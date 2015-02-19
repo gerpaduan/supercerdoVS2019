@@ -158,6 +158,19 @@
         OL9sGjJLgF+p+KGI9/TtAhbaKYpKncbvgv99/AUOvyrpi3EH8gAAAABJRU5ErkJggg==
 </value>
   </data>
+  <data name="Imprimir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAF+SURBVDhPlZJbSwJRFIX9DT75r7SfIkERRRGIIQ09jERY
+        lJWhVGQPdsHp8qBhF0qCSpEYaR40jIgs6klm5dpx1NSiObDnzJyz17fO3nNcrj4jMn8JFf32+651imrv
+        DZSegetKQ0D/gjDxA5CwXm0BXFUB4/bTGUSJzx6BjAWkTTgDKGclTt47ALBWlkJ3OqeaES8B0RsHEAJO
+        nr7FkewLtOQdgolzKUPXwwgEghJ9G8uNueULTC0ZGA+tYnRyFhNjIeiajlhsDft7BygUCsjn8z8hilqv
+        v8FIZzAdCiO6sIKN9W0k4ptIbu3IO2eKTdNsQygm3bbtVjBBCY6PspJcLj/Asiw5QS53KhophQ8ucoEn
+        UKBKpSoCzsrRMA4lz+8flH5o2kwboCB0KhZL4kqnVGoXi4tRDA+NwO12t4LGAuDgB10UhC4Mn28AHo9H
+        RGqmc08TFYRHpqMKArxer9RKUa1Wk1Oppvf8Ti6wTgI6kyj8VdR9Ibovyp8Xpyn+Aq4Z+NQi4xptAAAA
+        AElFTkSuQmCC
+</value>
+  </data>
   <metadata name="idCorteMovimientodo.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
@@ -170,13 +183,16 @@
   <metadata name="cantKg.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
+  <metadata name="Balanza.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
   <metadata name="lineShape1.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>7, 445, 423, 0</value>
+    <value>7, 513, 423, 0</value>
   </metadata>
   <metadata name="lineShape1.Size" type="System.Drawing.Size, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>423, 0</value>
   </metadata>
   <metadata name="lineShape1.Location" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>7, 445</value>
+    <value>7, 513</value>
   </metadata>
 </root>

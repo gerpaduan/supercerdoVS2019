@@ -28,16 +28,21 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoMovimiento));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.txtHora = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.checkMantenerCodigo = new System.Windows.Forms.CheckBox();
+            this.checkLeerPeso = new System.Windows.Forms.CheckBox();
             this.btnQuitar = new System.Windows.Forms.Button();
             this.btnAgregar = new System.Windows.Forms.Button();
             this.txtCantKgs = new System.Windows.Forms.TextBox();
@@ -58,6 +63,7 @@
             this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.txtTotalKg = new System.Windows.Forms.TextBox();
@@ -66,6 +72,7 @@
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -75,7 +82,7 @@
             // btnGuardar
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGuardar.Location = new System.Drawing.Point(303, 498);
+            this.btnGuardar.Location = new System.Drawing.Point(303, 597);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(80, 28);
             this.btnGuardar.TabIndex = 19;
@@ -87,7 +94,7 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(389, 498);
+            this.btnCancelar.Location = new System.Drawing.Point(389, 597);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(78, 27);
             this.btnCancelar.TabIndex = 18;
@@ -100,6 +107,9 @@
             // 
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.textBox1);
+            this.pnlBuscar.Controls.Add(this.label7);
+            this.pnlBuscar.Controls.Add(this.txtHora);
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.groupBox1);
@@ -108,6 +118,37 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(480, 199);
             this.pnlBuscar.TabIndex = 20;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(304, 79);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(100, 20);
+            this.textBox1.TabIndex = 19;
+            this.textBox1.Visible = false;
+            // 
+            // label7
+            // 
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(339, 47);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(34, 15);
+            this.label7.TabIndex = 18;
+            this.label7.Text = "Hora";
+            // 
+            // txtHora
+            // 
+            this.txtHora.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtHora.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtHora.Location = new System.Drawing.Point(379, 44);
+            this.txtHora.Name = "txtHora";
+            this.txtHora.ReadOnly = true;
+            this.txtHora.Size = new System.Drawing.Size(80, 22);
+            this.txtHora.TabIndex = 17;
+            this.txtHora.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label6
             // 
@@ -125,7 +166,7 @@
             // 
             this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox2.BackColor = System.Drawing.Color.SteelBlue;
-            this.groupBox2.Controls.Add(this.checkMantenerCodigo);
+            this.groupBox2.Controls.Add(this.checkLeerPeso);
             this.groupBox2.Controls.Add(this.btnQuitar);
             this.groupBox2.Controls.Add(this.btnAgregar);
             this.groupBox2.Controls.Add(this.txtCantKgs);
@@ -144,18 +185,20 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Corte";
             // 
-            // checkMantenerCodigo
+            // checkLeerPeso
             // 
-            this.checkMantenerCodigo.AutoSize = true;
-            this.checkMantenerCodigo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkMantenerCodigo.Location = new System.Drawing.Point(202, 26);
-            this.checkMantenerCodigo.Name = "checkMantenerCodigo";
-            this.checkMantenerCodigo.Size = new System.Drawing.Size(121, 19);
-            this.checkMantenerCodigo.TabIndex = 20;
-            this.checkMantenerCodigo.TabStop = false;
-            this.checkMantenerCodigo.Text = "Mantener Código";
-            this.checkMantenerCodigo.UseVisualStyleBackColor = true;
-            this.checkMantenerCodigo.CheckedChanged += new System.EventHandler(this.checkMantenerCodigo_CheckedChanged);
+            this.checkLeerPeso.AutoSize = true;
+            this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkLeerPeso.Checked = true;
+            this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkLeerPeso.Location = new System.Drawing.Point(199, 25);
+            this.checkLeerPeso.Name = "checkLeerPeso";
+            this.checkLeerPeso.Size = new System.Drawing.Size(130, 19);
+            this.checkLeerPeso.TabIndex = 20;
+            this.checkLeerPeso.TabStop = false;
+            this.checkLeerPeso.Text = "Leer Peso Balanza";
+            this.checkLeerPeso.UseVisualStyleBackColor = true;
+            this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 
             // btnQuitar
             // 
@@ -184,10 +227,13 @@
             // txtCantKgs
             // 
             this.txtCantKgs.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCantKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCantKgs.Location = new System.Drawing.Point(310, 52);
             this.txtCantKgs.Name = "txtCantKgs";
-            this.txtCantKgs.Size = new System.Drawing.Size(68, 21);
+            this.txtCantKgs.ReadOnly = true;
+            this.txtCantKgs.Size = new System.Drawing.Size(68, 22);
             this.txtCantKgs.TabIndex = 2;
+            this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
@@ -220,9 +266,10 @@
             // txtCodigo
             // 
             this.txtCodigo.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCodigo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCodigo.Location = new System.Drawing.Point(94, 23);
             this.txtCodigo.Name = "txtCodigo";
-            this.txtCodigo.Size = new System.Drawing.Size(53, 21);
+            this.txtCodigo.Size = new System.Drawing.Size(53, 22);
             this.txtCodigo.TabIndex = 1;
             this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
@@ -243,10 +290,11 @@
             // txtCorte
             // 
             this.txtCorte.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCorte.Location = new System.Drawing.Point(94, 52);
             this.txtCorte.Name = "txtCorte";
             this.txtCorte.ReadOnly = true;
-            this.txtCorte.Size = new System.Drawing.Size(134, 21);
+            this.txtCorte.Size = new System.Drawing.Size(134, 22);
             this.txtCorte.TabIndex = 9;
             // 
             // label5
@@ -282,10 +330,11 @@
             // comboSucDestino
             // 
             this.comboSucDestino.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucDestino.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboSucDestino.FormattingEnabled = true;
             this.comboSucDestino.Location = new System.Drawing.Point(94, 56);
             this.comboSucDestino.Name = "comboSucDestino";
-            this.comboSucDestino.Size = new System.Drawing.Size(132, 23);
+            this.comboSucDestino.Size = new System.Drawing.Size(132, 24);
             this.comboSucDestino.TabIndex = 12;
             this.comboSucDestino.TabStop = false;
             this.comboSucDestino.SelectedValueChanged += new System.EventHandler(this.comboSucDestino_SelectedValueChanged);
@@ -293,10 +342,11 @@
             // comboSucOrigen
             // 
             this.comboSucOrigen.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucOrigen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboSucOrigen.FormattingEnabled = true;
             this.comboSucOrigen.Location = new System.Drawing.Point(94, 24);
             this.comboSucOrigen.Name = "comboSucOrigen";
-            this.comboSucOrigen.Size = new System.Drawing.Size(132, 23);
+            this.comboSucOrigen.Size = new System.Drawing.Size(132, 24);
             this.comboSucOrigen.TabIndex = 11;
             this.comboSucOrigen.TabStop = false;
             this.comboSucOrigen.SelectedValueChanged += new System.EventHandler(this.comboSucOrigen_SelectedValueChanged);
@@ -328,10 +378,11 @@
             // txtFechaMovimiento
             // 
             this.txtFechaMovimiento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtFechaMovimiento.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaMovimiento.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaMovimiento.Location = new System.Drawing.Point(348, 16);
             this.txtFechaMovimiento.Name = "txtFechaMovimiento";
-            this.txtFechaMovimiento.Size = new System.Drawing.Size(111, 20);
+            this.txtFechaMovimiento.Size = new System.Drawing.Size(111, 22);
             this.txtFechaMovimiento.TabIndex = 15;
             this.txtFechaMovimiento.TabStop = false;
             // 
@@ -339,19 +390,29 @@
             // 
             this.grillaCortesPorMovimiento.AllowUserToAddRows = false;
             this.grillaCortesPorMovimiento.AllowUserToResizeColumns = false;
+            this.grillaCortesPorMovimiento.AllowUserToResizeRows = false;
             this.grillaCortesPorMovimiento.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.grillaCortesPorMovimiento.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortesPorMovimiento.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idCorteMovimientodo,
             this.codigo,
             this.corte,
-            this.cantKg});
+            this.cantKg,
+            this.Balanza});
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortesPorMovimiento.DefaultCellStyle = dataGridViewCellStyle4;
             this.grillaCortesPorMovimiento.Location = new System.Drawing.Point(12, 205);
             this.grillaCortesPorMovimiento.MultiSelect = false;
             this.grillaCortesPorMovimiento.Name = "grillaCortesPorMovimiento";
             this.grillaCortesPorMovimiento.RowHeadersVisible = false;
             this.grillaCortesPorMovimiento.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(455, 233);
+            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(455, 331);
             this.grillaCortesPorMovimiento.TabIndex = 21;
             this.grillaCortesPorMovimiento.TabStop = false;
             // 
@@ -399,14 +460,22 @@
             this.cantKg.Name = "cantKg";
             this.cantKg.ReadOnly = true;
             // 
+            // Balanza
+            // 
+            this.Balanza.DataPropertyName = "pesoBalanza";
+            this.Balanza.FillWeight = 30F;
+            this.Balanza.HeaderText = "Balanza";
+            this.Balanza.Name = "Balanza";
+            this.Balanza.ReadOnly = true;
+            // 
             // txtCantItems
             // 
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(389, 444);
+            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantItems.Location = new System.Drawing.Point(389, 543);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
-            this.txtCantItems.Size = new System.Drawing.Size(78, 21);
+            this.txtCantItems.Size = new System.Drawing.Size(78, 22);
             this.txtCantItems.TabIndex = 38;
             this.txtCantItems.TabStop = false;
             this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -416,7 +485,7 @@
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(300, 449);
+            this.label12.Location = new System.Drawing.Point(300, 548);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(79, 15);
             this.label12.TabIndex = 37;
@@ -425,11 +494,11 @@
             // txtTotalKg
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(389, 467);
+            this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalKg.Location = new System.Drawing.Point(389, 566);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
-            this.txtTotalKg.Size = new System.Drawing.Size(78, 21);
+            this.txtTotalKg.Size = new System.Drawing.Size(78, 22);
             this.txtTotalKg.TabIndex = 36;
             this.txtTotalKg.TabStop = false;
             this.txtTotalKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -439,7 +508,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(319, 470);
+            this.label8.Location = new System.Drawing.Point(319, 569);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 35;
@@ -449,7 +518,7 @@
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(10, 440);
+            this.label11.Location = new System.Drawing.Point(10, 539);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(78, 13);
             this.label11.TabIndex = 40;
@@ -458,7 +527,7 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(13, 455);
+            this.txtObservaciones.Location = new System.Drawing.Point(13, 554);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -473,8 +542,8 @@
             this.lineShape1.Name = "lineShape1";
             this.lineShape1.X1 = 6;
             this.lineShape1.X2 = 469;
-            this.lineShape1.Y1 = 493;
-            this.lineShape1.Y2 = 493;
+            this.lineShape1.Y1 = 592;
+            this.lineShape1.Y2 = 592;
             // 
             // shapeContainer1
             // 
@@ -483,15 +552,20 @@
             this.shapeContainer1.Name = "shapeContainer1";
             this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
             this.lineShape1});
-            this.shapeContainer1.Size = new System.Drawing.Size(479, 529);
+            this.shapeContainer1.Size = new System.Drawing.Size(479, 628);
             this.shapeContainer1.TabIndex = 41;
             this.shapeContainer1.TabStop = false;
+            // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // formNuevoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(479, 529);
+            this.ClientSize = new System.Drawing.Size(479, 628);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.txtCantItems);
@@ -508,6 +582,10 @@
             this.Name = "formNuevoMovimiento";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nuevo Movimiento";
+            this.Deactivate += new System.EventHandler(this.formNuevoMovimiento_Deactivate);
+            this.Load += new System.EventHandler(this.formNuevoMovimiento_Load);
+            this.Activated += new System.EventHandler(this.formNuevoMovimiento_Activated);
+            this.Leave += new System.EventHandler(this.formNuevoMovimiento_Leave);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -551,10 +629,15 @@
         private System.Windows.Forms.TextBox txtObservaciones;
         private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
         private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
+        private System.Windows.Forms.CheckBox checkLeerPeso;
+        protected System.Windows.Forms.Label label7;
+        protected System.Windows.Forms.TextBox txtHora;
+        private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMovimientodo;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
-        private System.Windows.Forms.CheckBox checkMantenerCodigo;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
+        private System.Windows.Forms.TextBox textBox1;
     }
 }

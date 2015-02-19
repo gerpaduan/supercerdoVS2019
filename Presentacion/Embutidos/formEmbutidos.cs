@@ -12,36 +12,51 @@ namespace Presentacion
 {
     public partial class formEmbutidos : Form
     {
+        bool esVentaClientes=false;
+
+        public bool EsVentaClientes
+        {
+            get { return esVentaClientes; }
+            set { esVentaClientes = value; }
+        }
         Negocio.Corte oCorteN = new Negocio.Corte();
         DataTable dtEmbutidos = new DataTable();
 
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
+        bool cargar = false;
         public formEmbutidos()
         {
             InitializeComponent();
+            fechaDesde.Value = fechaHasta.Value.AddDays(-fechaHasta.Value.Day - 30);
             
             cargarSucursal();
+
+            cargar = true;
             cargarGrilla();
+           
         }
 
         public void cargarGrilla()
         {
-            string sucursal = "";
-
-            if (comboSucursal.Text!="Todas")
+            if (cargar)
             {
-                sucursal = comboSucursal.Text;
+                string sucursal = "";
+
+                if (comboSucursal.Text != "Todas")
+                {
+                    sucursal = comboSucursal.Text;
+                }
+
+                dtEmbutidos = null;
+                grillaEmbutidos.DataSource = null;
+                grillaEmbutidos.AutoGenerateColumns = false;
+                dtEmbutidos = oCorteN.buscarEmbutido(sucursal, txtProducto.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                grillaEmbutidos.DataSource = dtEmbutidos;
+
+                cargarCampoTotal();
             }
-
-            dtEmbutidos = null;
-            grillaEmbutidos.DataSource = null;
-            grillaEmbutidos.AutoGenerateColumns = false;
-            dtEmbutidos=oCorteN.buscarEmbutido(sucursal,txtProducto.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
-            grillaEmbutidos.DataSource = dtEmbutidos;
-
-            cargarCampoTotal();
         }
 
         private void cargarCampoTotal()
@@ -137,6 +152,7 @@ namespace Presentacion
             nuevaFila[1] = "Todas";
 
             dtSucursales.Rows.Add(nuevaFila);
+            //dtSucursales.DefaultView.Sort = "idSucursal DESC";
 
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
@@ -178,6 +194,14 @@ namespace Presentacion
         private void comboSucursal_TextChanged(object sender, EventArgs e)
         {
             cargarGrilla();
+        }
+
+        private void formEmbutidos_Load(object sender, EventArgs e)
+        {
+            if (EsVentaClientes)
+            {
+                this.Text = "Embutidos/Ventas Clientes/Otros";
+            }
         }
     }
 }

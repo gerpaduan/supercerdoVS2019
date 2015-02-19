@@ -22,5 +22,23 @@ namespace Datos
         
         }
 
+        public DataTable obtenerSucursalSanMartin()
+        {
+            DataTable dtSucursal = new DataTable();
+            daSucursal = new SqlDataAdapter("Select * from sucursal where idSucursal = 2", conn.conectar());
+            daSucursal.Fill(dtSucursal);
+
+            return dtSucursal;
+
+        }
+        public DataTable obtenerSucursalSanLorenzo()
+        {
+            DataTable dtSucursal = new DataTable();
+            daSucursal = new SqlDataAdapter("Select * from sucursal where idSucursal = 1", conn.conectar());
+            daSucursal.Fill(dtSucursal);
+
+            return dtSucursal;
+
+        }
     }
 }

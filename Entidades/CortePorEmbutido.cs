@@ -10,6 +10,13 @@ namespace Entidades
         public float kgUtilizado;
          public Embutido embutido;
          public Corte corte;
+         private bool pesoBalanza;
+
+         public bool PesoBalanza
+         {
+             get { return pesoBalanza; }
+             set { pesoBalanza = value; }
+         }
 
         public float KgUtilizado
         {

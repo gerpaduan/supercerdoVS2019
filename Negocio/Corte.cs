@@ -197,10 +197,10 @@ namespace Negocio
 
          }
 
-         public DataTable CierreStock(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.CierreStock(texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta);
          }
 
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)

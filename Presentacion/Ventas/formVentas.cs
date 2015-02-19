@@ -12,43 +12,67 @@ namespace Presentacion
 {
     public partial class formVentas : Form
     {
-        DataTable dtSucursales;
+        private bool logueado = false;
 
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Venta oVentaN = new Negocio.Venta();
+        public bool Logueado
+        {
+            get { return logueado; }
+            set { logueado = value; }
+        }
 
-        DataTable dtVentas;
+        public DataTable dtSucursales;
 
+        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        public Negocio.Venta oVentaN = new Negocio.Venta();
+
+        public DataTable dtVentas;
+
+        bool cargar = false;
         public formVentas()
         {
             InitializeComponent();
-            cargarGrilla();
-            cargarSucursal();
+            
         }
 
         public void cargarGrilla()
         {
             try
             {
-                string sucursalSelect = "";
-                if (comboSucursal.Text=="Todas")
+                if (cargar)
                 {
-                    
-                }
-                else
-                {
-                    sucursalSelect = comboSucursal.Text;
-                }
 
-                dtVentas=new DataTable();
+                    string sucursalSelect = "";
+                    if (comboSucursal.Text == "Todas")
+                    {
 
-                dtVentas=oVentaN.obtenerVentas(sucursalSelect, fechaDesde.Value.Date,fechaHasta.Value.Date,txtDescripcion.Text.Trim());
+                    }
+                    else
+                    {
+                        sucursalSelect = comboSucursal.Text;
+                    }
 
-                grillaVentas.AutoGenerateColumns = false;
-                grillaVentas.DataSource = null;
-                grillaVentas.DataSource = dtVentas;
+                    dtVentas = new DataTable();
 
-                cargarTotales();
+                    dtVentas = oVentaN.obtenerVentas(sucursalSelect, fechaDesde.Value.Date, fechaHasta.Value.Date, txtDescripcion.Text.Trim());
+
+                    grillaVentas.AutoGenerateColumns = false;
+                    grillaVentas.DataSource = null;
+                    grillaVentas.DataSource = dtVentas;
+
+                    ///
+                    //if (logueado==false)
+                    if (Presentacion.FormPrincipal.logueado == false)
+                    {
+                        foreach (DataGridViewColumn col in grillaVentas.Columns)
+                        {
+                            if (col.Name.Equals("totalS"))
+                            {
+                                col.Visible = false;
+                            }
+                        }
+                    }
+                    cargarTotales();
+                }                                
 
             }
             catch (Exception ex)
@@ -68,8 +92,12 @@ namespace Presentacion
                 totalS += float.Parse(venta["totalS"].ToString());
 
             }
-            txtTotalKgs.Text = Convert.ToString(totalKgs);
-            txtTotalS.Text = Convert.ToString(totalS);
+            txtTotalKgs.Text = String.Format("{0:0.00}", totalKgs);
+            if (Presentacion.FormPrincipal.logueado)
+            {
+                txtTotalS.Text = String.Format("{0:0.00}", totalS );
+            }
+            
         
         }
 
@@ -94,13 +122,16 @@ namespace Presentacion
 
         private void infoVenta()
         {
-            int nroFila = Convert.ToInt32(grillaVentas.Rows.GetFirstRow(DataGridViewElementStates.Selected));
+            int idVenta = Convert.ToInt32(grillaVentas.CurrentRow.Cells["idVenta"].Value.ToString());
 
-            DataRow drVenta = dtVentas.Rows[nroFila];
+            DataRow drVenta = null;
 
-            //formInfoVenta frmInfoVenta = new formInfoVenta();
-            //frmInfoVenta.obtenerParametro(this, drVenta);
-            //frmInfoVenta.ShowDialog();
+            foreach (DataRow row in dtVentas.Rows)
+            {
+                if (row["idVenta"].Equals(idVenta)){
+                    drVenta = row;
+                }
+            }
 
             if (Application.OpenForms["formInfoVenta"] != null)
             {
@@ -112,7 +143,6 @@ namespace Presentacion
             }
             else
             {
-
                 formInfoVenta frmInfoVenta = new formInfoVenta();
                 frmInfoVenta.obtenerParametro(this, drVenta);
                 frmInfoVenta.Show();
@@ -182,6 +212,14 @@ namespace Presentacion
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
         {
+            cargarGrilla();
+        }
+
+        private void formVentas_Load(object sender, EventArgs e)
+        {
+            fechaDesde.Value = fechaHasta.Value.AddMonths(-2);
+            cargarSucursal();
+            cargar = true;
             cargarGrilla();
         }
     }

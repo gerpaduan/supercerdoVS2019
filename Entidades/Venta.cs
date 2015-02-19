@@ -9,6 +9,8 @@ namespace Entidades
     {
          int idVenta;
          DateTime fechaVenta;
+         DateTime creado;
+         DateTime actualizado;
          string turno;
          string diaFestivo;
          string observaciones;
@@ -66,6 +68,29 @@ namespace Entidades
             }
         }
 
+        public DateTime Creado
+        {
+            get
+            {
+                return creado;
+            }
+            set
+            {
+                creado = value;
+            }
+        }
+
+        public DateTime Actualizado
+        {
+            get
+            {
+                return actualizado;
+            }
+            set
+            {
+                actualizado = value;
+            }
+        }
         public string Observaciones
         {
             get

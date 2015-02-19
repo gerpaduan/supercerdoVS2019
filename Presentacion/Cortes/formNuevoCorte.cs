@@ -359,7 +359,16 @@ namespace Presentacion
 
             else
             {
-                return true;
+                if (this.txtPorcentajeCorteM.Text.Equals("0"))
+                {
+                    MessageBox.Show("% en Corte M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Corte Maestro", "Complete los campos",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                } else{
+                    return true;
+                }
+
+                
             }
         }
 
@@ -378,6 +387,11 @@ namespace Presentacion
                 SendKeys.Send("{TAB}");
 
             }
+
+        }
+
+        private void formNuevoCorte_Load(object sender, EventArgs e)
+        {
 
         }
 

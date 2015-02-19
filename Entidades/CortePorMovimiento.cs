@@ -11,6 +11,13 @@ namespace Entidades
         private Movimiento movimiento;
         private Corte corte;
         private float cantKg;
+        private bool pesoBalanza;
+
+        public bool PesoBalanza
+        {
+            get { return pesoBalanza; }
+            set { pesoBalanza = value; }
+        }
 
         public Corte Corte
         {

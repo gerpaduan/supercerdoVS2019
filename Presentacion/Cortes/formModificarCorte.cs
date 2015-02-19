@@ -129,5 +129,10 @@ namespace Presentacion
         {
             this.Close();
         }
+
+        private void formModificarCorte_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

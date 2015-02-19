@@ -16,6 +16,7 @@ namespace Presentacion
 {
     public partial class FormPrincipal : Form
     {
+        public static bool logueado = false;
         public FormPrincipal()
         {
             InitializeComponent();
@@ -24,20 +25,32 @@ namespace Presentacion
 
         private void linkCompras_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-           
-            if (Application.OpenForms["formCompras"] != null)
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
+            if (logueado)
             {
+                if (Application.OpenForms["formCompras"] != null)
+                {
 
-                Application.OpenForms["formCompras"].Activate();
-                Application.OpenForms["formCompras"].WindowState = FormWindowState.Normal;
-                
+                    Application.OpenForms["formCompras"].Activate();
+                    Application.OpenForms["formCompras"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+
+                    formCompras frmCompras = new formCompras();
+                    frmCompras.Show();
+
+                }
             }
             else
             {
-
-                formCompras frmCompras = new formCompras();
-                frmCompras.Show();
-
+                MessageBox.Show("No está logueado");
             }
             
 
@@ -45,20 +58,34 @@ namespace Presentacion
 
         private void linkVentas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (Application.OpenForms["formVentas"] != null)
-            {
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
+            //if (logueado)
+            //{
+                if (Application.OpenForms["formVentas"] != null)
+                {
 
-                Application.OpenForms["formVentas"].Activate();
-                Application.OpenForms["formVentas"].WindowState = FormWindowState.Normal;
+                    Application.OpenForms["formVentas"].Activate();
+                    Application.OpenForms["formVentas"].WindowState = FormWindowState.Normal;
 
-            }
-            else
-            {
+                }
+                else
+                {
 
-                formVentas frmVentas = new formVentas();
-                frmVentas.Show();
+                    formVentas frmVentas = new formVentas();
+                    frmVentas.Logueado = logueado;
+                    frmVentas.Show();
 
-            }
+                }
+            //}
+            //else
+            //{
+            //    MessageBox.Show("No está logueado");
+            //}
 
 
         }
@@ -128,6 +155,11 @@ namespace Presentacion
 
         private void linkEmbutidos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            Embutidos();
+        }
+
+        private static void Embutidos()
+        {
             if (Application.OpenForms["formEmbutidos"] != null)
             {
 
@@ -140,7 +172,6 @@ namespace Presentacion
 
                 formEmbutidos frmEmbutidos = new formEmbutidos();
                 frmEmbutidos.Show();
-
             }
         }
 
@@ -165,20 +196,34 @@ namespace Presentacion
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (Application.OpenForms["formStockCortes"] != null)
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
+            if (logueado)
             {
+                if (Application.OpenForms["formStockCortes"] != null)
+                {
 
-                Application.OpenForms["formStockCortes"].Activate();
-                Application.OpenForms["formStockCortes"].WindowState = FormWindowState.Normal;
+                    Application.OpenForms["formStockCortes"].Activate();
+                    Application.OpenForms["formStockCortes"].WindowState = FormWindowState.Normal;
 
+                }
+                else
+                {
+
+                    formStockCortes frmStockCortes = new formStockCortes();
+                    frmStockCortes.Show();
+
+                }
             }
             else
             {
-
-                formStockCortes frmStockCortes = new formStockCortes();
-                frmStockCortes.Show();
-
+                MessageBox.Show("No está logueado");
             }
+            
         }
 
         private void linkReportes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -204,19 +249,32 @@ namespace Presentacion
 
         private void linkPagos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (Application.OpenForms["formPagos"] != null)
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
+            if (logueado)
             {
+                if (Application.OpenForms["formPagos"] != null)
+                {
 
-                Application.OpenForms["formPagos"].Activate();
-                Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
+                    Application.OpenForms["formPagos"].Activate();
+                    Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
 
+                }
+                else
+                {
+
+                    formPagos frmPagos = new formPagos();
+                    frmPagos.Show();
+
+                }
             }
             else
             {
-
-                formPagos frmPagos = new formPagos();
-                frmPagos.Show();
-
+                MessageBox.Show("No está logueado");
             }
         }
 
@@ -224,19 +282,94 @@ namespace Presentacion
 
         private void linkBaseDeDatos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (Application.OpenForms["formBackUp"] != null)
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
+            if (logueado)
             {
+                if (Application.OpenForms["formBackUp"] != null)
+                {
 
-                Application.OpenForms["formBackUp"].Activate();
-                Application.OpenForms["formBackUp"].WindowState = FormWindowState.Normal;
+                    Application.OpenForms["formBackUp"].Activate();
+                    Application.OpenForms["formBackUp"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formBackUp frmBackUp = new formBackUp();
+                    frmBackUp.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+            
+        }
+
+        private void FormPrincipal_Activated(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                linkCerrarSesion.Visible = true;
+            }
+            else
+            {
+                linkCerrarSesion.Visible = false;
+            }
+        }
+
+        private void linkCerrarSesion_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (logueado)
+            {
+                MessageBox.Show("Sesión Cerrada.");
+            }
+            logueado = false;
+            linkLogin.Visible = true;
+            linkCerrarSesion.Visible = false;
+            
+        }
+
+        private void FormPrincipal_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void LinkVentasClientes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (Application.OpenForms["formEmbutidos"] != null)
+            {
+                Application.OpenForms["formEmbutidos"].Activate();
+                Application.OpenForms["formEmbutidos"].WindowState = FormWindowState.Normal;
 
             }
             else
             {
 
-                formBackUp frmBackUp = new formBackUp();
-                frmBackUp.Show();
+                formEmbutidos frmEmbutidos = new formEmbutidos();
+                frmEmbutidos.EsVentaClientes = true;
+                frmEmbutidos.Show();
+            }
+        }
 
+        private void linkLogin_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            frmLogin.ShowDialog();
+            logueado = frmLogin.Logueado();
+            if (logueado)
+            {
+                linkLogin.Visible = false;
+                linkCerrarSesion.Visible = true;
+            }
+            else
+            {
+                linkLogin.Visible = true;
+                linkCerrarSesion.Visible = false;
             }
         }
         

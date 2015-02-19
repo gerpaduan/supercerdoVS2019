@@ -312,6 +312,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@idCorte", oCortePorEmbutido.corte.idCorte);
             cmCorte.Parameters.AddWithValue("@kgUtilizados", oCortePorEmbutido.kgUtilizado);
             cmCorte.Parameters.AddWithValue("@idSucursal", oCortePorEmbutido.embutido.sucursal.IdSucursal);
+            cmCorte.Parameters.AddWithValue("@pesoBalanza", oCortePorEmbutido.PesoBalanza);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
@@ -406,6 +407,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@idMovimiento", cortePorMovimiento.Movimientos.IdMovimiento);
             cmCorte.Parameters.AddWithValue("@idCorte", cortePorMovimiento.Corte.IdCorte);
             cmCorte.Parameters.AddWithValue("@cantKg",cortePorMovimiento.CantKg );
+            cmCorte.Parameters.AddWithValue("@pesoBalanza", cortePorMovimiento.PesoBalanza);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
@@ -524,6 +526,16 @@ namespace Datos
                 oCortePorMovimiento.Corte = corte;
 
                 oCortePorMovimiento.CantKg = float.Parse(drMovimiento["cantKg"].ToString());
+                try
+                {
+                    oCortePorMovimiento.PesoBalanza = Convert.ToBoolean(drMovimiento["pesoBalanza"]);
+                }
+                catch (Exception)
+                {
+
+                    oCortePorMovimiento.PesoBalanza = false;
+                }
+                
 
                 listaCortesPorMovimiento.Add(oCortePorMovimiento);
 
@@ -687,7 +699,7 @@ namespace Datos
             return dtReporteTeoricoReal;
         }
 
-        public DataTable CierreStock(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable CierreStock(int nroCierre,string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtCierreStock = new DataTable();
             daCorte = new SqlDataAdapter();
@@ -696,7 +708,14 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
             cmCorte.CommandType = CommandType.StoredProcedure;
-            cmCorte.CommandText = "StockCierre";
+            if (nroCierre==1)
+            {
+                cmCorte.CommandText = "StockCierre";
+            }
+            if (nroCierre == 2)
+            {
+                cmCorte.CommandText = "StockCierre_2";
+            }
             cmCorte.Parameters.AddWithValue("@texto", texto);
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);

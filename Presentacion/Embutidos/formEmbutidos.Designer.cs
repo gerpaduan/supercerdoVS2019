@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formEmbutidos));
             this.btnSalir = new System.Windows.Forms.Button();
             this.grillaEmbutidos = new System.Windows.Forms.DataGridView();
@@ -47,6 +47,8 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.comboSucursal = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.btnBuscaProd = new System.Windows.Forms.Button();
             this.txtProducto = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -61,8 +63,6 @@
             this.label8 = new System.Windows.Forms.Label();
             this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.comboSucursal = new System.Windows.Forms.ComboBox();
-            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).BeginInit();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -115,14 +115,15 @@
             // 
             // fechaEmbutido
             // 
+            this.fechaEmbutido.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.fechaEmbutido.DataPropertyName = "fechaEmbutido";
-            dataGridViewCellStyle4.Format = "d";
-            dataGridViewCellStyle4.NullValue = null;
-            this.fechaEmbutido.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Format = "g";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaEmbutido.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaEmbutido.HeaderText = "Fecha Elaboración";
             this.fechaEmbutido.Name = "fechaEmbutido";
             this.fechaEmbutido.ReadOnly = true;
-            this.fechaEmbutido.Width = 70;
+            this.fechaEmbutido.Width = 111;
             // 
             // idCorte
             // 
@@ -151,10 +152,10 @@
             // totalKg
             // 
             this.totalKg.DataPropertyName = "totalKg";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle5.Format = "N2";
-            dataGridViewCellStyle5.NullValue = null;
-            this.totalKg.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
             this.totalKg.HeaderText = "Total Kgs.";
             this.totalKg.Name = "totalKg";
             this.totalKg.ReadOnly = true;
@@ -179,8 +180,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle6.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle3.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle3;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -240,12 +241,34 @@
             this.pnlBuscar.Size = new System.Drawing.Size(562, 91);
             this.pnlBuscar.TabIndex = 14;
             // 
+            // comboSucursal
+            // 
+            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucursal.FormattingEnabled = true;
+            this.comboSucursal.Location = new System.Drawing.Point(450, 13);
+            this.comboSucursal.Name = "comboSucursal";
+            this.comboSucursal.Size = new System.Drawing.Size(100, 21);
+            this.comboSucursal.TabIndex = 39;
+            this.comboSucursal.TabStop = false;
+            this.comboSucursal.TextChanged += new System.EventHandler(this.comboSucursal_TextChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(389, 17);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(55, 15);
+            this.label7.TabIndex = 40;
+            this.label7.Text = "Sucursal";
+            // 
             // btnBuscaProd
             // 
             this.btnBuscaProd.AccessibleDescription = "";
             this.btnBuscaProd.ForeColor = System.Drawing.Color.Black;
             this.btnBuscaProd.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscaProd.Image")));
-            this.btnBuscaProd.Location = new System.Drawing.Point(203, 13);
+            this.btnBuscaProd.Location = new System.Drawing.Point(219, 13);
             this.btnBuscaProd.Name = "btnBuscaProd";
             this.btnBuscaProd.Size = new System.Drawing.Size(28, 24);
             this.btnBuscaProd.TabIndex = 15;
@@ -254,7 +277,7 @@
             // 
             // txtProducto
             // 
-            this.txtProducto.Location = new System.Drawing.Point(84, 15);
+            this.txtProducto.Location = new System.Drawing.Point(100, 15);
             this.txtProducto.Name = "txtProducto";
             this.txtProducto.Size = new System.Drawing.Size(113, 20);
             this.txtProducto.TabIndex = 12;
@@ -267,9 +290,9 @@
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
             this.label2.Location = new System.Drawing.Point(22, 16);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(56, 15);
+            this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 11;
-            this.label2.Text = "Producto";
+            this.label2.Text = "Descripción";
             // 
             // label1
             // 
@@ -289,7 +312,7 @@
             this.fechaDesde.Name = "fechaDesde";
             this.fechaDesde.Size = new System.Drawing.Size(98, 20);
             this.fechaDesde.TabIndex = 5;
-            this.fechaDesde.Value = new System.DateTime(2011, 6, 29, 0, 0, 0, 0);
+            this.fechaDesde.Value = new System.DateTime(2012, 5, 30, 0, 0, 0, 0);
             this.fechaDesde.ValueChanged += new System.EventHandler(this.btnBuscaProd_Click);
             // 
             // label3
@@ -389,28 +412,6 @@
             this.shapeContainer2.TabIndex = 22;
             this.shapeContainer2.TabStop = false;
             // 
-            // comboSucursal
-            // 
-            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(450, 13);
-            this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(100, 21);
-            this.comboSucursal.TabIndex = 39;
-            this.comboSucursal.TabStop = false;
-            this.comboSucursal.TextChanged += new System.EventHandler(this.comboSucursal_TextChanged);
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(389, 17);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(55, 15);
-            this.label7.TabIndex = 40;
-            this.label7.Text = "Sucursal";
-            // 
             // formEmbutidos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -428,7 +429,8 @@
             this.MaximizeBox = false;
             this.Name = "formEmbutidos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Embutidos";
+            this.Text = "Embutidos / Otros";
+            this.Load += new System.EventHandler(this.formEmbutidos_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).EndInit();
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
@@ -460,6 +462,8 @@
         private System.Windows.Forms.Label label8;
         private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
         private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
+        private System.Windows.Forms.ComboBox comboSucursal;
+        protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.DataGridViewTextBoxColumn idEmbutido;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaEmbutido;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
@@ -470,7 +474,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursal;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
         private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
-        private System.Windows.Forms.ComboBox comboSucursal;
-        protected System.Windows.Forms.Label label7;
     }
 }

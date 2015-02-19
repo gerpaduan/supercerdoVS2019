@@ -1,4 +1,5 @@
-﻿namespace Presentacion.Reportes {
+﻿namespace Presentacion.Reportes
+{
     
     
     public partial class ReportesDataSet {

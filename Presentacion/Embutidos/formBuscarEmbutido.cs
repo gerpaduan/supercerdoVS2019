@@ -33,7 +33,8 @@ namespace Presentacion.Embutidos
         {
             oCorteN = new Negocio.Corte();
             grillaCortes.AutoGenerateColumns = false;
-            grillaCortes.DataSource = oCorteN.obtenerEmbutidos(txtBuscarCorte.Text.Trim());
+           // grillaCortes.DataSource = oCorteN.obtenerEmbutidos(txtBuscarCorte.Text.Trim());
+            grillaCortes.DataSource = oCorteN.buscarCorte(txtBuscarCorte.Text.Trim());
         }
 
         public void enviarCorte()
@@ -79,6 +80,11 @@ namespace Presentacion.Embutidos
         private void grillaCortes_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             enviarCorte();
+        }
+
+        private void formBuscarEmbutido_Load(object sender, EventArgs e)
+        {
+
         }
       
 

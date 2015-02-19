@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Reportes;
+using System.Configuration;
 
 namespace Presentacion.Pagos
 {
@@ -20,10 +21,11 @@ namespace Presentacion.Pagos
         DataGridViewRow fila;
         string tramite;
 
+        bool cargar = false;
         public formPagos()
         {
             InitializeComponent();
-            cargarGrilla();
+            //cargarGrilla();
         }
 
         private void nuevo_Click(object sender, EventArgs e)
@@ -63,35 +65,36 @@ namespace Presentacion.Pagos
 
         #region Metodos
         public void cargarGrilla()
-        { 
-            string tipoTramite="";
-            string descripcion = txtDescripcion.Text.Trim();
-            if (comboTipoTramite.Text=="Todos" )
-	        {
-        		 tipoTramite="";
-	        }
-            else
-	        {
-                tipoTramite=comboTipoTramite.Text;
-	        }
-            
-            dtPagos= oCompraN.obtenerPagos(tipoTramite,descripcion, txtFechaDesde.Value.Date,txtFechaHasta.Value.Date);
-            grillaPagos.DataSource = null;
-            grillaPagos.DataSource = dtPagos;
-
-            foreach (DataGridViewRow filaPago in grillaPagos.Rows)
+        {
+            if (cargar)
             {
 
-                if (filaPago.Cells["Tramite"].Value.ToString() == "Pago")
+                string tipoTramite = "";
+                string descripcion = txtDescripcion.Text.Trim();
+                if (comboTipoTramite.Text == "Todos")
                 {
-                    grillaPagos.Rows[filaPago.Index].DefaultCellStyle.BackColor = Color.FromArgb(209, 227, 254);
-
+                    tipoTramite = "";
                 }
+                else
+                {
+                    tipoTramite = comboTipoTramite.Text;
+                }
+
+                dtPagos = oCompraN.obtenerPagos(tipoTramite, descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
+                grillaPagos.DataSource = null;
+                grillaPagos.DataSource = dtPagos;
+                foreach (DataGridViewRow filaPago in grillaPagos.Rows)
+                {
+
+                    if (filaPago.Cells["Tramite"].Value.ToString() == "Pago")
+                    {
+                        grillaPagos.Rows[filaPago.Index].DefaultCellStyle.BackColor = Color.FromArgb(209, 227, 254);
+
+                    }
+                }
+                cargarTotales();
+                formatearGrilla();
             }
-
-            formatearGrilla();
-
-            cargarTotales();
 
             
         }
@@ -100,8 +103,15 @@ namespace Presentacion.Pagos
         {
             float totalCompra = 0, totalPagos = 0, saldoAnterior=0, saldo=0;
             
+        
             foreach (DataRow  fila in dtPagos.Rows)
             {
+                
+                if (fila["Tramite"].ToString() == "Saldo")
+                {
+                    saldoAnterior += float.Parse(fila["Importe"].ToString());
+                }
+
                 if (fila["Tramite"].ToString() == "Compra")
                 {
                     totalCompra += float.Parse(fila["Importe"].ToString());
@@ -110,11 +120,6 @@ namespace Presentacion.Pagos
                 if (fila["Tramite"].ToString() == "Pago")
                 {
                     totalPagos += float.Parse(fila["Importe"].ToString());
-                }
-
-                if (fila["Tramite"].ToString() == "Saldo")
-                {
-                    saldoAnterior += float.Parse(fila["Importe"].ToString());
                 }
 
                 fila["Saldo"] = totalPagos - totalCompra + saldoAnterior;
@@ -140,31 +145,38 @@ namespace Presentacion.Pagos
 
         private void modificarPago()
         {
-            cargarFilaSeleccionada();
-            if (tramite=="Pago")
+            try
             {
-                oPagoE.IdPago=Convert.ToInt32(fila.Cells["Id"].Value.ToString());
-                oPagoE = oCompraN.buscarPago(oPagoE);
-
-                if (Application.OpenForms["formNuevoPago"] != null)
+                cargarFilaSeleccionada();
+                if (tramite == "Pago")
                 {
-                    Application.OpenForms["formNuevoPago"].Activate();
-                    Application.OpenForms["formNuevoPago"].WindowState = FormWindowState.Normal;
+                    oPagoE.IdPago = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
+                    oPagoE = oCompraN.buscarPago(oPagoE);
+
+                    if (Application.OpenForms["formNuevoPago"] != null)
+                    {
+                        Application.OpenForms["formNuevoPago"].Activate();
+                        Application.OpenForms["formNuevoPago"].WindowState = FormWindowState.Normal;
+                    }
+                    else
+                    {
+                        formNuevoPago frmNuevoPago = new formNuevoPago();
+                        frmNuevoPago.obtenerParametros(oPagoE, this);
+                        frmNuevoPago.Show();
+
+                    }
                 }
                 else
                 {
-                    formNuevoPago frmNuevoPago = new formNuevoPago();
-                    frmNuevoPago.obtenerParametros(oPagoE, this);
-                    frmNuevoPago.Show();
-
+                    MessageBox.Show("Sólo se pueden seleccionar Pagos para realizar la modificación.");
                 }
-
-
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Sólo se pueden seleccionar Pagos para realizar la modificación.");
+                
+                throw;
             }
+           
         }
 
         private void eliminarPago()
@@ -308,7 +320,7 @@ namespace Presentacion.Pagos
 
         private void txtDescripcion_TextChanged(object sender, EventArgs e)
         {
-            cargarGrilla();
+            //cargarGrilla();
         }
 
         private void txtFechaDesde_ValueChanged(object sender, EventArgs e)
@@ -338,12 +350,23 @@ namespace Presentacion.Pagos
 
         private void formPagos_Load(object sender, EventArgs e)
         {
+            //leo de App.config fecha Desde
+            txtFechaDesde.Value =Convert.ToDateTime(ConfigurationManager.AppSettings["FechaDesdePago"].ToString());
+            cargar = true;
             cargarGrilla();
         }
 
         private void grillaPagos_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
             formatearGrilla();
+        }
+
+        private void txtDescripcion_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar==Convert.ToChar(Keys.Enter))
+            {
+                cargarGrilla();
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Cortes;
+using Presentacion.Reportes;
 
 namespace Presentacion.Movimientos
 {
@@ -45,6 +46,7 @@ namespace Presentacion.Movimientos
             txtSucOrigen.Text = oMovimientoE.SucursalOrigen.sucursal;
             txtSucDestino.Text = oMovimientoE.SucursalDestino.sucursal;
             txtFechaMovimiento.Value = oMovimientoE.FechaMovimiento;
+            txtHoraMovimiento.Text = oMovimientoE.FechaMovimiento.TimeOfDay.ToString();
             txtObservaciones.Text = oMovimientoE.Observaciones;
 
             cargarListaCortesPorMovimiento();
@@ -72,6 +74,7 @@ namespace Presentacion.Movimientos
                 cortePorMovimiento.Codigo = lineaCorte.Corte.codigo;
                 cortePorMovimiento.Corte = lineaCorte.Corte.corte;
                 cortePorMovimiento.CantKg = lineaCorte.CantKg;
+                cortePorMovimiento.PesoBalanza = lineaCorte.PesoBalanza;
 
                 listaEnGrilla.Add(cortePorMovimiento);
             }
@@ -142,6 +145,52 @@ namespace Presentacion.Movimientos
         private void Reporte_Click(object sender, EventArgs e)
         {
             cargarReporte();
+        }
+
+        private void formInfoMovimiento_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Imprimir_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string titulo = "Movimiento";
+                FormReportes frmReportes;
+
+                DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
+
+                if (resp != DialogResult.Cancel)
+                {
+                    if (resp == DialogResult.Yes)
+                    {
+                        titulo = "Movimiento Acum";
+                        Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
+                        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+
+                    }
+                    else
+                    {
+                        Reportes.ReporteMovimiento reporte = new Reportes.ReporteMovimiento();
+                        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+
+                    }
+
+
+                    frmReportes.ListaCortesPorMov = listaEnGrilla;
+                    frmReportes.Objetos = true;
+                    frmReportes.ReporteMovimiento = true;
+                    frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
+                    frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
+
+                    frmReportes.Show();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
        

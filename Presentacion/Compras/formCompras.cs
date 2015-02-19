@@ -16,11 +16,14 @@ namespace Presentacion
         Negocio.Compra oCompraN;
         Entidades.Compra oCompraE;
         DataTable dtCompras = new DataTable();
-        
+
+        bool cargar = false;
         public formCompras()
         {
             InitializeComponent();
             this.comboTipoCompra.SelectedIndex = 0 ;
+
+            cargar = true;
             cargarGrilla();
         }
         
@@ -30,19 +33,23 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
-            oCompraN = new Negocio.Compra();
+            if (cargar)
+            {
 
-            grillaCompras.AutoGenerateColumns = false;
+                oCompraN = new Negocio.Compra();
 
-            
-            dtCompras = null;
-            dtCompras = oCompraN.obtenerCompras(comboTipoCompra.Text , txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                grillaCompras.AutoGenerateColumns = false;
 
-            grillaCompras.DataSource = dtCompras;
 
-            cargarTotales();
-            
-            oCompraN = null;            
+                dtCompras = null;
+                dtCompras = oCompraN.obtenerCompras(comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+
+                grillaCompras.DataSource = dtCompras;
+
+                cargarTotales();
+
+                oCompraN = null;
+            }
         }
 
         private void cargarTotales()

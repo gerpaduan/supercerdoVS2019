@@ -15,5 +15,15 @@ namespace Negocio
             oSucursalD = new Datos.Sucursal();
             return oSucursalD.obtenerSucursales();
         }
+        public DataTable obtenerSucursalSanMartin()
+        {
+            oSucursalD = new Datos.Sucursal();
+            return oSucursalD.obtenerSucursalSanMartin();
+        }
+        public DataTable obtenerSucursalSanLorenzo()
+        {
+            oSucursalD = new Datos.Sucursal();
+            return oSucursalD.obtenerSucursalSanLorenzo();
+        }
     }
 }

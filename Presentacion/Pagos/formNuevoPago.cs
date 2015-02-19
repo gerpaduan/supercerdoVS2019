@@ -101,7 +101,19 @@ namespace Presentacion.Pagos
                         }
 
                         frmPagos.cargarGrilla();
-                        this.Close();
+
+                        DialogResult resp= MessageBox.Show("¿Ingresar otro pago?.", "Pagos", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                        if (resp == DialogResult.Yes)
+                        {
+                            txtNroRecibo.Text = "";
+                            txtImporte.Text = "";
+                            txtObservaciones.Text = "";
+                        }
+                        else
+                        {
+                            this.Close();
+                        }
+                        
                     }
                     
                 }

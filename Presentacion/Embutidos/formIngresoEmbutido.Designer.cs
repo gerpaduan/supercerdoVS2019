@@ -28,7 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formIngresoEmbutido));
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
@@ -37,12 +40,14 @@
             this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.txtFechaEmbutido = new System.Windows.Forms.DateTimePicker();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkLeerPeso = new System.Windows.Forms.CheckBox();
             this.btnQuitar = new System.Windows.Forms.Button();
             this.btnAgregar = new System.Windows.Forms.Button();
             this.txtCantKgs = new System.Windows.Forms.TextBox();
@@ -66,6 +71,7 @@
             this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.label11 = new System.Windows.Forms.Label();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -75,7 +81,7 @@
             // btnGuardar
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGuardar.Location = new System.Drawing.Point(305, 495);
+            this.btnGuardar.Location = new System.Drawing.Point(305, 578);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(87, 27);
             this.btnGuardar.TabIndex = 6;
@@ -87,7 +93,7 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(401, 495);
+            this.btnCancelar.Location = new System.Drawing.Point(401, 578);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(87, 27);
             this.btnCancelar.TabIndex = 7;
@@ -104,12 +110,29 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCortesPorEmbutido.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaCortesPorEmbutido.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortesPorEmbutido.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idCorte,
             this.codigo,
             this.corte,
-            this.kgUtilizados});
+            this.kgUtilizados,
+            this.Balanza});
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle3;
             this.grillaCortesPorEmbutido.Location = new System.Drawing.Point(9, 240);
             this.grillaCortesPorEmbutido.MultiSelect = false;
             this.grillaCortesPorEmbutido.Name = "grillaCortesPorEmbutido";
@@ -117,7 +140,7 @@
             this.grillaCortesPorEmbutido.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             this.grillaCortesPorEmbutido.RowHeadersVisible = false;
             this.grillaCortesPorEmbutido.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortesPorEmbutido.Size = new System.Drawing.Size(478, 182);
+            this.grillaCortesPorEmbutido.Size = new System.Drawing.Size(478, 265);
             this.grillaCortesPorEmbutido.StandardTab = true;
             this.grillaCortesPorEmbutido.TabIndex = 15;
             this.grillaCortesPorEmbutido.TabStop = false;
@@ -134,8 +157,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
             this.codigo.FillWeight = 80F;
             this.codigo.HeaderText = "Codigo";
             this.codigo.Name = "codigo";
@@ -155,6 +178,14 @@
             this.kgUtilizados.HeaderText = "Kgs. Utilizados";
             this.kgUtilizados.Name = "kgUtilizados";
             this.kgUtilizados.ReadOnly = true;
+            // 
+            // Balanza
+            // 
+            this.Balanza.DataPropertyName = "pesoBalanza";
+            this.Balanza.FillWeight = 50F;
+            this.Balanza.HeaderText = "Balanza";
+            this.Balanza.Name = "Balanza";
+            this.Balanza.ReadOnly = true;
             // 
             // pnlBuscar
             // 
@@ -176,10 +207,11 @@
             // comboSucursal
             // 
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboSucursal.FormattingEnabled = true;
             this.comboSucursal.Location = new System.Drawing.Point(80, 9);
             this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(116, 21);
+            this.comboSucursal.Size = new System.Drawing.Size(116, 24);
             this.comboSucursal.TabIndex = 0;
             this.comboSucursal.TabStop = false;
             this.comboSucursal.SelectedIndexChanged += new System.EventHandler(this.comboSucursal_SelectedIndexChanged);
@@ -210,10 +242,11 @@
             // txtFechaEmbutido
             // 
             this.txtFechaEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaEmbutido.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.txtFechaEmbutido.Location = new System.Drawing.Point(374, 8);
             this.txtFechaEmbutido.Name = "txtFechaEmbutido";
-            this.txtFechaEmbutido.Size = new System.Drawing.Size(104, 20);
+            this.txtFechaEmbutido.Size = new System.Drawing.Size(104, 22);
             this.txtFechaEmbutido.TabIndex = 11;
             this.txtFechaEmbutido.TabStop = false;
             // 
@@ -221,6 +254,7 @@
             // 
             this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox2.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox2.Controls.Add(this.checkLeerPeso);
             this.groupBox2.Controls.Add(this.btnQuitar);
             this.groupBox2.Controls.Add(this.btnAgregar);
             this.groupBox2.Controls.Add(this.txtCantKgs);
@@ -237,7 +271,22 @@
             this.groupBox2.Size = new System.Drawing.Size(477, 86);
             this.groupBox2.TabIndex = 10;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Corte en Embutido";
+            this.groupBox2.Text = "Ingreso Cortes ";
+            // 
+            // checkLeerPeso
+            // 
+            this.checkLeerPeso.AutoSize = true;
+            this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkLeerPeso.Checked = true;
+            this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkLeerPeso.Location = new System.Drawing.Point(204, 26);
+            this.checkLeerPeso.Name = "checkLeerPeso";
+            this.checkLeerPeso.Size = new System.Drawing.Size(130, 19);
+            this.checkLeerPeso.TabIndex = 23;
+            this.checkLeerPeso.TabStop = false;
+            this.checkLeerPeso.Text = "Leer Peso Balanza";
+            this.checkLeerPeso.UseVisualStyleBackColor = true;
+            this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 
             // btnQuitar
             // 
@@ -268,10 +317,13 @@
             // txtCantKgs
             // 
             this.txtCantKgs.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCantKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCantKgs.Location = new System.Drawing.Point(316, 53);
             this.txtCantKgs.Name = "txtCantKgs";
-            this.txtCantKgs.Size = new System.Drawing.Size(71, 21);
+            this.txtCantKgs.ReadOnly = true;
+            this.txtCantKgs.Size = new System.Drawing.Size(71, 22);
             this.txtCantKgs.TabIndex = 3;
+            this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
@@ -304,9 +356,10 @@
             // txtCodCorteEnEmbutido
             // 
             this.txtCodCorteEnEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCodCorteEnEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCodCorteEnEmbutido.Location = new System.Drawing.Point(92, 24);
             this.txtCodCorteEnEmbutido.Name = "txtCodCorteEnEmbutido";
-            this.txtCodCorteEnEmbutido.Size = new System.Drawing.Size(71, 21);
+            this.txtCodCorteEnEmbutido.Size = new System.Drawing.Size(71, 22);
             this.txtCodCorteEnEmbutido.TabIndex = 2;
             this.txtCodCorteEnEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodCorteEnEmbutido.TextChanged += new System.EventHandler(this.txtCodCorteEnEmbutido_TextChanged);
@@ -327,10 +380,11 @@
             // txtCorteEnEmbutido
             // 
             this.txtCorteEnEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCorteEnEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCorteEnEmbutido.Location = new System.Drawing.Point(92, 53);
             this.txtCorteEnEmbutido.Name = "txtCorteEnEmbutido";
             this.txtCorteEnEmbutido.ReadOnly = true;
-            this.txtCorteEnEmbutido.Size = new System.Drawing.Size(145, 21);
+            this.txtCorteEnEmbutido.Size = new System.Drawing.Size(145, 22);
             this.txtCorteEnEmbutido.TabIndex = 9;
             this.txtCorteEnEmbutido.TabStop = false;
             // 
@@ -363,7 +417,7 @@
             this.groupBox1.Size = new System.Drawing.Size(290, 85);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Embutido";
+            this.groupBox1.Text = "Embutido / Otro ";
             // 
             // btnBuscarEmbutido
             // 
@@ -382,10 +436,11 @@
             // txtCodigoEmbutido
             // 
             this.txtCodigoEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtCodigoEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCodigoEmbutido.Location = new System.Drawing.Point(92, 22);
             this.txtCodigoEmbutido.Name = "txtCodigoEmbutido";
             this.txtCodigoEmbutido.ReadOnly = true;
-            this.txtCodigoEmbutido.Size = new System.Drawing.Size(71, 21);
+            this.txtCodigoEmbutido.Size = new System.Drawing.Size(71, 22);
             this.txtCodigoEmbutido.TabIndex = 11;
             this.txtCodigoEmbutido.TabStop = false;
             this.txtCodigoEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -406,10 +461,11 @@
             // txtEmbutido
             // 
             this.txtEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtEmbutido.Location = new System.Drawing.Point(92, 51);
             this.txtEmbutido.Name = "txtEmbutido";
             this.txtEmbutido.ReadOnly = true;
-            this.txtEmbutido.Size = new System.Drawing.Size(145, 21);
+            this.txtEmbutido.Size = new System.Drawing.Size(145, 22);
             this.txtEmbutido.TabIndex = 9;
             this.txtEmbutido.TabStop = false;
             // 
@@ -450,11 +506,11 @@
             // txtTotalKg
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(383, 428);
+            this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
+            this.txtTotalKg.Location = new System.Drawing.Point(383, 511);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
-            this.txtTotalKg.Size = new System.Drawing.Size(102, 21);
+            this.txtTotalKg.Size = new System.Drawing.Size(102, 22);
             this.txtTotalKg.TabIndex = 19;
             this.txtTotalKg.TabStop = false;
             this.txtTotalKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -464,7 +520,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(317, 433);
+            this.label8.Location = new System.Drawing.Point(317, 516);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 18;
@@ -477,8 +533,8 @@
             this.lineShape1.Name = "lineShape1";
             this.lineShape1.X1 = 8;
             this.lineShape1.X2 = 489;
-            this.lineShape1.Y1 = 488;
-            this.lineShape1.Y2 = 488;
+            this.lineShape1.Y1 = 571;
+            this.lineShape1.Y2 = 571;
             // 
             // shapeContainer1
             // 
@@ -487,7 +543,7 @@
             this.shapeContainer1.Name = "shapeContainer1";
             this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
             this.lineShape1});
-            this.shapeContainer1.Size = new System.Drawing.Size(497, 528);
+            this.shapeContainer1.Size = new System.Drawing.Size(497, 611);
             this.shapeContainer1.TabIndex = 20;
             this.shapeContainer1.TabStop = false;
             // 
@@ -495,7 +551,7 @@
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(8, 427);
+            this.label11.Location = new System.Drawing.Point(8, 510);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(76, 13);
             this.label11.TabIndex = 22;
@@ -504,7 +560,7 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(11, 442);
+            this.txtObservaciones.Location = new System.Drawing.Point(11, 525);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -512,11 +568,16 @@
             this.txtObservaciones.TabIndex = 5;
             this.txtObservaciones.TabStop = false;
             // 
+            // timer1
+            // 
+            this.timer1.Enabled = true;
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
             // formIngresoEmbutido
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(497, 528);
+            this.ClientSize = new System.Drawing.Size(497, 611);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.txtTotalKg);
@@ -529,7 +590,11 @@
             this.MaximizeBox = false;
             this.Name = "formIngresoEmbutido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Ingreso de Embutidos";
+            this.Text = "Ingreso de Embutidos / Otros";
+            this.Deactivate += new System.EventHandler(this.formIngresoEmbutido_Deactivate);
+            this.Load += new System.EventHandler(this.formIngresoEmbutido_Load);
+            this.Activated += new System.EventHandler(this.formIngresoEmbutido_Activated);
+            this.Leave += new System.EventHandler(this.formIngresoEmbutido_Leave);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
@@ -576,9 +641,12 @@
         protected System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.TextBox txtObservaciones;
+        private System.Windows.Forms.CheckBox checkLeerPeso;
+        private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
     }
 }

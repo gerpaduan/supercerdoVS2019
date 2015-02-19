@@ -43,7 +43,7 @@ namespace Presentacion.Cortes
         {
             try
             {
-                if (comboTipoReporte.SelectedIndex == 5)
+                if (comboTipoReporte.SelectedIndex == 6)
                 {
                     ReportesDataSet.dtReporteTeoricoRealDataTable dtTeoricoReal = new ReportesDataSet.dtReporteTeoricoRealDataTable();
 
@@ -99,9 +99,38 @@ namespace Presentacion.Cortes
                     frmReportes.Show();
 
                 }
+                if (comboTipoReporte.Text == "Cierre Stock 2")
+                {
+                    ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
+
+                    string titulo = "Reporte Cierre Stock 2";
+                    foreach (DataRow fila in dtGrillaReporte.Rows)
+                    {
+                        DataRow dsFila = dtCierreStock.NewRow();
+                        dsFila["Codigo"] = fila["Codigo"];
+                        dsFila["Corte"] = fila["Corte"];
+                        dsFila["Sucursal"] = fila["Sucursal"];
+                        dsFila["TotalIngresado"] = fila["Total Ingresado"];
+                        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
+                        dsFila["TotalVendido"] = fila["Total Vendido"];
+                        dsFila["StockTeorico"] = fila["Stock Teorico"];
+                        dsFila["StockReal"] = fila["Stock Real"];
+                        dsFila["Faltante"] = fila["Faltante"];
+
+                        dtCierreStock.Rows.Add(dsFila);
+
+                    }
+
+                    ReporteCierreStock reporte = new ReporteCierreStock();
+
+                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
+
+                    frmReportes.Show();
+
+                }
 
                 //Reporte Ingreso-Egreso
-                if (comboTipoReporte.SelectedIndex == 1)
+                if (comboTipoReporte.SelectedIndex == 2)
                 {
                     ReportesDataSet.dtIngresoEgresoDataTable dtIngresoEgreso = new ReportesDataSet.dtIngresoEgresoDataTable();
 
@@ -129,7 +158,7 @@ namespace Presentacion.Cortes
 
                 }
 
-                if (comboTipoReporte.SelectedIndex == 2)
+                if (comboTipoReporte.SelectedIndex == 3)
                 {
                     ReportesDataSet.dtTotalPorCortesDataTable dtTotalPorCortes = new ReportesDataSet.dtTotalPorCortesDataTable();
 
@@ -156,7 +185,7 @@ namespace Presentacion.Cortes
                     frmReportes.Show();
                 }
 
-                if (comboTipoReporte.SelectedIndex == 3)
+                if (comboTipoReporte.SelectedIndex == 4)
                 {
                     ReportesDataSet.dtTotalCortePorCompraDataTable dtTotalCortePorCompra = new ReportesDataSet.dtTotalCortePorCompraDataTable();
 
@@ -182,7 +211,7 @@ namespace Presentacion.Cortes
                 }
 
 
-                if (comboTipoReporte.SelectedIndex == 4)
+                if (comboTipoReporte.SelectedIndex == 5)
                 {
                     ReportesDataSet.dtTotalMovimientosDataTable dtTotalMovimientos = new ReportesDataSet.dtTotalMovimientosDataTable();
 
@@ -224,7 +253,7 @@ namespace Presentacion.Cortes
         {
 
             //reporteTeoricoReal
-            if (comboTipoReporte.SelectedIndex == 5)
+            if (comboTipoReporte.SelectedIndex == 6)
             {
                 //DataTable dtReporteTeoricoReal = new DataTable();
                 grillaReportes.DataSource = null;
@@ -266,7 +295,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.CierreStock(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
                     if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
@@ -308,9 +337,57 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
+            //Cierre Stock
+            if (comboTipoReporte.Text == "Cierre Stock 2")
+            {
+                //DataTable dtTeoricoReal = new DataTable();
+                grillaReportes.DataSource = null;
+                dtGrillaReporte = null;
+
+                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                foreach (DataRow fila in dtGrillaReporte.Rows)
+                {
+                    if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
+                    {
+                        fila["Kgs En Embutidos"] = 0;
+                    }
+
+                    if (fila["Total Vendido"].ToString() == null || fila["Total Vendido"].ToString() == "")
+                    {
+                        fila["Total Vendido"] = 0;
+                    }
+
+                    if (fila["Stock Real"].ToString() == null || fila["Stock Real"].ToString() == "")
+                    {
+                        fila["Stock Real"] = 0;
+                    }
+
+
+                    string totalIngresado, kgsEnEmbutido, totalVendido, stockReales;
+
+                    totalIngresado = Convert.ToString(fila["Total Ingresado"]);
+                    kgsEnEmbutido = Convert.ToString(fila["Kgs En Embutidos"]);
+                    totalVendido = Convert.ToString(fila["Total Vendido"]);
+                    stockReales = Convert.ToString(fila["Stock Real"]);
+
+                    decimal stockTeorico, stockReal, faltante;
+
+                    stockTeorico = Convert.ToDecimal(totalIngresado) - Convert.ToDecimal(kgsEnEmbutido) - Convert.ToDecimal(totalVendido);
+                    stockReal = Convert.ToDecimal(stockReales);
+
+                    fila["Stock Teorico"] = stockTeorico;
+
+                    faltante = stockTeorico - stockReal;
+
+                    fila["Faltante"] = faltante;
+
+                }
+
+                grillaReportes.DataSource = dtGrillaReporte;
+            }
 
             //StockIngresoEgreso
-            if (comboTipoReporte.SelectedIndex == 1)
+            if (comboTipoReporte.SelectedIndex == 2)
             {
                 //DataTable dtTeoricoReal = new DataTable();
                 grillaReportes.DataSource = null;
@@ -343,19 +420,22 @@ namespace Presentacion.Cortes
             }
 
             //TotalPorCortesVendidos
-            if (comboTipoReporte.SelectedIndex == 2)
+            if (comboTipoReporte.SelectedIndex == 3)
             {
                 //DataTable dtTotalPorCortesVendidos = new DataTable();
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
-
-                dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
-
+                
+                //si está logueado
+                if (Presentacion.FormPrincipal.logueado)
+                {
+                    dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                }
                 grillaReportes.DataSource = dtGrillaReporte;
             }
             
             //TotalKgsCortePorCompra
-            if (comboTipoReporte.SelectedIndex == 3)
+            if (comboTipoReporte.SelectedIndex == 4)
             {
                 //DataTable dtReporteTeoricoReal = new DataTable();
                 grillaReportes.DataSource = null;
@@ -370,7 +450,7 @@ namespace Presentacion.Cortes
 
 
             //TotalMovimientosPorCorte
-            if (comboTipoReporte.SelectedIndex == 4) 
+            if (comboTipoReporte.SelectedIndex == 5) 
             {
                 //DataTable dtReporteTeoricoReal = new DataTable();
                 grillaReportes.DataSource = null;
@@ -417,6 +497,11 @@ namespace Presentacion.Cortes
         }
 
         private void formReporteStock_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboTipoReporte_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }

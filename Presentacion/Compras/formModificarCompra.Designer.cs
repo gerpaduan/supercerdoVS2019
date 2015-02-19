@@ -871,6 +871,7 @@
             this.quitarStock.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.quitarStock.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.quitarStock.ToolTipText = "Quitar Stock Real";
+            this.quitarStock.Visible = false;
             this.quitarStock.Click += new System.EventHandler(this.quitarStock_Click);
             // 
             // cambiarPrecio

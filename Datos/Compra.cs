@@ -528,16 +528,16 @@ namespace Datos
             cmCompra.Connection.Close();
         }
 
-        public void restaurarBD(string bdAuxiliar, string rutaOrigen)
+        public void restaurarBD(string dataSource, string bdAuxiliar, string rutaOrigen)
         { 
             SqlConnection connMaster=new SqlConnection();
-            connMaster.ConnectionString="Data Source=equipogap;Initial Catalog="+bdAuxiliar+";Integrated Security=True";
+            connMaster.ConnectionString = "Data Source='" + dataSource + "';Initial Catalog='" + bdAuxiliar + "';Integrated Security=True";
 
 //            FROM DISK = 'C\:Dbname.bak'
 //WITH MOVE 'Dbname_Data' TO 'C:\Data\datafile.mdf',
 //MOVE 'Dbname_Log' TO 'C:\Data\logfile.ldf',
              
-            string sentencia ="RESTORE DATABASE [SuperCerdo] FROM  DISK ='"+rutaOrigen+"' WITH  FILE = 1,  NOUNLOAD,  REPLACE,  STATS = 10" ;
+            string sentencia ="RESTORE DATABASE [SuperCerdo] FROM  DISK ='"+ rutaOrigen +"' WITH  FILE = 1,  NOUNLOAD,  REPLACE,  STATS = 10" ;
 
 
             SqlCommand cmCompra = new SqlCommand(sentencia);
@@ -546,6 +546,9 @@ namespace Datos
             cmCompra.Connection.Open();
             cmCompra.ExecuteNonQuery();
             cmCompra.Connection.Close();
+
+            connMaster.ConnectionString = null;
+            connMaster = null;
         }
 
         #endregion

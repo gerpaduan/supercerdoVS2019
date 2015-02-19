@@ -29,13 +29,16 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoMovimiento));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle19 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle20 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle21 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.Reporte = new System.Windows.Forms.ToolStripButton();
+            this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.txtHoraMovimiento = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtSucDestino = new System.Windows.Forms.TextBox();
@@ -50,13 +53,14 @@
             this.txtTotalKg = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.grillaCortesPorMovimiento = new System.Windows.Forms.DataGridView();
-            this.label11 = new System.Windows.Forms.Label();
-            this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.idCorteMovimientodo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.label11 = new System.Windows.Forms.Label();
+            this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
+            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -68,11 +72,12 @@
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.modificar,
-            this.Reporte});
+            this.Reporte,
+            this.Imprimir});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(436, 40);
+            this.barraControl.Size = new System.Drawing.Size(436, 45);
             this.barraControl.TabIndex = 7;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -83,7 +88,7 @@
             this.modificar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.modificar.Name = "modificar";
             this.modificar.Padding = new System.Windows.Forms.Padding(1);
-            this.modificar.Size = new System.Drawing.Size(64, 37);
+            this.modificar.Size = new System.Drawing.Size(64, 42);
             this.modificar.Text = "Modificar";
             this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.modificar.Click += new System.EventHandler(this.modificar_Click);
@@ -93,22 +98,60 @@
             this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
             this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.Reporte.Name = "Reporte";
-            this.Reporte.Size = new System.Drawing.Size(52, 37);
+            this.Reporte.Size = new System.Drawing.Size(52, 42);
             this.Reporte.Text = "Reporte";
             this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
+            // 
+            // Imprimir
+            // 
+            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
+            this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.Imprimir.Name = "Imprimir";
+            this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.Imprimir.Size = new System.Drawing.Size(59, 42);
+            this.Imprimir.Text = "Imprimir";
+            this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
             // 
             // pnlBuscar
             // 
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.txtHoraMovimiento);
+            this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.txtFechaMovimiento);
-            this.pnlBuscar.Location = new System.Drawing.Point(-6, 40);
+            this.pnlBuscar.Location = new System.Drawing.Point(-6, 39);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(448, 108);
             this.pnlBuscar.TabIndex = 23;
+            // 
+            // txtHoraMovimiento
+            // 
+            this.txtHoraMovimiento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtHoraMovimiento.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtHoraMovimiento.Location = new System.Drawing.Point(357, 45);
+            this.txtHoraMovimiento.Name = "txtHoraMovimiento";
+            this.txtHoraMovimiento.ReadOnly = true;
+            this.txtHoraMovimiento.Size = new System.Drawing.Size(78, 21);
+            this.txtHoraMovimiento.TabIndex = 45;
+            this.txtHoraMovimiento.TabStop = false;
+            this.txtHoraMovimiento.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label7
+            // 
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(317, 48);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(34, 15);
+            this.label7.TabIndex = 19;
+            this.label7.Text = "Hora";
             // 
             // label6
             // 
@@ -143,19 +186,21 @@
             // txtSucDestino
             // 
             this.txtSucDestino.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtSucDestino.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSucDestino.Location = new System.Drawing.Point(89, 56);
             this.txtSucDestino.Name = "txtSucDestino";
             this.txtSucDestino.ReadOnly = true;
-            this.txtSucDestino.Size = new System.Drawing.Size(121, 21);
+            this.txtSucDestino.Size = new System.Drawing.Size(121, 20);
             this.txtSucDestino.TabIndex = 12;
             // 
             // txtSucOrigen
             // 
             this.txtSucOrigen.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtSucOrigen.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSucOrigen.Location = new System.Drawing.Point(89, 24);
             this.txtSucOrigen.Name = "txtSucOrigen";
             this.txtSucOrigen.ReadOnly = true;
-            this.txtSucOrigen.Size = new System.Drawing.Size(121, 21);
+            this.txtSucOrigen.Size = new System.Drawing.Size(121, 20);
             this.txtSucOrigen.TabIndex = 11;
             // 
             // label3
@@ -186,6 +231,7 @@
             // 
             this.txtFechaMovimiento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFechaMovimiento.Enabled = false;
+            this.txtFechaMovimiento.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaMovimiento.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaMovimiento.Location = new System.Drawing.Point(329, 18);
             this.txtFechaMovimiento.Name = "txtFechaMovimiento";
@@ -195,7 +241,7 @@
             // btnSalir
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSalir.Location = new System.Drawing.Point(351, 449);
+            this.btnSalir.Location = new System.Drawing.Point(351, 517);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(78, 27);
             this.btnSalir.TabIndex = 21;
@@ -206,7 +252,7 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(12, 406);
+            this.txtObservaciones.Location = new System.Drawing.Point(12, 474);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ReadOnly = true;
@@ -219,7 +265,7 @@
             // 
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(346, 393);
+            this.txtCantItems.Location = new System.Drawing.Point(346, 461);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(78, 21);
@@ -232,7 +278,7 @@
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(257, 398);
+            this.label12.Location = new System.Drawing.Point(257, 466);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(79, 15);
             this.label12.TabIndex = 43;
@@ -242,7 +288,7 @@
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(346, 416);
+            this.txtTotalKg.Location = new System.Drawing.Point(346, 484);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
             this.txtTotalKg.Size = new System.Drawing.Size(78, 21);
@@ -255,7 +301,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(276, 419);
+            this.label8.Location = new System.Drawing.Point(276, 487);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 41;
@@ -272,50 +318,20 @@
             this.idCorteMovimientodo,
             this.codigo,
             this.corte,
-            this.cantKg});
+            this.cantKg,
+            this.Balanza});
             this.grillaCortesPorMovimiento.Location = new System.Drawing.Point(12, 154);
             this.grillaCortesPorMovimiento.Name = "grillaCortesPorMovimiento";
             this.grillaCortesPorMovimiento.RowHeadersVisible = false;
             this.grillaCortesPorMovimiento.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(412, 233);
+            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(412, 301);
             this.grillaCortesPorMovimiento.TabIndex = 0;
-            // 
-            // label11
-            // 
-            this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(14, 390);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(78, 13);
-            this.label11.TabIndex = 46;
-            this.label11.Text = "Observaciones";
-            // 
-            // lineShape1
-            // 
-            this.lineShape1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape1.Name = "lineShape1";
-            this.lineShape1.X1 = 7;
-            this.lineShape1.X2 = 430;
-            this.lineShape1.Y1 = 445;
-            this.lineShape1.Y2 = 445;
-            // 
-            // shapeContainer1
-            // 
-            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer1.Name = "shapeContainer1";
-            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape1});
-            this.shapeContainer1.Size = new System.Drawing.Size(436, 478);
-            this.shapeContainer1.TabIndex = 47;
-            this.shapeContainer1.TabStop = false;
             // 
             // idCorteMovimientodo
             // 
             this.idCorteMovimientodo.DataPropertyName = "idCorteMovimiento";
-            dataGridViewCellStyle19.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
-            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle19;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
+            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle1;
             this.idCorteMovimientodo.HeaderText = "Id Corte Mov.";
             this.idCorteMovimientodo.MinimumWidth = 70;
             this.idCorteMovimientodo.Name = "idCorteMovimientodo";
@@ -326,8 +342,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle20.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle20;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
             this.codigo.FillWeight = 50F;
             this.codigo.HeaderText = "Código";
             this.codigo.MinimumWidth = 80;
@@ -346,21 +362,60 @@
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle21.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle21.Format = "N3";
-            dataGridViewCellStyle21.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle21;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle3.Format = "N3";
+            dataGridViewCellStyle3.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle3;
             this.cantKg.FillWeight = 55F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
             this.cantKg.ReadOnly = true;
+            // 
+            // Balanza
+            // 
+            this.Balanza.DataPropertyName = "pesoBalanza";
+            this.Balanza.FillWeight = 30F;
+            this.Balanza.HeaderText = "Balanza";
+            this.Balanza.Name = "Balanza";
+            this.Balanza.ReadOnly = true;
+            // 
+            // label11
+            // 
+            this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(14, 458);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(78, 13);
+            this.label11.TabIndex = 46;
+            this.label11.Text = "Observaciones";
+            // 
+            // lineShape1
+            // 
+            this.lineShape1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.lineShape1.Name = "lineShape1";
+            this.lineShape1.X1 = 7;
+            this.lineShape1.X2 = 430;
+            this.lineShape1.Y1 = 513;
+            this.lineShape1.Y2 = 513;
+            // 
+            // shapeContainer1
+            // 
+            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
+            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
+            this.shapeContainer1.Name = "shapeContainer1";
+            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
+            this.lineShape1});
+            this.shapeContainer1.Size = new System.Drawing.Size(436, 546);
+            this.shapeContainer1.TabIndex = 47;
+            this.shapeContainer1.TabStop = false;
             // 
             // formInfoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(436, 478);
+            this.ClientSize = new System.Drawing.Size(436, 546);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.txtCantItems);
@@ -377,6 +432,7 @@
             this.Name = "formInfoMovimiento";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Información Movimiento";
+            this.Load += new System.EventHandler(this.formInfoMovimiento_Load);
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
             this.pnlBuscar.ResumeLayout(false);
@@ -412,9 +468,13 @@
         private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
         private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
         private System.Windows.Forms.ToolStripButton Reporte;
+        private System.Windows.Forms.TextBox txtHoraMovimiento;
+        protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMovimientodo;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
+        protected System.Windows.Forms.ToolStripButton Imprimir;
     }
 }

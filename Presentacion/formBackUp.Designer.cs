@@ -34,6 +34,8 @@
             this.label8 = new System.Windows.Forms.Label();
             this.txtDestino = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtBDAuxiliar = new System.Windows.Forms.TextBox();
             this.btnRestaurar = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -41,8 +43,8 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.button3 = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.label2 = new System.Windows.Forms.Label();
-            this.txtBDAuxiliar = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtDataSource = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -66,7 +68,7 @@
             // btnGenerarBackUp
             // 
             this.btnGenerarBackUp.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.btnGenerarBackUp.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.btnGenerarBackUp.ForeColor = System.Drawing.Color.Black;
             this.btnGenerarBackUp.Location = new System.Drawing.Point(245, 61);
             this.btnGenerarBackUp.Name = "btnGenerarBackUp";
             this.btnGenerarBackUp.Size = new System.Drawing.Size(98, 25);
@@ -78,7 +80,7 @@
             // button1
             // 
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.button1.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.button1.ForeColor = System.Drawing.Color.Black;
             this.button1.Location = new System.Drawing.Point(348, 32);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(43, 25);
@@ -108,6 +110,8 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.label3);
+            this.groupBox2.Controls.Add(this.txtDataSource);
             this.groupBox2.Controls.Add(this.label2);
             this.groupBox2.Controls.Add(this.txtBDAuxiliar);
             this.groupBox2.Controls.Add(this.btnRestaurar);
@@ -118,16 +122,35 @@
             this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox2.Location = new System.Drawing.Point(12, 113);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(407, 106);
+            this.groupBox2.Size = new System.Drawing.Size(407, 139);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Restaurar Base de Datos";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(39, 53);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(67, 15);
+            this.label2.TabIndex = 30;
+            this.label2.Text = "BD Auxiliar";
+            // 
+            // txtBDAuxiliar
+            // 
+            this.txtBDAuxiliar.Location = new System.Drawing.Point(112, 50);
+            this.txtBDAuxiliar.Name = "txtBDAuxiliar";
+            this.txtBDAuxiliar.Size = new System.Drawing.Size(121, 21);
+            this.txtBDAuxiliar.TabIndex = 29;
+            this.txtBDAuxiliar.Text = "base";
+            // 
             // btnRestaurar
             // 
             this.btnRestaurar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.btnRestaurar.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnRestaurar.Location = new System.Drawing.Point(245, 73);
+            this.btnRestaurar.ForeColor = System.Drawing.Color.Black;
+            this.btnRestaurar.Location = new System.Drawing.Point(245, 99);
             this.btnRestaurar.Name = "btnRestaurar";
             this.btnRestaurar.Size = new System.Drawing.Size(98, 26);
             this.btnRestaurar.TabIndex = 28;
@@ -138,8 +161,8 @@
             // button2
             // 
             this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.button2.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.button2.Location = new System.Drawing.Point(350, 46);
+            this.button2.ForeColor = System.Drawing.Color.Black;
+            this.button2.Location = new System.Drawing.Point(350, 72);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(43, 25);
             this.button2.TabIndex = 27;
@@ -152,7 +175,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(62, 51);
+            this.label1.Location = new System.Drawing.Point(62, 77);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(44, 15);
             this.label1.TabIndex = 25;
@@ -160,7 +183,7 @@
             // 
             // txtOrigen
             // 
-            this.txtOrigen.Location = new System.Drawing.Point(112, 48);
+            this.txtOrigen.Location = new System.Drawing.Point(112, 74);
             this.txtOrigen.Name = "txtOrigen";
             this.txtOrigen.ReadOnly = true;
             this.txtOrigen.Size = new System.Drawing.Size(231, 21);
@@ -185,36 +208,35 @@
             // 
             this.panel1.BackColor = System.Drawing.Color.Bisque;
             this.panel1.Controls.Add(this.button3);
-            this.panel1.Location = new System.Drawing.Point(-1, 229);
+            this.panel1.Location = new System.Drawing.Point(-1, 258);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(432, 45);
             this.panel1.TabIndex = 2;
             // 
-            // label2
+            // label3
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(39, 27);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(67, 15);
-            this.label2.TabIndex = 30;
-            this.label2.Text = "BD Auxiliar";
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label3.Location = new System.Drawing.Point(31, 29);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(75, 15);
+            this.label3.TabIndex = 32;
+            this.label3.Text = "Data Source";
             // 
-            // txtBDAuxiliar
+            // txtDataSource
             // 
-            this.txtBDAuxiliar.Location = new System.Drawing.Point(112, 24);
-            this.txtBDAuxiliar.Name = "txtBDAuxiliar";
-            this.txtBDAuxiliar.Size = new System.Drawing.Size(121, 21);
-            this.txtBDAuxiliar.TabIndex = 29;
-            this.txtBDAuxiliar.Text = "base";
+            this.txtDataSource.Location = new System.Drawing.Point(112, 26);
+            this.txtDataSource.Name = "txtDataSource";
+            this.txtDataSource.Size = new System.Drawing.Size(121, 21);
+            this.txtDataSource.TabIndex = 31;
             // 
             // formBackUp
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.SteelBlue;
-            this.ClientSize = new System.Drawing.Size(431, 273);
+            this.ClientSize = new System.Drawing.Size(431, 302);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -249,6 +271,8 @@
         private System.Windows.Forms.Button btnRestaurar;
         protected System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtBDAuxiliar;
+        protected System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox txtDataSource;
 
     }
 }

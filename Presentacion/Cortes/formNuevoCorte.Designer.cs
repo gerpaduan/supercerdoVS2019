@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
+            this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.txtIndependiente = new System.Windows.Forms.CheckBox();
             this.txtPorcHueso = new System.Windows.Forms.MaskedTextBox();
@@ -50,8 +52,6 @@
             this.label4 = new System.Windows.Forms.Label();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.btnGuardar = new System.Windows.Forms.Button();
-            this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
-            this.label9 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -97,6 +97,27 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // txtDesvioEstandar
+            // 
+            this.txtDesvioEstandar.Location = new System.Drawing.Point(363, 134);
+            this.txtDesvioEstandar.Name = "txtDesvioEstandar";
+            this.txtDesvioEstandar.Size = new System.Drawing.Size(75, 21);
+            this.txtDesvioEstandar.TabIndex = 7;
+            this.txtDesvioEstandar.Text = "0";
+            this.txtDesvioEstandar.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtDesvioEstandar.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label9.Location = new System.Drawing.Point(264, 137);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(96, 15);
+            this.label9.TabIndex = 28;
+            this.label9.Text = "Desvío Estandar";
             // 
             // label8
             // 
@@ -300,27 +321,6 @@
             this.btnGuardar.UseVisualStyleBackColor = true;
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
-            // txtDesvioEstandar
-            // 
-            this.txtDesvioEstandar.Location = new System.Drawing.Point(363, 134);
-            this.txtDesvioEstandar.Name = "txtDesvioEstandar";
-            this.txtDesvioEstandar.Size = new System.Drawing.Size(75, 21);
-            this.txtDesvioEstandar.TabIndex = 7;
-            this.txtDesvioEstandar.Text = "0";
-            this.txtDesvioEstandar.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtDesvioEstandar.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(264, 137);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(96, 15);
-            this.label9.TabIndex = 28;
-            this.label9.Text = "Desvío Estandar";
-            // 
             // formNuevoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -333,6 +333,7 @@
             this.Name = "formNuevoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nuevo Corte";
+            this.Load += new System.EventHandler(this.formNuevoCorte_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();

@@ -60,6 +60,7 @@
         <xs:element name="dtTotalMovimientos" msprop:Generator_UserTableName="dtTotalMovimientos" msprop:Generator_RowDeletedName="dtTotalMovimientosRowDeleted" msprop:Generator_RowChangedName="dtTotalMovimientosRowChanged" msprop:Generator_RowClassName="dtTotalMovimientosRow" msprop:Generator_RowChangingName="dtTotalMovimientosRowChanging" msprop:Generator_RowEvArgName="dtTotalMovimientosRowChangeEvent" msprop:Generator_RowEvHandlerName="dtTotalMovimientosRowChangeEventHandler" msprop:Generator_TableClassName="dtTotalMovimientosDataTable" msprop:Generator_TableVarName="tabledtTotalMovimientos" msprop:Generator_RowDeletingName="dtTotalMovimientosRowDeleting" msprop:Generator_TablePropName="dtTotalMovimientos">
           <xs:complexType>
             <xs:sequence>
+              <xs:element name="Codigo" msprop:Generator_UserColumnName="Codigo" msprop:Generator_ColumnVarNameInTable="columnCodigo" msprop:Generator_ColumnPropNameInRow="Codigo" msprop:Generator_ColumnPropNameInTable="CodigoColumn" type="xs:string" minOccurs="0" />
               <xs:element name="Corte" msprop:Generator_UserColumnName="Corte" msprop:Generator_ColumnPropNameInRow="Corte" msprop:Generator_ColumnVarNameInTable="columnCorte" msprop:Generator_ColumnPropNameInTable="CorteColumn" type="xs:string" minOccurs="0" />
               <xs:element name="SucursalOrigen" msprop:Generator_UserColumnName="SucursalOrigen" msprop:Generator_ColumnPropNameInRow="SucursalOrigen" msprop:Generator_ColumnVarNameInTable="columnSucursalOrigen" msprop:Generator_ColumnPropNameInTable="SucursalOrigenColumn" type="xs:string" minOccurs="0" />
               <xs:element name="SucursalDestino" msprop:Generator_UserColumnName="SucursalDestino" msprop:Generator_ColumnPropNameInRow="SucursalDestino" msprop:Generator_ColumnVarNameInTable="columnSucursalDestino" msprop:Generator_ColumnPropNameInTable="SucursalDestinoColumn" type="xs:string" minOccurs="0" />
@@ -103,6 +104,15 @@
               <xs:element name="StockReal" msprop:Generator_UserColumnName="StockReal" msprop:Generator_ColumnVarNameInTable="columnStockReal" msprop:Generator_ColumnPropNameInRow="StockReal" msprop:Generator_ColumnPropNameInTable="StockRealColumn" type="xs:decimal" minOccurs="0" />
               <xs:element name="Faltante" msprop:Generator_UserColumnName="Faltante" msprop:Generator_ColumnVarNameInTable="columnFaltante" msprop:Generator_ColumnPropNameInRow="Faltante" msprop:Generator_ColumnPropNameInTable="FaltanteColumn" type="xs:decimal" minOccurs="0" />
               <xs:element name="Sucursal" msprop:Generator_UserColumnName="Sucursal" msprop:Generator_ColumnVarNameInTable="columnSucursal" msprop:Generator_ColumnPropNameInRow="Sucursal" msprop:Generator_ColumnPropNameInTable="SucursalColumn" type="xs:string" minOccurs="0" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="dtCortesPorEmbutido" msprop:Generator_UserTableName="dtCortesPorEmbutido" msprop:Generator_RowDeletedName="dtCortesPorEmbutidoRowDeleted" msprop:Generator_TableClassName="dtCortesPorEmbutidoDataTable" msprop:Generator_RowChangedName="dtCortesPorEmbutidoRowChanged" msprop:Generator_RowClassName="dtCortesPorEmbutidoRow" msprop:Generator_RowChangingName="dtCortesPorEmbutidoRowChanging" msprop:Generator_RowEvArgName="dtCortesPorEmbutidoRowChangeEvent" msprop:Generator_RowEvHandlerName="dtCortesPorEmbutidoRowChangeEventHandler" msprop:Generator_TablePropName="dtCortesPorEmbutido" msprop:Generator_TableVarName="tabledtCortesPorEmbutido" msprop:Generator_RowDeletingName="dtCortesPorEmbutidoRowDeleting">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Codigo" msprop:Generator_UserColumnName="Codigo" msprop:Generator_ColumnPropNameInRow="Codigo" msprop:Generator_ColumnVarNameInTable="columnCodigo" msprop:Generator_ColumnPropNameInTable="CodigoColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="Corte" msprop:Generator_UserColumnName="Corte" msprop:Generator_ColumnPropNameInRow="Corte" msprop:Generator_ColumnVarNameInTable="columnCorte" msprop:Generator_ColumnPropNameInTable="CorteColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="TotalKg" msprop:Generator_UserColumnName="TotalKg" msprop:Generator_ColumnPropNameInRow="TotalKg" msprop:Generator_ColumnVarNameInTable="columnTotalKg" msprop:Generator_ColumnPropNameInTable="TotalKgColumn" type="xs:decimal" minOccurs="0" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>

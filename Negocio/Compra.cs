@@ -127,9 +127,9 @@ namespace Negocio
             oCompraD.backup(destino);
         }
 
-        public void restaurarBD(string bdAuxiliar, string rutaOrigen)
+        public void restaurarBD(string dataSource ,string bdAuxiliar, string rutaOrigen)
         {
-            oCompraD.restaurarBD(bdAuxiliar, rutaOrigen);
+            oCompraD.restaurarBD(dataSource,bdAuxiliar, rutaOrigen);
         }
 
         #endregion

@@ -124,12 +124,12 @@
   <data name="nuevo.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEcSURBVDhPlVMtr8IwFOX3vb+CnMSSqRcUmSI4cHuuc5ss
-        rrjhQFZOTh7u2XrJRrslr8lJk6bn497bbjZhmZuHuXdz8EzPmxa7vIbej3Ze7HugW4C7e+wKi/3ZpUVq
-        cV9b7jEKZDcgKxIiTLC0JBSYIDvUyKoOP9cO29zOkywJaEmt73G8WvwWBvuDIDffAs8oAHvipbJnQCu7
-        fXmUjfQiEmjmAlMy3Z3AvkaYR58SaD8JdBp0n5JrkgMSCUYBJTP2hxzcBwFxL1MJymoUYNNmzhMyiZeA
-        KEFZOXBcSo6iB+eTvBciErj8WYhZFHuo+Yt8XBRINS1BTiY4ySPhnHVc2jDWrLHpTKwKWKlDx6VNI0HJ
-        g0BqCmzKf8Ev/QbO9b/b5kD8hwAAAABJRU5ErkJggg==
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEMSURBVDhPlZIhD8IwEIX7+/gryEksmSIoMkVw4Ibr3CaL
+        K244kJWTk4+7rg3d2kK45Jmm77t31wpf8mYg78NcfObPux6bsoW7HhdfHEdgyEjfDTaVwvak05CWunwr
+        /ZgAxQ0oqgSEE+SKAtgExb5F0QxYXQasSzWH5AB+hN6MOFwUdpXEdk8q5RLwdJZP8U4MTfZ06knqZVB3
+        tIsI0M0BoZm7a5J6TZKPMQXonXUyc2wGhOaWzU5ZgDfPOocA6l6nEtTNBIg6B2Y2np0SAG2fy5uj6K7z
+        kf4LKwKcrwp0P+psZ16YD1lAamkJczLBkT4Jv/PSzPOG5p8Ajm7NJL+00GwBdBYB+OBfCSHEG871v9uB
+        HAjXAAAAAElFTkSuQmCC
 </value>
   </data>
   <metadata name="lineShape3.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -181,6 +181,12 @@
     <value>True</value>
   </metadata>
   <metadata name="observaciones.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="creado.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="actualizado.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
   <metadata name="diaFestivo.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">

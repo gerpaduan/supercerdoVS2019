@@ -30,8 +30,10 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
             this.pnlMantenimientos = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.linkBaseDeDatos = new System.Windows.Forms.LinkLabel();
             this.linkPagos = new System.Windows.Forms.LinkLabel();
             this.linkReportes = new System.Windows.Forms.LinkLabel();
             this.linkStock = new System.Windows.Forms.LinkLabel();
@@ -48,7 +50,7 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.linkCompras = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
-            this.linkBaseDeDatos = new System.Windows.Forms.LinkLabel();
+            this.linkLogin = new System.Windows.Forms.LinkLabel();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.pnlMantenimientos.SuspendLayout();
@@ -68,6 +70,8 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.PeachPuff;
+            this.splitContainer1.Panel1.Controls.Add(this.linkLogin);
+            this.splitContainer1.Panel1.Controls.Add(this.linkCerrarSesion);
             this.splitContainer1.Panel1.Controls.Add(this.pnlMantenimientos);
             this.splitContainer1.Panel1.Controls.Add(this.pnlVentas);
             this.splitContainer1.Panel1.Controls.Add(this.pnlCompras);
@@ -81,6 +85,20 @@
             this.splitContainer1.SplitterDistance = 228;
             this.splitContainer1.TabIndex = 0;
             // 
+            // linkCerrarSesion
+            // 
+            this.linkCerrarSesion.AutoSize = true;
+            this.linkCerrarSesion.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCerrarSesion.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCerrarSesion.Location = new System.Drawing.Point(12, 518);
+            this.linkCerrarSesion.Name = "linkCerrarSesion";
+            this.linkCerrarSesion.Size = new System.Drawing.Size(70, 13);
+            this.linkCerrarSesion.TabIndex = 12;
+            this.linkCerrarSesion.TabStop = true;
+            this.linkCerrarSesion.Text = "Cerrar Sesión";
+            this.linkCerrarSesion.Visible = false;
+            this.linkCerrarSesion.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarSesion_LinkClicked);
+            // 
             // pnlMantenimientos
             // 
             this.pnlMantenimientos.BackColor = System.Drawing.Color.SandyBrown;
@@ -88,7 +106,7 @@
             this.pnlMantenimientos.Controls.Add(this.label3);
             this.pnlMantenimientos.Location = new System.Drawing.Point(9, 216);
             this.pnlMantenimientos.Name = "pnlMantenimientos";
-            this.pnlMantenimientos.Size = new System.Drawing.Size(210, 260);
+            this.pnlMantenimientos.Size = new System.Drawing.Size(210, 265);
             this.pnlMantenimientos.TabIndex = 1;
             // 
             // panel4
@@ -104,8 +122,21 @@
             this.panel4.Controls.Add(this.linkCortes);
             this.panel4.Location = new System.Drawing.Point(2, 28);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(205, 218);
+            this.panel4.Size = new System.Drawing.Size(205, 223);
             this.panel4.TabIndex = 1;
+            // 
+            // linkBaseDeDatos
+            // 
+            this.linkBaseDeDatos.AutoSize = true;
+            this.linkBaseDeDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkBaseDeDatos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkBaseDeDatos.Location = new System.Drawing.Point(23, 182);
+            this.linkBaseDeDatos.Name = "linkBaseDeDatos";
+            this.linkBaseDeDatos.Size = new System.Drawing.Size(98, 16);
+            this.linkBaseDeDatos.TabIndex = 12;
+            this.linkBaseDeDatos.TabStop = true;
+            this.linkBaseDeDatos.Text = "Base de Datos";
+            this.linkBaseDeDatos.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkBaseDeDatos_LinkClicked);
             // 
             // linkPagos
             // 
@@ -295,18 +326,18 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Compras";
             // 
-            // linkBaseDeDatos
+            // linkLogin
             // 
-            this.linkBaseDeDatos.AutoSize = true;
-            this.linkBaseDeDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkBaseDeDatos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkBaseDeDatos.Location = new System.Drawing.Point(23, 182);
-            this.linkBaseDeDatos.Name = "linkBaseDeDatos";
-            this.linkBaseDeDatos.Size = new System.Drawing.Size(98, 16);
-            this.linkBaseDeDatos.TabIndex = 12;
-            this.linkBaseDeDatos.TabStop = true;
-            this.linkBaseDeDatos.Text = "Base de Datos";
-            this.linkBaseDeDatos.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkBaseDeDatos_LinkClicked);
+            this.linkLogin.AutoSize = true;
+            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkLogin.Location = new System.Drawing.Point(12, 518);
+            this.linkLogin.Name = "linkLogin";
+            this.linkLogin.Size = new System.Drawing.Size(70, 13);
+            this.linkLogin.TabIndex = 13;
+            this.linkLogin.TabStop = true;
+            this.linkLogin.Text = "Iniciar Sesión";
+            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
             // 
             // FormPrincipal
             // 
@@ -320,7 +351,10 @@
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Super Cerdo";
+            this.Load += new System.EventHandler(this.FormPrincipal_Load);
+            this.Activated += new System.EventHandler(this.FormPrincipal_Activated);
             this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.ResumeLayout(false);
             this.pnlMantenimientos.ResumeLayout(false);
             this.pnlMantenimientos.PerformLayout();
@@ -360,6 +394,8 @@
         private System.Windows.Forms.LinkLabel linkReportes;
         private System.Windows.Forms.LinkLabel linkPagos;
         private System.Windows.Forms.LinkLabel linkBaseDeDatos;
+        private System.Windows.Forms.LinkLabel linkCerrarSesion;
+        private System.Windows.Forms.LinkLabel linkLogin;
     }
 }
 

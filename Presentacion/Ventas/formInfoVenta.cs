@@ -6,11 +6,12 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Presentacion.Reportes;
 
 namespace Presentacion.Ventas
 {
     public partial class formInfoVenta : Form
-    {
+    {        
         formVentas frmVentas = new formVentas();
         
         DataRow drVenta;
@@ -49,6 +50,22 @@ namespace Presentacion.Ventas
                 grillaLineasVenta.DataSource = listaLineaGrilla;
 
                 cargarTotales();
+
+                ///quitar controles según Login
+                if (Presentacion.FormPrincipal.logueado==false)
+                {
+                    txtTotalS.Text = "";
+                    modificar.Enabled = false;
+                    agregaStock.Enabled = false;
+                    foreach (DataGridViewColumn col in grillaLineasVenta.Columns)
+                    {
+                        if (col.Name.Equals("totalS"))
+                        {
+                            col.Visible = false;
+                        }
+                    }
+                }
+           
             }
             catch (Exception ex)
             {
@@ -119,6 +136,9 @@ namespace Presentacion.Ventas
             oVentaE.Turno = drVenta["turno"].ToString();
             oVentaE.Estado = drVenta["estado"].ToString();
             oVentaE.Observaciones = drVenta["observaciones"].ToString();
+            oVentaE.Creado = Convert.ToDateTime(drVenta["creado"].ToString());
+            DateTime fechaNull = Convert.ToDateTime("01/01/1990");
+            oVentaE.Actualizado = !String.IsNullOrEmpty(drVenta["actualizado"].ToString()) ? (Convert.ToDateTime(drVenta["actualizado"].ToString())) : fechaNull ;
 
             Entidades.Persona oPersona = new Entidades.Persona();
             oPersona.idPersona = Convert.ToInt32(drVenta["idPersona"].ToString());
@@ -146,6 +166,8 @@ namespace Presentacion.Ventas
             txtFechaVenta.Value = fecha;
             txtNroRemito.Text = drVenta["nroRemito"].ToString();
             txtObservaciones.Text = drVenta["observaciones"].ToString();
+            txtCreado.Text = drVenta["creado"].ToString();
+            txtActualizado.Text = drVenta["actualizado"].ToString();
             txtSucursal.Text = drVenta["sucursal"].ToString();
 
             if (!oVentaE.Estado.Equals(""))
@@ -208,6 +230,36 @@ namespace Presentacion.Ventas
         private void agregaStock_Click(object sender, EventArgs e)
         {
             agregarStock();
+        }
+
+        private void formInfoVenta_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Imprimir_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string titulo = oVentaE.Persona.razonSocial;
+                FormReportes frmReportes;
+
+                Reportes.ReporteVenta reporte = new Reportes.ReporteVenta();
+                frmReportes = new FormReportes(reporte, titulo, null, oVentaE.FechaVenta, oVentaE.FechaVenta);
+
+                frmReportes.ListaLineasVenta = listaLineaGrilla;
+                frmReportes.Objetos = true;
+                frmReportes.ReporteVenta = true;
+                frmReportes.Origen = oVentaE.Sucursal.SucursalNombre;
+                frmReportes.Destino = oVentaE.Sucursal.SucursalNombre;
+
+                frmReportes.Show();
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
        

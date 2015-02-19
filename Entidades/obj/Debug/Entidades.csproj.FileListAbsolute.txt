@@ -8,3 +8,18 @@ C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\
 C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
 C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
 C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb

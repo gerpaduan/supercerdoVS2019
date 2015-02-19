@@ -25,3 +25,30 @@ E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
 E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
 E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
 E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb

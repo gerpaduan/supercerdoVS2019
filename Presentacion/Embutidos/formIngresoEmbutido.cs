@@ -9,11 +9,14 @@ using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Cortes;
 
+
 namespace Presentacion
 {
     public partial class formIngresoEmbutido : formBaseColor, InterfaceCorte, InterfaceEmbutido
-
     {
+        bool checkAnterior = false;
+        Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+
         formEmbutidos frmEmbutidos=new formEmbutidos();
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN;
@@ -44,8 +47,11 @@ namespace Presentacion
             grillaCortesPorEmbutido.DataSource = null;
             grillaCortesPorEmbutido.DataSource = listaCortesEnGrilla;
 
-            grillaCortesPorEmbutido.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
-            grillaCortesPorEmbutido.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
+            if (listaCortesEnGrilla.Count>0)
+            {
+                grillaCortesPorEmbutido.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
+                grillaCortesPorEmbutido.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
+            }           
 
             cargarTotalKg();
             
@@ -125,9 +131,41 @@ namespace Presentacion
 
         }
 
+        private bool validarCantKgs()
+        { 
+            bool resp=true;
+
+            try
+            {
+                decimal peso = Convert.ToDecimal(txtCantKgs.Text);
+                if (peso>0)
+                {
+                    resp = true;
+                }
+                else
+                {
+                    DialogResult result = MessageBox.Show("La Cantidad de Kgs. ingresado es igual o menor a 0(Cero).\n¿Desea ingresar esa Cant. de Kgs. igualmente?.","",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2);
+                    if (result==DialogResult.Yes)
+                    {
+                        resp = true;
+                    }
+                    else
+                    {
+                        resp = false;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                resp = false;
+                MessageBox.Show("Cant. Kgs debe ser un número represente un peso en Kg.");
+            }
+            return resp;
+        }
+
         private void agregarCorteEnEmbutido()
         {
-            if (validar())
+            if (validar() && validarCantKgs())
             {
                 cargarCortePorEmbutido();
                 //cargarCorteEnLista();
@@ -175,6 +213,7 @@ namespace Presentacion
                 oCortePorEmbutidoE.kgUtilizado = float.Parse(txtCantKgs.Text.Trim());
             }
 
+            oCortePorEmbutidoE.PesoBalanza = checkLeerPeso.Checked;
            
             //Cargar CortePorEmbutido para grilla
             cortePorEmbutido = new CortePorEmbutido();
@@ -249,11 +288,11 @@ namespace Presentacion
         {
             dtSucursales = new DataTable();
             oSucursalN = new Negocio.Sucursal();
-            dtSucursales = oSucursalN.obtenerSucursales();
+            dtSucursales = oSucursalN.obtenerSucursalSanMartin();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = 1;//No muestra ninguna sucursal
+            comboSucursal.SelectedIndex = 0;//No muestra ninguna sucursal
         }
 
 
@@ -269,6 +308,10 @@ namespace Presentacion
         private void btnBuscarEmbutido_Click(object sender, EventArgs e)
         {
             formBuscarEmbutido frmBuscarEmbutido = new formBuscarEmbutido();
+            if (frmEmbutidos.EsVentaClientes)
+            {
+                frmBuscarEmbutido.Text = "Buscar Cliente";
+            }
             frmBuscarEmbutido.Show(this);
         }
 
@@ -414,6 +457,88 @@ namespace Presentacion
 
             base.WndProc(ref m);
         }
+
+        private void formIngresoEmbutido_Load(object sender, EventArgs e)
+        {
+            if (frmEmbutidos.EsVentaClientes)
+            {
+                this.Text = "Nueva Venta Cliente";
+                groupBox1.Text = "Cliente ";
+                groupBox2.Text = "Cortes ";
+            }
+        }
+
+        private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (checkLeerPeso.Checked)
+                {
+                    txtCantKgs.ReadOnly = true;
+                    txtCantKgs.TabStop = false;
+                    timer1.Enabled = true;
+                    Leer_Peso.AbrirPuerto();
+                }
+                else
+                {
+                    txtCantKgs.Text = "";
+                    txtCantKgs.ReadOnly = false;
+                    txtCantKgs.TabStop = true;
+                    timer1.Enabled = false;
+                    Leer_Peso.CerrarPuerto();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (checkLeerPeso.Checked)
+                {
+                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();                     
+                }
+            }
+            catch (Exception ex)
+            {
+                timer1.Enabled = false;
+               DialogResult resp= MessageBox.Show("Error al leer peso de Balanza: "+ex.Message+".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?","Error balanza",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button1);
+               if (resp==DialogResult.Yes)
+               {
+                   checkLeerPeso.Checked = false;
+               }
+               else
+               {
+                   timer1.Enabled = true;
+               }
+            }
+        }
+
+        private void formIngresoEmbutido_Leave(object sender, EventArgs e)
+        {
+            Leer_Peso.CerrarPuerto();
+        }
+
+        private void formIngresoEmbutido_Activated(object sender, EventArgs e)
+        {
+            if (checkAnterior)
+            {
+                checkLeerPeso.Checked = true;
+                Leer_Peso.AbrirPuerto();
+            }
+        }
+
+        private void formIngresoEmbutido_Deactivate(object sender, EventArgs e)
+        {
+            checkAnterior = checkLeerPeso.Checked;
+            checkLeerPeso.Checked = false;
+            Leer_Peso.CerrarPuerto();
+        }
+
         
     }
 }

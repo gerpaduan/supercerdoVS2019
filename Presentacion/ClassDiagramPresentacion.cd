@@ -10,14 +10,14 @@
   <Class Name="Presentacion.formCompras" Collapsed="true">
     <Position X="2.75" Y="6" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>UAAQCAjAICAGANgaFBaKABCCKNREAIAJwEAACEAiBAA=</HashCode>
+      <HashCode>UABQCAjAICAGANgaFBaKBBCCKPxEgIAJwEAACEAiBAA=</HashCode>
       <FileName>Compras\formCompras.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.formCortes" Collapsed="true">
     <Position X="17" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>CAABDCAAMLQKQNAABACAAACCKJxAIKAhAIBABUACBwA=</HashCode>
+      <HashCode>CAABDCAAMLQqQNgABACAAACCKJxCJKEpAIBABUACBwg=</HashCode>
       <FileName>Cortes\formCortes.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -29,7 +29,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.formHistorialEmbutidos" Collapsed="true">
-    <Position X="5.75" Y="2" Width="1.5" />
+    <Position X="5.25" Y="2" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAACACAFAIBACCAAACAAZAAAACAAAQCAAAAAA=</HashCode>
       <FileName>formHistorialEmbutidos.cs</FileName>
@@ -38,19 +38,19 @@
   <Class Name="Presentacion.formInfoCorte" Collapsed="true">
     <Position X="10.25" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>UAAACUCICCAJBBQEAAyCJhACIJQAABACACAABAECBQA=</HashCode>
+      <HashCode>8AAACUCICCAJBBQEEAyCJhACoJQAABACACAABAECBQA=</HashCode>
       <FileName>Cortes\formInfoCorte.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.formModificarCorte" Collapsed="true">
     <Position X="12.5" Y="3.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAACACCAICJQAAISCABEDAIBCAABAACAAAQACBQA=</HashCode>
+      <HashCode>AAAAAACACCAICJQAAISCABEDAIBCAIBAACAAAQACBQA=</HashCode>
       <FileName>Cortes\formModificarCorte.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.formModificarCorteMaestro" Collapsed="true">
-    <Position X="19.25" Y="2" Width="1.5" />
+    <Position X="19.25" Y="2" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAACAAAJAAABCCAAACIABAAAAAECAAAEAAAAA=</HashCode>
       <FileName>formModificarCorteMaestro.cs</FileName>
@@ -59,22 +59,22 @@
   <Class Name="Presentacion.formMovimientos" Collapsed="true">
     <Position X="3.5" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AJAACABAICEAANAAFACiAAiCMJDBAAAhoAAIEkUCAQA=</HashCode>
+      <HashCode>AJAACARAICGAANACFBCjTQiCMJDBAAghIAAIEl0CAQA=</HashCode>
       <FileName>Movimientos\formMovimientos.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.formNuevaCompra" Collapsed="true">
     <Position X="21.75" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>4xBBCHIQACiWoN1iJIDSSEOSGo3kiXBqoGADTQAoMU0=</HashCode>
+      <HashCode>8xBBCHIQACiWoN1iJIHSSFOSGo30iXhqoGADTQAoMU0=</HashCode>
       <FileName>Compras\formNuevaCompra.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="Presentacion.formNuevoCorte" Collapsed="true">
-    <Position X="12.5" Y="2" Width="1.5" />
+    <Position X="9.25" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAACCASCANCJQKEICCABEDCARCSBBIACAAAAAqASA=</HashCode>
+      <HashCode>gAAAACCASCANCJQKEICCABEDCARCSBBIACAAAAAqASA=</HashCode>
       <FileName>Cortes\formNuevoCorte.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -82,7 +82,7 @@
   <Class Name="Presentacion.formNuevoMovimiento" Collapsed="true">
     <Position X="14.75" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>YAAAAACiECGGCJBCJAGiSFGDIIBCIIiAqCQAsBECASM=</HashCode>
+      <HashCode>YAQhIIiiECGGCJBCpAmiaHGDKsBiaIioqCRE8DECASM=</HashCode>
       <FileName>Movimientos\formNuevoMovimiento.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -90,7 +90,7 @@
   <Class Name="Presentacion.FormPrincipal" Collapsed="true">
     <Position X="23.5" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AABAIAAABCIABHCAAATCADACQAAgAQAABABAAQEQBCA=</HashCode>
+      <HashCode>BABBIAgABCIABHCQACTGEDECQAAgAQACBABAAQFRJiA=</HashCode>
       <FileName>FormPrincipal.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -104,7 +104,7 @@
   <Class Name="Presentacion.formIngresoEmbutido" Collapsed="true">
     <Position X="8" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>IBAhaAAgDCCEKNECNASSYFGDCJHAiYAgoSAQUIECAUE=</HashCode>
+      <HashCode>IBRhaAAgDCDEKNECtASSYFGDC5HA6YAgoSAQUIECAWE=</HashCode>
       <FileName>Embutidos\formIngresoEmbutido.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -112,7 +112,7 @@
   <Class Name="Presentacion.formVentas" Collapsed="true">
     <Position X="25.25" Y="0.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>QAAACADAICASAJAcFBSCAACCKBRAAIAJAEAAm0ADCAQ=</HashCode>
+      <HashCode>QBAgCADAICASAJAcFBSCRACCaBRAEYAJAEEAm0AHCEQ=</HashCode>
       <FileName>Ventas\formVentas.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -157,7 +157,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.formModificarProveedor" Collapsed="true">
-    <Position X="11.5" Y="2" Width="1.5" />
+    <Position X="13.5" Y="2.5" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAACAACAAAAACAAAACAABAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Proveedores\formModificarProveedor.cs</FileName>
@@ -199,7 +199,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="Presentacion.CortePorEmbutido">
-    <Position X="9.75" Y="5" Width="1.5" />
+    <Position X="10.25" Y="5.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAABCAAACQAAAAgAAAAAAAAAACAAAAAgAAAAAAAAAAg=</HashCode>
       <FileName>CortePorEmbutido.cs</FileName>
@@ -215,7 +215,7 @@
   <Class Name="Presentacion.CortesPorMovimiento">
     <Position X="16" Y="5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAABCAgAAQAJAAAAAQAAAAAAACAAAAAgAAAAAAAAAAg=</HashCode>
+      <HashCode>AABBCAgAQQAJAAAAAQAAAAAAACAAAAAgAAAAAAAAAAg=</HashCode>
       <FileName>CortesPorMovimiento.cs</FileName>
     </TypeIdentifier>
   </Class>

@@ -110,7 +110,7 @@ namespace Presentacion
 
                 if (resp==DialogResult.Yes)
                 {
-                    oCompraN.restaurarBD(txtBDAuxiliar.Text.Trim(), txtOrigen.Text.Trim());
+                    oCompraN.restaurarBD(txtDataSource.Text.Trim(),txtBDAuxiliar.Text.Trim(), txtOrigen.Text.Trim());
                     MessageBox.Show("La restuaracion de la base de datos se ha realizado exitosamente");
                 }
                 

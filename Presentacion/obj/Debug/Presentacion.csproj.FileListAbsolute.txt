@@ -160,3 +160,178 @@ E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentaci
 E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
 E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
 E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe.config
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Entidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Negocio.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Utilidades.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Datos.dll
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Negocio.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Entidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Datos.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Utilidades.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formPorcentajeCortesCompra.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formBuscarCorte.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formReporteStock.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formStockCortes.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formBuscarEmbutido.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formEmbutidos.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formInfoEmbutido.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBackUp.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Movimientos.formInfoMovimiento.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formNuevoPago.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formPagos.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formBuscarPersona.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formInfoPersona.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formNuevaPersona.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formPersonas.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBuscarProveedor.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBaseColor.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBusquedas.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCompras.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCortes.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoCorte.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoProveedor.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarCorte.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarProveedor.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoMovimiento.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formMovimientos.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevaCompra.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoCorte.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoProveedor.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.FormPrincipal.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formProveedores.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formIngresoEmbutido.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Properties.Resources.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Reportes.FormReportes.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe.config
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.pdb
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.exe
+E:\Sistemas\Modif SuperCerdo\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe.config
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.exe
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Negocio.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Utilidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Datos.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Negocio.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Datos.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Utilidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formPorcentajeCortesCompra.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarPrecios.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formBuscarCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formReporteStock.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formStockCortes.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formBuscarEmbutido.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formEmbutidos.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formInfoEmbutido.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBackUp.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Movimientos.formInfoMovimiento.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formNuevoPago.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formPagos.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formBuscarPersona.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formInfoPersona.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formNuevaPersona.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formPersonas.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBuscarProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBaseColor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBusquedas.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCompras.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCortes.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoMovimiento.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formMovimientos.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevaCompra.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.FormPrincipal.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formProveedores.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formIngresoEmbutido.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Properties.Resources.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Reportes.FormReportes.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo - modificado\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe.config
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Entidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Negocio.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Utilidades.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Datos.dll
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Negocio.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Entidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Datos.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\SuperCerdo\Utilidades.pdb
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formPorcentajeCortesCompra.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarPrecios.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formBuscarCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formReporteStock.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formStockCortes.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formBuscarEmbutido.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formEmbutidos.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formInfoEmbutido.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBackUp.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Movimientos.formInfoMovimiento.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formNuevoPago.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formPagos.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formBuscarPersona.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formInfoPersona.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formNuevaPersona.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formPersonas.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBuscarProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBaseColor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBusquedas.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCompras.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCortes.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoMovimiento.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formMovimientos.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevaCompra.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoCorte.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoProveedor.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.FormPrincipal.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formProveedores.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formIngresoEmbutido.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Properties.Resources.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Reportes.FormReportes.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.exe
+E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.pdb

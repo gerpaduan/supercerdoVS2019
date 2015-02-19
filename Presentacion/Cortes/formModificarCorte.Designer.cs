@@ -229,6 +229,7 @@
             this.Name = "formModificarCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Modificar Corte";
+            this.Load += new System.EventHandler(this.formModificarCorte_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();

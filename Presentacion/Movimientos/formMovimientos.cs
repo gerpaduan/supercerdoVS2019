@@ -27,12 +27,15 @@ namespace Presentacion
  
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
+        bool cargar = false;
+
         public formMovimientos()
         {
             InitializeComponent();
-
-            cargarGrilla();
             cargarSucursales();
+            txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
+            cargar = true;
+            cargarGrilla();
         }
 
         private void cargarSucursales()
@@ -74,20 +77,24 @@ namespace Presentacion
         {
             try
             {
-                grillaMovimientos.DataSource = null;
-
-                string sucOrigen = comboSucOrigen.Text, SucDestino = comboSucDestino.Text;
-
-                if (sucOrigen=="Todas")
+                if (cargar)
                 {
-                    sucOrigen = "";
+
+                    grillaMovimientos.DataSource = null;
+
+                    string sucOrigen = comboSucOrigen.Text, SucDestino = comboSucDestino.Text;
+
+                    if (sucOrigen == "Todas")
+                    {
+                        sucOrigen = "";
+                    }
+                    if (SucDestino == "Todas")
+                    {
+                        SucDestino = "";
+                    }
+                    dtMovimientos = oCorteN.obtenerMovimientos(sucOrigen, SucDestino, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, txtDescripcion.Text.Trim());
+                    grillaMovimientos.DataSource = dtMovimientos;
                 }
-                if (SucDestino=="Todas")
-                {
-                    SucDestino = "";
-                }
-                dtMovimientos = oCorteN.obtenerMovimientos(sucOrigen,SucDestino, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, txtDescripcion.Text.Trim());
-                grillaMovimientos.DataSource = dtMovimientos;
             }
             catch (Exception ex)
             {

@@ -12,6 +12,13 @@ namespace Presentacion
         private int codigo;
         private string corte;
         private float cantKg;
+        private bool pesoBalanza;
+
+        public bool PesoBalanza
+        {
+            get { return pesoBalanza; }
+            set { pesoBalanza = value; }
+        }
 
         public float CantKg
         {
