@@ -1,0 +1,162 @@
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe.config
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBaseColor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBusquedas.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCompras.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCortes.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoMovimiento.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formMovimientos.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevaCompra.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.FormPrincipal.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formProveedores.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Properties.Resources.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.exe
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBuscarProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formBuscarCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formEmbutidos.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formBuscarEmbutido.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formIngresoEmbutido.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formInfoEmbutido.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Movimientos.formInfoMovimiento.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formPersonas.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formNuevaPersona.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formInfoPersona.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formBuscarPersona.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formStockCortes.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formReporteStock.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Reportes.FormReportes.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formPorcentajeCortesCompra.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formNuevoPago.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formPagos.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBackUp.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe.config
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.exe
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formPorcentajeCortesCompra.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formBuscarCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formReporteStock.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formStockCortes.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formBuscarEmbutido.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formEmbutidos.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formInfoEmbutido.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBackUp.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Movimientos.formInfoMovimiento.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formNuevoPago.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formPagos.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formBuscarPersona.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formInfoPersona.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formNuevaPersona.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formPersonas.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBuscarProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBaseColor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBusquedas.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCompras.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCortes.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoMovimiento.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formMovimientos.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevaCompra.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoCorte.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoProveedor.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.FormPrincipal.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formProveedores.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formIngresoEmbutido.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Properties.Resources.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Reportes.FormReportes.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe.config
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.exe
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.exe
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Presentacion.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Negocio.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\bin\Debug\Utilidades.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Compras.formPorcentajeCortesCompra.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formBuscarCorte.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formReporteStock.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Cortes.formStockCortes.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formBuscarEmbutido.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formEmbutidos.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Embutidos.formInfoEmbutido.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBackUp.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Movimientos.formInfoMovimiento.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formNuevoPago.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Pagos.formPagos.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formBuscarPersona.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formInfoPersona.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formNuevaPersona.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Personas.formPersonas.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBuscarProveedor.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBaseColor.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formBusquedas.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCompras.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formCortes.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoCorte.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formInfoProveedor.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarCorte.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formModificarProveedor.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoMovimiento.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formMovimientos.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevaCompra.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoCorte.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formNuevoProveedor.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.FormPrincipal.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formProveedores.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formIngresoEmbutido.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Properties.Resources.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Reportes.FormReportes.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.formVentas.resources
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache

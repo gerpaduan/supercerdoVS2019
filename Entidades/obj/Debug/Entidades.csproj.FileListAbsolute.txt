@@ -1,0 +1,10 @@
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\bin\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb

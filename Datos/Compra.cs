@@ -1,0 +1,553 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace Datos
+{
+    public class Compra
+    {
+        Utilidades.Conexion conn = new Utilidades.Conexion();
+        SqlDataAdapter daCompra;
+        SqlCommand cmCompra;
+
+        public void anularCompra(int idCompra)
+        {
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText="anularCompra";
+            cmCompra.Parameters.AddWithValue("idCompra", idCompra);
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+            cmCompra = null;
+        }
+
+        public DataTable obtenerCompras(string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtCompras = new DataTable();
+            daCompra = new SqlDataAdapter();
+
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "obtenerCompras";
+            cmCompra.Parameters.AddWithValue("@texto", texto);
+            cmCompra.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCompra.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCompra.Parameters.AddWithValue("@tipoCompra", tipoCompra);
+
+            daCompra.SelectCommand = cmCompra;
+            daCompra.Fill(dtCompras);
+
+            cmCompra.Connection.Close();
+
+            return dtCompras;
+        }
+
+        public int agregarCompra(Entidades.Compra oCompraE)
+        {            
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "agregarCompra";
+
+            cmCompra.Parameters.AddWithValue("@nroRemito", oCompraE.NroRemito);
+            cmCompra.Parameters.AddWithValue("@fechaCompra", oCompraE.FechaCompra);
+            cmCompra.Parameters.AddWithValue("@idProveedor", oCompraE.Proveedor.idPersona);
+            cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
+            cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
+            cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+
+            SqlDataReader drCompra = cmCompra.ExecuteReader();
+
+            int idCompra = 0;
+            while (drCompra.Read())
+            {
+                idCompra = Convert.ToInt32(drCompra["idCompra"].ToString());// Convert.ToInt32();
+
+            }
+
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+
+            return idCompra;
+
+        }
+
+        public void ModificarCompra(Entidades.Compra oCompraE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "modificarCompra";
+
+            cmCompra.Parameters.AddWithValue("@idCompra", oCompraE.IdCompra);
+            cmCompra.Parameters.AddWithValue("@nroRemito", oCompraE.NroRemito);
+            cmCompra.Parameters.AddWithValue("@fechaCompra", oCompraE.FechaCompra);
+            cmCompra.Parameters.AddWithValue("@idProveedor", oCompraE.Proveedor.idPersona);
+            cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
+            cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
+            cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public void modificarPrecioMedia(int idCompra, float precioKg)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "modificarPrecioMedia";
+
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+            cmCompra.Parameters.AddWithValue("@precioKg", precioKg);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public void agregarCortePorCompra(Entidades.CortePorCompra oCorteE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "agregarCortePorCompra";//se agrega el corte y se actualizan stock del corte y sus sub-cortes
+
+            cmCompra.Parameters.AddWithValue("@idCompra", oCorteE.compra.IdCompra);
+            cmCompra.Parameters.AddWithValue("@idCorte", oCorteE.corte.idCorte);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oCorteE.sucursal.IdSucursal);
+            cmCompra.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
+            cmCompra.Parameters.AddWithValue("@cantKg", oCorteE.cantKgs);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public void agregarMediaRes(Entidades.MediaRes oMediaResE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "agregarMediaRes";//se actualizan los stock de todos los cortes
+
+            cmCompra.Parameters.AddWithValue("@idCompra", oMediaResE.compra.IdCompra);
+            cmCompra.Parameters.AddWithValue("@nroTropa", oMediaResE.nroTropa);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);
+            cmCompra.Parameters.AddWithValue("@precioMedia", oMediaResE.precioMedia);
+            cmCompra.Parameters.AddWithValue("@kgMedia", oMediaResE.kgMedia);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+
+
+        }
+
+        //actualiza stock del los cortes salidos de la media res
+        public void actualizarStockCortesPrimarios(Entidades.MediaRes oMediaResE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "actualizarStockCortesPrimarios";
+                       
+            cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);            
+            cmCompra.Parameters.AddWithValue("@kgMedia", oMediaResE.kgMedia);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        //actualiza stock de todos los cortes existentes
+        public void actualizarStockCortes()
+        { 
+        
+        }
+
+        public int obtenerIdUltimaCompra()
+        {
+            cmCompra=new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+           
+            cmCompra.CommandText="select top 1 * from Compras order by idCompra desc";
+            cmCompra.Connection.Open();
+            SqlDataReader drUltimaCompra=cmCompra.ExecuteReader();
+
+            int idUltimaCompra, idCompraActual=0;
+            while (drUltimaCompra.Read())
+            {
+                idUltimaCompra =Convert.ToInt32( drUltimaCompra[2].ToString());// Convert.ToInt32();
+                idCompraActual = idUltimaCompra + 1;
+            }
+           
+           conn.cerraConexion();
+            return idCompraActual;
+        }
+
+        public DataTable obtenerCortesPorCompra(int idCompra)
+        {
+            DataTable dtCortesPorCompra = new DataTable();
+            daCompra = new SqlDataAdapter();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "obtenerCortesPorCompra";
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+
+            daCompra.SelectCommand = cmCompra;
+            cmCompra.Connection.Close();
+
+            daCompra.Fill(dtCortesPorCompra);
+
+            return dtCortesPorCompra;
+        }
+
+        public DataTable obtenerMediasPorCompra(int idCompra)
+        {
+            DataTable dtMediasPorCompra = new DataTable();
+            daCompra = new SqlDataAdapter();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "obtenerMediasPorCompra";
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+
+            daCompra.SelectCommand = cmCompra;
+            cmCompra.Connection.Close();
+
+            daCompra.Fill(dtMediasPorCompra);
+
+            return dtMediasPorCompra;
+        }
+
+        public void modificarMediaPorCompra(Entidades.MediaRes oMediaResE, int idCompra)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "modificarMediaPorCompra";//se agrega el corte y se actualizan stock del corte y sus sub-cortes
+            
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+            cmCompra.Parameters.AddWithValue("@idMedia", oMediaResE.idMedia);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);
+            cmCompra.Parameters.AddWithValue("@nroTropa", oMediaResE.nroTropa);
+            cmCompra.Parameters.AddWithValue("@precioMedia", oMediaResE.precioMedia);
+            cmCompra.Parameters.AddWithValue("@kgMedia", oMediaResE.kgMedia);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public void modificarCortePorCompra(Entidades.CortePorCompra oCorteE, int idCompra)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "modificarCortePorCompra";//se agrega el corte y se actualizan stock del corte y sus sub-cortes
+
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+            cmCompra.Parameters.AddWithValue("@idCorte", oCorteE.corte.idCorte);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oCorteE.sucursal.IdSucursal);
+            cmCompra.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
+            cmCompra.Parameters.AddWithValue("@cantKg", oCorteE.cantKgs);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public void quitarStockMedia(Entidades.MediaRes oMediaResE, int idCompra)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "quitarStockMedia";
+
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+            cmCompra.Parameters.AddWithValue("@idMedia", oMediaResE.idMedia);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);
+            
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+
+        }
+
+        public void quitarStockTeoricoMedia(Entidades.MediaRes oMediaResE, int idCompra)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "quitarStockTeoricoMedia";
+
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+            cmCompra.Parameters.AddWithValue("@idMedia", oMediaResE.idMedia);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+
+        }
+
+        public void quitarStockCorte(Entidades.CortePorCompra oCorteE, int idCompra)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "quitarStockCorte";
+
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+            cmCompra.Parameters.AddWithValue("@idCorte", oCorteE.corte.idCorte);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oCorteE.sucursal.IdSucursal);
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public DataTable porcentajeCortesPorCompra(int idCompra)
+        {
+            DataTable dtPorcentajeCortesCompra = new DataTable();
+            daCompra = new SqlDataAdapter();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "porcentajeCortesPorCompra";
+            cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
+
+            daCompra.SelectCommand = cmCompra;
+            cmCompra.Connection.Close();
+
+            daCompra.Fill(dtPorcentajeCortesCompra);
+
+            return dtPorcentajeCortesCompra;
+        }
+
+
+        #region Pagos
+
+        public void agregarPago(Entidades.Pagos oPagoE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "agregarPago";
+
+            cmCompra.Parameters.AddWithValue("@nroRecibo", oPagoE.NroRecibo);
+            cmCompra.Parameters.AddWithValue("@fechaPago", oPagoE.FechaPago);
+            cmCompra.Parameters.AddWithValue("@idProveedor", oPagoE.Persona.idPersona);
+            cmCompra.Parameters.AddWithValue("@tipoPago", oPagoE.TipoPago);            
+            cmCompra.Parameters.AddWithValue("@importe", oPagoE.Importe);
+            cmCompra.Parameters.AddWithValue("@observaciones", oPagoE.Observaciones);
+
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+
+        }
+
+        public void modificarPago(Entidades.Pagos oPagoE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "modificarPago";
+
+            cmCompra.Parameters.AddWithValue("@idPago", oPagoE.IdPago);
+            cmCompra.Parameters.AddWithValue("@nroRecibo", oPagoE.NroRecibo);
+            cmCompra.Parameters.AddWithValue("@fechaPago", oPagoE.FechaPago);
+            cmCompra.Parameters.AddWithValue("@idProveedor", oPagoE.Persona.idPersona);
+            cmCompra.Parameters.AddWithValue("@tipoPago", oPagoE.TipoPago);
+            cmCompra.Parameters.AddWithValue("@importe", oPagoE.Importe);
+            cmCompra.Parameters.AddWithValue("@observaciones", oPagoE.Observaciones);
+
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public void eliminarPago(Entidades.Pagos oPagoE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "eliminarPago";
+
+            cmCompra.Parameters.AddWithValue("@idPago", oPagoE.IdPago);
+            
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        }
+
+        public DataTable obtenerPagos(string tipoTramite, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtPagos = new DataTable();
+            daCompra = new SqlDataAdapter();
+
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            //cmCompra.CommandText = "obtenerPagos";
+            cmCompra.CommandText = "obtenerPagos_1";
+            cmCompra.Parameters.AddWithValue("@texto", texto);
+            cmCompra.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCompra.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCompra.Parameters.AddWithValue("@tipoTramite", tipoTramite);
+
+            daCompra.SelectCommand = cmCompra;
+            daCompra.Fill(dtPagos);
+
+            cmCompra.Connection.Close();
+
+            return dtPagos;
+        }
+
+        public Entidades.Pagos buscarPago(Entidades.Pagos oPagoE)
+        {
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "buscarPago";
+
+            cmCompra.Parameters.AddWithValue("@idPago", oPagoE.IdPago);
+      
+
+            SqlDataReader drPago = cmCompra.ExecuteReader();
+
+            while (drPago.Read())
+            {
+                oPagoE.NroRecibo = drPago["nroRecibo"].ToString();
+                oPagoE.FechaPago = Convert.ToDateTime(drPago["fechaPago"].ToString());
+
+                Entidades.Persona oProveedor=new Entidades.Persona();
+                oProveedor.idPersona = Convert.ToInt32(drPago["idProveedor"].ToString());
+                oProveedor.razonSocial = drPago["razonSocial"].ToString();
+
+                oPagoE.Persona = oProveedor;
+                oPagoE.TipoPago = drPago["tipoPago"].ToString();
+                oPagoE.Importe = Convert.ToDecimal(drPago["importe"].ToString());
+                oPagoE.Observaciones = drPago["observaciones"].ToString();
+
+            }
+
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+
+            return oPagoE;
+
+        }
+
+        public void backup(string destino)
+        {
+
+          
+
+            //string BDaCopiar = "MiBaseDeDatos";
+
+            //string archivoParaLaCopia = @"C:\....\Copia.bak";
+
+            //string sentencia = "BACKUP DATABASE [" + BDaCopiar + "] TO DISK='" + archivoParaLaCopia + "'";
+
+           
+            string rutaDestino = @destino;  //"E:\SuperCerdo\SuperCerdo.bak";
+
+            //string sentencia ="backup database [SuperCerdo] to disk='"+rutaDestino+"' " ;
+
+            string sentencia = "BACKUP DATABASE [SuperCerdo] TO  DISK ='" + rutaDestino + "' WITH NOFORMAT, INIT,  NAME = N'SuperCerdo', SKIP, NOREWIND, NOUNLOAD,  STATS = 10";
+            SqlCommand cmCompra=new SqlCommand(sentencia);
+            cmCompra.Connection=conn.conectar();
+            cmCompra.Connection.Open();
+
+            cmCompra.ExecuteNonQuery();
+
+            cmCompra.Connection.Close();
+        }
+
+        public void restaurarBD(string bdAuxiliar, string rutaOrigen)
+        { 
+            SqlConnection connMaster=new SqlConnection();
+            connMaster.ConnectionString="Data Source=equipogap;Initial Catalog="+bdAuxiliar+";Integrated Security=True";
+
+//            FROM DISK = 'C\:Dbname.bak'
+//WITH MOVE 'Dbname_Data' TO 'C:\Data\datafile.mdf',
+//MOVE 'Dbname_Log' TO 'C:\Data\logfile.ldf',
+             
+            string sentencia ="RESTORE DATABASE [SuperCerdo] FROM  DISK ='"+rutaOrigen+"' WITH  FILE = 1,  NOUNLOAD,  REPLACE,  STATS = 10" ;
+
+
+            SqlCommand cmCompra = new SqlCommand(sentencia);
+
+            cmCompra.Connection = connMaster;
+            cmCompra.Connection.Open();
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+        }
+
+        #endregion
+    }
+}

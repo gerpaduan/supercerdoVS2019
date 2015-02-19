@@ -1,0 +1,548 @@
+﻿namespace Presentacion
+{
+    partial class formVentas
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formVentas));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            this.label5 = new System.Windows.Forms.Label();
+            this.txtTotalS = new System.Windows.Forms.TextBox();
+            this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.btnCancelar = new System.Windows.Forms.Button();
+            this.barraControl = new System.Windows.Forms.ToolStrip();
+            this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.comboSucursal = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.fechaDesde = new System.Windows.Forms.DateTimePicker();
+            this.label3 = new System.Windows.Forms.Label();
+            this.fechaHasta = new System.Windows.Forms.DateTimePicker();
+            this.btnBuscar = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.txtDescripcion = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
+            this.lineShape3 = new Microsoft.VisualBasic.PowerPacks.LineShape();
+            this.lineShape4 = new Microsoft.VisualBasic.PowerPacks.LineShape();
+            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
+            this.grillaVentas = new System.Windows.Forms.DataGridView();
+            this.idVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.fechaVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nroRemito = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idSucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.sucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.turno = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.observaciones = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.diaFestivo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtTotalKgs = new System.Windows.Forms.TextBox();
+            this.barraControl.SuspendLayout();
+            this.pnlBuscar.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // label5
+            // 
+            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.Location = new System.Drawing.Point(642, 487);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(51, 15);
+            this.label5.TabIndex = 33;
+            this.label5.Text = "Total $";
+            // 
+            // txtTotalS
+            // 
+            this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalS.Location = new System.Drawing.Point(699, 482);
+            this.txtTotalS.Name = "txtTotalS";
+            this.txtTotalS.ReadOnly = true;
+            this.txtTotalS.Size = new System.Drawing.Size(102, 21);
+            this.txtTotalS.TabIndex = 32;
+            this.txtTotalS.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // btnSeleccionar
+            // 
+            this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(617, 517);
+            this.btnSeleccionar.Name = "btnSeleccionar";
+            this.btnSeleccionar.Size = new System.Drawing.Size(85, 27);
+            this.btnSeleccionar.TabIndex = 29;
+            this.btnSeleccionar.Text = "Seleccionar";
+            this.btnSeleccionar.UseVisualStyleBackColor = true;
+            this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
+            // 
+            // btnCancelar
+            // 
+            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancelar.Location = new System.Drawing.Point(717, 517);
+            this.btnCancelar.Name = "btnCancelar";
+            this.btnCancelar.Size = new System.Drawing.Size(84, 26);
+            this.btnCancelar.TabIndex = 28;
+            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.UseVisualStyleBackColor = true;
+            this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
+            // 
+            // barraControl
+            // 
+            this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.nuevo});
+            this.barraControl.Location = new System.Drawing.Point(0, 0);
+            this.barraControl.Name = "barraControl";
+            this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.barraControl.Size = new System.Drawing.Size(816, 45);
+            this.barraControl.TabIndex = 26;
+            this.barraControl.TabStop = true;
+            this.barraControl.Text = "toolStrip1";
+            // 
+            // nuevo
+            // 
+            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
+            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.nuevo.Name = "nuevo";
+            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.nuevo.Size = new System.Drawing.Size(48, 42);
+            this.nuevo.Text = "Nuevo";
+            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            // 
+            // pnlBuscar
+            // 
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.comboSucursal);
+            this.pnlBuscar.Controls.Add(this.label7);
+            this.pnlBuscar.Controls.Add(this.label1);
+            this.pnlBuscar.Controls.Add(this.fechaDesde);
+            this.pnlBuscar.Controls.Add(this.label3);
+            this.pnlBuscar.Controls.Add(this.fechaHasta);
+            this.pnlBuscar.Controls.Add(this.btnBuscar);
+            this.pnlBuscar.Controls.Add(this.label4);
+            this.pnlBuscar.Controls.Add(this.txtDescripcion);
+            this.pnlBuscar.Controls.Add(this.label2);
+            this.pnlBuscar.Controls.Add(this.shapeContainer2);
+            this.pnlBuscar.Location = new System.Drawing.Point(-1, 45);
+            this.pnlBuscar.Name = "pnlBuscar";
+            this.pnlBuscar.Size = new System.Drawing.Size(817, 62);
+            this.pnlBuscar.TabIndex = 25;
+            // 
+            // comboSucursal
+            // 
+            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucursal.FormattingEnabled = true;
+            this.comboSucursal.Location = new System.Drawing.Point(91, 7);
+            this.comboSucursal.Name = "comboSucursal";
+            this.comboSucursal.Size = new System.Drawing.Size(114, 21);
+            this.comboSucursal.TabIndex = 37;
+            this.comboSucursal.TabStop = false;
+            this.comboSucursal.SelectedIndexChanged += new System.EventHandler(this.comboSucursal_SelectedIndexChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(30, 11);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(55, 15);
+            this.label7.TabIndex = 38;
+            this.label7.Text = "Sucursal";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(397, 18);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(41, 15);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Fecha";
+            // 
+            // fechaDesde
+            // 
+            this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.fechaDesde.Location = new System.Drawing.Point(488, 35);
+            this.fechaDesde.Name = "fechaDesde";
+            this.fechaDesde.Size = new System.Drawing.Size(98, 20);
+            this.fechaDesde.TabIndex = 5;
+            this.fechaDesde.Value = new System.DateTime(2011, 7, 1, 0, 0, 0, 0);
+            this.fechaDesde.ValueChanged += new System.EventHandler(this.btnBuscar_Click);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label3.Location = new System.Drawing.Point(440, 37);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(43, 15);
+            this.label3.TabIndex = 4;
+            this.label3.Text = "Desde";
+            // 
+            // fechaHasta
+            // 
+            this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.fechaHasta.Location = new System.Drawing.Point(647, 34);
+            this.fechaHasta.Name = "fechaHasta";
+            this.fechaHasta.Size = new System.Drawing.Size(98, 20);
+            this.fechaHasta.TabIndex = 7;
+            this.fechaHasta.ValueChanged += new System.EventHandler(this.btnBuscar_Click);
+            // 
+            // btnBuscar
+            // 
+            this.btnBuscar.Location = new System.Drawing.Point(258, 32);
+            this.btnBuscar.Name = "btnBuscar";
+            this.btnBuscar.Size = new System.Drawing.Size(58, 24);
+            this.btnBuscar.TabIndex = 8;
+            this.btnBuscar.Text = "Buscar";
+            this.btnBuscar.UseVisualStyleBackColor = true;
+            this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label4.Location = new System.Drawing.Point(603, 37);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(39, 15);
+            this.label4.TabIndex = 6;
+            this.label4.Text = "Hasta";
+            // 
+            // txtDescripcion
+            // 
+            this.txtDescripcion.Location = new System.Drawing.Point(91, 34);
+            this.txtDescripcion.Name = "txtDescripcion";
+            this.txtDescripcion.Size = new System.Drawing.Size(161, 20);
+            this.txtDescripcion.TabIndex = 0;
+            this.txtDescripcion.TextChanged += new System.EventHandler(this.btnBuscar_Click);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(13, 35);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(72, 15);
+            this.label2.TabIndex = 2;
+            this.label2.Text = "Descripción";
+            // 
+            // shapeContainer2
+            // 
+            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
+            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
+            this.shapeContainer2.Name = "shapeContainer2";
+            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
+            this.lineShape3});
+            this.shapeContainer2.Size = new System.Drawing.Size(817, 62);
+            this.shapeContainer2.TabIndex = 10;
+            this.shapeContainer2.TabStop = false;
+            // 
+            // lineShape3
+            // 
+            this.lineShape3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.lineShape3.BorderColor = System.Drawing.Color.White;
+            this.lineShape3.Name = "lineShape3";
+            this.lineShape3.X1 = 441;
+            this.lineShape3.X2 = 748;
+            this.lineShape3.Y1 = 29;
+            this.lineShape3.Y2 = 29;
+            // 
+            // lineShape4
+            // 
+            this.lineShape4.Name = "lineShape4";
+            this.lineShape4.X1 = 11;
+            this.lineShape4.X2 = 801;
+            this.lineShape4.Y1 = 510;
+            this.lineShape4.Y2 = 510;
+            // 
+            // shapeContainer1
+            // 
+            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
+            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
+            this.shapeContainer1.Name = "shapeContainer1";
+            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
+            this.lineShape4});
+            this.shapeContainer1.Size = new System.Drawing.Size(816, 549);
+            this.shapeContainer1.TabIndex = 34;
+            this.shapeContainer1.TabStop = false;
+            // 
+            // grillaVentas
+            // 
+            this.grillaVentas.AllowDrop = true;
+            this.grillaVentas.AllowUserToAddRows = false;
+            this.grillaVentas.AllowUserToDeleteRows = false;
+            this.grillaVentas.AllowUserToResizeRows = false;
+            this.grillaVentas.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            this.grillaVentas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.grillaVentas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.idVenta,
+            this.fechaVenta,
+            this.nroRemito,
+            this.idPersona,
+            this.razonSocial,
+            this.idSucursal,
+            this.sucursal,
+            this.turno,
+            this.totalKg,
+            this.totalS,
+            this.observaciones,
+            this.diaFestivo,
+            this.estado});
+            this.grillaVentas.Location = new System.Drawing.Point(11, 111);
+            this.grillaVentas.MultiSelect = false;
+            this.grillaVentas.Name = "grillaVentas";
+            this.grillaVentas.ReadOnly = true;
+            this.grillaVentas.RowHeadersVisible = false;
+            this.grillaVentas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaVentas.Size = new System.Drawing.Size(790, 344);
+            this.grillaVentas.TabIndex = 27;
+            this.grillaVentas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaVentas_CellDoubleClick);
+            // 
+            // idVenta
+            // 
+            this.idVenta.DataPropertyName = "idVenta";
+            this.idVenta.HeaderText = "idVenta";
+            this.idVenta.Name = "idVenta";
+            this.idVenta.ReadOnly = true;
+            this.idVenta.Visible = false;
+            // 
+            // fechaVenta
+            // 
+            this.fechaVenta.DataPropertyName = "fechaVenta";
+            dataGridViewCellStyle1.Format = "d";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle1;
+            this.fechaVenta.HeaderText = "Fecha Venta";
+            this.fechaVenta.Name = "fechaVenta";
+            this.fechaVenta.ReadOnly = true;
+            this.fechaVenta.Width = 95;
+            // 
+            // nroRemito
+            // 
+            this.nroRemito.DataPropertyName = "nroRemito";
+            this.nroRemito.HeaderText = "Nro. Remito";
+            this.nroRemito.Name = "nroRemito";
+            this.nroRemito.ReadOnly = true;
+            // 
+            // idPersona
+            // 
+            this.idPersona.DataPropertyName = "idPersona";
+            this.idPersona.HeaderText = "idPersona";
+            this.idPersona.Name = "idPersona";
+            this.idPersona.ReadOnly = true;
+            this.idPersona.Visible = false;
+            // 
+            // razonSocial
+            // 
+            this.razonSocial.DataPropertyName = "razonSocial";
+            this.razonSocial.HeaderText = "Cliente";
+            this.razonSocial.Name = "razonSocial";
+            this.razonSocial.ReadOnly = true;
+            // 
+            // idSucursal
+            // 
+            this.idSucursal.DataPropertyName = "idSucursal";
+            this.idSucursal.HeaderText = "idSucursal";
+            this.idSucursal.Name = "idSucursal";
+            this.idSucursal.ReadOnly = true;
+            this.idSucursal.Visible = false;
+            // 
+            // sucursal
+            // 
+            this.sucursal.DataPropertyName = "sucursal";
+            this.sucursal.HeaderText = "Sucursal";
+            this.sucursal.Name = "sucursal";
+            this.sucursal.ReadOnly = true;
+            // 
+            // turno
+            // 
+            this.turno.DataPropertyName = "turno";
+            this.turno.HeaderText = "Turno";
+            this.turno.Name = "turno";
+            this.turno.ReadOnly = true;
+            // 
+            // totalKg
+            // 
+            this.totalKg.DataPropertyName = "totalKg";
+            dataGridViewCellStyle2.Format = "N3";
+            dataGridViewCellStyle2.NullValue = null;
+            this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
+            this.totalKg.HeaderText = "Total Kg";
+            this.totalKg.Name = "totalKg";
+            this.totalKg.ReadOnly = true;
+            this.totalKg.Width = 90;
+            // 
+            // totalS
+            // 
+            this.totalS.DataPropertyName = "totalS";
+            dataGridViewCellStyle3.Format = "N2";
+            dataGridViewCellStyle3.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
+            this.totalS.HeaderText = "Total $";
+            this.totalS.Name = "totalS";
+            this.totalS.ReadOnly = true;
+            this.totalS.Width = 90;
+            // 
+            // observaciones
+            // 
+            this.observaciones.DataPropertyName = "observaciones";
+            this.observaciones.HeaderText = "observaciones";
+            this.observaciones.Name = "observaciones";
+            this.observaciones.ReadOnly = true;
+            // 
+            // diaFestivo
+            // 
+            this.diaFestivo.DataPropertyName = "diaFestivo";
+            this.diaFestivo.HeaderText = "Día Festivo";
+            this.diaFestivo.Name = "diaFestivo";
+            this.diaFestivo.ReadOnly = true;
+            // 
+            // estado
+            // 
+            this.estado.DataPropertyName = "estado";
+            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle4;
+            this.estado.HeaderText = "Estado";
+            this.estado.Name = "estado";
+            this.estado.ReadOnly = true;
+            // 
+            // label6
+            // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(626, 465);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(67, 15);
+            this.label6.TabIndex = 36;
+            this.label6.Text = "Total Kgs";
+            // 
+            // txtTotalKgs
+            // 
+            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalKgs.Location = new System.Drawing.Point(699, 460);
+            this.txtTotalKgs.Name = "txtTotalKgs";
+            this.txtTotalKgs.ReadOnly = true;
+            this.txtTotalKgs.Size = new System.Drawing.Size(102, 21);
+            this.txtTotalKgs.TabIndex = 35;
+            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // formVentas
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.Bisque;
+            this.ClientSize = new System.Drawing.Size(816, 549);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.txtTotalKgs);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.txtTotalS);
+            this.Controls.Add(this.btnSeleccionar);
+            this.Controls.Add(this.btnCancelar);
+            this.Controls.Add(this.grillaVentas);
+            this.Controls.Add(this.barraControl);
+            this.Controls.Add(this.pnlBuscar);
+            this.Controls.Add(this.shapeContainer1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.KeyPreview = true;
+            this.MaximizeBox = false;
+            this.Name = "formVentas";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Ventas";
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formVentas_KeyDown);
+            this.barraControl.ResumeLayout(false);
+            this.barraControl.PerformLayout();
+            this.pnlBuscar.ResumeLayout(false);
+            this.pnlBuscar.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).EndInit();
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox txtTotalS;
+        protected System.Windows.Forms.Button btnSeleccionar;
+        protected System.Windows.Forms.Button btnCancelar;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
+        protected internal System.Windows.Forms.ToolStrip barraControl;
+        protected System.Windows.Forms.ToolStripButton nuevo;
+        protected System.Windows.Forms.Panel pnlBuscar;
+        protected System.Windows.Forms.Label label1;
+        protected System.Windows.Forms.DateTimePicker fechaDesde;
+        protected System.Windows.Forms.Label label3;
+        protected System.Windows.Forms.DateTimePicker fechaHasta;
+        protected System.Windows.Forms.Button btnBuscar;
+        protected System.Windows.Forms.Label label4;
+        protected System.Windows.Forms.TextBox txtDescripcion;
+        protected System.Windows.Forms.Label label2;
+        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
+        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape3;
+        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape4;
+        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
+        private System.Windows.Forms.DataGridView grillaVentas;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox txtTotalKgs;
+        private System.Windows.Forms.ComboBox comboSucursal;
+        protected System.Windows.Forms.Label label7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idVenta;
+        private System.Windows.Forms.DataGridViewTextBoxColumn fechaVenta;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nroRemito;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
+        private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idSucursal;
+        private System.Windows.Forms.DataGridViewTextBoxColumn sucursal;
+        private System.Windows.Forms.DataGridViewTextBoxColumn turno;
+        private System.Windows.Forms.DataGridViewTextBoxColumn totalKg;
+        private System.Windows.Forms.DataGridViewTextBoxColumn totalS;
+        private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
+        private System.Windows.Forms.DataGridViewTextBoxColumn diaFestivo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn estado;
+    }
+}

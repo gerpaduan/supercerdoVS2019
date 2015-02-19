@@ -1,0 +1,27 @@
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
+C:\Users\Germán\Documents\Visual Studio 2008\Projects\SuperCerdoRAR\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Datos.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Utilidades.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\bin\Debug\Entidades.pdb
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.dll
+E:\Sistemas\SuperCerdo\SuperCerdo\Presentacion\Datos\obj\Debug\Datos.pdb
