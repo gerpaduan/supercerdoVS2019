@@ -64,3 +64,14 @@ E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Negocio\bin\De
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Negocio\obj\Debug\ResolveAssemblyReference.cache
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Negocio\obj\Debug\Negocio.dll
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Negocio\obj\Debug\Negocio.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Negocio.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Negocio.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Datos.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Entidades.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Utilidades.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Utilidades.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Entidades.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Datos.pdb
+E:\Sistemas\supercerdo\Negocio\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Negocio\obj\Debug\Negocio.dll
+E:\Sistemas\supercerdo\Negocio\obj\Debug\Negocio.pdb

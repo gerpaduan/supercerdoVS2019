@@ -23,3 +23,8 @@ E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\bin\
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\ResolveAssemblyReference.cache
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.dll
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Entidades\obj\Debug\Entidades.pdb
+E:\Sistemas\supercerdo\Entidades\bin\Debug\Entidades.dll
+E:\Sistemas\supercerdo\Entidades\bin\Debug\Entidades.pdb
+E:\Sistemas\supercerdo\Entidades\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Entidades\obj\Debug\Entidades.dll
+E:\Sistemas\supercerdo\Entidades\obj\Debug\Entidades.pdb

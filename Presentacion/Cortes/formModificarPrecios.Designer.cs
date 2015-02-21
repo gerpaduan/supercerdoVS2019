@@ -30,7 +30,6 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formModificarPrecios));
             this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtPrecioKg = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -40,16 +39,11 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
-            this.txtCorteMaestro = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.comboTipo = new System.Windows.Forms.ComboBox();
             this.btnBuscarCorteM = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
-            this.txtPorcHueso = new System.Windows.Forms.MaskedTextBox();
-            this.txtPorcentajeCorteM = new System.Windows.Forms.MaskedTextBox();
-            this.txtIndependiente = new System.Windows.Forms.CheckBox();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
@@ -61,36 +55,18 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
-            this.pnlBuscar.Controls.Add(this.txtDesvioEstandar);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.label7);
-            this.pnlBuscar.Controls.Add(this.txtCorteMaestro);
             this.pnlBuscar.Controls.Add(this.label9);
             this.pnlBuscar.Controls.Add(this.label3);
-            this.pnlBuscar.Controls.Add(this.comboTipo);
             this.pnlBuscar.Controls.Add(this.btnBuscarCorteM);
             this.pnlBuscar.Controls.Add(this.label2);
             this.pnlBuscar.Controls.Add(this.label8);
-            this.pnlBuscar.Controls.Add(this.txtPorcHueso);
-            this.pnlBuscar.Controls.Add(this.txtPorcentajeCorteM);
-            this.pnlBuscar.Controls.Add(this.txtIndependiente);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(479, 120);
             this.pnlBuscar.TabIndex = 10;
-            // 
-            // txtDesvioEstandar
-            // 
-            this.txtDesvioEstandar.ForeColor = System.Drawing.Color.Transparent;
-            this.txtDesvioEstandar.Location = new System.Drawing.Point(846, 130);
-            this.txtDesvioEstandar.Name = "txtDesvioEstandar";
-            this.txtDesvioEstandar.Size = new System.Drawing.Size(75, 20);
-            this.txtDesvioEstandar.TabIndex = 7;
-            this.txtDesvioEstandar.Text = "0";
-            this.txtDesvioEstandar.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtDesvioEstandar.Visible = false;
-            this.txtDesvioEstandar.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // groupBox1
             // 
@@ -195,16 +171,6 @@
             this.label7.Text = "% Desperdicio";
             this.label7.Visible = false;
             // 
-            // txtCorteMaestro
-            // 
-            this.txtCorteMaestro.Location = new System.Drawing.Point(628, 59);
-            this.txtCorteMaestro.Name = "txtCorteMaestro";
-            this.txtCorteMaestro.ReadOnly = true;
-            this.txtCorteMaestro.Size = new System.Drawing.Size(106, 20);
-            this.txtCorteMaestro.TabIndex = 4;
-            this.txtCorteMaestro.Visible = false;
-            this.txtCorteMaestro.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            // 
             // label9
             // 
             this.label9.AutoSize = true;
@@ -229,26 +195,6 @@
             this.label3.Text = "Corte Maestro";
             this.label3.Visible = false;
             // 
-            // comboTipo
-            // 
-            this.comboTipo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipo.ForeColor = System.Drawing.Color.Transparent;
-            this.comboTipo.FormattingEnabled = true;
-            this.comboTipo.Items.AddRange(new object[] {
-            "Corte",
-            "Embutido",
-            "Otro"});
-            this.comboTipo.Location = new System.Drawing.Point(576, 106);
-            this.comboTipo.Name = "comboTipo";
-            this.comboTipo.Size = new System.Drawing.Size(117, 21);
-            this.comboTipo.TabIndex = 3;
-            this.comboTipo.Visible = false;
-            this.comboTipo.VisibleChanged += new System.EventHandler(this.comboTipo_TextChanged);
-            this.comboTipo.SelectedIndexChanged += new System.EventHandler(this.comboTipo_TextChanged);
-            this.comboTipo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            this.comboTipo.SelectedValueChanged += new System.EventHandler(this.comboTipo_TextChanged);
-            this.comboTipo.TextChanged += new System.EventHandler(this.comboTipo_TextChanged);
-            // 
             // btnBuscarCorteM
             // 
             this.btnBuscarCorteM.AccessibleDescription = "";
@@ -260,7 +206,6 @@
             this.btnBuscarCorteM.TabIndex = 4;
             this.btnBuscarCorteM.UseVisualStyleBackColor = true;
             this.btnBuscarCorteM.Visible = false;
-            this.btnBuscarCorteM.Click += new System.EventHandler(this.btnBuscarCorteM_Click);
             // 
             // label2
             // 
@@ -285,41 +230,6 @@
             this.label8.TabIndex = 26;
             this.label8.Text = "Corte Independiente";
             this.label8.Visible = false;
-            // 
-            // txtPorcHueso
-            // 
-            this.txtPorcHueso.ForeColor = System.Drawing.Color.Transparent;
-            this.txtPorcHueso.Location = new System.Drawing.Point(846, 103);
-            this.txtPorcHueso.Name = "txtPorcHueso";
-            this.txtPorcHueso.Size = new System.Drawing.Size(75, 20);
-            this.txtPorcHueso.TabIndex = 6;
-            this.txtPorcHueso.Text = "0";
-            this.txtPorcHueso.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtPorcHueso.Visible = false;
-            this.txtPorcHueso.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            // 
-            // txtPorcentajeCorteM
-            // 
-            this.txtPorcentajeCorteM.ForeColor = System.Drawing.Color.Transparent;
-            this.txtPorcentajeCorteM.Location = new System.Drawing.Point(846, 76);
-            this.txtPorcentajeCorteM.Name = "txtPorcentajeCorteM";
-            this.txtPorcentajeCorteM.Size = new System.Drawing.Size(75, 20);
-            this.txtPorcentajeCorteM.TabIndex = 5;
-            this.txtPorcentajeCorteM.Text = "0";
-            this.txtPorcentajeCorteM.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtPorcentajeCorteM.Visible = false;
-            this.txtPorcentajeCorteM.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            // 
-            // txtIndependiente
-            // 
-            this.txtIndependiente.AutoSize = true;
-            this.txtIndependiente.ForeColor = System.Drawing.Color.Transparent;
-            this.txtIndependiente.Location = new System.Drawing.Point(846, 29);
-            this.txtIndependiente.Name = "txtIndependiente";
-            this.txtIndependiente.Size = new System.Drawing.Size(15, 14);
-            this.txtIndependiente.TabIndex = 25;
-            this.txtIndependiente.UseVisualStyleBackColor = true;
-            this.txtIndependiente.Visible = false;
             // 
             // btnCancelar
             // 
@@ -372,21 +282,15 @@
         protected internal System.Windows.Forms.Button btnBuscarCorteM;
         protected System.Windows.Forms.TextBox txtCodigo;
         protected System.Windows.Forms.Label label1;
-        protected System.Windows.Forms.TextBox txtCorteMaestro;
         protected System.Windows.Forms.Label label3;
         protected System.Windows.Forms.TextBox txtDescCorte;
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.Label label6;
-        protected System.Windows.Forms.ComboBox comboTipo;
-        private System.Windows.Forms.MaskedTextBox txtPorcentajeCorteM;
         protected System.Windows.Forms.TextBox txtPrecioKg;
         protected System.Windows.Forms.Label label5;
-        private System.Windows.Forms.MaskedTextBox txtPorcHueso;
         protected System.Windows.Forms.Label label7;
-        private System.Windows.Forms.CheckBox txtIndependiente;
         protected System.Windows.Forms.Label label8;
         protected System.Windows.Forms.Button btnGuardar;
-        private System.Windows.Forms.MaskedTextBox txtDesvioEstandar;
         protected System.Windows.Forms.Label label9;
     }
 }
