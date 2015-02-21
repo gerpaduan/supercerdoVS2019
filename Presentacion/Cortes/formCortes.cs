@@ -23,7 +23,6 @@ namespace Presentacion
         {
             InitializeComponent();
             cargarGrilla();
-
         }
 
         #region eventos
@@ -32,19 +31,12 @@ namespace Presentacion
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
             frmNuevoCorte.obtenerFormCorte(this);
             frmNuevoCorte.ShowDialog();
-
         }
 
         private void modificar_Click(object sender, EventArgs e)
         {
-            //formModificarCorte frmModificarCorte = new formModificarCorte();
-            //modificarCorte();
-            //frmModificarCorte.obtenerCorteFormCortes(oCorteE, this);
-            //frmModificarCorte.ShowDialog();
-
             modificarCorte();
         }
-
     
         private void stock_Click(object sender, EventArgs e)
         {
@@ -70,11 +62,6 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
-            //oCorteN = new Negocio.Corte();
-            //grillaCortes.AutoGenerateColumns = false;
-
-            //grillaCortes.DataSource = oCorteN.obtenerCortes();
-
             oCorteN = new Negocio.Corte();
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
@@ -83,8 +70,6 @@ namespace Presentacion
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
             grillaCortes.DataSource = dtCortes;
-            
-
         }
         
         public void buscarCorte()
@@ -96,8 +81,7 @@ namespace Presentacion
             grillaCortes.AutoGenerateColumns = false;
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
-            grillaCortes.DataSource = dtCortes;
-            
+            grillaCortes.DataSource = dtCortes;            
         }
 
         private void modificarCorte()
@@ -113,8 +97,6 @@ namespace Presentacion
             {
                 MessageBox.Show(ex.Message);
             }
-            
-
         }
 
         private void modificarPrecios_Click(object sender, EventArgs e)
@@ -134,13 +116,11 @@ namespace Presentacion
                     else
                     {
                         break;
-                    }
-                    
+                    }                    
                 }                              
             }
             catch (Exception ex)
-            {
-                
+            {                
                 MessageBox.Show(ex.Message);
             }
             
@@ -148,9 +128,8 @@ namespace Presentacion
 
         private void infoCorte()
         {
-            cargarCorte();
-           //int corte=Convert.ToInt32(grillaCortes.CurrentRow.Cells["corte"].Value.ToString());
-            
+            cargarCorte();            
+
             formInfoCorte frmInfoCorte=new formInfoCorte();
             frmInfoCorte.obtenerParametros(oCorteE, this);
             frmInfoCorte.ShowDialog();
@@ -173,9 +152,7 @@ namespace Presentacion
             oCorteE.corteMaestro.corte = grillaCortes.CurrentRow.Cells["corteMaestro"].Value.ToString();
             oCorteE.porcentaje = float.Parse(grillaCortes.CurrentRow.Cells["porcentaje"].Value.ToString());
             oCorteE.desvioEstandar = float.Parse(grillaCortes.CurrentRow.Cells["desvioEstandar"].Value.ToString());
-
             oCorteE.porcentajeHueso = float.Parse(grillaCortes.CurrentRow.Cells["porcentajeHueso"].Value.ToString());
-
         }
 
         private void cargarCorte(int fila)
@@ -185,7 +162,6 @@ namespace Presentacion
 
             oCorteE.idCorte = Convert.ToInt32(grillaCortes.Rows[fila].Cells["idCorte"].Value.ToString());
             oCorteE.codigo = Convert.ToInt32(grillaCortes.Rows[fila].Cells["codigo"].Value.ToString());
-
             oCorteE.corte = grillaCortes.Rows[fila].Cells["corte"].Value.ToString();
             oCorteE.precioKg = float.Parse(grillaCortes.Rows[fila].Cells["precioKg"].Value.ToString());
             oCorteE.independiente = Convert.ToInt32(grillaCortes.Rows[fila].Cells["independiente"].Value.ToString());
@@ -195,11 +171,8 @@ namespace Presentacion
             oCorteE.corteMaestro.corte = grillaCortes.Rows[fila].Cells["corteMaestro"].Value.ToString();
             oCorteE.porcentaje = float.Parse(grillaCortes.Rows[fila].Cells["porcentaje"].Value.ToString());
             oCorteE.desvioEstandar = float.Parse(grillaCortes.Rows[fila].Cells["desvioEstandar"].Value.ToString());
-
             oCorteE.porcentajeHueso = float.Parse(grillaCortes.Rows[fila].Cells["porcentajeHueso"].Value.ToString());
-
-        }
-        
+        }        
 
         #endregion
 
@@ -210,8 +183,7 @@ namespace Presentacion
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            this.Close();
-            
+            this.Close();            
         }
 
         private void imprimirReporte()
@@ -234,9 +206,7 @@ namespace Presentacion
             Reportes.ReporteStockCortes reporte = new Reportes.ReporteStockCortes();
             FormReportes frmReportes = new FormReportes(reporte, titulo, dtStockCortes , DateTime.Now , DateTime.Now);
 
-            frmReportes.Show();
-
-            
+            frmReportes.Show();            
         }
 
         private void formCortes_KeyDown(object sender, KeyEventArgs e)
@@ -255,22 +225,6 @@ namespace Presentacion
         private void Imprimir_Click(object sender, EventArgs e)
         {
             imprimirReporte();
-        }
-
-      
-       
-
-       
-
-      
-
-      
-       
-
-       
-
-       
-
-       
+        }      
     }
 }
