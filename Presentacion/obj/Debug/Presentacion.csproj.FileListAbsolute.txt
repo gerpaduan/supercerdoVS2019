@@ -335,6 +335,17 @@ E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\o
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.exe
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.pdb
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe.config
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.pdb
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Entidades.dll
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Negocio.dll
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Utilidades.dll
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Datos.dll
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Negocio.pdb
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Entidades.pdb
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Datos.pdb
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Utilidades.pdb
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\ResolveAssemblyReference.cache
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\Presentacion.Compras.formCambiarPrecioKg.resources
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\Presentacion.Compras.formModificarCompra.resources
@@ -377,16 +388,5 @@ E:\Sistemas\supercerdo\Presentacion\obj\Debug\Presentacion.Ventas.formInfoVenta.
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\Presentacion.Ventas.formNuevaVenta.resources
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\Presentacion.formVentas.resources
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe.config
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.pdb
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Entidades.dll
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Negocio.dll
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Utilidades.dll
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Datos.dll
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Negocio.pdb
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Entidades.pdb
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Datos.pdb
-E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\Utilidades.pdb
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\SuperCerdo.exe
 E:\Sistemas\supercerdo\Presentacion\obj\Debug\SuperCerdo.pdb
