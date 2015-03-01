@@ -65,6 +65,32 @@ namespace Datos
 
         }
 
+        public Entidades.Persona findById(int id)
+        {
+            DataTable dtPersona = new DataTable();
+            SqlDataAdapter daPersona;
+            cmPersona = new SqlCommand();
+
+            cmPersona.Connection = conn.conectar();
+            daPersona = new SqlDataAdapter("select * from Personas where idPersona = " + id, conn.conectar());
+            daPersona.Fill(dtPersona);
+
+            Entidades.Persona oPersona = new Entidades.Persona();
+
+            //int idUltimaCompra, idCompraActual = 0;
+            //while (drPersona.Read())
+            //{
+            oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
+            oPersona.razonSocial = dtPersona.Rows[0]["razonSocial"].ToString();
+            //    //idUltimaCompra = Convert.ToInt32(drUltimaCompra[2].ToString());// Convert.ToInt32();
+            //    //idCompraActual = idUltimaCompra + 1;
+            //}
+
+            conn.cerraConexion();
+            
+            return oPersona;
+        }
+
         public DataTable buscarProveedor(string buscarTexto)
         {
             DataTable dtProveedores = new DataTable();
@@ -81,8 +107,6 @@ namespace Datos
             daPersona.Fill(dtProveedores);
            
             return dtProveedores;
-
-
         }
 
         public DataTable buscarPersona(string buscarTexto)
@@ -101,8 +125,6 @@ namespace Datos
             daPersona.Fill(dtPersonas);
 
             return dtPersonas;
-
-
         }
 
         public DataTable obtenerProveedores()

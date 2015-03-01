@@ -30,6 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.linkLogin = new System.Windows.Forms.LinkLabel();
             this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
             this.pnlMantenimientos = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -50,7 +51,10 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.linkCompras = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
-            this.linkLogin = new System.Windows.Forms.LinkLabel();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.panel5 = new System.Windows.Forms.Panel();
+            this.linkAbrirCaja = new System.Windows.Forms.LinkLabel();
+            this.label4 = new System.Windows.Forms.Label();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.pnlMantenimientos.SuspendLayout();
@@ -59,6 +63,8 @@
             this.panel1.SuspendLayout();
             this.pnlCompras.SuspendLayout();
             this.panel2.SuspendLayout();
+            this.panel3.SuspendLayout();
+            this.panel5.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -70,6 +76,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.PeachPuff;
+            this.splitContainer1.Panel1.Controls.Add(this.panel3);
             this.splitContainer1.Panel1.Controls.Add(this.linkLogin);
             this.splitContainer1.Panel1.Controls.Add(this.linkCerrarSesion);
             this.splitContainer1.Panel1.Controls.Add(this.pnlMantenimientos);
@@ -78,19 +85,32 @@
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.HotTrack;
+            this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
-            this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.splitContainer1.Size = new System.Drawing.Size(886, 540);
-            this.splitContainer1.SplitterDistance = 228;
+            this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.splitContainer1.Size = new System.Drawing.Size(997, 581);
+            this.splitContainer1.SplitterDistance = 233;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // linkLogin
+            // 
+            this.linkLogin.AutoSize = true;
+            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkLogin.Location = new System.Drawing.Point(12, 559);
+            this.linkLogin.Name = "linkLogin";
+            this.linkLogin.Size = new System.Drawing.Size(70, 13);
+            this.linkLogin.TabIndex = 13;
+            this.linkLogin.TabStop = true;
+            this.linkLogin.Text = "Iniciar Sesión";
+            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
             // 
             // linkCerrarSesion
             // 
             this.linkCerrarSesion.AutoSize = true;
             this.linkCerrarSesion.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkCerrarSesion.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkCerrarSesion.Location = new System.Drawing.Point(12, 518);
+            this.linkCerrarSesion.Location = new System.Drawing.Point(12, 559);
             this.linkCerrarSesion.Name = "linkCerrarSesion";
             this.linkCerrarSesion.Size = new System.Drawing.Size(70, 13);
             this.linkCerrarSesion.TabIndex = 12;
@@ -104,7 +124,7 @@
             this.pnlMantenimientos.BackColor = System.Drawing.Color.SandyBrown;
             this.pnlMantenimientos.Controls.Add(this.panel4);
             this.pnlMantenimientos.Controls.Add(this.label3);
-            this.pnlMantenimientos.Location = new System.Drawing.Point(9, 216);
+            this.pnlMantenimientos.Location = new System.Drawing.Point(9, 286);
             this.pnlMantenimientos.Name = "pnlMantenimientos";
             this.pnlMantenimientos.Size = new System.Drawing.Size(210, 265);
             this.pnlMantenimientos.TabIndex = 1;
@@ -245,7 +265,7 @@
             this.pnlVentas.BackColor = System.Drawing.Color.SandyBrown;
             this.pnlVentas.Controls.Add(this.panel1);
             this.pnlVentas.Controls.Add(this.label1);
-            this.pnlVentas.Location = new System.Drawing.Point(9, 110);
+            this.pnlVentas.Location = new System.Drawing.Point(9, 100);
             this.pnlVentas.Name = "pnlVentas";
             this.pnlVentas.Size = new System.Drawing.Size(212, 86);
             this.pnlVentas.TabIndex = 0;
@@ -326,25 +346,56 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Compras";
             // 
-            // linkLogin
+            // panel3
             // 
-            this.linkLogin.AutoSize = true;
-            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkLogin.Location = new System.Drawing.Point(12, 518);
-            this.linkLogin.Name = "linkLogin";
-            this.linkLogin.Size = new System.Drawing.Size(70, 13);
-            this.linkLogin.TabIndex = 13;
-            this.linkLogin.TabStop = true;
-            this.linkLogin.Text = "Iniciar Sesión";
-            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
+            this.panel3.BackColor = System.Drawing.Color.SandyBrown;
+            this.panel3.Controls.Add(this.panel5);
+            this.panel3.Controls.Add(this.label4);
+            this.panel3.Location = new System.Drawing.Point(9, 192);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(212, 86);
+            this.panel3.TabIndex = 2;
+            // 
+            // panel5
+            // 
+            this.panel5.BackColor = System.Drawing.Color.PeachPuff;
+            this.panel5.Controls.Add(this.linkAbrirCaja);
+            this.panel5.Location = new System.Drawing.Point(2, 30);
+            this.panel5.Name = "panel5";
+            this.panel5.Size = new System.Drawing.Size(208, 46);
+            this.panel5.TabIndex = 1;
+            // 
+            // linkAbrirCaja
+            // 
+            this.linkAbrirCaja.AutoSize = true;
+            this.linkAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkAbrirCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkAbrirCaja.Location = new System.Drawing.Point(23, 16);
+            this.linkAbrirCaja.Name = "linkAbrirCaja";
+            this.linkAbrirCaja.Size = new System.Drawing.Size(67, 16);
+            this.linkAbrirCaja.TabIndex = 1;
+            this.linkAbrirCaja.TabStop = true;
+            this.linkAbrirCaja.Text = "Abrir Caja";
+            this.linkAbrirCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkAbrirCaja_LinkClicked);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label4.Location = new System.Drawing.Point(74, 7);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(42, 18);
+            this.label4.TabIndex = 0;
+            this.label4.Text = "Caja";
+            this.label4.Click += new System.EventHandler(this.label4_Click);
             // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(886, 540);
+            this.ClientSize = new System.Drawing.Size(997, 581);
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -368,6 +419,10 @@
             this.pnlCompras.PerformLayout();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
+            this.panel3.ResumeLayout(false);
+            this.panel3.PerformLayout();
+            this.panel5.ResumeLayout(false);
+            this.panel5.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -396,6 +451,10 @@
         private System.Windows.Forms.LinkLabel linkBaseDeDatos;
         private System.Windows.Forms.LinkLabel linkCerrarSesion;
         private System.Windows.Forms.LinkLabel linkLogin;
+        private System.Windows.Forms.Panel panel3;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.LinkLabel linkAbrirCaja;
+        private System.Windows.Forms.Label label4;
     }
 }
 

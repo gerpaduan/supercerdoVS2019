@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Presentacion.Personas;
 using Presentacion.Cortes;
 using Presentacion.Pagos;
+using Presentacion.Ventas;
 
 
 
@@ -58,14 +59,14 @@ namespace Presentacion
 
         private void linkVentas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
-            //if (logueado)
-            //{
+            if (!logueado)
+            {
+                //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+                //frmLogin.ShowDialog();
+                //logueado = frmLogin.Logueado();                
+            }
+            if (logueado)
+            {
                 if (Application.OpenForms["formVentas"] != null)
                 {
 
@@ -81,16 +82,20 @@ namespace Presentacion
                     frmVentas.Show();
 
                 }
-            //}
-            //else
-            //{
-            //    MessageBox.Show("No está logueado");
-            //}
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
 
 
         }
 
-      
+        private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formVentaCaja frmVentaCaja = new formVentaCaja();
+            frmVentaCaja.Show();
+        }        
 
         private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
@@ -372,6 +377,13 @@ namespace Presentacion
                 linkCerrarSesion.Visible = false;
             }
         }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        
         
        
     }

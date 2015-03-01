@@ -390,6 +390,12 @@
     <Compile Include="Ventas\formNuevaVenta.Designer.cs">
       <DependentUpon>formNuevaVenta.cs</DependentUpon>
     </Compile>
+    <Compile Include="Ventas\formVentaCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ventas\formVentaCaja.Designer.cs">
+      <DependentUpon>formVentaCaja.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ventas\formVentas.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -564,6 +570,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formNuevaVenta.resx">
       <DependentUpon>formNuevaVenta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Ventas\formVentaCaja.resx">
+      <DependentUpon>formVentaCaja.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formVentas.resx">
       <DependentUpon>formVentas.cs</DependentUpon>
