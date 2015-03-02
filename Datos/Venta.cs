@@ -55,6 +55,7 @@ namespace Datos
             cmVenta.Connection.Open();
 
             cmVenta.CommandType = CommandType.StoredProcedure;
+            /// Se eliminan todas las LineaVenta, y se actualiza datos de Venta
             cmVenta.CommandText = "modificarVenta";
 
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);

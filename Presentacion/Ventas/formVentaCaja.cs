@@ -17,6 +17,7 @@ namespace Presentacion.Ventas
         string cambiar = "";
         bool checkAnterior = false;
         Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
         formVentas frmVentas;
         DataTable dtSucursales;
@@ -53,6 +54,7 @@ namespace Presentacion.Ventas
         public formVentaCaja()
         {
             InitializeComponent();
+            this.KeyPreview = true;
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
@@ -246,7 +248,7 @@ namespace Presentacion.Ventas
             }
 
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
-            txtTotalS.Text = Convert.ToString(totalPesos);        
+            txtTotalS.Text = totalPesos.ToString("C2");        
         }
 
         private void agregarLinea()
@@ -257,25 +259,18 @@ namespace Presentacion.Ventas
                 {
                     cargarLinea();
 
-                    if (!existeCorte())
-                    {
+                    cargarListas();
+                    cargarGrilla();
 
-                        cargarGrilla();
+                    limpiarCamposCorte();
+                    oLineaVenta = null;
 
-                        limpiarCamposCorte();
-                        oLineaVenta = null;
-
-                        txtCodigo.Focus();
-                    }
-                   
-
+                    txtCodigo.Focus();
                 }
                 catch (Exception ex)
-                {
-                    
+                {                    
                     MessageBox.Show(ex.Message);
-                }
-                    
+                }                    
             }
         }
 
@@ -285,57 +280,7 @@ namespace Presentacion.Ventas
             cargarListaGrilla(oLineaVenta);
         }
         
-        private bool existeCorte()
-        {
-            //valida que no exista el corte
-            bool existeCorte = false;
-            int nroLinea=0;
-
-            foreach (Entidades.LineaVenta linea in listaLineaVenta)
-            {
-                if (oLineaVenta.Corte.idCorte == linea.Corte.idCorte &&
-                    oLineaVenta.Estado == linea.Estado)
-                {
-                    existeCorte = true;
-
-                    nroLinea = listaLineaVenta.IndexOf(linea);
-                }
-            }
-
-            if (existeCorte)
-            {
-                DialogResult respuesta;
-
-                ///si el corte existe y está checkeado Sumar igual Corte
-                ///sino pregunta
-                if (checkSumarIgualCorte.Checked)
-                {
-                    respuesta = DialogResult.Yes;
-                }
-                else
-                {
-                    respuesta = MessageBox.Show("El corte ingresado ya existe.\n\n¿Desea sumar los Kg al corte ya ingresado?", "El corte ya existe", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                }
-
-                if (respuesta==DialogResult.Yes)
-                {
-                    sumarCorte(nroLinea);
-                    existeCorte = false;
-                    return false;
-                }
-                else
-                {
-                    limpiarCamposCorte();
-                    return existeCorte;//true
-                }
-                
-            }
-            else
-            {
-                cargarListas();
-                return existeCorte;//false
-            }
-        }
+        
 
         private void sumarCorte(int nroLinea)
         {
@@ -351,11 +296,8 @@ namespace Presentacion.Ventas
             txtCodigo.Text = "";
             txtCorte.Text = "";
             txtCantKgs.Text = "";
-            if (checkFijarPrecio.Checked == false)
-            {
-                txtPrecioKg.Text = "";
-                txtTotalCorte.Text = "";
-            }
+            txtPrecioKg.Text = "";
+            txtTotalCorte.Text = "";
 
             txtCodigo.Focus();
         }
@@ -392,26 +334,6 @@ namespace Presentacion.Ventas
             oLineaVenta.Corte = oCorteE;
             oLineaVenta.Venta = oVentaE;
 
-            //try
-            //{
-            //    oLineaVenta.CantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-            //}
-            //catch (Exception)
-            //{
-
-            //    oLineaVenta.CantKg = float.Parse(txtCantKgs.Text.Trim());
-            //}
-
-            //try
-            //{
-            //    oLineaVenta.PrecioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-            //}
-            //catch (Exception)
-            //{
-
-            //    oLineaVenta.PrecioKg = float.Parse(txtPrecioKg.Text.Trim());
-            //}
-
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             
@@ -422,8 +344,7 @@ namespace Presentacion.Ventas
              else
              {
                  oLineaVenta.Estado = 0;//Activo
-             }
-                    
+             }                    
         }
 
         
@@ -464,15 +385,15 @@ namespace Presentacion.Ventas
                     }
                 
                 }
-
-
                 return false;
             }
-            
-            
-
+            if (!Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs."))
+            {
+                txtCantKgs.Focus();
+                return false;
+            }
             else
-            {                
+            {
                 return true;
             }
         }
@@ -508,23 +429,10 @@ namespace Presentacion.Ventas
 
                     return false;
                 }
-
                 else
                 {
-                    DialogResult respuesta;
-                    respuesta = MessageBox.Show("Vefique que la Fecha, Sucursal y demás datos ingresados esté correctos.\n\n¿Están correctos?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                    if (respuesta == DialogResult.Yes)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
                 }
-
-
             }
 
         }
@@ -586,16 +494,7 @@ namespace Presentacion.Ventas
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
-
-                        //si está fijo precio kg
-                        if (checkFijarPrecio.Checked)
-                        {
-                            oCorteE.precioKg = float.Parse(txtPrecioKg.Text);
-                        }
-                        else
-                        {
-                            this.txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
-                        }
+                        this.txtPrecioKg.Text = oCorteE.precioKg.ToString("N");
                     }
                     else
                     {
@@ -618,19 +517,17 @@ namespace Presentacion.Ventas
                 precioKg = 0;
                 totalCorte = 0;
                 txtTotalCorte.Text = null;
-                if (!checkFijarPrecio.Checked)
-                {
-                    txtPrecioKg.Text = null;
-                }                
+                txtPrecioKg.Text = null;
             }
         }
 
         private void cargarTotalCorte()
         {
-            if (!txtCantKgs.Text.Equals(""))
+            if (!txtCantKgs.Text.Equals("") && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))
             {
                 try
                 {
+                    //bool d = Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs");
                     try
                     {
                         cantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
@@ -666,7 +563,7 @@ namespace Presentacion.Ventas
                     }
                     totalCorte = cantKg * precioKg;
                     //cargo el txt total corte
-                    txtTotalCorte.Text = totalCorte.ToString();
+                    txtTotalCorte.Text = totalCorte.ToString("N");
                 }
                 catch (Exception ex)
                 { 
@@ -751,19 +648,6 @@ namespace Presentacion.Ventas
             cargarTotalCorte();
         }
 
-        private void txtTotalCorte_TextChanged(object sender, EventArgs e)
-        {
-            //if (!checkFijarPrecio.Checked)
-            //{
-            //    establecerPrecioKg();
-            //}
-            //if (checkLeerPeso.Checked)
-            //{
-            //    establecerPrecioKg();
-            //}
-            
-        }
-
         private void txtPrecioKg_TextChanged(object sender, EventArgs e)
         {
             establecerTotalCorte();
@@ -829,9 +713,7 @@ namespace Presentacion.Ventas
         {
             salir();
 
-        }
-
-        
+        }        
 
         private void btnBuscarCliente_Click(object sender, EventArgs e)
         {
@@ -860,7 +742,7 @@ namespace Presentacion.Ventas
         {
 
 
-            if (e.KeyChar == (char)(Keys.Enter))
+                if (e.KeyChar == (char)(Keys.Enter))
             {
 
                 e.Handled = true;
@@ -967,60 +849,7 @@ namespace Presentacion.Ventas
             }
         }
 
-        private void checkFijarPrecio_CheckedChanged(object sender, EventArgs e)
-        {
-            try
-            {
-                if (checkFijarPrecio.Checked)
-                {
-                    if (!txtPrecioKg.Text.Equals(""))
-                    {
-                        try
-                        {
-
-                            try
-                            {
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                            }
-                            catch (Exception)
-                            {
-
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim());
-                            }
-                            txtPrecioKg.ReadOnly = true;
-                            txtTotalCorte.ReadOnly = true;
-
-                        }
-                        catch (Exception ex)
-                        {
-                            if (txtPrecioKg.Text.Trim() != "-")
-                            {
-                                checkFijarPrecio.Checked = false;
-                                MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
-                            }
-
-                        }
-
-                    }
-                    else
-                    {
-                        checkFijarPrecio.Checked = false;
-                        MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
-                    }
-                    
-                }
-                else
-                {
-                    //txtCantKgs.Text = "";
-                    txtPrecioKg.ReadOnly = false;
-                    txtTotalCorte.ReadOnly = false;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
+        
 
         private void label17_Click(object sender, EventArgs e)
         {
@@ -1037,10 +866,46 @@ namespace Presentacion.Ventas
             
         }
 
-        
+        private void formVentaCaja_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            //if (e.KeyChar == (char)(Keys.Enter))
+            //{
 
-        
-       
+            //    e.Handled = true;
+
+            //    SendKeys.Send("{TAB}");
+
+            //}
+            //    switch (e.KeyChar)
+            //{
+            //    case (char)Keys.W: // mayúsculas
+            //    case (char)(Keys.W + 32): // minúsculas
+            //        MessageBox.Show("ba");
+            //        break;
+            //    case (char)Keys.S:
+            //    case (char)(Keys.S + 32): // minúsculas
+            //        MessageBox.Show("ba");
+            //        break;
+            //}
+            
+        }
+
+        private void formVentaCaja_KeyUp(object sender, KeyEventArgs e)
+        {
+        }
+
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.End:
+                    MessageBox.Show("Final.");
+                    agregarVenta();
+                    break;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
 
        
         
