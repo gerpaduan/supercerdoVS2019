@@ -48,6 +48,7 @@ namespace Presentacion.Ventas
         bool modificar = false;
         string fecha = "", estadoVenta="";
         float totalCorte, precioKg, cantKg;
+        float totalVenta = 0, abona = 0, cambio = 0;
         #endregion
 
 
@@ -150,7 +151,8 @@ namespace Presentacion.Ventas
             {
                 if (grillaLineasVenta.SelectedRows.Count > 0)
                 {
-                  agregarVenta();
+                    agregarVenta();
+                    txtCodigo.Focus();
                 }
                 else
                 {
@@ -216,6 +218,11 @@ namespace Presentacion.Ventas
             txtFechaVenta.Value = DateTime.Now;
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
+            txtCantItems.Text = "0";
+            txtTotalS.Text = "000,00";
+            txtAbona.Text = "";
+            txtCambio.Text = "";
+            panelPago.Visible = false;
 
             listaLineaGrilla = new List<LineaVenta>(); 
             listaLineaVenta = new List<Entidades.LineaVenta>();
@@ -248,7 +255,7 @@ namespace Presentacion.Ventas
             }
 
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
-            txtTotalS.Text = totalPesos.ToString("C2");        
+            txtTotalS.Text = totalPesos.ToString("N2");        
         }
 
         private void agregarLinea()
@@ -426,15 +433,20 @@ namespace Presentacion.Ventas
                     }
 
                     MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                     return false;
                 }
                 else
                 {
+                    if (abona > 0 && cambio < 0)
+                    {
+                        mensaje = "El pago del cliente es menor al total de la venta";
+                        MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        txtAbona.Focus();
+                        return false;
+                    }
                     return true;
                 }
             }
-
         }
 
         private void quitarLinea()
@@ -740,11 +752,8 @@ namespace Presentacion.Ventas
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
-
-                if (e.KeyChar == (char)(Keys.Enter))
+            if (e.KeyChar == (char)(Keys.Enter))
             {
-
                 e.Handled = true;
 
                 SendKeys.Send("{TAB}");
@@ -849,62 +858,44 @@ namespace Presentacion.Ventas
             }
         }
 
-        
-
-        private void label17_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
             
         }
-
-        private void formVentaCaja_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            //if (e.KeyChar == (char)(Keys.Enter))
-            //{
-
-            //    e.Handled = true;
-
-            //    SendKeys.Send("{TAB}");
-
-            //}
-            //    switch (e.KeyChar)
-            //{
-            //    case (char)Keys.W: // mayúsculas
-            //    case (char)(Keys.W + 32): // minúsculas
-            //        MessageBox.Show("ba");
-            //        break;
-            //    case (char)Keys.S:
-            //    case (char)(Keys.S + 32): // minúsculas
-            //        MessageBox.Show("ba");
-            //        break;
-            //}
-            
-        }
-
-        private void formVentaCaja_KeyUp(object sender, KeyEventArgs e)
-        {
-        }
-
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             switch (keyData)
             {
                 case Keys.End:
-                    MessageBox.Show("Final.");
-                    agregarVenta();
+                    panelPago.Visible = true;
+                    txtAbona.ReadOnly = false;
+                    txtAbona.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
                     break;
             }
+
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void txtAbona_TextChanged(object sender, EventArgs e)
+        {
+            if (Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona") && txtAbona.Text != "")
+            {
+                totalVenta = float.Parse(txtTotalS.Text.Trim());
+                abona = float.Parse(txtAbona.Text.Replace('.', ','));
+                cambio = abona - totalVenta;         
+            }
+            else
+            {
+                txtAbona.Text = "";
+                txtCambio.Text = "";
+                abona = 0;
+                cambio = 0;
+            }
+            txtCambio.Text = cambio.ToString("N2");
         }
 
        
