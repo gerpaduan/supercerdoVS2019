@@ -12,6 +12,13 @@ namespace Entidades
          Corte corte;
          Venta venta;
          int estado;
+         int indexAnulado = -1;
+
+         public int IndexAnulado
+         {
+             get { return indexAnulado; }
+             set { indexAnulado = value; }
+         }
 
         public float CantKg
         {

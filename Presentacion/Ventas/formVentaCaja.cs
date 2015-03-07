@@ -264,6 +264,10 @@ namespace Presentacion.Ventas
             {
                 try
                 {
+                    if (grillaLineasVenta.Rows.Count == 0)
+                    {
+                        txtFechaVenta.Value = DateTime.Now;
+                    }
                     cargarLinea();
 
                     cargarListas();
@@ -437,14 +441,35 @@ namespace Presentacion.Ventas
                 }
                 else
                 {
-                    if (abona > 0 && cambio < 0)
+                    if (totalVenta >= 0)
                     {
-                        mensaje = "El pago del cliente es menor al total de la venta";
-                        MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        txtAbona.Focus();
+                        if (abona > 0 && cambio < 0)
+                        {
+                            mensaje = "El pago del cliente es menor al total de la venta";
+                            MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            txtAbona.Focus();
+                            return false;
+                        }
+                        else
+                        {
+                            DialogResult respuesta = MessageBox.Show("¿Finalizar la venta?. ", "Finalizar Venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+
+                            if (respuesta == System.Windows.Forms.DialogResult.Yes)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        mensaje = "No se puede finalizar la venta porque el total a pagar es negativo (menor a cero).\n\nTotal a pagar:  $ "+totalVenta;
+                        MessageBox.Show(mensaje, "Error en la venta", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return false;
                     }
-                    return true;
                 }
             }
         }
@@ -454,15 +479,54 @@ namespace Presentacion.Ventas
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
-                listaLineaVenta.RemoveAt(nroFila);//elimina objetos de las listas
-                listaLineaGrilla.RemoveAt(nroFila);
+                
+                Entidades.LineaVenta oLineaVentaSelect = new Entidades.LineaVenta();
+                oLineaVentaSelect = listaLineaVenta[nroFila];
+
+                bool existeAnulado = false;
+                foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                  {
+                    if (oLineaVentaSelect.Corte.codigo == linea.Corte.codigo &&
+                        linea.IndexAnulado == nroFila)
+                    {
+                        existeAnulado = true;
+                    }
+                }
+
+                if (oLineaVentaSelect.Estado == 0 && !existeAnulado)
+                {
+                    string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " + 
+                        oLineaVentaSelect.Corte.corte +
+                        "    |   Cantidad:  " + oLineaVentaSelect.CantKg + "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.Corte.precioKg;
+                    string mensaje = "¿Está seguro de anular el corte seleccionado?" + datosLinea;
+                    DialogResult respuesta = MessageBox.Show(mensaje, "Anular Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    if (respuesta == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        oLineaVenta = new Entidades.LineaVenta();
+
+                        oLineaVenta = new Entidades.LineaVenta();
+                        oLineaVenta.Corte = oLineaVentaSelect.Corte;
+                        oLineaVenta.Venta = oLineaVentaSelect.Venta;
+                        oLineaVenta.CantKg = oLineaVentaSelect.CantKg * -1;
+                        oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
+                        oLineaVenta.Estado = 1;//anulado
+                        oLineaVenta.IndexAnulado = nroFila;
+                        cargarListas();
+                        cargarGrilla();
+
+                        txtCodigo.Focus();
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("El corte seleccionado ya ha sido anulado. \nIngréselo manualmente si desea volver a anularlo.", "Anular corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }                
             }
             else
             {
                 MessageBox.Show("No hay ninguna fila seleccionada.", "Seleccione un fila", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
-            cargarGrilla();
+            oLineaVenta = null;
         }
 
         private void cargarCorte()
@@ -501,8 +565,6 @@ namespace Presentacion.Ventas
                               }
                             
                         }
-
-
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
@@ -672,26 +734,15 @@ namespace Presentacion.Ventas
 
         private void btnQuitar_Click(object sender, EventArgs e)
         {
-            DialogResult respuesta = MessageBox.Show("¿Está seguro de quitar el corte seleccionado?. ", "Quitar Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-            if (respuesta == System.Windows.Forms.DialogResult.Yes)
-            {
-                quitarLinea();
-            }
-            
+            quitarLinea();
         }
 
         private void salir()
         {
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Salir de Nueva Venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                if (respuesta == System.Windows.Forms.DialogResult.Yes)
-                {
-                    this.Close();
-                }
-               
+                string mensaje = "No se puede salir porque hay un venta en curso.\n\nFinalice la venta e inténtelo nuevamente.";
+                MessageBox.Show(mensaje, "Salir", MessageBoxButtons.OK, MessageBoxIcon.Information);               
             }
 
             else
