@@ -519,7 +519,7 @@ namespace Presentacion.Ventas
                 }
                 else
                 {
-                    MessageBox.Show("El corte seleccionado ya ha sido anulado. \nIngréselo manualmente si desea volver a anularlo.", "Anular corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("El corte seleccionado ya ha sido anulado.", "Anular corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }                
             }
             else
