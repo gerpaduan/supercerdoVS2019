@@ -477,7 +477,7 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    Leer_Peso.AbrirPuerto();
+                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {

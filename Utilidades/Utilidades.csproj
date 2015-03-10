@@ -56,19 +56,12 @@
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
     <Compile Include="Leer_Peso.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Leer_Peso.Designer.cs">
-      <DependentUpon>Leer_Peso.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Leer_Peso.resx">
-      <DependentUpon>Leer_Peso.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

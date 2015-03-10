@@ -23,49 +23,49 @@ namespace Utilidades
         
         public void AbrirPuerto()
         {
-            try
+            //try
+            //{
+            if (!BasculaCom.IsOpen)
             {
-                if (!BasculaCom.IsOpen)
-                {
-                    BasculaCom.Open();
-                }
+                BasculaCom.Open();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Exception en AbrirPuerto() \n" + ex.Message);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show("Exception en AbrirPuerto() \n" + ex.Message);
+            //}
         }
 
         public void CerrarPuerto()
         {            
-            try
+            //try
+            //{
+            if (BasculaCom.IsOpen)
             {
-                if (BasculaCom.IsOpen)
-                {
-                    BasculaCom.Close();
-                }
+                BasculaCom.Close();
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Exception en CerrarPuerto() \n" + ex.Message);
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show("Exception en CerrarPuerto() \n" + ex.Message);
+            //}
         }
 
         public string ObtenerPeso()
         {
-            try
-            {
-                AbrirPuerto();
+            //try
+            //{
+            AbrirPuerto();
 
-                byte[] miBuffer = new byte[1];
-                miBuffer[0] = 5;
-                BasculaCom.Write(miBuffer, 0, miBuffer.Length);
-                MostrarRecibidos(BasculaCom.ReadExisting());
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Exception en ObtenerPeso \n" + ex.Message);
-            }
+            byte[] miBuffer = new byte[1];
+            miBuffer[0] = 5;
+            BasculaCom.Write(miBuffer, 0, miBuffer.Length);
+            MostrarRecibidos(BasculaCom.ReadExisting());
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show("Exception en ObtenerPeso \n" + ex.Message);
+            //}
             return pesoBalanza;
         }
 
@@ -73,7 +73,7 @@ namespace Utilidades
         {
             //al recibir de la bascula los bytesToRead indicara
             //un valor superior a 0
-            MessageBox.Show("  Recibir()");
+            //MessageBox.Show("  Recibir()");
             try
             {
                 MostrarRecibidos(BasculaCom.ReadExisting());
