@@ -971,24 +971,24 @@ namespace Presentacion.Ventas
         }
 
 
-        //const int WM_SYSCOMMAND = 0x0112;
-        //const int SC_CLOSE = 0xF060;
+        const int WM_SYSCOMMAND = 0x0112;
+        const int SC_CLOSE = 0xF060;
 
-        //protected override void WndProc(ref Message m)
-        //{
-        //    if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
-        //    {
-        //        DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Salir de Nueva Venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+        protected override void WndProc(ref Message m)
+        {
+            if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
+            {
+                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Salir de Nueva Venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-        //        if ((respuesta == System.Windows.Forms.DialogResult.No))
-        //        {
-        //            return;
-        //        } 
-                
-        //    }
+                if ((respuesta == System.Windows.Forms.DialogResult.No))
+                {
+                    return;
+                }
 
-        //    base.WndProc(ref m);
-        //}
+            }
+
+            base.WndProc(ref m);
+        }
 
         private void formNuevaVenta_Load(object sender, EventArgs e)
         {
