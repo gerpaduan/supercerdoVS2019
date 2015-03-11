@@ -1106,7 +1106,6 @@ namespace Presentacion.Ventas
                                 checkFijarPrecio.Checked = false;
                                 MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
                             }
-
                         }
 
                     }
