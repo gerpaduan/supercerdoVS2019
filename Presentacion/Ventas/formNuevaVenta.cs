@@ -894,7 +894,6 @@ namespace Presentacion.Ventas
                 }
                
             }
-
             else
             {
                 this.Close();
@@ -927,8 +926,6 @@ namespace Presentacion.Ventas
             salir();
 
         }
-
-        
 
         private void btnBuscarCliente_Click(object sender, EventArgs e)
         {
@@ -986,8 +983,8 @@ namespace Presentacion.Ventas
                 if ((respuesta == System.Windows.Forms.DialogResult.No))
                 {
                     return;
-                } 
-                
+                }
+
             }
 
             base.WndProc(ref m);
@@ -1040,7 +1037,7 @@ namespace Presentacion.Ventas
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    Leer_Peso.AbrirPuerto();
+                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {
@@ -1109,7 +1106,6 @@ namespace Presentacion.Ventas
                                 checkFijarPrecio.Checked = false;
                                 MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
                             }
-
                         }
 
                     }
