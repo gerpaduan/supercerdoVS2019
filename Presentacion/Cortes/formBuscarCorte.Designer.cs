@@ -64,7 +64,7 @@
             this.txtBuscarCorte.Location = new System.Drawing.Point(90, 21);
             this.txtBuscarCorte.Name = "txtBuscarCorte";
             this.txtBuscarCorte.Size = new System.Drawing.Size(121, 20);
-            this.txtBuscarCorte.TabIndex = 0;
+            this.txtBuscarCorte.TabIndex = 1;
             this.txtBuscarCorte.TextChanged += new System.EventHandler(this.btnBuscarCorte_Click);
             this.txtBuscarCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
@@ -76,7 +76,7 @@
             this.btnBuscarCorte.Location = new System.Drawing.Point(218, 20);
             this.btnBuscarCorte.Name = "btnBuscarCorte";
             this.btnBuscarCorte.Size = new System.Drawing.Size(28, 23);
-            this.btnBuscarCorte.TabIndex = 15;
+            this.btnBuscarCorte.TabIndex = 5;
             this.btnBuscarCorte.TabStop = false;
             this.btnBuscarCorte.UseVisualStyleBackColor = true;
             this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscarCorte_Click);
@@ -115,10 +115,10 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(247, 306);
+            this.btnSeleccionar.Location = new System.Drawing.Point(256, 306);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(84, 27);
-            this.btnSeleccionar.TabIndex = 2;
+            this.btnSeleccionar.TabIndex = 3;
             this.btnSeleccionar.Text = "Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
@@ -126,10 +126,11 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancelar.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancelar.Location = new System.Drawing.Point(346, 306);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(84, 27);
-            this.btnCancelar.TabIndex = 2;
+            this.btnCancelar.TabIndex = 4;
             this.btnCancelar.Text = "Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
@@ -156,11 +157,11 @@
             this.grillaCortes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaCortes.Size = new System.Drawing.Size(414, 236);
             this.grillaCortes.StandardTab = true;
-            this.grillaCortes.TabIndex = 1;
+            this.grillaCortes.TabIndex = 2;
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
             this.grillaCortes.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
-            // corte
+            // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
             this.idCorte.HeaderText = "ID Corte";
@@ -188,6 +189,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.btnCancelar;
             this.ClientSize = new System.Drawing.Size(442, 340);
             this.Controls.Add(this.grillaCortes);
             this.Controls.Add(this.panel1);
@@ -198,6 +200,7 @@
             this.Name = "formBuscarCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Buscar Corte";
+            this.Load += new System.EventHandler(this.formBuscarCorte_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).EndInit();

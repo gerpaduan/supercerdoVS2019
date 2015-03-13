@@ -26,6 +26,13 @@ namespace Presentacion
 
         private void linkCompras_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            compras();
+            
+
+        }
+
+        private static void compras()
+        {
             //if (!logueado)
             //{
             //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
@@ -53,11 +60,14 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-            
-
         }
 
         private void linkVentas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            ventas();
+        }
+
+        private static void ventas()
         {
             if (!logueado)
             {
@@ -87,8 +97,6 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-
-
         }
 
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -100,23 +108,29 @@ namespace Presentacion
         private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
 
+            cortes();
+        }
+
+        private static void cortes()
+        {
             if (Application.OpenForms["formCortes"] != null)
             {
-
                 Application.OpenForms["formCortes"].Activate();
                 Application.OpenForms["formCortes"].WindowState = FormWindowState.Normal;
-
             }
             else
             {
-
                 formCortes frmCortes = new formCortes();
                 frmCortes.Show();
-
             }
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            movimientos();
+        }
+
+        private static void movimientos()
         {
             if (Application.OpenForms["formMovimientos"] != null)
             {
@@ -132,7 +146,6 @@ namespace Presentacion
                 frmMovimientos.Show();
 
             }
-
         }
 
         private void linkProveedores_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -182,6 +195,11 @@ namespace Presentacion
 
         private void linkPersonas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            personas();
+        }
+
+        private static void personas()
+        {
             if (Application.OpenForms["formPersonas"] != null)
             {
 
@@ -200,6 +218,12 @@ namespace Presentacion
 
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            stockCortes();
+            
+        }
+
+        private static void stockCortes()
         {
             //if (!logueado)
             //{
@@ -228,31 +252,25 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-            
         }
 
         private void linkReportes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            reportes();
+        }
+
+        private static void reportes()
+        {
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
-
-            //if (Application.OpenForms["formReporteStock"] != null)
-            //{
-
-            //    Application.OpenForms["formReporteStock"].Activate();
-            //    Application.OpenForms["formReporteStock"].WindowState = FormWindowState.Normal;
-
-            //}
-            //else
-            //{
-
-            //    formReporteStock frmReporteStock = new formReporteStock();
-            //    frmReporteStock.Show();
-
-            //}
         }
 
         private void linkPagos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            pagos();
+        }
+
+        private static void pagos()
         {
             //if (!logueado)
             //{
@@ -287,6 +305,12 @@ namespace Presentacion
 
         private void linkBaseDeDatos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            baseDeDatos();
+            
+        }
+
+        private static void baseDeDatos()
+        {
             //if (!logueado)
             //{
             //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
@@ -312,7 +336,6 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-            
         }
 
         private void FormPrincipal_Activated(object sender, EventArgs e)
@@ -345,6 +368,11 @@ namespace Presentacion
         }
 
         private void LinkVentasClientes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            embutidos();
+        }
+
+        private static void embutidos()
         {
             if (Application.OpenForms["formEmbutidos"] != null)
             {
@@ -383,8 +411,52 @@ namespace Presentacion
 
         }
 
-        
-        
+        private void verComprasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            compras();
+        }
+
+        private void verVentasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ventas();
+        }
+
+        private void cortesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            cortes();
+        }
+
+        private void personasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            personas();
+        }
+
+        private void stockCortesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            stockCortes();
+        }
+
+        private void baseDeDatosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            baseDeDatos();
+        }
+
+        private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
+        { 
+            if (Application.OpenForms.Count > 1)
+            {
+                if (MessageBox.Show("¿ Está seguro que desea salir de la aplicación?", "SuperCerdo",
+               MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No)
+                {
+                    e.Cancel = true;
+                }
+            }
+            else
+            {
+                e.Cancel = false;
+            }
+            
+        }
        
     }
 

@@ -15,6 +15,7 @@ namespace Presentacion.Ventas
     public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona
     {
         string cambiar = "";
+        bool formAbierto = false;
         bool checkAnterior = false;
         Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
@@ -152,7 +153,7 @@ namespace Presentacion.Ventas
                 if (grillaLineasVenta.SelectedRows.Count > 0)
                 {
                     agregarVenta();
-                    txtCodigo.Focus();
+                    //txtCodigo.Focus();
                 }
                 else
                 {
@@ -447,6 +448,7 @@ namespace Presentacion.Ventas
                         {
                             mensaje = "El pago del cliente es menor al total de la venta";
                             MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            txtAbona.Select(); 
                             txtAbona.Focus();
                             return false;
                         }
@@ -456,6 +458,7 @@ namespace Presentacion.Ventas
 
                             if (respuesta == System.Windows.Forms.DialogResult.Yes)
                             {
+                                txtCodigo.Focus();
                                 return true;
                             }
                             else
@@ -737,21 +740,26 @@ namespace Presentacion.Ventas
             quitarLinea();
         }
 
-        private void salir()
+        private bool salir()
         {
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 string mensaje = "No se puede salir porque hay un venta en curso.\n\nFinalice la venta e inténtelo nuevamente.";
-                MessageBox.Show(mensaje, "Salir", MessageBoxButtons.OK, MessageBoxIcon.Information);               
+                MessageBox.Show(mensaje, "Salir", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return true;
             }
-
             else
             {
-                this.Close();
+                return false;
             }
         }
 
         private void btnBuscaCorte_Click(object sender, EventArgs e)
+        {
+            buscarCorte();
+        }
+
+        private void buscarCorte()
         {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
@@ -774,7 +782,7 @@ namespace Presentacion.Ventas
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            salir();
+            this.Close();
 
         }        
 
@@ -812,26 +820,6 @@ namespace Presentacion.Ventas
             }
 
         }
-
-
-        //const int WM_SYSCOMMAND = 0x0112;
-        //const int SC_CLOSE = 0xF060;
-
-        //protected override void WndProc(ref Message m)
-        //{
-        //    if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
-        //    {
-        //        DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Salir de Nueva Venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-        //        if ((respuesta == System.Windows.Forms.DialogResult.No))
-        //        {
-        //            return;
-        //        } 
-                
-        //    }
-
-        //    base.WndProc(ref m);
-        //}
 
         private void grupoCortes_Enter(object sender, EventArgs e)
         {
@@ -918,6 +906,9 @@ namespace Presentacion.Ventas
         {
             switch (keyData)
             {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
                 case Keys.End:
                     panelPago.Visible = true;
                     txtAbona.ReadOnly = false;
@@ -925,6 +916,46 @@ namespace Presentacion.Ventas
                     break;
                 case Keys.PageUp:
                     txtCodigo.Focus();
+                    break;
+                case Keys.F1:
+                    formAbierto = false;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                    if (!formAbierto)
+                    {
+                        formVentaCaja frmVentaCaja = new formVentaCaja();
+                        frmVentaCaja.Show();
+                    }
+                    break;
+                case Keys.F2:
+                    formAbierto = false;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja2))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                    if (!formAbierto)
+                    {
+                        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
+                        frmVentaCaja2.Show();
+                    }
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F12:
+                    txtObservaciones.Focus();
                     break;
             }
 
@@ -947,6 +978,11 @@ namespace Presentacion.Ventas
                 cambio = 0;
             }
             txtCambio.Text = cambio.ToString("N2");
+        }
+
+        private void formVentaCaja_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = salir();
         }
 
        

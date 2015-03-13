@@ -17,6 +17,7 @@ namespace Presentacion.Cortes
         {
             InitializeComponent();
             cargarGrilla();
+            txtBuscarCorte.Focus();
             
         }
 
@@ -26,9 +27,7 @@ namespace Presentacion.Cortes
             string txtBusqueda = txtBuscarCorte.Text.Trim();
 
             grillaCortes.AutoGenerateColumns = false;
-            grillaCortes.DataSource = oCorteN.buscarCorteSinMaestro(txtBusqueda);
-            
-                        
+            grillaCortes.DataSource = oCorteN.buscarCorteSinMaestro(txtBusqueda);                        
         }
 
         private void cargarGrilla()
@@ -102,6 +101,11 @@ namespace Presentacion.Cortes
         private void btnCancelar_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void formBuscarCorte_Load(object sender, EventArgs e)
+        {
+            txtBuscarCorte.Select();
         }
 
         
