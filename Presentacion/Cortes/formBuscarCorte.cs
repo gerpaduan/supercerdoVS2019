@@ -13,16 +13,24 @@ namespace Presentacion.Cortes
     {
         
         Negocio.Corte oCorteN;
+        bool tabStop = false;
         public formBuscarCorte()
         {
             InitializeComponent();
             cargarGrilla();
             txtBuscarCorte.Focus();
-            
+            txtBuscarCorte.Select();
         }
 
         private void buscarCorte()
         {
+            if (!tabStop)
+            {
+                tabStop = true;
+                grillaCortes.TabStop = true; 
+                btnSeleccionar.TabStop = true; 
+                btnCancelar.TabStop = true;
+            }
             oCorteN = new Negocio.Corte();
             string txtBusqueda = txtBuscarCorte.Text.Trim();
 
@@ -63,12 +71,12 @@ namespace Presentacion.Cortes
 
         private void cargarDatos(Entidades.Corte oCorte)
         {
-            
             oCorte.idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
             oCorte.codigo =  Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
             
             oCorte.corte = grillaCortes.CurrentRow.Cells[2].Value.ToString();
           //  oCorte.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
+            int nroFila = grillaCortes.Rows.GetFirstRow(DataGridViewElementStates.Selected);
         
         }
         private void btnBuscarCorte_Click(object sender, EventArgs e)
@@ -105,7 +113,6 @@ namespace Presentacion.Cortes
 
         private void formBuscarCorte_Load(object sender, EventArgs e)
         {
-            txtBuscarCorte.Select();
         }
 
         

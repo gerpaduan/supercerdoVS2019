@@ -12,11 +12,12 @@ namespace Presentacion.Personas
     public partial class formBuscarPersona : Form
     {
         Negocio.Persona oPersonaN = new Negocio.Persona();
-
+        bool tabStop = false;
         public formBuscarPersona()
         {
             InitializeComponent();
             cargarGrilla();
+            txtBuscar.Focus();
         }
 
         public void cargarGrilla()
@@ -30,15 +31,14 @@ namespace Presentacion.Personas
         }
 
         public void buscarPersona()
-        {
+        {            
+            btnSeleccionar.TabStop = true;
             oPersonaN = new Negocio.Persona();
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.AutoGenerateColumns = false;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
             oPersonaN = null;
         }
-
-        
 
         public void enviarPersona()
         {
@@ -61,6 +61,29 @@ namespace Presentacion.Personas
             oPersonaE.otrosDatos = grillaPersonas.CurrentRow.Cells[2].Value.ToString();
 
         }
+        private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!tabStop)
+            {
+                tabIndex();
+            }
+            if (e.KeyChar == (char)(Keys.Enter))
+            {
+                e.Handled = true;
+                enviarPersona();
+            }
+        }
+
+        private void tabIndex()
+        {
+            tabStop = true;
+            grillaPersonas.TabStop = true;
+            btnSeleccionar.TabStop = true;
+            btnCancelar.TabStop = true;
+            grillaPersonas.TabIndex = 2;
+            btnSeleccionar.TabIndex = 3;
+            btnCancelar.TabIndex = 4;
+        }
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
@@ -80,6 +103,21 @@ namespace Presentacion.Personas
         private void grillaPersonas_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             enviarPersona();
+        }
+
+        private void formBuscarPersona_Load(object sender, EventArgs e)
+        {
+        }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Tab:
+                    tabIndex();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
     }

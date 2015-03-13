@@ -788,6 +788,11 @@ namespace Presentacion.Ventas
 
         private void btnBuscarCliente_Click(object sender, EventArgs e)
         {
+            buscarCliente();
+        }
+
+        private void buscarCliente()
+        {
             formBuscarPersona frmBuscarPersona = new formBuscarPersona();
             frmBuscarPersona.Show(this);
         }
@@ -950,6 +955,9 @@ namespace Presentacion.Ventas
                         formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
                         frmVentaCaja2.Show();
                     }
+                    break;
+                case Keys.F9:
+                    buscarCliente();
                     break;
                 case Keys.F10:
                     buscarCorte();

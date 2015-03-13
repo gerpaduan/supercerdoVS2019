@@ -135,6 +135,12 @@
     <Compile Include="formBackUp.Designer.cs">
       <DependentUpon>formBackUp.cs</DependentUpon>
     </Compile>
+    <Compile Include="formInicial.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="formInicial.Designer.cs">
+      <DependentUpon>formInicial.cs</DependentUpon>
+    </Compile>
     <Compile Include="InterfaceEmbutido.cs" />
     <Compile Include="InterfacePersona.cs" />
     <Compile Include="InterfaceProveedor.cs" />
@@ -442,6 +448,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="formBackUp.resx">
       <DependentUpon>formBackUp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="formInicial.resx">
+      <DependentUpon>formInicial.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Movimientos\formInfoMovimiento.resx">
       <DependentUpon>formInfoMovimiento.cs</DependentUpon>

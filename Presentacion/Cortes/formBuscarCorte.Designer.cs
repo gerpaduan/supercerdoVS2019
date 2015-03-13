@@ -119,6 +119,7 @@
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(84, 27);
             this.btnSeleccionar.TabIndex = 3;
+            this.btnSeleccionar.TabStop = false;
             this.btnSeleccionar.Text = "Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
@@ -131,6 +132,7 @@
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(84, 27);
             this.btnCancelar.TabIndex = 4;
+            this.btnCancelar.TabStop = false;
             this.btnCancelar.Text = "Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
@@ -158,8 +160,8 @@
             this.grillaCortes.Size = new System.Drawing.Size(414, 236);
             this.grillaCortes.StandardTab = true;
             this.grillaCortes.TabIndex = 2;
+            this.grillaCortes.TabStop = false;
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
-            this.grillaCortes.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // idCorte
             // 
@@ -200,7 +202,6 @@
             this.Name = "formBuscarCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Buscar Corte";
-            this.Load += new System.EventHandler(this.formBuscarCorte_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).EndInit();
