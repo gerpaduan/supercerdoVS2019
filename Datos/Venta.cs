@@ -25,6 +25,8 @@ namespace Datos
 
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
+            cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
+            cmVenta.Parameters.AddWithValue("@vendedor", oVentaE.Vendedor);
             cmVenta.Parameters.AddWithValue("@turno",oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
@@ -62,6 +64,8 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaVenta", oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", SucAnterior);
             cmVenta.Parameters.AddWithValue("@idSucNueva", oVentaE.Sucursal.idSucursal);
+            cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
+            cmVenta.Parameters.AddWithValue("@vendedor", oVentaE.Vendedor);
             cmVenta.Parameters.AddWithValue("@turno", oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo", oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones", oVentaE.Observaciones);
@@ -119,6 +123,7 @@ namespace Datos
 
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
+            cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
@@ -142,6 +147,7 @@ namespace Datos
 
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
+            cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);

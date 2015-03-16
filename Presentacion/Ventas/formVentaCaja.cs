@@ -16,10 +16,12 @@ namespace Presentacion.Ventas
     {
         string cambiar = "";
         bool formAbierto = false;
+        bool pesoBalanza = false;
         bool checkAnterior = false;
         Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
+        public string vendedor = "-";
         formVentas frmVentas;
         DataTable dtSucursales;
         Negocio.Corte oCorteN = new Negocio.Corte();
@@ -59,6 +61,7 @@ namespace Presentacion.Ventas
             this.KeyPreview = true;
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            txtVendedor.Text = ConfigurationManager.AppSettings[this.Name].ToString();
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
@@ -66,11 +69,11 @@ namespace Presentacion.Ventas
             int idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
+            txtFecVenta.Text = DateTime.Now.ToString();
             if (!fecha.Equals(""))
             {
-                txtFechaVenta.Value = DateTime.Parse(fecha);
-            }
-            
+                txtFecVenta.Text = DateTime.Parse(fecha).ToString();
+            }            
         }
 
 
@@ -216,7 +219,7 @@ namespace Presentacion.Ventas
         }
         private void limpiarListas()
         {
-            txtFechaVenta.Value = DateTime.Now;
+            txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
@@ -234,7 +237,9 @@ namespace Presentacion.Ventas
         {
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
-            oVentaE.FechaVenta = txtFechaVenta.Value;
+            oVentaE.TipoVenta = "Caja";
+            oVentaE.Vendedor = txtVendedor.Text.Trim();
+            oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
@@ -261,13 +266,15 @@ namespace Presentacion.Ventas
 
         private void agregarLinea()
         {
+            //se asigna la lectura de balanza porque se destilda al desactivarse el form
+            pesoBalanza = checkLeerPeso.Checked;
             if (validarLinea())
             {
                 try
                 {
                     if (grillaLineasVenta.Rows.Count == 0)
                     {
-                        txtFechaVenta.Value = DateTime.Now;
+                        txtFecVenta.Text = DateTime.Now.ToString();
                     }
                     cargarLinea();
 
@@ -348,6 +355,7 @@ namespace Presentacion.Ventas
 
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
+            oLineaVenta.PesoBalanza = pesoBalanza;
             
              if (oLineaVenta.CantKg < 0)
              {

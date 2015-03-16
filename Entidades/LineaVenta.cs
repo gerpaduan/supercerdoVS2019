@@ -13,6 +13,13 @@ namespace Entidades
          Venta venta;
          int estado;
          int indexAnulado = -1;
+         private bool pesoBalanza;
+
+         public bool PesoBalanza
+         {
+             get { return pesoBalanza; }
+             set { pesoBalanza = value; }
+         }
 
          public int IndexAnulado
          {
