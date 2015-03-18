@@ -457,6 +457,11 @@ namespace Presentacion
             }
             
         }
+
+        private void linkCerrarCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+
+        }
        
     }
 

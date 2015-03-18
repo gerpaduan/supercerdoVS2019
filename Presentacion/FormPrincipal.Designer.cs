@@ -62,6 +62,9 @@
             this.personasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.panelCompras = new System.Windows.Forms.Panel();
+            this.panelVentas = new System.Windows.Forms.Panel();
+            this.linkCerrarCaja = new System.Windows.Forms.LinkLabel();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -74,6 +77,7 @@
             this.pnlCompras.SuspendLayout();
             this.panel2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
+            this.panelCompras.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -97,6 +101,7 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.splitContainer1.Panel2.Controls.Add(this.panelCompras);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
             this.splitContainer1.Size = new System.Drawing.Size(997, 581);
             this.splitContainer1.SplitterDistance = 203;
@@ -115,6 +120,7 @@
             // panel5
             // 
             this.panel5.BackColor = System.Drawing.Color.PeachPuff;
+            this.panel5.Controls.Add(this.linkCerrarCaja);
             this.panel5.Controls.Add(this.linkAbrirCaja);
             this.panel5.Location = new System.Drawing.Point(2, 30);
             this.panel5.Name = "panel5";
@@ -439,6 +445,40 @@
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
             // 
+            // panelCompras
+            // 
+            this.panelCompras.BackColor = System.Drawing.Color.Transparent;
+            this.panelCompras.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.panelCompras.Controls.Add(this.panelVentas);
+            this.panelCompras.Location = new System.Drawing.Point(0, 0);
+            this.panelCompras.Name = "panelCompras";
+            this.panelCompras.Size = new System.Drawing.Size(997, 581);
+            this.panelCompras.TabIndex = 1;
+            this.panelCompras.Visible = false;
+            // 
+            // panelVentas
+            // 
+            this.panelVentas.BackColor = System.Drawing.Color.Transparent;
+            this.panelVentas.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.panelVentas.Location = new System.Drawing.Point(0, 0);
+            this.panelVentas.Name = "panelVentas";
+            this.panelVentas.Size = new System.Drawing.Size(997, 581);
+            this.panelVentas.TabIndex = 2;
+            this.panelVentas.Visible = false;
+            // 
+            // linkCerrarCaja
+            // 
+            this.linkCerrarCaja.AutoSize = true;
+            this.linkCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCerrarCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCerrarCaja.Location = new System.Drawing.Point(23, 47);
+            this.linkCerrarCaja.Name = "linkCerrarCaja";
+            this.linkCerrarCaja.Size = new System.Drawing.Size(76, 16);
+            this.linkCerrarCaja.TabIndex = 2;
+            this.linkCerrarCaja.TabStop = true;
+            this.linkCerrarCaja.Text = "Cerrar Caja";
+            this.linkCerrarCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarCaja_LinkClicked);
+            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -478,6 +518,7 @@
             this.panel2.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.panelCompras.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -517,6 +558,9 @@
         private System.Windows.Forms.ToolStripMenuItem personasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockCortesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
+        private System.Windows.Forms.Panel panelCompras;
+        private System.Windows.Forms.LinkLabel linkCerrarCaja;
+        private System.Windows.Forms.Panel panelVentas;
     }
 }
 

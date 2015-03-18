@@ -23,6 +23,7 @@ namespace Datos
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "agregarVenta";
 
+            cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
