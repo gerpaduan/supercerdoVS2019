@@ -7,7 +7,7 @@ using System.Data.SqlClient;
 
 namespace Datos
 {
-    class CierreCaja
+    public class CierreCaja
     {
         Utilidades.Conexion conn = new Utilidades.Conexion();
         SqlDataAdapter daCierreCaja;
@@ -21,22 +21,22 @@ namespace Datos
             cmCierreCaja.Connection.Open();
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
             cmCierreCaja.CommandText = "addOrEditCierreCaja";
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Id);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Sucursal.IdSucursal);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.FechaHoraInicio);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.FechaHoraCierre);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.CajaInicio);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Ventas);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Gastos);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.SaldoCaja);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.CajaCierre);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Diferencia);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.CajaInicioSiguiente);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.ImporteRetirado);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.UsuarioInicio);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.UsuarioCierre);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Creado);
-            cmCierreCaja.Parameters.AddWithValue("@", oCierreCajaE.Actualizado);
+            cmCierreCaja.Parameters.AddWithValue("@id", oCierreCajaE.Id);
+            cmCierreCaja.Parameters.AddWithValue("@idSucursal", oCierreCajaE.Sucursal.IdSucursal);
+            cmCierreCaja.Parameters.AddWithValue("@fechaHoraInicio", oCierreCajaE.FechaHoraInicio);
+            cmCierreCaja.Parameters.AddWithValue("@fechaHoraCierre", oCierreCajaE.FechaHoraCierre);
+            cmCierreCaja.Parameters.AddWithValue("@cajaInicio", oCierreCajaE.CajaInicio);
+            cmCierreCaja.Parameters.AddWithValue("@ventas", oCierreCajaE.Ventas);
+            cmCierreCaja.Parameters.AddWithValue("@gastos", oCierreCajaE.Gastos);
+            cmCierreCaja.Parameters.AddWithValue("@saldoCaja", oCierreCajaE.SaldoCaja);
+            cmCierreCaja.Parameters.AddWithValue("@cajaCierre", oCierreCajaE.CajaCierre);
+            cmCierreCaja.Parameters.AddWithValue("@diferencia", oCierreCajaE.Diferencia);
+            cmCierreCaja.Parameters.AddWithValue("@cajaInicioSiguiente", oCierreCajaE.CajaInicioSiguiente);
+            cmCierreCaja.Parameters.AddWithValue("@importeRetirado", oCierreCajaE.ImporteRetirado);
+            cmCierreCaja.Parameters.AddWithValue("@usuarioInicio", oCierreCajaE.UsuarioInicio);
+            cmCierreCaja.Parameters.AddWithValue("@usuarioCierre", oCierreCajaE.UsuarioCierre);
+            cmCierreCaja.Parameters.AddWithValue("@creado", oCierreCajaE.Creado);
+            cmCierreCaja.Parameters.AddWithValue("@actualizado", oCierreCajaE.Actualizado);
 
             cmCierreCaja.ExecuteNonQuery();
             cmCierreCaja.Connection.Close();

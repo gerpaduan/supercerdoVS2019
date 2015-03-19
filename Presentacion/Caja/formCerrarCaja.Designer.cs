@@ -30,14 +30,14 @@
         {
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
-            this.txtRazonSocial = new System.Windows.Forms.TextBox();
+            this.txtSucursal = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.txtFechaHoraCierre = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label4 = new System.Windows.Forms.Label();
-            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.txtUserInicio = new System.Windows.Forms.TextBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.txtCajaInicial = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -55,6 +55,8 @@
             this.txtImporteRetirado = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
+            this.label12 = new System.Windows.Forms.Label();
+            this.txtUserCierre = new System.Windows.Forms.TextBox();
             this.pnlBuscar.SuspendLayout();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -74,7 +76,7 @@
             this.pnlBuscar.Controls.Add(this.txtFechaHoraInicio);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(361, 441);
+            this.pnlBuscar.Size = new System.Drawing.Size(361, 461);
             this.pnlBuscar.TabIndex = 24;
             // 
             // label1
@@ -82,27 +84,28 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(9, 13);
+            this.label1.Location = new System.Drawing.Point(48, 13);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(68, 16);
             this.label1.TabIndex = 8;
             this.label1.Text = "Sucursal";
             // 
-            // txtRazonSocial
+            // txtSucursal
             // 
-            this.txtRazonSocial.Location = new System.Drawing.Point(83, 12);
-            this.txtRazonSocial.Name = "txtRazonSocial";
-            this.txtRazonSocial.ReadOnly = true;
-            this.txtRazonSocial.Size = new System.Drawing.Size(150, 20);
-            this.txtRazonSocial.TabIndex = 7;
-            this.txtRazonSocial.TabStop = false;
+            this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSucursal.Location = new System.Drawing.Point(123, 10);
+            this.txtSucursal.Name = "txtSucursal";
+            this.txtSucursal.ReadOnly = true;
+            this.txtSucursal.Size = new System.Drawing.Size(150, 22);
+            this.txtSucursal.TabIndex = 7;
+            this.txtSucursal.TabStop = false;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(12, 97);
+            this.label2.Location = new System.Drawing.Point(12, 129);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(130, 16);
             this.label2.TabIndex = 10;
@@ -110,10 +113,11 @@
             // 
             // txtFechaHoraInicio
             // 
-            this.txtFechaHoraInicio.Location = new System.Drawing.Point(15, 115);
+            this.txtFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaHoraInicio.Location = new System.Drawing.Point(15, 147);
             this.txtFechaHoraInicio.Name = "txtFechaHoraInicio";
             this.txtFechaHoraInicio.ReadOnly = true;
-            this.txtFechaHoraInicio.Size = new System.Drawing.Size(150, 20);
+            this.txtFechaHoraInicio.Size = new System.Drawing.Size(169, 22);
             this.txtFechaHoraInicio.TabIndex = 9;
             this.txtFechaHoraInicio.TabStop = false;
             // 
@@ -122,7 +126,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(187, 97);
+            this.label3.Location = new System.Drawing.Point(187, 129);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(135, 16);
             this.label3.TabIndex = 12;
@@ -130,10 +134,11 @@
             // 
             // txtFechaHoraCierre
             // 
-            this.txtFechaHoraCierre.Location = new System.Drawing.Point(190, 115);
+            this.txtFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaHoraCierre.Location = new System.Drawing.Point(190, 147);
             this.txtFechaHoraCierre.Name = "txtFechaHoraCierre";
             this.txtFechaHoraCierre.ReadOnly = true;
-            this.txtFechaHoraCierre.Size = new System.Drawing.Size(150, 20);
+            this.txtFechaHoraCierre.Size = new System.Drawing.Size(159, 22);
             this.txtFechaHoraCierre.TabIndex = 11;
             this.txtFechaHoraCierre.TabStop = false;
             // 
@@ -153,7 +158,7 @@
             this.panel1.Controls.Add(this.label6);
             this.panel1.Controls.Add(this.txtCajaInicial);
             this.panel1.Controls.Add(this.label5);
-            this.panel1.Location = new System.Drawing.Point(12, 150);
+            this.panel1.Location = new System.Drawing.Point(12, 174);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(334, 283);
             this.panel1.TabIndex = 13;
@@ -163,29 +168,32 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(14, 39);
+            this.label4.Location = new System.Drawing.Point(13, 42);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(62, 16);
+            this.label4.Size = new System.Drawing.Size(103, 16);
             this.label4.TabIndex = 15;
-            this.label4.Text = "Usuario";
+            this.label4.Text = "Usuario Inicio";
             // 
-            // textBox3
+            // txtUserInicio
             // 
-            this.textBox3.Location = new System.Drawing.Point(83, 38);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(150, 20);
-            this.textBox3.TabIndex = 14;
+            this.txtUserInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtUserInicio.Location = new System.Drawing.Point(123, 39);
+            this.txtUserInicio.Name = "txtUserInicio";
+            this.txtUserInicio.Size = new System.Drawing.Size(150, 22);
+            this.txtUserInicio.TabIndex = 14;
             // 
             // panel2
             // 
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel2.Controls.Add(this.txtRazonSocial);
+            this.panel2.Controls.Add(this.label12);
+            this.panel2.Controls.Add(this.txtUserCierre);
+            this.panel2.Controls.Add(this.txtSucursal);
             this.panel2.Controls.Add(this.label4);
             this.panel2.Controls.Add(this.label1);
-            this.panel2.Controls.Add(this.textBox3);
+            this.panel2.Controls.Add(this.txtUserInicio);
             this.panel2.Location = new System.Drawing.Point(12, 12);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(255, 70);
+            this.panel2.Size = new System.Drawing.Size(294, 99);
             this.panel2.TabIndex = 14;
             // 
             // txtCajaInicial
@@ -195,7 +203,7 @@
             this.txtCajaInicial.Name = "txtCajaInicial";
             this.txtCajaInicial.Size = new System.Drawing.Size(150, 24);
             this.txtCajaInicial.TabIndex = 16;
-            this.txtCajaInicial.Text = "10.2";
+            this.txtCajaInicial.Text = "0";
             this.txtCajaInicial.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label5
@@ -227,7 +235,7 @@
             this.txtVentas.Name = "txtVentas";
             this.txtVentas.Size = new System.Drawing.Size(150, 24);
             this.txtVentas.TabIndex = 20;
-            this.txtVentas.Text = "10.2";
+            this.txtVentas.Text = "0";
             this.txtVentas.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // txtGastos
@@ -237,7 +245,7 @@
             this.txtGastos.Name = "txtGastos";
             this.txtGastos.Size = new System.Drawing.Size(150, 24);
             this.txtGastos.TabIndex = 22;
-            this.txtGastos.Text = "10.2";
+            this.txtGastos.Text = "0";
             this.txtGastos.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label7
@@ -258,7 +266,7 @@
             this.txtCajaActual.Name = "txtCajaActual";
             this.txtCajaActual.Size = new System.Drawing.Size(150, 24);
             this.txtCajaActual.TabIndex = 24;
-            this.txtCajaActual.Text = "10.2";
+            this.txtCajaActual.Text = "0";
             this.txtCajaActual.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label8
@@ -279,7 +287,7 @@
             this.txtDiferencia.Name = "txtDiferencia";
             this.txtDiferencia.Size = new System.Drawing.Size(150, 24);
             this.txtDiferencia.TabIndex = 26;
-            this.txtDiferencia.Text = "10.2";
+            this.txtDiferencia.Text = "0";
             this.txtDiferencia.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label9
@@ -310,7 +318,7 @@
             this.txtCaja.Name = "txtCaja";
             this.txtCaja.Size = new System.Drawing.Size(150, 24);
             this.txtCaja.TabIndex = 29;
-            this.txtCaja.Text = "10.2";
+            this.txtCaja.Text = "0";
             this.txtCaja.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label10
@@ -331,7 +339,7 @@
             this.txtImporteRetirado.Name = "txtImporteRetirado";
             this.txtImporteRetirado.Size = new System.Drawing.Size(150, 24);
             this.txtImporteRetirado.TabIndex = 31;
-            this.txtImporteRetirado.Text = "10.2";
+            this.txtImporteRetirado.Text = "0";
             this.txtImporteRetirado.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label11
@@ -348,7 +356,7 @@
             // btnCerrarCaja
             // 
             this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCerrarCaja.Location = new System.Drawing.Point(210, 447);
+            this.btnCerrarCaja.Location = new System.Drawing.Point(214, 467);
             this.btnCerrarCaja.Name = "btnCerrarCaja";
             this.btnCerrarCaja.Size = new System.Drawing.Size(135, 30);
             this.btnCerrarCaja.TabIndex = 30;
@@ -356,12 +364,31 @@
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label12.Location = new System.Drawing.Point(13, 70);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(108, 16);
+            this.label12.TabIndex = 17;
+            this.label12.Text = "Usuario Cierre";
+            // 
+            // txtUserCierre
+            // 
+            this.txtUserCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtUserCierre.Location = new System.Drawing.Point(123, 67);
+            this.txtUserCierre.Name = "txtUserCierre";
+            this.txtUserCierre.Size = new System.Drawing.Size(150, 22);
+            this.txtUserCierre.TabIndex = 16;
+            // 
             // formCerrarCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(361, 479);
+            this.ClientSize = new System.Drawing.Size(361, 501);
             this.Controls.Add(this.btnCerrarCaja);
             this.Controls.Add(this.pnlBuscar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -386,15 +413,14 @@
 
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.Label label1;
-        protected System.Windows.Forms.TextBox txtRazonSocial;
+        protected System.Windows.Forms.TextBox txtSucursal;
         protected System.Windows.Forms.Label label2;
         protected System.Windows.Forms.TextBox txtFechaHoraInicio;
         private System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.Label label3;
         protected System.Windows.Forms.TextBox txtFechaHoraCierre;
-        private System.Windows.Forms.Panel panel2;
         protected System.Windows.Forms.Label label4;
-        protected System.Windows.Forms.TextBox textBox3;
+        protected System.Windows.Forms.TextBox txtUserInicio;
         protected System.Windows.Forms.TextBox txtCajaInicial;
         protected System.Windows.Forms.Label label5;
         protected System.Windows.Forms.TextBox txtCajaActual;
@@ -403,13 +429,16 @@
         protected System.Windows.Forms.Label label7;
         protected System.Windows.Forms.TextBox txtVentas;
         protected System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Panel panel3;
         protected System.Windows.Forms.TextBox txtDiferencia;
         protected System.Windows.Forms.Label label9;
         protected System.Windows.Forms.TextBox txtImporteRetirado;
         protected System.Windows.Forms.Label label11;
         protected System.Windows.Forms.TextBox txtCaja;
         protected System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Button btnCerrarCaja;
+        protected System.Windows.Forms.Button btnCerrarCaja;
+        protected System.Windows.Forms.Panel panel2;
+        protected System.Windows.Forms.Panel panel3;
+        protected System.Windows.Forms.Label label12;
+        protected System.Windows.Forms.TextBox txtUserCierre;
     }
 }

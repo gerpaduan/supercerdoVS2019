@@ -469,6 +469,17 @@ namespace Presentacion
             formCerrarCaja frmCerrarCaja = new formCerrarCaja();
             frmCerrarCaja.ShowDialog();
         }
+
+        private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            abrirCaja();
+        }
+
+        private static void abrirCaja()
+        {
+            formAbrirCaja frmAbrirCaja = new formAbrirCaja();
+            frmAbrirCaja.ShowDialog();
+        }
        
     }
 

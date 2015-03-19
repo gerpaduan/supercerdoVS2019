@@ -6,7 +6,8 @@ using System.Data;
 
 namespace Negocio
 {
-    class CierreCaja
+    public class CierreCaja
     {
+        
     }
 }

@@ -11,6 +11,12 @@ namespace Presentacion.Caja
 {
     public partial class formCerrarCaja : Form
     {
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+
+        protected Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+        protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+
         public formCerrarCaja()
         {
             InitializeComponent();

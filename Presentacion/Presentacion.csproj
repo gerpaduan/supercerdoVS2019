@@ -65,6 +65,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caja\formAbrirCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formAbrirCaja.Designer.cs">
+      <DependentUpon>formAbrirCaja.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formCerrarCaja.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -422,6 +428,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Caja\formAbrirCaja.resx">
+      <DependentUpon>formAbrirCaja.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCerrarCaja.resx">
       <DependentUpon>formCerrarCaja.cs</DependentUpon>
     </EmbeddedResource>
