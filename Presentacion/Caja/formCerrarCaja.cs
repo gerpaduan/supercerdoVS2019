@@ -15,5 +15,15 @@ namespace Presentacion.Caja
         {
             InitializeComponent();
         }
+
+        private void formCerrarCaja_Load(object sender, EventArgs e)
+        {
+            txtCajaInicial.Focus();
+        }
+
+        private void btnCerrarCaja_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

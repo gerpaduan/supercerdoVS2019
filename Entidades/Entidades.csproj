@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CierreCaja.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="CortePorCompra.cs" />
     <Compile Include="CortePorEmbutido.cs" />

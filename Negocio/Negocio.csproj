@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CierreCaja.cs" />
     <Compile Include="Compra.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="DataSetCorte.cs">

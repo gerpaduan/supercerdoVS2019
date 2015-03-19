@@ -10,6 +10,7 @@ using Presentacion.Personas;
 using Presentacion.Cortes;
 using Presentacion.Pagos;
 using Presentacion.Ventas;
+using Presentacion.Caja;
 
 
 
@@ -460,7 +461,13 @@ namespace Presentacion
 
         private void linkCerrarCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            cerrarCaja();
+        }
 
+        private static void cerrarCaja()
+        {
+            formCerrarCaja frmCerrarCaja = new formCerrarCaja();
+            frmCerrarCaja.ShowDialog();
         }
        
     }
