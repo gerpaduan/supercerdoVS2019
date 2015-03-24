@@ -245,8 +245,6 @@ namespace Presentacion.Ventas
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta ;
-
-
         }
 
         private void cargarTotales()
@@ -261,7 +259,8 @@ namespace Presentacion.Ventas
             }
 
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
-            txtTotalS.Text = totalPesos.ToString("N2");        
+            txtTotalS.Text = totalPesos.ToString("N2");
+            abonar();
         }
 
         private void agregarLinea()
@@ -980,11 +979,16 @@ namespace Presentacion.Ventas
 
         private void txtAbona_TextChanged(object sender, EventArgs e)
         {
+            abonar();
+        }
+
+        private void abonar()
+        {
             if (Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona") && txtAbona.Text != "")
             {
                 totalVenta = float.Parse(txtTotalS.Text.Trim());
                 abona = float.Parse(txtAbona.Text.Replace('.', ','));
-                cambio = abona - totalVenta;         
+                cambio = abona - totalVenta;
             }
             else
             {

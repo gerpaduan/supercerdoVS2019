@@ -28,15 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pnlBuscar.SuspendLayout();
-            this.panel2.SuspendLayout();
-            this.panel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // txtCajaActual
             // 
-            this.txtCajaActual.ReadOnly = true;
-            this.txtCajaActual.Text = "";
+            this.txtCajaCierre.ReadOnly = true;
+            this.txtCajaCierre.Text = "";
             // 
             // txtGastos
             // 
@@ -60,8 +57,8 @@
             // 
             // txtCaja
             // 
-            this.txtCaja.ReadOnly = true;
-            this.txtCaja.Text = "";
+            this.txtCajaInicioSiguiente.ReadOnly = true;
+            this.txtCajaInicioSiguiente.Text = "";
             // 
             // btnCerrarCaja
             // 
@@ -70,17 +67,9 @@
             // 
             // formAbrirCaja
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.ClientSize = new System.Drawing.Size(361, 479);
             this.Name = "formAbrirCaja";
             this.Text = "Abrir Caja";
             this.Load += new System.EventHandler(this.formAbrirCaja_Load);
-            this.pnlBuscar.ResumeLayout(false);
-            this.pnlBuscar.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
-            this.panel3.ResumeLayout(false);
-            this.panel3.PerformLayout();
             this.ResumeLayout(false);
 
         }

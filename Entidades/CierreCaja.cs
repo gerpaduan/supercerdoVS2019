@@ -7,6 +7,7 @@ namespace Entidades
 {
     public class CierreCaja
     {
+        public enum tipoBusqueda {FindLast, FindAll, FindById};
         int id;
         public int Id
         {
@@ -34,58 +35,58 @@ namespace Entidades
             get { return fechaHoraCierre; }
             set { fechaHoraCierre = value; }
         }
-        float cajaInicio;
+        float? cajaInicio;
 
-        public float CajaInicio
+        public float? CajaInicio
         {
             get { return cajaInicio; }
             set { cajaInicio = value; }
         }
-        float ventas;
+        float? ventas;
 
-        public float Ventas
+        public float? Ventas
         {
             get { return ventas; }
             set { ventas = value; }
         }
-        float gastos;
+        float? gastos;
 
-        public float Gastos
+        public float? Gastos
         {
             get { return gastos; }
             set { gastos = value; }
         }
-        float saldoCaja;
+        float? saldoCaja;
 
-        public float SaldoCaja
+        public float? SaldoCaja
         {
             get { return saldoCaja; }
             set { saldoCaja = value; }
         }
-        float cajaCierre;
+        float? cajaCierre;
 
-        public float CajaCierre
+        public float? CajaCierre
         {
             get { return cajaCierre; }
             set { cajaCierre = value; }
         }
-        float diferencia;
+        float? diferencia;
 
-        public float Diferencia
+        public float? Diferencia
         {
             get { return diferencia; }
             set { diferencia = value; }
         }
-        float cajaInicioSiguiente;
+        float? cajaInicioSiguiente;
 
-        public float CajaInicioSiguiente
+        public float? CajaInicioSiguiente
         {
             get { return cajaInicioSiguiente; }
             set { cajaInicioSiguiente = value; }
         }
-        float importeRetirado;
+        float? importeRetirado;
 
-        public float ImporteRetirado
+        public float? ImporteRetirado
         {
             get { return importeRetirado; }
             set { importeRetirado = value; }

@@ -13,6 +13,36 @@ namespace Datos
         SqlDataAdapter daCierreCaja;
         SqlCommand cmCierreCaja;
 
+        public DataTable findCierreCaja(Entidades.CierreCaja oCierreParam, Entidades.CierreCaja.tipoBusqueda tipoBusquedaParam)
+        {
+            
+            //cmCierreCaja = new SqlCommand();
+            string selectText = "";
+
+            //cmCierreCaja.Connection = conn.conectar();
+            switch (tipoBusquedaParam)
+            {
+                case Entidades.CierreCaja.tipoBusqueda.FindAll:
+                    selectText = "select * from CierreCaja where idSucursal = "
+                        + oCierreParam.Sucursal.idSucursal;
+                        break;
+                case Entidades.CierreCaja.tipoBusqueda.FindById:
+                        selectText = "select * from CierreCaja where idSucursal = "
+                            + oCierreParam.Sucursal.idSucursal + " id =  " + oCierreParam.Id;
+                        break;
+                case Entidades.CierreCaja.tipoBusqueda.FindLast:
+                        selectText = "select top 1 * from CierreCaja where idSucursal = "
+                            + oCierreParam.Sucursal.idSucursal + " order by id desc";
+                        break;
+            }
+            DataTable dtCierreCaja = new DataTable();
+            SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
+            daCierreCaja.Fill(dtCierreCaja);           
+            conn.cerraConexion();
+
+            return dtCierreCaja;
+        }
+
         public void addOrEditCierreCaja(Entidades.CierreCaja oCierreCajaE)
         {
             cmCierreCaja = new SqlCommand();
@@ -35,12 +65,9 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@importeRetirado", oCierreCajaE.ImporteRetirado);
             cmCierreCaja.Parameters.AddWithValue("@usuarioInicio", oCierreCajaE.UsuarioInicio);
             cmCierreCaja.Parameters.AddWithValue("@usuarioCierre", oCierreCajaE.UsuarioCierre);
-            cmCierreCaja.Parameters.AddWithValue("@creado", oCierreCajaE.Creado);
-            cmCierreCaja.Parameters.AddWithValue("@actualizado", oCierreCajaE.Actualizado);
 
             cmCierreCaja.ExecuteNonQuery();
             cmCierreCaja.Connection.Close();
-
         }
     }
 }
