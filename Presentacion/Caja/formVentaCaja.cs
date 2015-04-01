@@ -205,6 +205,7 @@ namespace Presentacion.Ventas
                     {
                         oVentaN.agregarLineaVenta(linea);
                     }
+                    lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString();
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                     //this.Close();
@@ -681,9 +682,6 @@ namespace Presentacion.Ventas
                         precioKg = totalCorte / cantKg;
                         txtPrecioKg.Text = precioKg.ToString();
                     }
-                     
-                    
-
                 }
                 catch (Exception ex)
                 {
@@ -691,8 +689,6 @@ namespace Presentacion.Ventas
                     MessageBox.Show(ex.Message);
                 }
             }
-
-
         }
 
         private void establecerTotalCorte()

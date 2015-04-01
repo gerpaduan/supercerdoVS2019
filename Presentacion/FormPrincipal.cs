@@ -19,6 +19,7 @@ namespace Presentacion
     public partial class FormPrincipal : Form
     {
         public static bool logueado = false;
+        bool formAbierto = false;
         public FormPrincipal()
         {
             InitializeComponent();
@@ -108,7 +109,6 @@ namespace Presentacion
 
         private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-
             cortes();
         }
 
@@ -479,6 +479,54 @@ namespace Presentacion
         {
             formAbrirCaja frmAbrirCaja = new formAbrirCaja();
             frmAbrirCaja.ShowDialog();
+        }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.F1:
+                    formAbierto = false;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                    if (!formAbierto)
+                    {
+                        formVentaCaja frmVentaCaja = new formVentaCaja();
+                        frmVentaCaja.Show();
+                    }
+                    break;
+                case Keys.F2:
+                    formAbierto = false;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja2))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                    if (!formAbierto)
+                    {
+                        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
+                        frmVentaCaja2.Show();
+                    }
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void linkCierresDeCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
+            frmCierresDeCaja.Show();
         }
        
     }

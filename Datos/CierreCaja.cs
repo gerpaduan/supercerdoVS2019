@@ -13,7 +13,7 @@ namespace Datos
         SqlDataAdapter daCierreCaja;
         SqlCommand cmCierreCaja;
 
-        public DataTable findCierreCaja(Entidades.CierreCaja oCierreParam, Entidades.CierreCaja.tipoBusqueda tipoBusquedaParam)
+        public DataTable findCierreCaja(Entidades.CierreCaja oCierreParam, Entidades.CierreCaja.tipoBusqueda tipoBusquedaParam, string texto)
         {
             
             //cmCierreCaja = new SqlCommand();
@@ -23,8 +23,11 @@ namespace Datos
             switch (tipoBusquedaParam)
             {
                 case Entidades.CierreCaja.tipoBusqueda.FindAll:
-                    selectText = "select * from CierreCaja where idSucursal = "
-                        + oCierreParam.Sucursal.idSucursal;
+                    selectText = "select usuarioInicio as Iniciada_Por, fechaHoraInicio as Inicio, fechaHoraCierre as Cierre, " +
+                        "round(cajaInicio, 2) as Caja_Inicial, round(ventas, 2) as Ventas, round(gastos, 2) as Gastos, round(cajaCierre, 2) as Caja_Cierre, round(diferencia, 2) as Diferencia, " +
+                        "round(cajaInicioSiguiente, 2) as Caja_Ini_Sig, round(importeRetirado, 2) as Retirado, " +
+                        "usuarioCierre as Cerrada_Por from CierreCaja where idSucursal = "
+                        + oCierreParam.Sucursal.idSucursal + " and usuarioInicio like '%" + texto + "%' order by id desc ";
                         break;
                 case Entidades.CierreCaja.tipoBusqueda.FindById:
                         selectText = "select * from CierreCaja where idSucursal = "

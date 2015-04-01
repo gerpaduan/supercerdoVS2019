@@ -32,6 +32,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.panel3 = new System.Windows.Forms.Panel();
             this.panel5 = new System.Windows.Forms.Panel();
+            this.linkAbrirCaja = new System.Windows.Forms.LinkLabel();
             this.linkCerrarCaja = new System.Windows.Forms.LinkLabel();
             this.linkCajaVentas = new System.Windows.Forms.LinkLabel();
             this.label4 = new System.Windows.Forms.Label();
@@ -63,7 +64,7 @@
             this.personasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.linkAbrirCaja = new System.Windows.Forms.LinkLabel();
+            this.linkCierresDeCaja = new System.Windows.Forms.LinkLabel();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -117,6 +118,7 @@
             // panel5
             // 
             this.panel5.BackColor = System.Drawing.Color.PeachPuff;
+            this.panel5.Controls.Add(this.linkCierresDeCaja);
             this.panel5.Controls.Add(this.linkAbrirCaja);
             this.panel5.Controls.Add(this.linkCerrarCaja);
             this.panel5.Controls.Add(this.linkCajaVentas);
@@ -125,12 +127,25 @@
             this.panel5.Size = new System.Drawing.Size(173, 107);
             this.panel5.TabIndex = 1;
             // 
+            // linkAbrirCaja
+            // 
+            this.linkAbrirCaja.AutoSize = true;
+            this.linkAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkAbrirCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkAbrirCaja.Location = new System.Drawing.Point(23, 63);
+            this.linkAbrirCaja.Name = "linkAbrirCaja";
+            this.linkAbrirCaja.Size = new System.Drawing.Size(67, 16);
+            this.linkAbrirCaja.TabIndex = 3;
+            this.linkAbrirCaja.TabStop = true;
+            this.linkAbrirCaja.Text = "Abrir Caja";
+            this.linkAbrirCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkAbrirCaja_LinkClicked_1);
+            // 
             // linkCerrarCaja
             // 
             this.linkCerrarCaja.AutoSize = true;
             this.linkCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkCerrarCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkCerrarCaja.Location = new System.Drawing.Point(23, 47);
+            this.linkCerrarCaja.Location = new System.Drawing.Point(23, 41);
             this.linkCerrarCaja.Name = "linkCerrarCaja";
             this.linkCerrarCaja.Size = new System.Drawing.Size(76, 16);
             this.linkCerrarCaja.TabIndex = 2;
@@ -456,18 +471,18 @@
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
             // 
-            // linkAbrirCaja
+            // linkCierresDeCaja
             // 
-            this.linkAbrirCaja.AutoSize = true;
-            this.linkAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkAbrirCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkAbrirCaja.Location = new System.Drawing.Point(23, 72);
-            this.linkAbrirCaja.Name = "linkAbrirCaja";
-            this.linkAbrirCaja.Size = new System.Drawing.Size(67, 16);
-            this.linkAbrirCaja.TabIndex = 3;
-            this.linkAbrirCaja.TabStop = true;
-            this.linkAbrirCaja.Text = "Abrir Caja";
-            this.linkAbrirCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkAbrirCaja_LinkClicked_1);
+            this.linkCierresDeCaja.AutoSize = true;
+            this.linkCierresDeCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCierresDeCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCierresDeCaja.Location = new System.Drawing.Point(24, 83);
+            this.linkCierresDeCaja.Name = "linkCierresDeCaja";
+            this.linkCierresDeCaja.Size = new System.Drawing.Size(101, 16);
+            this.linkCierresDeCaja.TabIndex = 4;
+            this.linkCierresDeCaja.TabStop = true;
+            this.linkCierresDeCaja.Text = "Cierres de Caja";
+            this.linkCierresDeCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCierresDeCaja_LinkClicked);
             // 
             // FormPrincipal
             // 
@@ -549,6 +564,7 @@
         private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
         private System.Windows.Forms.LinkLabel linkCerrarCaja;
         private System.Windows.Forms.LinkLabel linkAbrirCaja;
+        private System.Windows.Forms.LinkLabel linkCierresDeCaja;
     }
 }
 

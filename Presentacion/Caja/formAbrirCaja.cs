@@ -20,11 +20,8 @@ namespace Presentacion.Caja
         {
             txtFechaHoraInicio.Text = DateTime.Now.ToString();
             txtFechaHoraCierre.Text = "";
-        }
-
-        private void btnCerrarCaja_Click(object sender, EventArgs e)
-        {
-            
+            txtDiferencia.Text = "";
+            txtImporteRetirado.Text = "";
         }
 
     }

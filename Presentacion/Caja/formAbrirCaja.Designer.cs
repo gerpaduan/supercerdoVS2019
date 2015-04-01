@@ -63,7 +63,6 @@
             // btnCerrarCaja
             // 
             this.btnCerrarCaja.Text = "Abrir Caja";
-            this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
             // formAbrirCaja
             // 

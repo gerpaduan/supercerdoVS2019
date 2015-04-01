@@ -9,10 +9,11 @@ namespace Negocio
     public class CierreCaja
     {
         Datos.CierreCaja oCierreD = new Datos.CierreCaja();
+        Negocio.Venta oVentaN = new Negocio.Venta();
 
-        public Entidades.CierreCaja findByIdOrLast(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda)
+        public Entidades.CierreCaja findByIdOrLast(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)
         {
-            DataTable dtCierreCaja = findCierreCaja(oCierre, tipoBusqueda);
+            DataTable dtCierreCaja = findCierreCaja(oCierre, tipoBusqueda, texto);
             List<Entidades.CierreCaja> listCierreCaja = convertDatatableToList(dtCierreCaja);
 
             return listCierreCaja[0];
@@ -49,14 +50,21 @@ namespace Negocio
             return listCierreCaja;
         }
 
-        private DataTable findCierreCaja(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda)
+        public DataTable findCierreCaja(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)
         {
-            return oCierreD.findCierreCaja(oCierre, tipoBusqueda);
+            return oCierreD.findCierreCaja(oCierre, tipoBusqueda, texto);
         }
+
         public void addOrEditCierreCaja(Entidades.CierreCaja oCierreE)
         {
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
+
+        public float obtenerTotalVentas(int idSucursal, DateTime? fechaInicioCaja, DateTime? fechaCierreCaja)
+        { 
+            return oVentaN.obtenerTotalVentas(idSucursal, fechaInicioCaja, fechaCierreCaja);
+        }
+
         
     }
 }

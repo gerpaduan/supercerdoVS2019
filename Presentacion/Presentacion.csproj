@@ -77,6 +77,12 @@
     <Compile Include="Caja\formCerrarCaja.Designer.cs">
       <DependentUpon>formCerrarCaja.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formCierresDeCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formCierresDeCaja.Designer.cs">
+      <DependentUpon>formCierresDeCaja.cs</DependentUpon>
+    </Compile>
     <Compile Include="CodeFile1.cs" />
     <Compile Include="Compras\formCambiarPrecioKg.cs">
       <SubType>Form</SubType>
@@ -433,6 +439,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCerrarCaja.resx">
       <DependentUpon>formCerrarCaja.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formCierresDeCaja.resx">
+      <DependentUpon>formCierresDeCaja.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Compras\formCambiarPrecioKg.resx">
       <DependentUpon>formCambiarPrecioKg.cs</DependentUpon>

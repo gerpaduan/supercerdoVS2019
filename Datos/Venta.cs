@@ -112,6 +112,35 @@ namespace Datos
             return dtVentas;
         }
 
+        public float obtenerTotalVentas(int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            DataTable dtVentas = new DataTable();
+            daVenta = new SqlDataAdapter();
+
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandText = "obtenerTotalVentas";
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            cmVenta.ExecuteNonQuery();
+
+            cmVenta.Connection.Close();
+
+            daVenta.SelectCommand = cmVenta;
+
+            daVenta.Fill(dtVentas);
+
+            daVenta = null;
+            cmVenta = null;
+
+            return float.Parse(dtVentas.Rows[0]["totalS"].ToString());
+        }
+
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
         {
             cmVenta = new SqlCommand();

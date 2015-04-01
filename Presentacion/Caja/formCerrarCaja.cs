@@ -21,7 +21,6 @@ namespace Presentacion.Caja
 
         protected enum tipoCierre { AbrirCaja, CerrarCaja };
         protected tipoCierre tipoCierreActual = tipoCierre.CerrarCaja;
-        //protected string tipoCierreActual = tipoCierre.CerrarCaja;
 
         public formCerrarCaja()
         {
@@ -36,7 +35,6 @@ namespace Presentacion.Caja
             validarAperturaForm();
             txtSucursal.Text = oSucursalE.sucursal;
             txtFechaHoraCierre.Text = DateTime.Now.ToString();
-            //txtCajaInicial.Focus();
         }
 
         private void btnCerrarCaja_Click(object sender, EventArgs e)
@@ -169,7 +167,7 @@ namespace Presentacion.Caja
 
                 diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
                 importeRetirado = cajaCierre - cajaInicioSiguiente;
-                txtDiferencia.Text = diferencia.ToString();
+                txtDiferencia.Text = diferencia.ToString("F2");
                 txtImporteRetirado.Text = importeRetirado.ToString();
             }             
         }
@@ -230,8 +228,7 @@ namespace Presentacion.Caja
 
         private void validarAperturaForm()
         {
-
-            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast);
+            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
             if (tipoCierreActual.Equals(tipoCierre.AbrirCaja))
             {
                 if (oCierreE.FechaHoraCierre.Equals(null))
@@ -240,7 +237,7 @@ namespace Presentacion.Caja
                         "\n\nDebe Cerrar Caja para volver a abrir", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.Close();
                 }
-                txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
+                txtCajaInicial.Text = oCierreE.CajaInicioSiguiente.ToString();
             }
             if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
             {
@@ -255,7 +252,7 @@ namespace Presentacion.Caja
                 txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
                 txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
                 txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
-                txtVentas.Text = oCierreE.Ventas.ToString();
+                txtVentas.Text = oCierreN.obtenerTotalVentas(oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
                 txtGastos.Text = oCierreE.Gastos.ToString();
                 txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
                 txtDiferencia.Text = oCierreE.Diferencia.ToString();
