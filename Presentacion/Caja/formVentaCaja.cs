@@ -31,7 +31,7 @@ namespace Presentacion.Ventas
 
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
-        Entidades.Usuario oUsuario;
+        public Entidades.Usuario oUsuario;
         Entidades.Corte oCorteE;
         Entidades.Sucursal oSucursalE= new Entidades.Sucursal();
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
@@ -61,22 +61,9 @@ namespace Presentacion.Ventas
         {
             InitializeComponent();
             this.KeyPreview = true;
-            ///login
-            FormLoginVendedor frmLogin = new FormLoginVendedor();
-            frmLogin.ShowDialog(this);
-
-            //formBuscarPersona frmBuscarPersona = new formBuscarPersona();
-            //frmBuscarPersona.Show(this);
-        
-        //public void EnviarPersona(Entidades.Persona persona)
-        //{
-        //    oCliente = persona;
-        //    this.txtCliente.Text = oCliente.razonSocial;
-
 
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            txtVendedor.Text = ConfigurationManager.AppSettings[this.Name].ToString();
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
@@ -88,7 +75,8 @@ namespace Presentacion.Ventas
             if (!fecha.Equals(""))
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
-            }            
+            }
+                              
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -258,7 +246,6 @@ namespace Presentacion.Ventas
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
             oVentaE.TipoVenta = "Caja";
-            oVentaE.Vendedor = oUsuario.Id;
             oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
@@ -926,7 +913,22 @@ namespace Presentacion.Ventas
 
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
-            
+            ///login
+            //FormLoginVendedor frmLogin = new FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+            if (oUsuario != null)
+            {
+                oVentaE.Vendedor = oUsuario;
+                usuario.Text = oUsuario.User;
+                txtVendedor.Text = oUsuario.Nombre;
+                Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
+                this.pnlBuscar.BackColor = colorUser;
+                this.grupoCortes.BackColor = colorUser;
+            }
+            else
+            {
+                this.Close();
+            }
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -944,49 +946,52 @@ namespace Presentacion.Ventas
                 case Keys.PageUp:
                     txtCodigo.Focus();
                     break;
-                case Keys.F1:
-                    formAbierto = false;
-                    foreach (Form frm in Application.OpenForms)
-                    {
-                        if (frm.GetType() == typeof(formVentaCaja))
-                        {
-                            frm.BringToFront();
-                            formAbierto = true;
-                            break;
-                        }
-                    }
-                    if (!formAbierto)
-                    {
-                        formVentaCaja frmVentaCaja = new formVentaCaja();
-                        frmVentaCaja.Show();
-                    }
-                    break;
-                case Keys.F2:
-                    formAbierto = false;
-                    foreach (Form frm in Application.OpenForms)
-                    {
-                        if (frm.GetType() == typeof(formVentaCaja2))
-                        {
-                            frm.BringToFront();
-                            formAbierto = true;
-                            break;
-                        }
-                    }
-                    if (!formAbierto)
-                    {
-                        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
-                        frmVentaCaja2.Show();
-                    }
-                    break;
-                case Keys.F9:
-                    buscarCliente();
-                    break;
-                case Keys.F10:
-                    buscarCorte();
-                    break;
-                case Keys.F12:
-                    txtObservaciones.Focus();
-                    break;
+                //case Keys.F1:
+                //    formAbierto = false;
+                //    foreach (Form frm in Application.OpenForms)
+                //    {
+                //        if (frm.GetType() == typeof(formVentaCaja))
+                //        {
+                //            bool d = frm.Visible;
+                //            if (!frm.Visible)
+                //            {
+                //                frm.BringToFront();
+                //                formAbierto = true;
+                //                break;
+                //            }
+                //            //foreach (Control ctrl in frm.Controls)
+                //            //{
+                //            //    //MessageBox.Show("\n text.ToString:" + ctrl.Text.ToString() + "\nName:" + ctrl.Name + "\nText:" + ctrl.Text);
+                //            //}
+                //        }
+                //    }
+                //    break;
+                //case Keys.F2:
+                //    formAbierto = false;
+                //    foreach (Form frm in Application.OpenForms)
+                //    {
+                //        if (frm.GetType() == typeof(formVentaCaja2))
+                //        {
+                //            frm.BringToFront();
+                //            formAbierto = true;
+                //            break;
+                //        }
+                //    }
+                //    if (!formAbierto)
+                //    {
+                //        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
+                //        frmVentaCaja2.Show();
+                //    }
+                //    break;
+                //case Keys.F9:
+                //    buscarCliente();
+                //    break;
+                //case Keys.F10:
+                //    buscarCorte();
+                //    break;
+                //case Keys.F12:
+                //    txtObservaciones.Focus();
+                //    break;
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
@@ -1020,14 +1025,34 @@ namespace Presentacion.Ventas
             e.Cancel = salir();
         }
 
-       
-        
+        private void btnBloquear_Click(object sender, EventArgs e)
+        {
+            panelBloquear.Visible = true;
+            btnBloquear.Visible = false;
+            btnAceptar.Enabled = false;
+            grupoCortes.Enabled = false;
+            pnlBuscar.Enabled = false;
+            panelPago.Enabled = false;
+        }
 
-       
+        private void btnIngresar_Click(object sender, EventArgs e)
+        {
+            if (txtClave.Text.Equals(oUsuario.Clave))
+            {
+                panelBloquear.Visible = false;
+                btnBloquear.Visible = true;                
+                lblErrorClave.Visible = false;
+                txtClave.Text = "";
 
-        
-        
-      
-        
+                btnAceptar.Enabled = true;
+                grupoCortes.Enabled = true;
+                pnlBuscar.Enabled = true;
+                panelPago.Enabled = true;
+            }
+            else
+            {
+                lblErrorClave.Visible = true;
+            }
+        }        
     }
 }

@@ -46,7 +46,11 @@ namespace Presentacion.Caja
             oUsuarioE = oUsuarioN.validarUsuario(comboUsuario.SelectedValue.ToString(), txtClave.Text);
             if (oUsuarioE != null)
             {
-                MessageBox.Show("encontrado");
+                enviarUsuario();
+            }
+            else
+            {
+                MessageBox.Show("Contraseña incorrecta.", "Error Login", MessageBoxButtons.OK ,MessageBoxIcon.Error);
             }
             
         }

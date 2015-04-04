@@ -18,7 +18,7 @@ namespace Entidades
          Persona persona;
          private string nroRemito;
          private string estado;
-         private int vendedor;
+         Usuario vendedor;
          private string tipoVenta;
 
          public string TipoVenta
@@ -27,7 +27,7 @@ namespace Entidades
              set { tipoVenta = value; }
          }
 
-         public int Vendedor
+         public Usuario Vendedor
          {
              get { return vendedor; }
              set { vendedor = value; }

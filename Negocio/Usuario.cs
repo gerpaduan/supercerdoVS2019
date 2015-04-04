@@ -38,6 +38,7 @@ namespace Negocio
                     user.User = Convert.ToString(drUsuario["usuario"]);
                     user.Clave = Convert.ToString(drUsuario["clave"]);
                     user.Admin = Convert.ToBoolean(drUsuario["admin"]);
+                    user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
    
                     listUsuarios.Add(user);
                 }
@@ -47,7 +48,7 @@ namespace Negocio
 
         public Entidades.Usuario validarUsuario(string usuario, string clave)
         {
-            Entidades.Usuario userEncontrado = new Entidades.Usuario();
+            Entidades.Usuario userEncontrado = null;
             if (listUsuarios == null)
 	        {
                 listUsuarios = convertDatatableToList();
@@ -56,6 +57,7 @@ namespace Negocio
             {
                 if (user.User.Equals(usuario) && user.Clave.Equals(clave))
                 {
+                    userEncontrado = new Entidades.Usuario();
                     userEncontrado = user;
                 }
             }

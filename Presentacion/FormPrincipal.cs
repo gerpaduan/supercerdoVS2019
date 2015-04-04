@@ -16,10 +16,12 @@ using Presentacion.Caja;
 
 namespace Presentacion
 {
-    public partial class FormPrincipal : Form
+    public partial class FormPrincipal : Form, InterfaceUsuario
     {
         public static bool logueado = false;
         bool formAbierto = false;
+        Entidades.Usuario oUsuario;
+
         public FormPrincipal()
         {
             InitializeComponent();
@@ -103,9 +105,37 @@ namespace Presentacion
 
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            formVentaCaja frmVentaCaja = new formVentaCaja();
-            frmVentaCaja.Show();
-        }        
+            formAbierto = false;
+            ///login
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formVentaCaja))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+	                    {
+                    		frm.BringToFront();
+                            formAbierto = true;
+                            break;
+	                    }
+                    }                    
+                }
+            }
+            if (!formAbierto)
+            {
+                formVentaCaja frmVentaCaja = new formVentaCaja();
+                frmVentaCaja.oUsuario = oUsuario;
+                frmVentaCaja.Show();
+            }
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        }
 
         private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {

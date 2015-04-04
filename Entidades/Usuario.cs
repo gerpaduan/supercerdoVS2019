@@ -42,6 +42,12 @@ namespace Entidades
             get { return admin; }
             set { admin = value; }
         }
+        string colorForm;
 
+        public string ColorForm
+        {
+            get { return colorForm; }
+            set { colorForm = value; }
+        }
     }
 }
