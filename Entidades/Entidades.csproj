@@ -64,6 +64,7 @@
     <Compile Include="StockCorteSucursal.cs" />
     <Compile Include="StockMaestroSucursal.cs" />
     <Compile Include="Sucursal.cs" />
+    <Compile Include="Usuario.cs" />
     <Compile Include="Venta.cs" />
   </ItemGroup>
   <ItemGroup>

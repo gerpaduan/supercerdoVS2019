@@ -29,6 +29,8 @@ namespace Presentacion.Caja
 
         private void formCerrarCaja_Load(object sender, EventArgs e)
         {
+            Utilidades.FormLogin frmLogin = new FormLogin();
+            frmLogin.ShowDialog();
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
             oCierreE.Sucursal = oSucursalE;

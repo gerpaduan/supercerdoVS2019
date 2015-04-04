@@ -83,6 +83,12 @@
     <Compile Include="Caja\formCierresDeCaja.Designer.cs">
       <DependentUpon>formCierresDeCaja.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\FormLoginVendedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\FormLoginVendedor.Designer.cs">
+      <DependentUpon>FormLoginVendedor.cs</DependentUpon>
+    </Compile>
     <Compile Include="CodeFile1.cs" />
     <Compile Include="Compras\formCambiarPrecioKg.cs">
       <SubType>Form</SubType>
@@ -163,6 +169,7 @@
     <Compile Include="InterfacePersona.cs" />
     <Compile Include="InterfaceProveedor.cs" />
     <Compile Include="InterfaceCorte.cs" />
+    <Compile Include="InterfaceUsuario.cs" />
     <Compile Include="LineaVenta.cs" />
     <Compile Include="MediasPorCompra.cs" />
     <Compile Include="Movimientos\formInfoMovimiento.cs">
@@ -442,6 +449,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCierresDeCaja.resx">
       <DependentUpon>formCierresDeCaja.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\FormLoginVendedor.resx">
+      <DependentUpon>FormLoginVendedor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Compras\formCambiarPrecioKg.resx">
       <DependentUpon>formCambiarPrecioKg.cs</DependentUpon>

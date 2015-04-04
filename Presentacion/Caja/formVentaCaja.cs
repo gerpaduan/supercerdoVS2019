@@ -8,11 +8,12 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
 using Presentacion.Cortes;
+using Presentacion.Caja;
 using System.Configuration;
 
 namespace Presentacion.Ventas
 {
-    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona
+    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
         string cambiar = "";
         bool formAbierto = false;
@@ -30,6 +31,7 @@ namespace Presentacion.Ventas
 
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
+        Entidades.Usuario oUsuario;
         Entidades.Corte oCorteE;
         Entidades.Sucursal oSucursalE= new Entidades.Sucursal();
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
@@ -59,6 +61,19 @@ namespace Presentacion.Ventas
         {
             InitializeComponent();
             this.KeyPreview = true;
+            ///login
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+
+            //formBuscarPersona frmBuscarPersona = new formBuscarPersona();
+            //frmBuscarPersona.Show(this);
+        
+        //public void EnviarPersona(Entidades.Persona persona)
+        //{
+        //    oCliente = persona;
+        //    this.txtCliente.Text = oCliente.razonSocial;
+
+
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             txtVendedor.Text = ConfigurationManager.AppSettings[this.Name].ToString();
@@ -76,7 +91,11 @@ namespace Presentacion.Ventas
             }            
         }
 
-
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+            this.txtVendedor.Text = oUsuario.Nombre;
+        }
 #region Modificar_Venta
 
 
@@ -239,7 +258,7 @@ namespace Presentacion.Ventas
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
             oVentaE.TipoVenta = "Caja";
-            oVentaE.Vendedor = txtVendedor.Text.Trim();
+            oVentaE.Vendedor = oUsuario.Id;
             oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";

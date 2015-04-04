@@ -1,0 +1,65 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Data;
+
+namespace Negocio
+{
+    public class Usuario
+    {
+        Datos.Usuario oUsuarioD;
+        public DataTable dtUsuarios;
+        List<Entidades.Usuario> listUsuarios;
+
+        public DataTable obtenerUsuarios()
+        {
+            oUsuarioD = new Datos.Usuario();
+            dtUsuarios = oUsuarioD.obtenerUsuarios();
+
+            return dtUsuarios;
+        }
+
+        private List<Entidades.Usuario> convertDatatableToList()
+        {
+            if (dtUsuarios == null)
+	        {
+        	    obtenerUsuarios();
+	        }
+            if (dtUsuarios.Rows.Count > 0)
+            {
+                listUsuarios = new List<Entidades.Usuario>();
+                Entidades.Usuario user;
+                foreach (DataRow drUsuario in dtUsuarios.Rows)
+                {
+                    user = new Entidades.Usuario();
+                    user.Id = Convert.ToInt32(drUsuario["id"]);
+                    user.Nombre = Convert.ToString(drUsuario["nombre"]);
+                    user.User = Convert.ToString(drUsuario["usuario"]);
+                    user.Clave = Convert.ToString(drUsuario["clave"]);
+                    user.Admin = Convert.ToBoolean(drUsuario["admin"]);
+   
+                    listUsuarios.Add(user);
+                }
+            }
+            return listUsuarios;
+        }
+
+        public Entidades.Usuario validarUsuario(string usuario, string clave)
+        {
+            Entidades.Usuario userEncontrado = new Entidades.Usuario();
+            if (listUsuarios == null)
+	        {
+                listUsuarios = convertDatatableToList();
+	        }
+            foreach (Entidades.Usuario user in listUsuarios)
+            {
+                if (user.User.Equals(usuario) && user.Clave.Equals(clave))
+                {
+                    userEncontrado = user;
+                }
+            }
+            return userEncontrado;
+        }
+    }
+}
