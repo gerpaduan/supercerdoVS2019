@@ -918,6 +918,7 @@ namespace Presentacion.Ventas
             //frmLogin.ShowDialog(this);
             if (oUsuario != null)
             {
+                validarAperturaCaja();
                 oVentaE.Vendedor = oUsuario;
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
@@ -927,6 +928,20 @@ namespace Presentacion.Ventas
             }
             else
             {
+                this.Close();
+            }
+        }
+
+        private void validarAperturaCaja()
+        {
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+            oCierreE.Sucursal = oSucursalE;
+            oCierreE.UsuarioInicio = oUsuario;
+            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
+            {
+                MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
         }
@@ -946,52 +961,18 @@ namespace Presentacion.Ventas
                 case Keys.PageUp:
                     txtCodigo.Focus();
                     break;
-                //case Keys.F1:
-                //    formAbierto = false;
-                //    foreach (Form frm in Application.OpenForms)
-                //    {
-                //        if (frm.GetType() == typeof(formVentaCaja))
-                //        {
-                //            bool d = frm.Visible;
-                //            if (!frm.Visible)
-                //            {
-                //                frm.BringToFront();
-                //                formAbierto = true;
-                //                break;
-                //            }
-                //            //foreach (Control ctrl in frm.Controls)
-                //            //{
-                //            //    //MessageBox.Show("\n text.ToString:" + ctrl.Text.ToString() + "\nName:" + ctrl.Name + "\nText:" + ctrl.Text);
-                //            //}
-                //        }
-                //    }
-                //    break;
-                //case Keys.F2:
-                //    formAbierto = false;
-                //    foreach (Form frm in Application.OpenForms)
-                //    {
-                //        if (frm.GetType() == typeof(formVentaCaja2))
-                //        {
-                //            frm.BringToFront();
-                //            formAbierto = true;
-                //            break;
-                //        }
-                //    }
-                //    if (!formAbierto)
-                //    {
-                //        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
-                //        frmVentaCaja2.Show();
-                //    }
-                //    break;
-                //case Keys.F9:
-                //    buscarCliente();
-                //    break;
-                //case Keys.F10:
-                //    buscarCorte();
-                //    break;
-                //case Keys.F12:
-                //    txtObservaciones.Focus();
-                //    break;
+                case Keys.F9:
+                    buscarCliente();
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+                case Keys.F12:
+                    bloquear();
+                    break;
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
@@ -1026,6 +1007,11 @@ namespace Presentacion.Ventas
         }
 
         private void btnBloquear_Click(object sender, EventArgs e)
+        {
+            bloquear();
+        }
+
+        private void bloquear()
         {
             panelBloquear.Visible = true;
             btnBloquear.Visible = false;

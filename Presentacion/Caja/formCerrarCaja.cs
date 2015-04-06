@@ -8,6 +8,7 @@ using System.Text;
 using System.Configuration;
 using System.Windows.Forms;
 using Utilidades;
+using Presentacion.Ventas;
 
 namespace Presentacion.Caja
 {
@@ -16,8 +17,10 @@ namespace Presentacion.Caja
         protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        protected Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+        public Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+        public Entidades.Usuario oUserIncio = new Entidades.Usuario();
+        public Entidades.Usuario oUserCierre = new Entidades.Usuario();
 
         protected enum tipoCierre { AbrirCaja, CerrarCaja };
         protected tipoCierre tipoCierreActual = tipoCierre.CerrarCaja;
@@ -29,11 +32,10 @@ namespace Presentacion.Caja
 
         private void formCerrarCaja_Load(object sender, EventArgs e)
         {
-            Utilidades.FormLogin frmLogin = new FormLogin();
-            frmLogin.ShowDialog();
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
             oCierreE.Sucursal = oSucursalE;
+            oCierreE.UsuarioInicio = oUserIncio;
             validarAperturaForm();
             txtSucursal.Text = oSucursalE.sucursal;
             txtFechaHoraCierre.Text = DateTime.Now.ToString();
@@ -50,11 +52,14 @@ namespace Presentacion.Caja
             {
                 if (validaciones())
                 {
-                    oCierreE = new Entidades.CierreCaja();
-                    oCierreE.Sucursal = oSucursalE;
-                    oCierreE.UsuarioInicio = txtUserInicio.Text;
-                    oCierreE.UsuarioCierre = txtUserCierre.Text;
-                    oCierreE.FechaHoraInicio = Convert.ToDateTime(txtFechaHoraInicio.Text);
+                    if (tipoCierreActual.Equals(tipoCierre.AbrirCaja))
+                    {
+                        oCierreE = new Entidades.CierreCaja();
+                        oCierreE.Sucursal = oSucursalE;
+                        oCierreE.UsuarioInicio = oUserIncio;
+                        oCierreE.FechaHoraInicio = Convert.ToDateTime(txtFechaHoraInicio.Text);
+                    }
+                    oCierreE.UsuarioCierre = oUserCierre;
                     oCierreE.FechaHoraCierre = string.IsNullOrEmpty(txtFechaHoraCierre.Text) ? (DateTime?)null : Convert.ToDateTime(txtFechaHoraCierre.Text.ToString());
                     oCierreE.CajaInicio = Util_Form.convertFloat(txtCajaInicial.Text);
                     oCierreE.Ventas = string.IsNullOrEmpty(txtVentas.Text) ? (float?)null : Util_Form.convertFloat(txtVentas.Text);
@@ -159,13 +164,13 @@ namespace Presentacion.Caja
             if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
             {
                 float cero = Util_Form.convertFloat("0"),
-                    cajaInicial = txtCajaInicial.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicial.Text),
-                    ventas = txtVentas.Text.Equals("") ? cero : Util_Form.convertFloat(txtVentas.Text),
-                    gastos = txtGastos.Text.Equals("") ? cero : Util_Form.convertFloat(txtGastos.Text),
-                    cajaCierre = txtCajaCierre.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaCierre.Text),
-                    cajaInicioSiguiente = txtCajaInicioSiguiente.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicioSiguiente.Text),
-                    importeRetirado = txtImporteRetirado.Text.Equals("") ? cero : Util_Form.convertFloat(txtImporteRetirado.Text),
-                    diferencia = 0;
+                cajaInicial = txtCajaInicial.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicial.Text),
+                ventas = txtVentas.Text.Equals("") ? cero : Util_Form.convertFloat(txtVentas.Text),
+                gastos = txtGastos.Text.Equals("") ? cero : Util_Form.convertFloat(txtGastos.Text),
+                cajaCierre = txtCajaCierre.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaCierre.Text),
+                cajaInicioSiguiente = txtCajaInicioSiguiente.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicioSiguiente.Text),
+                importeRetirado = txtImporteRetirado.Text.Equals("") ? cero : Util_Form.convertFloat(txtImporteRetirado.Text),
+                diferencia = 0;
 
                 diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
                 importeRetirado = cajaCierre - cajaInicioSiguiente;
@@ -230,37 +235,71 @@ namespace Presentacion.Caja
 
         private void validarAperturaForm()
         {
-            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-            if (tipoCierreActual.Equals(tipoCierre.AbrirCaja))
+            try
             {
-                if (oCierreE.FechaHoraCierre.Equals(null))
+                if (tipoCierreActual.Equals(tipoCierre.AbrirCaja))
                 {
-                    MessageBox.Show("Ya se abrió la caja en la siguiente fecha\n" + "Fecha: " + oCierreE.FechaHoraInicio.ToString() + 
-                        "\n\nDebe Cerrar Caja para volver a abrir", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.Close();
+                    oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+                    if (oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
+                    {
+                        MessageBox.Show(oUserIncio.Nombre +" ya ha abierto la caja en la siguiente fecha\n" + "Fecha: " + oCierreE.FechaHoraInicio.ToString() +
+                            "\n\nDebe Cerrar Caja para volver a abrir", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.Close();
+                    }
+                    txtUserInicio.Text = oUserIncio.Nombre;
+                    txtCajaInicial.Text = oCierreE != null ? oCierreE.CajaInicioSiguiente.ToString() : "";
                 }
-                txtCajaInicial.Text = oCierreE.CajaInicioSiguiente.ToString();
+                if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
+                {
+                    oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
+                    //if (!oUserCierre.Admin && !oCierreE.UsuarioInicio.Id.Equals(oUserCierre.Id))
+                    if (!oUserCierre.Admin)
+                    {
+                        MessageBox.Show(oUserCierre.Nombre + "\nNo tienes permiso para los cierres de caja.","Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.Close();
+                    }
+                    if (!oCierreE.FechaHoraCierre.Equals(null))
+                    {
+                        MessageBox.Show("No puede Cerrar Caja porque no se ha iniciado caja anteriormente.\n" + "Fecha Ultimo Cierre: " + oCierreE.FechaHoraCierre.ToString(),
+                            "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.Close();
+                    }
+
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja))
+                        {
+                            foreach (Control ctrl in frm.Controls)
+                            {
+                                if (ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oCierreE.UsuarioInicio.User))
+                                {
+                                    MessageBox.Show("No puede cerrar la caja de "+ oCierreE.UsuarioInicio.Nombre +" porque tiene abierta la pantalla de Ventas." +
+                                        "\n\nCierre la pantalla de ventas e intente cerrar la caja nuevamente",
+                                        "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    this.Close();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    txtUserInicio.Text = oCierreE.UsuarioInicio.Nombre;
+                    txtUserCierre.Text = oUserCierre.Nombre;
+                    txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
+                    txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
+                    txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
+                    txtVentas.Text = oCierreN.obtenerTotalVentas(oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
+                    txtGastos.Text = oCierreE.Gastos.ToString();
+                    txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
+                    txtDiferencia.Text = oCierreE.Diferencia.ToString();
+                    txtCajaInicioSiguiente.Text = oCierreE.CajaInicioSiguiente.ToString();
+                    txtImporteRetirado.Text = oCierreE.ImporteRetirado.ToString();
+                }
             }
-            if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
+            catch (Exception ex)
             {
-                if (!oCierreE.FechaHoraCierre.Equals(null))
-                {
-                    MessageBox.Show("No puede Cerrar Caja porque no se ha iniciado caja anteriormente.\n" + "Fecha Ultimo Cierre: " + oCierreE.FechaHoraCierre.ToString(),
-                        "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.Close();
-                }
-                txtUserInicio.Text = oCierreE.UsuarioInicio;
-                txtUserCierre.Text = oCierreE.UsuarioCierre;
-                txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
-                txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
-                txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
-                txtVentas.Text = oCierreN.obtenerTotalVentas(oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
-                txtGastos.Text = oCierreE.Gastos.ToString();
-                txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
-                txtDiferencia.Text = oCierreE.Diferencia.ToString();
-                txtCajaInicioSiguiente.Text = oCierreE.CajaInicioSiguiente.ToString();
-                txtImporteRetirado.Text = oCierreE.ImporteRetirado.ToString();
+                MessageBox.Show("Error en validarAperturaForm() \n" + ex.Message);
             }
+            
         }
     }
 }

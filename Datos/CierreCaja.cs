@@ -23,19 +23,26 @@ namespace Datos
             switch (tipoBusquedaParam)
             {
                 case Entidades.CierreCaja.tipoBusqueda.FindAll:
-                    selectText = "select usuarioInicio as Iniciada_Por, fechaHoraInicio as Inicio, fechaHoraCierre as Cierre, " +
+                    selectText = "select Usuarios.nombre as Iniciada_Por, fechaHoraInicio as Inicio, fechaHoraCierre as Cierre, " +
                         "round(cajaInicio, 2) as Caja_Inicial, round(ventas, 2) as Ventas, round(gastos, 2) as Gastos, round(cajaCierre, 2) as Caja_Cierre, round(diferencia, 2) as Diferencia, " +
                         "round(cajaInicioSiguiente, 2) as Caja_Ini_Sig, round(importeRetirado, 2) as Retirado, " +
-                        "usuarioCierre as Cerrada_Por from CierreCaja where idSucursal = "
-                        + oCierreParam.Sucursal.idSucursal + " and usuarioInicio like '%" + texto + "%' order by id desc ";
-                        break;
+                        "UsuarioCierre.nombre as Cerrada_Por from CierreCaja, Usuarios, Usuarios as UsuarioCierre " +
+                        "where CierreCaja.usuarioInicio = Usuarios.id and CierreCaja.usuarioCierre = UsuarioCierre.id and idSucursal = "
+                        + oCierreParam.Sucursal.idSucursal + " and Usuarios.nombre like '%" + texto + "%' order by CierreCaja.id desc ";
+                    break;
+                case Entidades.CierreCaja.tipoBusqueda.FindOpen:
+                    selectText = "select CierreCaja.id, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, fechaHoraInicio, " +
+                        "round(cajaInicio, 2) as cajaInicio from CierreCaja, Usuarios " +
+                        "where CierreCaja.usuarioInicio = Usuarios.id and idSucursal = "
+                        + oCierreParam.Sucursal.idSucursal + " and Usuarios.nombre like '%" + texto + "%' and CierreCaja.usuarioCierre = 0 ";
+                    break;
                 case Entidades.CierreCaja.tipoBusqueda.FindById:
                         selectText = "select * from CierreCaja where idSucursal = "
-                            + oCierreParam.Sucursal.idSucursal + " id =  " + oCierreParam.Id;
+                            + oCierreParam.Sucursal.idSucursal + " and id =  " + oCierreParam.Id;
                         break;
                 case Entidades.CierreCaja.tipoBusqueda.FindLast:
                         selectText = "select top 1 * from CierreCaja where idSucursal = "
-                            + oCierreParam.Sucursal.idSucursal + " order by id desc";
+                            + oCierreParam.Sucursal.idSucursal + " and usuarioInicio = "+ oCierreParam.UsuarioInicio.Id +" order by id desc";
                         break;
             }
             DataTable dtCierreCaja = new DataTable();
@@ -61,13 +68,12 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@cajaInicio", oCierreCajaE.CajaInicio);
             cmCierreCaja.Parameters.AddWithValue("@ventas", oCierreCajaE.Ventas);
             cmCierreCaja.Parameters.AddWithValue("@gastos", oCierreCajaE.Gastos);
-            cmCierreCaja.Parameters.AddWithValue("@saldoCaja", oCierreCajaE.SaldoCaja);
             cmCierreCaja.Parameters.AddWithValue("@cajaCierre", oCierreCajaE.CajaCierre);
             cmCierreCaja.Parameters.AddWithValue("@diferencia", oCierreCajaE.Diferencia);
             cmCierreCaja.Parameters.AddWithValue("@cajaInicioSiguiente", oCierreCajaE.CajaInicioSiguiente);
             cmCierreCaja.Parameters.AddWithValue("@importeRetirado", oCierreCajaE.ImporteRetirado);
-            cmCierreCaja.Parameters.AddWithValue("@usuarioInicio", oCierreCajaE.UsuarioInicio);
-            cmCierreCaja.Parameters.AddWithValue("@usuarioCierre", oCierreCajaE.UsuarioCierre);
+            cmCierreCaja.Parameters.AddWithValue("@usuarioInicio", oCierreCajaE.UsuarioInicio.Id);
+            cmCierreCaja.Parameters.AddWithValue("@usuarioCierre", oCierreCajaE.UsuarioCierre.Id);
 
             cmCierreCaja.ExecuteNonQuery();
             cmCierreCaja.Connection.Close();

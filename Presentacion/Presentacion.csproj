@@ -65,6 +65,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caja\formCajasAbiertas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formCajasAbiertas.Designer.cs">
+      <DependentUpon>formCajasAbiertas.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formAbrirCaja.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -441,6 +447,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Caja\formCajasAbiertas.resx">
+      <DependentUpon>formCajasAbiertas.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formAbrirCaja.resx">
       <DependentUpon>formAbrirCaja.cs</DependentUpon>
     </EmbeddedResource>
@@ -687,6 +696,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon_LogoAzulSuperCerdo.ico" />
+    <None Include="Resources\lock_32x32-32.ico" />
+    <None Include="Resources\16 %28Lock on%29.ico" />
+    <None Include="Resources\16 %28Lock off%29.ico" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

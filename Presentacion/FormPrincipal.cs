@@ -106,7 +106,7 @@ namespace Presentacion
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             formAbierto = false;
-            ///login
+
             FormLoginVendedor frmLogin = new FormLoginVendedor();
             frmLogin.ShowDialog(this);
             foreach (Form frm in Application.OpenForms)
@@ -115,7 +115,7 @@ namespace Presentacion
                 {
                     foreach (Control ctrl in frm.Controls)
                     {
-                        if (ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+                        if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
 	                    {
                     		frm.BringToFront();
                             formAbierto = true;
@@ -130,6 +130,7 @@ namespace Presentacion
                 frmVentaCaja.oUsuario = oUsuario;
                 frmVentaCaja.Show();
             }
+            oUsuario = null;
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -494,10 +495,16 @@ namespace Presentacion
             cerrarCaja();
         }
 
-        private static void cerrarCaja()
+        private void cerrarCaja()
         {
-            formCerrarCaja frmCerrarCaja = new formCerrarCaja();
-            frmCerrarCaja.ShowDialog();
+            formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
+            frmCajasAbiertas.Show();
+            //FormLoginVendedor frmLogin = new FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+
+            //formCerrarCaja frmCerrarCaja = new formCerrarCaja();
+            //frmCerrarCaja.oUserCierre = oUsuario;
+            //frmCerrarCaja.ShowDialog();
         }
 
         private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
@@ -505,10 +512,17 @@ namespace Presentacion
             abrirCaja();
         }
 
-        private static void abrirCaja()
+        private void abrirCaja()
         {
-            formAbrirCaja frmAbrirCaja = new formAbrirCaja();
-            frmAbrirCaja.ShowDialog();
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            if (oUsuario != null)
+            {                
+                formAbrirCaja frmAbrirCaja = new formAbrirCaja();
+                frmAbrirCaja.oUserIncio = oUsuario;
+                frmAbrirCaja.ShowDialog();
+            }
+            oUsuario = null;
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

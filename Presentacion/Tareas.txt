@@ -4,7 +4,7 @@
 
 	- Quitar autonumerico a idVenta
 	- Agregar campos @tipoVenta nvarchar(50),
-					 @vendedor nvarchar(50)
+					 @idVendedor int
 					 
 	- Modificar Procedures (Agregar, Modificar). Agregar los nuevos campos (Ver abajo el codigo)
 	
@@ -25,7 +25,7 @@
 	@fechaVenta datetime,
 	@turno nvarchar(50),
 	@tipoVenta nvarchar(50),
-	@vendedor nvarchar(50),
+	@idVendedor nvarchar(50),
 	@diaFestivo nvarchar(50),
 	@observaciones nvarchar(200),
 	@idPersona int,

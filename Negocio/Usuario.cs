@@ -20,7 +20,7 @@ namespace Negocio
             return dtUsuarios;
         }
 
-        private List<Entidades.Usuario> convertDatatableToList()
+        public List<Entidades.Usuario> convertDatatableToList()
         {
             if (dtUsuarios == null)
 	        {

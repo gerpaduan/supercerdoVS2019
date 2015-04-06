@@ -7,7 +7,7 @@ namespace Entidades
 {
     public class CierreCaja
     {
-        public enum tipoBusqueda {FindLast, FindAll, FindById};
+        public enum tipoBusqueda {FindLast, FindAll, FindById, FindOpen};
         int id;
         public int Id
         {
@@ -92,16 +92,16 @@ namespace Entidades
             set { importeRetirado = value; }
         }
 
-        string usuarioInicio;
+        Entidades.Usuario usuarioInicio;
 
-        public string UsuarioInicio
+        public Entidades.Usuario UsuarioInicio
         {
             get { return usuarioInicio; }
             set { usuarioInicio = value; }
         }
-        string usuarioCierre;
+        Entidades.Usuario usuarioCierre;
 
-        public string UsuarioCierre
+        public Entidades.Usuario UsuarioCierre
         {
             get { return usuarioCierre; }
             set { usuarioCierre = value; }

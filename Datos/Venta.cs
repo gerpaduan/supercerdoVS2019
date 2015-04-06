@@ -27,7 +27,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
-            cmVenta.Parameters.AddWithValue("@vendedor", oVentaE.Vendedor);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
             cmVenta.Parameters.AddWithValue("@turno",oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
@@ -66,7 +66,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idSucursal", SucAnterior);
             cmVenta.Parameters.AddWithValue("@idSucNueva", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
-            cmVenta.Parameters.AddWithValue("@vendedor", oVentaE.Vendedor);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
             cmVenta.Parameters.AddWithValue("@turno", oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo", oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones", oVentaE.Observaciones);
@@ -137,8 +137,8 @@ namespace Datos
 
             daVenta = null;
             cmVenta = null;
-
-            return float.Parse(dtVentas.Rows[0]["totalS"].ToString());
+            float totalVentas = dtVentas.Rows[0]["totalS"].ToString().Equals("") ? 0 : float.Parse(dtVentas.Rows[0]["totalS"].ToString());
+            return totalVentas;
         }
 
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
