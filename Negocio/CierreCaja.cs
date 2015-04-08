@@ -78,9 +78,9 @@ namespace Negocio
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
 
-        public float obtenerTotalVentas(int idSucursal, DateTime? fechaInicioCaja, DateTime? fechaCierreCaja)
-        { 
-            return oVentaN.obtenerTotalVentas(idSucursal, fechaInicioCaja, fechaCierreCaja);
+        public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaInicioCaja, DateTime? fechaCierreCaja)
+        {
+            return oVentaN.obtenerTotalVentas(idVendedor, idSucursal, fechaInicioCaja, fechaCierreCaja);
         }
 
         

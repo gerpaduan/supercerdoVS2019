@@ -474,20 +474,23 @@ namespace Presentacion
         }
 
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
-        { 
-            if (Application.OpenForms.Count > 1)
+        {
+            bool permitirCerrar = true;
+            e.Cancel = true;
+            foreach (Form frm in Application.OpenForms)
             {
-                if (MessageBox.Show("¿ Está seguro que desea salir de la aplicación?", "SuperCerdo",
-               MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No)
+                if (frm.GetType() == typeof(formVentaCaja))
                 {
-                    e.Cancel = true;
+                    MessageBox.Show("Para salir de la aplicación debe cerrar las ventanas de ventas");
+                    permitirCerrar = false;
+                    break;
                 }
             }
-            else
+            if (permitirCerrar && MessageBox.Show("¿ Está seguro que desea salir de la aplicación?", "SuperCerdo",
+           MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
                 e.Cancel = false;
-            }
-            
+            }            
         }
 
         private void linkCerrarCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

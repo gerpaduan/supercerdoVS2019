@@ -25,9 +25,9 @@ namespace Negocio
             return oVentaD.obtenerVentas(sucursal, fechaDesde, fechaHasta, texto);
         }
 
-        public float obtenerTotalVentas(int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
         {
-            return oVentaD.obtenerTotalVentas(idSucursal, fechaDesde, fechaHasta);
+            return oVentaD.obtenerTotalVentas(idVendedor, idSucursal, fechaDesde, fechaHasta);
         } 
 
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)

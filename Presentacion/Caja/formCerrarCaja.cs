@@ -273,8 +273,8 @@ namespace Presentacion.Caja
                             {
                                 if (ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oCierreE.UsuarioInicio.User))
                                 {
-                                    MessageBox.Show("No puede cerrar la caja de "+ oCierreE.UsuarioInicio.Nombre +" porque tiene abierta la pantalla de Ventas." +
-                                        "\n\nCierre la pantalla de ventas e intente cerrar la caja nuevamente",
+                                    MessageBox.Show("No puedes cerrar la caja de "+ oCierreE.UsuarioInicio.Nombre +" porque tiene una venta en curso." +
+                                        "\n\nCierre la pantalla de ventas correspondiente al vendedor e intente cerrar caja nuevamente",
                                         "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                     this.Close();
                                     break;
@@ -287,7 +287,7 @@ namespace Presentacion.Caja
                     txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
                     txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
                     txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
-                    txtVentas.Text = oCierreN.obtenerTotalVentas(oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
+                    txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
                     txtGastos.Text = oCierreE.Gastos.ToString();
                     txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
                     txtDiferencia.Text = oCierreE.Diferencia.ToString();

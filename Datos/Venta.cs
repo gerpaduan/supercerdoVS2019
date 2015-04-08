@@ -112,7 +112,7 @@ namespace Datos
             return dtVentas;
         }
 
-        public float obtenerTotalVentas(int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
         {
             DataTable dtVentas = new DataTable();
             daVenta = new SqlDataAdapter();
@@ -123,6 +123,7 @@ namespace Datos
             cmVenta.Connection.Open();
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "obtenerTotalVentas";
+            cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
             cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
@@ -233,6 +234,16 @@ namespace Datos
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
 
+                        try
+                        {
+                            oLinea.PesoBalanza = Convert.ToBoolean(drLinea["pesoBalanza"]);
+                        }
+                        catch (Exception)
+                        {
+
+                            oLinea.PesoBalanza = false;
+                        }
+
                         if (drLinea["estado"].ToString()=="")
                         {
                             oLinea.Estado = 0;
@@ -257,15 +268,8 @@ namespace Datos
             {
                 listaLineasVenta = null;
             }
-            //cmVenta.ExecuteNonQuery();
-
-            //daVenta.SelectCommand = cmVenta;
-            //daVenta.Fill(dtLineasVenta);
-
             daVenta = null;
             cmVenta = null;
-
-            //return dtLineasVenta;
         }
 
 
