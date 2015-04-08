@@ -27,7 +27,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
-            cmVenta.Parameters.AddWithValue("@vendedor", oVentaE.Vendedor);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
             cmVenta.Parameters.AddWithValue("@turno",oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
@@ -66,7 +66,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idSucursal", SucAnterior);
             cmVenta.Parameters.AddWithValue("@idSucNueva", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
-            cmVenta.Parameters.AddWithValue("@vendedor", oVentaE.Vendedor);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
             cmVenta.Parameters.AddWithValue("@turno", oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo", oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones", oVentaE.Observaciones);
@@ -112,7 +112,7 @@ namespace Datos
             return dtVentas;
         }
 
-        public float obtenerTotalVentas(int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
         {
             DataTable dtVentas = new DataTable();
             daVenta = new SqlDataAdapter();
@@ -123,6 +123,7 @@ namespace Datos
             cmVenta.Connection.Open();
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "obtenerTotalVentas";
+            cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
             cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
@@ -137,8 +138,8 @@ namespace Datos
 
             daVenta = null;
             cmVenta = null;
-
-            return float.Parse(dtVentas.Rows[0]["totalS"].ToString());
+            float totalVentas = dtVentas.Rows[0]["totalS"].ToString().Equals("") ? 0 : float.Parse(dtVentas.Rows[0]["totalS"].ToString());
+            return totalVentas;
         }
 
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
@@ -233,6 +234,16 @@ namespace Datos
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
 
+                        try
+                        {
+                            oLinea.PesoBalanza = Convert.ToBoolean(drLinea["pesoBalanza"]);
+                        }
+                        catch (Exception)
+                        {
+
+                            oLinea.PesoBalanza = false;
+                        }
+
                         if (drLinea["estado"].ToString()=="")
                         {
                             oLinea.Estado = 0;
@@ -257,15 +268,8 @@ namespace Datos
             {
                 listaLineasVenta = null;
             }
-            //cmVenta.ExecuteNonQuery();
-
-            //daVenta.SelectCommand = cmVenta;
-            //daVenta.Fill(dtLineasVenta);
-
             daVenta = null;
             cmVenta = null;
-
-            //return dtLineasVenta;
         }
 
 

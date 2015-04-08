@@ -38,7 +38,6 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.barraControl = new System.Windows.Forms.ToolStrip();
-            this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -57,8 +56,11 @@
             this.grillaVentas = new System.Windows.Forms.DataGridView();
             this.label6 = new System.Windows.Forms.Label();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
+            this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.idVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idVendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nombre = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.nroRemito = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -133,18 +135,6 @@
             this.barraControl.TabIndex = 26;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
-            // 
-            // nuevo
-            // 
-            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
-            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.nuevo.Name = "nuevo";
-            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "Nuevo";
-            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
             // pnlBuscar
             // 
@@ -322,6 +312,8 @@
             this.grillaVentas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idVenta,
             this.fechaVenta,
+            this.idVendedor,
+            this.nombre,
             this.nroRemito,
             this.idPersona,
             this.razonSocial,
@@ -367,6 +359,18 @@
             this.txtTotalKgs.TabIndex = 35;
             this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // nuevo
+            // 
+            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
+            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.nuevo.Name = "nuevo";
+            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.nuevo.Size = new System.Drawing.Size(48, 42);
+            this.nuevo.Text = "Nuevo";
+            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            // 
             // idVenta
             // 
             this.idVenta.DataPropertyName = "idVenta";
@@ -386,6 +390,21 @@
             this.fechaVenta.Name = "fechaVenta";
             this.fechaVenta.ReadOnly = true;
             this.fechaVenta.Width = 93;
+            // 
+            // idVendedor
+            // 
+            this.idVendedor.DataPropertyName = "idVendedor";
+            this.idVendedor.HeaderText = "idVendedor";
+            this.idVendedor.Name = "idVendedor";
+            this.idVendedor.ReadOnly = true;
+            this.idVendedor.Visible = false;
+            // 
+            // nombre
+            // 
+            this.nombre.DataPropertyName = "nombre";
+            this.nombre.HeaderText = "Vendedor";
+            this.nombre.Name = "nombre";
+            this.nombre.ReadOnly = true;
             // 
             // nroRemito
             // 
@@ -557,6 +576,8 @@
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.DataGridViewTextBoxColumn idVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaVenta;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idVendedor;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nombre;
         private System.Windows.Forms.DataGridViewTextBoxColumn nroRemito;
         private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
         private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;

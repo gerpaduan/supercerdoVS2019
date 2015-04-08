@@ -109,6 +109,7 @@
             this.txtUserCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtUserCierre.Location = new System.Drawing.Point(123, 67);
             this.txtUserCierre.Name = "txtUserCierre";
+            this.txtUserCierre.ReadOnly = true;
             this.txtUserCierre.Size = new System.Drawing.Size(150, 22);
             this.txtUserCierre.TabIndex = 16;
             // 
@@ -152,7 +153,6 @@
             this.txtUserInicio.ReadOnly = true;
             this.txtUserInicio.Size = new System.Drawing.Size(150, 22);
             this.txtUserInicio.TabIndex = 14;
-            this.txtUserInicio.Text = "User";
             // 
             // panel1
             // 

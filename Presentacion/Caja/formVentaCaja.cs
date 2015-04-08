@@ -8,11 +8,12 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
 using Presentacion.Cortes;
+using Presentacion.Caja;
 using System.Configuration;
 
 namespace Presentacion.Ventas
 {
-    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona
+    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
         string cambiar = "";
         bool formAbierto = false;
@@ -30,6 +31,7 @@ namespace Presentacion.Ventas
 
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
+        public Entidades.Usuario oUsuario;
         Entidades.Corte oCorteE;
         Entidades.Sucursal oSucursalE= new Entidades.Sucursal();
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
@@ -59,9 +61,9 @@ namespace Presentacion.Ventas
         {
             InitializeComponent();
             this.KeyPreview = true;
+
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            txtVendedor.Text = ConfigurationManager.AppSettings[this.Name].ToString();
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
@@ -73,10 +75,15 @@ namespace Presentacion.Ventas
             if (!fecha.Equals(""))
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
-            }            
+            }
+                              
         }
 
-
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+            this.txtVendedor.Text = oUsuario.Nombre;
+        }
 #region Modificar_Venta
 
 
@@ -239,7 +246,6 @@ namespace Presentacion.Ventas
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
             oVentaE.TipoVenta = "Caja";
-            oVentaE.Vendedor = txtVendedor.Text.Trim();
             oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
@@ -907,7 +913,37 @@ namespace Presentacion.Ventas
 
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
-            
+            ///login
+            //FormLoginVendedor frmLogin = new FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+            if (oUsuario != null)
+            {
+                validarAperturaCaja();
+                oVentaE.Vendedor = oUsuario;
+                usuario.Text = oUsuario.User;
+                txtVendedor.Text = oUsuario.Nombre;
+                Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
+                this.pnlBuscar.BackColor = colorUser;
+                this.grupoCortes.BackColor = colorUser;
+            }
+            else
+            {
+                this.Close();
+            }
+        }
+
+        private void validarAperturaCaja()
+        {
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+            oCierreE.Sucursal = oSucursalE;
+            oCierreE.UsuarioInicio = oUsuario;
+            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
+            {
+                MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
+            }
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -925,48 +961,17 @@ namespace Presentacion.Ventas
                 case Keys.PageUp:
                     txtCodigo.Focus();
                     break;
-                case Keys.F1:
-                    formAbierto = false;
-                    foreach (Form frm in Application.OpenForms)
-                    {
-                        if (frm.GetType() == typeof(formVentaCaja))
-                        {
-                            frm.BringToFront();
-                            formAbierto = true;
-                            break;
-                        }
-                    }
-                    if (!formAbierto)
-                    {
-                        formVentaCaja frmVentaCaja = new formVentaCaja();
-                        frmVentaCaja.Show();
-                    }
-                    break;
-                case Keys.F2:
-                    formAbierto = false;
-                    foreach (Form frm in Application.OpenForms)
-                    {
-                        if (frm.GetType() == typeof(formVentaCaja2))
-                        {
-                            frm.BringToFront();
-                            formAbierto = true;
-                            break;
-                        }
-                    }
-                    if (!formAbierto)
-                    {
-                        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
-                        frmVentaCaja2.Show();
-                    }
-                    break;
                 case Keys.F9:
                     buscarCliente();
                     break;
                 case Keys.F10:
                     buscarCorte();
                     break;
-                case Keys.F12:
+                case Keys.F11:
                     txtObservaciones.Focus();
+                    break;
+                case Keys.F12:
+                    bloquear();
                     break;
             }
 
@@ -1001,14 +1006,39 @@ namespace Presentacion.Ventas
             e.Cancel = salir();
         }
 
-       
-        
+        private void btnBloquear_Click(object sender, EventArgs e)
+        {
+            bloquear();
+        }
 
-       
+        private void bloquear()
+        {
+            panelBloquear.Visible = true;
+            btnBloquear.Visible = false;
+            btnAceptar.Enabled = false;
+            grupoCortes.Enabled = false;
+            pnlBuscar.Enabled = false;
+            panelPago.Enabled = false;
+        }
 
-        
-        
-      
-        
+        private void btnIngresar_Click(object sender, EventArgs e)
+        {
+            if (txtClave.Text.Equals(oUsuario.Clave))
+            {
+                panelBloquear.Visible = false;
+                btnBloquear.Visible = true;                
+                lblErrorClave.Visible = false;
+                txtClave.Text = "";
+
+                btnAceptar.Enabled = true;
+                grupoCortes.Enabled = true;
+                pnlBuscar.Enabled = true;
+                panelPago.Enabled = true;
+            }
+            else
+            {
+                lblErrorClave.Visible = true;
+            }
+        }        
     }
 }

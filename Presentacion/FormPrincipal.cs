@@ -16,10 +16,12 @@ using Presentacion.Caja;
 
 namespace Presentacion
 {
-    public partial class FormPrincipal : Form
+    public partial class FormPrincipal : Form, InterfaceUsuario
     {
         public static bool logueado = false;
         bool formAbierto = false;
+        Entidades.Usuario oUsuario;
+
         public FormPrincipal()
         {
             InitializeComponent();
@@ -103,9 +105,38 @@ namespace Presentacion
 
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            formVentaCaja frmVentaCaja = new formVentaCaja();
-            frmVentaCaja.Show();
-        }        
+            formAbierto = false;
+
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formVentaCaja))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+	                    {
+                    		frm.BringToFront();
+                            formAbierto = true;
+                            break;
+	                    }
+                    }                    
+                }
+            }
+            if (!formAbierto)
+            {
+                formVentaCaja frmVentaCaja = new formVentaCaja();
+                frmVentaCaja.oUsuario = oUsuario;
+                frmVentaCaja.Show();
+            }
+            oUsuario = null;
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        }
 
         private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
@@ -443,20 +474,23 @@ namespace Presentacion
         }
 
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
-        { 
-            if (Application.OpenForms.Count > 1)
+        {
+            bool permitirCerrar = true;
+            e.Cancel = true;
+            foreach (Form frm in Application.OpenForms)
             {
-                if (MessageBox.Show("¿ Está seguro que desea salir de la aplicación?", "SuperCerdo",
-               MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No)
+                if (frm.GetType() == typeof(formVentaCaja))
                 {
-                    e.Cancel = true;
+                    MessageBox.Show("Para salir de la aplicación debe cerrar las ventanas de ventas");
+                    permitirCerrar = false;
+                    break;
                 }
             }
-            else
+            if (permitirCerrar && MessageBox.Show("¿ Está seguro que desea salir de la aplicación?", "SuperCerdo",
+           MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
                 e.Cancel = false;
-            }
-            
+            }            
         }
 
         private void linkCerrarCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -464,10 +498,16 @@ namespace Presentacion
             cerrarCaja();
         }
 
-        private static void cerrarCaja()
+        private void cerrarCaja()
         {
-            formCerrarCaja frmCerrarCaja = new formCerrarCaja();
-            frmCerrarCaja.ShowDialog();
+            formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
+            frmCajasAbiertas.Show();
+            //FormLoginVendedor frmLogin = new FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+
+            //formCerrarCaja frmCerrarCaja = new formCerrarCaja();
+            //frmCerrarCaja.oUserCierre = oUsuario;
+            //frmCerrarCaja.ShowDialog();
         }
 
         private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
@@ -475,10 +515,17 @@ namespace Presentacion
             abrirCaja();
         }
 
-        private static void abrirCaja()
+        private void abrirCaja()
         {
-            formAbrirCaja frmAbrirCaja = new formAbrirCaja();
-            frmAbrirCaja.ShowDialog();
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            if (oUsuario != null)
+            {                
+                formAbrirCaja frmAbrirCaja = new formAbrirCaja();
+                frmAbrirCaja.oUserIncio = oUsuario;
+                frmAbrirCaja.ShowDialog();
+            }
+            oUsuario = null;
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
