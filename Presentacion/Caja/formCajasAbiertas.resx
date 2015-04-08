@@ -117,81 +117,22 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="btnBuscarCliente.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAEhSURBVDhPzdBPL8NwHMfxPRg3NxEPwE24OThwEolkN3Ew
-        TwBhU+ms1pFOqtP9Z10304VNrbNZxsKNi3gib43MWddE4pP8Lt98f6/k+wn8v0QyJcJWh333HWQMhmNv
-        2cqZTGs2s/oDwXIfyX51kZI3JFassJBvM67YrJQGaM+fCM4bQv3RG6DcPzHvAmMndywW+8R7Hwitd4TG
-        wBsQLZisGl0mVJvJU5u58zbLhe53H8OV37OdNVkqOkwlb5lJNZFbL4SvnNGKFLMGcqOHWO8QqTnslJts
-        yipiKj8a9JOgpJEwLBJWi139cnRkQ9YQ0wbZ2g2Ki+z5QULxM6RUgVy1znG1yZHu45xQLImcvkA1rhFU
-        3V8fa1GF9cOkv89/lEDgC48kugHM5/fMAAAAAElFTkSuQmCC
-</value>
-  </data>
-  <data name="btnQuitar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAB1SURBVDhPvY47CoBADET3SN7/MLaWlpZZBzMQJL9F8EGK
-        bCZvMz5zbUNQ2q5Dwa8SN0eBJJLyEyyfQQizdJkgBMlhwuXPb3YjiS4qwTIF+tQHF1CAQq+jGoRZXh+C
-        U7NwKrGLYegmnHeWiZvrLpPVvMsjGTIBBb6KPkF3GeIAAAAASUVORK5CYII=
-</value>
-  </data>
-  <data name="btnAgregar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAADCSURBVDhP1VEhDsMwDDQcLAwNDAwcDSwcLC3cE/aFamga
-        LGthYWBpYOGesGd4uSzZpklTk7KdZMWxdGefTf+Fixs4puUwVrO5EZ/mbptIPSke7g3v/VssUo8HVo4C
-        GZPEcj6kpSBA1w0W0DGQex9nH2uQEzEifkn4PHVfvYJxglumEPCdvNNIrPsM78oKbhb1EpFzoXd01MuT
-        BAHk2d4TKk9IIhV2keP9E609vkfP9f4N7AIim+4OYBc7T8Y0sfQDRA82Z4vTOwia5QAAAABJRU5ErkJg
-        gg==
-</value>
-  </data>
-  <data name="btnBuscarCorte.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADrwAAA68AZW8ckkAAAEhSURBVDhPzdBPL8NwHMfxPRg3NxEPwE24OThwEolkN3Ew
-        TwBhU+ms1pFOqtP9Z10304VNrbNZxsKNi3gib43MWddE4pP8Lt98f6/k+wn8v0QyJcJWh333HWQMhmNv
-        2cqZTGs2s/oDwXIfyX51kZI3JFassJBvM67YrJQGaM+fCM4bQv3RG6DcPzHvAmMndywW+8R7Hwitd4TG
-        wBsQLZisGl0mVJvJU5u58zbLhe53H8OV37OdNVkqOkwlb5lJNZFbL4SvnNGKFLMGcqOHWO8QqTnslJts
-        yipiKj8a9JOgpJEwLBJWi139cnRkQ9YQ0wbZ2g2Ki+z5QULxM6RUgVy1znG1yZHu45xQLImcvkA1rhFU
-        3V8fa1GF9cOkv89/lEDgC48kugHM5/fMAAAAAElFTkSuQmCC
-</value>
-  </data>
-  <metadata name="lineShape1.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>13, 632, 945, 0</value>
-  </metadata>
-  <metadata name="lineShape1.Size" type="System.Drawing.Size, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>945, 0</value>
-  </metadata>
-  <metadata name="lineShape1.Location" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>13, 632</value>
-  </metadata>
-  <metadata name="idCorte.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="id.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="codigo.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="usuarioInicio.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="corte.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="vendedor.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="cantKgs.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="fechaHoraInicio.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="precioKgs.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="cajaInicio.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="totalS.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="cerrarCaja.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
-  </metadata>
-  <metadata name="estado.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="timer1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
-  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>39</value>
   </metadata>
 </root>

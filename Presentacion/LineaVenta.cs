@@ -14,6 +14,13 @@ namespace Presentacion
         public float precioKg;
         public float totalS;
         public string estado;
+        private bool pesoBalanza;
+
+        public bool PesoBalanza
+        {
+            get { return pesoBalanza; }
+            set { pesoBalanza = value; }
+        }
 
         public int IdCorte
         {

@@ -1,0 +1,189 @@
+﻿Base de datos
+
+***Ventas
+
+	- Quitar autonumerico a idVenta
+	- Agregar campos @tipoVenta nvarchar(50),
+					 @idVendedor int
+					 
+	- Modificar Procedures (Agregar, Modificar). Agregar los nuevos campos (Ver abajo el codigo)
+	
+***LineaVenta
+	- agregar campos -idLineaVenta ->como única clave primaria
+					 -pesoBalanza (int) de 0 ó 1
+	- Modificar Procedures (Agregar, Modificar). Agregar los nuevos campos
+	
+
+		
+		
+	/////////////////
+	
+	ALTER PROCEDURE [dbo].[agregarVenta] 
+	-- Add the parameters for the stored procedure here
+	@idVenta int = 0,
+	@idVentaUltima int = null,
+	@fechaVenta datetime,
+	@turno nvarchar(50),
+	@tipoVenta nvarchar(50),
+	@idVendedor nvarchar(50),
+	@diaFestivo nvarchar(50),
+	@observaciones nvarchar(200),
+	@idPersona int,
+	@idSucursal int,
+	@nroRemito nvarchar(50)
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+	-- Insert statements for procedure here
+      IF(@idVenta = 0) --CONDITION
+            BEGIN 
+				set @idVentaUltima  = (select top 1 Ventas.idVenta from Ventas where Ventas.idSucursal = @idSucursal order by Ventas.idVenta desc) 
+				IF(@idVentaUltima is null or @idVentaUltima < (10000000 * @idSucursal)) --CONDITION
+					 BEGIN
+						set @idVentaUltima = (10000000 * @idSucursal)
+					 END
+                 set @idVenta = @idVentaUltima + 1
+            END
+            
+	insert into Ventas (idVenta, fechaVenta,idSucursal,turno,diaFestivo,observaciones,idPersona,nroRemito,estado, creado)
+	values (@idVenta, @fechaVenta,@idSucursal,@turno,@diaFestivo,@observaciones,@idPersona,@nroRemito,'', SYSDATETIME())
+
+	select top 1 Ventas.idVenta from Ventas where Ventas.idSucursal = @idSucursal order by Ventas.idVenta desc
+	
+END
+	
+	/////////////////
+
+***********************************************************************************************************************
+
+CIERRE DE CAJA
+	
+------------------------------------
+CREAR TABLA
+---------------------------------
+USE [SuperCerdo]
+GO
+
+/****** Object:  Table [dbo].[CierreCaja]    Script Date: 03/18/2015 19:01:12 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[CierreCaja](
+	[id] [int] NOT NULL,
+	[idSucursal] [int] NULL,
+	[fechaHoraInicio] [datetime] NULL,
+	[fechaHoraCierre] [datetime] NULL,
+	[cajaInicio] [float] NULL,
+	[ventas] [float] NULL,
+	[gastos] [float] NULL,
+	[saldoCaja] [float] NULL,
+	[cajaCierre] [float] NULL,
+	[diferencia] [float] NULL,
+	[cajaInicioSiguiente] [float] NULL,
+	[importeRetirado] [float] NULL,
+	[usuarioInicio] [varchar](50) NULL,
+	[usuarioCierre] [varchar](50) NULL,
+	[creado] [datetime] NULL,
+	[actualizado] [datetime] NULL,
+ CONSTRAINT [PK_CierreCaja] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+----------
+
+
+-----------------------------
+STORE PRODECURE
+
+addOrEditCierreCaja
+------------------------------
+USE [SuperCerdo]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE addOrEditCierreCaja 
+	-- Add the parameters for the stored procedure here
+	@id	int = 0,
+	@idCierreAnterior int = 0,
+	@idSucursal	int,
+	@fechaHoraInicio datetime,
+	@fechaHoraCierre datetime,
+	@cajaInicio	float,
+	@ventas	float,
+	@gastos	float,
+	@saldoCaja	float,
+	@cajaCierre	float,
+	@diferencia	float,
+	@cajaInicioSiguiente float,
+	@importeRetirado float,
+	@usuarioInicio varchar(50),
+	@usuarioCierre varchar(50),
+	@creado	datetime,
+	@actualizado datetime,
+	@idEncontrado int = 0
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- int,erfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	-- Insert statements for procedure here
+      IF(@id = 0 or @id is null)
+            BEGIN 
+				set @idCierreAnterior  = (select top 1 CierreCaja.id from CierreCaja where CierreCaja.idSucursal = @idSucursal order by CierreCaja.id desc) 
+				IF(@idCierreAnterior is null or @idCierreAnterior < (10000000 * @idSucursal)) --CONDITION
+					 BEGIN
+						set @idCierreAnterior = (10000000 * @idSucursal)
+					 END
+                 set @id = @idCierreAnterior + 1
+                 
+                insert into CierreCaja (id, idSucursal, fechaHoraInicio, fechaHoraCierre, cajaInicio, ventas, gastos, saldoCaja, cajaCierre, diferencia, cajaInicioSiguiente, importeRetirado, usuarioInicio, usuarioCierre, creado, actualizado)
+						values (@id, @idSucursal, @fechaHoraInicio, @fechaHoraCierre, @cajaInicio, @ventas, @gastos, @saldoCaja, @cajaCierre, @diferencia, @cajaInicioSiguiente, @importeRetirado, @usuarioInicio, @usuarioCierre, SYSDATETIME(),'')
+            END
+       ELSE
+		BEGIN
+			set @idEncontrado = (select CierreCaja.id from CierreCaja where CierreCaja.id = @id and CierreCaja.idSucursal = @idSucursal)		
+			IF(@idEncontrado > 0)
+				BEGIN 
+					UPDATE CierreCaja
+					 SET idSucursal = @idSucursal,fechaHoraInicio = @fechaHoraInicio,fechaHoraCierre = @fechaHoraCierre,
+						cajaInicio = @cajaInicio, ventas = @ventas,gastos = @gastos,saldoCaja = @saldoCaja,cajaCierre = @cajaCierre,diferencia = @diferencia,
+						cajaInicioSiguiente = @cajaInicioSiguiente,importeRetirado = @importeRetirado,usuarioInicio = @usuarioInicio,
+						usuarioCierre = @usuarioCierre,actualizado = SYSDATETIME()
+					 WHERE id = @id
+				END	
+			ELSE
+				BEGIN 
+					insert into CierreCaja (id, idSucursal, fechaHoraInicio, fechaHoraCierre, cajaInicio, ventas, gastos, saldoCaja, cajaCierre, diferencia, cajaInicioSiguiente, importeRetirado, usuarioInicio, usuarioCierre, creado, actualizado)
+							values (@id, @idSucursal, @fechaHoraInicio, @fechaHoraCierre, @cajaInicio, @ventas, @gastos, @saldoCaja, @cajaCierre, @diferencia, @cajaInicioSiguiente, @importeRetirado, @usuarioInicio, @usuarioCierre, SYSDATETIME(),'')
+				END			
+		END           
+
+	select top 1 CierreCaja.id from CierreCaja where CierreCaja.idSucursal = @idSucursal order by CierreCaja.id desc
+	
+END
+GO
+  
+------------------------------
+***********************************************************************************************************************

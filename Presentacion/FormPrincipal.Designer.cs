@@ -33,6 +33,8 @@
             this.panel3 = new System.Windows.Forms.Panel();
             this.panel5 = new System.Windows.Forms.Panel();
             this.linkAbrirCaja = new System.Windows.Forms.LinkLabel();
+            this.linkCerrarCaja = new System.Windows.Forms.LinkLabel();
+            this.linkCajaVentas = new System.Windows.Forms.LinkLabel();
             this.label4 = new System.Windows.Forms.Label();
             this.linkLogin = new System.Windows.Forms.LinkLabel();
             this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
@@ -62,6 +64,7 @@
             this.personasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.linkCierresDeCaja = new System.Windows.Forms.LinkLabel();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -115,7 +118,10 @@
             // panel5
             // 
             this.panel5.BackColor = System.Drawing.Color.PeachPuff;
+            this.panel5.Controls.Add(this.linkCierresDeCaja);
             this.panel5.Controls.Add(this.linkAbrirCaja);
+            this.panel5.Controls.Add(this.linkCerrarCaja);
+            this.panel5.Controls.Add(this.linkCajaVentas);
             this.panel5.Location = new System.Drawing.Point(2, 30);
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(173, 107);
@@ -126,13 +132,39 @@
             this.linkAbrirCaja.AutoSize = true;
             this.linkAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkAbrirCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkAbrirCaja.Location = new System.Drawing.Point(23, 18);
+            this.linkAbrirCaja.Location = new System.Drawing.Point(23, 63);
             this.linkAbrirCaja.Name = "linkAbrirCaja";
             this.linkAbrirCaja.Size = new System.Drawing.Size(67, 16);
-            this.linkAbrirCaja.TabIndex = 1;
+            this.linkAbrirCaja.TabIndex = 3;
             this.linkAbrirCaja.TabStop = true;
             this.linkAbrirCaja.Text = "Abrir Caja";
-            this.linkAbrirCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkAbrirCaja_LinkClicked);
+            this.linkAbrirCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkAbrirCaja_LinkClicked_1);
+            // 
+            // linkCerrarCaja
+            // 
+            this.linkCerrarCaja.AutoSize = true;
+            this.linkCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCerrarCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCerrarCaja.Location = new System.Drawing.Point(23, 41);
+            this.linkCerrarCaja.Name = "linkCerrarCaja";
+            this.linkCerrarCaja.Size = new System.Drawing.Size(76, 16);
+            this.linkCerrarCaja.TabIndex = 2;
+            this.linkCerrarCaja.TabStop = true;
+            this.linkCerrarCaja.Text = "Cerrar Caja";
+            this.linkCerrarCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarCaja_LinkClicked);
+            // 
+            // linkCajaVentas
+            // 
+            this.linkCajaVentas.AutoSize = true;
+            this.linkCajaVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCajaVentas.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCajaVentas.Location = new System.Drawing.Point(23, 18);
+            this.linkCajaVentas.Name = "linkCajaVentas";
+            this.linkCajaVentas.Size = new System.Drawing.Size(81, 16);
+            this.linkCajaVentas.TabIndex = 1;
+            this.linkCajaVentas.TabStop = true;
+            this.linkCajaVentas.Text = "Caja Ventas";
+            this.linkCajaVentas.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkAbrirCaja_LinkClicked);
             // 
             // label4
             // 
@@ -439,6 +471,19 @@
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
             // 
+            // linkCierresDeCaja
+            // 
+            this.linkCierresDeCaja.AutoSize = true;
+            this.linkCierresDeCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCierresDeCaja.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCierresDeCaja.Location = new System.Drawing.Point(24, 83);
+            this.linkCierresDeCaja.Name = "linkCierresDeCaja";
+            this.linkCierresDeCaja.Size = new System.Drawing.Size(101, 16);
+            this.linkCierresDeCaja.TabIndex = 4;
+            this.linkCierresDeCaja.TabStop = true;
+            this.linkCierresDeCaja.Text = "Cierres de Caja";
+            this.linkCierresDeCaja.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCierresDeCaja_LinkClicked);
+            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -505,7 +550,7 @@
         private System.Windows.Forms.LinkLabel linkLogin;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.Panel panel5;
-        private System.Windows.Forms.LinkLabel linkAbrirCaja;
+        private System.Windows.Forms.LinkLabel linkCajaVentas;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem comprasToolStripMenuItem;
@@ -517,6 +562,9 @@
         private System.Windows.Forms.ToolStripMenuItem personasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockCortesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
+        private System.Windows.Forms.LinkLabel linkCerrarCaja;
+        private System.Windows.Forms.LinkLabel linkAbrirCaja;
+        private System.Windows.Forms.LinkLabel linkCierresDeCaja;
     }
 }
 

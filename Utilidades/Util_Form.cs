@@ -26,7 +26,27 @@ namespace Utilidades
                 MessageBox.Show("-" + nombreTextBox + " está vacío. Ingrese un valor.", "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return resp;
+        }
 
+        public static bool validarArrayCamposVacios(string[,] textBoxes)
+        {
+            int nombreTextBox = 1;
+            int valorTextBox = 0;
+            bool resp = true;
+            string mensaje = "Complete los siguientes campos";
+            for (int fila = 0; fila < textBoxes.GetLength(0); fila++)
+            {
+                if (String.IsNullOrEmpty(textBoxes[fila,valorTextBox]))
+                {
+                    resp = false;
+                    mensaje += "\n- " + textBoxes[fila, nombreTextBox];
+                }			 
+            }
+            if (!resp)
+	        {
+        		 MessageBox.Show(mensaje, "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+	        }
+            return resp;
         }
 
         public static bool validarCampoNumerico(string texto, string nombreTextBox)
@@ -92,6 +112,20 @@ namespace Utilidades
 
         }
 
+        public static float convertFloat(string toFloat)
+        {
+            float? value = null;
+            try 
+	        {
+                toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
+        		value =  float.Parse( toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+	        }
+	        catch (Exception ex)
+	        {
+        		MessageBox.Show("Error al convertir a tipo Float\n"+ex.Message, "Convertir a float");
+	        }
+            return (float)value;
+        }
         private void Util_Form_Load(object sender, EventArgs e)
         {
 
