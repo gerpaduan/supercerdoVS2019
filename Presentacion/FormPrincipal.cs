@@ -73,14 +73,14 @@ namespace Presentacion
 
         private static void ventas()
         {
-            if (!logueado)
-            {
-                //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-                //frmLogin.ShowDialog();
-                //logueado = frmLogin.Logueado();                
-            }
-            if (logueado)
-            {
+            //if (!logueado)
+            //{
+            //    //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    //frmLogin.ShowDialog();
+            //    //logueado = frmLogin.Logueado();                
+            //}
+            //if (logueado)
+            //{
                 if (Application.OpenForms["formVentas"] != null)
                 {
 
@@ -96,11 +96,11 @@ namespace Presentacion
                     frmVentas.Show();
 
                 }
-            }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }
+            //}
+            //else
+            //{
+            //    MessageBox.Show("No está logueado");
+            //}
         }
 
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -173,10 +173,8 @@ namespace Presentacion
             }
             else
             {
-
                 formMovimientos frmMovimientos = new formMovimientos();
                 frmMovimientos.Show();
-
             }
         }
 
