@@ -206,7 +206,6 @@ namespace Presentacion.Ventas
 
                 try
                 {
-                    //oVentaE.IdVenta = 0;
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
                     Ticket.CreaTicket ticket = new Ticket.CreaTicket();
                     ticket.imprimir = checkTicket.Checked;
@@ -216,7 +215,6 @@ namespace Presentacion.Ventas
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
                     ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
-                    //ticket.TextoCentro(oVentaE.FechaVenta.ToString());
                     ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
                     ticket.LineasEnBlanco(1);
                     ticket.LineasGuion();
@@ -994,9 +992,6 @@ namespace Presentacion.Ventas
                     break;
                 case Keys.End:
                     mostrarPago();
-                    //panelPago.Visible = true;
-                    //txtAbona.ReadOnly = false;
-                    //txtAbona.Focus();
                     break;
                 case Keys.PageUp:
                     txtCodigo.Focus();

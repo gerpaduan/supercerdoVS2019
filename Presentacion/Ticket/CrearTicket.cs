@@ -110,19 +110,6 @@ namespace Presentacion.Ticket
             
             RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
-        //public void TextoCentro(string par1)
-        //{
-        //    ticket = "";
-        //    max = par1.Length;
-        //    if (max > cantMaxChar)                                 // **********
-        //    {
-        //        cort = max - cantMaxChar;
-        //        parte1 = par1.Remove(cantMaxChar, cort);          // si es mayor que cantMaxChar caracteres, lo corta
-        //    }
-        //    else { parte1 = par1; }         
-        //    ticket += parte1 + "\n";
-        //    RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
-        //}
         public void TextoCentro(string par1)
         {
             ticket = "";

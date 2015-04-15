@@ -44,6 +44,7 @@
             this.label17 = new System.Windows.Forms.Label();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.grupoCortes = new System.Windows.Forms.GroupBox();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
             this.btnQuitar = new System.Windows.Forms.Button();
             this.txtCorte = new System.Windows.Forms.TextBox();
             this.btnAgregar = new System.Windows.Forms.Button();
@@ -102,7 +103,6 @@
             this.btnBloquear = new System.Windows.Forms.Button();
             this.btnAbonar = new System.Windows.Forms.Button();
             this.panelAbonar = new System.Windows.Forms.Panel();
-            this.checkTicket = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -204,6 +204,21 @@
             this.grupoCortes.TabStop = false;
             this.grupoCortes.Text = "Corte";
             this.grupoCortes.Enter += new System.EventHandler(this.grupoCortes_Enter);
+            // 
+            // checkTicket
+            // 
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Checked = true;
+            this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.Location = new System.Drawing.Point(474, 18);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(70, 24);
+            this.checkTicket.TabIndex = 46;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "Ticket";
+            this.checkTicket.UseVisualStyleBackColor = true;
             // 
             // btnQuitar
             // 
@@ -823,10 +838,10 @@
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.Location = new System.Drawing.Point(13, 644);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(780, 15);
+            this.label10.Size = new System.Drawing.Size(784, 15);
             this.label10.TabIndex = 45;
-            this.label10.Text = "Inicio = Codigo   |   Fin = Abona   |   ESC = Salir   |   F9 = Buscar Cliente   |" +
-                "   F10 = Buscar Corte   |   F11 = Observaciones   |   F12 = Bloquear   |      ";
+            this.label10.Text = "Inicio = Codigo   |   Fin = Abonar   |   ESC = Salir   |   F9 = Buscar Cliente   " +
+                "|   F10 = Buscar Corte   |   F11 = Observaciones   |   F12 = Bloquear   |      ";
             // 
             // label12
             // 
@@ -953,21 +968,6 @@
             this.panelAbonar.Name = "panelAbonar";
             this.panelAbonar.Size = new System.Drawing.Size(148, 64);
             this.panelAbonar.TabIndex = 50;
-            // 
-            // checkTicket
-            // 
-            this.checkTicket.AutoSize = true;
-            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkTicket.Checked = true;
-            this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.Location = new System.Drawing.Point(474, 18);
-            this.checkTicket.Name = "checkTicket";
-            this.checkTicket.Size = new System.Drawing.Size(70, 24);
-            this.checkTicket.TabIndex = 46;
-            this.checkTicket.TabStop = false;
-            this.checkTicket.Text = "Ticket";
-            this.checkTicket.UseVisualStyleBackColor = true;
             // 
             // formVentaCaja
             // 
