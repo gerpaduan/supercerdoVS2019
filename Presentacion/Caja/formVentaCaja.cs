@@ -207,15 +207,37 @@ namespace Presentacion.Ventas
                 try
                 {
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
+                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                    ticket.imprimir = checkTicket.Checked;
+                    ticket.TextoCentro("x");
+                    ticket.NoValidoComoFactura();
+                    ticket.LineasEnBlanco(2);
+                    //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                    ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
+                    ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
+                    ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
+                    ticket.LineasEnBlanco(1);
+                    ticket.LineasGuion();
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
                     {
                         oVentaN.agregarLineaVenta(linea);
+                        ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                            linea.PrecioKg, linea.CantKg, linea.PrecioKg * linea.CantKg);
                     }
+                    ticket.LineasEnBlanco(1);
+                    ticket.AgregaTotales("Total", totalVenta);
+                    abona = abona > 0 ? abona : totalVenta;
+                    ticket.AgregaTotales("Pago", abona);
+                    ticket.AgregaTotales("Vuelto", cambio);
+                    ticket.LineasEnBlanco(1);
+                    ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
+                    ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
+                    ticket.GraciasPorSuCompra();
+
                     lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString();
                     oVentaE.IdVenta = 0;
                     limpiarListas();
-                    //this.Close();
                 }
                 catch (Exception ex)
                 {
@@ -227,6 +249,10 @@ namespace Presentacion.Ventas
         }
         private void limpiarListas()
         {
+            Negocio.Persona oPersonaN = new Negocio.Persona();
+            int idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
+            oCliente = oPersonaN.findById(idConsumidorFinal);
+            this.txtCliente.Text = oCliente.razonSocial;
             txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
@@ -235,6 +261,7 @@ namespace Presentacion.Ventas
             txtAbona.Text = "";
             txtCambio.Text = "";
             panelPago.Visible = false;
+            panelAbonar.Visible = true;
 
             listaLineaGrilla = new List<LineaVenta>(); 
             listaLineaVenta = new List<Entidades.LineaVenta>();
@@ -458,12 +485,22 @@ namespace Presentacion.Ventas
                 {
                     if (totalVenta >= 0)
                     {
-                        if (abona > 0 && cambio < 0)
+                        if ((abona > 0 && cambio < 0) || cambio >= 100)
                         {
-                            mensaje = "El pago del cliente es menor al total de la venta";
-                            MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            txtAbona.Select(); 
-                            txtAbona.Focus();
+                            if (cambio < 0)
+                            {                                
+                                mensaje = "El pago del cliente es menor al total de la venta";
+                                MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                txtAbona.Select(); 
+                                txtAbona.Focus();
+                            }
+                            if (cambio >= 100)
+                            {
+                                mensaje = "El cambio debe ser menor a $100.\nVerifique el pago ingresado e intente finalizar la venta nuevamente.";
+                                MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                txtAbona.Select();
+                                txtAbona.Focus();
+                            }
                             return false;
                         }
                         else
@@ -954,9 +991,7 @@ namespace Presentacion.Ventas
                     txtCodigo.Focus();
                     break;
                 case Keys.End:
-                    panelPago.Visible = true;
-                    txtAbona.ReadOnly = false;
-                    txtAbona.Focus();
+                    mostrarPago();
                     break;
                 case Keys.PageUp:
                     txtCodigo.Focus();
@@ -1039,6 +1074,30 @@ namespace Presentacion.Ventas
             {
                 lblErrorClave.Visible = true;
             }
-        }        
+        }
+
+        private void btnAceptar_Enter(object sender, EventArgs e)
+        {
+            btnAceptar.BackColor = Color.FromName("LimeGreen");
+        }
+
+        private void btnAceptar_Leave(object sender, EventArgs e)
+        {
+            btnAceptar.BackColor = Color.FromName("HotTrack");
+        }
+
+        private void btnAbonar_Click(object sender, EventArgs e)
+        {
+            mostrarPago();
+        }
+
+        private void mostrarPago()
+        {
+            panelAbonar.Visible = false;
+            panelPago.Visible = true;
+            txtAbona.ReadOnly = false;
+            txtAbona.Focus();
+        }
+      
     }
 }

@@ -415,6 +415,8 @@
       <DependentUpon>ReporteVenta.rpt</DependentUpon>
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Ticket\CrearTicket.cs" />
+    <Compile Include="Ticket\RawPrinterHelper.cs" />
     <Compile Include="Ventas\formInfoVenta.cs">
       <SubType>Form</SubType>
     </Compile>
