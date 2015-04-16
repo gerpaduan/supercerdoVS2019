@@ -372,6 +372,12 @@ namespace Presentacion
                 linkCerrarSesion.Visible = false;
             }
         }
+
+        private void btnIngresoStock_Click(object sender, EventArgs e)
+        {
+            formAddOrEditStock frm = new formAddOrEditStock();
+            frm.Show();
+        }
         
        
     }

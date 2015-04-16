@@ -29,13 +29,13 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevaCompra));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle22 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle27 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle28 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.radioIngresoStock = new System.Windows.Forms.RadioButton();
             this.panelCorte = new System.Windows.Forms.Panel();
@@ -48,7 +48,6 @@
             this.label14 = new System.Windows.Forms.Label();
             this.radioCorte = new System.Windows.Forms.RadioButton();
             this.radioMediaRes = new System.Windows.Forms.RadioButton();
-            this.label15 = new System.Windows.Forms.Label();
             this.grupoMediaRes = new System.Windows.Forms.GroupBox();
             this.txtPrecioKg = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -68,8 +67,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaCompra = new System.Windows.Forms.DateTimePicker();
             this.label3 = new System.Windows.Forms.Label();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.grillaMediaRes = new System.Windows.Forms.DataGridView();
             this.nroTropa = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.kgMedia = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -95,12 +92,16 @@
             this.sucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.pnlBuscar.SuspendLayout();
             this.panelCorte.SuspendLayout();
             this.grupoMediaRes.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMediaRes)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlBuscar
@@ -108,17 +109,15 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
-            this.pnlBuscar.Controls.Add(this.radioIngresoStock);
+            this.pnlBuscar.Controls.Add(this.groupBox2);
+            this.pnlBuscar.Controls.Add(this.txtUsuario);
+            this.pnlBuscar.Controls.Add(this.label16);
             this.pnlBuscar.Controls.Add(this.panelCorte);
-            this.pnlBuscar.Controls.Add(this.radioCorte);
-            this.pnlBuscar.Controls.Add(this.radioMediaRes);
-            this.pnlBuscar.Controls.Add(this.label15);
             this.pnlBuscar.Controls.Add(this.grupoMediaRes);
             this.pnlBuscar.Controls.Add(this.groupBox1);
-            this.pnlBuscar.Controls.Add(this.shapeContainer2);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(820, 170);
+            this.pnlBuscar.Size = new System.Drawing.Size(820, 193);
             this.pnlBuscar.TabIndex = 3;
             // 
             // radioIngresoStock
@@ -126,7 +125,7 @@
             this.radioIngresoStock.AutoSize = true;
             this.radioIngresoStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioIngresoStock.ForeColor = System.Drawing.Color.White;
-            this.radioIngresoStock.Location = new System.Drawing.Point(707, 33);
+            this.radioIngresoStock.Location = new System.Drawing.Point(36, 50);
             this.radioIngresoStock.Name = "radioIngresoStock";
             this.radioIngresoStock.Size = new System.Drawing.Size(99, 19);
             this.radioIngresoStock.TabIndex = 0;
@@ -144,7 +143,7 @@
             this.panelCorte.Controls.Add(this.label13);
             this.panelCorte.Controls.Add(this.txtCorteNuevaCompra);
             this.panelCorte.Controls.Add(this.label14);
-            this.panelCorte.Location = new System.Drawing.Point(24, 117);
+            this.panelCorte.Location = new System.Drawing.Point(24, 142);
             this.panelCorte.Name = "panelCorte";
             this.panelCorte.Size = new System.Drawing.Size(376, 34);
             this.panelCorte.TabIndex = 17;
@@ -179,7 +178,7 @@
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(1, 10);
+            this.label10.Location = new System.Drawing.Point(1, 9);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(46, 15);
             this.label10.TabIndex = 41;
@@ -236,7 +235,7 @@
             this.radioCorte.AutoSize = true;
             this.radioCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioCorte.ForeColor = System.Drawing.Color.White;
-            this.radioCorte.Location = new System.Drawing.Point(641, 33);
+            this.radioCorte.Location = new System.Drawing.Point(127, 26);
             this.radioCorte.Name = "radioCorte";
             this.radioCorte.Size = new System.Drawing.Size(60, 19);
             this.radioCorte.TabIndex = 13;
@@ -250,7 +249,7 @@
             this.radioMediaRes.Checked = true;
             this.radioMediaRes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioMediaRes.ForeColor = System.Drawing.Color.White;
-            this.radioMediaRes.Location = new System.Drawing.Point(550, 33);
+            this.radioMediaRes.Location = new System.Drawing.Point(36, 26);
             this.radioMediaRes.Name = "radioMediaRes";
             this.radioMediaRes.Size = new System.Drawing.Size(85, 19);
             this.radioMediaRes.TabIndex = 12;
@@ -258,17 +257,6 @@
             this.radioMediaRes.Text = "Media Res";
             this.radioMediaRes.UseVisualStyleBackColor = true;
             this.radioMediaRes.CheckedChanged += new System.EventHandler(this.radioMediaRes_CheckedChanged);
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(461, 14);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(95, 15);
-            this.label15.TabIndex = 19;
-            this.label15.Text = "Tipo de Compra";
             // 
             // grupoMediaRes
             // 
@@ -288,9 +276,9 @@
             this.grupoMediaRes.Controls.Add(this.label5);
             this.grupoMediaRes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grupoMediaRes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.grupoMediaRes.Location = new System.Drawing.Point(19, 98);
+            this.grupoMediaRes.Location = new System.Drawing.Point(19, 123);
             this.grupoMediaRes.Name = "grupoMediaRes";
-            this.grupoMediaRes.Size = new System.Drawing.Size(785, 60);
+            this.grupoMediaRes.Size = new System.Drawing.Size(785, 63);
             this.grupoMediaRes.TabIndex = 10;
             this.grupoMediaRes.TabStop = false;
             this.grupoMediaRes.Text = "Media Res";
@@ -417,9 +405,9 @@
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox1.Location = new System.Drawing.Point(19, 5);
+            this.groupBox1.Location = new System.Drawing.Point(19, 38);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(438, 85);
+            this.groupBox1.Size = new System.Drawing.Size(479, 79);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Remito";
@@ -480,10 +468,11 @@
             // txtFechaCompra
             // 
             this.txtFechaCompra.Checked = false;
+            this.txtFechaCompra.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.txtFechaCompra.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaCompra.Location = new System.Drawing.Point(315, 23);
             this.txtFechaCompra.Name = "txtFechaCompra";
-            this.txtFechaCompra.Size = new System.Drawing.Size(109, 21);
+            this.txtFechaCompra.Size = new System.Drawing.Size(144, 21);
             this.txtFechaCompra.TabIndex = 1;
             this.txtFechaCompra.TabStop = false;
             // 
@@ -497,28 +486,6 @@
             this.label3.Size = new System.Drawing.Size(41, 15);
             this.label3.TabIndex = 4;
             this.label3.Text = "Fecha";
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape2});
-            this.shapeContainer2.Size = new System.Drawing.Size(820, 170);
-            this.shapeContainer2.TabIndex = 22;
-            this.shapeContainer2.TabStop = false;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 553;
-            this.lineShape2.X2 = 802;
-            this.lineShape2.Y1 = 30;
-            this.lineShape2.Y2 = 30;
             // 
             // grillaMediaRes
             // 
@@ -534,21 +501,21 @@
             this.precioMedia,
             this.totalPs,
             this.sucursalM});
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaMediaRes.DefaultCellStyle = dataGridViewCellStyle3;
-            this.grillaMediaRes.Location = new System.Drawing.Point(20, 176);
+            dataGridViewCellStyle24.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle24.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle24.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle24.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle24.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle24.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle24.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMediaRes.DefaultCellStyle = dataGridViewCellStyle24;
+            this.grillaMediaRes.Location = new System.Drawing.Point(20, 197);
             this.grillaMediaRes.MultiSelect = false;
             this.grillaMediaRes.Name = "grillaMediaRes";
             this.grillaMediaRes.ReadOnly = true;
             this.grillaMediaRes.RowHeadersVisible = false;
             this.grillaMediaRes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaMediaRes.Size = new System.Drawing.Size(785, 216);
+            this.grillaMediaRes.Size = new System.Drawing.Size(681, 216);
             this.grillaMediaRes.TabIndex = 4;
             // 
             // nroTropa
@@ -575,9 +542,9 @@
             // totalPs
             // 
             this.totalPs.DataPropertyName = "totalS";
-            dataGridViewCellStyle1.Format = "N2";
-            dataGridViewCellStyle1.NullValue = null;
-            this.totalPs.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle22.Format = "N2";
+            dataGridViewCellStyle22.NullValue = null;
+            this.totalPs.DefaultCellStyle = dataGridViewCellStyle22;
             this.totalPs.HeaderText = "Total $";
             this.totalPs.Name = "totalPs";
             this.totalPs.ReadOnly = true;
@@ -585,8 +552,8 @@
             // sucursalM
             // 
             this.sucursalM.DataPropertyName = "sucursal";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.sucursalM.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle23.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.sucursalM.DefaultCellStyle = dataGridViewCellStyle23;
             this.sucursalM.HeaderText = "Sucursal";
             this.sucursalM.Name = "sucursalM";
             this.sucursalM.ReadOnly = true;
@@ -620,7 +587,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(635, 426);
+            this.label8.Location = new System.Drawing.Point(708, 245);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 7;
@@ -631,7 +598,7 @@
             this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(644, 448);
+            this.label9.Location = new System.Drawing.Point(708, 287);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(51, 15);
             this.label9.TabIndex = 8;
@@ -641,7 +608,7 @@
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(701, 421);
+            this.txtTotalKg.Location = new System.Drawing.Point(708, 263);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
             this.txtTotalKg.Size = new System.Drawing.Size(102, 21);
@@ -653,7 +620,7 @@
             // 
             this.txtTotal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotal.Location = new System.Drawing.Point(701, 443);
+            this.txtTotal.Location = new System.Drawing.Point(709, 305);
             this.txtTotal.Name = "txtTotal";
             this.txtTotal.ReadOnly = true;
             this.txtTotal.Size = new System.Drawing.Size(102, 21);
@@ -685,11 +652,11 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(19, 412);
+            this.txtObservaciones.Location = new System.Drawing.Point(19, 432);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(279, 51);
+            this.txtObservaciones.Size = new System.Drawing.Size(682, 31);
             this.txtObservaciones.TabIndex = 9;
             this.txtObservaciones.TabStop = false;
             // 
@@ -697,7 +664,7 @@
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(16, 397);
+            this.label11.Location = new System.Drawing.Point(16, 416);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(78, 13);
             this.label11.TabIndex = 15;
@@ -719,21 +686,21 @@
             this.precioKgs,
             this.totalS,
             this.sucursal});
-            this.grillaCortePorCompra.Location = new System.Drawing.Point(20, 176);
+            this.grillaCortePorCompra.Location = new System.Drawing.Point(20, 197);
             this.grillaCortePorCompra.MultiSelect = false;
             this.grillaCortePorCompra.Name = "grillaCortePorCompra";
             this.grillaCortePorCompra.ReadOnly = true;
             this.grillaCortePorCompra.RowHeadersVisible = false;
             this.grillaCortePorCompra.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortePorCompra.Size = new System.Drawing.Size(785, 216);
+            this.grillaCortePorCompra.Size = new System.Drawing.Size(681, 216);
             this.grillaCortePorCompra.TabIndex = 16;
             this.grillaCortePorCompra.TabStop = false;
             // 
             // corte
             // 
             this.corte.DataPropertyName = "Codigo";
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.corte.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle25.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.corte.DefaultCellStyle = dataGridViewCellStyle25;
             this.corte.HeaderText = "Codigo";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -748,10 +715,10 @@
             // cantKgs
             // 
             this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle5.Format = "N3";
-            dataGridViewCellStyle5.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle26.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle26.Format = "N3";
+            dataGridViewCellStyle26.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle26;
             this.cantKgs.HeaderText = "Cant. Kgs";
             this.cantKgs.Name = "cantKgs";
             this.cantKgs.ReadOnly = true;
@@ -759,10 +726,10 @@
             // precioKgs
             // 
             this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle6.Format = "N2";
-            dataGridViewCellStyle6.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle27.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle27.Format = "N2";
+            dataGridViewCellStyle27.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle27;
             this.precioKgs.HeaderText = "Precio Kg.";
             this.precioKgs.Name = "precioKgs";
             this.precioKgs.ReadOnly = true;
@@ -770,10 +737,10 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "TotalS";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle7.Format = "N2";
-            dataGridViewCellStyle7.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle28.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle28.Format = "N2";
+            dataGridViewCellStyle28.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle28;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -789,7 +756,7 @@
             // 
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(701, 398);
+            this.txtCantItems.Location = new System.Drawing.Point(708, 218);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(102, 21);
@@ -802,11 +769,45 @@
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(616, 403);
+            this.label12.Location = new System.Drawing.Point(708, 200);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(79, 15);
             this.label12.TabIndex = 33;
             this.label12.Text = "Cant. Items";
+            // 
+            // txtUsuario
+            // 
+            this.txtUsuario.Location = new System.Drawing.Point(81, 11);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.ReadOnly = true;
+            this.txtUsuario.Size = new System.Drawing.Size(158, 20);
+            this.txtUsuario.TabIndex = 11;
+            this.txtUsuario.TabStop = false;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label16.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label16.Location = new System.Drawing.Point(25, 12);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(50, 15);
+            this.label16.TabIndex = 10;
+            this.label16.Text = "Usuario";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.radioCorte);
+            this.groupBox2.Controls.Add(this.radioMediaRes);
+            this.groupBox2.Controls.Add(this.radioIngresoStock);
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupBox2.Location = new System.Drawing.Point(523, 38);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(280, 79);
+            this.groupBox2.TabIndex = 20;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Tipo de Compra";
             // 
             // formNuevaCompra
             // 
@@ -843,6 +844,8 @@
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMediaRes)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).EndInit();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -882,9 +885,6 @@
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.RadioButton radioCorte;
         private System.Windows.Forms.RadioButton radioMediaRes;
-        protected System.Windows.Forms.Label label15;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
         private System.Windows.Forms.Panel panelCorte;
         protected internal System.Windows.Forms.Button btnBuscaCorte;
         protected System.Windows.Forms.Label label13;
@@ -911,5 +911,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalM;
         private System.Windows.Forms.MaskedTextBox txtCodigo;
         protected System.Windows.Forms.Label label10;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.TextBox txtUsuario;
+        protected System.Windows.Forms.Label label16;
     }
 }

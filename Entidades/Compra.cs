@@ -7,6 +7,10 @@ namespace Entidades
 {
     public class Compra
     {
+        public enum tipoCompra
+        { 
+                    
+        }
         private int idCompra;
         private string nroRemito;
         private DateTime fechaCompra;

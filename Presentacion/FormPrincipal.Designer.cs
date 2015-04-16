@@ -30,6 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.linkLogin = new System.Windows.Forms.LinkLabel();
             this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
             this.pnlMantenimientos = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
@@ -50,8 +51,9 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.linkCompras = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
-            this.linkLogin = new System.Windows.Forms.LinkLabel();
+            this.btnIngresoStock = new System.Windows.Forms.Button();
             this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.pnlMantenimientos.SuspendLayout();
             this.panel4.SuspendLayout();
@@ -81,9 +83,23 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.HotTrack;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.splitContainer1.Panel2.Controls.Add(this.btnIngresoStock);
             this.splitContainer1.Size = new System.Drawing.Size(886, 540);
             this.splitContainer1.SplitterDistance = 228;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // linkLogin
+            // 
+            this.linkLogin.AutoSize = true;
+            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkLogin.Location = new System.Drawing.Point(12, 518);
+            this.linkLogin.Name = "linkLogin";
+            this.linkLogin.Size = new System.Drawing.Size(70, 13);
+            this.linkLogin.TabIndex = 13;
+            this.linkLogin.TabStop = true;
+            this.linkLogin.Text = "Iniciar Sesión";
+            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
             // 
             // linkCerrarSesion
             // 
@@ -326,18 +342,15 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Compras";
             // 
-            // linkLogin
+            // btnIngresoStock
             // 
-            this.linkLogin.AutoSize = true;
-            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkLogin.Location = new System.Drawing.Point(12, 518);
-            this.linkLogin.Name = "linkLogin";
-            this.linkLogin.Size = new System.Drawing.Size(70, 13);
-            this.linkLogin.TabIndex = 13;
-            this.linkLogin.TabStop = true;
-            this.linkLogin.Text = "Iniciar Sesión";
-            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
+            this.btnIngresoStock.Location = new System.Drawing.Point(51, 71);
+            this.btnIngresoStock.Name = "btnIngresoStock";
+            this.btnIngresoStock.Size = new System.Drawing.Size(127, 23);
+            this.btnIngresoStock.TabIndex = 0;
+            this.btnIngresoStock.Text = "Ingreso Stock";
+            this.btnIngresoStock.UseVisualStyleBackColor = true;
+            this.btnIngresoStock.Click += new System.EventHandler(this.btnIngresoStock_Click);
             // 
             // FormPrincipal
             // 
@@ -355,6 +368,7 @@
             this.Activated += new System.EventHandler(this.FormPrincipal_Activated);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel1.PerformLayout();
+            this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.ResumeLayout(false);
             this.pnlMantenimientos.ResumeLayout(false);
             this.pnlMantenimientos.PerformLayout();
@@ -396,6 +410,7 @@
         private System.Windows.Forms.LinkLabel linkBaseDeDatos;
         private System.Windows.Forms.LinkLabel linkCerrarSesion;
         private System.Windows.Forms.LinkLabel linkLogin;
+        private System.Windows.Forms.Button btnIngresoStock;
     }
 }
 
