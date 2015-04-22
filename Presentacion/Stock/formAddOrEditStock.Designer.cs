@@ -30,10 +30,11 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.txtTipoAccion = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnBuscaCorte = new System.Windows.Forms.Button();
             this.txtCantKgs = new System.Windows.Forms.TextBox();
@@ -62,6 +63,7 @@
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.idCompraLabel = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
@@ -72,7 +74,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
-            this.pnlBuscar.Controls.Add(this.textBox1);
+            this.pnlBuscar.Controls.Add(this.txtTipoAccion);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.checkLeerPeso);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
@@ -86,18 +88,17 @@
             this.pnlBuscar.Size = new System.Drawing.Size(820, 120);
             this.pnlBuscar.TabIndex = 3;
             // 
-            // textBox1
+            // txtTipoAccion
             // 
-            this.textBox1.BackColor = System.Drawing.SystemColors.Control;
-            this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold);
-            this.textBox1.ForeColor = System.Drawing.Color.Brown;
-            this.textBox1.Location = new System.Drawing.Point(650, 77);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(158, 29);
-            this.textBox1.TabIndex = 48;
-            this.textBox1.TabStop = false;
-            this.textBox1.Text = "Ingreso Stock";
+            this.txtTipoAccion.BackColor = System.Drawing.SystemColors.Control;
+            this.txtTipoAccion.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold);
+            this.txtTipoAccion.ForeColor = System.Drawing.Color.Brown;
+            this.txtTipoAccion.Location = new System.Drawing.Point(650, 77);
+            this.txtTipoAccion.Name = "txtTipoAccion";
+            this.txtTipoAccion.ReadOnly = true;
+            this.txtTipoAccion.Size = new System.Drawing.Size(158, 29);
+            this.txtTipoAccion.TabIndex = 48;
+            this.txtTipoAccion.TabStop = false;
             // 
             // groupBox1
             // 
@@ -262,6 +263,7 @@
             this.comboSucursal.Size = new System.Drawing.Size(158, 24);
             this.comboSucursal.TabIndex = 3;
             this.comboSucursal.TabStop = false;
+            this.comboSucursal.SelectedIndexChanged += new System.EventHandler(this.comboSucursal_SelectedIndexChanged);
             this.comboSucursal.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // label4
@@ -298,6 +300,7 @@
             this.txtFechaCompra.Size = new System.Drawing.Size(158, 23);
             this.txtFechaCompra.TabIndex = 1;
             this.txtFechaCompra.TabStop = false;
+            this.txtFechaCompra.ValueChanged += new System.EventHandler(this.txtFechaCompra_ValueChanged);
             // 
             // label3
             // 
@@ -351,6 +354,7 @@
             this.txtObservaciones.Size = new System.Drawing.Size(181, 209);
             this.txtObservaciones.TabIndex = 9;
             this.txtObservaciones.TabStop = false;
+            this.txtObservaciones.TextChanged += new System.EventHandler(this.txtObservaciones_TextChanged);
             // 
             // label11
             // 
@@ -371,6 +375,14 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCortePorCompra.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortePorCompra.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
             this.grillaCortePorCompra.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortePorCompra.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.corte,
@@ -381,6 +393,7 @@
             this.grillaCortePorCompra.Name = "grillaCortePorCompra";
             this.grillaCortePorCompra.ReadOnly = true;
             this.grillaCortePorCompra.RowHeadersVisible = false;
+            this.grillaCortePorCompra.RowTemplate.DefaultCellStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grillaCortePorCompra.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaCortePorCompra.Size = new System.Drawing.Size(600, 371);
             this.grillaCortePorCompra.TabIndex = 16;
@@ -389,8 +402,8 @@
             // corte
             // 
             this.corte.DataPropertyName = "Codigo";
-            dataGridViewCellStyle25.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.corte.DefaultCellStyle = dataGridViewCellStyle25;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.corte.DefaultCellStyle = dataGridViewCellStyle8;
             this.corte.HeaderText = "Codigo";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -405,10 +418,10 @@
             // cantKgs
             // 
             this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle26.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle26.Format = "N3";
-            dataGridViewCellStyle26.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle26;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Format = "N3";
+            dataGridViewCellStyle9.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle9;
             this.cantKgs.HeaderText = "Cant. Kgs";
             this.cantKgs.Name = "cantKgs";
             this.cantKgs.ReadOnly = true;
@@ -416,11 +429,11 @@
             // txtCantItems
             // 
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCantItems.Location = new System.Drawing.Point(625, 144);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
-            this.txtCantItems.Size = new System.Drawing.Size(102, 21);
+            this.txtCantItems.Size = new System.Drawing.Size(119, 22);
             this.txtCantItems.TabIndex = 34;
             this.txtCantItems.TabStop = false;
             this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -429,10 +442,10 @@
             // 
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
-            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label12.Location = new System.Drawing.Point(625, 126);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(79, 15);
+            this.label12.Size = new System.Drawing.Size(84, 16);
             this.label12.TabIndex = 33;
             this.label12.Text = "Cant. Items";
             // 
@@ -441,12 +454,25 @@
             this.timer1.Enabled = true;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // idCompraLabel
+            // 
+            this.idCompraLabel.AutoSize = true;
+            this.idCompraLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.idCompraLabel.ForeColor = System.Drawing.Color.Black;
+            this.idCompraLabel.Location = new System.Drawing.Point(715, 125);
+            this.idCompraLabel.Name = "idCompraLabel";
+            this.idCompraLabel.Size = new System.Drawing.Size(101, 16);
+            this.idCompraLabel.TabIndex = 42;
+            this.idCompraLabel.Text = "idCompraLabel";
+            this.idCompraLabel.Visible = false;
+            // 
             // formAddOrEditStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(820, 509);
+            this.Controls.Add(this.idCompraLabel);
             this.Controls.Add(this.txtCantItems);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
@@ -503,7 +529,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKgs;
         private System.Windows.Forms.CheckBox checkLeerPeso;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox txtTipoAccion;
         private System.Windows.Forms.Timer timer1;
+        protected System.Windows.Forms.Label idCompraLabel;
     }
 }

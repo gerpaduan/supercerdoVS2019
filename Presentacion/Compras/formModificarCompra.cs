@@ -49,15 +49,18 @@ namespace Presentacion.Compras
         {
             InitializeComponent();
             cargarComboSucursal();
-            cargarLista();
-            cargarGrilla();
         }
 
+        private void formModificarCompra_Load(object sender, EventArgs e)
+        {
+            //cargarLista();
+            //cargarGrilla();
+        }
 
         //Se carga la lista inicial desde la base de datos
         public void cargarLista()
         {
-            if (tipoCompraModificar == "Media Res")
+            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
             {
                 //dtLineasCompra = null;
                 
@@ -83,7 +86,10 @@ namespace Presentacion.Compras
                 }
             }
 
-            if (tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 dtLineasCompra = oCompraN.obtenerCortesPorCompra(idCompraModificar);
 
@@ -193,7 +199,10 @@ namespace Presentacion.Compras
                     grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;
                 }
 
-                if (tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+                if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                 {
 
                     grillaCortePorCompra.AutoGenerateColumns = false;
@@ -220,7 +229,10 @@ namespace Presentacion.Compras
         {
             float totalKgs = 0, totalPesos = 0;
 
-            if (tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 foreach (CortesPorCompra fila in listaCortesEnGrilla)
                 {
@@ -290,7 +302,10 @@ namespace Presentacion.Compras
         {
             
 
-            if (estadoModificar == "Stock Borrado" || tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+            if (estadoModificar == "Stock Borrado" || tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 quitarStock.Enabled = false;
                 PorcentajesCorte.Enabled = false;
@@ -381,13 +396,15 @@ namespace Presentacion.Compras
                 txtKgMedia.TabStop = false;
             }
 
-            if (tipoCompra=="Ingreso Stock")
+            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 radioIngresoStock.Checked = true;
                 panelCorte.Visible = true;
                 grupoMediaRes.Text = "Corte ";
 
-                tipoCompra = "Ingreso Stock";
+                tipoCompra = tipoCompraModificar;
 
                 grillaMediaRes.Visible = false;
                 grillaCortePorCompra.Visible = true;
@@ -430,7 +447,10 @@ namespace Presentacion.Compras
                     agregarMediaRes();
                     txtCantKgs.Focus();
                 }
-                if (tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+                if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                 {
                     agregarCorte();
                     txtCodigo.Focus();
@@ -662,7 +682,7 @@ namespace Presentacion.Compras
 
             if (radioIngresoStock.Checked==true)
             {
-                tipoCompraModificar = "Ingreso Stock";
+                //tipoCompraModificar = "Ingreso Stock";
             }
             if (radioCorte.Checked==true)
             {
@@ -720,7 +740,10 @@ namespace Presentacion.Compras
 
                     }
 
-                    if (tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+                    if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                        tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                        tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                        tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                     {
 
                         foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompraAnterior)
@@ -813,7 +836,10 @@ namespace Presentacion.Compras
                 {
                     quitarMedia();
                 }
-                if (tipoCompraModificar == "Cortes" || tipoCompraModificar == "Ingreso Stock")
+                if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                 {
                     quitarCorte();
                 }

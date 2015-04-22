@@ -384,6 +384,12 @@
     <Compile Include="Stock\formAddOrEditStock.Designer.cs">
       <DependentUpon>formAddOrEditStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="Stock\formStock.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Stock\formStock.Designer.cs">
+      <DependentUpon>formStock.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ventas\formInfoVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -567,6 +573,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Stock\formAddOrEditStock.resx">
       <DependentUpon>formAddOrEditStock.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Stock\formStock.resx">
+      <DependentUpon>formStock.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formInfoVenta.resx">
       <DependentUpon>formInfoVenta.cs</DependentUpon>

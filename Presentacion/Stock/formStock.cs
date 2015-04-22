@@ -10,51 +10,45 @@ using Presentacion.Compras;
 
 namespace Presentacion
 {
-    public partial class formCompras : formBaseColor
+    public partial class formStock : formBaseColor
 
     {
         Negocio.Compra oCompraN;
         Entidades.Compra oCompraE;
         DataTable dtCompras = new DataTable();
-
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         bool cargar = false;
-        public formCompras()
+        public formStock()
         {
             InitializeComponent();
             cargarSucursal();
             this.comboSucursal.SelectedIndex = 2;
-            this.comboTipoCompra.SelectedIndex = 0;
+            this.comboTipoCompra.SelectedIndex = 0 ;
 
             cargar = true;
             cargarGrilla();
-        }
-        
-      
+        }      
 
         #region metodos
 
         public void cargarGrilla()
-        {            
+        {
             if (cargar)
             {
                 int idSucCombo = 0;
                 if (comboSucursal.SelectedValue != null)
-	            {
+                {
                     idSucCombo = Convert.ToInt32(comboSucursal.SelectedValue);
-	            }
+                }
                 oCompraN = new Negocio.Compra();
 
                 grillaCompras.AutoGenerateColumns = false;
 
-
                 dtCompras = null;
                 dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
-
                 grillaCompras.DataSource = dtCompras;
-
                 cargarTotales();
 
                 oCompraN = null;
@@ -71,83 +65,47 @@ namespace Presentacion
             }
 
             txtTotalKgs.Text = Convert.ToString( totalKg);
-            txtTotalS.Text = Convert.ToString( totalS);
         }
 
         private void cargarCompra()
         { 
             
-        }
-
-    
+        }           
 
         private void modificarCompra()
         {
             try
             {
                 int idCompra = Convert.ToInt32(grillaCompras.CurrentRow.Cells["idCompra"].Value.ToString());
-
-
-                string tipoCompra, proveedor, nroRemito, estado, observaciones;
-                DateTime fechaCompra = Convert.ToDateTime(grillaCompras.CurrentRow.Cells["fechaCompra"].Value.ToString());
-                nroRemito = grillaCompras.CurrentRow.Cells["nroRemito"].Value.ToString();
-                int idProveedor = Convert.ToInt32(grillaCompras.CurrentRow.Cells["idPersona"].Value.ToString());
-                proveedor = grillaCompras.CurrentRow.Cells["razonSocial"].Value.ToString();
-                tipoCompra = grillaCompras.CurrentRow.Cells["tipoCompra"].Value.ToString();
-                estado = grillaCompras.CurrentRow.Cells["estado"].Value.ToString();
-                observaciones = grillaCompras.CurrentRow.Cells["observaciones"].Value.ToString();
-
-                if (Application.OpenForms["formModificarCompra"] != null)
+                bool formAbierto = false;
+                foreach (Form frm in Application.OpenForms)
                 {
-
-                    Application.OpenForms["formModificarCompra"].Activate();
-                    Application.OpenForms["formModificarCompra"].WindowState = FormWindowState.Normal;
-
-
+                    if (frm.GetType() == typeof(formAddOrEditStock))
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if(ctrl.Name.Equals("idCompraLabel") && ctrl.Text.Equals(idCompra.ToString())) //(oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+                            {
+                                frm.BringToFront();
+                                formAbierto = true;
+                                break;
+                            }
+                        }
+                    }
                 }
-                else
+                if (!formAbierto)
                 {
-
-                    formModificarCompra frmModificarCompra = new formModificarCompra();
-
-                    frmModificarCompra.cargarParametros(this, idCompra, tipoCompra, idProveedor, proveedor, fechaCompra, nroRemito, estado, observaciones);
-                    frmModificarCompra.Show();
-
+                    formAddOrEditStock frmAddOrEditStock = new formAddOrEditStock();
+                    frmAddOrEditStock.accion = Entidades.Compra.accion.Modificar;
+                    frmAddOrEditStock.idCompra = idCompra;
+                    frmAddOrEditStock.asignarFormCompra(this);
+                    frmAddOrEditStock.Show();
                 }
-
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
-        }
-
-        private void nuevaCompra()
-        {
-            //formNuevaCompra frmNuevaCompra = new formNuevaCompra();
-            //frmNuevaCompra.asignarFormCompra(this);
-            //frmNuevaCompra.ShowDialog();
-
-            if (Application.OpenForms["formNuevaCompra"] != null)
-            {
-
-                Application.OpenForms["formNuevaCompra"].Activate();
-                Application.OpenForms["formNuevaCompra"].WindowState = FormWindowState.Normal;
-
-
-            }
-            else
-            {
-
-                formNuevaCompra frmNuevaCompra = new formNuevaCompra();
-                frmNuevaCompra.asignarFormCompra(this);
-                frmNuevaCompra.Show();
-
-            }
-
-        
         }
 
         #endregion
@@ -159,12 +117,7 @@ namespace Presentacion
         {
             this.Close();
         }
-
-        private void nuevo_Click(object sender, EventArgs e)
-        {
-            nuevaCompra();
-        }
-       
+      
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
@@ -213,10 +166,16 @@ namespace Presentacion
 
         private void formCompras_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Control && e.KeyCode==Keys.N)
-            {
-                nuevaCompra();
-            }
+        }
+
+        private void nuevo_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pnlBuscar_Paint(object sender, PaintEventArgs e)
+        {
+
         }
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
@@ -225,7 +184,6 @@ namespace Presentacion
             {
                 cargarGrilla();
             }
-           
         }
 
         private void cargarSucursal()
@@ -247,31 +205,36 @@ namespace Presentacion
             comboSucursal.SelectedIndex = 2;
         }
 
-        private void formCompras_Load(object sender, EventArgs e)
+        private void btnIngreso_Click(object sender, EventArgs e)
         {
-            //cargarSucursal();
+            nuevoStock(Entidades.Compra.tipoCompraEnum.IngresoStock);
         }
 
-      
-        //cargar grilla del formModificarCorte
-        
+        private void btnEgreso_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.EgresoStock);
+        }
 
-      
+        private void btnCierre_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.CierreStock);
+        }
 
-        
-
-        
-
-       
-
-        
-
-        
-
-      
-
-        
-
-       
+        private void nuevoStock(Entidades.Compra.tipoCompraEnum tipoCompra)
+        {
+            if (Application.OpenForms["formAddOrEditStock"] != null)
+            {
+                Application.OpenForms["formAddOrEditStock"].Activate();
+                Application.OpenForms["formAddOrEditStock"].WindowState = FormWindowState.Normal;
+                MessageBox.Show("Si desea modificar un registro diferente debe cerrar este formulario y volver a seleccionar el que desea modificar");
+            }
+            else
+            {
+                formAddOrEditStock frmAddOrEditStock = new formAddOrEditStock();
+                frmAddOrEditStock.tipoCompraEnum = tipoCompra;
+                frmAddOrEditStock.asignarFormCompra(this);
+                frmAddOrEditStock.Show();
+            }
+        }       
     }
 }

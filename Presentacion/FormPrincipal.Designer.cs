@@ -52,6 +52,9 @@
             this.linkCompras = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
             this.btnIngresoStock = new System.Windows.Forms.Button();
+            this.btnEgresoStock = new System.Windows.Forms.Button();
+            this.btnCierreStock = new System.Windows.Forms.Button();
+            this.btnStock = new System.Windows.Forms.Button();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -83,6 +86,9 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.HotTrack;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.splitContainer1.Panel2.Controls.Add(this.btnStock);
+            this.splitContainer1.Panel2.Controls.Add(this.btnCierreStock);
+            this.splitContainer1.Panel2.Controls.Add(this.btnEgresoStock);
             this.splitContainer1.Panel2.Controls.Add(this.btnIngresoStock);
             this.splitContainer1.Size = new System.Drawing.Size(886, 540);
             this.splitContainer1.SplitterDistance = 228;
@@ -352,6 +358,36 @@
             this.btnIngresoStock.UseVisualStyleBackColor = true;
             this.btnIngresoStock.Click += new System.EventHandler(this.btnIngresoStock_Click);
             // 
+            // btnEgresoStock
+            // 
+            this.btnEgresoStock.Location = new System.Drawing.Point(51, 100);
+            this.btnEgresoStock.Name = "btnEgresoStock";
+            this.btnEgresoStock.Size = new System.Drawing.Size(127, 23);
+            this.btnEgresoStock.TabIndex = 1;
+            this.btnEgresoStock.Text = "Egreso Stock";
+            this.btnEgresoStock.UseVisualStyleBackColor = true;
+            this.btnEgresoStock.Click += new System.EventHandler(this.btnEgresoStock_Click);
+            // 
+            // btnCierreStock
+            // 
+            this.btnCierreStock.Location = new System.Drawing.Point(51, 129);
+            this.btnCierreStock.Name = "btnCierreStock";
+            this.btnCierreStock.Size = new System.Drawing.Size(127, 23);
+            this.btnCierreStock.TabIndex = 2;
+            this.btnCierreStock.Text = "Cierre Stock";
+            this.btnCierreStock.UseVisualStyleBackColor = true;
+            this.btnCierreStock.Click += new System.EventHandler(this.btnCierreStock_Click);
+            // 
+            // btnStock
+            // 
+            this.btnStock.Location = new System.Drawing.Point(51, 42);
+            this.btnStock.Name = "btnStock";
+            this.btnStock.Size = new System.Drawing.Size(127, 23);
+            this.btnStock.TabIndex = 3;
+            this.btnStock.Text = "Stock";
+            this.btnStock.UseVisualStyleBackColor = true;
+            this.btnStock.Click += new System.EventHandler(this.btnStock_Click);
+            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -411,6 +447,9 @@
         private System.Windows.Forms.LinkLabel linkCerrarSesion;
         private System.Windows.Forms.LinkLabel linkLogin;
         private System.Windows.Forms.Button btnIngresoStock;
+        private System.Windows.Forms.Button btnCierreStock;
+        private System.Windows.Forms.Button btnEgresoStock;
+        private System.Windows.Forms.Button btnStock;
     }
 }
 

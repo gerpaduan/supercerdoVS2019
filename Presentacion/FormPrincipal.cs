@@ -376,6 +376,27 @@ namespace Presentacion
         private void btnIngresoStock_Click(object sender, EventArgs e)
         {
             formAddOrEditStock frm = new formAddOrEditStock();
+            frm.tipoCompraEnum = Entidades.Compra.tipoCompraEnum.IngresoStock;
+            frm.Show();
+        }
+
+        private void btnEgresoStock_Click(object sender, EventArgs e)
+        {
+            formAddOrEditStock frm = new formAddOrEditStock();
+            frm.tipoCompraEnum = Entidades.Compra.tipoCompraEnum.EgresoStock;
+            frm.Show();
+        }
+
+        private void btnCierreStock_Click(object sender, EventArgs e)
+        {
+            formAddOrEditStock frm = new formAddOrEditStock();
+            frm.tipoCompraEnum = Entidades.Compra.tipoCompraEnum.CierreStock;
+            frm.Show();
+        }
+
+        private void btnStock_Click(object sender, EventArgs e)
+        {
+            formStock frm = new formStock();
             frm.Show();
         }
         

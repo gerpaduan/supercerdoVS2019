@@ -976,6 +976,7 @@
             this.Name = "formModificarCompra";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Información de la Compra";
+            this.Load += new System.EventHandler(this.formModificarCompra_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();

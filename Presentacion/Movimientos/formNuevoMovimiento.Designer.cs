@@ -121,7 +121,7 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(304, 79);
+            this.textBox1.Location = new System.Drawing.Point(359, 77);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(100, 20);
             this.textBox1.TabIndex = 19;
@@ -138,6 +138,7 @@
             this.label7.Size = new System.Drawing.Size(34, 15);
             this.label7.TabIndex = 18;
             this.label7.Text = "Hora";
+            this.label7.Visible = false;
             // 
             // txtHora
             // 
@@ -145,10 +146,10 @@
             this.txtHora.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtHora.Location = new System.Drawing.Point(379, 44);
             this.txtHora.Name = "txtHora";
-            this.txtHora.ReadOnly = true;
             this.txtHora.Size = new System.Drawing.Size(80, 22);
             this.txtHora.TabIndex = 17;
             this.txtHora.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtHora.Visible = false;
             // 
             // label6
             // 
@@ -156,7 +157,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(301, 17);
+            this.label6.Location = new System.Drawing.Point(259, 18);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(41, 15);
             this.label6.TabIndex = 16;
@@ -322,7 +323,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(13, 8);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(259, 89);
+            this.groupBox1.Size = new System.Drawing.Size(239, 89);
             this.groupBox1.TabIndex = 13;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Sucursales";
@@ -357,7 +358,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(44, 27);
+            this.label3.Location = new System.Drawing.Point(42, 27);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(44, 15);
             this.label3.TabIndex = 10;
@@ -369,7 +370,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(39, 59);
+            this.label4.Location = new System.Drawing.Point(37, 59);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(49, 15);
             this.label4.TabIndex = 8;
@@ -378,11 +379,12 @@
             // txtFechaMovimiento
             // 
             this.txtFechaMovimiento.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtFechaMovimiento.CustomFormat = "dd/MM/yyyy H:mm";
             this.txtFechaMovimiento.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaMovimiento.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaMovimiento.Location = new System.Drawing.Point(348, 16);
+            this.txtFechaMovimiento.Location = new System.Drawing.Point(306, 16);
             this.txtFechaMovimiento.Name = "txtFechaMovimiento";
-            this.txtFechaMovimiento.Size = new System.Drawing.Size(111, 22);
+            this.txtFechaMovimiento.Size = new System.Drawing.Size(153, 22);
             this.txtFechaMovimiento.TabIndex = 15;
             this.txtFechaMovimiento.TabStop = false;
             // 

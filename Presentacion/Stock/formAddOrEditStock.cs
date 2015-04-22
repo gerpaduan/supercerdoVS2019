@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Cortes;
 using Utilidades;
+using System.Configuration;
 
 
 namespace Presentacion
@@ -26,40 +27,70 @@ namespace Presentacion
         Entidades.Persona oProvNuevaCompra;
         Entidades.Corte oCorteNuevaCompra;
         Entidades.CortePorCompra oCortePorCompra;
-        Entidades.Sucursal oSucursalE;
+        Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         CortesPorCompra cortesPorCompra;
         float totalKgs = 0;
         float totalPesos = 0;
 
-        string tipoCompra = "Media Res";
+        string tipoCompra = "";
+
+        public int idCompra = 0;
+        public Entidades.Compra.tipoCompraEnum tipoCompraEnum;
+        public Entidades.Compra.accion accion = Entidades.Compra.accion.Agregar;
 
         List<CortesPorCompra> listaCortesEnGrilla = new List<CortesPorCompra>();//Lista que se carga en la grilla
 
        List<Entidades.CortePorCompra> listaCortePorCompra = new List<Entidades.CortePorCompra>();
 
-       formCompras oFrmCompra;
+       formStock frmStock;
 
        bool ultimaValidacion = true;
+       bool huboModificaciones = false;
 
         public formAddOrEditStock()
         {
             InitializeComponent();            
-            cargarComboSucursal();            
+            cargarComboSucursal();
+        }
+
+        private void formNuevaCompra_Load(object sender, EventArgs e)
+        {
+            if (accion.Equals(Entidades.Compra.accion.Agregar))
+            {
+                oProvNuevaCompra = new Entidades.Persona();
+                oProvNuevaCompra.idPersona = Convert.ToInt32(tipoCompraEnum);
+                oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
+            }
+            if (accion.Equals(Entidades.Compra.accion.Modificar))
+            {
+                oCompraE = oCompraN.findById_converToCompra(idCompra);
+                listaCortePorCompra = oCompraN.convertCortesPorCompraToList(idCompra);
+
+                tipoCompraEnum = Entidades.Compra.tipoCompraToEnum(oCompraE.TipoCompra);
+                oProvNuevaCompra = oCompraE.Proveedor;
+
+                oSucursalE = oCompraE.Sucursal;
+                comboSucursal.SelectedValue = oSucursalE.idSucursal;
+                txtFechaCompra.Value = oCompraE.FechaCompra;
+                txtObservaciones.Text = oCompraE.Observaciones;
+                foreach (Entidades.CortePorCompra corte in listaCortePorCompra)
+                {
+                    cargarCorteEnGrilla(corte);
+                }
+                cargarGrilla();
+                btnAceptar.Text = "Modificar";
+                txtFechaCompra.Enabled = false;
+                comboSucursal.Enabled = false;
+                groupBox1.Enabled = false;
+            }
+            tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
+            txtTipoAccion.Text = tipoCompra;
+            this.Text = accion.ToString()+" "+tipoCompra;
+            huboModificaciones = false;
+            idCompraLabel.Text = idCompra.ToString();
         }
 
         #region eventos
-
-        private void btnBuscarProv_Click(object sender, EventArgs e)
-        {
-            formBuscarProveedor frmBuscarProv = new formBuscarProveedor();
-            frmBuscarProv.Show(this);
-        }
-
-        //comunicación con interface
-        public void EnviarProveedor(Entidades.Persona proveedor)
-        {
-            oProvNuevaCompra = proveedor;
-        }
 
         //comunicación con interface
         public void EnviarCorte(Entidades.Corte corte)
@@ -81,24 +112,39 @@ namespace Presentacion
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
-            agregarLinea();
-            
+            agregarLinea();            
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            if (huboModificaciones)//(accion.Equals(Entidades.Compra.accion.Modificar) || grillaCortePorCompra.Rows.Count > 0)
+            {
+                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-            if ((respuesta == System.Windows.Forms.DialogResult.Yes))
+                if ((respuesta == System.Windows.Forms.DialogResult.Yes))
+                {
+                    this.Close();
+                }                
+            }
+            else
             {
                 this.Close();
             }
-            
         }
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
-            agregarCompra();
+            if (btnAceptar.Text.Equals("Modificar"))
+            {
+                btnAceptar.Text = "Guardar";
+                txtFechaCompra.Enabled = true;
+                comboSucursal.Enabled = true;
+                groupBox1.Enabled = true;
+            }
+            else
+            {
+                agregarCompra();
+            }
         }
 
         #endregion
@@ -106,38 +152,49 @@ namespace Presentacion
         #region Métodos
 
         //se asigna el form compra para recargar la grilla del formCompras
-        public void asignarFormCompra(formCompras frmCompra)
+        public void asignarFormCompra(formStock frmCompra)
         {
-            oFrmCompra = frmCompra;
+            frmStock = frmCompra;
         }
 
         private void agregarCompra()
         {
-            if (listaCortePorCompra.Count > 0)
+            try
             {
-                if (validaciónFinal())
+                if (listaCortePorCompra.Count > 0)
                 {
-                    cargarCompra();//se cargan datos de la compra
-                    oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
-
-                    if (tipoCompra=="Cortes" || tipoCompra=="Ingreso Stock")
+                    if (validaciónFinal())
                     {
+                        cargarCompra();//se cargan datos de la compra
+                        if (accion.Equals(Entidades.Compra.accion.Modificar))
+                        {
+                            oCompraN.modificarCompra(oCompraE);
+                        }
+                        if (accion.Equals(Entidades.Compra.accion.Agregar))
+                        {
+                            oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
+                        }
                         foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                         {
+                            cortePorCompra.Sucursal = oSucursalE;
                             oCompraN.agregarCortePorCompra(cortePorCompra);
                         }
+                        if (frmStock != null)
+                        {                            
+                          frmStock.cargarGrilla();
+                        }
+                        this.Close();
+                        //limpiarListas();
                     }
-                
-                    oFrmCompra.cargarGrilla();
-                    //this.Close();
-                    limpiarListas();                    
-
                 }
-
+                else
+                {
+                    MessageBox.Show("No hay cargada ninguna linea de compra.", "No hay lineas cargadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("No hay cargada ninguna linea de compra.", "No hay lineas cargadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(ex.Message);
             }
           
 
@@ -145,6 +202,7 @@ namespace Presentacion
         private void limpiarListas()
         {
             //limpio campos
+            txtCantItems.Text = "0";
             txtObservaciones.Text = "";            
             listaCortesEnGrilla = new List<CortesPorCompra>();//Lista que se carga en la grilla
             listaCortePorCompra = new List<Entidades.CortePorCompra>();
@@ -153,20 +211,18 @@ namespace Presentacion
 
         private void cargarCompra()
         {
-            oCompraE.NroRemito = null;
+            oCompraE.NroRemito = "";
             oCompraE.Proveedor = oProvNuevaCompra;
             oCompraE.FechaCompra = txtFechaCompra.Value;
             oCompraE.Estado = "";
-            oCompraE.Observaciones = txtObservaciones.Text.Trim();
+            oCompraE.Observaciones = txtObservaciones.Text;
             oCompraE.TipoCompra = tipoCompra;
+            oCompraE.Sucursal = oSucursalE;
         }
 
         private void quitarLinea()
         {
-            if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
-            {
-                quitarCorte();
-            }           
+            quitarCorte();
             cargarGrilla();
         }
 
@@ -176,6 +232,7 @@ namespace Presentacion
             {
                 if (grillaCortePorCompra.SelectedRows.Count > 0 || grillaCortePorCompra.CurrentRow != null)
                 {
+                    huboModificaciones = true;
                     int nroFila = grillaCortePorCompra.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
                     listaCortePorCompra.RemoveAt(nroFila);//elimina objetos de las listas
                     listaCortesEnGrilla.RemoveAt(nroFila);
@@ -194,11 +251,9 @@ namespace Presentacion
         {
             if (validarCampos())
             {
-                if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
-                {
-                    agregarCorte();
-                    txtCodigo.Focus();
-                }
+                huboModificaciones = true;
+                agregarCorte();
+                txtCodigo.Focus();
                 limpiarCampos();                
             }
         }
@@ -214,18 +269,13 @@ namespace Presentacion
         {
             totalKgs = 0;
             totalPesos = 0;
-
-            if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
+            foreach (CortesPorCompra fila in listaCortesEnGrilla)
             {
-                foreach (CortesPorCompra fila in listaCortesEnGrilla)
-                {
-                    //sumo totales
-                    totalKgs = totalKgs + fila.cantKgs;
-
-                    //cargo Totales
-                    txtCantItems.Text = grillaCortePorCompra.Rows.Count.ToString();
-                }
-            }            
+                //sumo totales
+                totalKgs = totalKgs + fila.cantKgs;
+            }
+            //cargo Totales
+            txtCantItems.Text = grillaCortePorCompra.Rows.Count.ToString();     
         }
 
         private int validarCorteEnGrilla()
@@ -233,12 +283,14 @@ namespace Presentacion
             int nroFila = -1;//si corte no está cargado
             foreach (Entidades.CortePorCompra corte in listaCortePorCompra)
             {
-                if (corte.corte.idCorte == oCorteNuevaCompra.idCorte && corte.sucursal.IdSucursal == Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
+                if (corte.corte.idCorte == oCorteNuevaCompra.idCorte)
                 {
-                    DialogResult resp = MessageBox.Show("Ya se ha cargado el corte en la sucursal seleccionada.\nDesea sumarlo al Corte ya ingresado?.", "Corte ya cargado en la sucursal", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    string mensaje = "Ya se han cargado " + corte.CantKgs.ToString() + "Kgs a " + corte.corte.corte + "\n\n¿Desea sumar los " + oCortePorCompra.CantKgs.ToString() + " Kgs ingresados?";
+                    DialogResult resp = MessageBox.Show(mensaje, "Corte ya cargado", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
 
                     if (resp == DialogResult.Yes)
                     {
+                        MessageBox.Show("Se sumaron correctamente los " + oCortePorCompra.CantKgs.ToString() + " Kgs a "+ corte.corte.corte);
                         nroFila = listaCortePorCompra.IndexOf(corte);//se envía el index de la lista para sumar los kg al corte ya ingresado
                     }
                     else
@@ -247,7 +299,7 @@ namespace Presentacion
                     }
                 }
             }
-            return nroFila; ;
+            return nroFila;
         }
 
 
@@ -277,14 +329,20 @@ namespace Presentacion
                     }
                     catch (Exception)
                     {
+                        MessageBox.Show("Ingresó una cantidad de KGs erronea.");
                         ultimaValidacion = false;
                     }
                 }
 
                 if (ultimaValidacion)
                 {
-                    oSucursalE = new Entidades.Sucursal(); //creo objeto sucursal
-                    oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
+                    if (tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.EgresoStock))
+                    {
+                        oCortePorCompra.CantKgs = oCortePorCompra.CantKgs * -1;
+                    }
+
+                    //oSucursalE = new Entidades.Sucursal(); //creo objeto sucursal
+                    //oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
 
                     if (oSucursalE.IdSucursal == 1)
                     {
@@ -305,19 +363,7 @@ namespace Presentacion
 
 
                         //creo CortesPorCompra y cargo la lista de la grilla
-                        cortesPorCompra = new CortesPorCompra();
-
-                        cortesPorCompra.codigo = oCortePorCompra.corte.codigo;
-                        cortesPorCompra.corte = oCortePorCompra.corte.corte;
-                        cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
-                        cortesPorCompra.precioKg = oCortePorCompra.precioKg;
-                        cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
-                        cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
-
-                        listaCortesEnGrilla.Add(cortesPorCompra);
-
-                        oCortePorCompra = null;
-                        cortesPorCompra = null;
+                        cargarCorteEnGrilla(oCortePorCompra);
 
                     }
 
@@ -344,24 +390,50 @@ namespace Presentacion
 	        }
         }
 
+        private void cargarCorteEnGrilla(Entidades.CortePorCompra oCortePorCompra)
+        {
+            cortesPorCompra = new CortesPorCompra();
+
+            cortesPorCompra.codigo = oCortePorCompra.corte.codigo;
+            cortesPorCompra.corte = oCortePorCompra.corte.corte;
+            cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
+            cortesPorCompra.precioKg = oCortePorCompra.precioKg;
+            cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
+            cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
+
+            listaCortesEnGrilla.Add(cortesPorCompra);
+
+            oCortePorCompra = null;
+            cortesPorCompra = null;
+        }
+
         private bool validarCampos()
         {
-            if (comboSucursal.SelectedIndex.Equals(-1) &&
-                 (txtCorteNuevaCompra.Text.Equals("") || txtCantKgs.Text.Equals("") ))
+            if (txtCorteNuevaCompra.Text.Equals(""))
             {
-                MessageBox.Show("Debe Completar todos los campos.", "Complete los campos vacíos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Ingrese el corte que desea agregar.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtCodigo.Focus();
                 return false;
             }
             else
             {
-                return true;
+                if (txtCantKgs.Text.Equals("") || txtCantKgs.Text.Equals("0") )
+                {
+                    MessageBox.Show("Ingrese un cantidad de KGs distinta a 0 (cero).", "Ingrese una cantidad", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    txtCantKgs.Focus();
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
 
         private bool validaciónFinal()
         {
             DialogResult respuesta;
-            respuesta = MessageBox.Show("¿ Guardar la modificación en el stock de los cortes?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            respuesta = MessageBox.Show("¿Guardar la modificación en el stock de los cortes ingresados?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
             if (respuesta == DialogResult.Yes)
             {
@@ -384,16 +456,16 @@ namespace Presentacion
         private void cargarGrilla()
         {
             try
-            {
-                if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
-                {
-                    grillaCortePorCompra.AutoGenerateColumns = false;
-                    grillaCortePorCompra.DataSource = null;
-                    grillaCortePorCompra.DataSource = listaCortesEnGrilla;
+            {                
+                grillaCortePorCompra.AutoGenerateColumns = false;
+                grillaCortePorCompra.DataSource = null;
+                grillaCortePorCompra.DataSource = listaCortesEnGrilla;
 
+                if (listaCortesEnGrilla.Count > 0)
+                {
                     grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
                     grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
-                }
+                }                
                 cargarTotales();
             }
             catch (Exception ex)
@@ -453,7 +525,7 @@ namespace Presentacion
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
 
-            comboSucursal.SelectedIndex = -1;//San Martín
+            comboSucursal.SelectedIndex = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString()) - 1;
         }
 
         #endregion
@@ -498,31 +570,26 @@ namespace Presentacion
             txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
         }
 
-        const int WM_SYSCOMMAND = 0x0112;
-        const int SC_CLOSE = 0xF060;
+        //const int WM_SYSCOMMAND = 0x0112;
+        //const int SC_CLOSE = 0xF060;
 
-        protected override void WndProc(ref Message m)
-        {
-            if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
-            {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+        //protected override void WndProc(ref Message m)
+        //{
+        //    if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
+        //    {
+        //        DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-                if ((respuesta == System.Windows.Forms.DialogResult.No))
-                {
-                    return;
-                }
-            }
-            base.WndProc(ref m);
-        }
+        //        if ((respuesta == System.Windows.Forms.DialogResult.No))
+        //        {
+        //            return;
+        //        }
+        //    }
+        //    base.WndProc(ref m);
+        //}
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
-        }
-
-        private void formNuevaCompra_Load(object sender, EventArgs e)
-        {
-
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -583,6 +650,25 @@ namespace Presentacion
         private void btnAceptar_Leave(object sender, EventArgs e)
         {
             btnAceptar.BackColor = System.Drawing.Color.FromName("SeaGreen");
+        }
+
+        private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!comboSucursal.ValueMember.Equals(""))
+            {
+                oSucursalE.idSucursal = Convert.ToInt32(comboSucursal.SelectedValue);
+                huboModificaciones = true;
+            }
+        }
+
+        private void txtFechaCompra_ValueChanged(object sender, EventArgs e)
+        {
+            huboModificaciones = true;
+        }
+
+        private void txtObservaciones_TextChanged(object sender, EventArgs e)
+        {
+            huboModificaciones = true;
         }      
     }
 }

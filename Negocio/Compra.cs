@@ -12,8 +12,43 @@ namespace Negocio
         
         public int agregarCompra(Entidades.Compra oCompraE)
         {
-           return oCompraD.agregarCompra(oCompraE);
-            
+           return oCompraD.agregarCompra(oCompraE);            
+        }
+        
+        public DataTable findById(int idCompra)
+        {
+            DataTable dtCompra = oCompraD.findById(idCompra);
+            return dtCompra;
+        }
+
+        public Entidades.Compra findById_converToCompra(int idCompra)
+        {
+            Entidades.Compra oCompra = new Entidades.Compra();
+            DataTable dtCompra = this.findById(idCompra);
+            foreach (DataRow row in dtCompra.Rows)
+            {
+                oCompra.IdCompra = Convert.ToInt32(row["idCompra"].ToString());
+                oCompra.NroRemito = row["nroRemito"].ToString();
+                oCompra.FechaCompra = Convert.ToDateTime(row["fechaCompra"].ToString());
+                //Negocio.Persona oPersonaN = new Persona();
+                //Entidades.Persona proveedor = oPersonaN.findById();
+                Entidades.Persona proveedor = new Entidades.Persona();
+                proveedor.idPersona = Convert.ToInt32(row["idProveedor"].ToString());
+                oCompra.Proveedor = proveedor;
+                oCompra.TipoCompra = row["tipoCompra"].ToString();
+                //agrego sucursal
+                Negocio.Sucursal oSucN = new Negocio.Sucursal();
+                oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));
+                oCompra.Estado = row["estado"].ToString();
+                oCompra.Observaciones = row["observaciones"].ToString();
+                //oCompra.Creado = row["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(row["creado"].ToString());
+                //oCompra.Actualizado = Convert.ToDateTime(row["Actualizado"].ToString());
+
+                //Usuario oUsuarioN = new Usuario();
+                //oCompra.CreadoPor = oUsuarioN.findById();
+                //oCompra.ActualizadoPor = oUsuarioN.findById();
+            }
+            return oCompra;
         }
 
         public void modificarCompra(Entidades.Compra oCompraE)
@@ -43,14 +78,59 @@ namespace Negocio
             return oCompraD.obtenerIdUltimaCompra();
         }
 
-        public DataTable obtenerCompras(string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            return oCompraD.obtenerCompras(tipoCompra, texto,fechaDesde,fechaHasta);
+            return oCompraD.obtenerCompras(idSucursal,tipoCompra, texto,fechaDesde,fechaHasta);
         }
 
         public DataTable obtenerCortesPorCompra(int idCompra)
         {
             return oCompraD.obtenerCortesPorCompra(idCompra);
+        }
+
+        public List<Entidades.CortePorCompra> convertCortesPorCompraToList(int idCompra)
+        {
+            List<Entidades.CortePorCompra> listCortesPorCompra = new List<Entidades.CortePorCompra>();
+
+            DataTable dtCortesPorCompra = obtenerCortesPorCompra(idCompra);
+            if (dtCortesPorCompra.Rows.Count > 0)
+            {
+                Negocio.Corte oCorteN = new Corte();
+                DataTable dtCortes = oCorteN.obtenerCortes();
+                Entidades.Corte oCorte;
+
+                Entidades.Compra oCompra = findById_converToCompra(idCompra);
+                Entidades.CortePorCompra corte;
+                foreach (DataRow row in dtCortesPorCompra.Rows)
+                {
+                    corte = new Entidades.CortePorCompra();
+
+                    corte.Compra = oCompra;
+                    corte.precioKgs = float.Parse(row["precioKg"].ToString());
+                    corte.CantKgs = float.Parse(row["cantKg"].ToString());
+                    oCorte = new Entidades.Corte();
+                    foreach (DataRow rowCorte in dtCortes.Rows)
+                    {
+                        if (row["idCorte"].Equals(rowCorte["idCorte"]))
+                        {
+                            oCorte.idCorte = Convert.ToInt32(rowCorte["idCorte"]);
+                            oCorte.codigo = Convert.ToInt32(rowCorte["codigo"]);
+                            oCorte.corte = rowCorte["corte"].ToString();
+                            oCorte.precioKg = float.Parse(rowCorte["precioKg"].ToString());
+                            break;
+                        }
+                    }
+                    corte.Corte = oCorte;
+                    oCorte = null;
+                    Entidades.Sucursal oSuc = new Entidades.Sucursal();
+                    oSuc.idSucursal = Convert.ToInt32(row["idSucursal"]);
+                    corte.Sucursal = oSuc;
+
+                    listCortesPorCompra.Add(corte);
+                }
+            }
+            
+            return listCortesPorCompra;
         }
 
         public DataTable obtenerMediasPorCompra(int idCompra)
