@@ -63,7 +63,7 @@ namespace Presentacion
             }
             if (accion.Equals(Entidades.Compra.accion.Modificar))
             {
-                oCompraE = oCompraN.findById_converToCompra(idCompra);
+                oCompraE = oCompraN.findById_convertToCompra(idCompra);
                 listaCortePorCompra = oCompraN.convertCortesPorCompraToList(idCompra);
 
                 tipoCompraEnum = Entidades.Compra.tipoCompraToEnum(oCompraE.TipoCompra);
@@ -82,6 +82,7 @@ namespace Presentacion
                 txtFechaCompra.Enabled = false;
                 comboSucursal.Enabled = false;
                 groupBox1.Enabled = false;
+                txtObservaciones.ReadOnly = true;
             }
             tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
             txtTipoAccion.Text = tipoCompra;
@@ -140,6 +141,7 @@ namespace Presentacion
                 txtFechaCompra.Enabled = true;
                 comboSucursal.Enabled = true;
                 groupBox1.Enabled = true;
+                txtObservaciones.ReadOnly = false;
             }
             else
             {

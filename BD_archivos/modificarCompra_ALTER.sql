@@ -1,7 +1,7 @@
 USE [SuperCerdo]
 GO
 
-/****** Object:  StoredProcedure [dbo].[modificarCompra]    Script Date: 04/20/2015 19:02:05 ******/
+/****** Object:  StoredProcedure [dbo].[modificarCompra]    Script Date: 04/23/2015 10:47:21 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -37,6 +37,7 @@ BEGIN
 	where idCompra=@idCompra
 	
 	delete from CortePorCompra where CortePorCompra.idCompra=@idCompra 
+	delete from MediaRes where MediaRes.idCompra=@idCompra
 END
 
 GO

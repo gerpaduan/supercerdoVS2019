@@ -79,40 +79,22 @@ namespace Presentacion
             
         }
 
-    
-
         private void modificarCompra()
         {
             try
             {
                 int idCompra = Convert.ToInt32(grillaCompras.CurrentRow.Cells["idCompra"].Value.ToString());
 
-
-                string tipoCompra, proveedor, nroRemito, estado, observaciones;
-                DateTime fechaCompra = Convert.ToDateTime(grillaCompras.CurrentRow.Cells["fechaCompra"].Value.ToString());
-                nroRemito = grillaCompras.CurrentRow.Cells["nroRemito"].Value.ToString();
-                int idProveedor = Convert.ToInt32(grillaCompras.CurrentRow.Cells["idPersona"].Value.ToString());
-                proveedor = grillaCompras.CurrentRow.Cells["razonSocial"].Value.ToString();
-                tipoCompra = grillaCompras.CurrentRow.Cells["tipoCompra"].Value.ToString();
-                estado = grillaCompras.CurrentRow.Cells["estado"].Value.ToString();
-                observaciones = grillaCompras.CurrentRow.Cells["observaciones"].Value.ToString();
-
                 if (Application.OpenForms["formModificarCompra"] != null)
                 {
-
                     Application.OpenForms["formModificarCompra"].Activate();
                     Application.OpenForms["formModificarCompra"].WindowState = FormWindowState.Normal;
-
-
                 }
                 else
                 {
-
                     formModificarCompra frmModificarCompra = new formModificarCompra();
-
-                    frmModificarCompra.cargarParametros(this, idCompra, tipoCompra, idProveedor, proveedor, fechaCompra, nroRemito, estado, observaciones);
+                    frmModificarCompra.cargarParametros(this, idCompra);
                     frmModificarCompra.Show();
-
                 }
 
 

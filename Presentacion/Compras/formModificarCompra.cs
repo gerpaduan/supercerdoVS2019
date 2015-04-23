@@ -14,16 +14,15 @@ namespace Presentacion.Compras
     {
         Negocio.Compra oCompraN = new Negocio.Compra();
         Negocio.Corte oCorteN = new Negocio.Corte();
-        int idCompraModificar, idProveedorModificar;
-        string tipoCompraModificar, proveedorModificar, nroRemitoModificar, estadoModificar, observacionesModificar;
-        
+        string estadoModificar;
         bool modificado = false;
-        DateTime fechaModificar;
+        DateTime fechaModificar;//borrar
         formCompras frmCompras;
-        formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+        //formNuevaCompra frmNuevaCompra = new formNuevaCompra();
         Entidades.Compra oCompraModificada = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra=new Entidades.Persona();
-        Entidades.Corte oCorteNuevaCompra;       
+        Entidades.Corte oCorteNuevaCompra;
+        Entidades.Sucursal oSucursal = new Entidades.Sucursal();
         DataTable dtSucursales;
         DataTable dtCortes;
         DataTable dtLineasCompra=new DataTable();
@@ -60,17 +59,12 @@ namespace Presentacion.Compras
         //Se carga la lista inicial desde la base de datos
         public void cargarLista()
         {
-            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
-            {
-                //dtLineasCompra = null;
-                
-                dtLineasCompra = oCompraN.obtenerMediasPorCompra(idCompraModificar);
-                
-
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
+            {                
+                dtLineasCompra = oCompraN.obtenerMediasPorCompra(oCompraModificada.IdCompra);
                 foreach (DataRow  fila in dtLineasCompra.Rows)
                 {
                     mediaPorCompra = new MediasPorCompra();
-
                     mediaPorCompra.idMedia=Convert.ToInt32(fila["idMedia"].ToString());
                     mediaPorCompra.nroTropa = fila["nroTropa"].ToString();
                     mediaPorCompra.kgMedia =float.Parse( fila["kgMedia"].ToString());
@@ -80,23 +74,21 @@ namespace Presentacion.Compras
                     mediaPorCompra.sucursal = fila["sucursal"].ToString();
 
                     cargarMediaRes(mediaPorCompra);
-
                     listaMediasEnGrilla.Add(mediaPorCompra);
                     mediaPorCompra = null;
                 }
             }
 
-            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
-                dtLineasCompra = oCompraN.obtenerCortesPorCompra(idCompraModificar);
+                dtLineasCompra = oCompraN.obtenerCortesPorCompra(oCompraModificada.IdCompra);
 
                 foreach (DataRow fila in dtLineasCompra.Rows)
                 {
                     cortePorCompra = new CortesPorCompra();
-
                     cortePorCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                     cortePorCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
                     cortePorCompra.corte = fila["corte"].ToString();
@@ -110,11 +102,9 @@ namespace Presentacion.Compras
                     cargarCortePorCompra(nroFila,cortePorCompra);
 
                     listaCortesEnGrilla.Add(cortePorCompra);
-                    cortePorCompra = null;
-                    
+                    cortePorCompra = null;                    
                 }
-            }
-        
+            }        
         }
 
         private void cargarCortePorCompra(int nroFila, CortesPorCompra cortePorCompra)
@@ -124,7 +114,7 @@ namespace Presentacion.Compras
             //creo objeto compra y lo asigno
             Entidades.Compra oCompraE = new Entidades.Compra();
             oCortePorCompraE.compra = oCompraE;
-            oCortePorCompraE.compra.IdCompra = idCompraModificar;
+            oCortePorCompraE.compra.IdCompra = oCompraModificada.IdCompra;
             
             //creo objeto corte y lo asigno
             Entidades.Corte oCorteE= new Entidades.Corte();
@@ -151,11 +141,8 @@ namespace Presentacion.Compras
             if (nroFila>-1)
             {
                 listaCortePorCompra.RemoveAt(nroFila);
-                listaCortePorCompra.Insert(nroFila, oCortePorCompraE);
-                
+                listaCortePorCompra.Insert(nroFila, oCortePorCompraE);                
             }
-         
-
             oCortePorCompraE = null;
  
         }
@@ -167,7 +154,7 @@ namespace Presentacion.Compras
             //creo objeto compra y lo asigno
             Entidades.Compra oCompraE = new Entidades.Compra();
             oMediaResE.compra = oCompraE;
-            oMediaResE.compra.IdCompra = idCompraModificar;
+            oMediaResE.compra.IdCompra = oCompraModificada.IdCompra;
             oMediaResE.idMedia = mediaResCompra.idMedia;
             oMediaResE.nroTropa = mediaResCompra.nroTropa;
             oMediaResE.kgMedia = mediaResCompra.kgMedia;
@@ -188,29 +175,31 @@ namespace Presentacion.Compras
         {
             try
             {
-                if (tipoCompraModificar == "Media Res")
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
                 {
-
                     grillaMediaRes.AutoGenerateColumns = false;
                     grillaMediaRes.DataSource = null;
                     grillaMediaRes.DataSource = listaMediasEnGrilla;
-
-                    grillaMediaRes.Rows[listaMediasEnGrilla.Count - 1].Selected = true;
-                    grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;
+                    if (listaCortesEnGrilla.Count > 0)
+                    {
+                        grillaMediaRes.Rows[listaMediasEnGrilla.Count - 1].Selected = true;
+                        grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;
+                    }
                 }
 
-                if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                 {
-
                     grillaCortePorCompra.AutoGenerateColumns = false;
                     grillaCortePorCompra.DataSource = null;
                     grillaCortePorCompra.DataSource = listaCortesEnGrilla;
-
-                    grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
-                    grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
+                    if (listaCortesEnGrilla.Count > 0)
+                    {
+                        grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
+                        grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;                        
+                    }
                 }
 
                 cargarTotales();
@@ -219,20 +208,15 @@ namespace Presentacion.Compras
             {
                 MessageBox.Show(ex.Message);
             }
-
-            
-            
-           
         }
 
         private void cargarTotales()
         {
             float totalKgs = 0, totalPesos = 0;
-
-            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 foreach (CortesPorCompra fila in listaCortesEnGrilla)
                 {
@@ -243,34 +227,23 @@ namespace Presentacion.Compras
                 }
             }
 
-            if (tipoCompraModificar == "Media Res")
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
             {
                 foreach (MediasPorCompra fila in listaMediasEnGrilla)
                 {
                     totalKgs = totalKgs + fila.kgMedia;
                     totalPesos = totalPesos + fila.totalS;
                     txtCantItems.Text = grillaMediaRes.Rows.Count.ToString();
-
                 }
-            }
-            
+            }            
             txtTotalKgs.Text = Convert.ToString(totalKgs);
             txtTotalS.Text = Convert.ToString(totalPesos);
         }
 
-        public void cargarParametros(formCompras frmComprasParam, int idCompra, string tipoCompra,int idProveedorCompra, string proveedorCompra, DateTime fecha, string nroRemito, string estado, string observaciones)
+        public void cargarParametros(formCompras frmComprasParam, int idCompra)
         {
             frmCompras=frmComprasParam;
-
-            idCompraModificar = idCompra;
-            idProveedorModificar = idProveedorCompra;
-            proveedorModificar = proveedorCompra;
-            fechaModificar = fecha;
-            nroRemitoModificar = nroRemito;
-            tipoCompraModificar = tipoCompra;
-            estadoModificar = estado;
-            observacionesModificar = observaciones;
-
+            oCompraModificada = oCompraN.findById_convertToCompra(idCompra);
             cargarCampos();
         }
 
@@ -282,16 +255,19 @@ namespace Presentacion.Compras
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = -1;
         }
 
         public void cargarCampos()
         {
-            txtNroRemito.Text = nroRemitoModificar;
-            txtProveedor.Text = proveedorModificar;
-            txtFechaCompra.Value = fechaModificar;
-            txtObservaciones.Text = observacionesModificar;
-            establecerTipo(tipoCompraModificar);
+            oSucursal = oCompraModificada.Sucursal;
+            oProvNuevaCompra = oCompraModificada.Proveedor;
+
+            comboSucursal.SelectedValue = oSucursal.idSucursal;
+            txtNroRemito.Text = oCompraModificada.NroRemito;
+            txtProveedor.Text = oCompraModificada.Proveedor.razonSocial;
+            txtFechaCompra.Value = oCompraModificada.FechaCompra;
+            txtObservaciones.Text = oCompraModificada.Observaciones;
+            establecerTipo(oCompraModificada.TipoCompra);
 
             validarEstado();
             cargarLista();
@@ -300,12 +276,10 @@ namespace Presentacion.Compras
 
         private void validarEstado()
         {
-            
-
-            if (estadoModificar == "Stock Borrado" || tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 quitarStock.Enabled = false;
                 PorcentajesCorte.Enabled = false;
@@ -313,20 +287,16 @@ namespace Presentacion.Compras
             else
             {
                 quitarStock.Enabled = true;
-
             }
-            if (tipoCompraModificar == "Media Res")
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
             {
                 PorcentajesCorte.Enabled = true;
 
                 if (!modificado)
                 {
                     cambiarPrecio.Enabled = true;
-                }
-                
+                }                
             }
-           
-        
         }
 
         private void habilitarModificacion()
@@ -340,9 +310,12 @@ namespace Presentacion.Compras
             txtNroRemito.ReadOnly = false;
             modificar.Enabled = false;
             cambiarPrecio.Enabled = false;
-            modificado = true;
+            txtFechaCompra.Enabled = true;
+            comboSucursal.Enabled = true;
+            btnAceptar.Visible = true;
+            txtFechaCompra.Value = oCompraModificada.FechaCompra; 
 
-            if (tipoCompraModificar=="Media Res")
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
             {
                 
             }
@@ -356,15 +329,15 @@ namespace Presentacion.Compras
 
         private void establecerTipo(string tipoCompra)
         {
-            if (tipoCompra=="Media Res")
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))//(tipoCompra=="Media Res")
             {
                 radioMediaRes.Checked = true;
                 panelCorte.Visible = false;
                 panelCorte.Enabled = false;
 
-                grupoMediaRes.Text = "Media Res";
+                grupoMediaRes.Text = oCompraModificada.TipoCompra;//"Media Res";
 
-                tipoCompra = "media";
+                //tipoCompra = "media";
                 grillaMediaRes.Visible = true;
                 grillaCortePorCompra.Visible = false;
 
@@ -372,17 +345,14 @@ namespace Presentacion.Compras
                 radioCorte.Enabled = false;
                 radioIngresoStock.Enabled = false;
                 radioMediaRes.TabStop = false;
-
-                //quitarStock.Enabled = true;
-
             }
-            if (tipoCompra=="Cortes")
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)))//(tipoCompra=="Cortes")
             {
                 radioCorte.Checked = true;
                 panelCorte.Visible = true;
                 grupoMediaRes.Text = "Corte ";
 
-                tipoCompra = "Cortes";
+                //tipoCompra = "Cortes";
 
                 grillaMediaRes.Visible = false;
                 grillaCortePorCompra.Visible = true;
@@ -396,15 +366,15 @@ namespace Presentacion.Compras
                 txtKgMedia.TabStop = false;
             }
 
-            if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
             {
                 radioIngresoStock.Checked = true;
                 panelCorte.Visible = true;
                 grupoMediaRes.Text = "Corte ";
 
-                tipoCompra = tipoCompraModificar;
+                tipoCompra = oCompraModificada.TipoCompra;
 
                 grillaMediaRes.Visible = false;
                 grillaCortePorCompra.Visible = true;
@@ -423,7 +393,7 @@ namespace Presentacion.Compras
 
         private void cargarDatosEnCampos()
         {
-            if (tipoCompraModificar=="Media Res" && grillaMediaRes!=null)
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)) && grillaMediaRes!=null)
             {
                 txtNroTropa.Text =  grillaMediaRes.CurrentRow.Cells[1].Value.ToString();
                 txtKgMedia.Text = grillaMediaRes.CurrentRow.Cells["kgMedia"].Value.ToString();
@@ -431,7 +401,7 @@ namespace Presentacion.Compras
                 comboSucursal.SelectedIndex = Convert.ToInt32(grillaMediaRes.CurrentRow.Cells["idSucursalMedia"].Value.ToString())-1;
               
             }
-            if (tipoCompraModificar=="Cortes")
+            if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)))
             {
 
                 
@@ -442,20 +412,20 @@ namespace Presentacion.Compras
         {
             if (validarCampos())
             {
-                if (tipoCompraModificar == "Media Res")
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
                 {
                     agregarMediaRes();
                     txtCantKgs.Focus();
                 }
-                if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                 {
                     agregarCorte();
                     txtCodigo.Focus();
                 }
-
+                modificado = true;
                 limpiarCampos();
             }
         }
@@ -585,7 +555,6 @@ namespace Presentacion.Compras
                     }
                 }
             }
-
             return nroFila; ;
         }
 
@@ -594,14 +563,12 @@ namespace Presentacion.Compras
         private void agregarMediaRes()
         {
             cargarMediasPorCompra();
-
             cargarGrilla();
         }
 
         private void cargarMediasPorCompra()
         {
-            //creo y Cargar la Entidad MediaRes
-            
+            //creo y Cargar la Entidad MediaRes            
             mediaPorCompra = new MediasPorCompra();
 
             mediaPorCompra.nroTropa = txtNroTropa.Text.Trim();
@@ -618,12 +585,10 @@ namespace Presentacion.Compras
                 {
                     mediaPorCompra.kgMedia = float.Parse(txtKgMedia.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                     mediaPorCompra.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-
                 }
                 catch (Exception ex1)
                 {
-                    MessageBox.Show("Verifique que ha ingresado datos correctos en los campos 'Kg Media' y 'Precio'.", "Error de ingreso de datos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                
+                    MessageBox.Show("Verifique que ha ingresado datos correctos en los campos 'Kg Media' y 'Precio'.", "Error de ingreso de datos", MessageBoxButtons.OK, MessageBoxIcon.Information);              
                 }
             }
             
@@ -668,27 +633,23 @@ namespace Presentacion.Compras
 
         private void cargarDatosCompraModificada()
         {
-            oCompraModificada.IdCompra = idCompraModificar;
             oCompraModificada.NroRemito = txtNroRemito.Text.Trim();
             oCompraModificada.FechaCompra = txtFechaCompra.Value;
             
-            if (oProvNuevaCompra.idPersona==0)
-	        {
-        		 oProvNuevaCompra.idPersona=idProveedorModificar;
-	        }
+            oCompraModificada.Sucursal = oSucursal;
             oCompraModificada.Proveedor = oProvNuevaCompra;
             oCompraModificada.Estado = "";//Vuelvo a cargar el stock- Estado=" "
             oCompraModificada.Observaciones = txtObservaciones.Text.Trim();
 
             if (radioIngresoStock.Checked==true)
             {
-                //tipoCompraModificar = "Ingreso Stock";
+                //oCompraModificada.TipoCompra = "Ingreso Stock";
             }
             if (radioCorte.Checked==true)
             {
-                tipoCompraModificar = "Cortes";
+                oCompraModificada.TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);//"Cortes";
             }
-            oCompraModificada.TipoCompra = tipoCompraModificar;
+            oCompraModificada.TipoCompra = oCompraModificada.TipoCompra;
         }
 
         private void modificarCompra()
@@ -699,59 +660,43 @@ namespace Presentacion.Compras
                  DialogResult respuesta = MessageBox.Show("¿Está seguro que desea guardar los cambios realizados?. ", "Modificar Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                  if (respuesta == DialogResult.Yes)
                  {  
-                     cargarDatosCompraModificada();
+                    cargarDatosCompraModificada();
                     oCompraN.modificarCompra(oCompraModificada);
 
-                    if (tipoCompraModificar == "Media Res")
+                    if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
                     {
                         foreach (Entidades.MediaRes mediaRes in listaMediaResAnterior)
                         {
                             if (estadoModificar == "Stock Borrado")
                             {
-                                oCompraN.quitarStockTeoricoMedia(mediaRes, idCompraModificar);
+                                oCompraN.quitarStockTeoricoMedia(mediaRes, oCompraModificada.IdCompra);
                             }
                             if (estadoModificar == "")
                             {
-                                oCompraN.quitarStockMedia(mediaRes, idCompraModificar);
-                                oCompraN.quitarStockTeoricoMedia(mediaRes, idCompraModificar);
+                                oCompraN.quitarStockMedia(mediaRes, oCompraModificada.IdCompra);
+                                oCompraN.quitarStockTeoricoMedia(mediaRes, oCompraModificada.IdCompra);
                             }
                         }
-
-                        ///codigo para modificar sucursal
-                        ///
-                        //foreach (Entidades.MediaRes mediaRes in listaMediaRes)
-                        //{
-                        //    int id = mediaRes.Sucursal.IdSucursal;
-
-                        //    mediaRes.Sucursal.IdSucursal=2;
-
-                        //    int idw = mediaRes.Sucursal.IdSucursal;
-                        //}
-                        //foreach (Entidades.MediaRes mediaRes in listaMediaRes)
-                        //{
-                        //    int id = mediaRes.Sucursal.IdSucursal;
-
-                           
-                        //}
                         foreach (Entidades.MediaRes mediaRes in listaMediaRes)
                         {
+                            mediaRes.sucursal = oSucursal;
                             oCompraN.agregarMedias(mediaRes);
                         }
-
                     }
 
-                    if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                        tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                        tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                        tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                    if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                        oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                        oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                        oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                     {
 
                         foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompraAnterior)
                         {
-                            oCompraN.quitarStockCorte(cortePorCompra, idCompraModificar);
+                            oCompraN.quitarStockCorte(cortePorCompra, oCompraModificada.IdCompra);
                         }
                         foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                         {
+                            cortePorCompra.sucursal = oSucursal;
                             oCompraN.agregarCortePorCompra(cortePorCompra);
                         }
 
@@ -768,11 +713,7 @@ namespace Presentacion.Compras
             else
             {
                 this.Close();
-            }
-           
-            
-        
-        
+            }        
         }
 
         private void quitarStockMedia()
@@ -787,11 +728,11 @@ namespace Presentacion.Compras
                 oCompraModificada.Estado = estadoModificar;
                 oCompraN.modificarCompra(oCompraModificada);
 
-                if (tipoCompraModificar == "Media Res")
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
                 {
                     foreach (Entidades.MediaRes mediaRes in listaMediaResAnterior)
                     {                       
-                       oCompraN.quitarStockMedia(mediaRes, idCompraModificar);
+                       oCompraN.quitarStockMedia(mediaRes, oCompraModificada.IdCompra);
                     }
                 }
 
@@ -800,57 +741,28 @@ namespace Presentacion.Compras
             }
         }
 
-        private void anularCompra()
-        {
-            
-            if (estadoModificar=="Anulado")
-                {
-                    MessageBox.Show("La compra ya ha sido anulada", "Compra Anulada", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            
-            
-            if (estadoModificar=="")
-                {    
-                    DialogResult respuesta=MessageBox.Show("¿Está seguro que desea anular la compra?", "Anular Compra", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                    if (respuesta == System.Windows.Forms.DialogResult.Yes)
-                    {
-                        oCompraN.anularCompra(idCompraModificar);
-
-                        estadoModificar = "Anulado";
-                    }
-                    
-                }
-
-            validarEstado();
-            cargarGrilla();
-            frmCompras.cargarGrilla();
-            
-        }
-
         private void quitarLinea()
         {
             try
             {
-                if (tipoCompraModificar == "Media Res")
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
                 {
                     quitarMedia();
                 }
-                if (tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                tipoCompraModificar.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                 {
                     quitarCorte();
                 }
-
+                modificado = true;
                 cargarGrilla();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-            }
-            
+            }            
         }
 
         private void quitarMedia()
@@ -885,7 +797,7 @@ namespace Presentacion.Compras
 
         public void verPorcentajesPorCompra()
         {
-            formPorcentajeCortesCompra frmPorcentajesPorCompra = new formPorcentajeCortesCompra(idCompraModificar);
+            formPorcentajeCortesCompra frmPorcentajesPorCompra = new formPorcentajeCortesCompra(oCompraModificada.IdCompra);
             frmPorcentajesPorCompra.Show();
         
         }
@@ -936,8 +848,8 @@ namespace Presentacion.Compras
         public void EnviarProveedor(Entidades.Persona proveedor)
         {
             oProvNuevaCompra = proveedor;
-
             txtProveedor.Text = oProvNuevaCompra.razonSocial;
+            modificado = oCompraModificada.Proveedor.idPersona.Equals(oProvNuevaCompra.idPersona) ? false : true;
         }
 
         //comunicación con interface
@@ -953,12 +865,6 @@ namespace Presentacion.Compras
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
             
-        }
-
-
-        private void eliminar_Click(object sender, EventArgs e)
-        {
-            anularCompra();
         }
 
         private void modificar_Click(object sender, EventArgs e)
@@ -1066,7 +972,7 @@ namespace Presentacion.Compras
             int tipoReporte=3, idSucursal=2;
 
             formReporteStock frmReporte = new formReporteStock();
-            frmReporte.obtenerParametros(idSucursal, fechaModificar, fechaModificar, tipoReporte, nroRemitoModificar);
+            frmReporte.obtenerParametros(idSucursal, oCompraModificada.FechaCompra, fechaModificar, tipoReporte, oCompraModificada.NroRemito);
             frmReporte.Show();
         }
 
@@ -1075,29 +981,25 @@ namespace Presentacion.Compras
             verPorcentajesPorCompra();
         }
 
-        const int WM_SYSCOMMAND = 0x0112;
-        const int SC_CLOSE = 0xF060;
+        //const int WM_SYSCOMMAND = 0x0112;
+        //const int SC_CLOSE = 0xF060;
 
-        protected override void WndProc(ref Message m)
-        {
-            if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE) &&(modificado))
-            {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+        //protected override void WndProc(ref Message m)
+        //{
+        //    if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE) &&(modificado))
+        //    {
+        //        DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-                if ((respuesta == System.Windows.Forms.DialogResult.No))
-                {
-                    return;
-                }
+        //        if ((respuesta == System.Windows.Forms.DialogResult.No))
+        //        {
+        //            return;
+        //        }
 
-            }
+        //    }
 
-            base.WndProc(ref m);
-        }
+        //    base.WndProc(ref m);
+        //}
 
-        private void pnlBuscar_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
 
         private void Reporte_Click(object sender, EventArgs e)
         {
@@ -1111,7 +1013,7 @@ namespace Presentacion.Compras
 
         private void cambiarPrecio_Click(object sender, EventArgs e)
         {
-            formCambiarPrecioKg frmCambiarPrecioKg = new formCambiarPrecioKg(this, idCompraModificar);
+            formCambiarPrecioKg frmCambiarPrecioKg = new formCambiarPrecioKg(this, oCompraModificada.IdCompra);
             frmCambiarPrecioKg.ShowDialog();
 
         }
@@ -1133,5 +1035,33 @@ namespace Presentacion.Compras
                         
         }
 
+        private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!comboSucursal.ValueMember.Equals(""))
+            {
+                oSucursal = new Entidades.Sucursal();
+                oSucursal.idSucursal = (int)comboSucursal.SelectedValue;
+                if (oSucursal.idSucursal.Equals(oCompraModificada.Sucursal.idSucursal))
+                {
+                    modificado = false;
+                }
+                else
+                {
+                    modificado = true;
+                }
+            }
+        }
+
+        private void txtFechaCompra_ValueChanged(object sender, EventArgs e)
+        {
+            if (txtFechaCompra.Value.Equals(oCompraModificada.FechaCompra))
+            {
+                modificado = false;
+            }
+            else
+            {
+                modificado = true;
+            }
+        }
     }
 }

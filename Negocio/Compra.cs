@@ -21,7 +21,7 @@ namespace Negocio
             return dtCompra;
         }
 
-        public Entidades.Compra findById_converToCompra(int idCompra)
+        public Entidades.Compra findById_convertToCompra(int idCompra)
         {
             Entidades.Compra oCompra = new Entidades.Compra();
             DataTable dtCompra = this.findById(idCompra);
@@ -30,11 +30,8 @@ namespace Negocio
                 oCompra.IdCompra = Convert.ToInt32(row["idCompra"].ToString());
                 oCompra.NroRemito = row["nroRemito"].ToString();
                 oCompra.FechaCompra = Convert.ToDateTime(row["fechaCompra"].ToString());
-                //Negocio.Persona oPersonaN = new Persona();
-                //Entidades.Persona proveedor = oPersonaN.findById();
-                Entidades.Persona proveedor = new Entidades.Persona();
-                proveedor.idPersona = Convert.ToInt32(row["idProveedor"].ToString());
-                oCompra.Proveedor = proveedor;
+                Negocio.Persona oPersonaN = new Persona();
+                oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();
@@ -99,7 +96,7 @@ namespace Negocio
                 DataTable dtCortes = oCorteN.obtenerCortes();
                 Entidades.Corte oCorte;
 
-                Entidades.Compra oCompra = findById_converToCompra(idCompra);
+                Entidades.Compra oCompra = findById_convertToCompra(idCompra);
                 Entidades.CortePorCompra corte;
                 foreach (DataRow row in dtCortesPorCompra.Rows)
                 {

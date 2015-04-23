@@ -28,6 +28,12 @@ namespace Negocio
             oPersonaD.eliminarPersona(oPersonaE);
         }
 
+        public Entidades.Persona findById(int id)
+        {
+            oPersonaD = new Datos.Persona();
+            return oPersonaD.findById(id);
+        }
+
         public DataTable buscarPersona(string texto)
         {
             oPersonaD = new Datos.Persona();

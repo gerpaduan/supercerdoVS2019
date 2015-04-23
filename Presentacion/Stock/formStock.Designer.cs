@@ -28,10 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formStock));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.comboSucursal = new System.Windows.Forms.ComboBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label1 = new System.Windows.Forms.Label();
             this.fechaDesde = new System.Windows.Forms.DateTimePicker();
             this.label3 = new System.Windows.Forms.Label();
@@ -44,13 +47,15 @@
             this.label2 = new System.Windows.Forms.Label();
             this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.barraControl = new System.Windows.Forms.ToolStrip();
+            this.btnIngreso = new System.Windows.Forms.ToolStripButton();
+            this.btnEgreso = new System.Windows.Forms.ToolStripButton();
+            this.btnCierre = new System.Windows.Forms.ToolStripButton();
             this.grillaCompras = new System.Windows.Forms.DataGridView();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -59,11 +64,8 @@
             this.tipoCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.observaciones = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.comboSucursal = new System.Windows.Forms.ComboBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.btnIngreso = new System.Windows.Forms.ToolStripButton();
-            this.btnCierre = new System.Windows.Forms.ToolStripButton();
-            this.btnEgreso = new System.Windows.Forms.ToolStripButton();
+            this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -92,6 +94,39 @@
             this.pnlBuscar.Size = new System.Drawing.Size(786, 89);
             this.pnlBuscar.TabIndex = 6;
             this.pnlBuscar.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlBuscar_Paint);
+            // 
+            // comboSucursal
+            // 
+            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucursal.FormattingEnabled = true;
+            this.comboSucursal.Location = new System.Drawing.Point(97, 6);
+            this.comboSucursal.Name = "comboSucursal";
+            this.comboSucursal.Size = new System.Drawing.Size(161, 21);
+            this.comboSucursal.TabIndex = 41;
+            this.comboSucursal.TabStop = false;
+            this.comboSucursal.SelectedIndexChanged += new System.EventHandler(this.comboSucursal_SelectedIndexChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(36, 10);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(55, 15);
+            this.label7.TabIndex = 42;
+            this.label7.Text = "Sucursal";
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(469, 41);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(290, 7);
+            this.groupBox1.TabIndex = 25;
+            this.groupBox1.TabStop = false;
             // 
             // label1
             // 
@@ -231,6 +266,36 @@
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
             // 
+            // btnIngreso
+            // 
+            this.btnIngreso.Image = ((System.Drawing.Image)(resources.GetObject("btnIngreso.Image")));
+            this.btnIngreso.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnIngreso.Name = "btnIngreso";
+            this.btnIngreso.Size = new System.Drawing.Size(50, 35);
+            this.btnIngreso.Text = "Ingreso";
+            this.btnIngreso.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnIngreso.Click += new System.EventHandler(this.btnIngreso_Click);
+            // 
+            // btnEgreso
+            // 
+            this.btnEgreso.Image = ((System.Drawing.Image)(resources.GetObject("btnEgreso.Image")));
+            this.btnEgreso.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnEgreso.Name = "btnEgreso";
+            this.btnEgreso.Size = new System.Drawing.Size(46, 35);
+            this.btnEgreso.Text = "Egreso";
+            this.btnEgreso.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnEgreso.Click += new System.EventHandler(this.btnEgreso_Click);
+            // 
+            // btnCierre
+            // 
+            this.btnCierre.Image = ((System.Drawing.Image)(resources.GetObject("btnCierre.Image")));
+            this.btnCierre.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnCierre.Name = "btnCierre";
+            this.btnCierre.Size = new System.Drawing.Size(42, 35);
+            this.btnCierre.Text = "Cierre";
+            this.btnCierre.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnCierre.Click += new System.EventHandler(this.btnCierre_Click);
+            // 
             // grillaCompras
             // 
             this.grillaCompras.AllowDrop = true;
@@ -248,7 +313,9 @@
             this.sucursal,
             this.tipoCompra,
             this.cantKg,
-            this.observaciones});
+            this.observaciones,
+            this.creado,
+            this.actualizado});
             this.grillaCompras.Location = new System.Drawing.Point(12, 134);
             this.grillaCompras.MultiSelect = false;
             this.grillaCompras.Name = "grillaCompras";
@@ -312,17 +379,6 @@
             this.panel1.Size = new System.Drawing.Size(759, 1);
             this.panel1.TabIndex = 23;
             // 
-            // groupBox1
-            // 
-            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(469, 41);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(290, 7);
-            this.groupBox1.TabIndex = 25;
-            this.groupBox1.TabStop = false;
-            // 
             // idCompra
             // 
             this.idCompra.DataPropertyName = "idCompra";
@@ -334,9 +390,9 @@
             // fechaCompra
             // 
             this.fechaCompra.DataPropertyName = "fechaCompra";
-            dataGridViewCellStyle5.Format = "g";
-            dataGridViewCellStyle5.NullValue = null;
-            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle1.Format = "g";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaCompra.FillWeight = 60F;
             this.fechaCompra.HeaderText = "Fecha Compra";
             this.fechaCompra.Name = "fechaCompra";
@@ -378,10 +434,10 @@
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle6.Format = "N2";
-            dataGridViewCellStyle6.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle2;
             this.cantKg.FillWeight = 42.98663F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
@@ -395,57 +451,23 @@
             this.observaciones.Name = "observaciones";
             this.observaciones.ReadOnly = true;
             // 
-            // comboSucursal
+            // creado
             // 
-            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(97, 6);
-            this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(161, 21);
-            this.comboSucursal.TabIndex = 41;
-            this.comboSucursal.TabStop = false;
-            this.comboSucursal.SelectedIndexChanged += new System.EventHandler(this.comboSucursal_SelectedIndexChanged);
+            this.creado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.creado.DataPropertyName = "creado";
+            this.creado.HeaderText = "Creado";
+            this.creado.Name = "creado";
+            this.creado.ReadOnly = true;
+            this.creado.Width = 66;
             // 
-            // label7
+            // actualizado
             // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(36, 10);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(55, 15);
-            this.label7.TabIndex = 42;
-            this.label7.Text = "Sucursal";
-            // 
-            // btnIngreso
-            // 
-            this.btnIngreso.Image = ((System.Drawing.Image)(resources.GetObject("btnIngreso.Image")));
-            this.btnIngreso.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnIngreso.Name = "btnIngreso";
-            this.btnIngreso.Size = new System.Drawing.Size(50, 35);
-            this.btnIngreso.Text = "Ingreso";
-            this.btnIngreso.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.btnIngreso.Click += new System.EventHandler(this.btnIngreso_Click);
-            // 
-            // btnCierre
-            // 
-            this.btnCierre.Image = ((System.Drawing.Image)(resources.GetObject("btnCierre.Image")));
-            this.btnCierre.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnCierre.Name = "btnCierre";
-            this.btnCierre.Size = new System.Drawing.Size(42, 35);
-            this.btnCierre.Text = "Cierre";
-            this.btnCierre.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.btnCierre.Click += new System.EventHandler(this.btnCierre_Click);
-            // 
-            // btnEgreso
-            // 
-            this.btnEgreso.Image = ((System.Drawing.Image)(resources.GetObject("btnEgreso.Image")));
-            this.btnEgreso.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnEgreso.Name = "btnEgreso";
-            this.btnEgreso.Size = new System.Drawing.Size(46, 35);
-            this.btnEgreso.Text = "Egreso";
-            this.btnEgreso.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.btnEgreso.Click += new System.EventHandler(this.btnEgreso_Click);
+            this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.actualizado.DataPropertyName = "actualizado";
+            this.actualizado.HeaderText = "Actualizado";
+            this.actualizado.Name = "actualizado";
+            this.actualizado.ReadOnly = true;
+            this.actualizado.Width = 87;
             // 
             // formStock
             // 
@@ -511,6 +533,11 @@
         private System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.Label label1;
         private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.ComboBox comboSucursal;
+        protected System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ToolStripButton btnIngreso;
+        private System.Windows.Forms.ToolStripButton btnCierre;
+        private System.Windows.Forms.ToolStripButton btnEgreso;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCompra;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaCompra;
         private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
@@ -519,11 +546,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn tipoCompra;
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
         private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
-        private System.Windows.Forms.ComboBox comboSucursal;
-        protected System.Windows.Forms.Label label7;
-        private System.Windows.Forms.ToolStripButton btnIngreso;
-        private System.Windows.Forms.ToolStripButton btnCierre;
-        private System.Windows.Forms.ToolStripButton btnEgreso;
+        private System.Windows.Forms.DataGridViewTextBoxColumn creado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
 
     }
 }
