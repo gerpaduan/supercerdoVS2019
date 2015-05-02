@@ -17,6 +17,7 @@ namespace Presentacion
     {
 
         Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
 
         DataTable dtSucursales;
         DataTable dtCortes;
@@ -305,24 +306,8 @@ namespace Presentacion
                 oCortePorCompra.corte = oCorteNuevaCompra;
                 cargarCompra();//cargo datos en oCompraE
                 oCortePorCompra.compra = oCompraE;
-                try
-                {
-                    oCortePorCompra.cantKgs = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                    oCortePorCompra.precioKg = float.Parse("0.00");
-                }
-                catch (Exception)
-                {
-                    try
-                    {
-                        oCortePorCompra.cantKgs = float.Parse(txtCantKgs.Text.Trim());
-                        oCortePorCompra.precioKg = float.Parse("0,00");
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show("Ingresó una cantidad de KGs erronea.");
-                        ultimaValidacion = false;
-                    }
-                }
+                oCortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                oCortePorCompra.precioKg = float.Parse("0.00");
 
                 if (ultimaValidacion)
                 {
@@ -344,17 +329,14 @@ namespace Presentacion
                     }
 
                     oCortePorCompra.sucursal = oSucursalE;
-
-
+                    
                     int nroFila = validarCorteEnGrilla();
                     if (nroFila == -1)
                     {
                         listaCortePorCompra.Add(oCortePorCompra);
 
-
                         //creo CortesPorCompra y cargo la lista de la grilla
                         cargarCorteEnGrilla(oCortePorCompra);
-
                     }
 
                     if (nroFila == -2)
@@ -407,16 +389,26 @@ namespace Presentacion
             }
             else
             {
-                if (txtCantKgs.Text.Equals("") || txtCantKgs.Text.Equals("0") )
+                if (!Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs."))
                 {
-                    MessageBox.Show("Ingrese un cantidad de KGs distinta a 0 (cero).", "Ingrese una cantidad", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCantKgs.Focus();
                     return false;
                 }
                 else
                 {
-                    return true;
+                    float cantKgs = Utilidades.Util_Form.convertFloat(txtCantKgs.Text);
+                    if (cantKgs <= 0)
+                    {
+                        MessageBox.Show("Ingrese una cantidad de Kgs mayor a 0 (cero).", "Ingrese una cantidad", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        txtCantKgs.Focus();
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
+
             }
         }
 
