@@ -38,9 +38,9 @@ namespace Negocio
                 oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));
                 oCompra.Estado = row["estado"].ToString();
                 oCompra.Observaciones = row["observaciones"].ToString();
-                //oCompra.Creado = row["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(row["creado"].ToString());
-                //oCompra.Actualizado = Convert.ToDateTime(row["Actualizado"].ToString());
-
+                oCompra.Creado = row["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(row["creado"].ToString());
+                DateTime fechaNull = Convert.ToDateTime("01/01/1990");
+                oCompra.Actualizado = !String.IsNullOrEmpty(row["actualizado"].ToString()) ? (Convert.ToDateTime(row["actualizado"].ToString())) : fechaNull;
                 //Usuario oUsuarioN = new Usuario();
                 //oCompra.CreadoPor = oUsuarioN.findById();
                 //oCompra.ActualizadoPor = oUsuarioN.findById();

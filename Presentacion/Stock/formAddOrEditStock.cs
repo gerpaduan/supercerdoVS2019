@@ -118,19 +118,7 @@ namespace Presentacion
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            if (huboModificaciones)//(accion.Equals(Entidades.Compra.accion.Modificar) || grillaCortePorCompra.Rows.Count > 0)
-            {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                if ((respuesta == System.Windows.Forms.DialogResult.Yes))
-                {
-                    this.Close();
-                }                
-            }
-            else
-            {
-                this.Close();
-            }
+            this.Close();
         }
 
         private void btnAceptar_Click(object sender, EventArgs e)
@@ -572,23 +560,6 @@ namespace Presentacion
             txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
         }
 
-        //const int WM_SYSCOMMAND = 0x0112;
-        //const int SC_CLOSE = 0xF060;
-
-        //protected override void WndProc(ref Message m)
-        //{
-        //    if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
-        //    {
-        //        DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-        //        if ((respuesta == System.Windows.Forms.DialogResult.No))
-        //        {
-        //            return;
-        //        }
-        //    }
-        //    base.WndProc(ref m);
-        //}
-
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
@@ -600,7 +571,7 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso(); //"000.568";
+                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
                 }
             }
             catch (Exception ex)
@@ -671,6 +642,33 @@ namespace Presentacion
         private void txtObservaciones_TextChanged(object sender, EventArgs e)
         {
             huboModificaciones = true;
-        }      
+        }
+
+        private void formAddOrEditStock_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = salir();
+        }
+
+        private bool salir()
+        {
+            if (huboModificaciones)
+            {
+                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Stock", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if ((respuesta == System.Windows.Forms.DialogResult.Yes))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
     }
 }

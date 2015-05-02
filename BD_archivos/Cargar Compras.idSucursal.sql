@@ -1,5 +1,5 @@
 use SuperCerdo
-DECLARE @idSucursal INT, @idCompra INT, @lastId int, @tipoCompra varchar(50)
+DECLARE @idSucursal INT, @idCompra INT, @lastId int, @tipoCompra varchar(50), @creado datetime
 SET @idCompra = 1
 SET @lastId = (select top 1 Compras.idCompra from Compras order by Compras.idCompra desc)
 set @idSucursal = 0		
@@ -10,6 +10,12 @@ BEGIN
  --   update Compras set idSucursal = (select top 1 idSucursal 
 	--			from CortePorCompra where CortePorCompra.idCompra = Compras.idCompra)
 	--where Compras.idCompra = @idCompra	
+	
+	--Se actualiza la fecha de creado	
+	set @creado = null
+	set @creado = (select Compras.fechaCompra from Compras where Compras.idCompra = @idCompra)
+	update Compras set creado = @creado where Compras.idCompra = @idCompra
+			
 	set @tipoCompra = (select Compras.tipoCompra from Compras where Compras.idCompra = @idCompra)
 	
 	IF @tipoCompra = 'Media Res'
@@ -28,8 +34,8 @@ BEGIN
 					
 			update Compras set idSucursal = @idSucursal
 			where Compras.idCompra = @idCompra
-		END
-			
+		END		
+	
     SET @idCompra = @idCompra + 1
     set @idSucursal = 0    
 END

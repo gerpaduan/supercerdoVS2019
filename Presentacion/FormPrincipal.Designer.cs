@@ -51,12 +51,7 @@
             this.panel2 = new System.Windows.Forms.Panel();
             this.linkCompras = new System.Windows.Forms.LinkLabel();
             this.label2 = new System.Windows.Forms.Label();
-            this.btnIngresoStock = new System.Windows.Forms.Button();
-            this.btnEgresoStock = new System.Windows.Forms.Button();
-            this.btnCierreStock = new System.Windows.Forms.Button();
-            this.btnStock = new System.Windows.Forms.Button();
             this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.pnlMantenimientos.SuspendLayout();
             this.panel4.SuspendLayout();
@@ -86,10 +81,6 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.HotTrack;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.splitContainer1.Panel2.Controls.Add(this.btnStock);
-            this.splitContainer1.Panel2.Controls.Add(this.btnCierreStock);
-            this.splitContainer1.Panel2.Controls.Add(this.btnEgresoStock);
-            this.splitContainer1.Panel2.Controls.Add(this.btnIngresoStock);
             this.splitContainer1.Size = new System.Drawing.Size(886, 540);
             this.splitContainer1.SplitterDistance = 228;
             this.splitContainer1.TabIndex = 0;
@@ -152,7 +143,7 @@
             this.linkBaseDeDatos.AutoSize = true;
             this.linkBaseDeDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkBaseDeDatos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkBaseDeDatos.Location = new System.Drawing.Point(23, 182);
+            this.linkBaseDeDatos.Location = new System.Drawing.Point(23, 180);
             this.linkBaseDeDatos.Name = "linkBaseDeDatos";
             this.linkBaseDeDatos.Size = new System.Drawing.Size(98, 16);
             this.linkBaseDeDatos.TabIndex = 12;
@@ -165,7 +156,7 @@
             this.linkPagos.AutoSize = true;
             this.linkPagos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkPagos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkPagos.Location = new System.Drawing.Point(22, 110);
+            this.linkPagos.Location = new System.Drawing.Point(23, 157);
             this.linkPagos.Name = "linkPagos";
             this.linkPagos.Size = new System.Drawing.Size(48, 16);
             this.linkPagos.TabIndex = 11;
@@ -178,7 +169,7 @@
             this.linkReportes.AutoSize = true;
             this.linkReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkReportes.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkReportes.Location = new System.Drawing.Point(23, 134);
+            this.linkReportes.Location = new System.Drawing.Point(23, 107);
             this.linkReportes.Name = "linkReportes";
             this.linkReportes.Size = new System.Drawing.Size(64, 16);
             this.linkReportes.TabIndex = 10;
@@ -191,12 +182,12 @@
             this.linkStock.AutoSize = true;
             this.linkStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkStock.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkStock.Location = new System.Drawing.Point(23, 158);
+            this.linkStock.Location = new System.Drawing.Point(23, 83);
             this.linkStock.Name = "linkStock";
-            this.linkStock.Size = new System.Drawing.Size(84, 16);
+            this.linkStock.Size = new System.Drawing.Size(42, 16);
             this.linkStock.TabIndex = 9;
             this.linkStock.TabStop = true;
-            this.linkStock.Text = "Stock Cortes";
+            this.linkStock.Text = "Stock";
             this.linkStock.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkStock_LinkClicked);
             // 
             // linkEmbutidos
@@ -204,7 +195,7 @@
             this.linkEmbutidos.AutoSize = true;
             this.linkEmbutidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkEmbutidos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkEmbutidos.Location = new System.Drawing.Point(23, 86);
+            this.linkEmbutidos.Location = new System.Drawing.Point(23, 59);
             this.linkEmbutidos.Name = "linkEmbutidos";
             this.linkEmbutidos.Size = new System.Drawing.Size(117, 16);
             this.linkEmbutidos.TabIndex = 8;
@@ -217,7 +208,7 @@
             this.linkLabel1.AutoSize = true;
             this.linkLabel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkLabel1.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkLabel1.Location = new System.Drawing.Point(23, 62);
+            this.linkLabel1.Location = new System.Drawing.Point(23, 35);
             this.linkLabel1.Name = "linkLabel1";
             this.linkLabel1.Size = new System.Drawing.Size(84, 16);
             this.linkLabel1.TabIndex = 7;
@@ -230,7 +221,7 @@
             this.linkPersonas.AutoSize = true;
             this.linkPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkPersonas.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkPersonas.Location = new System.Drawing.Point(23, 38);
+            this.linkPersonas.Location = new System.Drawing.Point(23, 132);
             this.linkPersonas.Name = "linkPersonas";
             this.linkPersonas.Size = new System.Drawing.Size(66, 16);
             this.linkPersonas.TabIndex = 4;
@@ -348,46 +339,6 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Compras";
             // 
-            // btnIngresoStock
-            // 
-            this.btnIngresoStock.Location = new System.Drawing.Point(51, 71);
-            this.btnIngresoStock.Name = "btnIngresoStock";
-            this.btnIngresoStock.Size = new System.Drawing.Size(127, 23);
-            this.btnIngresoStock.TabIndex = 0;
-            this.btnIngresoStock.Text = "Ingreso Stock";
-            this.btnIngresoStock.UseVisualStyleBackColor = true;
-            this.btnIngresoStock.Click += new System.EventHandler(this.btnIngresoStock_Click);
-            // 
-            // btnEgresoStock
-            // 
-            this.btnEgresoStock.Location = new System.Drawing.Point(51, 100);
-            this.btnEgresoStock.Name = "btnEgresoStock";
-            this.btnEgresoStock.Size = new System.Drawing.Size(127, 23);
-            this.btnEgresoStock.TabIndex = 1;
-            this.btnEgresoStock.Text = "Egreso Stock";
-            this.btnEgresoStock.UseVisualStyleBackColor = true;
-            this.btnEgresoStock.Click += new System.EventHandler(this.btnEgresoStock_Click);
-            // 
-            // btnCierreStock
-            // 
-            this.btnCierreStock.Location = new System.Drawing.Point(51, 129);
-            this.btnCierreStock.Name = "btnCierreStock";
-            this.btnCierreStock.Size = new System.Drawing.Size(127, 23);
-            this.btnCierreStock.TabIndex = 2;
-            this.btnCierreStock.Text = "Cierre Stock";
-            this.btnCierreStock.UseVisualStyleBackColor = true;
-            this.btnCierreStock.Click += new System.EventHandler(this.btnCierreStock_Click);
-            // 
-            // btnStock
-            // 
-            this.btnStock.Location = new System.Drawing.Point(51, 42);
-            this.btnStock.Name = "btnStock";
-            this.btnStock.Size = new System.Drawing.Size(127, 23);
-            this.btnStock.TabIndex = 3;
-            this.btnStock.Text = "Stock";
-            this.btnStock.UseVisualStyleBackColor = true;
-            this.btnStock.Click += new System.EventHandler(this.btnStock_Click);
-            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -404,7 +355,6 @@
             this.Activated += new System.EventHandler(this.FormPrincipal_Activated);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel1.PerformLayout();
-            this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.ResumeLayout(false);
             this.pnlMantenimientos.ResumeLayout(false);
             this.pnlMantenimientos.PerformLayout();
@@ -446,10 +396,6 @@
         private System.Windows.Forms.LinkLabel linkBaseDeDatos;
         private System.Windows.Forms.LinkLabel linkCerrarSesion;
         private System.Windows.Forms.LinkLabel linkLogin;
-        private System.Windows.Forms.Button btnIngresoStock;
-        private System.Windows.Forms.Button btnCierreStock;
-        private System.Windows.Forms.Button btnEgresoStock;
-        private System.Windows.Forms.Button btnStock;
     }
 }
 

@@ -710,7 +710,8 @@ namespace Datos
             cmCorte.CommandType = CommandType.StoredProcedure;
             if (nroCierre==1)
             {
-                cmCorte.CommandText = "a_CierreStock2";
+                //cmCorte.CommandText = "a_InicioCierreStock";
+                cmCorte.CommandText = "a_CierreStock";
             }
             if (nroCierre == 2)
             {

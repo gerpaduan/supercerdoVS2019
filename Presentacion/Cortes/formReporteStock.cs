@@ -390,22 +390,36 @@ namespace Presentacion.Cortes
                                 TotEGR += Convert.ToDecimal(fila["Ventas"]);
                             }
 
-                            if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "Stock.Cierre")
+                            if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
                             {
                                 fila["Stock.Cierre"] = 0;
                             }
 
+                            fila["Tot.INGR"] = TotINGR;
+                            fila["Tot.EGR"] = TotEGR;
                             fila["DIF"] = TotINGR - TotEGR;
 
                             fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
 
                         }
                         grillaReportes.DataSource = dtGrillaReporte;
+
+                        Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+
+                        grillaReportes.Columns["Codigo"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Corte"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Tot.INGR"].DefaultCellStyle.BackColor = Color.PaleGreen;
+                        grillaReportes.Columns["Tot.INGR"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Tot.EGR"].DefaultCellStyle.BackColor = Color.PaleGreen;
+                        grillaReportes.Columns["Tot.EGR"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.BackColor = Color.LightBlue;
+                        grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Faltante"].DefaultCellStyle.Font = fuente;
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    //MessageBox.Show(ex.Message);
                 }
             }
 

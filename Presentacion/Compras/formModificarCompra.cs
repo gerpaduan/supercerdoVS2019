@@ -267,6 +267,9 @@ namespace Presentacion.Compras
             txtProveedor.Text = oCompraModificada.Proveedor.razonSocial;
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtObservaciones.Text = oCompraModificada.Observaciones;
+            string datosCreado = "Creado: " + oCompraModificada.Creado.ToString() + "\nModificado: " +
+                (oCompraModificada.Actualizado > DateTime.Today.AddYears(-20) ? oCompraModificada.Actualizado.ToString() : "-");
+            txtCreado.Text = datosCreado;
             establecerTipo(oCompraModificada.TipoCompra);
 
             validarEstado();
@@ -313,7 +316,8 @@ namespace Presentacion.Compras
             txtFechaCompra.Enabled = true;
             comboSucursal.Enabled = true;
             btnAceptar.Visible = true;
-            txtFechaCompra.Value = oCompraModificada.FechaCompra; 
+            txtFechaCompra.Value = oCompraModificada.FechaCompra;
+            txtObservaciones.ReadOnly = false;
 
             if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
             {
@@ -699,16 +703,14 @@ namespace Presentacion.Compras
                             cortePorCompra.sucursal = oSucursal;
                             oCompraN.agregarCortePorCompra(cortePorCompra);
                         }
-
                     }
                      //se establece el estado a vacío
                     estadoModificar = "";
                     validarEstado();
-
                     frmCompras.cargarGrilla();
+                    modificado = false;
                     this.Close();
                  }
-
             }
             else
             {
@@ -819,18 +821,7 @@ namespace Presentacion.Compras
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            if (modificado)
-            {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderán los cambios que ha realizado.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                if (respuesta == DialogResult.Yes)
-                {
-                    this.Close();
-                }
-            }
-            else
-            {
-                this.Close();
-            }
+            this.Close();
         }
 
         private void grillaMediaRes_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -875,16 +866,11 @@ namespace Presentacion.Compras
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
             if (e.KeyChar == (char)(Keys.Enter))
             {
-
                 e.Handled = true;
-
                 SendKeys.Send("{TAB}");
-
             }
-
         }
 
         private void quitarStock_Click(object sender, EventArgs e)
@@ -914,7 +900,6 @@ namespace Presentacion.Compras
                             oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
                         }
-
                         //se cargan los datos del corte
                         txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
                     }
@@ -924,13 +909,10 @@ namespace Presentacion.Compras
                         MessageBox.Show("El código no existe");                        
                         txtCodigo.Focus();
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
-
                 MessageBox.Show(ex.Message);
             }
         }
@@ -964,7 +946,6 @@ namespace Presentacion.Compras
         private void txtCorteNuevaCompra_TextChanged(object sender, EventArgs e)
         {
             txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
-
         }
 
         private void cargarReporte()
@@ -980,26 +961,6 @@ namespace Presentacion.Compras
         {
             verPorcentajesPorCompra();
         }
-
-        //const int WM_SYSCOMMAND = 0x0112;
-        //const int SC_CLOSE = 0xF060;
-
-        //protected override void WndProc(ref Message m)
-        //{
-        //    if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE) &&(modificado))
-        //    {
-        //        DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-        //        if ((respuesta == System.Windows.Forms.DialogResult.No))
-        //        {
-        //            return;
-        //        }
-
-        //    }
-
-        //    base.WndProc(ref m);
-        //}
-
 
         private void Reporte_Click(object sender, EventArgs e)
         {
@@ -1061,6 +1022,44 @@ namespace Presentacion.Compras
             else
             {
                 modificado = true;
+            }
+        }
+
+        private void txtObservaciones_TextChanged(object sender, EventArgs e)
+        {
+            if (txtObservaciones.Text.Equals(oCompraModificada.Observaciones))
+            {
+                modificado = false;
+            }
+            else
+            {
+                modificado = true;
+            }
+        }
+
+        private void formModificarCompra_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = salir();
+        }
+
+        private bool salir()
+        {
+            if (modificado)
+            {
+                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if ((respuesta == System.Windows.Forms.DialogResult.Yes))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return false;
             }
         }
     }

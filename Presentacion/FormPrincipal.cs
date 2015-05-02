@@ -196,65 +196,26 @@ namespace Presentacion
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
-            if (logueado)
+            if (Application.OpenForms["formStock"] != null)
             {
-                if (Application.OpenForms["formStockCortes"] != null)
-                {
-
-                    Application.OpenForms["formStockCortes"].Activate();
-                    Application.OpenForms["formStockCortes"].WindowState = FormWindowState.Normal;
-
-                }
-                else
-                {
-
-                    formStockCortes frmStockCortes = new formStockCortes();
-                    frmStockCortes.Show();
-
-                }
+                Application.OpenForms["formStock"].Activate();
+                Application.OpenForms["formStock"].WindowState = FormWindowState.Normal;
             }
             else
             {
-                MessageBox.Show("No está logueado");
-            }
-            
+                formStock frm = new formStock();
+                frm.Show();
+            }          
         }
 
         private void linkReportes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
-
-            //if (Application.OpenForms["formReporteStock"] != null)
-            //{
-
-            //    Application.OpenForms["formReporteStock"].Activate();
-            //    Application.OpenForms["formReporteStock"].WindowState = FormWindowState.Normal;
-
-            //}
-            //else
-            //{
-
-            //    formReporteStock frmReporteStock = new formReporteStock();
-            //    frmReporteStock.Show();
-
-            //}
         }
 
         private void linkPagos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formPagos"] != null)
@@ -278,16 +239,8 @@ namespace Presentacion
             }
         }
 
-        
-
         private void linkBaseDeDatos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formBackUp"] != null)
@@ -372,35 +325,6 @@ namespace Presentacion
                 linkCerrarSesion.Visible = false;
             }
         }
-
-        private void btnIngresoStock_Click(object sender, EventArgs e)
-        {
-            formAddOrEditStock frm = new formAddOrEditStock();
-            frm.tipoCompraEnum = Entidades.Compra.tipoCompraEnum.IngresoStock;
-            frm.Show();
-        }
-
-        private void btnEgresoStock_Click(object sender, EventArgs e)
-        {
-            formAddOrEditStock frm = new formAddOrEditStock();
-            frm.tipoCompraEnum = Entidades.Compra.tipoCompraEnum.EgresoStock;
-            frm.Show();
-        }
-
-        private void btnCierreStock_Click(object sender, EventArgs e)
-        {
-            formAddOrEditStock frm = new formAddOrEditStock();
-            frm.tipoCompraEnum = Entidades.Compra.tipoCompraEnum.CierreStock;
-            frm.Show();
-        }
-
-        private void btnStock_Click(object sender, EventArgs e)
-        {
-            formStock frm = new formStock();
-            frm.Show();
-        }
-        
-       
     }
 
 }

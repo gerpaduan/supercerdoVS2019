@@ -28,13 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle19 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle20 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle21 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formModificarCompra));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle22 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grillaCortePorCompra = new System.Windows.Forms.DataGridView();
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -104,6 +104,7 @@
             this.label10 = new System.Windows.Forms.Label();
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
+            this.txtCreado = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -170,9 +171,9 @@
             // cantKgs
             // 
             this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle7.Format = "N3";
-            dataGridViewCellStyle7.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle19.Format = "N3";
+            dataGridViewCellStyle19.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle19;
             this.cantKgs.HeaderText = "Cant. Kgs";
             this.cantKgs.Name = "cantKgs";
             this.cantKgs.ReadOnly = true;
@@ -180,9 +181,9 @@
             // precioKgs
             // 
             this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle8.Format = "N2";
-            dataGridViewCellStyle8.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle20.Format = "N2";
+            dataGridViewCellStyle20.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle20;
             this.precioKgs.HeaderText = "Precio Kg.";
             this.precioKgs.Name = "precioKgs";
             this.precioKgs.ReadOnly = true;
@@ -190,9 +191,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "TotalS";
-            dataGridViewCellStyle9.Format = "N2";
-            dataGridViewCellStyle9.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle21.Format = "N2";
+            dataGridViewCellStyle21.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle21;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -219,10 +220,12 @@
             this.txtObservaciones.Location = new System.Drawing.Point(671, 334);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
+            this.txtObservaciones.ReadOnly = true;
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtObservaciones.Size = new System.Drawing.Size(134, 95);
             this.txtObservaciones.TabIndex = 8;
             this.txtObservaciones.TabStop = false;
+            this.txtObservaciones.TextChanged += new System.EventHandler(this.txtObservaciones_TextChanged);
             // 
             // txtTotalS
             // 
@@ -302,20 +305,21 @@
             // pnlBuscar
             // 
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.txtCreado);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
             this.pnlBuscar.Controls.Add(this.label13);
             this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.panelCorte);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.grupoMediaRes);
-            this.pnlBuscar.Location = new System.Drawing.Point(0, 40);
+            this.pnlBuscar.Location = new System.Drawing.Point(0, 38);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(817, 146);
             this.pnlBuscar.TabIndex = 17;
             // 
             // txtUsuario
             // 
-            this.txtUsuario.Location = new System.Drawing.Point(665, 21);
+            this.txtUsuario.Location = new System.Drawing.Point(665, 7);
             this.txtUsuario.Name = "txtUsuario";
             this.txtUsuario.ReadOnly = true;
             this.txtUsuario.Size = new System.Drawing.Size(140, 20);
@@ -327,7 +331,7 @@
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label13.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label13.Location = new System.Drawing.Point(609, 22);
+            this.label13.Location = new System.Drawing.Point(609, 8);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(50, 15);
             this.label13.TabIndex = 52;
@@ -773,9 +777,9 @@
             // kgMedia
             // 
             this.kgMedia.DataPropertyName = "kgMedia";
-            dataGridViewCellStyle10.Format = "N3";
-            dataGridViewCellStyle10.NullValue = null;
-            this.kgMedia.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle22.Format = "N3";
+            dataGridViewCellStyle22.NullValue = null;
+            this.kgMedia.DefaultCellStyle = dataGridViewCellStyle22;
             this.kgMedia.HeaderText = "Kgs. Media";
             this.kgMedia.Name = "kgMedia";
             this.kgMedia.ReadOnly = true;
@@ -783,9 +787,9 @@
             // precioMedia
             // 
             this.precioMedia.DataPropertyName = "precioMedia";
-            dataGridViewCellStyle11.Format = "N2";
-            dataGridViewCellStyle11.NullValue = null;
-            this.precioMedia.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle23.Format = "N2";
+            dataGridViewCellStyle23.NullValue = null;
+            this.precioMedia.DefaultCellStyle = dataGridViewCellStyle23;
             this.precioMedia.HeaderText = "Precio Kg. ";
             this.precioMedia.Name = "precioMedia";
             this.precioMedia.ReadOnly = true;
@@ -793,9 +797,9 @@
             // totalPs
             // 
             this.totalPs.DataPropertyName = "totalS";
-            dataGridViewCellStyle12.Format = "N2";
-            dataGridViewCellStyle12.NullValue = null;
-            this.totalPs.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle24.Format = "N2";
+            dataGridViewCellStyle24.NullValue = null;
+            this.totalPs.DefaultCellStyle = dataGridViewCellStyle24;
             this.totalPs.HeaderText = "Total $";
             this.totalPs.Name = "totalPs";
             this.totalPs.ReadOnly = true;
@@ -934,6 +938,16 @@
             this.label12.TabIndex = 31;
             this.label12.Text = "Cant. Items";
             // 
+            // txtCreado
+            // 
+            this.txtCreado.Location = new System.Drawing.Point(612, 33);
+            this.txtCreado.Multiline = true;
+            this.txtCreado.Name = "txtCreado";
+            this.txtCreado.ReadOnly = true;
+            this.txtCreado.Size = new System.Drawing.Size(193, 45);
+            this.txtCreado.TabIndex = 54;
+            this.txtCreado.TabStop = false;
+            // 
             // formModificarCompra
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -961,6 +975,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Información de la Compra";
             this.Load += new System.EventHandler(this.formModificarCompra_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formModificarCompra_FormClosing);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
@@ -1053,5 +1068,6 @@
         private System.Windows.Forms.TextBox txtUsuario;
         protected System.Windows.Forms.Label label13;
         private System.Windows.Forms.DateTimePicker txtFechaCompra;
+        private System.Windows.Forms.TextBox txtCreado;
     }
 }
