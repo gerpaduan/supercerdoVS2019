@@ -710,7 +710,8 @@ namespace Datos
             cmCorte.CommandType = CommandType.StoredProcedure;
             if (nroCierre==1)
             {
-                cmCorte.CommandText = "StockCierre";
+                //cmCorte.CommandText = "a_InicioCierreStock";
+                cmCorte.CommandText = "a_CierreStock";
             }
             if (nroCierre == 2)
             {
@@ -815,7 +816,8 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
             cmCorte.CommandType = CommandType.StoredProcedure;
-            cmCorte.CommandText = "TotalKgsCortePorCompra";
+            //cmCorte.CommandText = "TotalKgsCortePorCompra";
+            cmCorte.CommandText = "a_CierreStock"; // "a_IngresoStock";
             cmCorte.Parameters.AddWithValue("@texto", texto);
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);

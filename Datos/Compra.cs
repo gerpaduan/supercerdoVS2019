@@ -26,7 +26,7 @@ namespace Datos
             cmCompra = null;
         }
 
-        public DataTable obtenerCompras(string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerCompras(int idSucursal,string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtCompras = new DataTable();
             daCompra = new SqlDataAdapter();
@@ -40,6 +40,25 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCompra.Parameters.AddWithValue("@fechaHasta", fechaHasta);
             cmCompra.Parameters.AddWithValue("@tipoCompra", tipoCompra);
+            cmCompra.Parameters.AddWithValue("@idSucursal", idSucursal);
+
+            daCompra.SelectCommand = cmCompra;
+            daCompra.Fill(dtCompras);
+
+            cmCompra.Connection.Close();
+
+            return dtCompras;
+        }
+
+        public DataTable findById(int idCompra)
+        {
+            DataTable dtCompras = new DataTable();
+            daCompra = new SqlDataAdapter();
+
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandText = "select * from Compras where idCompra = "+idCompra;
 
             daCompra.SelectCommand = cmCompra;
             daCompra.Fill(dtCompras);
@@ -64,6 +83,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
 
             SqlDataReader drCompra = cmCompra.ExecuteReader();
 
@@ -98,6 +118,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
 
             cmCompra.ExecuteNonQuery();
             cmCompra.Connection.Close();

@@ -173,10 +173,8 @@ namespace Presentacion
                 
                     oFrmCompra.cargarGrilla();
                     //this.Close();
-                    limpiarListas();                    
-
+                    limpiarListas(); 
                 }
-
             }
 
             else
@@ -214,6 +212,7 @@ namespace Presentacion
             oCompraE.Estado = "";
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;
+            oCompraE.Sucursal = oSucursalE;
         }
 
         private void quitarLinea()
@@ -228,6 +227,14 @@ namespace Presentacion
             }
            
             cargarGrilla();
+            //si ambas listas no contienen objetos se habilitan los radioButtons
+            if (listaCortePorCompra.Count() == 0 && listaMediaRes.Count() == 0)
+            {
+                radioMediaRes.Enabled = true;
+                radioCorte.Enabled = true;
+                radioIngresoStock.Enabled = true;
+                comboSucursal.Enabled = true;
+            }
         }
 
         private void quitarCorte()
@@ -544,15 +551,24 @@ namespace Presentacion
 
         private bool validarCampos()
         {
-            if (comboSucursal.SelectedIndex.Equals(-1) || txtPrecioKg.Text.Equals("") || ((txtKgMedia.Text.Equals("") || txtKgMedia.Text.Equals("")) &&
-                 (txtCorteNuevaCompra.Text.Equals("") || txtCantKgs.Text.Equals("") )))
+            if (comboSucursal.SelectedIndex.Equals(-1))
             {
-                MessageBox.Show("Debe Completar todos los campos.", "Complete los campos vacíos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Ingrese la sucursal.", "Ingresar sucursal", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
+            
             else
             {
-                return true;
+                if (txtPrecioKg.Text.Equals("") || ((txtKgMedia.Text.Equals("") || txtKgMedia.Text.Equals("")) &&
+                 (txtCorteNuevaCompra.Text.Equals("") || txtCantKgs.Text.Equals(""))))
+                {
+                    MessageBox.Show("Debe Completar todos los campos.", "Complete los campos vacíos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
 
@@ -639,7 +655,7 @@ namespace Presentacion
                 radioMediaRes.Enabled = false;
                 radioCorte.Enabled = true;
                 radioIngresoStock.Enabled = true;
-                
+                comboSucursal.Enabled = false;
             }
 
             if (listaMediaRes.Count() > 0)
@@ -647,6 +663,7 @@ namespace Presentacion
                  radioMediaRes.Enabled = true;
                 radioCorte.Enabled = false;
                 radioIngresoStock.Enabled = false;
+                comboSucursal.Enabled = false;
             }
 
             //si ambas listas no contienen objetos se habilitan los radioButtons
@@ -655,6 +672,7 @@ namespace Presentacion
                 radioMediaRes.Enabled = true;
                 radioCorte.Enabled = true;
                 radioIngresoStock.Enabled = true;
+                comboSucursal.Enabled = true;
             }
           
         }
@@ -779,12 +797,15 @@ namespace Presentacion
 
             if (e.KeyChar == (char)(Keys.Enter))
             {
-
+                if (radioCorte.TabStop)
+                {
+            		 radioCorte.TabStop = false;
+                }
                 e.Handled = true;
 
                 SendKeys.Send("{TAB}");
 
-            }
+                }
 
         }
 
@@ -843,6 +864,26 @@ namespace Presentacion
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
+        }
+
+        private void label16_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtUsuario_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnAceptar_Enter(object sender, EventArgs e)
+        {
+            btnAceptar.BackColor = System.Drawing.Color.FromName("LimeGreen");
+        }
+
+        private void btnAceptar_Leave(object sender, EventArgs e)
+        {
+            btnAceptar.BackColor = System.Drawing.Color.FromName("SeaGreen");
         }
 
        
