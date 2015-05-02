@@ -289,6 +289,7 @@ namespace Presentacion
             dtSucursales = new DataTable();
             oSucursalN = new Negocio.Sucursal();
             dtSucursales = oSucursalN.obtenerSucursalSanMartin();
+            dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
