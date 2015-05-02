@@ -69,7 +69,6 @@
             this.txtClave.Name = "txtClave";
             this.txtClave.Size = new System.Drawing.Size(139, 20);
             this.txtClave.TabIndex = 1;
-            this.txtClave.Text = "sistema";
             this.txtClave.UseSystemPasswordChar = true;
             this.txtClave.TextChanged += new System.EventHandler(this.txtClave_TextChanged);
             this.txtClave.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtClave_KeyPress);
