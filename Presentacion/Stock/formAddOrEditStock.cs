@@ -174,6 +174,7 @@ namespace Presentacion
                         {                            
                           frmStock.cargarGrilla();
                         }
+                        huboModificaciones = false;
                         this.Close();
                         //limpiarListas();
                     }

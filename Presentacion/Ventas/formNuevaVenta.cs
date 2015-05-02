@@ -560,17 +560,25 @@ namespace Presentacion.Ventas
 
                 else
                 {
-                    DialogResult respuesta;
-                    respuesta = MessageBox.Show("Vefique que la Fecha, Sucursal y demás datos ingresados esté correctos.\n\n¿Están correctos?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                    if (respuesta == DialogResult.Yes)
+                    if (Utilidades.Util_Form.validarFecha(txtFechaVenta.Value, "Fecha"))
                     {
-                        return true;
+                        DialogResult respuesta;
+                        respuesta = MessageBox.Show("Vefique que la Fecha, Sucursal y demás datos ingresados esté correctos.\n\n¿Están correctos?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                        if (respuesta == DialogResult.Yes)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
                     }
                     else
                     {
                         return false;
                     }
+                    
                 }
 
 

@@ -657,9 +657,8 @@ namespace Presentacion.Compras
         }
 
         private void modificarCompra()
-        {
-        
-            if (modificado == true)
+        {        
+            if (modificado == true && Utilidades.Util_Form.validarFecha(txtFechaCompra.Value, "Fecha"))
             {
                  DialogResult respuesta = MessageBox.Show("¿Está seguro que desea guardar los cambios realizados?. ", "Modificar Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                  if (respuesta == DialogResult.Yes)
@@ -714,7 +713,10 @@ namespace Presentacion.Compras
             }
             else
             {
-                this.Close();
+                if (!modificado)
+                {
+                    this.Close();                    
+                }
             }        
         }
 

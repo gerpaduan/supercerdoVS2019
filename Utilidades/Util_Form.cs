@@ -126,6 +126,19 @@ namespace Utilidades
 	        }
             return (float)value;
         }
+
+        public static bool validarFecha(DateTime fecha, string nombreTextBox)
+        {
+            bool resp = fecha > DateTime.Now ? false : true;
+            
+            if (!resp)
+            {
+                MessageBox.Show("-" + nombreTextBox + " debe ser menor o igual a la fecha de hoy.", "Error fecha", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return resp;
+
+        }
+
         private void Util_Form_Load(object sender, EventArgs e)
         {
 
