@@ -64,6 +64,7 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaMovimientos = new System.Windows.Forms.DataGridView();
+            this.Reporte = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovimientos)).BeginInit();
@@ -73,11 +74,12 @@
             // 
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.nuevo});
+            this.nuevo,
+            this.Reporte});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(521, 45);
+            this.barraControl.Size = new System.Drawing.Size(611, 45);
             this.barraControl.TabIndex = 6;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -114,7 +116,7 @@
             this.pnlBuscar.Controls.Add(this.shapeContainer1);
             this.pnlBuscar.Location = new System.Drawing.Point(-4, 45);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(529, 108);
+            this.pnlBuscar.Size = new System.Drawing.Size(619, 108);
             this.pnlBuscar.TabIndex = 8;
             this.pnlBuscar.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlBuscar_Paint);
             // 
@@ -134,9 +136,9 @@
             // 
             this.comboSucDestino.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucDestino.FormattingEnabled = true;
-            this.comboSucDestino.Location = new System.Drawing.Point(119, 47);
+            this.comboSucDestino.Location = new System.Drawing.Point(89, 47);
             this.comboSucDestino.Name = "comboSucDestino";
-            this.comboSucDestino.Size = new System.Drawing.Size(99, 21);
+            this.comboSucDestino.Size = new System.Drawing.Size(133, 21);
             this.comboSucDestino.TabIndex = 43;
             this.comboSucDestino.TabStop = false;
             this.comboSucDestino.SelectedIndexChanged += new System.EventHandler(this.comboSucDestino_SelectedIndexChanged);
@@ -147,7 +149,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(69, 28);
+            this.label7.Location = new System.Drawing.Point(39, 28);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(44, 15);
             this.label7.TabIndex = 40;
@@ -157,20 +159,19 @@
             // 
             this.comboSucOrigen.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucOrigen.FormattingEnabled = true;
-            this.comboSucOrigen.Location = new System.Drawing.Point(119, 25);
+            this.comboSucOrigen.Location = new System.Drawing.Point(89, 25);
             this.comboSucOrigen.Name = "comboSucOrigen";
-            this.comboSucOrigen.Size = new System.Drawing.Size(99, 21);
+            this.comboSucOrigen.Size = new System.Drawing.Size(133, 21);
             this.comboSucOrigen.TabIndex = 42;
             this.comboSucOrigen.TabStop = false;
             this.comboSucOrigen.TextChanged += new System.EventHandler(this.comboSucOrigen_TextChanged);
             // 
             // label5
             // 
-            this.label5.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(64, 48);
+            this.label5.Location = new System.Drawing.Point(34, 48);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(49, 15);
             this.label5.TabIndex = 41;
@@ -213,7 +214,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(327, 6);
+            this.label1.Location = new System.Drawing.Point(376, 6);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(41, 15);
             this.label1.TabIndex = 9;
@@ -223,7 +224,7 @@
             // 
             this.txtFechaDesde.CustomFormat = "dd/MM/yyyy";
             this.txtFechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaDesde.Location = new System.Drawing.Point(418, 24);
+            this.txtFechaDesde.Location = new System.Drawing.Point(479, 24);
             this.txtFechaDesde.Name = "txtFechaDesde";
             this.txtFechaDesde.Size = new System.Drawing.Size(95, 20);
             this.txtFechaDesde.TabIndex = 5;
@@ -235,7 +236,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(368, 26);
+            this.label3.Location = new System.Drawing.Point(429, 26);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 4;
@@ -245,7 +246,7 @@
             // 
             this.txtFechaHasta.CustomFormat = "dd/MM/yyyy";
             this.txtFechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaHasta.Location = new System.Drawing.Point(418, 47);
+            this.txtFechaHasta.Location = new System.Drawing.Point(479, 47);
             this.txtFechaHasta.Name = "txtFechaHasta";
             this.txtFechaHasta.Size = new System.Drawing.Size(96, 20);
             this.txtFechaHasta.TabIndex = 7;
@@ -256,7 +257,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(373, 49);
+            this.label4.Location = new System.Drawing.Point(434, 49);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
@@ -271,7 +272,7 @@
             this.lineShape3,
             this.lineShape1,
             this.lineShape2});
-            this.shapeContainer1.Size = new System.Drawing.Size(529, 108);
+            this.shapeContainer1.Size = new System.Drawing.Size(619, 108);
             this.shapeContainer1.TabIndex = 10;
             this.shapeContainer1.TabStop = false;
             // 
@@ -282,7 +283,7 @@
             this.lineShape3.BorderColor = System.Drawing.Color.White;
             this.lineShape3.Name = "lineShape3";
             this.lineShape3.X1 = 72;
-            this.lineShape3.X2 = 217;
+            this.lineShape3.X2 = 307;
             this.lineShape3.Y1 = 19;
             this.lineShape3.Y2 = 19;
             // 
@@ -293,7 +294,7 @@
             this.lineShape1.BorderColor = System.Drawing.Color.White;
             this.lineShape1.Name = "lineShape1";
             this.lineShape1.X1 = 16;
-            this.lineShape1.X2 = 513;
+            this.lineShape1.X2 = 603;
             this.lineShape1.Y1 = 71;
             this.lineShape1.Y2 = 71;
             // 
@@ -303,8 +304,8 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.lineShape2.BorderColor = System.Drawing.Color.White;
             this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 370;
-            this.lineShape2.X2 = 515;
+            this.lineShape2.X1 = 426;
+            this.lineShape2.X2 = 597;
             this.lineShape2.Y1 = 18;
             this.lineShape2.Y2 = 18;
             // 
@@ -387,7 +388,7 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(338, 473);
+            this.btnSeleccionar.Location = new System.Drawing.Point(428, 473);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(83, 27);
             this.btnSeleccionar.TabIndex = 15;
@@ -398,7 +399,7 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(427, 473);
+            this.btnCancelar.Location = new System.Drawing.Point(517, 473);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(82, 27);
             this.btnCancelar.TabIndex = 14;
@@ -422,20 +423,30 @@
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle3;
-            this.grillaMovimientos.Location = new System.Drawing.Point(13, 157);
+            this.grillaMovimientos.Location = new System.Drawing.Point(12, 157);
             this.grillaMovimientos.Name = "grillaMovimientos";
             this.grillaMovimientos.ReadOnly = true;
             this.grillaMovimientos.RowHeadersVisible = false;
             this.grillaMovimientos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaMovimientos.Size = new System.Drawing.Size(496, 310);
+            this.grillaMovimientos.Size = new System.Drawing.Size(587, 310);
             this.grillaMovimientos.TabIndex = 16;
             this.grillaMovimientos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaMovimientos_CellDoubleClick);
+            // 
+            // Reporte
+            // 
+            this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
+            this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.Reporte.Name = "Reporte";
+            this.Reporte.Size = new System.Drawing.Size(52, 42);
+            this.Reporte.Text = "Reporte";
+            this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
             // 
             // formMovimientos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(521, 504);
+            this.ClientSize = new System.Drawing.Size(611, 504);
             this.Controls.Add(this.grillaMovimientos);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
@@ -446,6 +457,7 @@
             this.Name = "formMovimientos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Movimientos";
+            this.Load += new System.EventHandler(this.formMovimientos_Load);
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
             this.pnlBuscar.ResumeLayout(false);
@@ -492,5 +504,6 @@
         protected System.Windows.Forms.Label label6;
         private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
         private Microsoft.VisualBasic.PowerPacks.LineShape lineShape3;
+        private System.Windows.Forms.ToolStripButton Reporte;
     }
 }

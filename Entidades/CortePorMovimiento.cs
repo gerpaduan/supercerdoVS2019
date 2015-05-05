@@ -11,6 +11,14 @@ namespace Entidades
         private Movimiento movimiento;
         private Corte corte;
         private float cantKg;
+
+        private int cantUnidad;
+
+        public int CantUnidad
+        {
+            get { return cantUnidad; }
+            set { cantUnidad = value; }
+        }
         private bool pesoBalanza;
 
         public bool PesoBalanza

@@ -8,17 +8,20 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Cortes;
 using Presentacion.Reportes;
+using Utilidades;
 
 namespace Presentacion
 {
     public partial class formNuevoMovimiento : formBaseColor, InterfaceCorte
     {
-        bool checkAnterior=false;
+        bool checkAnterior = false;
         Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Util_Form Util_Form = new Util_Form();
 
         formMovimientos frmMovimiento = new formMovimientos();
 
-        DataTable dtSucursalOrigen=new DataTable();
+        DataTable dtCorte = new DataTable();
+        DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
 
         Entidades.Corte oCorteE = new Entidades.Corte();
@@ -36,12 +39,13 @@ namespace Presentacion
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        bool modificacion = false;
+        bool modificacion = false, huboModificaciones = false;
 
         public formNuevoMovimiento()
         {
             InitializeComponent();
             cargarSucursales();
+            dtCorte = oCorteN.obtenerCortes();
         }
 
         public void obtenerParametros(formMovimientos frmMovimientoParam, Entidades.Movimiento movimientoParam, List<Entidades.CortePorMovimiento> listaCortesPorMovimientoParam)
@@ -69,45 +73,46 @@ namespace Presentacion
             txtHora.Text = oMovimiento.FechaMovimiento.TimeOfDay.ToString();
             txtObservaciones.Text = oMovimiento.Observaciones;
 
-            cargarGrilla();
-        
-        }
+            string datosCreado = "Creado: " + oMovimiento.Creado.ToString() + "\n\nModificado: " +
+                (oMovimiento.Actualizado > DateTime.Today.AddYears(-20) ? oMovimiento.Actualizado.ToString() : "-");
+            txtCreado.Text = datosCreado;
+            txtCreado.Visible = true;
 
+            cargarGrilla();
+
+        }
 
         public void agregarMovimiento()
         {
-            if (validacionFinal())
+            if (Util_Form.validarFecha(txtFechaMovimiento.Value, "Fecha") && validacionFinal())
             {
                 cargarMovimiento();
-
                 try
                 {
                     if (modificacion)
                     {
                         oCorteN.quitarCortesPorMovimiento(oMovimiento);
-
                         oCorteN.modificarMovimiento(oMovimiento);
                     }
-
                     else
                     {
                         oMovimiento.IdMovimiento = oCorteN.agregarMovimiento(oMovimiento);
                     }
 
-                    foreach (Entidades.CortePorMovimiento  corteEnLista in listaCortesPorMovimiento)
+                    foreach (Entidades.CortePorMovimiento corteEnLista in listaCortesPorMovimiento)
                     {
                         corteEnLista.Movimientos = oMovimiento;
-
                         oCorteN.agregarCortePorMovimiento(corteEnLista);
                     }
 
-                    DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                    if (resp==DialogResult.Yes)
-                    {
-                        imprimir();
-                    }
+                    //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    //if (resp == DialogResult.Yes)
+                    //{
+                    //    imprimir();
+                    //}
 
                     frmMovimiento.cargarGrilla();
+                    huboModificaciones = false;
                     this.Close();
                 }
                 catch (Exception ex)
@@ -144,7 +149,7 @@ namespace Presentacion
 
         private bool validacionFinal()
         {
-            if (modificacion)
+            if (modificacion && huboModificaciones)
             {
                 DialogResult resp = MessageBox.Show("¿Está seguro que desea modificar los datos del Movimiento?", "Modificar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 if (resp == DialogResult.Yes)
@@ -155,22 +160,27 @@ namespace Presentacion
                 {
                     return false;
                 }
-
             }
             else
             {
-                DialogResult resp = MessageBox.Show("Verifique si la Sucursal Origen - Destino y la fecha ingresada son correctas.\n¿Están correctas?", "Verificar Datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                if (resp == DialogResult.Yes)
+                if (huboModificaciones)
                 {
-                    return true;
-                }
+                    DialogResult resp = MessageBox.Show("Verifique si la Sucursal Origen - Destino y la fecha ingresada son correctas.\n¿Están correctas?", "Verificar Datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    if (resp == DialogResult.Yes)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }                
                 else
                 {
+                    MessageBox.Show("No ha realizado ninguna modificación.\nPresione cancelar si desea salir");
                     return false;
                 }
-
             }
-        
         }
 
         private void cargarMovimiento()
@@ -178,9 +188,9 @@ namespace Presentacion
             oMovimiento.FechaMovimiento = txtFechaMovimiento.Value;
 
             //Se cargan sucursales y se asignan al movimiento
-   
-            oSucursalOrigen.idSucursal=Convert.ToInt32(comboSucOrigen.SelectedValue.ToString());
-            oSucursalDestino.idSucursal=Convert.ToInt32(comboSucDestino.SelectedValue.ToString());
+
+            oSucursalOrigen.idSucursal = Convert.ToInt32(comboSucOrigen.SelectedValue.ToString());
+            oSucursalDestino.idSucursal = Convert.ToInt32(comboSucDestino.SelectedValue.ToString());
 
             oMovimiento.SucursalOrigen = oSucursalOrigen;
             oMovimiento.SucursalDestino = oSucursalDestino;
@@ -193,23 +203,33 @@ namespace Presentacion
         {
             bool resp = true;
 
-            if (txtCorte.Text.Trim()=="")
+            if (txtCorte.Text.Trim() == "")
             {
                 txtCodigo.Focus();
                 MessageBox.Show("No se hay ingresado ningún corte.", "Completar Campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                resp= false;
-            }
-
-            if (txtCantKgs.Text.Trim() == "")
-            {
-                txtCantKgs.Focus();
-                MessageBox.Show("Ingrese la cantidad de Kgs.", "Completar Campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                 resp = false;
             }
+            else
+            {
+                if (txtCantUnidad.Text.Trim() == "")
+                {
+                    MessageBox.Show("Ingrese la cantidad de Unidades", "Completar Campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    txtCantUnidad.Focus();
+                    resp = false;
+                }
+                else
+                {
+                    if (txtCantKgs.Text.Trim() == "")
+                    {
+                        txtCantKgs.Focus();
+                        MessageBox.Show("Ingrese la cantidad de Kgs.", "Completar Campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                        resp = false;
+                    }
+                }
 
+            }
             return resp;
         }
 
@@ -217,60 +237,51 @@ namespace Presentacion
         {
             try
             {
-                if (txtCodigo.Text.Trim() !="")
+                oCorteE = null;
+                txtCorte.Text = "";
+                if (txtCodigo.Text.Trim() != "")
                 {
-                    oCorteE = null;
                     oCorteE = new Entidades.Corte();
-
-                    DataTable dtCorte = new DataTable();
-
-                    dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
 
                     if (dtCorte.Rows.Count > 0)
                     {
                         foreach (DataRow fila in dtCorte.Rows)
                         {
-                            oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                            oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
-                            oCorteE.corte = fila["corte"].ToString();
-                        }
+                            if (fila["codigo"].ToString().Equals(txtCodigo.Text))
+                            {
+                                oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
+                                oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                                oCorteE.corte = fila["corte"].ToString();
 
+                                break;
+                            }
+                        }
                         //se cargan los datos del corte
                         txtCorte.Text = oCorteE.corte;
                     }
-                    else
-                    {
-                        txtCorte.Text = "";
-                        //MessageBox.Show("El código no existe");
-                        //txtCodigo.Focus();
-                    }
-                    
                 }
-
             }
             catch (Exception ex)
             {
-
                 MessageBox.Show(ex.Message);
             }
-        
         }
 
         private bool validarCantKgs()
-        { 
-            bool resp=true;
+        {
+            bool resp = true;
 
             try
             {
                 decimal peso = Convert.ToDecimal(txtCantKgs.Text);
-                if (peso>0)
+                if (peso > 0)
                 {
                     resp = true;
                 }
                 else
                 {
-                    DialogResult result = MessageBox.Show("La Cantidad de Kgs. ingresado es igual o menor a 0(Cero).\n¿Desea ingresar esa Cant. de Kgs. igualmente?.","",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2);
-                    if (result==DialogResult.Yes)
+                    DialogResult result = MessageBox.Show("La Cantidad de Kgs. ingresado es igual o menor a 0(Cero).\n¿Desea ingresar esa Cant. de Kgs. igualmente?.", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    if (result == DialogResult.Yes)
                     {
                         resp = true;
                     }
@@ -295,45 +306,37 @@ namespace Presentacion
                 {
                     oCortePorMovimientoE = new Entidades.CortePorMovimiento();
                     oCortePorMovimientoE.Corte = oCorteE;
-
-                    try
-                    {
-                        oCortePorMovimientoE.CantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                    }
-                    catch (Exception)
-                    {
-
-                        oCortePorMovimientoE.CantKg = float.Parse(txtCantKgs.Text.Trim());
-                    }
-
+                    oCortePorMovimientoE.CantUnidad = Convert.ToInt32(txtCantUnidad.Text);
+                    oCortePorMovimientoE.CantKg = Util_Form.convertFloat(txtCantKgs.Text);
                     oCortePorMovimientoE.PesoBalanza = checkLeerPeso.Checked;
 
                     listaCortesPorMovimiento.Add(oCortePorMovimientoE);
                     cargarGrilla();
-                                       
+                    huboModificaciones = true;
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
                 }
-
                 limpiarCampos();
-  
+                if (checkLeerPeso.Checked.Equals(true))
+                {
+                    txtCodigo.Focus();
+                }
+                else
+                {
+                    txtCodigo.Focus();
+                }
             }
-  
+
         }
 
         private void limpiarCampos()
         {
-            //if (checkLeerPeso.Checked.Equals(false))
-            //{
-            //    txtCodigo.Text = "";
-            //    txtCorte.Text = "";
-            //}
             txtCodigo.Text = "";
             txtCorte.Text = "";
+            txtCantUnidad.Text = "";
             txtCantKgs.Text = "";
-        
         }
 
         private void cargarListaEnGrilla()
@@ -348,12 +351,12 @@ namespace Presentacion
                 cortePorMovimiento.IdCorte = lineaCorte.Corte.idCorte;
                 cortePorMovimiento.Codigo = lineaCorte.Corte.codigo;
                 cortePorMovimiento.Corte = lineaCorte.Corte.corte;
+                cortePorMovimiento.CantUnidad = lineaCorte.CantUnidad;
                 cortePorMovimiento.CantKg = lineaCorte.CantKg;
                 cortePorMovimiento.PesoBalanza = lineaCorte.PesoBalanza;
 
                 listaEnGrilla.Add(cortePorMovimiento);
             }
-        
         }
 
         public void cargarGrilla()
@@ -371,20 +374,22 @@ namespace Presentacion
                 grillaCortesPorMovimiento.FirstDisplayedScrollingRowIndex = listaCortesPorMovimiento.Count() - 1;
             }
 
-            cargarTotales();        
+            cargarTotales();
         }
 
         private void cargarTotales()
         {
-            float totalKg = 0;
-            foreach (Entidades.CortePorMovimiento  filaCorte in listaCortesPorMovimiento)
+            float totalKg = 0, totalCantUn = 0;
+            foreach (Entidades.CortePorMovimiento filaCorte in listaCortesPorMovimiento)
             {
                 totalKg += filaCorte.CantKg;
+                totalCantUn += filaCorte.CantUnidad;
             }
 
             txtCantItems.Text = Convert.ToString(grillaCortesPorMovimiento.Rows.Count);
             txtTotalKg.Text = Convert.ToString(totalKg);
-        
+            txtCantTotUni.Text = Convert.ToString(totalCantUn);
+
         }
 
         private void cargarSucursales()
@@ -401,18 +406,6 @@ namespace Presentacion
             comboSucDestino.ValueMember = "idSucursal";
 
             cambiarSucursalDestino();
-            //dtSucursalOrigen= oSucursalN.obtenerSucursalSanMartin();
-
-            //comboSucOrigen.DataSource = dtSucursalOrigen;
-            //comboSucOrigen.DisplayMember = "sucursal";
-            //comboSucOrigen.ValueMember = "idSucursal";
-
-            //dtSucursalDestino= oSucursalN.obtenerSucursalSanLorenzo();
-            //comboSucDestino.DataSource = dtSucursalDestino;
-            //comboSucDestino.DisplayMember = "sucursal";
-            //comboSucDestino.ValueMember = "idSucursal";
-
-            //cambiarSucursalDestino();
         }
 
         private void quitarCorteEnMovimiento()
@@ -425,29 +418,18 @@ namespace Presentacion
                     listaCortesPorMovimiento.RemoveAt(nroFila);
 
                     cargarGrilla();
+                    huboModificaciones = true;
                 }
             }
             catch (Exception ex)
             {
-
                 MessageBox.Show(ex.Message);
             }
-        
         }
 
         private void agregarCorteEnMovimiento()
         {
             cargarCortePorMovimiento();
-
-            if (checkLeerPeso.Checked.Equals(true))
-            {
-                 txtCodigo.Focus();
-            }
-            else
-            {
-                 txtCodigo.Focus();
-            }
-           
         }
 
         private void cerrarFormulario()
@@ -456,24 +438,20 @@ namespace Presentacion
             if (modificacion)
             {
                 respuesta = MessageBox.Show("Si cierra el formulario se perderán los datos ingresados para realizar la modificación.\n¿Está seguro que desea salir?. ", "Modificar movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
             }
             else
             {
                 respuesta = MessageBox.Show("Si cierra el formulario se perderán los datos ingresados.\n¿Está seguro que desea salir?. ", "Nuevo movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
             }
 
             if ((respuesta == System.Windows.Forms.DialogResult.Yes))
             {
                 this.Close();
             }
-
         }
 
         private void cambiarSucursalDestino()
         {
-
             if (comboSucOrigen.SelectedValue.Equals(1))
             {
                 comboSucDestino.SelectedValue = 2;
@@ -486,7 +464,6 @@ namespace Presentacion
 
         private void cambiarSucursalOrigen()
         {
-
             if (comboSucDestino.SelectedValue.Equals(1))
             {
                 comboSucOrigen.SelectedValue = 2;
@@ -516,7 +493,7 @@ namespace Presentacion
         public void EnviarCorte(Entidades.Corte corte)
         {
             oCorteE = corte;
-            txtCodigo.Text = Convert.ToString(oCorteE.codigo) ;
+            txtCodigo.Text = Convert.ToString(oCorteE.codigo);
             txtCorte.Text = oCorteE.corte;
         }
 
@@ -527,7 +504,8 @@ namespace Presentacion
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            cerrarFormulario();
+            //cerrarFormulario();
+            this.Close();
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -538,7 +516,6 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnMovimiento();
-            
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
@@ -548,23 +525,11 @@ namespace Presentacion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
             if (e.KeyChar == (char)(Keys.Enter))
             {
-                if (oCorteE.idCorte > 0)
+                if (oCorteE != null && oCorteE.idCorte > 0)
                 {
-                    //foreach (DataRow fila in dtCorte.Rows)
-                    //{
-                    //    oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                    //    oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
-                    //    oCorteE.corte = fila["corte"].ToString();
-                    //}
-
-                    ////se cargan los datos del corte
-                    //txtCorte.Text = oCorteE.corte;
-
                     e.Handled = true;
-
                     SendKeys.Send("{TAB}");
                 }
                 else
@@ -573,10 +538,7 @@ namespace Presentacion
                     MessageBox.Show("El código no existe");
                     txtCodigo.Focus();
                 }
-                
-
             }
-
         }
 
         private void cambiarMantenerCodigo()
@@ -596,39 +558,12 @@ namespace Presentacion
             cambiarMantenerCodigo();
         }
 
-
-        const int WM_SYSCOMMAND = 0x0112;
-        const int SC_CLOSE = 0xF060;
-
-        protected override void WndProc(ref Message m)
-        {
-            if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
-            {
-                DialogResult respuesta;
-                if (modificacion)
-                {
-                    respuesta = MessageBox.Show("Si cierra el formulario se perderán los datos ingresados para realizar la modificación.\n¿Está seguro que desea salir?. ", "Modificar movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                }
-                else
-                {
-                    respuesta = MessageBox.Show("Si cierra el formulario se perderán los datos ingresados.\n¿Está seguro que desea salir?. ", "Nuevo movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                }
-
-                if ((respuesta == System.Windows.Forms.DialogResult.No))
-                {
-                    return;
-                }
-
-            }
-
-            base.WndProc(ref m);
-        }
-
         private void formNuevoMovimiento_Load(object sender, EventArgs e)
         {
-
+            if (dtCorte.Rows.Count == 0)
+            {
+                MessageBox.Show("No se pudieron cargar los cortes.");
+            }
         }
 
         private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)
@@ -694,7 +629,6 @@ namespace Presentacion
                 checkLeerPeso.Checked = true;
                 Leer_Peso.AbrirPuerto();
             }
-            
         }
 
         private void formNuevoMovimiento_Deactivate(object sender, EventArgs e)
@@ -704,7 +638,78 @@ namespace Presentacion
             Leer_Peso.CerrarPuerto();
         }
 
+        private void txtTotalKg_TextChanged(object sender, EventArgs e)
+        {
 
-        
+        }
+
+        private void txtCantUnidad_TextChanged(object sender, EventArgs e)
+        {
+            Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un");
+        }
+
+        private void btnGuardar_Enter(object sender, EventArgs e)
+        {
+            btnGuardar.BackColor = System.Drawing.Color.FromName("LimeGreen");
+        }
+
+        private void btnGuardar_Leave(object sender, EventArgs e)
+        {
+            btnGuardar.BackColor = System.Drawing.Color.FromName("SeaGreen");
+        }
+
+        private void txtCantUnidad_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)(Keys.Enter))
+            {
+                if (Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un."))
+                {
+                    e.Handled = true;
+                    SendKeys.Send("{TAB}");
+                }
+                else
+                {
+                    txtCantUnidad.Text = "";
+                    txtCantUnidad.Focus();
+                }
+            }
+        }
+
+        private void comboSucOrigen_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (modificacion && oMovimiento != null)
+            {
+                if (!comboSucOrigen.SelectedValue.Equals("") && !oMovimiento.SucursalOrigen.idSucursal.Equals(comboSucOrigen.SelectedValue))
+                {
+                    huboModificaciones = true;
+                }                
+            }
+        }
+
+        private void formNuevoMovimiento_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = salir();
+        }
+
+        private bool salir()
+        {
+            if (huboModificaciones)
+            {
+                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if ((respuesta == System.Windows.Forms.DialogResult.Yes))
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

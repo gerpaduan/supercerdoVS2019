@@ -12,6 +12,20 @@ namespace Entidades
         private Sucursal sucursalDestino;
         private int idMovimiento;
         private string observaciones;
+        private DateTime? creado;
+        private DateTime? actualizado;
+
+        public DateTime? Actualizado
+        {
+            get { return actualizado; }
+            set { actualizado = value; }
+        }
+
+        public DateTime? Creado
+        {
+            get { return creado; }
+            set { creado = value; }
+        }
 
         public DateTime FechaMovimiento
         {

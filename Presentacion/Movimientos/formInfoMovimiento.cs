@@ -48,6 +48,9 @@ namespace Presentacion.Movimientos
             txtFechaMovimiento.Value = oMovimientoE.FechaMovimiento;
             txtHoraMovimiento.Text = oMovimientoE.FechaMovimiento.TimeOfDay.ToString();
             txtObservaciones.Text = oMovimientoE.Observaciones;
+            string datosCreado = "Creado: " + oMovimientoE.Creado.ToString() + "\tModificado: " +
+                (oMovimientoE.Actualizado > DateTime.Today.AddYears(-20) ? oMovimientoE.Actualizado.ToString() : "-");
+            txtCreado.Text = datosCreado;
 
             cargarListaCortesPorMovimiento();
         }
@@ -55,11 +58,8 @@ namespace Presentacion.Movimientos
         private void cargarListaCortesPorMovimiento()
         {
             listaCortesPorMovimiento= oCorteN.cargarCortesPorMovimiento(oMovimientoE.IdMovimiento);
-
-            cargarGrilla();
-        
+            cargarGrilla();        
         }
-
 
         private void cargarListaEnGrilla()
         {
@@ -73,6 +73,7 @@ namespace Presentacion.Movimientos
                 cortePorMovimiento.IdCorte = lineaCorte.Corte.idCorte;
                 cortePorMovimiento.Codigo = lineaCorte.Corte.codigo;
                 cortePorMovimiento.Corte = lineaCorte.Corte.corte;
+                cortePorMovimiento.CantUnidad = lineaCorte.CantUnidad;
                 cortePorMovimiento.CantKg = lineaCorte.CantKg;
                 cortePorMovimiento.PesoBalanza = lineaCorte.PesoBalanza;
 
@@ -117,29 +118,23 @@ namespace Presentacion.Movimientos
         {
             if (Application.OpenForms["formNuevoMovimiento"] != null)
             {
-
                 Application.OpenForms["formNuevoMovimiento"].Activate();
-
-
             }
             else
             {
-
                 formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
                 frmNuevoMovimiento.obtenerParametros(frmMovimiento,oMovimientoE,listaCortesPorMovimiento);
                 this.Close();
                 frmNuevoMovimiento.Show();
-
             }
         }
 
         private void cargarReporte()
         {
-            int tipoReporte = 4;//nro perteneciente al reporte de los movimientos
+            int tipoReporte = 5;//nro perteneciente al reporte de los movimientos
             formReporteStock frmReporte = new formReporteStock();
             frmReporte.obtenerParametros(oMovimientoE.SucursalDestino.idSucursal, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento, tipoReporte, oMovimientoE.IdMovimiento.ToString());
-            frmReporte.Show();
-        
+            frmReporte.Show();        
         }
 
         private void Reporte_Click(object sender, EventArgs e)
@@ -176,8 +171,6 @@ namespace Presentacion.Movimientos
                         frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
 
                     }
-
-
                     frmReportes.ListaCortesPorMov = listaEnGrilla;
                     frmReportes.Objetos = true;
                     frmReportes.ReporteMovimiento = true;

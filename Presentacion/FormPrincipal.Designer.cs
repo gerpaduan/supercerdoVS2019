@@ -143,7 +143,7 @@
             this.linkBaseDeDatos.AutoSize = true;
             this.linkBaseDeDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkBaseDeDatos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkBaseDeDatos.Location = new System.Drawing.Point(23, 180);
+            this.linkBaseDeDatos.Location = new System.Drawing.Point(23, 183);
             this.linkBaseDeDatos.Name = "linkBaseDeDatos";
             this.linkBaseDeDatos.Size = new System.Drawing.Size(98, 16);
             this.linkBaseDeDatos.TabIndex = 12;
@@ -156,7 +156,7 @@
             this.linkPagos.AutoSize = true;
             this.linkPagos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkPagos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkPagos.Location = new System.Drawing.Point(23, 157);
+            this.linkPagos.Location = new System.Drawing.Point(23, 160);
             this.linkPagos.Name = "linkPagos";
             this.linkPagos.Size = new System.Drawing.Size(48, 16);
             this.linkPagos.TabIndex = 11;
@@ -169,7 +169,7 @@
             this.linkReportes.AutoSize = true;
             this.linkReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkReportes.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkReportes.Location = new System.Drawing.Point(23, 107);
+            this.linkReportes.Location = new System.Drawing.Point(23, 110);
             this.linkReportes.Name = "linkReportes";
             this.linkReportes.Size = new System.Drawing.Size(64, 16);
             this.linkReportes.TabIndex = 10;
@@ -182,7 +182,7 @@
             this.linkStock.AutoSize = true;
             this.linkStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkStock.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkStock.Location = new System.Drawing.Point(23, 83);
+            this.linkStock.Location = new System.Drawing.Point(23, 86);
             this.linkStock.Name = "linkStock";
             this.linkStock.Size = new System.Drawing.Size(42, 16);
             this.linkStock.TabIndex = 9;
@@ -195,7 +195,7 @@
             this.linkEmbutidos.AutoSize = true;
             this.linkEmbutidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkEmbutidos.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkEmbutidos.Location = new System.Drawing.Point(23, 59);
+            this.linkEmbutidos.Location = new System.Drawing.Point(23, 62);
             this.linkEmbutidos.Name = "linkEmbutidos";
             this.linkEmbutidos.Size = new System.Drawing.Size(117, 16);
             this.linkEmbutidos.TabIndex = 8;
@@ -208,7 +208,7 @@
             this.linkLabel1.AutoSize = true;
             this.linkLabel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkLabel1.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkLabel1.Location = new System.Drawing.Point(23, 35);
+            this.linkLabel1.Location = new System.Drawing.Point(23, 38);
             this.linkLabel1.Name = "linkLabel1";
             this.linkLabel1.Size = new System.Drawing.Size(84, 16);
             this.linkLabel1.TabIndex = 7;
@@ -221,7 +221,7 @@
             this.linkPersonas.AutoSize = true;
             this.linkPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkPersonas.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkPersonas.Location = new System.Drawing.Point(23, 132);
+            this.linkPersonas.Location = new System.Drawing.Point(23, 135);
             this.linkPersonas.Name = "linkPersonas";
             this.linkPersonas.Size = new System.Drawing.Size(66, 16);
             this.linkPersonas.TabIndex = 4;

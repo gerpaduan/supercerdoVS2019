@@ -29,13 +29,13 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevaCompra));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.radioCorte = new System.Windows.Forms.RadioButton();
@@ -71,6 +71,11 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.grillaMediaRes = new System.Windows.Forms.DataGridView();
+            this.nroTropa = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.kgMedia = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.precioMedia = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalPs = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.sucursalM = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnAceptar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
@@ -88,11 +93,6 @@
             this.sucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.nroTropa = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.kgMedia = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.precioMedia = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalPs = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.sucursalM = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.grupoMediaRes.SuspendLayout();
@@ -532,14 +532,14 @@
             this.precioMedia,
             this.totalPs,
             this.sucursalM});
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaMediaRes.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMediaRes.DefaultCellStyle = dataGridViewCellStyle10;
             this.grillaMediaRes.Location = new System.Drawing.Point(20, 161);
             this.grillaMediaRes.MultiSelect = false;
             this.grillaMediaRes.Name = "grillaMediaRes";
@@ -548,6 +548,47 @@
             this.grillaMediaRes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaMediaRes.Size = new System.Drawing.Size(681, 336);
             this.grillaMediaRes.TabIndex = 4;
+            // 
+            // nroTropa
+            // 
+            this.nroTropa.DataPropertyName = "nroTropa";
+            this.nroTropa.HeaderText = "Nro Tropa";
+            this.nroTropa.Name = "nroTropa";
+            this.nroTropa.ReadOnly = true;
+            // 
+            // kgMedia
+            // 
+            this.kgMedia.DataPropertyName = "kgMedia";
+            this.kgMedia.HeaderText = "Kgs. Media";
+            this.kgMedia.Name = "kgMedia";
+            this.kgMedia.ReadOnly = true;
+            // 
+            // precioMedia
+            // 
+            this.precioMedia.DataPropertyName = "precioMedia";
+            this.precioMedia.HeaderText = "Precio Kg. ";
+            this.precioMedia.Name = "precioMedia";
+            this.precioMedia.ReadOnly = true;
+            // 
+            // totalPs
+            // 
+            this.totalPs.DataPropertyName = "totalS";
+            dataGridViewCellStyle8.Format = "N2";
+            dataGridViewCellStyle8.NullValue = null;
+            this.totalPs.DefaultCellStyle = dataGridViewCellStyle8;
+            this.totalPs.HeaderText = "Total $";
+            this.totalPs.Name = "totalPs";
+            this.totalPs.ReadOnly = true;
+            // 
+            // sucursalM
+            // 
+            this.sucursalM.DataPropertyName = "sucursal";
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.sucursalM.DefaultCellStyle = dataGridViewCellStyle9;
+            this.sucursalM.HeaderText = "Sucursal";
+            this.sucursalM.Name = "sucursalM";
+            this.sucursalM.ReadOnly = true;
+            this.sucursalM.Visible = false;
             // 
             // btnAceptar
             // 
@@ -675,8 +716,8 @@
             // corte
             // 
             this.corte.DataPropertyName = "Codigo";
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.corte.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.corte.DefaultCellStyle = dataGridViewCellStyle11;
             this.corte.HeaderText = "Codigo";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -691,10 +732,10 @@
             // cantKgs
             // 
             this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle5.Format = "N3";
-            dataGridViewCellStyle5.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle12.Format = "N3";
+            dataGridViewCellStyle12.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle12;
             this.cantKgs.HeaderText = "Cant. Kgs";
             this.cantKgs.Name = "cantKgs";
             this.cantKgs.ReadOnly = true;
@@ -702,10 +743,10 @@
             // precioKgs
             // 
             this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle6.Format = "N2";
-            dataGridViewCellStyle6.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle13.Format = "N2";
+            dataGridViewCellStyle13.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle13;
             this.precioKgs.HeaderText = "Precio Kg.";
             this.precioKgs.Name = "precioKgs";
             this.precioKgs.ReadOnly = true;
@@ -713,10 +754,10 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "TotalS";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle7.Format = "N2";
-            dataGridViewCellStyle7.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle14.Format = "N2";
+            dataGridViewCellStyle14.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle14;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -751,47 +792,6 @@
             this.label12.Size = new System.Drawing.Size(79, 15);
             this.label12.TabIndex = 33;
             this.label12.Text = "Cant. Items";
-            // 
-            // nroTropa
-            // 
-            this.nroTropa.DataPropertyName = "nroTropa";
-            this.nroTropa.HeaderText = "Nro Tropa";
-            this.nroTropa.Name = "nroTropa";
-            this.nroTropa.ReadOnly = true;
-            // 
-            // kgMedia
-            // 
-            this.kgMedia.DataPropertyName = "kgMedia";
-            this.kgMedia.HeaderText = "Kgs. Media";
-            this.kgMedia.Name = "kgMedia";
-            this.kgMedia.ReadOnly = true;
-            // 
-            // precioMedia
-            // 
-            this.precioMedia.DataPropertyName = "precioMedia";
-            this.precioMedia.HeaderText = "Precio Kg. ";
-            this.precioMedia.Name = "precioMedia";
-            this.precioMedia.ReadOnly = true;
-            // 
-            // totalPs
-            // 
-            this.totalPs.DataPropertyName = "totalS";
-            dataGridViewCellStyle1.Format = "N2";
-            dataGridViewCellStyle1.NullValue = null;
-            this.totalPs.DefaultCellStyle = dataGridViewCellStyle1;
-            this.totalPs.HeaderText = "Total $";
-            this.totalPs.Name = "totalPs";
-            this.totalPs.ReadOnly = true;
-            // 
-            // sucursalM
-            // 
-            this.sucursalM.DataPropertyName = "sucursal";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.sucursalM.DefaultCellStyle = dataGridViewCellStyle2;
-            this.sucursalM.HeaderText = "Sucursal";
-            this.sucursalM.Name = "sucursalM";
-            this.sucursalM.ReadOnly = true;
-            this.sucursalM.Visible = false;
             // 
             // formNuevaCompra
             // 

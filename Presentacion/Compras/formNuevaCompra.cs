@@ -48,8 +48,6 @@ namespace Presentacion
             
             cambiarGrupo();
             cargarComboSucursal();
-            
-            
         }
 
         #region eventos
@@ -885,17 +883,5 @@ namespace Presentacion
         {
             btnAceptar.BackColor = System.Drawing.Color.FromName("SeaGreen");
         }
-
-       
-
-        
-
-        
-
-        
-
-       
-
-
     }
 }

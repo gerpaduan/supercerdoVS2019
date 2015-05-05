@@ -415,6 +415,9 @@ namespace Presentacion.Cortes
                         grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.BackColor = Color.LightBlue;
                         grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Faltante"].DefaultCellStyle.Font = fuente;
+
+                        //fuente = new System.Drawing.Font("Microsoft Sans Serif", 9.50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+                        //grillaReportes.AlternatingRowsDefaultCellStyle.Font = fuente;
                     }
                 }
                 catch (Exception ex)
@@ -528,8 +531,7 @@ namespace Presentacion.Cortes
                 dtGrillaReporte = null;
 
                 dtGrillaReporte = oCorteN.TotalKgsCortePorCompra(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                    Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(comboCierreStock.Text));
-                    //fechaDesde.Value.Date, fechaHasta.Value.Date);
+                    fechaDesde.Value.Date, fechaHasta.Value.Date);
 
 
                 grillaReportes.DataSource = dtGrillaReporte;
@@ -548,6 +550,15 @@ namespace Presentacion.Cortes
 
 
                 grillaReportes.DataSource = dtGrillaReporte;
+                //grillaReportes.AlternatingRowsDefaultCellStyle.BackColor = grillaReportes.AlternatingRowsDefaultCellStyle.BackColor.Name{"0"};
+                Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+
+                grillaReportes.Columns["Codigo"].DefaultCellStyle.Font = fuente;
+                grillaReportes.Columns["Corte"].DefaultCellStyle.Font = fuente;
+                grillaReportes.Columns["Total Unidades"].DefaultCellStyle.BackColor = Color.PaleGreen;
+                grillaReportes.Columns["Total Unidades"].DefaultCellStyle.Font = fuente;
+                grillaReportes.Columns["Total Kgs"].DefaultCellStyle.BackColor = Color.LightBlue;
+                grillaReportes.Columns["Total Kgs"].DefaultCellStyle.Font = fuente;
 
             }
         

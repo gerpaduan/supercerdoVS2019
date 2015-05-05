@@ -406,7 +406,8 @@ namespace Datos
             cmCorte.CommandText = "agregarCortePorMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", cortePorMovimiento.Movimientos.IdMovimiento);
             cmCorte.Parameters.AddWithValue("@idCorte", cortePorMovimiento.Corte.IdCorte);
-            cmCorte.Parameters.AddWithValue("@cantKg",cortePorMovimiento.CantKg );
+            cmCorte.Parameters.AddWithValue("@cantKg", cortePorMovimiento.CantKg);
+            cmCorte.Parameters.AddWithValue("@cantUnidad", cortePorMovimiento.CantUnidad);
             cmCorte.Parameters.AddWithValue("@pesoBalanza", cortePorMovimiento.PesoBalanza);
 
             cmCorte.ExecuteNonQuery();
@@ -489,6 +490,11 @@ namespace Datos
                 oMovimiento.SucursalDestino = destino;
 
                 oMovimiento.Observaciones = drMovimiento["observaciones"].ToString();
+
+                oMovimiento.Creado = drMovimiento["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(drMovimiento["creado"].ToString());
+                DateTime fechaNull = Convert.ToDateTime("01/01/1990");
+                oMovimiento.Actualizado = !String.IsNullOrEmpty(drMovimiento["actualizado"].ToString()) ? (Convert.ToDateTime(drMovimiento["actualizado"].ToString())) : fechaNull;
+                
             }
 
             cmCorte.Connection.Close();
@@ -526,6 +532,7 @@ namespace Datos
                 oCortePorMovimiento.Corte = corte;
 
                 oCortePorMovimiento.CantKg = float.Parse(drMovimiento["cantKg"].ToString());
+                oCortePorMovimiento.CantUnidad = Convert.ToInt32(drMovimiento["cantUnidad"].ToString());
                 try
                 {
                     oCortePorMovimiento.PesoBalanza = Convert.ToBoolean(drMovimiento["pesoBalanza"]);

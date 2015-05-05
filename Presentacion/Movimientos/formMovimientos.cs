@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Movimientos;
+using Presentacion.Reportes;
+using Presentacion.Cortes;
 
 namespace Presentacion
 {
@@ -203,6 +205,24 @@ namespace Presentacion
             cargarGrilla();
         }
 
+        private void formMovimientos_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Reporte_Click(object sender, EventArgs e)
+        {
+            cargarReporte();
+        }
+
+        private void cargarReporte()
+        {
+            cargarMovimiento();
+            int tipoReporte = 5;//nro perteneciente al reporte de los movimientos
+            formReporteStock frmReporte = new formReporteStock();
+            frmReporte.obtenerParametros(oMovimientoE.SucursalDestino.idSucursal, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento, tipoReporte, oMovimientoE.IdMovimiento.ToString());
+            frmReporte.Show();
+        }
        
     }
 }
