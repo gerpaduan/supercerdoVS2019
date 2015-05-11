@@ -569,7 +569,6 @@
             this.txtTotalKg.TabIndex = 36;
             this.txtTotalKg.TabStop = false;
             this.txtTotalKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtTotalKg.TextChanged += new System.EventHandler(this.txtTotalKg_TextChanged);
             // 
             // label8
             // 

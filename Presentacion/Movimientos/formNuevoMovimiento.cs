@@ -638,11 +638,6 @@ namespace Presentacion
             Leer_Peso.CerrarPuerto();
         }
 
-        private void txtTotalKg_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void txtCantUnidad_TextChanged(object sender, EventArgs e)
         {
             Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un");

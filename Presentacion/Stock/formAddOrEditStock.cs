@@ -18,7 +18,8 @@ namespace Presentacion
 
         Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
-
+        
+        DataTable dtCorte = new DataTable();
         DataTable dtSucursales;
         DataTable dtCortes;
         Negocio.Compra oCompraN=new Negocio.Compra();
@@ -50,12 +51,17 @@ namespace Presentacion
 
         public formAddOrEditStock()
         {
-            InitializeComponent();            
+            InitializeComponent();
             cargarComboSucursal();
+            dtCorte = oCorteN.obtenerCortes();
         }
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
         {
+            if (dtCorte.Rows.Count == 0)
+            {
+                MessageBox.Show("No se pudieron cargar los cortes.");
+            }
             if (accion.Equals(Entidades.Compra.accion.Agregar))
             {
                 oProvNuevaCompra = new Entidades.Persona();
@@ -98,7 +104,8 @@ namespace Presentacion
         public void EnviarCorte(Entidades.Corte corte)
         {
             oCorteNuevaCompra = corte;
-            this.txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
+            //this.txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
+            this.txtCodigo.Text = oCorteNuevaCompra.codigo.ToString();
         }
 
         private void btnBuscaCorte_Click(object sender, EventArgs e)
@@ -357,9 +364,9 @@ namespace Presentacion
                     }
                 }
 	        }
-	        catch (Exception)
-	        {        		
-		        throw;
+	        catch (Exception ex)
+	        {
+                MessageBox.Show("Hubo un error al cargar el corte.\n\nMensaje de exception: " + ex.Message);
 	        }
         }
 
@@ -384,7 +391,7 @@ namespace Presentacion
         {
             if (txtCorteNuevaCompra.Text.Equals(""))
             {
-                MessageBox.Show("Ingrese el corte que desea agregar.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El corte ingresado no existe.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtCodigo.Focus();
                 return false;
             }
@@ -461,34 +468,29 @@ namespace Presentacion
         {
             try
             {
+                oCorteNuevaCompra = null;
+                txtCorteNuevaCompra.Text = "";
+
                 if (txtCodigo.Text.Trim() != "")
                 {
-                    oCorteNuevaCompra = null;
                     oCorteNuevaCompra = new Entidades.Corte();
-
-                    DataTable dtCorte = new DataTable();
-
-                    dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
 
                     if (dtCorte.Rows.Count > 0)
                     {
                         foreach (DataRow fila in dtCorte.Rows)
                         {
-                            oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                            oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
-                            oCorteNuevaCompra.corte = fila["corte"].ToString();
-                        }
+                            if (fila["codigo"].ToString().Equals(txtCodigo.Text))
+                            {
+                                oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
+                                oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                                oCorteNuevaCompra.corte = fila["corte"].ToString();
 
+                                break;
+                            }
+                        }
                         //se cargan los datos del corte
                         txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
                     }
-                    else
-                    {
-                        txtCorteNuevaCompra.Text = "";
-                        MessageBox.Show("El código no existe");
-                        txtCodigo.Focus();
-                    }
-
                 }
 
             }
@@ -525,11 +527,9 @@ namespace Presentacion
         //Métodos autocompletar
         public  AutoCompleteStringCollection LoadAutoComplete()
         {
-            dtCortes = oCorteN.buscarCorteSinMaestro(txtCorteNuevaCompra.Text.Trim());
-            
             AutoCompleteStringCollection cortes = new AutoCompleteStringCollection();
             
-            foreach (DataRow fila in dtCortes.Rows)
+            foreach (DataRow fila in dtCorte.Rows)
             {
                 //cortes.Add(fila["codigo"].ToString());
                 cortes.Add(fila["corte"].ToString());
@@ -537,13 +537,12 @@ namespace Presentacion
                 //crear un corte nuevo y lo envia al metodo EnviarCorte                
                 if (txtCorteNuevaCompra.Text.Trim() == fila["corte"].ToString())
                 {
-                    Entidades.Corte oCorteNuevoE = new Entidades.Corte();
-                    oCorteNuevoE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                    oCorteNuevoE.codigo = Convert.ToInt32(fila["codigo"].ToString());
-                    oCorteNuevoE.corte = fila["corte"].ToString();
-
-                    EnviarCorte(oCorteNuevoE);
-                }                
+                    if (!txtCodigo.Text.Equals(fila["codigo"].ToString()))
+                    {
+                        txtCodigo.Text = fila["codigo"].ToString();                        
+                    }
+                    break;
+                }
             }
             return cortes;
         }
