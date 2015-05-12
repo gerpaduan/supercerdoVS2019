@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCompras));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -46,9 +46,6 @@
             this.label4 = new System.Windows.Forms.Label();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape3 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.grillaCompras = new System.Windows.Forms.DataGridView();
@@ -68,12 +65,12 @@
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.shapeContainer3 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape4 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -84,6 +81,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.comboTipoCompra);
@@ -96,7 +94,6 @@
             this.pnlBuscar.Controls.Add(this.label4);
             this.pnlBuscar.Controls.Add(this.txtDescripcion);
             this.pnlBuscar.Controls.Add(this.label2);
-            this.pnlBuscar.Controls.Add(this.shapeContainer2);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 45);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(786, 84);
@@ -229,39 +226,7 @@
             this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 2;
             this.label2.Text = "Descripción";
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape3});
-            this.shapeContainer2.Size = new System.Drawing.Size(786, 84);
-            this.shapeContainer2.TabIndex = 10;
-            this.shapeContainer2.TabStop = false;
-            // 
-            // lineShape3
-            // 
-            this.lineShape3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape3.BorderColor = System.Drawing.Color.White;
-            this.lineShape3.Name = "lineShape3";
-            this.lineShape3.X1 = 452;
-            this.lineShape3.X2 = 760;
-            this.lineShape3.Y1 = 51;
-            this.lineShape3.Y2 = 51;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 477;
-            this.lineShape2.X2 = 786;
-            this.lineShape2.Y1 = 13;
-            this.lineShape2.Y2 = 13;
+
             // 
             // barraControl
             // 
@@ -333,14 +298,14 @@
             // fechaCompra
             // 
             this.fechaCompra.DataPropertyName = "fechaCompra";
-            dataGridViewCellStyle1.Format = "g";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle5.Format = "g";
+            dataGridViewCellStyle5.NullValue = null;
+            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle5;
             this.fechaCompra.FillWeight = 60F;
             this.fechaCompra.HeaderText = "Fecha Compra";
             this.fechaCompra.Name = "fechaCompra";
             this.fechaCompra.ReadOnly = true;
-            this.fechaCompra.Width = 93;
+            this.fechaCompra.Width = 101;
             // 
             // nroRemito
             // 
@@ -349,7 +314,7 @@
             this.nroRemito.HeaderText = "Nro. Remito";
             this.nroRemito.Name = "nroRemito";
             this.nroRemito.ReadOnly = true;
-            this.nroRemito.Width = 81;
+            this.nroRemito.Width = 88;
             // 
             // idPersona
             // 
@@ -375,33 +340,33 @@
             this.tipoCompra.HeaderText = "Tipo Compra";
             this.tipoCompra.Name = "tipoCompra";
             this.tipoCompra.ReadOnly = true;
-            this.tipoCompra.Width = 85;
+            this.tipoCompra.Width = 92;
             // 
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle2.Format = "N2";
-            dataGridViewCellStyle2.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle6.Format = "N2";
+            dataGridViewCellStyle6.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle6;
             this.cantKg.FillWeight = 42.98663F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
             this.cantKg.ReadOnly = true;
-            this.cantKg.Width = 72;
+            this.cantKg.Width = 78;
             // 
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle3.Format = "N2";
-            dataGridViewCellStyle3.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle7.Format = "N2";
+            dataGridViewCellStyle7.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle7;
             this.totalS.FillWeight = 42.98663F;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
-            this.totalS.Width = 61;
+            this.totalS.Width = 65;
             // 
             // idSucursal
             // 
@@ -432,10 +397,10 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Red;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.White;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle8.ForeColor = System.Drawing.Color.Red;
+            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.Color.White;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle8;
             this.estado.FillWeight = 42.98663F;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
@@ -479,25 +444,6 @@
             this.btnCancelar.Text = "Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
-            // 
-            // shapeContainer3
-            // 
-            this.shapeContainer3.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer3.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer3.Name = "shapeContainer3";
-            this.shapeContainer3.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape4});
-            this.shapeContainer3.Size = new System.Drawing.Size(785, 549);
-            this.shapeContainer3.TabIndex = 18;
-            this.shapeContainer3.TabStop = false;
-            // 
-            // lineShape4
-            // 
-            this.lineShape4.Name = "lineShape4";
-            this.lineShape4.X1 = 10;
-            this.lineShape4.X2 = 772;
-            this.lineShape4.Y1 = 509;
-            this.lineShape4.Y2 = 509;
             // 
             // txtTotalS
             // 
@@ -543,10 +489,31 @@
             this.label5.TabIndex = 24;
             this.label5.Text = "Total $";
             // 
+            // panel1
+            // 
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(10, 508);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(763, 1);
+            this.panel1.TabIndex = 25;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(460, 46);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(302, 7);
+            this.groupBox1.TabIndex = 41;
+            this.groupBox1.TabStop = false;
+            // 
             // formCompras
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.ClientSize = new System.Drawing.Size(785, 549);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.txtTotalS);
             this.Controls.Add(this.txtTotalKgs);
@@ -556,7 +523,6 @@
             this.Controls.Add(this.grillaCompras);
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
-            this.Controls.Add(this.shapeContainer3);
             this.KeyPreview = true;
             this.MaximizeBox = false;
             this.MinimizeBox = true;
@@ -586,8 +552,8 @@
         private System.Windows.Forms.TextBox txtTotalKg;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label8;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
+        
+        
         private System.Windows.Forms.Label label10;
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.Label label1;
@@ -598,16 +564,12 @@
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.TextBox txtDescripcion;
         protected System.Windows.Forms.Label label2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape3;
+        
         protected internal System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton nuevo;
         private System.Windows.Forms.DataGridView grillaCompras;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer3;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape4;
         private System.Windows.Forms.TextBox txtTotalS;
         private System.Windows.Forms.TextBox txtTotalKgs;
         private System.Windows.Forms.Label label12;
@@ -631,6 +593,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
         private System.Windows.Forms.DataGridViewTextBoxColumn creado;
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.GroupBox groupBox1;
 
     }
 }

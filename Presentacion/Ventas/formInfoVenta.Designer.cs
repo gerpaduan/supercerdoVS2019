@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoVenta));
             this.grillaLineasVenta = new System.Windows.Forms.DataGridView();
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -49,7 +49,6 @@
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.txtFechaVenta = new System.Windows.Forms.DateTimePicker();
             this.txtTurno = new System.Windows.Forms.TextBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.txtNroRemito = new System.Windows.Forms.TextBox();
@@ -61,8 +60,7 @@
             this.txtCliente = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
+            this.txtFechaVenta = new System.Windows.Forms.DateTimePicker();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.agregaStock = new System.Windows.Forms.ToolStripButton();
@@ -75,6 +73,7 @@
             this.txtActualizado = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.txtCreado = new System.Windows.Forms.TextBox();
+            this.panel1 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -132,9 +131,9 @@
             // cantKgs
             // 
             this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle9.Format = "N3";
-            dataGridViewCellStyle9.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle1.Format = "N3";
+            dataGridViewCellStyle1.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle1;
             this.cantKgs.HeaderText = "Cant. Kgs";
             this.cantKgs.Name = "cantKgs";
             this.cantKgs.ReadOnly = true;
@@ -143,9 +142,9 @@
             // precioKgs
             // 
             this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle10.Format = "N2";
-            dataGridViewCellStyle10.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle2;
             this.precioKgs.HeaderText = "Precio Kg.";
             this.precioKgs.Name = "precioKgs";
             this.precioKgs.ReadOnly = true;
@@ -154,9 +153,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle11.Format = "N2";
-            dataGridViewCellStyle11.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle3.Format = "N2";
+            dataGridViewCellStyle3.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -165,8 +164,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle12.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle4;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -279,17 +278,6 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Datos Venta";
             // 
-            // txtFechaVenta
-            // 
-            this.txtFechaVenta.CustomFormat = "dd/MM/yyyy  HH:mm";
-            this.txtFechaVenta.Enabled = false;
-            this.txtFechaVenta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaVenta.Location = new System.Drawing.Point(506, 27);
-            this.txtFechaVenta.Name = "txtFechaVenta";
-            this.txtFechaVenta.Size = new System.Drawing.Size(145, 21);
-            this.txtFechaVenta.TabIndex = 27;
-            this.txtFechaVenta.TabStop = false;
-            // 
             // txtTurno
             // 
             this.txtTurno.Location = new System.Drawing.Point(506, 61);
@@ -401,26 +389,16 @@
             this.label3.TabIndex = 14;
             this.label3.Text = "Fecha";
             // 
-            // lineShape1
+            // txtFechaVenta
             // 
-            this.lineShape1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape1.Name = "lineShape1";
-            this.lineShape1.X1 = 10;
-            this.lineShape1.X2 = 727;
-            this.lineShape1.Y1 = 546;
-            this.lineShape1.Y2 = 546;
-            // 
-            // shapeContainer1
-            // 
-            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer1.Name = "shapeContainer1";
-            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape1});
-            this.shapeContainer1.Size = new System.Drawing.Size(737, 580);
-            this.shapeContainer1.TabIndex = 49;
-            this.shapeContainer1.TabStop = false;
+            this.txtFechaVenta.CustomFormat = "dd/MM/yyyy  HH:mm";
+            this.txtFechaVenta.Enabled = false;
+            this.txtFechaVenta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.txtFechaVenta.Location = new System.Drawing.Point(506, 27);
+            this.txtFechaVenta.Name = "txtFechaVenta";
+            this.txtFechaVenta.Size = new System.Drawing.Size(145, 21);
+            this.txtFechaVenta.TabIndex = 27;
+            this.txtFechaVenta.TabStop = false;
             // 
             // barraControl
             // 
@@ -553,12 +531,22 @@
             this.txtCreado.TabStop = false;
             this.txtCreado.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // panel1
+            // 
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(9, 548);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(719, 1);
+            this.panel1.TabIndex = 58;
+            // 
             // formInfoVenta
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(737, 580);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.label18);
             this.Controls.Add(this.txtActualizado);
             this.Controls.Add(this.label17);
@@ -575,7 +563,6 @@
             this.Controls.Add(this.label10);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.pnlBuscar);
-            this.Controls.Add(this.shapeContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formInfoVenta";
@@ -603,8 +590,6 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox txtObservaciones;
         protected System.Windows.Forms.Panel pnlBuscar;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
         protected System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TextBox txtNroRemito;
         protected System.Windows.Forms.Label label8;
@@ -637,6 +622,7 @@
         private System.Windows.Forms.TextBox txtActualizado;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.TextBox txtCreado;
+        private System.Windows.Forms.Panel panel1;
 
     }
 }

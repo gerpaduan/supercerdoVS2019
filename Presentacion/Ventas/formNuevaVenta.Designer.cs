@@ -75,8 +75,6 @@
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
-            this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.btnAceptar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaLineasVenta = new System.Windows.Forms.DataGridView();
@@ -94,6 +92,7 @@
             this.label17 = new System.Windows.Forms.Label();
             this.label18 = new System.Windows.Forms.Label();
             this.txtActualizado = new System.Windows.Forms.TextBox();
+            this.panel1 = new System.Windows.Forms.Panel();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -641,27 +640,6 @@
             this.label10.TabIndex = 32;
             this.label10.Text = "Total Kg";
             // 
-            // lineShape1
-            // 
-            this.lineShape1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape1.Name = "lineShape1";
-            this.lineShape1.X1 = 13;
-            this.lineShape1.X2 = 760;
-            this.lineShape1.Y1 = 592;
-            this.lineShape1.Y2 = 592;
-            // 
-            // shapeContainer1
-            // 
-            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer1.Name = "shapeContainer1";
-            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape1});
-            this.shapeContainer1.Size = new System.Drawing.Size(777, 631);
-            this.shapeContainer1.TabIndex = 36;
-            this.shapeContainer1.TabStop = false;
-            // 
             // btnAceptar
             // 
             this.btnAceptar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -847,12 +825,22 @@
             this.txtActualizado.TabStop = false;
             this.txtActualizado.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // panel1
+            // 
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(9, 595);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(759, 1);
+            this.panel1.TabIndex = 47;
+            // 
             // formNuevaVenta
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(777, 631);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.label18);
             this.Controls.Add(this.txtActualizado);
             this.Controls.Add(this.label17);
@@ -869,7 +857,6 @@
             this.Controls.Add(this.label11);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.pnlBuscar);
-            this.Controls.Add(this.shapeContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formNuevaVenta";
@@ -913,8 +900,6 @@
         private System.Windows.Forms.TextBox txtTotalKgs;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
         protected System.Windows.Forms.Button btnAceptar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.DataGridView grillaLineasVenta;
@@ -953,5 +938,6 @@
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label18;
         private System.Windows.Forms.TextBox txtActualizado;
+        private System.Windows.Forms.Panel panel1;
     }
 }

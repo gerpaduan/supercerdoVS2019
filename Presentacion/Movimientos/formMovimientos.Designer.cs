@@ -29,11 +29,12 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formMovimientos));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.Reporte = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.label6 = new System.Windows.Forms.Label();
             this.comboSucDestino = new System.Windows.Forms.ComboBox();
@@ -48,10 +49,6 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtFechaHasta = new System.Windows.Forms.DateTimePicker();
             this.label4 = new System.Windows.Forms.Label();
-            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape3 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.movimiento = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaMovimiento = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -64,7 +61,9 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaMovimientos = new System.Windows.Forms.DataGridView();
-            this.Reporte = new System.Windows.Forms.ToolStripButton();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovimientos)).BeginInit();
@@ -95,11 +94,24 @@
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
+            // Reporte
+            // 
+            this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
+            this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.Reporte.Name = "Reporte";
+            this.Reporte.Size = new System.Drawing.Size(52, 42);
+            this.Reporte.Text = "Reporte";
+            this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
+            // 
             // pnlBuscar
             // 
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.groupBox3);
+            this.pnlBuscar.Controls.Add(this.groupBox2);
+            this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.comboSucDestino);
             this.pnlBuscar.Controls.Add(this.label7);
@@ -113,7 +125,6 @@
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Controls.Add(this.txtFechaHasta);
             this.pnlBuscar.Controls.Add(this.label4);
-            this.pnlBuscar.Controls.Add(this.shapeContainer1);
             this.pnlBuscar.Location = new System.Drawing.Point(-4, 45);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(619, 108);
@@ -263,52 +274,6 @@
             this.label4.TabIndex = 6;
             this.label4.Text = "Hasta";
             // 
-            // shapeContainer1
-            // 
-            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer1.Name = "shapeContainer1";
-            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape3,
-            this.lineShape1,
-            this.lineShape2});
-            this.shapeContainer1.Size = new System.Drawing.Size(619, 108);
-            this.shapeContainer1.TabIndex = 10;
-            this.shapeContainer1.TabStop = false;
-            // 
-            // lineShape3
-            // 
-            this.lineShape3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape3.BorderColor = System.Drawing.Color.White;
-            this.lineShape3.Name = "lineShape3";
-            this.lineShape3.X1 = 72;
-            this.lineShape3.X2 = 307;
-            this.lineShape3.Y1 = 19;
-            this.lineShape3.Y2 = 19;
-            // 
-            // lineShape1
-            // 
-            this.lineShape1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape1.BorderColor = System.Drawing.Color.White;
-            this.lineShape1.Name = "lineShape1";
-            this.lineShape1.X1 = 16;
-            this.lineShape1.X2 = 603;
-            this.lineShape1.Y1 = 71;
-            this.lineShape1.Y2 = 71;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 426;
-            this.lineShape2.X2 = 597;
-            this.lineShape2.Y1 = 18;
-            this.lineShape2.Y2 = 18;
-            // 
             // movimiento
             // 
             this.movimiento.DataPropertyName = "movimiento";
@@ -320,9 +285,9 @@
             // fechaMovimiento
             // 
             this.fechaMovimiento.DataPropertyName = "fechaMovimiento";
-            dataGridViewCellStyle1.Format = "d";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle4.Format = "d";
+            dataGridViewCellStyle4.NullValue = null;
+            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle4;
             this.fechaMovimiento.HeaderText = "Fecha Movimiento";
             this.fechaMovimiento.Name = "fechaMovimiento";
             this.fechaMovimiento.ReadOnly = true;
@@ -379,8 +344,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -414,15 +379,15 @@
             this.grillaMovimientos.AllowUserToResizeRows = false;
             this.grillaMovimientos.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.grillaMovimientos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.NullValue = null;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.NullValue = null;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle6;
             this.grillaMovimientos.Location = new System.Drawing.Point(12, 157);
             this.grillaMovimientos.Name = "grillaMovimientos";
             this.grillaMovimientos.ReadOnly = true;
@@ -432,15 +397,38 @@
             this.grillaMovimientos.TabIndex = 16;
             this.grillaMovimientos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaMovimientos_CellDoubleClick);
             // 
-            // Reporte
+            // groupBox1
             // 
-            this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
-            this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.Reporte.Name = "Reporte";
-            this.Reporte.Size = new System.Drawing.Size(52, 42);
-            this.Reporte.Text = "Reporte";
-            this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(77, 14);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(175, 7);
+            this.groupBox1.TabIndex = 45;
+            this.groupBox1.TabStop = false;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(423, 12);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(180, 7);
+            this.groupBox2.TabIndex = 46;
+            this.groupBox2.TabStop = false;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox3.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox3.Location = new System.Drawing.Point(16, 67);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(587, 7);
+            this.groupBox3.TabIndex = 47;
+            this.groupBox3.TabStop = false;
             // 
             // formMovimientos
             // 
@@ -481,8 +469,6 @@
         protected System.Windows.Forms.Label label3;
         protected System.Windows.Forms.DateTimePicker txtFechaHasta;
         protected System.Windows.Forms.Label label4;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.DataGridViewTextBoxColumn idMovimiento;
@@ -502,8 +488,9 @@
         private System.Windows.Forms.ComboBox comboSucOrigen;
         protected System.Windows.Forms.Label label5;
         protected System.Windows.Forms.Label label6;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape3;
         private System.Windows.Forms.ToolStripButton Reporte;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.GroupBox groupBox2;
     }
 }

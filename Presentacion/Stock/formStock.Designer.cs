@@ -45,7 +45,7 @@
             this.btnBuscar = new System.Windows.Forms.Button();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
+            
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.btnIngreso = new System.Windows.Forms.ToolStripButton();
             this.btnEgreso = new System.Windows.Forms.ToolStripButton();
@@ -239,17 +239,7 @@
             this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 2;
             this.label2.Text = "Descripción";
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 477;
-            this.lineShape2.X2 = 786;
-            this.lineShape2.Y1 = 13;
-            this.lineShape2.Y2 = 13;
+
             // 
             // barraControl
             // 
@@ -509,7 +499,7 @@
         private System.Windows.Forms.TextBox txtTotalKg;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label8;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
+        
         private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
         private System.Windows.Forms.Label label10;
         protected System.Windows.Forms.Panel pnlBuscar;
@@ -520,7 +510,7 @@
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.TextBox txtDescripcion;
         protected System.Windows.Forms.Label label2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
+        
         protected internal System.Windows.Forms.ToolStrip barraControl;
         private System.Windows.Forms.DataGridView grillaCompras;
         protected System.Windows.Forms.Button btnSeleccionar;

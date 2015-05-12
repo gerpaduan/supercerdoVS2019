@@ -33,14 +33,13 @@
             this.txtBuscarCorte = new System.Windows.Forms.TextBox();
             this.btnBuscarCorte = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaCortes = new System.Windows.Forms.DataGridView();
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.SuspendLayout();
@@ -50,10 +49,10 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.SteelBlue;
+            this.panel1.Controls.Add(this.groupBox1);
             this.panel1.Controls.Add(this.txtBuscarCorte);
             this.panel1.Controls.Add(this.btnBuscarCorte);
             this.panel1.Controls.Add(this.label9);
-            this.panel1.Controls.Add(this.shapeContainer2);
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(443, 58);
@@ -91,26 +90,6 @@
             this.label9.Size = new System.Drawing.Size(72, 15);
             this.label9.TabIndex = 2;
             this.label9.Text = "Descripción";
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape2});
-            this.shapeContainer2.Size = new System.Drawing.Size(443, 58);
-            this.shapeContainer2.TabIndex = 11;
-            this.shapeContainer2.TabStop = false;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 14;
-            this.lineShape2.X2 = 428;
-            this.lineShape2.Y1 = 49;
-            this.lineShape2.Y2 = 49;
             // 
             // btnSeleccionar
             // 
@@ -160,7 +139,7 @@
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
             this.grillaCortes.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
-            // corte
+            // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
             this.idCorte.HeaderText = "ID Corte";
@@ -183,6 +162,17 @@
             this.corte.HeaderText = "Corte";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(14, 42);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(415, 7);
+            this.groupBox1.TabIndex = 26;
+            this.groupBox1.TabStop = false;
             // 
             // formBuscarCorte
             // 
@@ -209,8 +199,6 @@
 
         protected System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.Label label9;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.Button btnBuscarCorte;
@@ -219,6 +207,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.TextBox txtBuscarCorte;
+        private System.Windows.Forms.GroupBox groupBox1;
         
 
     }

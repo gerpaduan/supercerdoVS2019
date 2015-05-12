@@ -43,8 +43,6 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtFechaHasta = new System.Windows.Forms.DateTimePicker();
             this.label4 = new System.Windows.Forms.Label();
-            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
@@ -56,10 +54,10 @@
             this.label12 = new System.Windows.Forms.Label();
             this.txtPagos = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.lineShape4 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.label8 = new System.Windows.Forms.Label();
             this.txtSaldoAnterior = new System.Windows.Forms.TextBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPagos)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -106,6 +104,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.comboTipoTramite);
             this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.btnBuscar);
@@ -116,7 +115,6 @@
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Controls.Add(this.txtFechaHasta);
             this.pnlBuscar.Controls.Add(this.label4);
-            this.pnlBuscar.Controls.Add(this.shapeContainer1);
             this.pnlBuscar.Location = new System.Drawing.Point(-9, 42);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(741, 71);
@@ -232,28 +230,6 @@
             this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
             this.label4.Text = "Hasta";
-            // 
-            // shapeContainer1
-            // 
-            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer1.Name = "shapeContainer1";
-            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape2});
-            this.shapeContainer1.Size = new System.Drawing.Size(741, 71);
-            this.shapeContainer1.TabIndex = 10;
-            this.shapeContainer1.TabStop = false;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 393;
-            this.lineShape2.X2 = 721;
-            this.lineShape2.Y1 = 31;
-            this.lineShape2.Y2 = 31;
             // 
             // barraControl
             // 
@@ -385,25 +361,6 @@
             this.label6.TabIndex = 29;
             this.label6.Text = "Pagos";
             // 
-            // lineShape4
-            // 
-            this.lineShape4.Name = "lineShape4";
-            this.lineShape4.X1 = 6;
-            this.lineShape4.X2 = 713;
-            this.lineShape4.Y1 = 578;
-            this.lineShape4.Y2 = 578;
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape4});
-            this.shapeContainer2.Size = new System.Drawing.Size(723, 615);
-            this.shapeContainer2.TabIndex = 31;
-            this.shapeContainer2.TabStop = false;
-            // 
             // label8
             // 
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -427,12 +384,33 @@
             this.txtSaldoAnterior.TabIndex = 32;
             this.txtSaldoAnterior.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // panel1
+            // 
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(8, 580);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(708, 1);
+            this.panel1.TabIndex = 34;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(397, 26);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(296, 7);
+            this.groupBox2.TabIndex = 47;
+            this.groupBox2.TabStop = false;
+            // 
             // formPagos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(723, 615);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.txtSaldoAnterior);
             this.Controls.Add(this.txtPagos);
@@ -445,7 +423,6 @@
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
-            this.Controls.Add(this.shapeContainer2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formPagos";
@@ -475,8 +452,6 @@
         protected System.Windows.Forms.Label label3;
         protected System.Windows.Forms.DateTimePicker txtFechaHasta;
         protected System.Windows.Forms.Label label4;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
         protected internal System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton nuevo;
         private System.Windows.Forms.Label label5;
@@ -485,8 +460,6 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox txtPagos;
         private System.Windows.Forms.Label label6;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape4;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
         private System.Windows.Forms.ComboBox comboTipoTramite;
         protected System.Windows.Forms.Label label7;
         protected System.Windows.Forms.ToolStripButton modificar;
@@ -494,5 +467,7 @@
         protected System.Windows.Forms.ToolStripButton Imprimir;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox txtSaldoAnterior;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.GroupBox groupBox2;
     }
 }

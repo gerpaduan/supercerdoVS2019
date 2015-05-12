@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoEmbutido));
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.txtTotalKg = new System.Windows.Forms.TextBox();
@@ -53,17 +53,15 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtEmbutido = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.label8 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
-            this.lineShape1 = new Microsoft.VisualBasic.PowerPacks.LineShape();
-            this.shapeContainer1 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.anular = new System.Windows.Forms.ToolStripButton();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.panelAnulado = new System.Windows.Forms.Panel();
             this.label10 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -175,9 +173,9 @@
             // kgUtilizados
             // 
             this.kgUtilizados.DataPropertyName = "kgUtilizados";
-            dataGridViewCellStyle1.Format = "N2";
-            dataGridViewCellStyle1.NullValue = null;
-            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle2;
             this.kgUtilizados.FillWeight = 82.81686F;
             this.kgUtilizados.HeaderText = "Kgs. Utilizados";
             this.kgUtilizados.Name = "kgUtilizados";
@@ -196,6 +194,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.txtHoraEmbutido);
             this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.txtSucursal);
@@ -203,7 +202,6 @@
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.txtFechaEmbutido);
             this.pnlBuscar.Controls.Add(this.groupBox1);
-            this.pnlBuscar.Controls.Add(this.shapeContainer2);
             this.pnlBuscar.Location = new System.Drawing.Point(-1, 40);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(489, 138);
@@ -334,28 +332,6 @@
             this.label4.TabIndex = 8;
             this.label4.Text = "Descripción";
             // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape2});
-            this.shapeContainer2.Size = new System.Drawing.Size(489, 138);
-            this.shapeContainer2.TabIndex = 19;
-            this.shapeContainer2.TabStop = false;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 17;
-            this.lineShape2.X2 = 311;
-            this.lineShape2.Y1 = 37;
-            this.lineShape2.Y2 = 37;
-            // 
             // label8
             // 
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -376,27 +352,6 @@
             this.label11.Size = new System.Drawing.Size(76, 13);
             this.label11.TabIndex = 29;
             this.label11.Text = "observaciones";
-            // 
-            // lineShape1
-            // 
-            this.lineShape1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.lineShape1.Name = "lineShape1";
-            this.lineShape1.X1 = 8;
-            this.lineShape1.X2 = 478;
-            this.lineShape1.Y1 = 398;
-            this.lineShape1.Y2 = 398;
-            // 
-            // shapeContainer1
-            // 
-            this.shapeContainer1.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer1.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer1.Name = "shapeContainer1";
-            this.shapeContainer1.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape1});
-            this.shapeContainer1.Size = new System.Drawing.Size(487, 539);
-            this.shapeContainer1.TabIndex = 30;
-            this.shapeContainer1.TabStop = false;
             // 
             // barraControl
             // 
@@ -457,12 +412,33 @@
             this.label10.TabIndex = 7;
             this.label10.Text = "Embutido Anulado";
             // 
+            // panel1
+            // 
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(4, 502);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(478, 1);
+            this.panel1.TabIndex = 33;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(13, 35);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(281, 7);
+            this.groupBox2.TabIndex = 48;
+            this.groupBox2.TabStop = false;
+            // 
             // formInfoEmbutido
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(487, 539);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.txtObservaciones);
@@ -473,7 +449,6 @@
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.panelAnulado);
-            this.Controls.Add(this.shapeContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formInfoEmbutido";
@@ -510,12 +485,8 @@
         protected System.Windows.Forms.Label label3;
         protected System.Windows.Forms.TextBox txtEmbutido;
         protected System.Windows.Forms.Label label4;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label11;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape1;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
         protected internal System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton anular;
         protected System.Windows.Forms.TextBox txtSucursal;
@@ -530,5 +501,7 @@
         protected System.Windows.Forms.ToolStripButton Imprimir;
         private System.Windows.Forms.TextBox txtHoraEmbutido;
         protected System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.GroupBox groupBox2;
     }
 }

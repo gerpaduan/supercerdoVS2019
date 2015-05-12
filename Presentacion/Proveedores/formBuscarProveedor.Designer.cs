@@ -36,12 +36,11 @@
             this.btnBuscarProv = new System.Windows.Forms.Button();
             this.txtBuscar = new System.Windows.Forms.TextBox();
             this.Proveedor = new System.Windows.Forms.Label();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
             this.grillaProveedores = new System.Windows.Forms.DataGridView();
             this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.otroDatos = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaProveedores)).BeginInit();
             this.SuspendLayout();
@@ -72,10 +71,10 @@
             // 
             this.panel1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.panel1.BackColor = System.Drawing.Color.SteelBlue;
+            this.panel1.Controls.Add(this.groupBox2);
             this.panel1.Controls.Add(this.btnBuscarProv);
             this.panel1.Controls.Add(this.txtBuscar);
             this.panel1.Controls.Add(this.Proveedor);
-            this.panel1.Controls.Add(this.shapeContainer2);
             this.panel1.Location = new System.Drawing.Point(-1, 0);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(349, 62);
@@ -110,26 +109,6 @@
             this.Proveedor.Size = new System.Drawing.Size(63, 15);
             this.Proveedor.TabIndex = 2;
             this.Proveedor.Text = "Proveedor";
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape2});
-            this.shapeContainer2.Size = new System.Drawing.Size(349, 62);
-            this.shapeContainer2.TabIndex = 11;
-            this.shapeContainer2.TabStop = false;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 13;
-            this.lineShape2.X2 = 332;
-            this.lineShape2.Y1 = 49;
-            this.lineShape2.Y2 = 49;
             // 
             // grillaProveedores
             // 
@@ -190,6 +169,17 @@
             this.otroDatos.Visible = false;
             this.otroDatos.Width = 240;
             // 
+            // groupBox2
+            // 
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(13, 47);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(322, 7);
+            this.groupBox2.TabIndex = 47;
+            this.groupBox2.TabStop = false;
+            // 
             // formBuscarProveedor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -217,14 +207,13 @@
         protected System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.TextBox txtBuscar;
         protected System.Windows.Forms.Label Proveedor;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
         private System.Windows.Forms.Button btnBuscarProv;
         protected System.Windows.Forms.DataGridView grillaProveedores;
         private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
         private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
         private System.Windows.Forms.DataGridViewTextBoxColumn otroDatos;
         private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
+        private System.Windows.Forms.GroupBox groupBox2;
 
 
     }

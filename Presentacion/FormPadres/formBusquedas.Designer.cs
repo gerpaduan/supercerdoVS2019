@@ -33,7 +33,7 @@
             this.Proveedor = new System.Windows.Forms.Label();
             this.button3 = new System.Windows.Forms.Button();
             this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-            this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
+            
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaProveedores = new System.Windows.Forms.DataGridView();
@@ -88,20 +88,10 @@
             this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
             this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
             this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Shapes.AddRange(new Microsoft.VisualBasic.PowerPacks.Shape[] {
-            this.lineShape2});
             this.shapeContainer2.Size = new System.Drawing.Size(492, 62);
             this.shapeContainer2.TabIndex = 11;
             this.shapeContainer2.TabStop = false;
-            // 
-            // lineShape2
-            // 
-            this.lineShape2.BorderColor = System.Drawing.Color.White;
-            this.lineShape2.Name = "lineShape2";
-            this.lineShape2.X1 = 13;
-            this.lineShape2.X2 = 483;
-            this.lineShape2.Y1 = 49;
-            this.lineShape2.Y2 = 49;
+        
             // 
             // btnSeleccionar
             // 
@@ -163,7 +153,7 @@
         protected System.Windows.Forms.Label Proveedor;
         protected System.Windows.Forms.Button button3;
         private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-        private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
+        
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         protected System.Windows.Forms.DataGridView grillaProveedores;
@@ -202,7 +192,7 @@
     //        this.Proveedor = new System.Windows.Forms.Label();
     //        this.button3 = new System.Windows.Forms.Button();
     //        this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
-    //        this.lineShape2 = new Microsoft.VisualBasic.PowerPacks.LineShape();
+    //        
     //        this.btnSeleccionar = new System.Windows.Forms.Button();
     //        this.btnCancelar = new System.Windows.Forms.Button();
     //        this.grillaProveedores = new System.Windows.Forms.DataGridView();
@@ -328,7 +318,7 @@
     //    protected System.Windows.Forms.Label Proveedor;
     //    protected System.Windows.Forms.Button button3;
     //    private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
-    //    private Microsoft.VisualBasic.PowerPacks.LineShape lineShape2;
+    //    
     //    protected System.Windows.Forms.Button btnSeleccionar;
     //    protected System.Windows.Forms.Button btnCancelar;
     //    protected System.Windows.Forms.DataGridView grillaProveedores;
