@@ -68,7 +68,6 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
-            this.txtStock = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.txtTotalS = new System.Windows.Forms.TextBox();
@@ -107,7 +106,6 @@
             this.pnlBuscar.Controls.Add(this.grupoCortes);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.label12);
-            this.pnlBuscar.Controls.Add(this.txtStock);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(777, 204);
@@ -142,7 +140,6 @@
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
             this.grupoCortes.Text = "Corte";
-            this.grupoCortes.Enter += new System.EventHandler(this.grupoCortes_Enter);
             // 
             // button1
             // 
@@ -158,7 +155,6 @@
             this.button1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Visible = false;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // checkSumarIgualCorte
             // 
@@ -297,7 +293,6 @@
             this.label5.Size = new System.Drawing.Size(46, 15);
             this.label5.TabIndex = 39;
             this.label5.Text = "Código";
-            this.label5.Click += new System.EventHandler(this.label5_Click);
             // 
             // btnBuscarCorte
             // 
@@ -559,20 +554,6 @@
             this.label12.Text = "Stock";
             this.label12.Visible = false;
             // 
-            // txtStock
-            // 
-            this.txtStock.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtStock.Location = new System.Drawing.Point(822, 196);
-            this.txtStock.Name = "txtStock";
-            this.txtStock.ReadOnly = true;
-            this.txtStock.Size = new System.Drawing.Size(61, 20);
-            this.txtStock.TabIndex = 41;
-            this.txtStock.TabStop = false;
-            this.txtStock.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtStock.Visible = false;
-            // 
             // label11
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
@@ -801,7 +782,6 @@
             this.label17.Size = new System.Drawing.Size(41, 13);
             this.label17.TabIndex = 44;
             this.label17.Text = "Creado";
-            this.label17.Click += new System.EventHandler(this.label17_Click);
             // 
             // label18
             // 
@@ -919,7 +899,6 @@
         protected System.Windows.Forms.Label label15;
         private System.Windows.Forms.MaskedTextBox txtCantKgs;
         protected System.Windows.Forms.Label label13;
-        protected System.Windows.Forms.TextBox txtStock;
         protected System.Windows.Forms.Label label12;
         private System.Windows.Forms.MaskedTextBox txtCodigo;
         protected System.Windows.Forms.Label label5;

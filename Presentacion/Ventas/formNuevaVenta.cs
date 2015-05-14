@@ -18,6 +18,7 @@ namespace Presentacion.Ventas
         #region variables
         formVentas frmVentas;
         DataTable dtSucursales;
+        DataTable dtCortes = new DataTable();
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN=new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
@@ -52,6 +53,7 @@ namespace Presentacion.Ventas
         {
             InitializeComponent();
             cargarSucursal();
+            dtCortes = oCorteN.obtenerCortes();
             if (!fecha.Equals(""))
             {
                 txtFechaVenta.Value = DateTime.Parse(fecha);
@@ -237,6 +239,7 @@ namespace Presentacion.Ventas
             listaLineaGrilla = new List<LineaVenta>(); 
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
+            dtCortes = oCorteN.obtenerCortes();
         }
 
         private void cambiarSucursal()
@@ -244,10 +247,8 @@ namespace Presentacion.Ventas
             if (comboSucursal.SelectedIndex > -1)
             {
                   oSucursalE.idSucursal =comboSucursal.SelectedIndex +1 ;
-
                   cargarCorte();
             }
-
         }
 
         private void cargarVenta()
@@ -298,7 +299,6 @@ namespace Presentacion.Ventas
 
                     if (!existeCorte())
                     {
-
                         cargarGrilla();
 
                         limpiarCamposCorte();
@@ -306,15 +306,11 @@ namespace Presentacion.Ventas
 
                         txtCodigo.Focus();
                     }
-                   
-
                 }
                 catch (Exception ex)
-                {
-                    
+                {                    
                     MessageBox.Show(ex.Message);
-                }
-                    
+                }                    
             }
         }
 
@@ -385,18 +381,15 @@ namespace Presentacion.Ventas
         }
 
         private void limpiarCamposCorte()
-        {
-            
+        {            
             txtCodigo.Text = "";
             txtCorte.Text = "";
-            txtStock.Text = "";
             txtCantKgs.Text = "";
             if (checkFijarPrecio.Checked == false)
             {
                 txtPrecioKg.Text = "";
                 txtTotalCorte.Text = "";
             }
-
             txtCodigo.Focus();
         }
 
@@ -432,26 +425,6 @@ namespace Presentacion.Ventas
             oLineaVenta.Corte = oCorteE;
             oLineaVenta.Venta = oVentaE;
 
-            //try
-            //{
-            //    oLineaVenta.CantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-            //}
-            //catch (Exception)
-            //{
-
-            //    oLineaVenta.CantKg = float.Parse(txtCantKgs.Text.Trim());
-            //}
-
-            //try
-            //{
-            //    oLineaVenta.PrecioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-            //}
-            //catch (Exception)
-            //{
-
-            //    oLineaVenta.PrecioKg = float.Parse(txtPrecioKg.Text.Trim());
-            //}
-
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             
@@ -462,58 +435,56 @@ namespace Presentacion.Ventas
              else
              {
                  oLineaVenta.Estado = 0;//Activo
-             }
-                    
+             }                    
         }
-
         
         private bool validarLinea()
         {
             string mensaje = "Complete los siguientes campos: ";
-            if (txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")
+            if (oCorteE == null || txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")
             {
-                if (txtCodigo.Text.Trim() == "")
+                if (oCorteE == null || txtCodigo.Text.Trim() == "")
                 {
-                    mensaje += "\n" + "-Código Corte";
-                    
-                    MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                 }
-
                 else
                 {
-                    if (oCorteE==null)
+                    if (txtCantKgs.Text.Trim() == "")
                     {
-                          MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                          txtCodigo.Focus();  
+                        mensaje += "\n" + "-Cant. Kgs";
+                        
+                    }
+                    if (txtPrecioKg.Text.Trim() == "")
+                    {
+                        mensaje += "\n" + "-Precio Kg";
+                    }
+
+                    MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    txtCantKgs.Focus();                                    
+                }
+                return false;
+            }
+            else
+            {                
+                if (cantKg >= 100)
+                {
+                    DialogResult respuesta;
+                    respuesta = MessageBox.Show("¿Está seguro de ingresar una venta igual o más de 100 kg?.", "Venta mayor o igual a 100kg", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+
+                    if (respuesta == DialogResult.Yes)
+                    {
+                        return true;
                     }
                     else
                     {
-                        if (txtCantKgs.Text.Trim() == "")
-                        {
-                            mensaje += "\n" + "-Cant. Kgs";
-                            
-                        }
-                        if (txtPrecioKg.Text.Trim() == "")
-                        {
-                            mensaje += "\n" + "-Precio Kg";
-                        }
-
-                        MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        txtCantKgs.Focus();
+                        return false;
                     }
-                
                 }
-
-
-                return false;
-            }
-            
-            
-
-            else
-            {                
-                return true;
+                else
+                {
+                    return true;
+                }
             }
         }
 
@@ -552,12 +523,9 @@ namespace Presentacion.Ventas
                     {
                         mensaje += "\n" + "-Turno";
                     }
-
                     MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                     return false;
                 }
-
                 else
                 {
                     if (Utilidades.Util_Form.validarFecha(txtFechaVenta.Value, "Fecha"))
@@ -577,13 +545,9 @@ namespace Presentacion.Ventas
                     else
                     {
                         return false;
-                    }
-                    
+                    }                    
                 }
-
-
             }
-
         }
 
         private void quitarLinea()
@@ -598,7 +562,6 @@ namespace Presentacion.Ventas
             {
                 MessageBox.Show("No hay ninguna fila seleccionada.", "Seleccione un fila", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
             cargarGrilla();
         }
 
@@ -616,75 +579,53 @@ namespace Presentacion.Ventas
 
         private void cargarCorte()
         {
+            oCorteE = null;
+            this.txtCorte.Text = "";
             if (txtCodigo.Text.Trim() != "")
             {
                 try
                 {
-                    oStockCorteSucursal = null;
-                    oStockCorteSucursal = new Entidades.StockCorteSucursal();
-
-                    oCorteE = null;
-                    oCorteE = new Entidades.Corte();
-
-                    DataTable dtCortes = new DataTable();
-                    dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
-
-                    if (dtCortes.Rows.Count > 0 )
+                    if (dtCortes.Rows.Count > 0)
                     {
                         foreach (DataRow fila in dtCortes.Rows)
                         {
-                            if (Convert.ToInt32(fila["idSucursal"].ToString()) == oSucursalE.idSucursal)
-	                        {
+                            if (fila["codigo"].ToString().Equals(txtCodigo.Text))
+                            {
                                 //cargo el corte
+                                oCorteE = new Entidades.Corte();
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
-                                oCorteE.corte = fila["corte"].ToString();                                
+                                oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
 
-                                //cargo stock
-                                oStockCorteSucursal.Corte = oCorteE;
-                                oStockCorteSucursal.Sucursal = oSucursalE;
+                                this.txtCorte.Text = oCorteE.corte;
 
-                                oStockCorteSucursal.Stock = float.Parse(fila["stock"].ToString());
-	                           
-                              }
-                            
-                        }
-
-
-                        //cargo los campos
-                        this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
-                        this.txtCorte.Text = oCorteE.corte;
-                        this.txtStock.Text =Convert.ToString(oStockCorteSucursal.Stock);
-
-                        //si está fijo precio kg
-                        if (checkFijarPrecio.Checked)
-                        {
-                            oCorteE.precioKg = float.Parse(txtPrecioKg.Text);
-                        }
-                        else
-                        {
-                            this.txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
+                                //si está fijo precio kg
+                                if (checkFijarPrecio.Checked)
+                                {
+                                    oCorteE.precioKg = float.Parse(txtPrecioKg.Text);
+                                }
+                                else
+                                {
+                                    this.txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
+                                }
+                                break;
+                            }
                         }
                     }
-
                     else
                     {
-
                         oCorteE = null;
                         this.txtTotalCorte.Text = "";
                         this.txtPrecioKg.Text = "";
                         this.txtCorte.Text = "";
-                        this.txtStock.Text = "";
                     }
                 }
                 catch (Exception ex)
                 {
-
                     MessageBox.Show(ex.Message);
                     limpiarCamposCorte();
                 }
-
             }
             else
             {
@@ -694,8 +635,7 @@ namespace Presentacion.Ventas
                 if (!checkFijarPrecio.Checked)
                 {
                     txtPrecioKg.Text = null;
-                }
-                
+                }                
             }
         }
 
@@ -738,7 +678,6 @@ namespace Presentacion.Ventas
                             
                         }
                     }
-
                     ///si está logueado
                     //if (frmVentas.Logueado)
                     if (Presentacion.FormPrincipal.logueado)
@@ -751,8 +690,6 @@ namespace Presentacion.Ventas
                     {
                         txtTotalCorte.Text = "";
                     }
-                    
-
                 }
                 catch (Exception ex)
                 { 
@@ -760,17 +697,8 @@ namespace Presentacion.Ventas
                     {
                         MessageBox.Show(ex.Message);
                     }
-                    //if (!txtCantKgs.Text.Equals("."))
-                    //{
-                    //    MessageBox.Show(ex.Message);
-                    //}
-
-                    //MessageBox.Show(ex.Message);
-                    
                 }
-
             }
-
         }
 
         private void establecerPrecioKg()
@@ -794,18 +722,12 @@ namespace Presentacion.Ventas
                         precioKg = totalCorte / cantKg;
                         txtPrecioKg.Text = precioKg.ToString();
                     }
-                     
-                    
-
                 }
                 catch (Exception ex)
                 {
-
                     MessageBox.Show(ex.Message);
                 }
             }
-
-
         }
 
         private void establecerTotalCorte()
@@ -828,8 +750,7 @@ namespace Presentacion.Ventas
                     if (Presentacion.FormPrincipal.logueado)
                     {
                         txtTotalCorte.Text = totalCorte.ToString();
-                    }                   
-  
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -837,42 +758,17 @@ namespace Presentacion.Ventas
                     txtPrecioKg.Text = "";
                 }
             }
-      }
-
+        }
 
         private void txtCantKgs_TextChanged(object sender, EventArgs e)
         {
             cargarTotalCorte();
         }
 
-        private void txtTotalCorte_TextChanged(object sender, EventArgs e)
-        {
-            //if (!checkFijarPrecio.Checked)
-            //{
-            //    establecerPrecioKg();
-            //}
-            //if (checkLeerPeso.Checked)
-            //{
-            //    establecerPrecioKg();
-            //}
-            
-        }
-
         private void txtPrecioKg_TextChanged(object sender, EventArgs e)
         {
             establecerTotalCorte();
         }
-
-        //private void txtTotalCorte_TextChanged(object sender, EventArgs e)
-        //{
-        //    establecerPrecioKg();
-        //}
-
-        //private void txtPrecioKg_TextChanged(object sender, EventArgs e)
-        //{
-        //    establecerTotalCorte();
-        //}
-
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
@@ -899,8 +795,7 @@ namespace Presentacion.Ventas
                 if (respuesta == System.Windows.Forms.DialogResult.Yes)
                 {
                     this.Close();
-                }
-               
+                }               
             }
             else
             {
@@ -932,7 +827,6 @@ namespace Presentacion.Ventas
         private void btnCancelar_Click(object sender, EventArgs e)
         {
             salir();
-
         }
 
         private void btnBuscarCliente_Click(object sender, EventArgs e)
@@ -945,17 +839,11 @@ namespace Presentacion.Ventas
         {
             oCliente = persona;
             this.txtCliente.Text = oCliente.razonSocial;
-            
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
-        }
-
-        private void label5_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void comboSucursal_TextChanged(object sender, EventArgs e)
@@ -965,17 +853,11 @@ namespace Presentacion.Ventas
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
-
             if (e.KeyChar == (char)(Keys.Enter))
             {
-
                 e.Handled = true;
-
                 SendKeys.Send("{TAB}");
-
             }
-
         }
 
 
@@ -999,19 +881,12 @@ namespace Presentacion.Ventas
         }
 
         private void formNuevaVenta_Load(object sender, EventArgs e)
-        {
-            
+        {            
             if (!frmVentas.Logueado)
             {
                 
             }
         }
-
-        private void grupoCortes_Enter(object sender, EventArgs e)
-        {
-
-        }
-
         private void timer1_Tick(object sender, EventArgs e)
         {
             try
@@ -1115,14 +990,12 @@ namespace Presentacion.Ventas
                                 MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
                             }
                         }
-
                     }
                     else
                     {
                         checkFijarPrecio.Checked = false;
                         MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
-                    }
-                    
+                    }                    
                 }
                 else
                 {
@@ -1136,30 +1009,5 @@ namespace Presentacion.Ventas
                 MessageBox.Show(ex.Message);
             }
         }
-
-        private void label17_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        
-
-        
-       
-
-       
-        
-
-       
-
-        
-        
-      
-        
     }
 }
