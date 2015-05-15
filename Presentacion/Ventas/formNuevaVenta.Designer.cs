@@ -208,7 +208,6 @@
             this.txtTotalCorte.TabStop = false;
             this.txtTotalCorte.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtTotalCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            this.txtTotalCorte.TextChanged += new System.EventHandler(this.txtTotalCorte_TextChanged);
             // 
             // txtPrecioKg
             // 

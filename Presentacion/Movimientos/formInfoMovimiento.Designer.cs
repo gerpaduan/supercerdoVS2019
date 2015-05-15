@@ -29,15 +29,16 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoMovimiento));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle29 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle30 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle31 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle32 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.Reporte = new System.Windows.Forms.ToolStripButton();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.txtCreado = new System.Windows.Forms.TextBox();
             this.txtHoraMovimiento = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -54,14 +55,13 @@
             this.txtTotalKg = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.grillaCortesPorMovimiento = new System.Windows.Forms.DataGridView();
-            this.label11 = new System.Windows.Forms.Label();
             this.idCorteMovimientodo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cantUnidad = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.txtCreado = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -130,6 +130,16 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(607, 93);
             this.pnlBuscar.TabIndex = 23;
+            // 
+            // txtCreado
+            // 
+            this.txtCreado.Location = new System.Drawing.Point(356, 35);
+            this.txtCreado.Multiline = true;
+            this.txtCreado.Name = "txtCreado";
+            this.txtCreado.ReadOnly = true;
+            this.txtCreado.Size = new System.Drawing.Size(238, 47);
+            this.txtCreado.TabIndex = 56;
+            this.txtCreado.TabStop = false;
             // 
             // txtHoraMovimiento
             // 
@@ -243,7 +253,7 @@
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSalir.Location = new System.Drawing.Point(470, 488);
+            this.btnSalir.Location = new System.Drawing.Point(470, 542);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(123, 37);
             this.btnSalir.TabIndex = 21;
@@ -254,12 +264,12 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(470, 262);
+            this.txtObservaciones.Location = new System.Drawing.Point(470, 263);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ReadOnly = true;
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(123, 110);
+            this.txtObservaciones.Size = new System.Drawing.Size(123, 190);
             this.txtObservaciones.TabIndex = 45;
             this.txtObservaciones.TabStop = false;
             // 
@@ -267,7 +277,7 @@
             // 
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(470, 205);
+            this.txtCantItems.Location = new System.Drawing.Point(470, 206);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(123, 21);
@@ -280,7 +290,7 @@
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(467, 187);
+            this.label12.Location = new System.Drawing.Point(467, 188);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(79, 15);
             this.label12.TabIndex = 43;
@@ -290,7 +300,7 @@
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(470, 163);
+            this.txtTotalKg.Location = new System.Drawing.Point(470, 164);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
             this.txtTotalKg.Size = new System.Drawing.Size(123, 21);
@@ -303,7 +313,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(467, 145);
+            this.label8.Location = new System.Drawing.Point(467, 146);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 41;
@@ -327,24 +337,14 @@
             this.grillaCortesPorMovimiento.Name = "grillaCortesPorMovimiento";
             this.grillaCortesPorMovimiento.RowHeadersVisible = false;
             this.grillaCortesPorMovimiento.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(449, 380);
+            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(449, 434);
             this.grillaCortesPorMovimiento.TabIndex = 0;
-            // 
-            // label11
-            // 
-            this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(467, 246);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(78, 13);
-            this.label11.TabIndex = 46;
-            this.label11.Text = "Observaciones";
             // 
             // idCorteMovimientodo
             // 
             this.idCorteMovimientodo.DataPropertyName = "idCorteMovimiento";
-            dataGridViewCellStyle29.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
-            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle29;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
+            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle5;
             this.idCorteMovimientodo.HeaderText = "Id Corte Mov.";
             this.idCorteMovimientodo.MinimumWidth = 70;
             this.idCorteMovimientodo.Name = "idCorteMovimientodo";
@@ -355,8 +355,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle30.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle30;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle6;
             this.codigo.FillWeight = 40F;
             this.codigo.HeaderText = "Código";
             this.codigo.MinimumWidth = 80;
@@ -375,8 +375,8 @@
             // cantUnidad
             // 
             this.cantUnidad.DataPropertyName = "cantUnidad";
-            dataGridViewCellStyle31.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.cantUnidad.DefaultCellStyle = dataGridViewCellStyle31;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.cantUnidad.DefaultCellStyle = dataGridViewCellStyle7;
             this.cantUnidad.FillWeight = 45F;
             this.cantUnidad.HeaderText = "Cant. Un.";
             this.cantUnidad.Name = "cantUnidad";
@@ -385,10 +385,10 @@
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle32.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle32.Format = "N3";
-            dataGridViewCellStyle32.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle32;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle8.Format = "N3";
+            dataGridViewCellStyle8.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle8;
             this.cantKg.FillWeight = 55F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
@@ -402,22 +402,22 @@
             this.Balanza.Name = "Balanza";
             this.Balanza.ReadOnly = true;
             // 
-            // txtCreado
+            // label11
             // 
-            this.txtCreado.Location = new System.Drawing.Point(356, 35);
-            this.txtCreado.Multiline = true;
-            this.txtCreado.Name = "txtCreado";
-            this.txtCreado.ReadOnly = true;
-            this.txtCreado.Size = new System.Drawing.Size(238, 47);
-            this.txtCreado.TabIndex = 56;
-            this.txtCreado.TabStop = false;
+            this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(467, 247);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(78, 13);
+            this.label11.TabIndex = 46;
+            this.label11.Text = "Observaciones";
             // 
             // formInfoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(605, 532);
+            this.ClientSize = new System.Drawing.Size(605, 591);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.txtCantItems);

@@ -90,7 +90,7 @@
             this.btnGuardar.BackColor = System.Drawing.Color.SeaGreen;
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold);
             this.btnGuardar.ForeColor = System.Drawing.SystemColors.ControlLight;
-            this.btnGuardar.Location = new System.Drawing.Point(485, 490);
+            this.btnGuardar.Location = new System.Drawing.Point(484, 575);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(130, 37);
             this.btnGuardar.TabIndex = 19;
@@ -105,7 +105,7 @@
             // 
             this.btnCancelar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.btnCancelar.Location = new System.Drawing.Point(485, 529);
+            this.btnCancelar.Location = new System.Drawing.Point(484, 614);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(130, 26);
             this.btnCancelar.TabIndex = 18;
@@ -126,18 +126,18 @@
             this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.txtFechaMovimiento);
-            this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
+            this.pnlBuscar.Location = new System.Drawing.Point(0, -1);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(627, 199);
             this.pnlBuscar.TabIndex = 20;
             // 
             // txtCreado
             // 
-            this.txtCreado.Location = new System.Drawing.Point(418, 44);
+            this.txtCreado.Location = new System.Drawing.Point(411, 44);
             this.txtCreado.Multiline = true;
             this.txtCreado.Name = "txtCreado";
             this.txtCreado.ReadOnly = true;
-            this.txtCreado.Size = new System.Drawing.Size(197, 53);
+            this.txtCreado.Size = new System.Drawing.Size(204, 53);
             this.txtCreado.TabIndex = 55;
             this.txtCreado.TabStop = false;
             this.txtCreado.Visible = false;
@@ -181,7 +181,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(415, 18);
+            this.label6.Location = new System.Drawing.Point(408, 18);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(41, 15);
             this.label6.TabIndex = 16;
@@ -435,9 +435,9 @@
             this.txtFechaMovimiento.CustomFormat = "dd/MM/yyyy H:mm";
             this.txtFechaMovimiento.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaMovimiento.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaMovimiento.Location = new System.Drawing.Point(462, 16);
+            this.txtFechaMovimiento.Location = new System.Drawing.Point(455, 16);
             this.txtFechaMovimiento.Name = "txtFechaMovimiento";
-            this.txtFechaMovimiento.Size = new System.Drawing.Size(153, 22);
+            this.txtFechaMovimiento.Size = new System.Drawing.Size(160, 22);
             this.txtFechaMovimiento.TabIndex = 15;
             this.txtFechaMovimiento.TabStop = false;
             // 
@@ -464,12 +464,12 @@
             dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaCortesPorMovimiento.DefaultCellStyle = dataGridViewCellStyle5;
-            this.grillaCortesPorMovimiento.Location = new System.Drawing.Point(12, 205);
+            this.grillaCortesPorMovimiento.Location = new System.Drawing.Point(12, 204);
             this.grillaCortesPorMovimiento.MultiSelect = false;
             this.grillaCortesPorMovimiento.Name = "grillaCortesPorMovimiento";
             this.grillaCortesPorMovimiento.RowHeadersVisible = false;
             this.grillaCortesPorMovimiento.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(461, 350);
+            this.grillaCortesPorMovimiento.Size = new System.Drawing.Size(461, 437);
             this.grillaCortesPorMovimiento.TabIndex = 21;
             this.grillaCortesPorMovimiento.TabStop = false;
             // 
@@ -539,7 +539,7 @@
             // 
             this.txtCantItems.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(484, 312);
+            this.txtCantItems.Location = new System.Drawing.Point(484, 310);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(131, 22);
@@ -552,7 +552,7 @@
             this.label12.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(481, 294);
+            this.label12.Location = new System.Drawing.Point(481, 292);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(79, 15);
             this.label12.TabIndex = 37;
@@ -562,7 +562,7 @@
             // 
             this.txtTotalKg.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(485, 269);
+            this.txtTotalKg.Location = new System.Drawing.Point(485, 267);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
             this.txtTotalKg.Size = new System.Drawing.Size(130, 22);
@@ -575,7 +575,7 @@
             this.label8.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(482, 251);
+            this.label8.Location = new System.Drawing.Point(482, 249);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 35;
@@ -585,7 +585,7 @@
             // 
             this.label11.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(482, 351);
+            this.label11.Location = new System.Drawing.Point(482, 349);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(78, 13);
             this.label11.TabIndex = 40;
@@ -594,11 +594,11 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtObservaciones.Location = new System.Drawing.Point(485, 367);
+            this.txtObservaciones.Location = new System.Drawing.Point(485, 365);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(130, 117);
+            this.txtObservaciones.Size = new System.Drawing.Size(130, 197);
             this.txtObservaciones.TabIndex = 39;
             this.txtObservaciones.TabStop = false;
             // 
@@ -611,7 +611,7 @@
             // 
             this.txtCantTotUni.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtCantTotUni.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantTotUni.Location = new System.Drawing.Point(484, 226);
+            this.txtCantTotUni.Location = new System.Drawing.Point(484, 224);
             this.txtCantTotUni.Name = "txtCantTotUni";
             this.txtCantTotUni.ReadOnly = true;
             this.txtCantTotUni.Size = new System.Drawing.Size(131, 22);
@@ -624,7 +624,7 @@
             this.label10.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(481, 208);
+            this.label10.Location = new System.Drawing.Point(481, 206);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(105, 15);
             this.label10.TabIndex = 41;
@@ -634,7 +634,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(627, 567);
+            this.ClientSize = new System.Drawing.Size(627, 647);
             this.Controls.Add(this.txtCantTotUni);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.label11);
