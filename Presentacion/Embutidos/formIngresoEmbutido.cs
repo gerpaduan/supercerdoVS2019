@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Cortes;
+using System.Configuration;
 
 
 namespace Presentacion
@@ -293,7 +294,7 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = 0;//No muestra ninguna sucursal
+            comboSucursal.SelectedIndex = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString()) - 1;//-1;//No muestra ninguna sucursal
         }
 
 
@@ -361,11 +362,6 @@ namespace Presentacion
             }
 
             
-        }
-
-        private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)

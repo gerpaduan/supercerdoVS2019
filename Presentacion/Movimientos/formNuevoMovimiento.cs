@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Presentacion.Cortes;
 using Presentacion.Reportes;
 using Utilidades;
+using System.Configuration;
 
 namespace Presentacion
 {
@@ -405,6 +406,7 @@ namespace Presentacion
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
 
+            comboSucOrigen.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());//-1;//No muestra ninguna sucursal
             cambiarSucursalDestino();
         }
 
