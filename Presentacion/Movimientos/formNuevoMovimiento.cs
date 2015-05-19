@@ -281,15 +281,9 @@ namespace Presentacion
                 }
                 else
                 {
-                    DialogResult result = MessageBox.Show("La Cantidad de Kgs. ingresado es igual o menor a 0(Cero).\n¿Desea ingresar esa Cant. de Kgs. igualmente?.", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                    if (result == DialogResult.Yes)
-                    {
-                        resp = true;
-                    }
-                    else
-                    {
-                        resp = false;
-                    }
+                    MessageBox.Show("Cant. Kgs debe ser mayor a 0 (cero)");
+                    resp = false;
+                    txtCantKgs.Focus();
                 }
             }
             catch (Exception)
