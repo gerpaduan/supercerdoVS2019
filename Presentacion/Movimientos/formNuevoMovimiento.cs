@@ -283,7 +283,7 @@ namespace Presentacion
                 {
                     MessageBox.Show("Cant. Kgs debe ser mayor a 0 (cero)");
                     resp = false;
-                    txtCantKgs.Focus();
+                    txtCantKgs.Select();
                 }
             }
             catch (Exception)
@@ -323,7 +323,6 @@ namespace Presentacion
                     txtCodigo.Focus();
                 }
             }
-
         }
 
         private void limpiarCampos()
@@ -620,18 +619,33 @@ namespace Presentacion
 
         private void formNuevoMovimiento_Activated(object sender, EventArgs e)
         {
-            if (checkAnterior)
+            try
             {
-                checkLeerPeso.Checked = true;
-                Leer_Peso.AbrirPuerto();
+                if (checkAnterior)
+                {
+                    checkLeerPeso.Checked = true;
+                    Leer_Peso.AbrirPuerto();
+                }
+            }
+            catch (Exception ex)
+            {
+                checkLeerPeso.Checked = false;
             }
         }
 
         private void formNuevoMovimiento_Deactivate(object sender, EventArgs e)
         {
-            checkAnterior = checkLeerPeso.Checked;
-            checkLeerPeso.Checked = false;
-            Leer_Peso.CerrarPuerto();
+            try
+            {
+                checkAnterior = checkLeerPeso.Checked;
+                checkLeerPeso.Checked = false;
+                Leer_Peso.CerrarPuerto();
+
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         private void txtCantUnidad_TextChanged(object sender, EventArgs e)

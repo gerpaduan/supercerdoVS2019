@@ -522,10 +522,17 @@ namespace Presentacion
 
         private void formIngresoEmbutido_Activated(object sender, EventArgs e)
         {
-            if (checkAnterior)
+            try
             {
-                checkLeerPeso.Checked = true;
-                Leer_Peso.AbrirPuerto();
+                if (checkAnterior)
+                {
+                    checkLeerPeso.Checked = true;
+                    Leer_Peso.AbrirPuerto();
+                }
+            }
+            catch (Exception ex)
+            {
+                checkLeerPeso.Checked = false;
             }
         }
 

@@ -195,9 +195,8 @@ namespace Presentacion
             {
                 MessageBox.Show(ex.Message);
             }
-          
-
         }
+
         private void limpiarListas()
         {
             //limpio campos
@@ -492,7 +491,6 @@ namespace Presentacion
                         txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
                     }
                 }
-
             }
             catch (Exception ex)
             {
