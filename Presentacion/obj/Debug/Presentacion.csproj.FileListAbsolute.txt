@@ -335,3 +335,4 @@ E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\o
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\Presentacion.csproj.GenerateResource.Cache
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.exe
 E:\Sistemas\SuperCerdo Negocio\SuperCerdo\SuperCerdo\Presentacion\Presentacion\obj\Debug\SuperCerdo.pdb
+E:\Sistemas\supercerdo\Presentacion\bin\Debug\SuperCerdo\SuperCerdo.exe.config
