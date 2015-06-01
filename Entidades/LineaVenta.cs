@@ -12,6 +12,20 @@ namespace Entidades
          Corte corte;
          Venta venta;
          int estado;
+         int indexAnulado = -1;
+         private bool pesoBalanza;
+
+         public bool PesoBalanza
+         {
+             get { return pesoBalanza; }
+             set { pesoBalanza = value; }
+         }
+
+         public int IndexAnulado
+         {
+             get { return indexAnulado; }
+             set { indexAnulado = value; }
+         }
 
         public float CantKg
         {

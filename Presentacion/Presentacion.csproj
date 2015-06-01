@@ -65,6 +65,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Caja\formCajasAbiertas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formCajasAbiertas.Designer.cs">
+      <DependentUpon>formCajasAbiertas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formAbrirCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formAbrirCaja.Designer.cs">
+      <DependentUpon>formAbrirCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formCerrarCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formCerrarCaja.Designer.cs">
+      <DependentUpon>formCerrarCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formCierresDeCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formCierresDeCaja.Designer.cs">
+      <DependentUpon>formCierresDeCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\FormLoginVendedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\FormLoginVendedor.Designer.cs">
+      <DependentUpon>FormLoginVendedor.cs</DependentUpon>
+    </Compile>
     <Compile Include="CodeFile1.cs" />
     <Compile Include="Compras\formCambiarPrecioKg.cs">
       <SubType>Form</SubType>
@@ -139,6 +169,7 @@
     <Compile Include="InterfacePersona.cs" />
     <Compile Include="InterfaceProveedor.cs" />
     <Compile Include="InterfaceCorte.cs" />
+    <Compile Include="InterfaceUsuario.cs" />
     <Compile Include="LineaVenta.cs" />
     <Compile Include="MediasPorCompra.cs" />
     <Compile Include="Movimientos\formInfoMovimiento.cs">
@@ -390,6 +421,8 @@
     <Compile Include="Stock\formStock.Designer.cs">
       <DependentUpon>formStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="Ticket\CrearTicket.cs" />
+    <Compile Include="Ticket\RawPrinterHelper.cs" />
     <Compile Include="Ventas\formInfoVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -402,6 +435,18 @@
     <Compile Include="Ventas\formNuevaVenta.Designer.cs">
       <DependentUpon>formNuevaVenta.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formVentaCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formVentaCaja.Designer.cs">
+      <DependentUpon>formVentaCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formVentaCaja2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formVentaCaja2.Designer.cs">
+      <DependentUpon>formVentaCaja2.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ventas\formVentas.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -410,6 +455,21 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Caja\formCajasAbiertas.resx">
+      <DependentUpon>formCajasAbiertas.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formAbrirCaja.resx">
+      <DependentUpon>formAbrirCaja.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formCerrarCaja.resx">
+      <DependentUpon>formCerrarCaja.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formCierresDeCaja.resx">
+      <DependentUpon>formCierresDeCaja.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\FormLoginVendedor.resx">
+      <DependentUpon>FormLoginVendedor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Compras\formCambiarPrecioKg.resx">
       <DependentUpon>formCambiarPrecioKg.cs</DependentUpon>
     </EmbeddedResource>
@@ -583,6 +643,9 @@
     <EmbeddedResource Include="Ventas\formNuevaVenta.resx">
       <DependentUpon>formNuevaVenta.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formVentaCaja.resx">
+      <DependentUpon>formVentaCaja.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formVentas.resx">
       <DependentUpon>formVentas.cs</DependentUpon>
     </EmbeddedResource>
@@ -644,6 +707,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon_LogoAzulSuperCerdo.ico" />
+    <None Include="Resources\lock_32x32-32.ico" />
+    <None Include="Resources\16 %28Lock on%29.ico" />
+    <None Include="Resources\16 %28Lock off%29.ico" />
+    <Content Include="Tareas.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -37,6 +37,23 @@ namespace Datos
             return oSucursalE;
         }
 
+        public Entidades.Sucursal findById(int id)
+        {
+            DataTable dtSucursal = new DataTable();
+            daSucursal = new SqlDataAdapter("Select * from sucursal where idSucursal = "+id, conn.conectar());
+            daSucursal.Fill(dtSucursal);
+
+            Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+            if (dtSucursal.Rows.Count > 0)
+            {
+                oSucursalE.idSucursal = Convert.ToInt32(dtSucursal.Rows[0]["idSucursal"].ToString());
+                oSucursalE.sucursal = dtSucursal.Rows[0]["sucursal"].ToString();
+            }
+
+            return oSucursalE;
+
+        }
+
         public DataTable obtenerSucursalSanMartin()
         {
             DataTable dtSucursal = new DataTable();

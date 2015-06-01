@@ -110,6 +110,7 @@ namespace Presentacion.Ventas
                 lineaVentaP.cantKgs = lineaE.CantKg;
                 lineaVentaP.precioKg = lineaE.PrecioKg;
                 lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
+                lineaVentaP.PesoBalanza = lineaE.PesoBalanza;
 
                 if (lineaE.Estado == 1)
                 {

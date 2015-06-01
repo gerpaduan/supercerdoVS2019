@@ -23,8 +23,11 @@ namespace Datos
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "agregarVenta";
 
+            cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
+            cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
             cmVenta.Parameters.AddWithValue("@turno",oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
@@ -55,12 +58,15 @@ namespace Datos
             cmVenta.Connection.Open();
 
             cmVenta.CommandType = CommandType.StoredProcedure;
+            /// Se eliminan todas las LineaVenta, y se actualiza datos de Venta
             cmVenta.CommandText = "modificarVenta";
 
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@fechaVenta", oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", SucAnterior);
             cmVenta.Parameters.AddWithValue("@idSucNueva", oVentaE.Sucursal.idSucursal);
+            cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
             cmVenta.Parameters.AddWithValue("@turno", oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo", oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones", oVentaE.Observaciones);
@@ -106,6 +112,36 @@ namespace Datos
             return dtVentas;
         }
 
+        public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            DataTable dtVentas = new DataTable();
+            daVenta = new SqlDataAdapter();
+
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandText = "obtenerTotalVentas";
+            cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            cmVenta.ExecuteNonQuery();
+
+            cmVenta.Connection.Close();
+
+            daVenta.SelectCommand = cmVenta;
+
+            daVenta.Fill(dtVentas);
+
+            daVenta = null;
+            cmVenta = null;
+            float totalVentas = dtVentas.Rows[0]["totalS"].ToString().Equals("") ? 0 : float.Parse(dtVentas.Rows[0]["totalS"].ToString());
+            return totalVentas;
+        }
+
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
         {
             cmVenta = new SqlCommand();
@@ -118,6 +154,7 @@ namespace Datos
 
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
+            cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
@@ -141,6 +178,7 @@ namespace Datos
 
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
+            cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
@@ -196,6 +234,16 @@ namespace Datos
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
 
+                        try
+                        {
+                            oLinea.PesoBalanza = Convert.ToBoolean(drLinea["pesoBalanza"]);
+                        }
+                        catch (Exception)
+                        {
+
+                            oLinea.PesoBalanza = false;
+                        }
+
                         if (drLinea["estado"].ToString()=="")
                         {
                             oLinea.Estado = 0;
@@ -220,15 +268,8 @@ namespace Datos
             {
                 listaLineasVenta = null;
             }
-            //cmVenta.ExecuteNonQuery();
-
-            //daVenta.SelectCommand = cmVenta;
-            //daVenta.Fill(dtLineasVenta);
-
             daVenta = null;
             cmVenta = null;
-
-            //return dtLineasVenta;
         }
 
 

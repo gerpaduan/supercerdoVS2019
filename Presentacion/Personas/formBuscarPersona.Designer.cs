@@ -74,7 +74,8 @@
             this.grillaPersonas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaPersonas.Size = new System.Drawing.Size(316, 183);
             this.grillaPersonas.StandardTab = true;
-            this.grillaPersonas.TabIndex = 43;
+            this.grillaPersonas.TabIndex = 4;
+            this.grillaPersonas.TabStop = false;
             this.grillaPersonas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaPersonas_CellDoubleClick);
             // 
             // idPersona
@@ -110,7 +111,8 @@
             this.btnSeleccionar.Location = new System.Drawing.Point(165, 255);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(78, 28);
-            this.btnSeleccionar.TabIndex = 42;
+            this.btnSeleccionar.TabIndex = 2;
+            this.btnSeleccionar.TabStop = false;
             this.btnSeleccionar.Text = "Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
@@ -118,10 +120,12 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnCancelar.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancelar.Location = new System.Drawing.Point(249, 255);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(78, 27);
-            this.btnCancelar.TabIndex = 41;
+            this.btnCancelar.TabIndex = 3;
+            this.btnCancelar.TabStop = false;
             this.btnCancelar.Text = "Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
@@ -148,6 +152,7 @@
             this.btnBuscarProv.Name = "btnBuscarProv";
             this.btnBuscarProv.Size = new System.Drawing.Size(28, 23);
             this.btnBuscarProv.TabIndex = 14;
+            this.btnBuscarProv.TabStop = false;
             this.btnBuscarProv.UseVisualStyleBackColor = true;
             this.btnBuscarProv.Click += new System.EventHandler(this.btnBuscarProv_Click);
             // 
@@ -156,8 +161,9 @@
             this.txtBuscar.Location = new System.Drawing.Point(89, 20);
             this.txtBuscar.Name = "txtBuscar";
             this.txtBuscar.Size = new System.Drawing.Size(137, 20);
-            this.txtBuscar.TabIndex = 3;
+            this.txtBuscar.TabIndex = 1;
             this.txtBuscar.TextChanged += new System.EventHandler(this.btnBuscarProv_Click);
+            this.txtBuscar.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // Proveedor
             // 
@@ -186,6 +192,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
+            this.CancelButton = this.btnCancelar;
             this.ClientSize = new System.Drawing.Size(336, 286);
             this.Controls.Add(this.grillaPersonas);
             this.Controls.Add(this.btnSeleccionar);
@@ -196,6 +203,7 @@
             this.Name = "formBuscarPersona";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Buscar Personas";
+            this.Load += new System.EventHandler(this.formBuscarPersona_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaPersonas)).EndInit();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();

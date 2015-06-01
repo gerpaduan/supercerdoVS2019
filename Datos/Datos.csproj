@@ -57,6 +57,7 @@
     <None Include="DataSetCorte.xss">
       <DependentUpon>DataSetCorte.xsd</DependentUpon>
     </None>
+    <Compile Include="CierreCaja.cs" />
     <Compile Include="Compra.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="DataSetCorte.Designer.cs">
@@ -68,6 +69,7 @@
     <Compile Include="Persona.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sucursal.cs" />
+    <Compile Include="Usuario.cs" />
     <Compile Include="Venta.cs" />
   </ItemGroup>
   <ItemGroup>

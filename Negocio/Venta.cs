@@ -23,6 +23,11 @@ namespace Negocio
         public DataTable obtenerVentas(string sucursal, DateTime fechaDesde, DateTime fechaHasta, string texto)
         {
             return oVentaD.obtenerVentas(sucursal, fechaDesde, fechaHasta, texto);
+        }
+
+        public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
+        {
+            return oVentaD.obtenerTotalVentas(idVendedor, idSucursal, fechaDesde, fechaHasta);
         } 
 
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)

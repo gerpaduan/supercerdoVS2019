@@ -18,6 +18,20 @@ namespace Entidades
          Persona persona;
          private string nroRemito;
          private string estado;
+         Usuario vendedor;
+         private string tipoVenta;
+
+         public string TipoVenta
+         {
+             get { return tipoVenta; }
+             set { tipoVenta = value; }
+         }
+
+         public Usuario Vendedor
+         {
+             get { return vendedor; }
+             set { vendedor = value; }
+         }
 
         public int IdVenta
         {

@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CierreCaja.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="CortePorCompra.cs" />
     <Compile Include="CortePorEmbutido.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="StockCorteSucursal.cs" />
     <Compile Include="StockMaestroSucursal.cs" />
     <Compile Include="Sucursal.cs" />
+    <Compile Include="Usuario.cs" />
     <Compile Include="Venta.cs" />
   </ItemGroup>
   <ItemGroup>
