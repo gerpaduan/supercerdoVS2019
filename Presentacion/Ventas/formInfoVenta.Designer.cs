@@ -699,12 +699,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn totalS;
         private System.Windows.Forms.DataGridViewCheckBoxColumn PesoBalanza;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        protected System.Windows.Forms.ToolStripButton Imprimir;
-        private System.Windows.Forms.Label label18;
-        private System.Windows.Forms.TextBox txtActualizado;
-        private System.Windows.Forms.Label label17;
-        private System.Windows.Forms.TextBox txtCreado;
         private System.Windows.Forms.Panel panel1;
     }
 }
