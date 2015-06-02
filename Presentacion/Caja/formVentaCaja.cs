@@ -26,14 +26,14 @@ namespace Presentacion.Ventas
         formVentas frmVentas;
         DataTable dtSucursales;
         Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Sucursal oSucursalN=new Negocio.Sucursal();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
 
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
         public Entidades.Usuario oUsuario;
         Entidades.Corte oCorteE;
-        Entidades.Sucursal oSucursalE= new Entidades.Sucursal();
+        Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
         Entidades.Venta oVentaE = new Entidades.Venta();
         Entidades.LineaVenta oLineaVenta;
@@ -51,7 +51,7 @@ namespace Presentacion.Ventas
         }
 
         bool modificar = false;
-        string fecha = "", estadoVenta="";
+        string fecha = "", estadoVenta = "";
         float totalCorte, precioKg, cantKg;
         float totalVenta = 0, abona = 0, cambio = 0;
         #endregion
@@ -76,7 +76,7 @@ namespace Presentacion.Ventas
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
-                              
+
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -84,10 +84,10 @@ namespace Presentacion.Ventas
             oUsuario = usuario;
             this.txtVendedor.Text = oUsuario.Nombre;
         }
-#region Modificar_Venta
+        #region Modificar_Venta
 
 
-        public void parametrosModificacion(formVentas frmVentasParam,Entidades.Venta oVentaParam, List<Entidades.LineaVenta> listaLineaVentaParam, List<LineaVenta> listaLineaGrillaParam)
+        public void parametrosModificacion(formVentas frmVentasParam, Entidades.Venta oVentaParam, List<Entidades.LineaVenta> listaLineaVentaParam, List<LineaVenta> listaLineaGrillaParam)
         {
             modificar = true;
             this.Text = "Modificar Venta";
@@ -110,14 +110,14 @@ namespace Presentacion.Ventas
         {
             txtCliente.Text = oVentaE.Persona.razonSocial;
             txtSucursal.Text = oVentaE.Sucursal.sucursal;
-            txtFechaVenta.Value =oVentaE.FechaVenta;
+            txtFechaVenta.Value = oVentaE.FechaVenta;
             txtNroRemito.Text = oVentaE.NroRemito;
             txtObservaciones.Text = oVentaE.Observaciones;
 
             estadoVenta = oVentaE.Estado;
         }
 
-      
+
 
         private void modificarVenta()
         {
@@ -126,7 +126,7 @@ namespace Presentacion.Ventas
                 cargarVenta();
                 try
                 {
-                    
+
                     oVentaN.modificarVenta(oVentaE, SucAnterior);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
@@ -137,7 +137,7 @@ namespace Presentacion.Ventas
                     frmVentas.cargarGrilla();
 
                     this.Close();
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -149,7 +149,7 @@ namespace Presentacion.Ventas
 
         }
 
-#endregion
+        #endregion
 
         private void esModificacion()
         {
@@ -171,7 +171,7 @@ namespace Presentacion.Ventas
 
                 }
             }
-            
+
         }
 
         public void cargarGrilla()
@@ -195,7 +195,7 @@ namespace Presentacion.Ventas
             {
                 MessageBox.Show(ex.Message);
             }
-            
+
         }
 
         private void agregarVenta()
@@ -245,7 +245,7 @@ namespace Presentacion.Ventas
                     MessageBox.Show(ex.Message);
                 }
             }
-            
+
         }
         private void limpiarListas()
         {
@@ -263,7 +263,7 @@ namespace Presentacion.Ventas
             panelPago.Visible = false;
             panelAbonar.Visible = true;
 
-            listaLineaGrilla = new List<LineaVenta>(); 
+            listaLineaGrilla = new List<LineaVenta>();
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
         }
@@ -278,7 +278,7 @@ namespace Presentacion.Ventas
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
-            oVentaE.Estado = estadoVenta ;
+            oVentaE.Estado = estadoVenta;
         }
 
         private void cargarTotales()
@@ -320,9 +320,9 @@ namespace Presentacion.Ventas
                     txtCodigo.Focus();
                 }
                 catch (Exception ex)
-                {                    
+                {
                     MessageBox.Show(ex.Message);
-                }                    
+                }
             }
         }
 
@@ -331,8 +331,8 @@ namespace Presentacion.Ventas
             listaLineaVenta.Add(oLineaVenta);
             cargarListaGrilla(oLineaVenta);
         }
-        
-        
+
+
 
         private void sumarCorte(int nroLinea)
         {
@@ -344,7 +344,7 @@ namespace Presentacion.Ventas
 
         private void limpiarCamposCorte()
         {
-            
+
             txtCodigo.Text = "";
             txtCorte.Text = "";
             txtCantKgs.Text = "";
@@ -365,7 +365,7 @@ namespace Presentacion.Ventas
             lineaVentaP.precioKg = lineaE.PrecioKg;
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
 
-            if (lineaE.Estado==1)
+            if (lineaE.Estado == 1)
             {
                 lineaVentaP.estado = "Anulado";
             }
@@ -389,18 +389,18 @@ namespace Presentacion.Ventas
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
-            
-             if (oLineaVenta.CantKg < 0)
-             {
-                 oLineaVenta.Estado = 1;//Anulado
-             }
-             else
-             {
-                 oLineaVenta.Estado = 0;//Activo
-             }                    
+
+            if (oLineaVenta.CantKg < 0)
+            {
+                oLineaVenta.Estado = 1;//Anulado
+            }
+            else
+            {
+                oLineaVenta.Estado = 0;//Activo
+            }
         }
 
-        
+
         private bool validarLinea()
         {
             string mensaje = "Complete los siguientes campos: ";
@@ -409,24 +409,24 @@ namespace Presentacion.Ventas
                 if (txtCodigo.Text.Trim() == "")
                 {
                     mensaje += "\n" + "-Código Corte";
-                    
+
                     MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                 }
 
                 else
                 {
-                    if (oCorteE==null)
+                    if (oCorteE == null)
                     {
-                          MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                          txtCodigo.Focus();  
+                        MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        txtCodigo.Focus();
                     }
                     else
                     {
                         if (txtCantKgs.Text.Trim() == "")
                         {
                             mensaje += "\n" + "-Cant. Kgs";
-                            
+
                         }
                         if (txtPrecioKg.Text.Trim() == "")
                         {
@@ -436,7 +436,7 @@ namespace Presentacion.Ventas
                         MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         txtCantKgs.Focus();
                     }
-                
+
                 }
                 return false;
             }
@@ -454,7 +454,7 @@ namespace Presentacion.Ventas
         private bool validacionFinal()
         {
             //si es una modificacion y no hay datos en la grilla no valida porque se eliminar la venta
-            if (modificar && grillaLineasVenta.Rows.Count==0)
+            if (modificar && grillaLineasVenta.Rows.Count == 0)
             {
                 DialogResult respuesta;
                 respuesta = MessageBox.Show("¿Está seguro que desea eliminar todos los datos de la venta?.", "Eliminar venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
@@ -488,10 +488,10 @@ namespace Presentacion.Ventas
                         if ((abona > 0 && cambio < 0) || cambio >= 100)
                         {
                             if (cambio < 0)
-                            {                                
+                            {
                                 mensaje = "El pago del cliente es menor al total de la venta";
                                 MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                txtAbona.Select(); 
+                                txtAbona.Select();
                                 txtAbona.Focus();
                             }
                             if (cambio >= 100)
@@ -520,7 +520,7 @@ namespace Presentacion.Ventas
                     }
                     else
                     {
-                        mensaje = "No se puede finalizar la venta porque el total a pagar es negativo (menor a cero).\n\nTotal a pagar:  $ "+totalVenta;
+                        mensaje = "No se puede finalizar la venta porque el total a pagar es negativo (menor a cero).\n\nTotal a pagar:  $ " + totalVenta;
                         MessageBox.Show(mensaje, "Error en la venta", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return false;
                     }
@@ -533,13 +533,13 @@ namespace Presentacion.Ventas
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
-                
+
                 Entidades.LineaVenta oLineaVentaSelect = new Entidades.LineaVenta();
                 oLineaVentaSelect = listaLineaVenta[nroFila];
 
                 bool existeAnulado = false;
                 foreach (Entidades.LineaVenta linea in listaLineaVenta)
-                  {
+                {
                     if (oLineaVentaSelect.Corte.codigo == linea.Corte.codigo &&
                         linea.IndexAnulado == nroFila)
                     {
@@ -549,7 +549,7 @@ namespace Presentacion.Ventas
 
                 if (oLineaVentaSelect.Estado == 0 && !existeAnulado)
                 {
-                    string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " + 
+                    string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " +
                         oLineaVentaSelect.Corte.corte +
                         "    |   Cantidad:  " + oLineaVentaSelect.CantKg + "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.Corte.precioKg;
                     string mensaje = "¿Está seguro de anular el corte seleccionado?" + datosLinea;
@@ -574,7 +574,7 @@ namespace Presentacion.Ventas
                 else
                 {
                     MessageBox.Show("El corte seleccionado ya ha sido anulado.", "Anular corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }                
+                }
             }
             else
             {
@@ -598,16 +598,16 @@ namespace Presentacion.Ventas
                     DataTable dtCortes = new DataTable();
                     dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
 
-                    if (dtCortes.Rows.Count > 0 )
+                    if (dtCortes.Rows.Count > 0)
                     {
                         foreach (DataRow fila in dtCortes.Rows)
                         {
                             if (Convert.ToInt32(fila["idSucursal"].ToString()) == oSucursalE.idSucursal)
-	                        {
+                            {
                                 //cargo el corte
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
-                                oCorteE.corte = fila["corte"].ToString();                                
+                                oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
 
                                 //cargo stock
@@ -615,9 +615,9 @@ namespace Presentacion.Ventas
                                 oStockCorteSucursal.Sucursal = oSucursalE;
 
                                 oStockCorteSucursal.Stock = float.Parse(fila["stock"].ToString());
-	                           
-                              }
-                            
+
+                            }
+
                         }
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
@@ -675,7 +675,7 @@ namespace Presentacion.Ventas
                         catch (Exception)
                         {
                             try
-                            {                                
+                            {
                                 precioKg = float.Parse(txtPrecioKg.Text.Trim());
                             }
                             catch (Exception)
@@ -686,7 +686,7 @@ namespace Presentacion.Ventas
                                     precioKg = 0;
                                 }
                             }
-                            
+
                         }
                     }
                     totalCorte = cantKg * precioKg;
@@ -694,11 +694,11 @@ namespace Presentacion.Ventas
                     txtTotalCorte.Text = totalCorte.ToString("N");
                 }
                 catch (Exception ex)
-                { 
-                    if (txtCantKgs.Text.Trim() != "-" )
+                {
+                    if (txtCantKgs.Text.Trim() != "-")
                     {
                         MessageBox.Show(ex.Message);
-                    }                    
+                    }
                 }
             }
 
@@ -720,7 +720,7 @@ namespace Presentacion.Ventas
                         totalCorte = float.Parse(txtTotalCorte.Text.Trim());
                     }
 
-                    if (cantKg>0)
+                    if (cantKg > 0)
                     {
                         precioKg = totalCorte / cantKg;
                         txtPrecioKg.Text = precioKg.ToString();
@@ -754,8 +754,8 @@ namespace Presentacion.Ventas
                     if (Presentacion.FormPrincipal.logueado)
                     {
                         txtTotalCorte.Text = totalCorte.ToString();
-                    }                   
-  
+                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -763,7 +763,7 @@ namespace Presentacion.Ventas
                     txtPrecioKg.Text = "";
                 }
             }
-      }
+        }
 
 
         private void txtCantKgs_TextChanged(object sender, EventArgs e)
@@ -817,7 +817,7 @@ namespace Presentacion.Ventas
 
             oCorteE = corte;
 
-            this.txtCodigo.Text =Convert.ToString( oCorteE.codigo);
+            this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
             this.txtCorte.Text = oCorteE.corte;
         }
 
@@ -830,7 +830,7 @@ namespace Presentacion.Ventas
         {
             this.Close();
 
-        }        
+        }
 
         private void btnBuscarCliente_Click(object sender, EventArgs e)
         {
@@ -847,7 +847,7 @@ namespace Presentacion.Ventas
         {
             oCliente = persona;
             this.txtCliente.Text = oCliente.razonSocial;
-            
+
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -1020,7 +1020,7 @@ namespace Presentacion.Ventas
 
         private void abonar()
         {
-            if (Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona") && txtAbona.Text != "")
+            if (txtAbona.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona"))
             {
                 totalVenta = float.Parse(txtTotalS.Text.Trim());
                 abona = float.Parse(txtAbona.Text.Replace('.', ','));
@@ -1061,7 +1061,7 @@ namespace Presentacion.Ventas
             if (txtClave.Text.Equals(oUsuario.Clave))
             {
                 panelBloquear.Visible = false;
-                btnBloquear.Visible = true;                
+                btnBloquear.Visible = true;
                 lblErrorClave.Visible = false;
                 txtClave.Text = "";
 
@@ -1098,6 +1098,6 @@ namespace Presentacion.Ventas
             txtAbona.ReadOnly = false;
             txtAbona.Focus();
         }
-      
+
     }
 }

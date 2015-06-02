@@ -32,7 +32,6 @@
             this.txtBuscar = new System.Windows.Forms.TextBox();
             this.Proveedor = new System.Windows.Forms.Label();
             this.button3 = new System.Windows.Forms.Button();
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
@@ -49,7 +48,6 @@
             this.panel1.Controls.Add(this.txtBuscar);
             this.panel1.Controls.Add(this.Proveedor);
             this.panel1.Controls.Add(this.button3);
-            this.panel1.Controls.Add(this.shapeContainer2);
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(492, 62);
@@ -82,15 +80,6 @@
             this.button3.TabIndex = 8;
             this.button3.Text = "Buscar";
             this.button3.UseVisualStyleBackColor = true;
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-            this.shapeContainer2.Size = new System.Drawing.Size(492, 62);
-            this.shapeContainer2.TabIndex = 11;
-            this.shapeContainer2.TabStop = false;
         
             // 
             // btnSeleccionar
@@ -152,7 +141,6 @@
         protected System.Windows.Forms.TextBox txtBuscar;
         protected System.Windows.Forms.Label Proveedor;
         protected System.Windows.Forms.Button button3;
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
         
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;

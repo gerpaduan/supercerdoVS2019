@@ -60,7 +60,6 @@
             this.txtTotalKg = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             
-            this.shapeContainer2 = new Microsoft.VisualBasic.PowerPacks.ShapeContainer();
             this.panel1 = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).BeginInit();
@@ -368,17 +367,6 @@
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 20;
             this.label8.Text = "Total Kg";
-
-            // 
-            // shapeContainer2
-            // 
-            this.shapeContainer2.Location = new System.Drawing.Point(0, 0);
-            this.shapeContainer2.Margin = new System.Windows.Forms.Padding(0);
-            this.shapeContainer2.Name = "shapeContainer2";
-
-            this.shapeContainer2.Size = new System.Drawing.Size(563, 561);
-            this.shapeContainer2.TabIndex = 22;
-            this.shapeContainer2.TabStop = false;
             // 
             // panel1
             // 
@@ -413,7 +401,6 @@
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.grillaEmbutidos);
-            this.Controls.Add(this.shapeContainer2);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formEmbutidos";
@@ -448,7 +435,6 @@
         private System.Windows.Forms.TextBox txtTotalKg;
         private System.Windows.Forms.Label label8;
         
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer2;
         private System.Windows.Forms.ComboBox comboSucursal;
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.DataGridViewTextBoxColumn idEmbutido;

@@ -9,14 +9,19 @@ using System.Windows.Forms;
 using Presentacion.Personas;
 using Presentacion.Cortes;
 using Presentacion.Pagos;
+using Presentacion.Ventas;
+using Presentacion.Caja;
 
 
 
 namespace Presentacion
 {
-    public partial class FormPrincipal : Form
+    public partial class FormPrincipal : Form, InterfaceUsuario
     {
         public static bool logueado = false;
+        bool formAbierto = false;
+        Entidades.Usuario oUsuario;
+
         public FormPrincipal()
         {
             InitializeComponent();
@@ -24,6 +29,13 @@ namespace Presentacion
         }
 
         private void linkCompras_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            compras();
+            
+
+        }
+
+        private static void compras()
         {
             //if (!logueado)
             //{
@@ -52,17 +64,20 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-            
-
         }
 
         private void linkVentas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            ventas();
+        }
+
+        private static void ventas()
+        {
             //if (!logueado)
             //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
+            //    //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    //frmLogin.ShowDialog();
+            //    //logueado = frmLogin.Logueado();                
             //}
             //if (logueado)
             //{
@@ -86,32 +101,68 @@ namespace Presentacion
             //{
             //    MessageBox.Show("No está logueado");
             //}
-
-
         }
 
-      
+        private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formAbierto = false;
+
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formVentaCaja))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+	                    {
+                    		frm.BringToFront();
+                            formAbierto = true;
+                            break;
+	                    }
+                    }                    
+                }
+            }
+            if (!formAbierto)
+            {
+                formVentaCaja frmVentaCaja = new formVentaCaja();
+                frmVentaCaja.oUsuario = oUsuario;
+                frmVentaCaja.Show();
+            }
+            oUsuario = null;
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        }
 
         private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            cortes();
+        }
 
+        private static void cortes()
+        {
             if (Application.OpenForms["formCortes"] != null)
             {
-
                 Application.OpenForms["formCortes"].Activate();
                 Application.OpenForms["formCortes"].WindowState = FormWindowState.Normal;
-
             }
             else
             {
-
                 formCortes frmCortes = new formCortes();
                 frmCortes.Show();
-
             }
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            movimientos();
+        }
+
+        private static void movimientos()
         {
             if (Application.OpenForms["formMovimientos"] != null)
             {
@@ -122,12 +173,9 @@ namespace Presentacion
             }
             else
             {
-
                 formMovimientos frmMovimientos = new formMovimientos();
                 frmMovimientos.Show();
-
             }
-
         }
 
         private void linkProveedores_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -177,6 +225,11 @@ namespace Presentacion
 
         private void linkPersonas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            personas();
+        }
+
+        private static void personas()
+        {
             if (Application.OpenForms["formPersonas"] != null)
             {
 
@@ -196,19 +249,47 @@ namespace Presentacion
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (Application.OpenForms["formStock"] != null)
+            stockCortes();
+            
+        }
+
+        private static void stockCortes()
+        {
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
+            if (logueado)
             {
-                Application.OpenForms["formStock"].Activate();
-                Application.OpenForms["formStock"].WindowState = FormWindowState.Normal;
+                if (Application.OpenForms["formStockCortes"] != null)
+                {
+
+                    Application.OpenForms["formStockCortes"].Activate();
+                    Application.OpenForms["formStockCortes"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+
+                    formStockCortes frmStockCortes = new formStockCortes();
+                    frmStockCortes.Show();
+
+                }
             }
             else
             {
-                formStock frm = new formStock();
-                frm.Show();
-            }          
+                MessageBox.Show("No está logueado");
+            }
         }
 
         private void linkReportes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            reportes();
+        }
+
+        private static void reportes()
         {
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
@@ -216,6 +297,17 @@ namespace Presentacion
 
         private void linkPagos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            pagos();
+        }
+
+        private static void pagos()
+        {
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
             if (logueado)
             {
                 if (Application.OpenForms["formPagos"] != null)
@@ -239,8 +331,22 @@ namespace Presentacion
             }
         }
 
+        
+
         private void linkBaseDeDatos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            baseDeDatos();
+            
+        }
+
+        private static void baseDeDatos()
+        {
+            //if (!logueado)
+            //{
+            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //    frmLogin.ShowDialog();
+            //    logueado = frmLogin.Logueado();
+            //}
             if (logueado)
             {
                 if (Application.OpenForms["formBackUp"] != null)
@@ -260,7 +366,6 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-            
         }
 
         private void FormPrincipal_Activated(object sender, EventArgs e)
@@ -294,6 +399,11 @@ namespace Presentacion
 
         private void LinkVentasClientes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            embutidos();
+        }
+
+        private static void embutidos()
+        {
             if (Application.OpenForms["formEmbutidos"] != null)
             {
                 Application.OpenForms["formEmbutidos"].Activate();
@@ -325,6 +435,145 @@ namespace Presentacion
                 linkCerrarSesion.Visible = false;
             }
         }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void verComprasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            compras();
+        }
+
+        private void verVentasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ventas();
+        }
+
+        private void cortesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            cortes();
+        }
+
+        private void personasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            personas();
+        }
+
+        private void stockCortesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            stockCortes();
+        }
+
+        private void baseDeDatosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            baseDeDatos();
+        }
+
+        private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            bool permitirCerrar = true;
+            e.Cancel = true;
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formVentaCaja))
+                {
+                    MessageBox.Show("Para salir de la aplicación debe cerrar las ventanas de ventas");
+                    permitirCerrar = false;
+                    break;
+                }
+            }
+            if (permitirCerrar && MessageBox.Show("¿ Está seguro que desea salir de la aplicación?", "SuperCerdo",
+           MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+            {
+                e.Cancel = false;
+            }            
+        }
+
+        private void linkCerrarCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            cerrarCaja();
+        }
+
+        private void cerrarCaja()
+        {
+            formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
+            frmCajasAbiertas.Show();
+            //FormLoginVendedor frmLogin = new FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+
+            //formCerrarCaja frmCerrarCaja = new formCerrarCaja();
+            //frmCerrarCaja.oUserCierre = oUsuario;
+            //frmCerrarCaja.ShowDialog();
+        }
+
+        private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            abrirCaja();
+        }
+
+        private void abrirCaja()
+        {
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            if (oUsuario != null)
+            {                
+                formAbrirCaja frmAbrirCaja = new formAbrirCaja();
+                frmAbrirCaja.oUserIncio = oUsuario;
+                frmAbrirCaja.ShowDialog();
+            }
+            oUsuario = null;
+        }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.F1:
+                    formAbierto = false;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                    if (!formAbierto)
+                    {
+                        formVentaCaja frmVentaCaja = new formVentaCaja();
+                        frmVentaCaja.Show();
+                    }
+                    break;
+                case Keys.F2:
+                    formAbierto = false;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja2))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                    if (!formAbierto)
+                    {
+                        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
+                        frmVentaCaja2.Show();
+                    }
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void linkCierresDeCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
+            frmCierresDeCaja.Show();
+        }
+       
     }
 
 }
