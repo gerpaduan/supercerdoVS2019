@@ -181,7 +181,7 @@ namespace Presentacion.Caja
 
         private void txtCajaInicial_TextChanged(object sender, EventArgs e)
         {
-            if (!(Utilidades.Util_Form.validarCampoNumerico(txtCajaInicial.Text, "Caja Inicial") && txtCajaInicial.Text != ""))
+            if (!(txtCajaInicial.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtCajaInicial.Text, "Caja Inicial")))
             {
                 txtCajaInicial.Text = "";
             }
@@ -190,7 +190,7 @@ namespace Presentacion.Caja
 
         private void txtVentas_TextChanged(object sender, EventArgs e)
         {
-            if (!(Utilidades.Util_Form.validarCampoNumerico(txtVentas.Text, "Ventas") && txtVentas.Text != ""))
+            if (!(txtVentas.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtVentas.Text, "Ventas")))
             {
                 txtVentas.Text = "";
             }
@@ -199,7 +199,7 @@ namespace Presentacion.Caja
 
         private void txtGastos_TextChanged(object sender, EventArgs e)
         {
-            if (!(Utilidades.Util_Form.validarCampoNumerico(txtGastos.Text, "Gastos") && txtGastos.Text != ""))
+            if (!(txtGastos.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtGastos.Text, "Gastos")))
             {
                 txtGastos.Text = "";
             }
@@ -208,7 +208,7 @@ namespace Presentacion.Caja
 
         private void txtCajaCierre_TextChanged(object sender, EventArgs e)
         {
-            if (!(Utilidades.Util_Form.validarCampoNumerico(txtCajaCierre.Text, "Caja Cierre") && txtCajaCierre.Text != ""))
+            if (!(txtCajaCierre.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtCajaCierre.Text, "Caja Cierre")))
             {
                 txtCajaCierre.Text = "";
             }
@@ -217,7 +217,7 @@ namespace Presentacion.Caja
 
         private void txtCajaInicioSiguiente_TextChanged(object sender, EventArgs e)
         {
-            if (!(Utilidades.Util_Form.validarCampoNumerico(txtCajaInicioSiguiente.Text, "Caja") && txtCajaInicioSiguiente.Text != ""))
+            if (!(txtCajaInicioSiguiente.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtCajaInicioSiguiente.Text, "Caja")))
             {
                 txtCajaInicioSiguiente.Text = "";
             }
@@ -226,7 +226,7 @@ namespace Presentacion.Caja
 
         private void txtImporteRetirado_TextChanged(object sender, EventArgs e)
         {
-            if (!(Utilidades.Util_Form.validarCampoNumerico(txtImporteRetirado.Text, "Importe a Retirar") && txtImporteRetirado.Text != ""))
+            if (!(txtImporteRetirado.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtImporteRetirado.Text, "Importe a Retirar")))
             {
                 txtImporteRetirado.Text = "";
             }
