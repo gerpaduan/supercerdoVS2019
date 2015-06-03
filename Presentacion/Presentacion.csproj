@@ -165,6 +165,12 @@
     <Compile Include="formBackUp.Designer.cs">
       <DependentUpon>formBackUp.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormPrincipal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPrincipal.designer.cs">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </Compile>
     <Compile Include="InterfaceEmbutido.cs" />
     <Compile Include="InterfacePersona.cs" />
     <Compile Include="InterfaceProveedor.cs" />
@@ -303,12 +309,6 @@
     </Compile>
     <Compile Include="Proveedores\formNuevoProveedor.Designer.cs">
       <DependentUpon>formNuevoProveedor.cs</DependentUpon>
-    </Compile>
-    <Compile Include="FormPrincipal.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="FormPrincipal.Designer.cs">
-      <DependentUpon>FormPrincipal.cs</DependentUpon>
     </Compile>
     <Compile Include="Proveedores\formProveedores.cs">
       <SubType>Form</SubType>
@@ -503,6 +503,9 @@
     <EmbeddedResource Include="formBackUp.resx">
       <DependentUpon>formBackUp.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormPrincipal.resx">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Movimientos\formInfoMovimiento.resx">
       <DependentUpon>formInfoMovimiento.cs</DependentUpon>
     </EmbeddedResource>
@@ -565,9 +568,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Proveedores\formNuevoProveedor.resx">
       <DependentUpon>formNuevoProveedor.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="FormPrincipal.resx">
-      <DependentUpon>FormPrincipal.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Proveedores\formProveedores.resx">
       <DependentUpon>formProveedores.cs</DependentUpon>
