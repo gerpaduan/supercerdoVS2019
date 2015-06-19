@@ -246,13 +246,6 @@ namespace Presentacion
             }
         }
 
-
-        private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            stockCortes();
-            
-        }
-
         private static void stockCortes()
         {
             //if (!logueado)
@@ -573,7 +566,11 @@ namespace Presentacion
             formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
             frmCierresDeCaja.Show();
         }
-       
-    }
 
+        private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formStock frm = new formStock();
+            frm.Show();
+        }     
+    }
 }
