@@ -917,7 +917,7 @@ namespace Presentacion.Ventas
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    Leer_Peso.AbrirPuerto();
+                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {
@@ -941,17 +941,40 @@ namespace Presentacion.Ventas
 
         private void formNuevaVenta_Deactivate(object sender, EventArgs e)
         {
-            checkAnterior = checkLeerPeso.Checked;
-            checkLeerPeso.Checked = false;
-            Leer_Peso.CerrarPuerto();
+            //checkAnterior = checkLeerPeso.Checked;
+            //checkLeerPeso.Checked = false;
+            //Leer_Peso.CerrarPuerto();
+            try
+            {
+                checkAnterior = checkLeerPeso.Checked;
+                checkLeerPeso.Checked = false;
+                Leer_Peso.CerrarPuerto();
+
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         private void formNuevaVenta_Activated(object sender, EventArgs e)
         {
-            if (checkAnterior)
+            //if (checkAnterior)
+            //{
+            //    checkLeerPeso.Checked = true;
+            //    Leer_Peso.AbrirPuerto();
+            //}
+            try
             {
-                checkLeerPeso.Checked = true;
-                Leer_Peso.AbrirPuerto();
+                if (checkAnterior)
+                {
+                    checkLeerPeso.Checked = true;
+                    Leer_Peso.AbrirPuerto();
+                }
+            }
+            catch (Exception ex)
+            {
+                checkLeerPeso.Checked = false;
             }
         }
 
@@ -1103,6 +1126,42 @@ namespace Presentacion.Ventas
             panelPago.Visible = true;
             txtAbona.ReadOnly = false;
             txtAbona.Focus();
+        }
+
+        private void formVentaCaja_Leave(object sender, EventArgs e)
+        {
+            Leer_Peso.CerrarPuerto();
+        }
+
+        private void formVentaCaja_Deactivate(object sender, EventArgs e)
+        {
+            try
+            {
+                checkAnterior = checkLeerPeso.Checked;
+                checkLeerPeso.Checked = false;
+                Leer_Peso.CerrarPuerto();
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        private void formVentaCaja_Activated(object sender, EventArgs e)
+        {
+            try
+            {
+                if (checkAnterior)
+                {
+                    checkLeerPeso.Checked = true;
+                    Leer_Peso.AbrirPuerto();
+                }
+            }
+            catch (Exception ex)
+            {
+                checkLeerPeso.Checked = false;
+            }
         }
 
     }
