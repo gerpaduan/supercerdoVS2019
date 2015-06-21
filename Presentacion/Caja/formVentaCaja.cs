@@ -211,12 +211,12 @@ namespace Presentacion.Ventas
                     ticket.imprimir = checkTicket.Checked;
                     ticket.TextoCentro("x");
                     ticket.NoValidoComoFactura();
-                    ticket.LineasEnBlanco(2);
+                    ticket.LineasEnBlanco(1);
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
                     ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
                     ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
-                    ticket.LineasEnBlanco(1);
+                    //ticket.LineasEnBlanco(0);
                     ticket.LineasGuion();
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
@@ -225,15 +225,18 @@ namespace Presentacion.Ventas
                         ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
                             linea.PrecioKg, linea.CantKg, linea.PrecioKg * linea.CantKg);
                     }
-                    ticket.LineasEnBlanco(1);
+                    //ticket.LineasEnBlanco(1);
+                    ticket.TextoDerecha("-------");
                     ticket.AgregaTotales("Total", totalVenta);
                     abona = abona > 0 ? abona : totalVenta;
                     ticket.AgregaTotales("Pago", abona);
                     ticket.AgregaTotales("Vuelto", cambio);
                     ticket.LineasEnBlanco(1);
                     ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
-                    ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
+                    //ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
+                    ticket.TextoIzquierda("Cajero: " + oUsuario.Id);
                     ticket.GraciasPorSuCompra();
+                    ticket.LineasEnBlanco(2);
 
                     lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString();
                     oVentaE.IdVenta = 0;
@@ -241,7 +244,6 @@ namespace Presentacion.Ventas
                 }
                 catch (Exception ex)
                 {
-
                     MessageBox.Show(ex.Message);
                 }
             }
@@ -262,6 +264,10 @@ namespace Presentacion.Ventas
             txtCambio.Text = "";
             panelPago.Visible = false;
             panelAbonar.Visible = true;
+
+            totalVenta = 0;
+            abona = 0;
+            cambio = 0;
 
             listaLineaGrilla = new List<LineaVenta>();
             listaLineaVenta = new List<Entidades.LineaVenta>();
@@ -294,6 +300,7 @@ namespace Presentacion.Ventas
 
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
             txtTotalS.Text = totalPesos.ToString("N2");
+            totalVenta = float.Parse(txtTotalS.Text.Trim());
             abonar();
         }
 
@@ -1022,7 +1029,6 @@ namespace Presentacion.Ventas
         {
             if (txtAbona.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona"))
             {
-                totalVenta = float.Parse(txtTotalS.Text.Trim());
                 abona = float.Parse(txtAbona.Text.Replace('.', ','));
                 cambio = abona - totalVenta;
             }

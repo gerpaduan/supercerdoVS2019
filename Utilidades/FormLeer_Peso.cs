@@ -6,94 +6,110 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.IO.Ports;
 
 namespace Utilidades
 {
-    public class Leer_Peso
+    public partial class FormLeer_Peso : Form
     {
-        //BasculaCom.PortName = "COM1";
-        //BasculaCom.BaudRate = 9600;
-        //BasculaCom.Parity = System.IO.Ports.Parity.None;
-        //BasculaCom.StopBits = StopBits.One;
-        SerialPort BasculaCom = new SerialPort("COM1", 9600, System.IO.Ports.Parity.None, 8, StopBits.One);
-        Label Recibidos = new Label();
-        string pesoBalanza = "";
+        string pesoBalanza;
+
+        public string PesoBalanza
+        {
+            get { return pesoBalanza; }
+            set { pesoBalanza = value; }
+        }
+
         internal delegate void MostrarRecepcion(string Texto);
 
-        public void AbrirPuerto()
+        public FormLeer_Peso()
         {
-            //try
-            //{
-            if (!BasculaCom.IsOpen)
-            {
-                BasculaCom.Open();
-            }
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show("Exception en AbrirPuerto() \n" + ex.Message);
-            //}
+            InitializeComponent();
         }
 
         public void CerrarPuerto()
         {
-            //try
-            //{
             if (BasculaCom.IsOpen)
             {
                 BasculaCom.Close();
             }
+        }
+        public void AbrirPuerto()
+        {
+            //try
+            //{
+            //    if (!BasculaCom.IsOpen)
+            //    {
+            //        BasculaCom.Open();
+            //    }
             //}
             //catch (Exception ex)
             //{
-            //    MessageBox.Show("Exception en CerrarPuerto() \n" + ex.Message);
+            //    MessageBox.Show(ex.Message);
             //}
+            
         }
 
         public string ObtenerPeso()
         {
+            if (!BasculaCom.IsOpen)
+            {
+                BasculaCom.Open();
+            }
+            
+            //BasculaCom.Open();
+            EnviarPeticion();
+            return pesoBalanza;
+
+        }
+
+        private void Leer_Peso_Load(object sender, EventArgs e)
+        {
+            //BasculaCom.Open();
+           // AbrirPuerto();        
+        }
+
+        internal void EnviarPeticion()
+        {
             //try
             //{
-            AbrirPuerto();
+                /// Se envía número 5 para la peticion
+                byte[] miBuffer = new byte[1];
+                miBuffer[0] = 5;
+                this.BasculaCom.Write(miBuffer, 0, miBuffer.Length);
 
-            byte[] miBuffer = new byte[1];
-            miBuffer[0] = 5;
-            BasculaCom.Write(miBuffer, 0, miBuffer.Length);
-            MostrarRecibidos(BasculaCom.ReadExisting());
+              //  MessageBox.Show("EnviarPeticion");
             //}
             //catch (Exception ex)
             //{
-            //    MessageBox.Show("Exception en ObtenerPeso \n" + ex.Message);
+            //    MessageBox.Show("EnviarPeticion  " + ex.Message);
             //}
-            return pesoBalanza;
+
         }
 
         internal void Recibir()
         {
-            //al recibir de la bascula los bytesToRead indicara
-            //un valor superior a 0
-            //MessageBox.Show("  Recibir()");
             try
             {
                 MostrarRecibidos(BasculaCom.ReadExisting());
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Recibir  \n" + ex.Message);
+                MessageBox.Show("Método Recibir  " + ex.Message);
             }
         }
-
         private void MostrarRecibidos(string texto)
         {
             try
             {
                 //Mostrar los bytes recibidos en el Label recibidos
-                //BasculaCom.InvokeRequired
+
                 if (Recibidos.InvokeRequired)
                 {
+                    //MessageBox.Show("MostrarRecibidos InvokeRequired");
                     MostrarRecepcion delegado = new MostrarRecepcion(MostrarRecibidos);
+
                     this.Invoke(delegado, new object[] { texto });
+
                 }
                 else
                 {
@@ -104,13 +120,17 @@ namespace Utilidades
                     {
                         peso = "Error - " + texto;
                     }
+
                     else
                     {
+                        
+
                         int contar = 0; //cuenta los dígitos usables
                         char[] indices = new char[texto.Length];
                         bool esNegativo = false; //si es negativo el peso se estable true
                         foreach (char letra in texto)
                         {
+
                             if (letra == '-')
                             {
                                 indices[contar] = letra;
@@ -138,26 +158,30 @@ namespace Utilidades
                         {
                             nuevoPeso[i] = indices[i];
                         }
+
                         peso = new string(nuevoPeso);
+
+                       // MessageBox.Show("MostrarRecibidos InvokeRequired else. Peso="+peso);
                     }
-                    pesoBalanza = peso;
+
                     Recibidos.Text = peso;
+                    pesoBalanza = Recibidos.Text;
                 }
+
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Exception en MostrarRecibidos() \n" + ex.Message);
+                MessageBox.Show("Método MostrarRecibidos  " + ex.Message);
             }
+
+
         }
 
-        private void Invoke(MostrarRecepcion delegado, object[] p)
+        private void BasculaCom_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
         {
-            throw new NotImplementedException();
-        }
-
-        private void BasculaCom_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
+           // MessageBox.Show("BasculaCom_DataReceived");
             Recibir();
         }
+       
     }
 }

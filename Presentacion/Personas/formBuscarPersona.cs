@@ -56,10 +56,16 @@ namespace Presentacion.Personas
 
         private void cargarDatos(Entidades.Persona oPersonaE)
         {
-            oPersonaE.idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
-            oPersonaE.razonSocial = grillaPersonas.CurrentRow.Cells[1].Value.ToString();
-            oPersonaE.otrosDatos = grillaPersonas.CurrentRow.Cells[2].Value.ToString();
-
+            try
+            {                
+                oPersonaE.idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
+                oPersonaE.razonSocial = grillaPersonas.CurrentRow.Cells[1].Value.ToString();
+                oPersonaE.otrosDatos = grillaPersonas.CurrentRow.Cells[2].Value.ToString();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("No se seleccionó ningún cliente");
+            }
         }
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {

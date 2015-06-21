@@ -1,6 +1,6 @@
 ﻿namespace Utilidades
 {
-    partial class Leer_Peso
+    partial class FormLeer_Peso
     {
         /// <summary>
         /// Required designer variable.
