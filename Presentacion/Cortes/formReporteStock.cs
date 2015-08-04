@@ -23,6 +23,8 @@ namespace Presentacion.Cortes
 
         DataTable dtGrillaReporte = new DataTable();
 
+        int indexUltimaSucursal = -1;
+
         public formReporteStock()
         {
             InitializeComponent();
@@ -597,25 +599,25 @@ namespace Presentacion.Cortes
 
         private void cargarComboCierreStock()
         {
-            if (comboSucursal.ValueMember != "")
+            if (comboSucursal.ValueMember != "" && comboTipoReporte.Text.Equals("Cierre Stock"))
             {
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
 
-                if (comboInicioStock.SelectedIndex == -1)
+                if (indexUltimaSucursal != comboSucursal.SelectedIndex)
                 {
                     DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
                     comboInicioStock.DataSource = dtInicioStock;
                     comboInicioStock.DisplayMember = "fechaCompra";
                     comboInicioStock.ValueMember = "idCompra";
-                    comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 ? 1 : -1;                    
-                }
-                if (comboCierreStock.SelectedIndex == -1)
-                {                    
+                    comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 ? 1 : -1;   
+    
                     comboCierreStock.DataSource = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
                     comboCierreStock.DisplayMember = "fechaCompra";
                     comboCierreStock.ValueMember = "idCompra";
                 }
+
+                indexUltimaSucursal = comboSucursal.SelectedIndex;
             }
         }
 

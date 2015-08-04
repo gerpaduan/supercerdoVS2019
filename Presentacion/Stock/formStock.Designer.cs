@@ -45,7 +45,6 @@
             this.btnBuscar = new System.Windows.Forms.Button();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.btnIngreso = new System.Windows.Forms.ToolStripButton();
             this.btnEgreso = new System.Windows.Forms.ToolStripButton();
@@ -239,7 +238,6 @@
             this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 2;
             this.label2.Text = "Descripción";
-
             // 
             // barraControl
             // 
@@ -384,7 +382,7 @@
             dataGridViewCellStyle1.NullValue = null;
             this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaCompra.FillWeight = 60F;
-            this.fechaCompra.HeaderText = "Fecha Compra";
+            this.fechaCompra.HeaderText = "Fecha";
             this.fechaCompra.Name = "fechaCompra";
             this.fechaCompra.ReadOnly = true;
             // 
