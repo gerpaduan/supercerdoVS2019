@@ -127,6 +127,18 @@ namespace Utilidades
             return (float)value;
         }
 
+        public static bool validarNumeroMayorACero(string valor, string nombreTextBox)
+        {
+            bool resp = true;
+            float? value = convertFloat(valor);
+            if (value.Equals(null) || value <= 0)
+            {
+                resp = false;
+                MessageBox.Show("-" + nombreTextBox + " debe ser un valor mayor a cero.", "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return resp;
+        }
+
         public static bool validarFecha(DateTime fecha, string nombreTextBox)
         {
             bool resp = fecha > DateTime.Now ? false : true;
