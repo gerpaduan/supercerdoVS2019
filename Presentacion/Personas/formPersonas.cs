@@ -46,15 +46,20 @@ namespace Presentacion.Personas
         public void infoPersona()
         {
 
-            Entidades.Persona oPersonaE = new Entidades.Persona();
-            cargarDatos(oPersonaE);
+            try
+            {
+                Entidades.Persona oPersonaE = new Entidades.Persona();
+                cargarDatos(oPersonaE);
 
-            formInfoPersona frmInfoPersona = new formInfoPersona();
-            frmInfoPersona.cargarCampos(oPersonaE);
-            frmInfoPersona.ShowDialog();
-            cargarGrilla();
-
-
+                formInfoPersona frmInfoPersona = new formInfoPersona();
+                frmInfoPersona.cargarCampos(oPersonaE);
+                frmInfoPersona.ShowDialog();
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hubo un error al seleccionar la fila");
+            }
         }
 
         private void cargarDatos(Entidades.Persona oPersonaE)
@@ -111,9 +116,5 @@ namespace Presentacion.Personas
         {
             this.Close();
         }
-
-       
-
-        
     }
 }

@@ -56,6 +56,7 @@
             this.panel5 = new System.Windows.Forms.Panel();
             this.linkVentas = new System.Windows.Forms.LinkLabel();
             this.label1 = new System.Windows.Forms.Label();
+            this.btnTipoConexioin = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.comprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verComprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,6 +67,7 @@
             this.personasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.balanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -101,6 +103,7 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.splitContainer1.Panel2.Controls.Add(this.btnTipoConexioin);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
             this.splitContainer1.Size = new System.Drawing.Size(997, 581);
             this.splitContainer1.SplitterDistance = 203;
@@ -417,6 +420,22 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Ventas";
             // 
+            // btnTipoConexioin
+            // 
+            this.btnTipoConexioin.BackColor = System.Drawing.Color.SteelBlue;
+            this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.btnTipoConexioin.Location = new System.Drawing.Point(674, 0);
+            this.btnTipoConexioin.Name = "btnTipoConexioin";
+            this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
+            this.btnTipoConexioin.TabIndex = 100;
+            this.btnTipoConexioin.TabStop = false;
+            this.btnTipoConexioin.Text = "Con. Local";
+            this.btnTipoConexioin.UseVisualStyleBackColor = false;
+            this.btnTipoConexioin.Visible = false;
+            this.btnTipoConexioin.Click += new System.EventHandler(this.btnTipoConexioin_Click);
+            // 
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -465,7 +484,8 @@
             this.cortesToolStripMenuItem,
             this.personasToolStripMenuItem,
             this.stockCortesToolStripMenuItem,
-            this.baseDeDatosToolStripMenuItem});
+            this.baseDeDatosToolStripMenuItem,
+            this.balanzaToolStripMenuItem});
             this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
             this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
             this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
@@ -497,6 +517,13 @@
             this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
+            // 
+            // balanzaToolStripMenuItem
+            // 
+            this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
+            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.balanzaToolStripMenuItem.Text = "Balanza";
+            this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
             // 
             // FormPrincipal
             // 
@@ -580,6 +607,8 @@
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.LinkLabel linkStock;
+        private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem;
+        private System.Windows.Forms.Button btnTipoConexioin;
     }
 }
 

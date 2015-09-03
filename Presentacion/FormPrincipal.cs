@@ -11,14 +11,17 @@ using Presentacion.Cortes;
 using Presentacion.Pagos;
 using Presentacion.Ventas;
 using Presentacion.Caja;
-
+using Presentacion.Balanza;
 
 
 namespace Presentacion
 {
     public partial class FormPrincipal : Form, InterfaceUsuario
     {
+        
         public static bool logueado = false;
+        //public enum tipoConexion { local, remota }
+        //public static tipoConexion tipoConn  = tipoConexion.local;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
 
@@ -387,7 +390,7 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-
+            Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
         }
 
         private void LinkVentasClientes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -421,11 +424,13 @@ namespace Presentacion
             {
                 linkLogin.Visible = false;
                 linkCerrarSesion.Visible = true;
+                btnTipoConexioin.Visible = true;
             }
             else
             {
                 linkLogin.Visible = true;
                 linkCerrarSesion.Visible = false;
+                btnTipoConexioin.Visible = false;
             }
         }
 
@@ -571,6 +576,40 @@ namespace Presentacion
         {
             formStock frm = new formStock();
             frm.Show();
+        }
+
+        private void balanzaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            formBalanza frmBalanza = new formBalanza();
+            frmBalanza.Show();
+        }
+
+        private void btnTipoConexioin_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms.Count == 1)
+            {
+                if (MessageBox.Show("¿ Está seguro que desea conectarse a otra base de datos?", "Cambiar de conexión",
+                 MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+                {
+                    if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.local)
+                    {
+                        Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.remota;
+                        btnTipoConexioin.Text = "Con. Remota";
+                        btnTipoConexioin.BackColor = Color.DarkSalmon;
+                    }
+                    else
+                    {
+                        Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
+                        btnTipoConexioin.Text = "Con. Local";
+                        btnTipoConexioin.BackColor = Color.SteelBlue;
+                    }
+                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n"+Utilidades.Conexion.getConnString(),"Cambio de conexion",MessageBoxButtons.OK);                    
+                }
+            }
+            else
+            {
+                MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
+            }
         }     
     }
 }
