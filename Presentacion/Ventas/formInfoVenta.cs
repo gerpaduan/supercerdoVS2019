@@ -137,8 +137,10 @@ namespace Presentacion.Ventas
             oVentaE.Turno = drVenta["turno"].ToString();
             oVentaE.Estado = drVenta["estado"].ToString();
             oVentaE.Observaciones = drVenta["observaciones"].ToString();
-            oVentaE.Creado = Convert.ToDateTime(drVenta["creado"].ToString());
             DateTime fechaNull = Convert.ToDateTime("01/01/1990");
+           // oVentaE.Creado = Convert.ToDateTime(drVenta["creado"].ToString());
+            oVentaE.Creado = !String.IsNullOrEmpty(drVenta["creado"].ToString()) ? (Convert.ToDateTime(drVenta["creado"].ToString())) : fechaNull;
+        
             oVentaE.Actualizado = !String.IsNullOrEmpty(drVenta["actualizado"].ToString()) ? (Convert.ToDateTime(drVenta["actualizado"].ToString())) : fechaNull ;
 
             Entidades.Persona oPersona = new Entidades.Persona();
