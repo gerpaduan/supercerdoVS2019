@@ -36,6 +36,7 @@
             this.btnTimer = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.btnVerBalanza = new System.Windows.Forms.Button();
+            this.txtNuevo = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label2
@@ -95,11 +96,22 @@
             this.btnVerBalanza.UseVisualStyleBackColor = true;
             this.btnVerBalanza.Click += new System.EventHandler(this.btnVerBalanza_Click);
             // 
+            // txtNuevo
+            // 
+            this.txtNuevo.Location = new System.Drawing.Point(184, 107);
+            this.txtNuevo.Name = "txtNuevo";
+            this.txtNuevo.Size = new System.Drawing.Size(95, 23);
+            this.txtNuevo.TabIndex = 12;
+            this.txtNuevo.Text = "Nueva Lectura";
+            this.txtNuevo.UseVisualStyleBackColor = true;
+            this.txtNuevo.Click += new System.EventHandler(this.txtNuevo_Click);
+            // 
             // formBalanza
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(372, 142);
+            this.Controls.Add(this.txtNuevo);
             this.Controls.Add(this.btnVerBalanza);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtVelocidadTimer);
@@ -123,5 +135,6 @@
         private System.Windows.Forms.Button btnTimer;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Button btnVerBalanza;
+        private System.Windows.Forms.Button txtNuevo;
     }
 }

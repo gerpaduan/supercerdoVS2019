@@ -12,8 +12,7 @@ namespace Presentacion.Balanza
     public partial class formBalanza : Form
     {
 
-        Utilidades.FormLeer_Peso Leer_Peso = Utilidades.FormLeer_Peso.CrearLeerPeso();
-
+        Utilidades.SingletonLeerPeso Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
         public formBalanza()
         {
             InitializeComponent();
@@ -43,24 +42,40 @@ namespace Presentacion.Balanza
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            txtPesoBalanza.Text = Leer_Peso.ObtenerPeso();
+            try
+            {
+                Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                txtPesoBalanza.Text = Leer_Peso.ObtenerPeso();
+            }
+            catch (Exception ex)
+            {
+                timer1.Enabled = false;
+                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                {
+                    
+                }
+                else
+                {
+                }
+            }
         }
 
         private void btnVerBalanza_Click(object sender, EventArgs e)
-        {
-
-            
+        {            
             //Leer_Peso.Show();
             try
             {
-                Leer_Peso.Show();
+                Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
             }
             catch (Exception)
             {
-                //Leer_Peso.Dispose();
-                Leer_Peso = Utilidades.FormLeer_Peso.CrearLeerPeso();
-                Leer_Peso.Show();
             }
+        }
+
+        private void txtNuevo_Click(object sender, EventArgs e)
+        {
+            formBalanza frm = new formBalanza();
+            frm.Show();
         }
     }
 }
