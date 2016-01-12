@@ -151,6 +151,12 @@ namespace Utilidades
 
         }
 
+        public static DialogResult errorBalanza(string error)
+        {
+            DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + error + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            return resp;
+        }
+
         private void Util_Form_Load(object sender, EventArgs e)
         {
 
