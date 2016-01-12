@@ -19,7 +19,7 @@ namespace Presentacion.Ventas
         bool formAbierto = false;
         bool pesoBalanza = false;
         bool checkAnterior = false;
-        Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
         public string vendedor = "-";
@@ -60,6 +60,8 @@ namespace Presentacion.Ventas
         public formVentaCaja()
         {
             InitializeComponent();
+
+            timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;
 
             //asigo sucursal a la venta  
@@ -451,10 +453,10 @@ namespace Presentacion.Ventas
             {
                 txtCantKgs.Focus();
                 return false;
-            }
+            } 
             else
             {
-                return true;
+                return Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
             }
         }
 
@@ -603,14 +605,14 @@ namespace Presentacion.Ventas
                     oCorteE = new Entidades.Corte();
 
                     DataTable dtCortes = new DataTable();
-                    dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
+                        dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
 
                     if (dtCortes.Rows.Count > 0)
                     {
                         foreach (DataRow fila in dtCortes.Rows)
                         {
-                            if (Convert.ToInt32(fila["idSucursal"].ToString()) == oSucursalE.idSucursal)
-                            {
+                            //if (Convert.ToInt32(fila["idSucursal"].ToString()) == oSucursalE.idSucursal)
+                            //{
                                 //cargo el corte
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
@@ -618,12 +620,12 @@ namespace Presentacion.Ventas
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
 
                                 //cargo stock
-                                oStockCorteSucursal.Corte = oCorteE;
-                                oStockCorteSucursal.Sucursal = oSucursalE;
+                                //oStockCorteSucursal.Corte = oCorteE;
+                                //oStockCorteSucursal.Sucursal = oSucursalE;
 
-                                oStockCorteSucursal.Stock = float.Parse(fila["stock"].ToString());
+                                //oStockCorteSucursal.Stock = float.Parse(fila["stock"].ToString());
 
-                            }
+                            //}
 
                         }
                         //cargo los campos
@@ -872,16 +874,8 @@ namespace Presentacion.Ventas
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 e.Handled = true;
-
                 SendKeys.Send("{TAB}");
-
             }
-
-        }
-
-        private void grupoCortes_Enter(object sender, EventArgs e)
-        {
-
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -890,14 +884,14 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso(); //"000.568";
+                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
                 }
             }
             catch (Exception ex)
             {
                 timer1.Enabled = false;
-                DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + ex.Message + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
-                if (resp == DialogResult.Yes)
+                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
                     checkLeerPeso.Checked = false;
                 }
@@ -917,7 +911,6 @@ namespace Presentacion.Ventas
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {
@@ -925,7 +918,6 @@ namespace Presentacion.Ventas
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     timer1.Enabled = false;
-                    Leer_Peso.CerrarPuerto();
                 }
             }
             catch (Exception ex)
@@ -934,61 +926,15 @@ namespace Presentacion.Ventas
             }
         }
 
-        private void formNuevaVenta_Leave(object sender, EventArgs e)
-        {
-            Leer_Peso.CerrarPuerto();
-        }
-
-        private void formNuevaVenta_Deactivate(object sender, EventArgs e)
-        {
-            //checkAnterior = checkLeerPeso.Checked;
-            //checkLeerPeso.Checked = false;
-            //Leer_Peso.CerrarPuerto();
-            try
-            {
-                checkAnterior = checkLeerPeso.Checked;
-                checkLeerPeso.Checked = false;
-                Leer_Peso.CerrarPuerto();
-
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
-
-        private void formNuevaVenta_Activated(object sender, EventArgs e)
-        {
-            //if (checkAnterior)
-            //{
-            //    checkLeerPeso.Checked = true;
-            //    Leer_Peso.AbrirPuerto();
-            //}
-            try
-            {
-                if (checkAnterior)
-                {
-                    checkLeerPeso.Checked = true;
-                    Leer_Peso.AbrirPuerto();
-                }
-            }
-            catch (Exception ex)
-            {
-                checkLeerPeso.Checked = false;
-            }
-        }
-
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
-            ///login
-            //FormLoginVendedor frmLogin = new FormLoginVendedor();
-            //frmLogin.ShowDialog(this);
             if (oUsuario != null)
             {
                 validarAperturaCaja();
                 oVentaE.Vendedor = oUsuario;
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
+                this.Text = oUsuario.Nombre;
                 Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
@@ -1127,42 +1073,5 @@ namespace Presentacion.Ventas
             txtAbona.ReadOnly = false;
             txtAbona.Focus();
         }
-
-        private void formVentaCaja_Leave(object sender, EventArgs e)
-        {
-            Leer_Peso.CerrarPuerto();
-        }
-
-        private void formVentaCaja_Deactivate(object sender, EventArgs e)
-        {
-            try
-            {
-                checkAnterior = checkLeerPeso.Checked;
-                checkLeerPeso.Checked = false;
-                Leer_Peso.CerrarPuerto();
-
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
-
-        private void formVentaCaja_Activated(object sender, EventArgs e)
-        {
-            try
-            {
-                if (checkAnterior)
-                {
-                    checkLeerPeso.Checked = true;
-                    Leer_Peso.AbrirPuerto();
-                }
-            }
-            catch (Exception ex)
-            {
-                checkLeerPeso.Checked = false;
-            }
-        }
-
     }
 }
