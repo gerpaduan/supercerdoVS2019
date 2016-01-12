@@ -12,6 +12,7 @@ using Presentacion.Pagos;
 using Presentacion.Ventas;
 using Presentacion.Caja;
 using Presentacion.Balanza;
+using System.Configuration;
 
 
 namespace Presentacion
@@ -24,6 +25,9 @@ namespace Presentacion
         //public static tipoConexion tipoConn  = tipoConexion.local;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
+
+        Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         public FormPrincipal()
         {
@@ -391,6 +395,11 @@ namespace Presentacion
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
+
+            //asigo sucursal al título  
+            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            oSucursalE = oSucursalN.findById(idSucursal);
+            this.Text = this.Text + " | Suc. " + oSucursalE.sucursal;
         }
 
         private void LinkVentasClientes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -580,8 +589,7 @@ namespace Presentacion
 
         private void balanzaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            formBalanza frmBalanza = new formBalanza();
-            frmBalanza.Show();
+            
         }
 
         private void btnTipoConexioin_Click(object sender, EventArgs e)
@@ -610,6 +618,18 @@ namespace Presentacion
             {
                 MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
             }
+        }
+
+        private void verBalanzaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Utilidades.FormLeer_Peso frm = Utilidades.FormLeer_Peso.CrearLeerPeso();
+            frm.Show();
+        }
+
+        private void leerPesoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            formBalanza frm = new formBalanza();
+            frm.Show();
         }     
     }
 }

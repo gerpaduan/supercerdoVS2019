@@ -68,6 +68,8 @@
             this.stockCortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.balanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.verBalanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.leerPesoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -520,10 +522,27 @@
             // 
             // balanzaToolStripMenuItem
             // 
+            this.balanzaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.verBalanzaToolStripMenuItem,
+            this.leerPesoToolStripMenuItem});
             this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
             this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.balanzaToolStripMenuItem.Text = "Balanza";
             this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
+            // 
+            // verBalanzaToolStripMenuItem
+            // 
+            this.verBalanzaToolStripMenuItem.Name = "verBalanzaToolStripMenuItem";
+            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.verBalanzaToolStripMenuItem.Text = "Ver Balanza";
+            this.verBalanzaToolStripMenuItem.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem_Click);
+            // 
+            // leerPesoToolStripMenuItem
+            // 
+            this.leerPesoToolStripMenuItem.Name = "leerPesoToolStripMenuItem";
+            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.leerPesoToolStripMenuItem.Text = "Leer Peso";
+            this.leerPesoToolStripMenuItem.Click += new System.EventHandler(this.leerPesoToolStripMenuItem_Click);
             // 
             // FormPrincipal
             // 
@@ -609,6 +628,8 @@
         private System.Windows.Forms.LinkLabel linkStock;
         private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem;
         private System.Windows.Forms.Button btnTipoConexioin;
+        private System.Windows.Forms.ToolStripMenuItem verBalanzaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem;
     }
 }
 
