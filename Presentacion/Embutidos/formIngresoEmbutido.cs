@@ -16,7 +16,7 @@ namespace Presentacion
     public partial class formIngresoEmbutido : formBaseColor, InterfaceCorte, InterfaceEmbutido
     {
         bool checkAnterior = false;
-        Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Utilidades.SingletonLeerPeso Leer_Peso;
 
         formEmbutidos frmEmbutidos=new formEmbutidos();
         DataTable dtSucursales;
@@ -32,11 +32,11 @@ namespace Presentacion
         List<CortePorEmbutido> listaCortesEnGrilla = new List<CortePorEmbutido>();
 
         List<Entidades.CortePorEmbutido> listaCortePorEmbutido = new List<Entidades.CortePorEmbutido>();
-        //List<Entidades.Corte> listaCorteEnGrilla = new List<Entidades.Corte>();
 
         public formIngresoEmbutido()
         {
             InitializeComponent();
+            timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             cargarComboSucursal();
         }
 
@@ -300,13 +300,6 @@ namespace Presentacion
 
         #endregion
 
-
-        private void checkBoxKgPorDefecto_Click(object sender, EventArgs e)
-        {
-            
-
-        }
-
         private void btnBuscarEmbutido_Click(object sender, EventArgs e)
         {
             formBuscarEmbutido frmBuscarEmbutido = new formBuscarEmbutido();
@@ -343,9 +336,7 @@ namespace Presentacion
         {
             agregarCorteEnEmbutido();
             txtCodCorteEnEmbutido.Focus();
-        }
-
-        
+        }        
 
         private void btnGuardar_Click(object sender, EventArgs e)
         {
@@ -359,9 +350,7 @@ namespace Presentacion
             if ((respuesta == DialogResult.Yes))
             {
                 this.Close();
-            }
-
-            
+            }            
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
@@ -371,16 +360,11 @@ namespace Presentacion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
             if (e.KeyChar == (char)(Keys.Enter))
             {
-
                 e.Handled = true;
-
                 SendKeys.Send("{TAB}");
-
             }
-
         }
 
         private void cargarCorteEnEmbutido()
@@ -389,7 +373,6 @@ namespace Presentacion
             {
                 if (txtCodCorteEnEmbutido.Text.Trim() != "")
                 {
-                    //oCorteEmbutidoE = null;
                     oCorteE = new Entidades.Corte();
 
                     DataTable dtCorte = new DataTable();
@@ -404,7 +387,6 @@ namespace Presentacion
                             oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                             oCorteE.corte = fila["corte"].ToString();
                         }
-
                         //se cargan los datos del corte
                         txtCorteEnEmbutido.Text = oCorteE.corte;
                     }
@@ -414,21 +396,13 @@ namespace Presentacion
                         MessageBox.Show("El código no existe");
                         txtCodCorteEnEmbutido.Focus();
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
 
                 MessageBox.Show(ex.Message);
             }
-
-        }
-
-        private void txtCodigoEmbutido_TextChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void txtCodCorteEnEmbutido_TextChanged(object sender, EventArgs e)
@@ -449,9 +423,7 @@ namespace Presentacion
                 {
                     return;
                 }
-
             }
-
             base.WndProc(ref m);
         }
 
@@ -474,7 +446,6 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {
@@ -482,7 +453,6 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     timer1.Enabled = false;
-                    Leer_Peso.CerrarPuerto();
                 }
             }
             catch (Exception ex)
@@ -497,52 +467,22 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();                     
+                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
                 }
             }
             catch (Exception ex)
             {
                 timer1.Enabled = false;
-               DialogResult resp= MessageBox.Show("Error al leer peso de Balanza: "+ex.Message+".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?","Error balanza",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button1);
-               if (resp==DialogResult.Yes)
-               {
-                   checkLeerPeso.Checked = false;
-               }
-               else
-               {
-                   timer1.Enabled = true;
-               }
-            }
-        }
-
-        private void formIngresoEmbutido_Leave(object sender, EventArgs e)
-        {
-            Leer_Peso.CerrarPuerto();
-        }
-
-        private void formIngresoEmbutido_Activated(object sender, EventArgs e)
-        {
-            try
-            {
-                if (checkAnterior)
+                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
-                    checkLeerPeso.Checked = true;
-                    Leer_Peso.AbrirPuerto();
+                    checkLeerPeso.Checked = false;
+                }
+                else
+                {
+                    timer1.Enabled = true;
                 }
             }
-            catch (Exception ex)
-            {
-                checkLeerPeso.Checked = false;
-            }
         }
-
-        private void formIngresoEmbutido_Deactivate(object sender, EventArgs e)
-        {
-            checkAnterior = checkLeerPeso.Checked;
-            checkLeerPeso.Checked = false;
-            Leer_Peso.CerrarPuerto();
-        }
-
-        
     }
 }

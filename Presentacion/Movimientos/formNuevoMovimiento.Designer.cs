@@ -605,6 +605,7 @@
             // timer1
             // 
             this.timer1.Enabled = true;
+            this.timer1.Interval = 10;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // txtCantTotUni
@@ -652,10 +653,7 @@
             this.Name = "formNuevoMovimiento";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nuevo Movimiento";
-            this.Deactivate += new System.EventHandler(this.formNuevoMovimiento_Deactivate);
             this.Load += new System.EventHandler(this.formNuevoMovimiento_Load);
-            this.Activated += new System.EventHandler(this.formNuevoMovimiento_Activated);
-            this.Leave += new System.EventHandler(this.formNuevoMovimiento_Leave);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formNuevoMovimiento_FormClosing);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
