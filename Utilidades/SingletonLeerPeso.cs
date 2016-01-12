@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO.Ports;
+using System.Configuration;
 
 namespace Utilidades
 {
@@ -15,7 +16,7 @@ namespace Utilidades
         private static SingletonLeerPeso _singleton;
         SerialPort BasculaCom;
         string lineas = "Se capturó \r\n";
-        private static System.Timers.Timer timer1 = new System.Timers.Timer(300);
+        private static System.Timers.Timer timer1 = new System.Timers.Timer(Convert.ToInt32(ConfigurationManager.AppSettings["timerBalanza"].ToString()));
         Label Recibidos = new Label();
         Util_Form util_form = new Util_Form();
         private SingletonLeerPeso()
@@ -33,11 +34,19 @@ namespace Utilidades
             }
             return _singleton;
         }
+
         string pesoBalanza;
         public string PesoBalanza
         {
             get { return pesoBalanza; }
             set { pesoBalanza = value; }
+        }
+
+        string errorBalanza;
+        public string ErrorBalanza
+        {
+            get { return errorBalanza; }
+            set { errorBalanza = value; }
         }
 
         internal delegate void MostrarRecepcion(string Texto);
@@ -59,6 +68,10 @@ namespace Utilidades
 
         public string ObtenerPeso()
         {
+            if (!string.IsNullOrEmpty(ErrorBalanza))
+            {
+                throw new Exception(ErrorBalanza);
+            }
             return pesoBalanza;
 
         }
@@ -72,16 +85,14 @@ namespace Utilidades
                 BasculaCom.Write(miBuffer, 0, miBuffer.Length);
                 string readExisting = BasculaCom.ReadExisting();
                 this.MostrarRecibidos(readExisting);
+                ErrorBalanza = null;
             }
             catch (Exception ex)
             {
-                Utilidades.Util_Form.errorBalanza(ex.Message);
-                //throw Exception ;
+                ErrorBalanza = ex.Message+"\r\nError en Singleton";
                 timer1.Enabled = false;
                 CerrarPuerto();
-                //BasculaCom = new SerialPort("COM1", 9600, System.IO.Ports.Parity.None, 8, StopBits.One);
                 pesoBalanza = null;
-                _singleton = null;
             }
         }
         private void MostrarRecibidos(string texto)
