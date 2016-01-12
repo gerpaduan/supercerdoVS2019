@@ -8,13 +8,14 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
 using Presentacion.Cortes;
+using System.Configuration;
 
 namespace Presentacion.Ventas
 {
     public partial class formNuevaVenta : Form, InterfaceCorte, InterfacePersona
     {
         bool checkAnterior = false;
-        Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Utilidades.SingletonLeerPeso Leer_Peso;
         #region variables
         formVentas frmVentas;
         DataTable dtSucursales;
@@ -52,6 +53,7 @@ namespace Presentacion.Ventas
         public formNuevaVenta()
         {
             InitializeComponent();
+            timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             cargarSucursal();
             dtCortes = oCorteN.obtenerCortes();
             if (!fecha.Equals(""))
@@ -256,10 +258,13 @@ namespace Presentacion.Ventas
             oVentaE.Persona = oCliente;
             oVentaE.Turno = comboTurno.SelectedItem.ToString();
 
-            //asigo sucursal a la venta
-            
+            //asigo sucursal a la venta            
             oVentaE.Sucursal = oSucursalE;
 
+            Entidades.Usuario oUsuario = new Entidades.Usuario();
+            oUsuario.Id = 0;
+
+            oVentaE.Vendedor = oUsuario;
             oVentaE.FechaVenta = txtFechaVenta.Value;
             oVentaE.DiaFestivo = txtDiaFestivo.Text.Trim();
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
@@ -713,7 +718,6 @@ namespace Presentacion.Ventas
                     }
                     catch (Exception)
                     {
-
                         totalCorte = float.Parse(txtTotalCorte.Text.Trim());
                     }
 
@@ -778,12 +782,10 @@ namespace Presentacion.Ventas
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             DialogResult respuesta = MessageBox.Show("¿Está seguro de quitar el corte seleccionado?. ", "Quitar Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
             if (respuesta == System.Windows.Forms.DialogResult.Yes)
             {
                 quitarLinea();
-            }
-            
+            }            
         }
 
         private void salir()
@@ -893,14 +895,14 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso(); //"000.568";
+                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
                 }
             }
             catch (Exception ex)
             {
                 timer1.Enabled = false;
-                DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + ex.Message + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
-                if (resp == DialogResult.Yes)
+                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
                     checkLeerPeso.Checked = false;
                 }
@@ -920,7 +922,6 @@ namespace Presentacion.Ventas
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {
@@ -928,40 +929,11 @@ namespace Presentacion.Ventas
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     timer1.Enabled = false;
-                    Leer_Peso.CerrarPuerto();
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-            }
-        }
-
-        private void formNuevaVenta_Leave(object sender, EventArgs e)
-        {
-            Leer_Peso.CerrarPuerto();
-        }
-
-        private void formNuevaVenta_Deactivate(object sender, EventArgs e)
-        {
-            checkAnterior = checkLeerPeso.Checked;
-            checkLeerPeso.Checked = false;
-            Leer_Peso.CerrarPuerto();
-        }
-
-        private void formNuevaVenta_Activated(object sender, EventArgs e)
-        {
-            try
-            {
-                if (checkAnterior)
-                {
-                    checkLeerPeso.Checked = true;
-                    Leer_Peso.AbrirPuerto();
-                }
-            }
-            catch (Exception ex)
-            {
-                checkLeerPeso.Checked = false;
             }
         }
 
@@ -971,20 +943,11 @@ namespace Presentacion.Ventas
             {
                 if (checkFijarPrecio.Checked)
                 {
-                    if (!txtPrecioKg.Text.Equals(""))
+                    if (!txtPrecioKg.Text.Equals("") && Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$/Kg"))
                     {
                         try
                         {
-
-                            try
-                            {
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                            }
-                            catch (Exception)
-                            {
-
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim());
-                            }
+                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text);
                             txtPrecioKg.ReadOnly = true;
                             txtTotalCorte.ReadOnly = true;
 
@@ -1001,13 +964,12 @@ namespace Presentacion.Ventas
                     else
                     {
                         checkFijarPrecio.Checked = false;
-                        MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
                     }                    
                 }
                 else
                 {
-                    //txtCantKgs.Text = "";
                     txtPrecioKg.ReadOnly = false;
+                    txtPrecioKg.Focus();
                     txtTotalCorte.ReadOnly = false;
                 }
             }

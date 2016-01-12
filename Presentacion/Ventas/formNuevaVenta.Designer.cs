@@ -758,6 +758,7 @@
             // timer1
             // 
             this.timer1.Enabled = true;
+            this.timer1.Interval = 50;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // txtCreado
@@ -841,10 +842,7 @@
             this.Name = "formNuevaVenta";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nueva Venta";
-            this.Deactivate += new System.EventHandler(this.formNuevaVenta_Deactivate);
             this.Load += new System.EventHandler(this.formNuevaVenta_Load);
-            this.Activated += new System.EventHandler(this.formNuevaVenta_Activated);
-            this.Leave += new System.EventHandler(this.formNuevaVenta_Leave);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.grupoCortes.ResumeLayout(false);
