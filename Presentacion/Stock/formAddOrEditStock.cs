@@ -15,8 +15,7 @@ namespace Presentacion
 {
     public partial class formAddOrEditStock : Form, InterfaceCorte       
     {
-
-        Utilidades.Leer_Peso Leer_Peso = new Utilidades.Leer_Peso();
+        Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         
         DataTable dtCorte = new DataTable();
@@ -415,7 +414,6 @@ namespace Presentacion
                         return true;
                     }
                 }
-
             }
         }
 
@@ -561,14 +559,14 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
+                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
                     txtCantKgs.Text = Leer_Peso.ObtenerPeso();
                 }
             }
             catch (Exception ex)
-            {
+            {                
                 timer1.Enabled = false;
-                DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + ex.Message + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
-                if (resp == DialogResult.Yes)
+                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
                     checkLeerPeso.Checked = false;
                 }
@@ -588,7 +586,6 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
-                    //Leer_Peso.AbrirPuerto();
                 }
                 else
                 {
@@ -596,7 +593,6 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     timer1.Enabled = false;
-                    Leer_Peso.CerrarPuerto();
                 }
             }
             catch (Exception ex)
