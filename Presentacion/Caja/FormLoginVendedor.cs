@@ -43,6 +43,11 @@ namespace Presentacion.Caja
 
         private void btnIngresar_Click(object sender, EventArgs e)
         {
+            ingresar();          
+        }
+
+        private void ingresar()
+        {
             oUsuarioE = oUsuarioN.validarUsuario(comboUsuario.SelectedValue.ToString(), txtClave.Text);
             if (oUsuarioE != null)
             {
@@ -50,9 +55,16 @@ namespace Presentacion.Caja
             }
             else
             {
-                MessageBox.Show("Contraseña incorrecta.", "Error Login", MessageBoxButtons.OK ,MessageBoxIcon.Error);
+                MessageBox.Show("Contraseña incorrecta.", "Error Login", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            
+        }
+
+        private void txtClave_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)(Keys.Enter))
+            {
+                ingresar();
+            }
         }
     }
 }

@@ -1033,6 +1033,11 @@ namespace Presentacion.Ventas
 
         private void btnIngresar_Click(object sender, EventArgs e)
         {
+            desbloquear();
+        }
+
+        private void desbloquear()
+        {
             if (txtClave.Text.Equals(oUsuario.Clave))
             {
                 panelBloquear.Visible = false;
@@ -1072,6 +1077,14 @@ namespace Presentacion.Ventas
             panelPago.Visible = true;
             txtAbona.ReadOnly = false;
             txtAbona.Focus();
+        }
+
+        private void txtClave_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)(Keys.Enter))
+            {
+                desbloquear();
+            }
         }
     }
 }
