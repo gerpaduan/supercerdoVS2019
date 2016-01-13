@@ -103,21 +103,28 @@ namespace Presentacion
         {
             try
             {
-                formModificarPrecios frmModificarPrecios = new formModificarPrecios();
-
-                foreach (DataGridViewRow filaCorte in grillaCortes.Rows)
+                if (Presentacion.FormPrincipal.logueado == false)
                 {
-                    if (!frmModificarPrecios.finalizarMod)
+                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+                }
+                else
+                {
+                    formModificarPrecios frmModificarPrecios = new formModificarPrecios();
+
+                    foreach (DataGridViewRow filaCorte in grillaCortes.Rows)
                     {
-                        cargarCorte(filaCorte.Index);
-                        frmModificarPrecios.obtenerCorteFormCortes(oCorteE, this);
-                        frmModificarPrecios.ShowDialog();
+                        if (!frmModificarPrecios.finalizarMod)
+                        {
+                            cargarCorte(filaCorte.Index);
+                            frmModificarPrecios.obtenerCorteFormCortes(oCorteE, this);
+                            frmModificarPrecios.ShowDialog();
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    else
-                    {
-                        break;
-                    }                    
-                }                              
+                }      
             }
             catch (Exception ex)
             {                

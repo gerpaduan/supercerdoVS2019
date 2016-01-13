@@ -44,27 +44,17 @@ namespace Presentacion
 
         private static void compras()
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formCompras"] != null)
                 {
-
                     Application.OpenForms["formCompras"].Activate();
                     Application.OpenForms["formCompras"].WindowState = FormWindowState.Normal;
-
                 }
                 else
                 {
-
                     formCompras frmCompras = new formCompras();
                     frmCompras.Show();
-
                 }
             }
             else
@@ -80,34 +70,24 @@ namespace Presentacion
 
         private static void ventas()
         {
-            //if (!logueado)
-            //{
-            //    //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    //frmLogin.ShowDialog();
-            //    //logueado = frmLogin.Logueado();                
-            //}
-            //if (logueado)
-            //{
+            if (logueado)
+            {
                 if (Application.OpenForms["formVentas"] != null)
                 {
-
                     Application.OpenForms["formVentas"].Activate();
                     Application.OpenForms["formVentas"].WindowState = FormWindowState.Normal;
-
                 }
                 else
                 {
-
                     formVentas frmVentas = new formVentas();
                     frmVentas.Logueado = logueado;
                     frmVentas.Show();
-
                 }
-            //}
-            //else
-            //{
-            //    MessageBox.Show("No está logueado");
-            //}
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
         }
 
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)

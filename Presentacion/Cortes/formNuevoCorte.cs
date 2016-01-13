@@ -25,12 +25,8 @@ namespace Presentacion
 
         public formNuevoCorte()
         {
-            InitializeComponent();
-            
+            InitializeComponent();            
         }
-
-
-
 
         #region eventos
 
@@ -392,12 +388,11 @@ namespace Presentacion
 
         private void formNuevoCorte_Load(object sender, EventArgs e)
         {
-
+            if (Presentacion.FormPrincipal.logueado == false)
+            {
+                MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+                this.Close();
+            }
         }
-
-        
-
-        
-
     }
 }

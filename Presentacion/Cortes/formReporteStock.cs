@@ -511,16 +511,21 @@ namespace Presentacion.Cortes
             //TotalPorCortesVendidos
             if (comboTipoReporte.SelectedIndex == 3)
             {
-                //DataTable dtTotalPorCortesVendidos = new DataTable();
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
-                
-                //si está logueado
-                if (Presentacion.FormPrincipal.logueado)
+                if (Presentacion.FormPrincipal.logueado == false)
                 {
-                    dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
                 }
-                grillaReportes.DataSource = dtGrillaReporte;
+                else
+                {
+                    //si está logueado
+                    if (Presentacion.FormPrincipal.logueado)
+                    {
+                        dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                    }
+                    grillaReportes.DataSource = dtGrillaReporte;
+                }
             }
             
             //TotalKgsCortePorCompra
@@ -532,12 +537,9 @@ namespace Presentacion.Cortes
 
                 dtGrillaReporte = oCorteN.TotalKgsCortePorCompra(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                     fechaDesde.Value.Date, fechaHasta.Value.Date);
-
-
                 grillaReportes.DataSource = dtGrillaReporte;
 
             }
-
 
             //TotalMovimientosPorCorte
             if (comboTipoReporte.SelectedIndex == 5) 

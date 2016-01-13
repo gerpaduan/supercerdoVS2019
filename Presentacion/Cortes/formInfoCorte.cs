@@ -26,10 +26,6 @@ namespace Presentacion
 
         private void modificar_Click(object sender, EventArgs e)
         {
-            //formModificarCorte frmModificarCorte = new formModificarCorte();
-            //frmModificarCorte.obtenerCorteFormInfoCorte(oCorteE, this);
-            //frmModificarCorte.ShowDialog();
-
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
             frmNuevoCorte.obtenerCorteFormInfoCorte(oCorteE, this);
             frmNuevoCorte.ShowDialog();
@@ -136,7 +132,14 @@ namespace Presentacion
 
         private void eliminar_Click(object sender, EventArgs e)
         {
-            eliminarCorte();
+            if (Presentacion.FormPrincipal.logueado == false)
+            {
+                MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+            }
+            else
+            {
+                eliminarCorte();
+            }
         }
 
     }

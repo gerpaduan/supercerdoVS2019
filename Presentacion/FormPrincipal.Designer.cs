@@ -362,10 +362,10 @@
             this.linkCompras.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
             this.linkCompras.Location = new System.Drawing.Point(23, 14);
             this.linkCompras.Name = "linkCompras";
-            this.linkCompras.Size = new System.Drawing.Size(121, 16);
+            this.linkCompras.Size = new System.Drawing.Size(63, 16);
             this.linkCompras.TabIndex = 1;
             this.linkCompras.TabStop = true;
-            this.linkCompras.Text = "Registrar Compras";
+            this.linkCompras.Text = "Compras";
             this.linkCompras.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCompras_LinkClicked);
             // 
             // label2
