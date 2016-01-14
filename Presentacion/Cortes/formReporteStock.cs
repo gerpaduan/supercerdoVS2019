@@ -561,11 +561,8 @@ namespace Presentacion.Cortes
                 grillaReportes.Columns["Total Unidades"].DefaultCellStyle.Font = fuente;
                 grillaReportes.Columns["Total Kgs"].DefaultCellStyle.BackColor = Color.LightBlue;
                 grillaReportes.Columns["Total Kgs"].DefaultCellStyle.Font = fuente;
-
-            }
-        
+            }        
         }
-
         
         private void cargarSucursales()
         {
@@ -574,7 +571,6 @@ namespace Presentacion.Cortes
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idsucursal";
-
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -599,25 +595,25 @@ namespace Presentacion.Cortes
 
         private void cargarComboCierreStock()
         {
-            if (comboSucursal.ValueMember != "")
+            if (comboSucursal.ValueMember != "" && comboTipoReporte.Text == "Cierre Stock")
             {
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
 
-                if (comboInicioStock.SelectedIndex == -1)
-                {
+                //if (comboInicioStock.SelectedIndex == -1)
+                //{
                     DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
                     comboInicioStock.DataSource = dtInicioStock;
                     comboInicioStock.DisplayMember = "fechaCompra";
                     comboInicioStock.ValueMember = "idCompra";
                     comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 ? 1 : -1;                    
-                }
-                if (comboCierreStock.SelectedIndex == -1)
-                {                    
+                //}
+                //if (comboCierreStock.SelectedIndex == -1)
+                //{                    
                     comboCierreStock.DataSource = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
                     comboCierreStock.DisplayMember = "fechaCompra";
                     comboCierreStock.ValueMember = "idCompra";
-                }
+                //}
             }
         }
 
@@ -636,7 +632,14 @@ namespace Presentacion.Cortes
             }
         }
 
-      
+        private void comboInicioStock_SelectedValueChanged(object sender, EventArgs e)
+        {
+            cargarGrilla();
+        }
 
+        private void comboCierreStock_SelectedValueChanged(object sender, EventArgs e)
+        {
+            cargarGrilla();
+        }
     }
 }
