@@ -595,7 +595,7 @@ namespace Presentacion.Cortes
 
         private void cargarComboCierreStock()
         {
-            if (comboSucursal.ValueMember != "" && comboTipoReporte.Text == "Cierre Stock")
+            if (comboSucursal.ValueMember != "" && comboTipoReporte.Text.Equals("Cierre Stock"))
             {
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
