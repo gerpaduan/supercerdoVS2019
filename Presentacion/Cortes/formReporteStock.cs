@@ -23,6 +23,8 @@ namespace Presentacion.Cortes
 
         DataTable dtGrillaReporte = new DataTable();
 
+        int indexUltimaSucursal = -1;
+
         public formReporteStock()
         {
             InitializeComponent();
