@@ -1,0 +1,10 @@
+E:\Sistemas\supercerdo\Utilidades\bin\Debug\Utilidades.dll
+E:\Sistemas\supercerdo\Utilidades\bin\Debug\Utilidades.pdb
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.FormLogin.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.FormLoginVendedor.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.FormLeer_Peso.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.Util_Form.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades1.csproj.GenerateResource.Cache
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.pdb
