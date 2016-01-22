@@ -6,7 +6,10 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
 using Presentacion.Reportes;
+using System.IO;
 
 namespace Presentacion.Cortes
 {
@@ -406,7 +409,7 @@ namespace Presentacion.Cortes
                         }
                         grillaReportes.DataSource = dtGrillaReporte;
 
-                        Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+                        System.Drawing.Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
                         grillaReportes.Columns["Codigo"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Corte"].DefaultCellStyle.Font = fuente;
@@ -555,7 +558,7 @@ namespace Presentacion.Cortes
 
                 grillaReportes.DataSource = dtGrillaReporte;
                 //grillaReportes.AlternatingRowsDefaultCellStyle.BackColor = grillaReportes.AlternatingRowsDefaultCellStyle.BackColor.Name{"0"};
-                Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+                System.Drawing.Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
                 grillaReportes.Columns["Codigo"].DefaultCellStyle.Font = fuente;
                 grillaReportes.Columns["Corte"].DefaultCellStyle.Font = fuente;
@@ -637,6 +640,88 @@ namespace Presentacion.Cortes
         private void comboCierreStock_SelectedValueChanged(object sender, EventArgs e)
         {
             cargarGrilla();
+        }
+
+        private void btnExportar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                //Creating iTextSharp Table from the DataTable data
+                PdfPTable pdfTable = new PdfPTable(grillaReportes.ColumnCount);
+                pdfTable.DefaultCell.Padding = 3;
+                pdfTable.WidthPercentage = 100;
+                pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
+                iTextSharp.text.Font fontsubtit = FontFactory.GetFont("Arial", 9);
+
+                string encabezado = "";
+
+                //Adding Header row
+                foreach (DataGridViewColumn column in grillaReportes.Columns)
+                {
+                    PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
+                    cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
+
+                    encabezado = comboTipoReporte.Text + "\n Sucursal: " + comboSucursal.Text;
+                    if (comboTipoReporte.Text == "Cierre Stock")
+                    {
+                        encabezado += " ||| Desde: " + comboInicioStock.Text +
+                            " | Hasta: " + comboCierreStock.Text + "\n\n";
+                    }
+                    else
+                    {
+                        encabezado += " ||| Desde: " + fechaDesde.Text +
+                            " | Hasta: " + fechaHasta.Text + "\n\n";
+                    }
+                    pdfTable.AddCell(cell);
+                }
+
+                //Adding DataRow
+                foreach (DataGridViewRow row in grillaReportes.Rows)
+                {
+                    foreach (DataGridViewCell cell in row.Cells)
+                    {
+                        string valueCell = "";
+                        if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
+                        {
+                            //pdfTable.AddCell(new Phrase(String.Format("{0:0.00}", cell.Value), fontsubtit)); //(String.Format("{0:0.00}", cell.Value));
+                            valueCell = String.Format("{0:0.00}", cell.Value);
+                        }
+                        else
+                        {
+                            //pdfTable.AddCell(cell.Value.ToString());
+                            valueCell = cell.Value.ToString();
+                        }
+                        pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
+                    }
+                }
+
+                //agregando encabezado
+                Paragraph parrafo = new Paragraph();
+                parrafo.Alignment = Element.ALIGN_CENTER;
+                parrafo.Font = FontFactory.GetFont("Arial", 9);
+                parrafo.Add(encabezado);
+
+                string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".pdf";
+                using (FileStream stream = new FileStream(fileName, FileMode.Create))
+                {
+                    Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
+                    PdfWriter.GetInstance(pdfDoc, stream);
+                    pdfDoc.Open();
+                    pdfDoc.Add(parrafo);
+                    pdfDoc.Add(pdfTable);
+                    pdfDoc.Close();
+                    stream.Close();
+
+                    System.Diagnostics.Process prc = new System.Diagnostics.Process();
+                    prc.StartInfo.FileName = fileName;
+                    prc.Start();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }            
         }
     }
 }
