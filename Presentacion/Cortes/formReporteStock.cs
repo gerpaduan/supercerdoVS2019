@@ -683,13 +683,12 @@ namespace Presentacion.Cortes
                         string valueCell = "";
                         if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
                         {
-                            //pdfTable.AddCell(new Phrase(String.Format("{0:0.00}", cell.Value), fontsubtit)); //(String.Format("{0:0.00}", cell.Value));
                             valueCell = String.Format("{0:0.00}", cell.Value);
                         }
                         else
                         {
-                            //pdfTable.AddCell(cell.Value.ToString());
                             valueCell = cell.Value.ToString();
+                            valueCell = (valueCell.Length > 6) ? valueCell.Substring(0, 6) : valueCell;
                         }
                         pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
                     }
@@ -716,7 +715,6 @@ namespace Presentacion.Cortes
                     prc.StartInfo.FileName = fileName;
                     prc.Start();
                 }
-
             }
             catch (Exception ex)
             {
