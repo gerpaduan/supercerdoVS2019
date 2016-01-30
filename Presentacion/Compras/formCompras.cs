@@ -27,7 +27,7 @@ namespace Presentacion
             cargarSucursal();
             this.comboSucursal.SelectedIndex = 2;
             this.comboTipoCompra.SelectedIndex = 0;
-
+            fechaDesde.Value = DateTime.Today.AddMonths(-2);
             cargar = true;
             cargarGrilla();
         }

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Reportes;
+using System.Configuration;
 
 namespace Presentacion.Embutidos
 {
@@ -24,6 +25,17 @@ namespace Presentacion.Embutidos
         public formInfoEmbutido()
         {
             InitializeComponent();
+        }
+
+        private void formInfoEmbutido_Load(object sender, EventArgs e)
+        {
+
+            int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            if (!FormPrincipal.logueado && txtFechaEmbutido.Value < DateTime.Today ||
+                !FormPrincipal.logueado && oEmbutidoE.sucursal.idSucursal != sucActual)
+            {
+                anular.Enabled = false;
+            }
         }
 
         public void obtenerParametros(Entidades.Embutido embutidoParam, formEmbutidos formEmbutidoParam)
@@ -155,11 +167,6 @@ namespace Presentacion.Embutidos
             {
                 MessageBox.Show(ex.Message);
             }
-        }
-
-        private void formInfoEmbutido_Load(object sender, EventArgs e)
-        {
-
         }
     }
 }

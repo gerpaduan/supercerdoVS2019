@@ -65,8 +65,9 @@ namespace Presentacion
 
         private void agregarEmbutido()
         {
-
-            if (validacionFinal())
+            if ( Utilidades.Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaEmbutido.Value, "Fecha") &&
+                Utilidades.Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
+                  && validacionFinal())
             {
                 cargarEmbutido();
                 oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
@@ -79,7 +80,6 @@ namespace Presentacion
                 frmEmbutidos.cargarGrilla();
                 this.Close();
             }
-
         }
 
         private bool validacionFinal()

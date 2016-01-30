@@ -51,7 +51,7 @@ namespace Presentacion
         }
 
         public void obtenerParametros(formMovimientos frmMovimientoParam, Entidades.Movimiento movimientoParam, List<Entidades.CortePorMovimiento> listaCortesPorMovimientoParam)
-        {
+        {            
             modificacion = true;
             frmMovimiento = frmMovimientoParam;
             oMovimiento = movimientoParam;
@@ -86,7 +86,9 @@ namespace Presentacion
 
         public void agregarMovimiento()
         {
-            if (Util_Form.validarFecha(txtFechaMovimiento.Value, "Fecha") && validacionFinal())
+            if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaMovimiento.Value, "Fecha") && 
+                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()))
+                 && Util_Form.validarFecha(txtFechaMovimiento.Value, "Fecha") && validacionFinal())
             {
                 cargarMovimiento();
                 try
@@ -556,6 +558,11 @@ namespace Presentacion
 
         private void formNuevoMovimiento_Load(object sender, EventArgs e)
         {
+            if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
+            {
+                this.Close();
+            }
+
             if (dtCorte.Rows.Count == 0)
             {
                 MessageBox.Show("No se pudieron cargar los cortes.");
@@ -677,6 +684,11 @@ namespace Presentacion
             {
                 return false;
             }
+        }
+
+        private void txtFechaMovimiento_ValueChanged(object sender, EventArgs e)
+        {
+            huboModificaciones = true;
         }
     }
 }

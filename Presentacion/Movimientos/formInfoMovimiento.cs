@@ -122,10 +122,14 @@ namespace Presentacion.Movimientos
             }
             else
             {
-                formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
-                frmNuevoMovimiento.obtenerParametros(frmMovimiento,oMovimientoE,listaCortesPorMovimiento);
-                this.Close();
-                frmNuevoMovimiento.Show();
+
+                if (Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
+                {
+                    formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
+                    frmNuevoMovimiento.obtenerParametros(frmMovimiento, oMovimientoE, listaCortesPorMovimiento);
+                    this.Close();
+                    frmNuevoMovimiento.Show();
+                }
             }
         }
 

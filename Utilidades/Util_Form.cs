@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Configuration;
 
 namespace Utilidades
 {
@@ -157,9 +158,42 @@ namespace Utilidades
             return resp;
         }
 
-        private void Util_Form_Load(object sender, EventArgs e)
+        public static bool validarPermisoModif(bool esAdmin, DateTime fechaRegistro)
         {
+            bool resp = true;
+            if (!esAdmin && fechaRegistro < DateTime.Today)
+            {
+                resp = false;
+                MessageBox.Show("No está logueado!.\n\nDebe iniciar sesión como administrador para " +
+                "poder agregar o modificar registros con fecha anterior al día de hoy.\n\nInicie sesión y vuelva a intentar.", "No tiene permiso para cambios", MessageBoxButtons.OK, MessageBoxIcon.Error);                
+            }
+            return resp;
+        }
 
+        public static bool validarSucursal(bool esAdmin, int idSucursal)
+        {
+            bool resp = true;
+            int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            if (!esAdmin && idSucursal != sucActual)
+            {
+                resp = false;
+                MessageBox.Show("No está logueado!.\n\nDebe iniciar sesión como administrador para " +
+                "poder agregar o modificar registros que pertenecen a una sucursal diferente a la que Ud. se encuentra.\n\nInicie sesión y vuelva a intentar.", "Sucursal diferente", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return resp;
+        }
+
+        public static bool validarFechaConAdmin(bool esAdmin, DateTime fechaRegistro, string nombreTextBox)
+        {
+            bool resp = fechaRegistro.Date != DateTime.Today && !esAdmin ? false : true;
+
+            if (!resp)
+            {
+                MessageBox.Show("-" + nombreTextBox + " debe ser igual a la fecha de hoy -" + DateTime.Now.ToShortDateString() + "-.\n\n"  +
+                    "Debe iniciar sesión como administrador para " +
+                    "poder agregar o modificar registros con fecha diferente al día de hoy.\n\nInicie sesión y vuelva a intentar.", "Fecha distinta a hoy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return resp;
         }
     }
 }

@@ -132,11 +132,15 @@ namespace Presentacion
         {
             if (btnAceptar.Text.Equals("Modificar"))
             {
-                btnAceptar.Text = "Guardar";
-                txtFechaCompra.Enabled = true;
-                comboSucursal.Enabled = true;
-                groupBox1.Enabled = true;
-                txtObservaciones.ReadOnly = false;
+                if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") &&
+                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
+                {
+                    btnAceptar.Text = "Guardar";
+                    txtFechaCompra.Enabled = true;
+                    comboSucursal.Enabled = true;
+                    groupBox1.Enabled = true;
+                    txtObservaciones.ReadOnly = false;                    
+                }
             }
             else
             {
@@ -160,7 +164,9 @@ namespace Presentacion
             {
                 if (listaCortePorCompra.Count > 0)
                 {
-                    if (validaciónFinal())
+                    if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") && 
+                        Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
+                        && Util_Form.validarFecha(txtFechaCompra.Value, "Fecha") && validaciónFinal())
                     {
                         cargarCompra();//se cargan datos de la compra
                         if (accion.Equals(Entidades.Compra.accion.Modificar))
@@ -187,7 +193,7 @@ namespace Presentacion
                 }
                 else
                 {
-                    MessageBox.Show("No hay cargada ninguna linea de compra.", "No hay lineas cargadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("No hay cargado ningún registro.", "No hay registros cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
@@ -655,6 +661,5 @@ namespace Presentacion
                 return false;
             }
         }
-
     }
 }

@@ -18,6 +18,8 @@ namespace Presentacion.Personas
         public formInfoPersona()
         {
             InitializeComponent();
+            eliminar.Enabled = FormPrincipal.logueado;//solo permiter borrar si es admin
+            txtRazonSocial.Enabled = FormPrincipal.logueado;//solo permite modif nombre si es admin
         }
 
         #region Métodos

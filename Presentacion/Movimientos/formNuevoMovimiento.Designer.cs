@@ -440,6 +440,7 @@
             this.txtFechaMovimiento.Size = new System.Drawing.Size(160, 22);
             this.txtFechaMovimiento.TabIndex = 15;
             this.txtFechaMovimiento.TabStop = false;
+            this.txtFechaMovimiento.ValueChanged += new System.EventHandler(this.txtFechaMovimiento_ValueChanged);
             // 
             // grillaCortesPorMovimiento
             // 
