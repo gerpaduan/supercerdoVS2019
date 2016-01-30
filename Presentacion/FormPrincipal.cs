@@ -92,6 +92,11 @@ namespace Presentacion
 
         private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            cajaVentas();
+        }
+
+        private void cajaVentas()
+        {
             formAbierto = false;
 
             FormLoginVendedor frmLogin = new FormLoginVendedor();
@@ -103,12 +108,12 @@ namespace Presentacion
                     foreach (Control ctrl in frm.Controls)
                     {
                         if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
-	                    {
-                    		frm.BringToFront();
+                        {
+                            frm.BringToFront();
                             formAbierto = true;
                             break;
-	                    }
-                    }                    
+                        }
+                    }
                 }
             }
             if (!formAbierto)
@@ -557,11 +562,21 @@ namespace Presentacion
 
         private void linkCierresDeCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            cierresCaja();
+        }
+
+        private static void cierresCaja()
+        {
             formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
             frmCierresDeCaja.Show();
         }
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            stock();
+        }
+
+        private static void stock()
         {
             formStock frm = new formStock();
             frm.Show();
@@ -610,6 +625,66 @@ namespace Presentacion
         {
             formBalanza frm = new formBalanza();
             frm.Show();
+        }
+
+        private void btnCompras_Click(object sender, EventArgs e)
+        {
+            compras();
+        }
+
+        private void btnVentas_Click(object sender, EventArgs e)
+        {
+            ventas();
+        }
+
+        private void btnCajaVentas_Click(object sender, EventArgs e)
+        {
+            cajaVentas();
+        }
+
+        private void btnAbrirCaja_Click(object sender, EventArgs e)
+        {
+            abrirCaja();
+        }
+
+        private void btnCerrarCaja_Click(object sender, EventArgs e)
+        {
+            cerrarCaja();
+        }
+
+        private void btnCierresCaja_Click(object sender, EventArgs e)
+        {
+            cierresCaja();
+        }
+
+        private void btnMovimientos_Click(object sender, EventArgs e)
+        {
+            movimientos();
+        }
+
+        private void btnEmbutidos_Click(object sender, EventArgs e)
+        {
+            Embutidos();
+        }
+
+        private void btnStock_Click(object sender, EventArgs e)
+        {
+            stock();
+        }
+
+        private void btnCortes_Click(object sender, EventArgs e)
+        {
+            cortes();
+        }
+
+        private void btnPersonas_Click(object sender, EventArgs e)
+        {
+            personas();
+        }
+
+        private void btnReportes_Click(object sender, EventArgs e)
+        {
+            reportes();
         }     
     }
 }
