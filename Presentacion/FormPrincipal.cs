@@ -35,13 +35,6 @@ namespace Presentacion
             
         }
 
-        private void linkCompras_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            compras();
-            
-
-        }
-
         private static void compras()
         {
             if (logueado)
@@ -61,11 +54,6 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-        }
-
-        private void linkVentas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            ventas();
         }
 
         private static void ventas()
@@ -88,11 +76,6 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-        }
-
-        private void linkAbrirCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            cajaVentas();
         }
 
         private void cajaVentas()
@@ -130,11 +113,6 @@ namespace Presentacion
             oUsuario = usuario;
         }
 
-        private void linkCortes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            cortes();
-        }
-
         private static void cortes()
         {
             if (Application.OpenForms["formCortes"] != null)
@@ -147,11 +125,6 @@ namespace Presentacion
                 formCortes frmCortes = new formCortes();
                 frmCortes.Show();
             }
-        }
-
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            movimientos();
         }
 
         private static void movimientos()
@@ -170,34 +143,6 @@ namespace Presentacion
             }
         }
 
-        private void linkProveedores_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            if (Application.OpenForms["formProveedores"] != null)
-            {
-
-                Application.OpenForms["formProveedores"].Activate();
-                Application.OpenForms["formProveedores"].WindowState = FormWindowState.Normal;
-
-            }
-            else
-            {
-
-                formProveedores frmProveedores = new formProveedores();
-                frmProveedores.Show();
-
-            }
-        }
-
-        private void linkMediaRes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-
-        }
-
-        private void linkEmbutidos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Embutidos();
-        }
-
         private static void Embutidos()
         {
             if (Application.OpenForms["formEmbutidos"] != null)
@@ -213,11 +158,6 @@ namespace Presentacion
                 formEmbutidos frmEmbutidos = new formEmbutidos();
                 frmEmbutidos.Show();
             }
-        }
-
-        private void linkPersonas_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            personas();
         }
 
         private static void personas()
@@ -269,20 +209,10 @@ namespace Presentacion
             }
         }
 
-        private void linkReportes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            reportes();
-        }
-
         private static void reportes()
         {
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
-        }
-
-        private void linkPagos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            pagos();
         }
 
         private static void pagos()
@@ -314,14 +244,6 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
-        }
-
-        
-
-        private void linkBaseDeDatos_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            baseDeDatos();
-            
         }
 
         private static void baseDeDatos()
@@ -385,11 +307,6 @@ namespace Presentacion
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
             this.Text = this.Text + " | Suc. " + oSucursalE.sucursal;
-        }
-
-        private void LinkVentasClientes_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            embutidos();
         }
 
         private static void embutidos()
