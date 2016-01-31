@@ -131,7 +131,7 @@ namespace Utilidades
         public static bool validarNumeroMayorACero(string valor, string nombreTextBox)
         {
             bool resp = true;
-            float? value = convertFloat(valor);
+            float? value = valor.Contains("-") ? 0 : convertFloat(valor);
             if (value.Equals(null) || value <= 0)
             {
                 resp = false;

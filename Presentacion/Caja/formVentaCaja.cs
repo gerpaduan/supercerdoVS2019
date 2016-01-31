@@ -165,12 +165,11 @@ namespace Presentacion.Ventas
                 if (grillaLineasVenta.SelectedRows.Count > 0)
                 {
                     agregarVenta();
-                    //txtCodigo.Focus();
                 }
                 else
                 {
                     MessageBox.Show("No se ha cargado ningún corte en la venta. ", "No hay cortes cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+                    txtCodigo.Focus();
                 }
             }
 
@@ -456,7 +455,13 @@ namespace Presentacion.Ventas
             } 
             else
             {
-                return Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
+                bool esMayorACero = Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
+                if (!esMayorACero)
+	            {
+                    txtCantKgs.Focus();
+                    txtCantKgs.SelectAll();
+	            }
+                return esMayorACero;
             }
         }
 
@@ -480,6 +485,18 @@ namespace Presentacion.Ventas
             else
             {
                 string mensaje = "Complete los siguientes campos: ";
+
+                //valido que no haya ningún corte seleccionado al finalizar venta
+                if (txtCodigo.Text.Length > 0)
+                {
+                    mensaje = "No se puede finalizar la venta si existe un corte seleccionado.\n" +
+                        "Borre el código e inténtelo nuevamente";
+                    MessageBox.Show(mensaje, "Existe un corte seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    txtCodigo.Focus();
+                    txtCodigo.SelectAll();
+                    return false;
+                }
+
                 if (txtCliente.Text.Trim() == "")
                 {
                     if (txtCliente.Text.Trim() == "")
@@ -523,6 +540,7 @@ namespace Presentacion.Ventas
                             }
                             else
                             {
+                                txtCodigo.Focus();
                                 return false;
                             }
                         }
@@ -653,6 +671,7 @@ namespace Presentacion.Ventas
             {
                 precioKg = 0;
                 totalCorte = 0;
+                txtCorte.Text = null;
                 txtTotalCorte.Text = null;
                 txtPrecioKg.Text = null;
             }
@@ -873,8 +892,15 @@ namespace Presentacion.Ventas
         {
             if (e.KeyChar == (char)(Keys.Enter))
             {
-                e.Handled = true;
-                SendKeys.Send("{TAB}");
+                if (txtAbona.Focused) //si esta en abona finaliza la venta
+                {
+                    esModificacion();
+                }
+                else
+                {
+                    e.Handled = true;
+                    SendKeys.Send("{TAB}");
+                }
             }
         }
 
@@ -966,11 +992,14 @@ namespace Presentacion.Ventas
                 case Keys.Home:
                     txtCodigo.Focus();
                     break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
                 case Keys.End:
                     mostrarPago();
                     break;
-                case Keys.PageUp:
-                    txtCodigo.Focus();
+                case Keys.PageDown:
+                    mostrarPago();
                     break;
                 case Keys.F9:
                     buscarCliente();
@@ -996,7 +1025,8 @@ namespace Presentacion.Ventas
 
         private void abonar()
         {
-            if (txtAbona.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona"))
+            if (txtAbona.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtAbona.Text, "Abona") && 
+                (txtAbona.Text.Contains("-") ? Utilidades.Util_Form.validarNumeroMayorACero(txtAbona.Text, "Abona") : true))
             {
                 abona = float.Parse(txtAbona.Text.Replace('.', ','));
                 cambio = abona - totalVenta;
@@ -1073,10 +1103,17 @@ namespace Presentacion.Ventas
 
         private void mostrarPago()
         {
-            panelAbonar.Visible = false;
-            panelPago.Visible = true;
-            txtAbona.ReadOnly = false;
-            txtAbona.Focus();
+            if (txtAbona.Focused)
+            {
+                esModificacion();
+            }
+            else
+            {
+                panelAbonar.Visible = false;
+                panelPago.Visible = true;
+                txtAbona.ReadOnly = false;
+                txtAbona.Focus();
+            }
         }
 
         private void txtClave_KeyPress(object sender, KeyPressEventArgs e)
