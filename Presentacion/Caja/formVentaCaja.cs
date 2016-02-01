@@ -999,7 +999,7 @@ namespace Presentacion.Ventas
                     mostrarPago();
                     break;
                 case Keys.PageDown:
-                    mostrarPago();
+                    cambiarPuntoDeVenta();
                     break;
                 case Keys.F9:
                     buscarCliente();
@@ -1016,6 +1016,29 @@ namespace Presentacion.Ventas
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void cambiarPuntoDeVenta()
+        {
+            bool cambioForm = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formVentaCaja))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (oUsuario != null && ctrl.Name.Equals("usuario") && !ctrl.Text.Equals(oUsuario.User))
+                        {
+                            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso(ctrl.Text.ToUpper());
+                            barraProgreso.ShowDialog();
+                            cambioForm = true;
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                }
+                if (cambioForm) { break; }
+            }
         }
 
         private void txtAbona_TextChanged(object sender, EventArgs e)

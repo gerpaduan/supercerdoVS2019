@@ -84,7 +84,7 @@
             this.btnGuardar.Size = new System.Drawing.Size(87, 27);
             this.btnGuardar.TabIndex = 6;
             this.btnGuardar.TabStop = false;
-            this.btnGuardar.Text = "Guardar";
+            this.btnGuardar.Text = "&Guardar";
             this.btnGuardar.UseVisualStyleBackColor = true;
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
@@ -96,7 +96,7 @@
             this.btnCancelar.Size = new System.Drawing.Size(87, 27);
             this.btnCancelar.TabIndex = 7;
             this.btnCancelar.TabStop = false;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -292,7 +292,7 @@
             this.checkLeerPeso.Size = new System.Drawing.Size(130, 19);
             this.checkLeerPeso.TabIndex = 23;
             this.checkLeerPeso.TabStop = false;
-            this.checkLeerPeso.Text = "Leer Peso Balanza";
+            this.checkLeerPeso.Text = "Leer Peso &Balanza";
             this.checkLeerPeso.UseVisualStyleBackColor = true;
             this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 
