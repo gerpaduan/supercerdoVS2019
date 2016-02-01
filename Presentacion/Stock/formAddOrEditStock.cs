@@ -162,7 +162,7 @@ namespace Presentacion
         {
             try
             {
-                if (listaCortePorCompra.Count > 0)
+                if (listaCortePorCompra.Count > 0 || accion.Equals(Entidades.Compra.accion.Modificar))
                 {
                     if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") && 
                         Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
