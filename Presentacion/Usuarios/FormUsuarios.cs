@@ -40,12 +40,17 @@ namespace Presentacion.Usuario
 
         private void comboUsuario_SelectedValueChanged(object sender, EventArgs e)
         {
-            oUsuarioE = oUsuarioN.getUser(comboUsuario.SelectedValue.ToString());
+            oUsuarioE = comboUsuario.SelectedValue != null ? oUsuarioN.getUser(comboUsuario.SelectedValue.ToString()) : null;
             if (oUsuarioE != null)
             {
                 txtNombre.Text = oUsuarioE.Nombre;
                 checkAdmin.Checked = oUsuarioE.Admin;
                 txtClave.Text = txtNueva.Text = txtRepetir.Text = "";
+            }
+            else
+            {
+                txtNombre.Text = "";
+                checkAdmin.Checked = false;
             }
             checkOlvidoClave.Checked = false;
         }
@@ -57,7 +62,25 @@ namespace Presentacion.Usuario
                 oUsuarioE.Nombre = txtNombre.Text;
                 oUsuarioE.Admin = checkAdmin.Checked;
 
-                //TODO - guardas datos en BD
+                //TODO - guarda datos en BD
+                addOrEditUser();
+            }
+            else
+            {
+                MessageBox.Show("No seleccionó ningún usuario.", "El usuario no existe", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void addOrEditUser()
+        {
+            try
+            {
+                oUsuarioN.addOrEditUser(oUsuarioE);
+                MessageBox.Show("Los datos se guardaron correctamente!", "Datos guardados");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error al guardar usuario", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -65,7 +88,7 @@ namespace Presentacion.Usuario
         {
             string mensaje = "Errores:\n\n";
             bool errores = false;
-            oUsuarioE = checkOlvidoClave.Checked ? oUsuarioE : oUsuarioN.validarUsuario(comboUsuario.SelectedValue.ToString(), txtClave.Text);            
+            oUsuarioE = checkOlvidoClave.Checked ? oUsuarioE : oUsuarioN.validarUsuario(comboUsuario.Text, txtClave.Text);            
             if (oUsuarioE == null)
             {
                 errores = true;
@@ -91,7 +114,7 @@ namespace Presentacion.Usuario
             {
                 oUsuarioE.Clave = txtNueva.Text;
                 //TODO - guardar cambios en BD
-
+                addOrEditUser();
 
                 //limpio campos
                 txtClave.Text = txtNueva.Text = txtRepetir.Text = "";

@@ -75,7 +75,7 @@
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
             this.txtClave.Size = new System.Drawing.Size(141, 22);
-            this.txtClave.TabIndex = 3;
+            this.txtClave.TabIndex = 2;
             // 
             // btnGuardarContra
             // 
@@ -84,18 +84,20 @@
             this.btnGuardarContra.Name = "btnGuardarContra";
             this.btnGuardarContra.Size = new System.Drawing.Size(141, 27);
             this.btnGuardarContra.TabIndex = 4;
-            this.btnGuardarContra.Text = "Guardar Contraseña";
+            this.btnGuardarContra.Text = "Guardar &Contraseña";
             this.btnGuardarContra.UseVisualStyleBackColor = true;
             this.btnGuardarContra.Click += new System.EventHandler(this.btnGuardarContra_Click);
             // 
             // comboUsuario
             // 
+            this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboUsuario.FormattingEnabled = true;
             this.comboUsuario.Location = new System.Drawing.Point(75, 12);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(140, 21);
-            this.comboUsuario.TabIndex = 5;
+            this.comboUsuario.TabIndex = 0;
             this.comboUsuario.SelectedValueChanged += new System.EventHandler(this.comboUsuario_SelectedValueChanged);
+            this.comboUsuario.TextChanged += new System.EventHandler(this.comboUsuario_SelectedValueChanged);
             // 
             // txtNueva
             // 
@@ -104,7 +106,7 @@
             this.txtNueva.Name = "txtNueva";
             this.txtNueva.PasswordChar = '*';
             this.txtNueva.Size = new System.Drawing.Size(141, 22);
-            this.txtNueva.TabIndex = 7;
+            this.txtNueva.TabIndex = 3;
             this.txtNueva.TextChanged += new System.EventHandler(this.txtNueva_TextChanged);
             // 
             // label3
@@ -124,7 +126,7 @@
             this.txtRepetir.Name = "txtRepetir";
             this.txtRepetir.PasswordChar = '*';
             this.txtRepetir.Size = new System.Drawing.Size(141, 22);
-            this.txtRepetir.TabIndex = 9;
+            this.txtRepetir.TabIndex = 4;
             // 
             // label4
             // 
@@ -174,7 +176,7 @@
             this.checkAdmin.Location = new System.Drawing.Point(23, 56);
             this.checkAdmin.Name = "checkAdmin";
             this.checkAdmin.Size = new System.Drawing.Size(110, 20);
-            this.checkAdmin.TabIndex = 5;
+            this.checkAdmin.TabIndex = 6;
             this.checkAdmin.Text = "Administrador";
             this.checkAdmin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkAdmin.UseVisualStyleBackColor = true;
@@ -196,8 +198,8 @@
             this.btnGuardarDatos.Location = new System.Drawing.Point(113, 110);
             this.btnGuardarDatos.Name = "btnGuardarDatos";
             this.btnGuardarDatos.Size = new System.Drawing.Size(141, 27);
-            this.btnGuardarDatos.TabIndex = 4;
-            this.btnGuardarDatos.Text = "Guardar Datos";
+            this.btnGuardarDatos.TabIndex = 7;
+            this.btnGuardarDatos.Text = "Guardar &Datos";
             this.btnGuardarDatos.UseVisualStyleBackColor = true;
             this.btnGuardarDatos.Click += new System.EventHandler(this.btnGuardarDatos_Click);
             // 
@@ -208,7 +210,8 @@
             this.txtNombre.Name = "txtNombre";
             this.txtNombre.ReadOnly = true;
             this.txtNombre.Size = new System.Drawing.Size(141, 22);
-            this.txtNombre.TabIndex = 3;
+            this.txtNombre.TabIndex = 5;
+            this.txtNombre.TabStop = false;
             // 
             // checkOlvidoClave
             // 

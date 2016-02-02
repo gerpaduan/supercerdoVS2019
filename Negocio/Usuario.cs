@@ -81,5 +81,10 @@ namespace Negocio
             }
             return userEncontrado;
         }
+
+        public void addOrEditUser(Entidades.Usuario oUsuarioE)
+        {
+            oUsuarioD.addOrEditUser(oUsuarioE);
+        }
     }
 }
