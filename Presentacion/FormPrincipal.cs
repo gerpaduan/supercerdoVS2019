@@ -12,6 +12,7 @@ using Presentacion.Pagos;
 using Presentacion.Ventas;
 using Presentacion.Caja;
 using Presentacion.Balanza;
+using Presentacion.Usuario;
 using System.Configuration;
 
 
@@ -602,6 +603,12 @@ namespace Presentacion
         private void btnReportes_Click(object sender, EventArgs e)
         {
             reportes();
+        }
+
+        private void btnUsuarios_Click(object sender, EventArgs e)
+        {
+            FormUsuarios frmUsuario = new FormUsuarios();
+            frmUsuario.Show();
         }     
     }
 }

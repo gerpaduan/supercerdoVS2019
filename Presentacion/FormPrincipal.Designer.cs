@@ -30,12 +30,26 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.label4 = new System.Windows.Forms.Label();
+            this.btnReportes = new System.Windows.Forms.Button();
+            this.label6 = new System.Windows.Forms.Label();
+            this.btnPersonas = new System.Windows.Forms.Button();
+            this.btnCortes = new System.Windows.Forms.Button();
+            this.label5 = new System.Windows.Forms.Label();
+            this.btnEmbutidos = new System.Windows.Forms.Button();
+            this.btnStock = new System.Windows.Forms.Button();
+            this.btnMovimientos = new System.Windows.Forms.Button();
+            this.btnAbrirCaja = new System.Windows.Forms.Button();
+            this.btnCerrarCaja = new System.Windows.Forms.Button();
+            this.btnCierresCaja = new System.Windows.Forms.Button();
+            this.btnCajaVentas = new System.Windows.Forms.Button();
+            this.btnCompras = new System.Windows.Forms.Button();
             this.linkLogin = new System.Windows.Forms.LinkLabel();
-            this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
             this.label3 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
+            this.btnVentas = new System.Windows.Forms.Button();
+            this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
             this.label1 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this.btnTipoConexioin = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.comprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -50,20 +64,7 @@
             this.balanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verBalanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.leerPesoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.btnVentas = new System.Windows.Forms.Button();
-            this.btnCompras = new System.Windows.Forms.Button();
-            this.btnCajaVentas = new System.Windows.Forms.Button();
-            this.btnCierresCaja = new System.Windows.Forms.Button();
-            this.btnCerrarCaja = new System.Windows.Forms.Button();
-            this.btnAbrirCaja = new System.Windows.Forms.Button();
-            this.btnEmbutidos = new System.Windows.Forms.Button();
-            this.btnStock = new System.Windows.Forms.Button();
-            this.btnMovimientos = new System.Windows.Forms.Button();
-            this.label5 = new System.Windows.Forms.Label();
-            this.btnPersonas = new System.Windows.Forms.Button();
-            this.btnCortes = new System.Windows.Forms.Button();
-            this.btnReportes = new System.Windows.Forms.Button();
-            this.label6 = new System.Windows.Forms.Label();
+            this.btnUsuarios = new System.Windows.Forms.Button();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -79,6 +80,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.SandyBrown;
+            this.splitContainer1.Panel1.Controls.Add(this.btnUsuarios);
             this.splitContainer1.Panel1.Controls.Add(this.btnReportes);
             this.splitContainer1.Panel1.Controls.Add(this.label6);
             this.splitContainer1.Panel1.Controls.Add(this.btnPersonas);
@@ -111,306 +113,81 @@
             this.splitContainer1.SplitterDistance = 203;
             this.splitContainer1.TabIndex = 0;
             // 
-            // label4
+            // btnReportes
             // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label4.Location = new System.Drawing.Point(12, 111);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(42, 18);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "Caja";
+            this.btnReportes.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnReportes.FlatAppearance.BorderSize = 0;
+            this.btnReportes.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnReportes.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnReportes.ForeColor = System.Drawing.Color.Black;
+            this.btnReportes.Location = new System.Drawing.Point(15, 481);
+            this.btnReportes.Name = "btnReportes";
+            this.btnReportes.Size = new System.Drawing.Size(170, 27);
+            this.btnReportes.TabIndex = 27;
+            this.btnReportes.TabStop = false;
+            this.btnReportes.Text = "Reportes";
+            this.btnReportes.UseVisualStyleBackColor = false;
+            this.btnReportes.Click += new System.EventHandler(this.btnReportes_Click);
             // 
-            // linkLogin
+            // label6
             // 
-            this.linkLogin.AutoSize = true;
-            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkLogin.Location = new System.Drawing.Point(12, 559);
-            this.linkLogin.Name = "linkLogin";
-            this.linkLogin.Size = new System.Drawing.Size(70, 13);
-            this.linkLogin.TabIndex = 13;
-            this.linkLogin.TabStop = true;
-            this.linkLogin.Text = "Iniciar Sesión";
-            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label6.Location = new System.Drawing.Point(12, 460);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(77, 18);
+            this.label6.TabIndex = 26;
+            this.label6.Text = "Reportes";
             // 
-            // linkCerrarSesion
+            // btnPersonas
             // 
-            this.linkCerrarSesion.AutoSize = true;
-            this.linkCerrarSesion.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkCerrarSesion.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkCerrarSesion.Location = new System.Drawing.Point(12, 559);
-            this.linkCerrarSesion.Name = "linkCerrarSesion";
-            this.linkCerrarSesion.Size = new System.Drawing.Size(70, 13);
-            this.linkCerrarSesion.TabIndex = 12;
-            this.linkCerrarSesion.TabStop = true;
-            this.linkCerrarSesion.Text = "Cerrar Sesión";
-            this.linkCerrarSesion.Visible = false;
-            this.linkCerrarSesion.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarSesion_LinkClicked);
+            this.btnPersonas.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnPersonas.FlatAppearance.BorderSize = 0;
+            this.btnPersonas.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnPersonas.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnPersonas.ForeColor = System.Drawing.Color.Black;
+            this.btnPersonas.Location = new System.Drawing.Point(15, 391);
+            this.btnPersonas.Name = "btnPersonas";
+            this.btnPersonas.Size = new System.Drawing.Size(170, 27);
+            this.btnPersonas.TabIndex = 25;
+            this.btnPersonas.TabStop = false;
+            this.btnPersonas.Text = "Personas";
+            this.btnPersonas.UseVisualStyleBackColor = false;
+            this.btnPersonas.Click += new System.EventHandler(this.btnPersonas_Click);
             // 
-            // label3
+            // btnCortes
             // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label3.Location = new System.Drawing.Point(12, 239);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(92, 18);
-            this.label3.TabIndex = 0;
-            this.label3.Text = "Mercadería";
+            this.btnCortes.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnCortes.FlatAppearance.BorderSize = 0;
+            this.btnCortes.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnCortes.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnCortes.ForeColor = System.Drawing.Color.Black;
+            this.btnCortes.Location = new System.Drawing.Point(15, 364);
+            this.btnCortes.Name = "btnCortes";
+            this.btnCortes.Size = new System.Drawing.Size(170, 27);
+            this.btnCortes.TabIndex = 24;
+            this.btnCortes.TabStop = false;
+            this.btnCortes.Text = "Cortes";
+            this.btnCortes.UseVisualStyleBackColor = false;
+            this.btnCortes.Click += new System.EventHandler(this.btnCortes_Click);
             // 
-            // label2
+            // label5
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label2.Location = new System.Drawing.Point(12, 9);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(77, 18);
-            this.label2.TabIndex = 0;
-            this.label2.Text = "Compras";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label1.Location = new System.Drawing.Point(12, 60);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(59, 18);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Ventas";
-            // 
-            // btnTipoConexioin
-            // 
-            this.btnTipoConexioin.BackColor = System.Drawing.Color.SteelBlue;
-            this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnTipoConexioin.Location = new System.Drawing.Point(674, 0);
-            this.btnTipoConexioin.Name = "btnTipoConexioin";
-            this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
-            this.btnTipoConexioin.TabIndex = 100;
-            this.btnTipoConexioin.TabStop = false;
-            this.btnTipoConexioin.Text = "Con. Local";
-            this.btnTipoConexioin.UseVisualStyleBackColor = false;
-            this.btnTipoConexioin.Visible = false;
-            this.btnTipoConexioin.Click += new System.EventHandler(this.btnTipoConexioin_Click);
-            // 
-            // menuStrip1
-            // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.comprasToolStripMenuItem,
-            this.ventasToolStripMenuItem,
-            this.mantenimientoToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(790, 24);
-            this.menuStrip1.TabIndex = 0;
-            this.menuStrip1.Text = "menuStrip1";
-            // 
-            // comprasToolStripMenuItem
-            // 
-            this.comprasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verComprasToolStripMenuItem});
-            this.comprasToolStripMenuItem.Name = "comprasToolStripMenuItem";
-            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(67, 20);
-            this.comprasToolStripMenuItem.Text = "Compras";
-            // 
-            // verComprasToolStripMenuItem
-            // 
-            this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
-            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.verComprasToolStripMenuItem.Text = "Ver Compras";
-            this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
-            // 
-            // ventasToolStripMenuItem
-            // 
-            this.ventasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verVentasToolStripMenuItem});
-            this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
-            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
-            this.ventasToolStripMenuItem.Text = "Ventas";
-            // 
-            // verVentasToolStripMenuItem
-            // 
-            this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.verVentasToolStripMenuItem.Text = "Ver Ventas";
-            this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
-            // 
-            // mantenimientoToolStripMenuItem
-            // 
-            this.mantenimientoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.cortesToolStripMenuItem,
-            this.personasToolStripMenuItem,
-            this.stockCortesToolStripMenuItem,
-            this.baseDeDatosToolStripMenuItem,
-            this.balanzaToolStripMenuItem});
-            this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
-            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
-            this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
-            // 
-            // cortesToolStripMenuItem
-            // 
-            this.cortesToolStripMenuItem.Name = "cortesToolStripMenuItem";
-            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.cortesToolStripMenuItem.Text = "Cortes";
-            this.cortesToolStripMenuItem.Click += new System.EventHandler(this.cortesToolStripMenuItem_Click);
-            // 
-            // personasToolStripMenuItem
-            // 
-            this.personasToolStripMenuItem.Name = "personasToolStripMenuItem";
-            this.personasToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.personasToolStripMenuItem.Text = "Personas";
-            this.personasToolStripMenuItem.Click += new System.EventHandler(this.personasToolStripMenuItem_Click);
-            // 
-            // stockCortesToolStripMenuItem
-            // 
-            this.stockCortesToolStripMenuItem.Name = "stockCortesToolStripMenuItem";
-            this.stockCortesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.stockCortesToolStripMenuItem.Text = "Stock Cortes";
-            this.stockCortesToolStripMenuItem.Click += new System.EventHandler(this.stockCortesToolStripMenuItem_Click);
-            // 
-            // baseDeDatosToolStripMenuItem
-            // 
-            this.baseDeDatosToolStripMenuItem.Name = "baseDeDatosToolStripMenuItem";
-            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
-            this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
-            // 
-            // balanzaToolStripMenuItem
-            // 
-            this.balanzaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verBalanzaToolStripMenuItem,
-            this.leerPesoToolStripMenuItem});
-            this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
-            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.balanzaToolStripMenuItem.Text = "Balanza";
-            this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
-            // 
-            // verBalanzaToolStripMenuItem
-            // 
-            this.verBalanzaToolStripMenuItem.Name = "verBalanzaToolStripMenuItem";
-            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
-            this.verBalanzaToolStripMenuItem.Text = "Ver Balanza";
-            this.verBalanzaToolStripMenuItem.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem_Click);
-            // 
-            // leerPesoToolStripMenuItem
-            // 
-            this.leerPesoToolStripMenuItem.Name = "leerPesoToolStripMenuItem";
-            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
-            this.leerPesoToolStripMenuItem.Text = "Leer Peso";
-            this.leerPesoToolStripMenuItem.Click += new System.EventHandler(this.leerPesoToolStripMenuItem_Click);
-            // 
-            // btnVentas
-            // 
-            this.btnVentas.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnVentas.FlatAppearance.BorderSize = 0;
-            this.btnVentas.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnVentas.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnVentas.ForeColor = System.Drawing.Color.Black;
-            this.btnVentas.Location = new System.Drawing.Point(15, 81);
-            this.btnVentas.Name = "btnVentas";
-            this.btnVentas.Size = new System.Drawing.Size(170, 27);
-            this.btnVentas.TabIndex = 3;
-            this.btnVentas.TabStop = false;
-            this.btnVentas.Text = "Ventas";
-            this.btnVentas.UseVisualStyleBackColor = false;
-            this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
-            // 
-            // btnCompras
-            // 
-            this.btnCompras.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnCompras.FlatAppearance.BorderSize = 0;
-            this.btnCompras.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnCompras.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnCompras.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCompras.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnCompras.ForeColor = System.Drawing.Color.Black;
-            this.btnCompras.Location = new System.Drawing.Point(15, 30);
-            this.btnCompras.Name = "btnCompras";
-            this.btnCompras.Size = new System.Drawing.Size(170, 27);
-            this.btnCompras.TabIndex = 14;
-            this.btnCompras.TabStop = false;
-            this.btnCompras.Text = "Compras";
-            this.btnCompras.UseVisualStyleBackColor = false;
-            this.btnCompras.Click += new System.EventHandler(this.btnCompras_Click);
-            // 
-            // btnCajaVentas
-            // 
-            this.btnCajaVentas.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnCajaVentas.FlatAppearance.BorderSize = 0;
-            this.btnCajaVentas.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnCajaVentas.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnCajaVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCajaVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnCajaVentas.ForeColor = System.Drawing.Color.Black;
-            this.btnCajaVentas.Location = new System.Drawing.Point(15, 132);
-            this.btnCajaVentas.Name = "btnCajaVentas";
-            this.btnCajaVentas.Size = new System.Drawing.Size(170, 27);
-            this.btnCajaVentas.TabIndex = 15;
-            this.btnCajaVentas.TabStop = false;
-            this.btnCajaVentas.Text = "Caja Ventas";
-            this.btnCajaVentas.UseVisualStyleBackColor = false;
-            this.btnCajaVentas.Click += new System.EventHandler(this.btnCajaVentas_Click);
-            // 
-            // btnCierresCaja
-            // 
-            this.btnCierresCaja.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnCierresCaja.FlatAppearance.BorderSize = 0;
-            this.btnCierresCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnCierresCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnCierresCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCierresCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnCierresCaja.ForeColor = System.Drawing.Color.Black;
-            this.btnCierresCaja.Location = new System.Drawing.Point(15, 209);
-            this.btnCierresCaja.Name = "btnCierresCaja";
-            this.btnCierresCaja.Size = new System.Drawing.Size(170, 27);
-            this.btnCierresCaja.TabIndex = 16;
-            this.btnCierresCaja.TabStop = false;
-            this.btnCierresCaja.Text = "Cierres Caja";
-            this.btnCierresCaja.UseVisualStyleBackColor = false;
-            this.btnCierresCaja.Click += new System.EventHandler(this.btnCierresCaja_Click);
-            // 
-            // btnCerrarCaja
-            // 
-            this.btnCerrarCaja.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnCerrarCaja.FlatAppearance.BorderSize = 0;
-            this.btnCerrarCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnCerrarCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnCerrarCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnCerrarCaja.ForeColor = System.Drawing.Color.Black;
-            this.btnCerrarCaja.Location = new System.Drawing.Point(15, 185);
-            this.btnCerrarCaja.Name = "btnCerrarCaja";
-            this.btnCerrarCaja.Size = new System.Drawing.Size(170, 27);
-            this.btnCerrarCaja.TabIndex = 17;
-            this.btnCerrarCaja.TabStop = false;
-            this.btnCerrarCaja.Text = "Cerrar Caja";
-            this.btnCerrarCaja.UseVisualStyleBackColor = false;
-            this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
-            // 
-            // btnAbrirCaja
-            // 
-            this.btnAbrirCaja.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnAbrirCaja.FlatAppearance.BorderSize = 0;
-            this.btnAbrirCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnAbrirCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnAbrirCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnAbrirCaja.ForeColor = System.Drawing.Color.Black;
-            this.btnAbrirCaja.Location = new System.Drawing.Point(15, 159);
-            this.btnAbrirCaja.Name = "btnAbrirCaja";
-            this.btnAbrirCaja.Size = new System.Drawing.Size(170, 27);
-            this.btnAbrirCaja.TabIndex = 18;
-            this.btnAbrirCaja.TabStop = false;
-            this.btnAbrirCaja.Text = "Abrir Caja";
-            this.btnAbrirCaja.UseVisualStyleBackColor = false;
-            this.btnAbrirCaja.Click += new System.EventHandler(this.btnAbrirCaja_Click);
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label5.Location = new System.Drawing.Point(12, 343);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(127, 18);
+            this.label5.TabIndex = 23;
+            this.label5.Text = "Mantenimientos";
             // 
             // btnEmbutidos
             // 
@@ -466,81 +243,324 @@
             this.btnMovimientos.UseVisualStyleBackColor = false;
             this.btnMovimientos.Click += new System.EventHandler(this.btnMovimientos_Click);
             // 
-            // label5
+            // btnAbrirCaja
             // 
-            this.label5.AutoSize = true;
-            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label5.Location = new System.Drawing.Point(12, 343);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(127, 18);
-            this.label5.TabIndex = 23;
-            this.label5.Text = "Mantenimientos";
+            this.btnAbrirCaja.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnAbrirCaja.FlatAppearance.BorderSize = 0;
+            this.btnAbrirCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnAbrirCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnAbrirCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnAbrirCaja.ForeColor = System.Drawing.Color.Black;
+            this.btnAbrirCaja.Location = new System.Drawing.Point(15, 159);
+            this.btnAbrirCaja.Name = "btnAbrirCaja";
+            this.btnAbrirCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnAbrirCaja.TabIndex = 18;
+            this.btnAbrirCaja.TabStop = false;
+            this.btnAbrirCaja.Text = "Abrir Caja";
+            this.btnAbrirCaja.UseVisualStyleBackColor = false;
+            this.btnAbrirCaja.Click += new System.EventHandler(this.btnAbrirCaja_Click);
             // 
-            // btnPersonas
+            // btnCerrarCaja
             // 
-            this.btnPersonas.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnPersonas.FlatAppearance.BorderSize = 0;
-            this.btnPersonas.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnPersonas.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnPersonas.ForeColor = System.Drawing.Color.Black;
-            this.btnPersonas.Location = new System.Drawing.Point(15, 391);
-            this.btnPersonas.Name = "btnPersonas";
-            this.btnPersonas.Size = new System.Drawing.Size(170, 27);
-            this.btnPersonas.TabIndex = 25;
-            this.btnPersonas.TabStop = false;
-            this.btnPersonas.Text = "Personas";
-            this.btnPersonas.UseVisualStyleBackColor = false;
-            this.btnPersonas.Click += new System.EventHandler(this.btnPersonas_Click);
+            this.btnCerrarCaja.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnCerrarCaja.FlatAppearance.BorderSize = 0;
+            this.btnCerrarCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnCerrarCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnCerrarCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnCerrarCaja.ForeColor = System.Drawing.Color.Black;
+            this.btnCerrarCaja.Location = new System.Drawing.Point(15, 185);
+            this.btnCerrarCaja.Name = "btnCerrarCaja";
+            this.btnCerrarCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnCerrarCaja.TabIndex = 17;
+            this.btnCerrarCaja.TabStop = false;
+            this.btnCerrarCaja.Text = "Cerrar Caja";
+            this.btnCerrarCaja.UseVisualStyleBackColor = false;
+            this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
-            // btnCortes
+            // btnCierresCaja
             // 
-            this.btnCortes.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnCortes.FlatAppearance.BorderSize = 0;
-            this.btnCortes.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnCortes.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnCortes.ForeColor = System.Drawing.Color.Black;
-            this.btnCortes.Location = new System.Drawing.Point(15, 364);
-            this.btnCortes.Name = "btnCortes";
-            this.btnCortes.Size = new System.Drawing.Size(170, 27);
-            this.btnCortes.TabIndex = 24;
-            this.btnCortes.TabStop = false;
-            this.btnCortes.Text = "Cortes";
-            this.btnCortes.UseVisualStyleBackColor = false;
-            this.btnCortes.Click += new System.EventHandler(this.btnCortes_Click);
+            this.btnCierresCaja.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnCierresCaja.FlatAppearance.BorderSize = 0;
+            this.btnCierresCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnCierresCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnCierresCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCierresCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnCierresCaja.ForeColor = System.Drawing.Color.Black;
+            this.btnCierresCaja.Location = new System.Drawing.Point(15, 209);
+            this.btnCierresCaja.Name = "btnCierresCaja";
+            this.btnCierresCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnCierresCaja.TabIndex = 16;
+            this.btnCierresCaja.TabStop = false;
+            this.btnCierresCaja.Text = "Cierres Caja";
+            this.btnCierresCaja.UseVisualStyleBackColor = false;
+            this.btnCierresCaja.Click += new System.EventHandler(this.btnCierresCaja_Click);
             // 
-            // btnReportes
+            // btnCajaVentas
             // 
-            this.btnReportes.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnReportes.FlatAppearance.BorderSize = 0;
-            this.btnReportes.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnReportes.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnReportes.ForeColor = System.Drawing.Color.Black;
-            this.btnReportes.Location = new System.Drawing.Point(15, 442);
-            this.btnReportes.Name = "btnReportes";
-            this.btnReportes.Size = new System.Drawing.Size(170, 27);
-            this.btnReportes.TabIndex = 27;
-            this.btnReportes.TabStop = false;
-            this.btnReportes.Text = "Reportes";
-            this.btnReportes.UseVisualStyleBackColor = false;
-            this.btnReportes.Click += new System.EventHandler(this.btnReportes_Click);
+            this.btnCajaVentas.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnCajaVentas.FlatAppearance.BorderSize = 0;
+            this.btnCajaVentas.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnCajaVentas.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnCajaVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCajaVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnCajaVentas.ForeColor = System.Drawing.Color.Black;
+            this.btnCajaVentas.Location = new System.Drawing.Point(15, 132);
+            this.btnCajaVentas.Name = "btnCajaVentas";
+            this.btnCajaVentas.Size = new System.Drawing.Size(170, 27);
+            this.btnCajaVentas.TabIndex = 15;
+            this.btnCajaVentas.TabStop = false;
+            this.btnCajaVentas.Text = "Caja Ventas";
+            this.btnCajaVentas.UseVisualStyleBackColor = false;
+            this.btnCajaVentas.Click += new System.EventHandler(this.btnCajaVentas_Click);
             // 
-            // label6
+            // btnCompras
             // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label6.Location = new System.Drawing.Point(12, 421);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(77, 18);
-            this.label6.TabIndex = 26;
-            this.label6.Text = "Reportes";
+            this.btnCompras.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnCompras.FlatAppearance.BorderSize = 0;
+            this.btnCompras.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnCompras.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnCompras.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCompras.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnCompras.ForeColor = System.Drawing.Color.Black;
+            this.btnCompras.Location = new System.Drawing.Point(15, 30);
+            this.btnCompras.Name = "btnCompras";
+            this.btnCompras.Size = new System.Drawing.Size(170, 27);
+            this.btnCompras.TabIndex = 14;
+            this.btnCompras.TabStop = false;
+            this.btnCompras.Text = "Compras";
+            this.btnCompras.UseVisualStyleBackColor = false;
+            this.btnCompras.Click += new System.EventHandler(this.btnCompras_Click);
+            // 
+            // linkLogin
+            // 
+            this.linkLogin.AutoSize = true;
+            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkLogin.Location = new System.Drawing.Point(12, 559);
+            this.linkLogin.Name = "linkLogin";
+            this.linkLogin.Size = new System.Drawing.Size(70, 13);
+            this.linkLogin.TabIndex = 13;
+            this.linkLogin.TabStop = true;
+            this.linkLogin.Text = "Iniciar Sesión";
+            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label3.Location = new System.Drawing.Point(12, 239);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(92, 18);
+            this.label3.TabIndex = 0;
+            this.label3.Text = "Mercadería";
+            // 
+            // btnVentas
+            // 
+            this.btnVentas.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnVentas.FlatAppearance.BorderSize = 0;
+            this.btnVentas.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnVentas.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnVentas.ForeColor = System.Drawing.Color.Black;
+            this.btnVentas.Location = new System.Drawing.Point(15, 81);
+            this.btnVentas.Name = "btnVentas";
+            this.btnVentas.Size = new System.Drawing.Size(170, 27);
+            this.btnVentas.TabIndex = 3;
+            this.btnVentas.TabStop = false;
+            this.btnVentas.Text = "Ventas";
+            this.btnVentas.UseVisualStyleBackColor = false;
+            this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
+            // 
+            // linkCerrarSesion
+            // 
+            this.linkCerrarSesion.AutoSize = true;
+            this.linkCerrarSesion.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.linkCerrarSesion.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
+            this.linkCerrarSesion.Location = new System.Drawing.Point(12, 559);
+            this.linkCerrarSesion.Name = "linkCerrarSesion";
+            this.linkCerrarSesion.Size = new System.Drawing.Size(70, 13);
+            this.linkCerrarSesion.TabIndex = 12;
+            this.linkCerrarSesion.TabStop = true;
+            this.linkCerrarSesion.Text = "Cerrar Sesión";
+            this.linkCerrarSesion.Visible = false;
+            this.linkCerrarSesion.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarSesion_LinkClicked);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label1.Location = new System.Drawing.Point(12, 60);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(59, 18);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Ventas";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label4.Location = new System.Drawing.Point(12, 111);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(42, 18);
+            this.label4.TabIndex = 0;
+            this.label4.Text = "Caja";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label2.Location = new System.Drawing.Point(12, 9);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(77, 18);
+            this.label2.TabIndex = 0;
+            this.label2.Text = "Compras";
+            // 
+            // btnTipoConexioin
+            // 
+            this.btnTipoConexioin.BackColor = System.Drawing.Color.SteelBlue;
+            this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.btnTipoConexioin.Location = new System.Drawing.Point(674, 0);
+            this.btnTipoConexioin.Name = "btnTipoConexioin";
+            this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
+            this.btnTipoConexioin.TabIndex = 100;
+            this.btnTipoConexioin.TabStop = false;
+            this.btnTipoConexioin.Text = "Con. Local";
+            this.btnTipoConexioin.UseVisualStyleBackColor = false;
+            this.btnTipoConexioin.Visible = false;
+            this.btnTipoConexioin.Click += new System.EventHandler(this.btnTipoConexioin_Click);
+            // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.comprasToolStripMenuItem,
+            this.ventasToolStripMenuItem,
+            this.mantenimientoToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(790, 24);
+            this.menuStrip1.TabIndex = 0;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // comprasToolStripMenuItem
+            // 
+            this.comprasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.verComprasToolStripMenuItem});
+            this.comprasToolStripMenuItem.Name = "comprasToolStripMenuItem";
+            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(67, 20);
+            this.comprasToolStripMenuItem.Text = "Compras";
+            // 
+            // verComprasToolStripMenuItem
+            // 
+            this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
+            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
+            this.verComprasToolStripMenuItem.Text = "Ver Compras";
+            this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
+            // 
+            // ventasToolStripMenuItem
+            // 
+            this.ventasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.verVentasToolStripMenuItem});
+            this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
+            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.ventasToolStripMenuItem.Text = "Ventas";
+            // 
+            // verVentasToolStripMenuItem
+            // 
+            this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
+            this.verVentasToolStripMenuItem.Text = "Ver Ventas";
+            this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
+            // 
+            // mantenimientoToolStripMenuItem
+            // 
+            this.mantenimientoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cortesToolStripMenuItem,
+            this.personasToolStripMenuItem,
+            this.stockCortesToolStripMenuItem,
+            this.baseDeDatosToolStripMenuItem,
+            this.balanzaToolStripMenuItem});
+            this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
+            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
+            this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
+            // 
+            // cortesToolStripMenuItem
+            // 
+            this.cortesToolStripMenuItem.Name = "cortesToolStripMenuItem";
+            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.cortesToolStripMenuItem.Text = "Cortes";
+            this.cortesToolStripMenuItem.Click += new System.EventHandler(this.cortesToolStripMenuItem_Click);
+            // 
+            // personasToolStripMenuItem
+            // 
+            this.personasToolStripMenuItem.Name = "personasToolStripMenuItem";
+            this.personasToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.personasToolStripMenuItem.Text = "Personas";
+            this.personasToolStripMenuItem.Click += new System.EventHandler(this.personasToolStripMenuItem_Click);
+            // 
+            // stockCortesToolStripMenuItem
+            // 
+            this.stockCortesToolStripMenuItem.Name = "stockCortesToolStripMenuItem";
+            this.stockCortesToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.stockCortesToolStripMenuItem.Text = "Stock Cortes";
+            this.stockCortesToolStripMenuItem.Click += new System.EventHandler(this.stockCortesToolStripMenuItem_Click);
+            // 
+            // baseDeDatosToolStripMenuItem
+            // 
+            this.baseDeDatosToolStripMenuItem.Name = "baseDeDatosToolStripMenuItem";
+            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
+            this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
+            // 
+            // balanzaToolStripMenuItem
+            // 
+            this.balanzaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.verBalanzaToolStripMenuItem,
+            this.leerPesoToolStripMenuItem});
+            this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
+            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
+            this.balanzaToolStripMenuItem.Text = "Balanza";
+            this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
+            // 
+            // verBalanzaToolStripMenuItem
+            // 
+            this.verBalanzaToolStripMenuItem.Name = "verBalanzaToolStripMenuItem";
+            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.verBalanzaToolStripMenuItem.Text = "Ver Balanza";
+            this.verBalanzaToolStripMenuItem.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem_Click);
+            // 
+            // leerPesoToolStripMenuItem
+            // 
+            this.leerPesoToolStripMenuItem.Name = "leerPesoToolStripMenuItem";
+            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
+            this.leerPesoToolStripMenuItem.Text = "Leer Peso";
+            this.leerPesoToolStripMenuItem.Click += new System.EventHandler(this.leerPesoToolStripMenuItem_Click);
+            // 
+            // btnUsuarios
+            // 
+            this.btnUsuarios.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnUsuarios.FlatAppearance.BorderSize = 0;
+            this.btnUsuarios.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnUsuarios.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnUsuarios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnUsuarios.ForeColor = System.Drawing.Color.Black;
+            this.btnUsuarios.Location = new System.Drawing.Point(15, 418);
+            this.btnUsuarios.Name = "btnUsuarios";
+            this.btnUsuarios.Size = new System.Drawing.Size(170, 27);
+            this.btnUsuarios.TabIndex = 28;
+            this.btnUsuarios.TabStop = false;
+            this.btnUsuarios.Text = "Usuarios";
+            this.btnUsuarios.UseVisualStyleBackColor = false;
+            this.btnUsuarios.Click += new System.EventHandler(this.btnUsuarios_Click);
             // 
             // FormPrincipal
             // 
@@ -606,6 +626,7 @@
         private System.Windows.Forms.Button btnPersonas;
         private System.Windows.Forms.Button btnCortes;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button btnUsuarios;
     }
 }
 
