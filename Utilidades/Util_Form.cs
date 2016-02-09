@@ -29,6 +29,19 @@ namespace Utilidades
             return resp;
         }
 
+        /// <summary>
+        /// //Cargando TextBox para validar
+        /// int nroFilas = 0;
+        /// int nombreTextBox = 1;
+        /// int valorTextBox = 0;
+        /// 
+        /// string[,] textBoxes = new string[CantidadTexbox, 2];
+        /// 
+        /// string[valor_campo][nombre_textBox] 
+        /// 
+        /// textBoxes[nroFilas, valorTextBox] = txtDescripcion.Text;
+        /// textBoxes[nroFilas++, nombreTextBox] = lblDescripcion.Text;
+        /// </summary>
         public static bool validarArrayCamposVacios(string[,] textBoxes)
         {
             int nombreTextBox = 1;
@@ -130,12 +143,15 @@ namespace Utilidades
 
         public static bool validarNumeroMayorACero(string valor, string nombreTextBox)
         {
-            bool resp = true;
-            float? value = valor.Contains("-") ? 0 : convertFloat(valor);
-            if (value.Equals(null) || value <= 0)
+            bool resp = validarCampoNumerico(valor, nombreTextBox);
+            if (resp)
             {
-                resp = false;
-                MessageBox.Show("-" + nombreTextBox + " debe ser un valor mayor a cero.", "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                float? value = valor.Contains("-") ? 0 : convertFloat(valor);
+                if (value.Equals(null) || value <= 0)
+                {
+                    resp = false;
+                    MessageBox.Show("-" + nombreTextBox + " debe ser un valor mayor a cero.", "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             return resp;
         }

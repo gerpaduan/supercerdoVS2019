@@ -82,7 +82,45 @@ namespace Negocio
         {
             return oVentaN.obtenerTotalVentas(idVendedor, idSucursal, fechaInicioCaja, fechaCierreCaja);
         }
+        #region TipoGasto
+        public DataTable obtenerTipoGasto()
+        {
+            return oCierreD.obtenerTipoGasto();
+        }
 
-        
+        public DataTable obtenerGastos(int idSucursal, int idTipoGasto, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            return oCierreD.obtenerGastos(idSucursal, idTipoGasto, texto, fechaDesde, fechaHasta);
+        }
+
+        public void addOrEditGasto(Entidades.Gasto oGasto)
+        {
+            oCierreD.addOrEditGasto(oGasto);
+        }
+        public Entidades.Gasto getGastoById(int idGasto)
+        {
+            Entidades.Gasto oGasto = oCierreD.getGastoById(idGasto);
+
+            if (oGasto != null)
+            {
+                Negocio.Usuario oUserN = new Usuario();
+
+                oGasto.CreadoPorUser = oUserN.getUserById(oGasto.CreadoPor);
+                oGasto.ActualizadoPorUser = oUserN.getUserById(oGasto.ActualizadoPor);
+            }
+
+            return oGasto;
+        }
+
+        public float getMontoGastosVendedor(Entidades.CierreCaja oCierreE)
+        {
+            return  oCierreD.getMontoGastosVendedor(oCierreE);
+        }
+
+        public DataTable getGastosVendedor(Entidades.CierreCaja oCierreE)
+        {
+            return oCierreD.getGastosVendedor(oCierreE);
+        }
+        #endregion
     }
 }

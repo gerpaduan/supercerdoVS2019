@@ -609,6 +609,27 @@ namespace Presentacion
         {
             FormUsuarios frmUsuario = new FormUsuarios();
             frmUsuario.Show();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            gastos();
+        }
+
+        private static void gastos()
+        {
+            if (Application.OpenForms["formGastos"] != null)
+            {
+
+                Application.OpenForms["formGastos"].Activate();
+                Application.OpenForms["formGastos"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formGastos frmGastos = new formGastos();
+                frmGastos.Show();
+            }
         }     
     }
 }

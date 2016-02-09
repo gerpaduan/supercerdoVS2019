@@ -29,11 +29,12 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCompras));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.comboTipoCompra = new System.Windows.Forms.ComboBox();
@@ -48,21 +49,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.grillaCompras = new System.Windows.Forms.DataGridView();
-            this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nroRemito = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.tipoCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idSucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.sucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.observaciones = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.txtTotalS = new System.Windows.Forms.TextBox();
@@ -70,7 +56,21 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.observaciones = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.sucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idSucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tipoCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nroRemito = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.grillaCompras = new System.Windows.Forms.DataGridView();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -98,6 +98,17 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(786, 84);
             this.pnlBuscar.TabIndex = 6;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(460, 46);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(302, 7);
+            this.groupBox1.TabIndex = 41;
+            this.groupBox1.TabStop = false;
             // 
             // comboSucursal
             // 
@@ -226,7 +237,6 @@
             this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 2;
             this.label2.Text = "Descripción";
-
             // 
             // barraControl
             // 
@@ -252,176 +262,6 @@
             this.nuevo.Text = "Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
-            // 
-            // grillaCompras
-            // 
-            this.grillaCompras.AllowDrop = true;
-            this.grillaCompras.AllowUserToAddRows = false;
-            this.grillaCompras.AllowUserToDeleteRows = false;
-            this.grillaCompras.AllowUserToResizeRows = false;
-            this.grillaCompras.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
-            this.grillaCompras.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            this.grillaCompras.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaCompras.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.idCompra,
-            this.fechaCompra,
-            this.nroRemito,
-            this.idPersona,
-            this.razonSocial,
-            this.tipoCompra,
-            this.cantKg,
-            this.totalS,
-            this.idSucursal,
-            this.sucursal,
-            this.observaciones,
-            this.estado,
-            this.creado,
-            this.actualizado});
-            this.grillaCompras.Location = new System.Drawing.Point(12, 135);
-            this.grillaCompras.MultiSelect = false;
-            this.grillaCompras.Name = "grillaCompras";
-            this.grillaCompras.ReadOnly = true;
-            this.grillaCompras.RowHeadersVisible = false;
-            this.grillaCompras.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCompras.Size = new System.Drawing.Size(761, 310);
-            this.grillaCompras.TabIndex = 8;
-            this.grillaCompras.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCompras_CellDoubleClick);
-            // 
-            // idCompra
-            // 
-            this.idCompra.DataPropertyName = "idCompra";
-            this.idCompra.HeaderText = "ID Compra";
-            this.idCompra.Name = "idCompra";
-            this.idCompra.ReadOnly = true;
-            this.idCompra.Visible = false;
-            // 
-            // fechaCompra
-            // 
-            this.fechaCompra.DataPropertyName = "fechaCompra";
-            dataGridViewCellStyle5.Format = "g";
-            dataGridViewCellStyle5.NullValue = null;
-            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle5;
-            this.fechaCompra.FillWeight = 60F;
-            this.fechaCompra.HeaderText = "Fecha Compra";
-            this.fechaCompra.Name = "fechaCompra";
-            this.fechaCompra.ReadOnly = true;
-            this.fechaCompra.Width = 101;
-            // 
-            // nroRemito
-            // 
-            this.nroRemito.DataPropertyName = "nroRemito";
-            this.nroRemito.FillWeight = 42.98663F;
-            this.nroRemito.HeaderText = "Nro. Remito";
-            this.nroRemito.Name = "nroRemito";
-            this.nroRemito.ReadOnly = true;
-            this.nroRemito.Width = 88;
-            // 
-            // idPersona
-            // 
-            this.idPersona.DataPropertyName = "idProveedor";
-            this.idPersona.HeaderText = "ID Proveedor";
-            this.idPersona.Name = "idPersona";
-            this.idPersona.ReadOnly = true;
-            this.idPersona.Visible = false;
-            // 
-            // razonSocial
-            // 
-            this.razonSocial.DataPropertyName = "razonSocial";
-            this.razonSocial.FillWeight = 42.98663F;
-            this.razonSocial.HeaderText = "Proveedor";
-            this.razonSocial.Name = "razonSocial";
-            this.razonSocial.ReadOnly = true;
-            this.razonSocial.Width = 81;
-            // 
-            // tipoCompra
-            // 
-            this.tipoCompra.DataPropertyName = "tipoCompra";
-            this.tipoCompra.FillWeight = 42.98663F;
-            this.tipoCompra.HeaderText = "Tipo Compra";
-            this.tipoCompra.Name = "tipoCompra";
-            this.tipoCompra.ReadOnly = true;
-            this.tipoCompra.Width = 92;
-            // 
-            // cantKg
-            // 
-            this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle6.Format = "N2";
-            dataGridViewCellStyle6.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle6;
-            this.cantKg.FillWeight = 42.98663F;
-            this.cantKg.HeaderText = "Cant. Kgs";
-            this.cantKg.Name = "cantKg";
-            this.cantKg.ReadOnly = true;
-            this.cantKg.Width = 78;
-            // 
-            // totalS
-            // 
-            this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle7.Format = "N2";
-            dataGridViewCellStyle7.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle7;
-            this.totalS.FillWeight = 42.98663F;
-            this.totalS.HeaderText = "Total $";
-            this.totalS.Name = "totalS";
-            this.totalS.ReadOnly = true;
-            this.totalS.Width = 65;
-            // 
-            // idSucursal
-            // 
-            this.idSucursal.DataPropertyName = "idSucursal";
-            this.idSucursal.HeaderText = "ID Sucursal";
-            this.idSucursal.Name = "idSucursal";
-            this.idSucursal.ReadOnly = true;
-            this.idSucursal.Visible = false;
-            // 
-            // sucursal
-            // 
-            this.sucursal.DataPropertyName = "sucursal";
-            this.sucursal.FillWeight = 42.98663F;
-            this.sucursal.HeaderText = "Sucursal";
-            this.sucursal.Name = "sucursal";
-            this.sucursal.ReadOnly = true;
-            this.sucursal.Width = 73;
-            // 
-            // observaciones
-            // 
-            this.observaciones.DataPropertyName = "observaciones";
-            this.observaciones.FillWeight = 42.98663F;
-            this.observaciones.HeaderText = "Observaciones";
-            this.observaciones.Name = "observaciones";
-            this.observaciones.ReadOnly = true;
-            this.observaciones.Width = 103;
-            // 
-            // estado
-            // 
-            this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle8.ForeColor = System.Drawing.Color.Red;
-            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.Color.White;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle8;
-            this.estado.FillWeight = 42.98663F;
-            this.estado.HeaderText = "Estado";
-            this.estado.Name = "estado";
-            this.estado.ReadOnly = true;
-            this.estado.Visible = false;
-            // 
-            // creado
-            // 
-            this.creado.DataPropertyName = "creado";
-            this.creado.HeaderText = "Creado";
-            this.creado.Name = "creado";
-            this.creado.ReadOnly = true;
-            this.creado.Width = 66;
-            // 
-            // actualizado
-            // 
-            this.actualizado.DataPropertyName = "actualizado";
-            this.actualizado.HeaderText = "Actualizado";
-            this.actualizado.Name = "actualizado";
-            this.actualizado.ReadOnly = true;
-            this.actualizado.Width = 87;
             // 
             // btnSeleccionar
             // 
@@ -498,16 +338,175 @@
             this.panel1.Size = new System.Drawing.Size(763, 1);
             this.panel1.TabIndex = 25;
             // 
-            // groupBox1
+            // actualizado
             // 
-            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(460, 46);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(302, 7);
-            this.groupBox1.TabIndex = 41;
-            this.groupBox1.TabStop = false;
+            this.actualizado.DataPropertyName = "actualizado";
+            this.actualizado.HeaderText = "Actualizado";
+            this.actualizado.Name = "actualizado";
+            this.actualizado.ReadOnly = true;
+            this.actualizado.Width = 87;
+            // 
+            // creado
+            // 
+            this.creado.DataPropertyName = "creado";
+            this.creado.HeaderText = "Creado";
+            this.creado.Name = "creado";
+            this.creado.ReadOnly = true;
+            this.creado.Width = 66;
+            // 
+            // estado
+            // 
+            this.estado.DataPropertyName = "estado";
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.Red;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.White;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle1;
+            this.estado.FillWeight = 42.98663F;
+            this.estado.HeaderText = "Estado";
+            this.estado.Name = "estado";
+            this.estado.ReadOnly = true;
+            this.estado.Visible = false;
+            // 
+            // observaciones
+            // 
+            this.observaciones.DataPropertyName = "observaciones";
+            this.observaciones.FillWeight = 42.98663F;
+            this.observaciones.HeaderText = "Observaciones";
+            this.observaciones.Name = "observaciones";
+            this.observaciones.ReadOnly = true;
+            this.observaciones.Width = 103;
+            // 
+            // sucursal
+            // 
+            this.sucursal.DataPropertyName = "sucursal";
+            this.sucursal.FillWeight = 42.98663F;
+            this.sucursal.HeaderText = "Sucursal";
+            this.sucursal.Name = "sucursal";
+            this.sucursal.ReadOnly = true;
+            this.sucursal.Width = 73;
+            // 
+            // idSucursal
+            // 
+            this.idSucursal.DataPropertyName = "idSucursal";
+            this.idSucursal.HeaderText = "ID Sucursal";
+            this.idSucursal.Name = "idSucursal";
+            this.idSucursal.ReadOnly = true;
+            this.idSucursal.Visible = false;
+            // 
+            // totalS
+            // 
+            this.totalS.DataPropertyName = "totalS";
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle2;
+            this.totalS.FillWeight = 42.98663F;
+            this.totalS.HeaderText = "Total $";
+            this.totalS.Name = "totalS";
+            this.totalS.ReadOnly = true;
+            this.totalS.Width = 65;
+            // 
+            // cantKg
+            // 
+            this.cantKg.DataPropertyName = "cantKg";
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle3.Format = "N2";
+            dataGridViewCellStyle3.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle3;
+            this.cantKg.FillWeight = 42.98663F;
+            this.cantKg.HeaderText = "Cant. Kgs";
+            this.cantKg.Name = "cantKg";
+            this.cantKg.ReadOnly = true;
+            this.cantKg.Width = 78;
+            // 
+            // tipoCompra
+            // 
+            this.tipoCompra.DataPropertyName = "tipoCompra";
+            this.tipoCompra.FillWeight = 42.98663F;
+            this.tipoCompra.HeaderText = "Tipo Compra";
+            this.tipoCompra.Name = "tipoCompra";
+            this.tipoCompra.ReadOnly = true;
+            this.tipoCompra.Width = 92;
+            // 
+            // razonSocial
+            // 
+            this.razonSocial.DataPropertyName = "razonSocial";
+            this.razonSocial.FillWeight = 42.98663F;
+            this.razonSocial.HeaderText = "Proveedor";
+            this.razonSocial.Name = "razonSocial";
+            this.razonSocial.ReadOnly = true;
+            this.razonSocial.Width = 81;
+            // 
+            // idPersona
+            // 
+            this.idPersona.DataPropertyName = "idProveedor";
+            this.idPersona.HeaderText = "ID Proveedor";
+            this.idPersona.Name = "idPersona";
+            this.idPersona.ReadOnly = true;
+            this.idPersona.Visible = false;
+            // 
+            // nroRemito
+            // 
+            this.nroRemito.DataPropertyName = "nroRemito";
+            this.nroRemito.FillWeight = 42.98663F;
+            this.nroRemito.HeaderText = "Nro. Remito";
+            this.nroRemito.Name = "nroRemito";
+            this.nroRemito.ReadOnly = true;
+            this.nroRemito.Width = 88;
+            // 
+            // fechaCompra
+            // 
+            this.fechaCompra.DataPropertyName = "fechaCompra";
+            dataGridViewCellStyle4.Format = "g";
+            dataGridViewCellStyle4.NullValue = null;
+            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle4;
+            this.fechaCompra.FillWeight = 60F;
+            this.fechaCompra.HeaderText = "Fecha Compra";
+            this.fechaCompra.Name = "fechaCompra";
+            this.fechaCompra.ReadOnly = true;
+            this.fechaCompra.Width = 101;
+            // 
+            // idCompra
+            // 
+            this.idCompra.DataPropertyName = "idCompra";
+            this.idCompra.HeaderText = "ID Compra";
+            this.idCompra.Name = "idCompra";
+            this.idCompra.ReadOnly = true;
+            this.idCompra.Visible = false;
+            // 
+            // grillaCompras
+            // 
+            this.grillaCompras.AllowDrop = true;
+            this.grillaCompras.AllowUserToAddRows = false;
+            this.grillaCompras.AllowUserToDeleteRows = false;
+            this.grillaCompras.AllowUserToResizeRows = false;
+            this.grillaCompras.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
+            this.grillaCompras.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            this.grillaCompras.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.grillaCompras.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.idCompra,
+            this.fechaCompra,
+            this.nroRemito,
+            this.idPersona,
+            this.razonSocial,
+            this.tipoCompra,
+            this.cantKg,
+            this.totalS,
+            this.idSucursal,
+            this.sucursal,
+            this.observaciones,
+            this.estado,
+            this.creado,
+            this.actualizado});
+            this.grillaCompras.Location = new System.Drawing.Point(12, 135);
+            this.grillaCompras.MultiSelect = false;
+            this.grillaCompras.Name = "grillaCompras";
+            this.grillaCompras.ReadOnly = true;
+            this.grillaCompras.RowHeadersVisible = false;
+            this.grillaCompras.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaCompras.Size = new System.Drawing.Size(761, 310);
+            this.grillaCompras.TabIndex = 8;
+            this.grillaCompras.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCompras_CellDoubleClick);
             // 
             // formCompras
             // 
@@ -567,7 +566,6 @@
         
         protected internal System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton nuevo;
-        private System.Windows.Forms.DataGridView grillaCompras;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.TextBox txtTotalS;
@@ -579,22 +577,23 @@
         private System.Windows.Forms.ComboBox comboTipoCompra;
         private System.Windows.Forms.ComboBox comboSucursal;
         protected System.Windows.Forms.Label label7;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn fechaCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn nroRemito;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
-        private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
-        private System.Windows.Forms.DataGridViewTextBoxColumn tipoCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
-        private System.Windows.Forms.DataGridViewTextBoxColumn totalS;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idSucursal;
-        private System.Windows.Forms.DataGridViewTextBoxColumn sucursal;
-        private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
-        private System.Windows.Forms.DataGridViewTextBoxColumn estado;
-        private System.Windows.Forms.DataGridViewTextBoxColumn creado;
-        private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn creado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn estado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
+        private System.Windows.Forms.DataGridViewTextBoxColumn sucursal;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idSucursal;
+        private System.Windows.Forms.DataGridViewTextBoxColumn totalS;
+        private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
+        private System.Windows.Forms.DataGridViewTextBoxColumn tipoCompra;
+        private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nroRemito;
+        private System.Windows.Forms.DataGridViewTextBoxColumn fechaCompra;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idCompra;
+        private System.Windows.Forms.DataGridView grillaCompras;
 
     }
 }

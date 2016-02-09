@@ -87,6 +87,29 @@ namespace Presentacion.Caja
                     if (respuesta == DialogResult.Yes)
                     {
                         oCierreN.addOrEditCierreCaja(oCierreE);
+
+                        if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
+                        {
+                            //imprimir ticket
+                            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                            ticket.imprimir = checkTicket.Checked;
+                            ticket.TextoCentro("Cierre Caja");
+                            ticket.LineasEnBlanco(1);
+                            //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                            ticket.TextoIzquierda("Vendedor: " + oCierreE.UsuarioInicio.Nombre);
+                            ticket.TextoIzquierda("Desde: " + oCierreE.FechaHoraInicio.Value.ToString());
+                            ticket.TextoIzquierda("Hasta: " + oCierreE.FechaHoraCierre.Value.ToString());
+                            ticket.LineasGuion();
+                            ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
+                            ticket.AgregaTotales("Ventas", Convert.ToDouble(oCierreE.Ventas));
+                            ticket.AgregaTotales("Gastos", Convert.ToDouble(oCierreE.Gastos));
+                            ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
+                            ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
+                            ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
+                            ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreE.ImporteRetirado));
+                            ticket.LineasEnBlanco(2);
+                        }
+
                         this.Close();
                     }
                 }
@@ -174,6 +197,7 @@ namespace Presentacion.Caja
 
                 diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
                 importeRetirado = cajaCierre - cajaInicioSiguiente;
+                oCierreE.Diferencia = diferencia;
                 txtDiferencia.Text = diferencia.ToString("F2");
                 txtImporteRetirado.Text = importeRetirado.ToString();
             }             
@@ -251,6 +275,8 @@ namespace Presentacion.Caja
                 }
                 if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
                 {
+                    checkTicket.Visible = true;
+                    checkTicket.Checked = true;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
                     //if (!oUserCierre.Admin && !oCierreE.UsuarioInicio.Id.Equals(oUserCierre.Id))
                     if (!oUserCierre.Admin)
@@ -288,6 +314,7 @@ namespace Presentacion.Caja
                     txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
                     txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
                     txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
+                    oCierreE.Gastos = oCierreN.getMontoGastosVendedor(oCierreE);
                     txtGastos.Text = oCierreE.Gastos.ToString();
                     txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
                     txtDiferencia.Text = oCierreE.Diferencia.ToString();
@@ -300,6 +327,13 @@ namespace Presentacion.Caja
                 MessageBox.Show("Error en validarAperturaForm() \n" + ex.Message);
             }
             
+        }
+
+        private void btnVerGastos_Click(object sender, EventArgs e)
+        {
+            formGastosVendedor frmGastosVendedor = new formGastosVendedor();
+            frmGastosVendedor.oCierreE = oCierreE;
+            frmGastosVendedor.ShowDialog();
         }
     }
 }

@@ -57,6 +57,8 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
+            this.btnVerGastos = new System.Windows.Forms.Button();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -68,6 +70,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.checkTicket);
             this.pnlBuscar.Controls.Add(this.panel2);
             this.pnlBuscar.Controls.Add(this.panel1);
             this.pnlBuscar.Controls.Add(this.label3);
@@ -157,6 +160,7 @@
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.btnVerGastos);
             this.panel1.Controls.Add(this.txtImporteRetirado);
             this.panel1.Controls.Add(this.lblImporteRetirado);
             this.panel1.Controls.Add(this.txtCajaInicioSiguiente);
@@ -389,9 +393,34 @@
             this.btnCerrarCaja.Name = "btnCerrarCaja";
             this.btnCerrarCaja.Size = new System.Drawing.Size(135, 30);
             this.btnCerrarCaja.TabIndex = 30;
-            this.btnCerrarCaja.Text = "Cerrar Caja";
+            this.btnCerrarCaja.Text = "&Cerrar Caja";
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
+            // 
+            // btnVerGastos
+            // 
+            this.btnVerGastos.Location = new System.Drawing.Point(315, 92);
+            this.btnVerGastos.Name = "btnVerGastos";
+            this.btnVerGastos.Size = new System.Drawing.Size(36, 24);
+            this.btnVerGastos.TabIndex = 32;
+            this.btnVerGastos.Text = "Ver";
+            this.btnVerGastos.UseVisualStyleBackColor = true;
+            this.btnVerGastos.Click += new System.EventHandler(this.btnVerGastos_Click);
+            // 
+            // checkTicket
+            // 
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkTicket.Location = new System.Drawing.Point(314, 91);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(64, 20);
+            this.checkTicket.TabIndex = 47;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = true;
+            this.checkTicket.Visible = false;
             // 
             // formCerrarCaja
             // 
@@ -450,5 +479,7 @@
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Panel pnlBuscar;
+        private System.Windows.Forms.Button btnVerGastos;
+        private System.Windows.Forms.CheckBox checkTicket;
     }
 }

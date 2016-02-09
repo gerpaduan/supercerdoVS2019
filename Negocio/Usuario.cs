@@ -82,6 +82,24 @@ namespace Negocio
             return userEncontrado;
         }
 
+        public Entidades.Usuario getUserById(int idUsuario)
+        {
+            Entidades.Usuario userEncontrado = null;
+            if (listUsuarios == null)
+            {
+                listUsuarios = convertDatatableToList();
+            }
+            foreach (Entidades.Usuario user in listUsuarios)
+            {
+                if (user.Id.Equals(idUsuario))
+                {
+                    userEncontrado = new Entidades.Usuario();
+                    userEncontrado = user;
+                }
+            }
+            return userEncontrado;
+        }
+
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
             oUsuarioD.addOrEditUser(oUsuarioE);
