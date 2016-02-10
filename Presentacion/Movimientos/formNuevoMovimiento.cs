@@ -46,6 +46,7 @@ namespace Presentacion
         {
             InitializeComponent();
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarSucursales();
             dtCorte = oCorteN.obtenerCortes();
         }

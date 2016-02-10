@@ -165,7 +165,6 @@
             this.txtMonto.Name = "txtMonto";
             this.txtMonto.Size = new System.Drawing.Size(158, 22);
             this.txtMonto.TabIndex = 2;
-            this.txtMonto.TabStop = false;
             // 
             // lblDescripcion
             // 
@@ -187,7 +186,6 @@
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(355, 22);
             this.txtDescripcion.TabIndex = 1;
-            this.txtDescripcion.TabStop = false;
             // 
             // comboTipoGasto
             // 
@@ -212,7 +210,6 @@
             this.txtDetalle.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtDetalle.Size = new System.Drawing.Size(355, 95);
             this.txtDetalle.TabIndex = 3;
-            this.txtDetalle.TabStop = false;
             // 
             // lblTipo
             // 

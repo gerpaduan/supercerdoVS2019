@@ -37,6 +37,7 @@ namespace Presentacion
         {
             InitializeComponent();
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarComboSucursal();
         }
 
@@ -135,31 +136,18 @@ namespace Presentacion
         private bool validarCantKgs()
         { 
             bool resp=true;
-
             try
             {
-                decimal peso = Convert.ToDecimal(txtCantKgs.Text);
-                if (peso>0)
+                if (!Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Cant. Kgs"))
                 {
-                    resp = true;
-                }
-                else
-                {
-                    DialogResult result = MessageBox.Show("La Cantidad de Kgs. ingresado es igual o menor a 0(Cero).\n¿Desea ingresar esa Cant. de Kgs. igualmente?.","",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2);
-                    if (result==DialogResult.Yes)
-                    {
-                        resp = true;
-                    }
-                    else
-                    {
-                        resp = false;
-                    }
+                    resp = false;
+                    txtCantKgs.Focus();
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 resp = false;
-                MessageBox.Show("Cant. Kgs debe ser un número represente un peso en Kg.");
+                MessageBox.Show("Error en método validarCantKgs()\n\n"+ex.Message);
             }
             return resp;
         }
@@ -178,7 +166,8 @@ namespace Presentacion
                 oCorteE = null;//libero el objeto
                 oCortePorEmbutidoE = null;//libero el objeto
                 limpiarCampos();
-                
+
+                txtCodCorteEnEmbutido.Focus();                
             }
         }
 
@@ -335,7 +324,6 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
-            txtCodCorteEnEmbutido.Focus();
         }        
 
         private void btnGuardar_Click(object sender, EventArgs e)

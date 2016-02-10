@@ -82,7 +82,7 @@
             this.comboUsuario.Location = new System.Drawing.Point(119, 25);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(140, 21);
-            this.comboUsuario.TabIndex = 5;
+            this.comboUsuario.TabIndex = 2;
             // 
             // FormLoginVendedor
             // 

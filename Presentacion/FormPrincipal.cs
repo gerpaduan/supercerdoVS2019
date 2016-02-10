@@ -630,6 +630,16 @@ namespace Presentacion
                 formGastos frmGastos = new formGastos();
                 frmGastos.Show();
             }
+        }
+
+        private void cierresCajaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            cierresCaja();
+        }
+
+        private void btnGastos_Click(object sender, EventArgs e)
+        {
+            gastos();
         }     
     }
 }

@@ -64,6 +64,9 @@ namespace Presentacion.Ventas
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;
 
+            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString());
+            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
+
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
@@ -451,6 +454,7 @@ namespace Presentacion.Ventas
             if (!Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs."))
             {
                 txtCantKgs.Focus();
+                if (checkLeerPeso.Checked)  btnAgregar.Focus();
                 return false;
             } 
             else
@@ -679,7 +683,8 @@ namespace Presentacion.Ventas
 
         private void cargarTotalCorte()
         {
-            if (!txtCantKgs.Text.Equals("") && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))
+            if (!txtCantKgs.Text.Equals("") && (checkLeerPeso.Checked  || 
+                ( !checkLeerPeso.Checked && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))))
             {
                 try
                 {
@@ -723,7 +728,7 @@ namespace Presentacion.Ventas
                 }
                 catch (Exception ex)
                 {
-                    if (txtCantKgs.Text.Trim() != "-")
+                    if (txtCantKgs.Text.Trim() != "-" && !checkLeerPeso.Checked)
                     {
                         MessageBox.Show(ex.Message);
                     }

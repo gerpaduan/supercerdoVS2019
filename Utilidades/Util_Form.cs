@@ -71,16 +71,6 @@ namespace Utilidades
             
             foreach (char letra in texto)
             {
-                //if ((!char.IsNumber(letra) && !char.IsPunctuation('.')) ||  char.IsLetter(letra) || !char.IsSeparator(' '))
-                //{
-                //    resp = false;
-                //}
-                //if (char.IsSymbol(letra))
-                //{
-                //    resp = false;
-                //}&& (index>0 && letra == '-')
-
-                ///
                 bool esNro = true;
                 if (!char.IsNumber(letra))
                 {
