@@ -51,6 +51,7 @@ namespace Presentacion.Ventas
         }
 
         bool modificar = false;
+        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         string fecha = "", estadoVenta = "";
         float totalCorte, precioKg, cantKg;
         float totalVenta = 0, abona = 0, cambio = 0;
@@ -63,9 +64,6 @@ namespace Presentacion.Ventas
 
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;
-
-            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString());
-            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
 
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
@@ -82,6 +80,8 @@ namespace Presentacion.Ventas
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
 
+            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            checkTicket.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -915,8 +915,15 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
-                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    if (fijarPeso)
+                    {
+                        txtCantKgs.Text = "1.500";
+                    }
+                    else
+                    {
+                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    }
                 }
             }
             catch (Exception ex)

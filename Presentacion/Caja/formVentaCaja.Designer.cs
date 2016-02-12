@@ -287,6 +287,7 @@
             this.checkLeerPeso.TabStop = false;
             this.checkLeerPeso.Text = "Leer Peso &Balanza";
             this.checkLeerPeso.UseVisualStyleBackColor = true;
+            this.checkLeerPeso.Visible = false;
             this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 
             // label7

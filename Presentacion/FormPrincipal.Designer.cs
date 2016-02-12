@@ -147,7 +147,7 @@
             this.btnReportes.Size = new System.Drawing.Size(170, 27);
             this.btnReportes.TabIndex = 27;
             this.btnReportes.TabStop = false;
-            this.btnReportes.Text = "&Reportes";
+            this.btnReportes.Text = "Re&portes";
             this.btnReportes.UseVisualStyleBackColor = false;
             this.btnReportes.Click += new System.EventHandler(this.btnReportes_Click);
             // 
@@ -345,7 +345,7 @@
             this.linkLogin.Size = new System.Drawing.Size(70, 13);
             this.linkLogin.TabIndex = 13;
             this.linkLogin.TabStop = true;
-            this.linkLogin.Text = "Iniciar Sesión";
+            this.linkLogin.Text = "&Iniciar Sesión";
             this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
             // 
             // label3
@@ -387,7 +387,7 @@
             this.linkCerrarSesion.Size = new System.Drawing.Size(70, 13);
             this.linkCerrarSesion.TabIndex = 12;
             this.linkCerrarSesion.TabStop = true;
-            this.linkCerrarSesion.Text = "Cerrar Sesión";
+            this.linkCerrarSesion.Text = "Cerrar Ses&ión";
             this.linkCerrarSesion.Visible = false;
             this.linkCerrarSesion.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarSesion_LinkClicked);
             // 
