@@ -22,6 +22,9 @@ namespace Presentacion.Caja
             txtFechaHoraCierre.Text = "";
             txtDiferencia.Text = "";
             txtImporteRetirado.Text = "";
+            txtCajaCierre.TabStop = false;
+            txtCajaInicioSiguiente.TabStop = false;
+            txtImporteRetirado.TabStop = false;
         }
 
     }

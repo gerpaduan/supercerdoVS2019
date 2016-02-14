@@ -13,6 +13,7 @@ using Presentacion.Ventas;
 using Presentacion.Caja;
 using Presentacion.Balanza;
 using Presentacion.Usuario;
+using Presentacion.Pruebas;
 using System.Configuration;
 
 
@@ -456,23 +457,6 @@ namespace Presentacion
                         frmVentaCaja.Show();
                     }
                     break;
-                case Keys.F2:
-                    formAbierto = false;
-                    foreach (Form frm in Application.OpenForms)
-                    {
-                        if (frm.GetType() == typeof(formVentaCaja2))
-                        {
-                            frm.BringToFront();
-                            formAbierto = true;
-                            break;
-                        }
-                    }
-                    if (!formAbierto)
-                    {
-                        formVentaCaja2 frmVentaCaja2 = new formVentaCaja2();
-                        frmVentaCaja2.Show();
-                    }
-                    break;
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
@@ -640,6 +624,22 @@ namespace Presentacion
         private void btnGastos_Click(object sender, EventArgs e)
         {
             gastos();
+        }
+
+        private void imprimirTicketToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formTicketPrueba"] != null)
+            {
+
+                Application.OpenForms["formTicketPrueba"].Activate();
+                Application.OpenForms["formTicketPrueba"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formTicketPrueba frmTicketPrueba = new formTicketPrueba();
+                frmTicketPrueba.Show();
+            }
         }     
     }
 }

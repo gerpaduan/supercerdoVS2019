@@ -192,10 +192,13 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@montoGasto", true);
 
             SqlDataReader drGasto = cmCierreCaja.ExecuteReader();
-            float gasto = -1;
+            float gasto = 0;
             while (drGasto.Read())
             {
-                gasto = float.Parse(drGasto["monto"].ToString());
+                if (drGasto["monto"] != DBNull.Value)
+                {
+                    gasto = float.Parse(drGasto["monto"].ToString());                    
+                }
             }
             cmCierreCaja.Connection.Close();
             return gasto;

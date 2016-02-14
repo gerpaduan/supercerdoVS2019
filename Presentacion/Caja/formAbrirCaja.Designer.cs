@@ -62,7 +62,7 @@
             // 
             // btnCerrarCaja
             // 
-            this.btnCerrarCaja.Text = "Abrir Caja";
+            this.btnCerrarCaja.Text = "&Abrir Caja";
             // 
             // formAbrirCaja
             // 

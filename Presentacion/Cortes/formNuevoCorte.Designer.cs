@@ -196,6 +196,7 @@
             this.comboTipo.Items.AddRange(new object[] {
             "Corte",
             "Embutido",
+            "Unidad",
             "Otro"});
             this.comboTipo.Location = new System.Drawing.Point(93, 110);
             this.comboTipo.Name = "comboTipo";

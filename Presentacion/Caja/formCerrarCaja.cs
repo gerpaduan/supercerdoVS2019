@@ -107,7 +107,7 @@ namespace Presentacion.Caja
                             ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
                             ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
                             ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreE.ImporteRetirado));
-                            ticket.LineasEnBlanco(2);
+                            ticket.LineasEnBlanco(3);
                         }
 
                         this.Close();
@@ -196,11 +196,18 @@ namespace Presentacion.Caja
                 diferencia = 0;
 
                 diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
-                importeRetirado = cajaCierre - cajaInicioSiguiente;
                 oCierreE.Diferencia = diferencia;
-                txtDiferencia.Text = diferencia.ToString("F2");
-                txtImporteRetirado.Text = importeRetirado.ToString();
-            }             
+                txtDiferencia.Text = txtCajaCierre.Text.Length > 0 ? diferencia.ToString("F2") : "";
+                if (txtCajaInicioSiguiente.ReadOnly)
+                {
+                    txtCajaInicioSiguiente.Text = (cajaCierre - importeRetirado).ToString();
+                }
+                else
+                {
+                    importeRetirado = cajaCierre - cajaInicioSiguiente;
+                    txtImporteRetirado.Text = importeRetirado.ToString();
+                }
+             }             
         }
 
         private void txtCajaInicial_TextChanged(object sender, EventArgs e)
@@ -241,20 +248,26 @@ namespace Presentacion.Caja
 
         private void txtCajaInicioSiguiente_TextChanged(object sender, EventArgs e)
         {
-            if (!(txtCajaInicioSiguiente.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtCajaInicioSiguiente.Text, "Caja")))
+            if (!txtCajaInicioSiguiente.ReadOnly)
             {
-                txtCajaInicioSiguiente.Text = "";
+                if (!(txtCajaInicioSiguiente.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtCajaInicioSiguiente.Text, "Caja")))
+                {
+                    txtCajaInicioSiguiente.Text = "";
+                }
+                calcularCierreCaja();                
             }
-            calcularCierreCaja();
         }
 
         private void txtImporteRetirado_TextChanged(object sender, EventArgs e)
         {
-            if (!(txtImporteRetirado.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtImporteRetirado.Text, "Importe a Retirar")))
+            if (!txtImporteRetirado.ReadOnly)
             {
-                txtImporteRetirado.Text = "";
+                if (!(txtImporteRetirado.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtImporteRetirado.Text, "Importe a Retirar")))
+                {
+                    txtImporteRetirado.Text = "";
+                }
+                calcularCierreCaja();                
             }
-            calcularCierreCaja();
         }
 
         private void validarAperturaForm()
@@ -263,6 +276,8 @@ namespace Presentacion.Caja
             {
                 if (tipoCierreActual.Equals(tipoCierre.AbrirCaja))
                 {
+                    panelTaparCamposCierre.BringToFront();
+                    btnVerGastos.TabStop = false;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
                     if (oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
                     {
@@ -275,8 +290,13 @@ namespace Presentacion.Caja
                 }
                 if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
                 {
+                    txtCajaInicial.ReadOnly = true;
+                    txtCajaInicial.TabStop = false;
+                    txtCajaInicial.BackColor = SystemColors.ScrollBar;
+                    panelTaparCamposCierre.Visible = false;
                     checkTicket.Visible = true;
                     checkTicket.Checked = true;
+                    controlEleccionImporte.Value = 1;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
                     //if (!oUserCierre.Admin && !oCierreE.UsuarioInicio.Id.Equals(oUserCierre.Id))
                     if (!oUserCierre.Admin)
@@ -334,6 +354,25 @@ namespace Presentacion.Caja
             formGastosVendedor frmGastosVendedor = new formGastosVendedor();
             frmGastosVendedor.oCierreE = oCierreE;
             frmGastosVendedor.ShowDialog();
+        }
+
+        private void controlEleccionImporte_ValueChanged(object sender, EventArgs e)
+        {
+            if (controlEleccionImporte.Value.Equals(0))
+            {
+                txtCajaInicioSiguiente.ReadOnly = true;
+                txtCajaInicioSiguiente.BackColor = SystemColors.ScrollBar;
+                txtImporteRetirado.ReadOnly = false;
+                txtImporteRetirado.BackColor = SystemColors.Window;
+            }
+            else
+            {
+                txtCajaInicioSiguiente.ReadOnly = false;
+                txtCajaInicioSiguiente.BackColor = SystemColors.Window;
+                txtImporteRetirado.ReadOnly = true;
+                txtImporteRetirado.BackColor = SystemColors.ScrollBar;
+            }
+
         }
     }
 }

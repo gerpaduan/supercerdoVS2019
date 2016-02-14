@@ -28,7 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.panelTaparCamposCierre = new System.Windows.Forms.Panel();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lblUsuarioCierre = new System.Windows.Forms.Label();
             this.txtUserCierre = new System.Windows.Forms.TextBox();
@@ -37,6 +40,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtUserInicio = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.controlEleccionImporte = new System.Windows.Forms.TrackBar();
+            this.btnVerGastos = new System.Windows.Forms.Button();
             this.txtImporteRetirado = new System.Windows.Forms.TextBox();
             this.lblImporteRetirado = new System.Windows.Forms.Label();
             this.txtCajaInicioSiguiente = new System.Windows.Forms.TextBox();
@@ -57,11 +62,11 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
-            this.btnVerGastos = new System.Windows.Forms.Button();
-            this.checkTicket = new System.Windows.Forms.CheckBox();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.pnlBuscar.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.controlEleccionImporte)).BeginInit();
             this.panel3.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -72,15 +77,38 @@
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
             this.pnlBuscar.Controls.Add(this.checkTicket);
             this.pnlBuscar.Controls.Add(this.panel2);
-            this.pnlBuscar.Controls.Add(this.panel1);
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Controls.Add(this.txtFechaHoraCierre);
             this.pnlBuscar.Controls.Add(this.label2);
             this.pnlBuscar.Controls.Add(this.txtFechaHoraInicio);
+            this.pnlBuscar.Controls.Add(this.panel1);
+            this.pnlBuscar.Controls.Add(this.panelTaparCamposCierre);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(390, 461);
             this.pnlBuscar.TabIndex = 24;
+            // 
+            // panelTaparCamposCierre
+            // 
+            this.panelTaparCamposCierre.Location = new System.Drawing.Point(13, 221);
+            this.panelTaparCamposCierre.Name = "panelTaparCamposCierre";
+            this.panelTaparCamposCierre.Size = new System.Drawing.Size(364, 234);
+            this.panelTaparCamposCierre.TabIndex = 33;
+            // 
+            // checkTicket
+            // 
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkTicket.Location = new System.Drawing.Point(314, 91);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(64, 20);
+            this.checkTicket.TabIndex = 47;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = true;
+            this.checkTicket.Visible = false;
             // 
             // panel2
             // 
@@ -109,15 +137,18 @@
             // 
             // txtUserCierre
             // 
+            this.txtUserCierre.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtUserCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtUserCierre.Location = new System.Drawing.Point(123, 67);
             this.txtUserCierre.Name = "txtUserCierre";
             this.txtUserCierre.ReadOnly = true;
             this.txtUserCierre.Size = new System.Drawing.Size(150, 22);
             this.txtUserCierre.TabIndex = 16;
+            this.txtUserCierre.TabStop = false;
             // 
             // txtSucursal
             // 
+            this.txtSucursal.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSucursal.Location = new System.Drawing.Point(123, 10);
             this.txtSucursal.Name = "txtSucursal";
@@ -150,16 +181,19 @@
             // 
             // txtUserInicio
             // 
+            this.txtUserInicio.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtUserInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtUserInicio.Location = new System.Drawing.Point(123, 39);
             this.txtUserInicio.Name = "txtUserInicio";
             this.txtUserInicio.ReadOnly = true;
             this.txtUserInicio.Size = new System.Drawing.Size(150, 22);
             this.txtUserInicio.TabIndex = 14;
+            this.txtUserInicio.TabStop = false;
             // 
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.controlEleccionImporte);
             this.panel1.Controls.Add(this.btnVerGastos);
             this.panel1.Controls.Add(this.txtImporteRetirado);
             this.panel1.Controls.Add(this.lblImporteRetirado);
@@ -179,6 +213,29 @@
             this.panel1.Size = new System.Drawing.Size(366, 283);
             this.panel1.TabIndex = 13;
             // 
+            // controlEleccionImporte
+            // 
+            this.controlEleccionImporte.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.controlEleccionImporte.LargeChange = 2;
+            this.controlEleccionImporte.Location = new System.Drawing.Point(318, 207);
+            this.controlEleccionImporte.Maximum = 1;
+            this.controlEleccionImporte.Name = "controlEleccionImporte";
+            this.controlEleccionImporte.Orientation = System.Windows.Forms.Orientation.Vertical;
+            this.controlEleccionImporte.Size = new System.Drawing.Size(45, 68);
+            this.controlEleccionImporte.TabIndex = 0;
+            this.controlEleccionImporte.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.controlEleccionImporte.ValueChanged += new System.EventHandler(this.controlEleccionImporte_ValueChanged);
+            // 
+            // btnVerGastos
+            // 
+            this.btnVerGastos.Location = new System.Drawing.Point(315, 92);
+            this.btnVerGastos.Name = "btnVerGastos";
+            this.btnVerGastos.Size = new System.Drawing.Size(36, 24);
+            this.btnVerGastos.TabIndex = 32;
+            this.btnVerGastos.Text = "Ver";
+            this.btnVerGastos.UseVisualStyleBackColor = true;
+            this.btnVerGastos.Click += new System.EventHandler(this.btnVerGastos_Click);
+            // 
             // txtImporteRetirado
             // 
             this.txtImporteRetirado.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -188,6 +245,7 @@
             this.txtImporteRetirado.TabIndex = 31;
             this.txtImporteRetirado.Text = "0";
             this.txtImporteRetirado.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.txtImporteRetirado, "Ingrese aquí la cantidad de dinero que se lleva el dueño.");
             this.txtImporteRetirado.TextChanged += new System.EventHandler(this.txtImporteRetirado_TextChanged);
             // 
             // lblImporteRetirado
@@ -200,6 +258,7 @@
             this.lblImporteRetirado.Size = new System.Drawing.Size(124, 16);
             this.lblImporteRetirado.TabIndex = 30;
             this.lblImporteRetirado.Text = "Importe a Retirar";
+            this.toolTip1.SetToolTip(this.lblImporteRetirado, "Ingrese aquí la cantidad de dinero que se lleva el dueño.");
             // 
             // txtCajaInicioSiguiente
             // 
@@ -210,6 +269,7 @@
             this.txtCajaInicioSiguiente.TabIndex = 29;
             this.txtCajaInicioSiguiente.Text = "0";
             this.txtCajaInicioSiguiente.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.txtCajaInicioSiguiente, "Aquí ingrese la cantidad de dinero que quedará en la caja para el próximo día.");
             this.txtCajaInicioSiguiente.TextChanged += new System.EventHandler(this.txtCajaInicioSiguiente_TextChanged);
             // 
             // lblCaja
@@ -222,6 +282,7 @@
             this.lblCaja.Size = new System.Drawing.Size(40, 16);
             this.lblCaja.TabIndex = 28;
             this.lblCaja.Text = "Caja";
+            this.toolTip1.SetToolTip(this.lblCaja, "Aquí ingrese la cantidad de dinero que quedará en la caja.");
             // 
             // panel3
             // 
@@ -235,6 +296,7 @@
             // 
             // txtDiferencia
             // 
+            this.txtDiferencia.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtDiferencia.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDiferencia.Location = new System.Drawing.Point(147, 9);
             this.txtDiferencia.Name = "txtDiferencia";
@@ -244,6 +306,8 @@
             this.txtDiferencia.TabStop = false;
             this.txtDiferencia.Text = "0";
             this.txtDiferencia.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.txtDiferencia, "Aquí se muestra el sobrante\r\no faltante de la caja.\r\nSi el número es negativo\r\nsi" +
+                    "gnifica que faltó dinero\r\nsi es positivo es porque \r\nsobró dinero.");
             // 
             // label9
             // 
@@ -255,6 +319,7 @@
             this.label9.Size = new System.Drawing.Size(79, 16);
             this.label9.TabIndex = 25;
             this.label9.Text = "Diferencia";
+            this.toolTip1.SetToolTip(this.label9, "Aquí se muestra el sobrante");
             // 
             // txtCajaCierre
             // 
@@ -265,6 +330,8 @@
             this.txtCajaCierre.TabIndex = 24;
             this.txtCajaCierre.Text = "0";
             this.txtCajaCierre.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.toolTip1.SetToolTip(this.txtCajaCierre, "Aquí ingrese el total de dinero que hay en la caja.\r\nSe deben contar todos los bi" +
+                    "lletes incluyendo los de $100 y las monedas.\r\n\r\n");
             this.txtCajaCierre.TextChanged += new System.EventHandler(this.txtCajaCierre_TextChanged);
             // 
             // lblCajaCierre
@@ -277,14 +344,18 @@
             this.lblCajaCierre.Size = new System.Drawing.Size(86, 16);
             this.lblCajaCierre.TabIndex = 23;
             this.lblCajaCierre.Text = "Caja Cierre";
+            this.toolTip1.SetToolTip(this.lblCajaCierre, "Aquí ingrese el total de \r\ndinero que hay en la caja.\r\n");
             // 
             // txtGastos
             // 
+            this.txtGastos.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtGastos.Location = new System.Drawing.Point(147, 91);
             this.txtGastos.Name = "txtGastos";
+            this.txtGastos.ReadOnly = true;
             this.txtGastos.Size = new System.Drawing.Size(162, 24);
             this.txtGastos.TabIndex = 22;
+            this.txtGastos.TabStop = false;
             this.txtGastos.Text = "0";
             this.txtGastos.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtGastos.TextChanged += new System.EventHandler(this.txtGastos_TextChanged);
@@ -302,11 +373,14 @@
             // 
             // txtVentas
             // 
+            this.txtVentas.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtVentas.Location = new System.Drawing.Point(147, 53);
             this.txtVentas.Name = "txtVentas";
+            this.txtVentas.ReadOnly = true;
             this.txtVentas.Size = new System.Drawing.Size(162, 24);
             this.txtVentas.TabIndex = 20;
+            this.txtVentas.TabStop = false;
             this.txtVentas.Text = "0";
             this.txtVentas.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtVentas.TextChanged += new System.EventHandler(this.txtVentas_TextChanged);
@@ -357,6 +431,7 @@
             // 
             // txtFechaHoraCierre
             // 
+            this.txtFechaHoraCierre.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaHoraCierre.Location = new System.Drawing.Point(201, 147);
             this.txtFechaHoraCierre.Name = "txtFechaHoraCierre";
@@ -378,6 +453,7 @@
             // 
             // txtFechaHoraInicio
             // 
+            this.txtFechaHoraInicio.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaHoraInicio.Location = new System.Drawing.Point(15, 147);
             this.txtFechaHoraInicio.Name = "txtFechaHoraInicio";
@@ -396,31 +472,6 @@
             this.btnCerrarCaja.Text = "&Cerrar Caja";
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
-            // 
-            // btnVerGastos
-            // 
-            this.btnVerGastos.Location = new System.Drawing.Point(315, 92);
-            this.btnVerGastos.Name = "btnVerGastos";
-            this.btnVerGastos.Size = new System.Drawing.Size(36, 24);
-            this.btnVerGastos.TabIndex = 32;
-            this.btnVerGastos.Text = "Ver";
-            this.btnVerGastos.UseVisualStyleBackColor = true;
-            this.btnVerGastos.Click += new System.EventHandler(this.btnVerGastos_Click);
-            // 
-            // checkTicket
-            // 
-            this.checkTicket.AutoSize = true;
-            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkTicket.Location = new System.Drawing.Point(314, 91);
-            this.checkTicket.Name = "checkTicket";
-            this.checkTicket.Size = new System.Drawing.Size(64, 20);
-            this.checkTicket.TabIndex = 47;
-            this.checkTicket.TabStop = false;
-            this.checkTicket.Text = "&Ticket";
-            this.checkTicket.UseVisualStyleBackColor = true;
-            this.checkTicket.Visible = false;
             // 
             // formCerrarCaja
             // 
@@ -442,6 +493,7 @@
             this.panel2.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.controlEleccionImporte)).EndInit();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
             this.ResumeLayout(false);
@@ -481,5 +533,8 @@
         private System.Windows.Forms.Panel pnlBuscar;
         private System.Windows.Forms.Button btnVerGastos;
         private System.Windows.Forms.CheckBox checkTicket;
+        private System.Windows.Forms.Panel panelTaparCamposCierre;
+        private System.Windows.Forms.TrackBar controlEleccionImporte;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

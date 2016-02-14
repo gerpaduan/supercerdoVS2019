@@ -42,6 +42,13 @@ namespace Presentacion.Ventas
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
+        Color enableColor = SystemColors.Window;
+        Color readOnlyColor = SystemColors.Window;
+        Color focusColor = Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+
+        Color ultimoColor = Color.Green;
+
+
         int sucAnterior;
 
         public int SucAnterior
@@ -80,7 +87,7 @@ namespace Presentacion.Ventas
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
 
-            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            checkLeerPeso.Visible = (FormPrincipal.logueado && Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString()));
             checkTicket.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
         }
 
@@ -242,7 +249,7 @@ namespace Presentacion.Ventas
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
 
-                    lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString();
+                    lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString() + "\n$ " +txtTotalS.Text;
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                 }
@@ -445,7 +452,7 @@ namespace Presentacion.Ventas
                         }
 
                         MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        txtCantKgs.Focus();
+                        if(!checkLeerPeso.Checked) txtCantKgs.Focus();
                     }
 
                 }
@@ -460,7 +467,7 @@ namespace Presentacion.Ventas
             else
             {
                 bool esMayorACero = Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
-                if (!esMayorACero)
+                if (!esMayorACero && !checkLeerPeso.Checked)
 	            {
                     txtCantKgs.Focus();
                     txtCantKgs.SelectAll();
@@ -633,27 +640,17 @@ namespace Presentacion.Ventas
                     {
                         foreach (DataRow fila in dtCortes.Rows)
                         {
-                            //if (Convert.ToInt32(fila["idSucursal"].ToString()) == oSucursalE.idSucursal)
-                            //{
-                                //cargo el corte
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
-
-                                //cargo stock
-                                //oStockCorteSucursal.Corte = oCorteE;
-                                //oStockCorteSucursal.Sucursal = oSucursalE;
-
-                                //oStockCorteSucursal.Stock = float.Parse(fila["stock"].ToString());
-
-                            //}
-
+                                oCorteE.tipo = fila["tipo"].ToString();
                         }
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
                         this.txtPrecioKg.Text = oCorteE.precioKg.ToString("N");
+                        cargarTotalCorte();
                     }
                     else
                     {
@@ -852,6 +849,9 @@ namespace Presentacion.Ventas
 
             this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
             this.txtCorte.Text = oCorteE.corte;
+
+            this.txtCodigo.Focus();
+
         }
 
         private void btnAceptar_Click(object sender, EventArgs e)
@@ -946,12 +946,14 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
+                    txtCantKgs.BackColor = SystemColors.ScrollBar;
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
                 }
                 else
                 {
+                    txtCantKgs.BackColor = SystemColors.Window;
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
@@ -1015,6 +1017,16 @@ namespace Presentacion.Ventas
                     break;
                 case Keys.F9:
                     buscarCliente();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
                     break;
                 case Keys.F10:
                     buscarCorte();
@@ -1157,6 +1169,65 @@ namespace Presentacion.Ventas
             {
                 desbloquear();
             }
+        }
+
+        private void txtCodigo_Enter(object sender, EventArgs e)
+        {
+            this.txtCodigo.BackColor = focusColor;
+        }
+
+        private void txtCodigo_Leave(object sender, EventArgs e)
+        {
+            this.txtCodigo.BackColor = enableColor;
+            if (oCorteE != null && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+            {
+                checkLeerPeso.Checked = false;
+                txtCantKgs.Focus();
+            }
+            else
+            {
+                if (oCorteE != null && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                {
+                    checkLeerPeso.Checked = true;
+                    btnAgregar.Focus();
+                }
+            }
+        }
+
+        private void txtCantKgs_Enter(object sender, EventArgs e)
+        {
+            this.txtCantKgs.BackColor = focusColor;
+        }
+
+        private void txtCantKgs_Leave(object sender, EventArgs e)
+        {
+            this.txtCantKgs.BackColor = enableColor;
+        }
+
+        private void btnAgregar_Enter(object sender, EventArgs e)
+        {
+            this.btnAgregar.UseVisualStyleBackColor = false;
+            this.btnAgregar.BackColor = focusColor;
+        }
+
+        private void btnAgregar_Leave(object sender, EventArgs e)
+        {
+            this.btnAgregar.UseVisualStyleBackColor = true;
+        }
+
+        private void txtAbona_Enter(object sender, EventArgs e)
+        {
+            this.txtAbona.BackColor = focusColor;
+        }
+
+        private void txtAbona_Leave(object sender, EventArgs e)
+        {
+            this.txtAbona.BackColor = enableColor;
+        }
+
+        private void checkTicket_CheckedChanged(object sender, EventArgs e)
+        {
+            txtCodigo.Focus();
         }
     }
 }
