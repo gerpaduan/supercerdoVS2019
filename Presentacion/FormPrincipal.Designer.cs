@@ -610,11 +610,11 @@
             this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
             this.lblConectadoA.TabIndex = 102;
             this.lblConectadoA.Text = "|  Conectado a";
-            this.lblConectadoA.Visible = false;
             // 
             // comboConexion
             // 
             this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboConexion.Enabled = false;
             this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboConexion.FormattingEnabled = true;
             this.comboConexion.Items.AddRange(new object[] {
@@ -627,7 +627,6 @@
             this.comboConexion.Name = "comboConexion";
             this.comboConexion.Size = new System.Drawing.Size(157, 23);
             this.comboConexion.TabIndex = 103;
-            this.comboConexion.Visible = false;
             this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
             // 
             // FormPrincipal

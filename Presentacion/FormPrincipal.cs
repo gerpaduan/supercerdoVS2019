@@ -338,16 +338,14 @@ namespace Presentacion
                 linkLogin.Visible = false;
                 linkCerrarSesion.Visible = true;
                 //btnTipoConexioin.Visible = true;
-                lblConectadoA.Visible = true;
-                comboConexion.Visible = true;
+                comboConexion.Enabled = true;
             }
             else
             {
                 linkLogin.Visible = true;
                 linkCerrarSesion.Visible = false;
-                btnTipoConexioin.Visible = false;
-                lblConectadoA.Visible = false;
-                comboConexion.Visible = false;
+                //btnTipoConexioin.Visible = false;
+                comboConexion.Enabled = false;
             }
         }
 
