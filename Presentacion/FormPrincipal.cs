@@ -297,13 +297,13 @@ namespace Presentacion
             }
             logueado = false;
             linkLogin.Visible = true;
-            linkCerrarSesion.Visible = false;
-            
+            linkCerrarSesion.Visible = false;            
         }
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-            Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
+            comboConexion.Text = Utilidades.Conexion.connStringActual;
+            Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
 
             //asigo sucursal al título  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
@@ -337,13 +337,17 @@ namespace Presentacion
             {
                 linkLogin.Visible = false;
                 linkCerrarSesion.Visible = true;
-                btnTipoConexioin.Visible = true;
+                //btnTipoConexioin.Visible = true;
+                lblConectadoA.Visible = true;
+                comboConexion.Visible = true;
             }
             else
             {
                 linkLogin.Visible = true;
                 linkCerrarSesion.Visible = false;
                 btnTipoConexioin.Visible = false;
+                lblConectadoA.Visible = false;
+                comboConexion.Visible = false;
             }
         }
 
@@ -469,8 +473,23 @@ namespace Presentacion
 
         private static void cierresCaja()
         {
-            formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
-            frmCierresDeCaja.Show();
+            if (logueado)
+            {
+                if (Application.OpenForms["formCierresDeCaja"] != null)
+                {
+                    Application.OpenForms["formCierresDeCaja"].Activate();
+                    Application.OpenForms["formCierresDeCaja"].WindowState = FormWindowState.Normal;
+                }
+                else
+                {
+                    formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
+                    frmCierresDeCaja.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
         }
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -498,15 +517,22 @@ namespace Presentacion
                 {
                     if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.local)
                     {
-                        Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.remota;
-                        btnTipoConexioin.Text = "Con. Remota";
-                        btnTipoConexioin.BackColor = Color.DarkSalmon;
+                        Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.sanLorenzo;
+                        btnTipoConexioin.Text = "San Lorenzo";
                     }
                     else
                     {
-                        Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
-                        btnTipoConexioin.Text = "Con. Local";
-                        btnTipoConexioin.BackColor = Color.SteelBlue;
+                        if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.sanLorenzo)
+                        {
+                            Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.sanMartin;
+                            btnTipoConexioin.Text = "San Martín";
+                        }
+                        else //(Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.sanMartin)
+                        {
+                            Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
+                            btnTipoConexioin.Text = "Local";
+                        }
+
                     }
                     MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n"+Utilidades.Conexion.getConnString(),"Cambio de conexion",MessageBoxButtons.OK);                    
                 }
@@ -640,6 +666,23 @@ namespace Presentacion
                 formTicketPrueba frmTicketPrueba = new formTicketPrueba();
                 frmTicketPrueba.Show();
             }
-        }     
+        }
+
+        private void comboConexion_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms.Count == 1)
+                {
+                    Utilidades.Conexion.connStringActual = comboConexion.Text;
+                    Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
+                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);       
+                }
+                else
+                {
+                    MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
+                }                
+            }
+        }  
     }
 }

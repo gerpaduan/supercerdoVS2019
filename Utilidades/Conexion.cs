@@ -14,11 +14,15 @@ namespace Utilidades
         public enum tipoConexion
         {
             local,
-            remota,
+            sanMartin,
+            sanMartinRemoto,
+            sanLorenzo,
+            sanLorenzoRemoto
         }
         public static tipoConexion tipoConn;
         string valueConnString = "";
-        string conString = ConfigurationManager.ConnectionStrings["connecString"].ToString();
+        public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
+        string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
 
         SqlConnection conn;
         public SqlConnection conectar()
@@ -39,14 +43,47 @@ namespace Utilidades
             switch (tipoConn)
             {
                 case Conexion.tipoConexion.local:
-                    connString = "connecString";
-                        break;
-                case Conexion.tipoConexion.remota:
-                        connString = "connecStringRemota";
-                        break;
+                    connString = "local";
+                    break;
+                case Conexion.tipoConexion.sanMartin:
+                    connString = "sanMartin";
+                    break;
+                case Conexion.tipoConexion.sanMartinRemoto:
+                    connString = "sanMartinRemoto";
+                    break;
+                case Conexion.tipoConexion.sanLorenzo:
+                    connString = "sanLorenzo";
+                    break;
+                case Conexion.tipoConexion.sanLorenzoRemoto:
+                    connString = "sanLorenzoRemoto";
+                    break;
             }
             connString = ConfigurationManager.ConnectionStrings[connString.ToString()].ToString();
             return connString;
+        }
+
+        public static tipoConexion getTipoConexion()
+        {
+            tipoConexion tipoConn = Conexion.tipoConexion.local;
+            switch (connStringActual)
+            {
+                case "local":
+                    tipoConn = Conexion.tipoConexion.local;
+                    break;
+                case "sanMartin":
+                    tipoConn = Conexion.tipoConexion.sanMartin;
+                    break;
+                case "sanMartinRemoto":
+                    tipoConn = Conexion.tipoConexion.sanMartinRemoto;
+                    break;
+                case "sanLorenzo":
+                    tipoConn = Conexion.tipoConexion.sanLorenzo;
+                    break;
+                case "sanLorenzoRemoto":
+                    tipoConn = Conexion.tipoConexion.sanLorenzoRemoto;
+                    break;
+            }
+            return tipoConn;
         }
      }
     

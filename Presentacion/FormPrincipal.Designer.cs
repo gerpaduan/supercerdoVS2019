@@ -69,6 +69,8 @@
             this.leerPesoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.lblConectadoA = new System.Windows.Forms.Label();
+            this.comboConexion = new System.Windows.Forms.ComboBox();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -111,6 +113,8 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
             this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.splitContainer1.Panel2.Controls.Add(this.comboConexion);
+            this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
             this.splitContainer1.Panel2.Controls.Add(this.btnTipoConexioin);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
             this.splitContainer1.Size = new System.Drawing.Size(997, 581);
@@ -446,16 +450,16 @@
             // 
             // btnTipoConexioin
             // 
-            this.btnTipoConexioin.BackColor = System.Drawing.Color.SteelBlue;
+            this.btnTipoConexioin.BackColor = System.Drawing.SystemColors.Control;
             this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnTipoConexioin.Location = new System.Drawing.Point(674, 0);
+            this.btnTipoConexioin.Location = new System.Drawing.Point(382, 0);
             this.btnTipoConexioin.Name = "btnTipoConexioin";
             this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
             this.btnTipoConexioin.TabIndex = 100;
             this.btnTipoConexioin.TabStop = false;
-            this.btnTipoConexioin.Text = "Con. Local";
+            this.btnTipoConexioin.Text = "Local";
             this.btnTipoConexioin.UseVisualStyleBackColor = false;
             this.btnTipoConexioin.Visible = false;
             this.btnTipoConexioin.Click += new System.EventHandler(this.btnTipoConexioin_Click);
@@ -515,7 +519,7 @@
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -598,6 +602,34 @@
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
+            // lblConectadoA
+            // 
+            this.lblConectadoA.AutoSize = true;
+            this.lblConectadoA.Location = new System.Drawing.Point(548, 5);
+            this.lblConectadoA.Name = "lblConectadoA";
+            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
+            this.lblConectadoA.TabIndex = 102;
+            this.lblConectadoA.Text = "|  Conectado a";
+            this.lblConectadoA.Visible = false;
+            // 
+            // comboConexion
+            // 
+            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboConexion.FormattingEnabled = true;
+            this.comboConexion.Items.AddRange(new object[] {
+            "local",
+            "sanMartin",
+            "sanMartinRemoto",
+            "sanLorenzo",
+            "sanLorenzoRemoto"});
+            this.comboConexion.Location = new System.Drawing.Point(630, 1);
+            this.comboConexion.Name = "comboConexion";
+            this.comboConexion.Size = new System.Drawing.Size(157, 23);
+            this.comboConexion.TabIndex = 103;
+            this.comboConexion.Visible = false;
+            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
+            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -667,6 +699,8 @@
         private System.Windows.Forms.Button btnGastos;
         private System.Windows.Forms.ToolStripMenuItem probarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem imprimirTicketToolStripMenuItem;
+        private System.Windows.Forms.Label lblConectadoA;
+        private System.Windows.Forms.ComboBox comboConexion;
     }
 }
 
