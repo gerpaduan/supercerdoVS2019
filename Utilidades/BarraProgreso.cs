@@ -12,10 +12,11 @@ namespace Utilidades
     public partial class BarraProgreso : Form
     {
         int count = 0;
-        public BarraProgreso(string nombreVendedor)
+        public BarraProgreso(string tituto, string nombreVendedor)
         {
             InitializeComponent();
-            lblVendedor.Text = nombreVendedor;
+            this.Text = string.IsNullOrEmpty(tituto) ? this.Text : tituto;
+            lblVendedor.Text = string.IsNullOrEmpty(nombreVendedor) ? lblVendedor.Text : nombreVendedor;
         }
 
         private void BarraProgreso_Load(object sender, EventArgs e)

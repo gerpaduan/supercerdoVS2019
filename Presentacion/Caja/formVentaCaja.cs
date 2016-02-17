@@ -43,13 +43,17 @@ namespace Presentacion.Ventas
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
         Color enableColor = SystemColors.Window;
-        Color readOnlyColor = SystemColors.Window;
+        Color readOnlyColor = SystemColors.ScrollBar;
         Color focusColor = Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
 
         Color ultimoColor = Color.Green;
 
 
         int sucAnterior;
+        int tiempoInactivo = 0;
+        int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
+        int sumaTitilar = 0;
+        int titilarHasta = 2000;
 
         public int SucAnterior
         {
@@ -59,6 +63,7 @@ namespace Presentacion.Ventas
 
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+        bool cartelPrimerCorteVendedor = Convert.ToBoolean(ConfigurationManager.AppSettings["cartelPrimerCorteVendedor"].ToString());
         string fecha = "", estadoVenta = "";
         float totalCorte, precioKg, cantKg;
         float totalVenta = 0, abona = 0, cambio = 0;
@@ -198,6 +203,24 @@ namespace Presentacion.Ventas
                 {
                     grillaLineasVenta.Rows[listaLineaGrilla.Count - 1].Selected = true;
                     grillaLineasVenta.FirstDisplayedScrollingRowIndex = listaLineaGrilla.Count - 1;
+
+                    for (int nroFila = 0; nroFila < grillaLineasVenta.Rows.Count; nroFila++)
+                    {
+                        
+                        foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                        {
+                            if (Convert.ToInt32(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo &&
+                                linea.IndexAnulado == nroFila)
+                            {
+                                grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
+                            }
+                        }
+                        //if (grillaLineasVenta.Rows[nroFila].Cells["ind == nroFila)
+                        //{
+                        //    grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
+                        //}
+                        
+                    }
                 }
 
                 cargarTotales();
@@ -542,7 +565,7 @@ namespace Presentacion.Ventas
                         }
                         else
                         {
-                            DialogResult respuesta = MessageBox.Show("¿Finalizar la venta?. ", "Finalizar Venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                            DialogResult respuesta = MessageBox.Show(txtVendedor.Text+"\n¿Finalizar la venta?. ", txtVendedor.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
 
                             if (respuesta == System.Windows.Forms.DialogResult.Yes)
                             {
@@ -808,11 +831,13 @@ namespace Presentacion.Ventas
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
+            tiempoInactivo = 0;
             agregarLinea();
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
         {
+            tiempoInactivo = 0;
             quitarLinea();
         }
 
@@ -856,6 +881,7 @@ namespace Presentacion.Ventas
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
+            tiempoInactivo = 0;
             esModificacion();
         }
 
@@ -885,6 +911,10 @@ namespace Presentacion.Ventas
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
+            if (grillaLineasVenta.Rows.Count.Equals(0))
+            {
+                titilarTextBoxVendedor();
+            }
             cargarCorte();
         }
 
@@ -978,6 +1008,8 @@ namespace Presentacion.Ventas
                 Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
+                grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
+                timerBloquearCaja.Start();
             }
             else
             {
@@ -1053,7 +1085,7 @@ namespace Presentacion.Ventas
                     {
                         if (oUsuario != null && ctrl.Name.Equals("usuario") && !ctrl.Text.Equals(oUsuario.User))
                         {
-                            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso(ctrl.Text.ToUpper());
+                            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso(null ,ctrl.Text.ToUpper());
                             barraProgreso.ShowDialog();
                             cambioForm = true;
                             frm.BringToFront();
@@ -1103,9 +1135,11 @@ namespace Presentacion.Ventas
             panelBloquear.Visible = true;
             btnBloquear.Visible = false;
             btnAceptar.Enabled = false;
+            btnAbonar.Enabled = false;
             grupoCortes.Enabled = false;
             pnlBuscar.Enabled = false;
             panelPago.Enabled = false;
+            txtClave.Focus();
         }
 
         private void btnIngresar_Click(object sender, EventArgs e)
@@ -1122,10 +1156,15 @@ namespace Presentacion.Ventas
                 lblErrorClave.Visible = false;
                 txtClave.Text = "";
 
+                btnAbonar.Enabled = true;
                 btnAceptar.Enabled = true;
                 grupoCortes.Enabled = true;
                 pnlBuscar.Enabled = true;
                 panelPago.Enabled = true;
+
+                timerBloquearCaja.Start();
+                tiempoInactivo = 0;
+                txtCodigo.Focus();
             }
             else
             {
@@ -1179,17 +1218,36 @@ namespace Presentacion.Ventas
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
             this.txtCodigo.BackColor = enableColor;
-            if (oCorteE != null && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+            if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
             {
                 checkLeerPeso.Checked = false;
                 txtCantKgs.Focus();
             }
             else
             {
-                if (oCorteE != null && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                 {
                     checkLeerPeso.Checked = true;
                     btnAgregar.Focus();
+                }
+            }
+
+            if (cartelPrimerCorteVendedor && !this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
+            {
+                int cantCajaVenta = 0;
+                foreach (Form frm in Application.OpenForms)
+                {
+                    if (frm.GetType() == typeof(formVentaCaja))
+                    {
+                        cantCajaVenta++;
+                        if (cantCajaVenta > 1)
+                        {
+                            titilarTextBoxVendedor();
+                            //Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Caja de..." ,oUsuario.User.ToUpper());
+                            //barraProgreso.ShowDialog();
+                            break; 
+                        }
+                    }
                 }
             }
         }
@@ -1228,6 +1286,33 @@ namespace Presentacion.Ventas
         private void checkTicket_CheckedChanged(object sender, EventArgs e)
         {
             txtCodigo.Focus();
+        }
+
+        private void timerBloquearCaja_Tick(object sender, EventArgs e)
+        {
+            tiempoInactivo += timerBloquearCaja.Interval;
+            if (tiempoInactivo >= tiempoBloqueo)
+            {
+                bloquear();
+                timerBloquearCaja.Stop();
+            }
+        }
+
+        private void timerTitilar_Tick(object sender, EventArgs e)
+        {
+            txtVendedor.BackColor = txtVendedor.BackColor.Equals(readOnlyColor) ? focusColor : readOnlyColor;
+            sumaTitilar += timerTitilar.Interval;
+            if (sumaTitilar > titilarHasta)
+            {
+                txtVendedor.BackColor = readOnlyColor;
+                timerTitilar.Stop();
+            }
+        }
+
+        private void titilarTextBoxVendedor()
+        {
+            sumaTitilar = 0;
+            timerTitilar.Start();
         }
     }
 }
