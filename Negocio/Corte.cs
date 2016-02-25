@@ -129,6 +129,11 @@ namespace Negocio
              oCorteD.modificarMovimiento(oMovimientoE);
          }
 
+         public void eliminarMovimiento(int idMovimiento)
+         {
+             oCorteD.eliminarMovimiento(idMovimiento);
+         }
+
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
              oCorteD = new Datos.Corte();

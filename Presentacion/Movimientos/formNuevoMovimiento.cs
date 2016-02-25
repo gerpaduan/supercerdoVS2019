@@ -40,7 +40,7 @@ namespace Presentacion
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        bool modificacion = false, huboModificaciones = false;
+        bool modificacion = false, huboModificaciones = false, eliminacion = false;
 
         public formNuevoMovimiento()
         {
@@ -70,6 +70,14 @@ namespace Presentacion
         {
             this.Text = "Modificar Movimiento";
 
+            lblIdDestino.Visible = true;
+            lblIdOrigen.Visible = true;
+
+            lblIdOrigen.Text = oMovimiento.IdMovOrigen != null && oMovimiento.IdMovOrigen > 0 ?
+                oMovimiento.IdMovOrigen.ToString() : oMovimiento.IdMovimiento.ToString();
+            lblIdDestino.Text = oMovimiento.IdMovOrigen != null && oMovimiento.IdMovOrigen > 0 ?
+                oMovimiento.IdMovimiento.ToString() : "-";
+
             comboSucOrigen.SelectedValue = Convert.ToInt32(oMovimiento.SucursalOrigen.idSucursal);
 
             txtFechaMovimiento.Value = oMovimiento.FechaMovimiento;
@@ -96,8 +104,15 @@ namespace Presentacion
                 {
                     if (modificacion)
                     {
-                        oCorteN.quitarCortesPorMovimiento(oMovimiento);
-                        oCorteN.modificarMovimiento(oMovimiento);
+                        if (eliminacion)
+                        {
+                            oCorteN.eliminarMovimiento(oMovimiento.IdMovimiento);
+                        }
+                        else
+                        {
+                            oCorteN.quitarCortesPorMovimiento(oMovimiento);
+                            oCorteN.modificarMovimiento(oMovimiento);
+                        }
                     }
                     else
                     {
@@ -156,7 +171,11 @@ namespace Presentacion
         {
             if (modificacion && huboModificaciones)
             {
-                DialogResult resp = MessageBox.Show("¿Está seguro que desea modificar los datos del Movimiento?", "Modificar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                eliminacion = grillaCortesPorMovimiento.Rows.Count.Equals(0) ? true : false;
+                DialogResult resp = eliminacion ?
+                    MessageBox.Show("Si guarda los cambios se eliminará el movimiento.\n ¿Eliminar el Movimiento?", "Eliminar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
+                    :
+                    MessageBox.Show("¿Está seguro que desea modificar los datos del Movimiento?", "Modificar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 if (resp == DialogResult.Yes)
                 {
                     return true;
@@ -414,10 +433,17 @@ namespace Presentacion
                 if (grillaCortesPorMovimiento.Rows.Count > 0)
                 {
                     int nroFila = grillaCortesPorMovimiento.Rows.GetFirstRow(DataGridViewElementStates.Selected);
-                    listaCortesPorMovimiento.RemoveAt(nroFila);
+                    DialogResult eliminarCorte = MessageBox.Show(
+                        "- "+ listaCortesPorMovimiento[nroFila].Corte.CorteDesc + "  " +
+                        listaCortesPorMovimiento[nroFila].CantKg + "Kgs.\n¿Quitar el corte del movimiento?",
+                        "Quitar Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-                    cargarGrilla();
-                    huboModificaciones = true;
+                    if (eliminarCorte.Equals(DialogResult.Yes))
+                    {
+                        listaCortesPorMovimiento.RemoveAt(nroFila);
+                        cargarGrilla();
+                        huboModificaciones = true;                        
+                    }
                 }
             }
             catch (Exception ex)

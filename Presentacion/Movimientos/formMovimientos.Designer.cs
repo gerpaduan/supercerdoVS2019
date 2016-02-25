@@ -29,13 +29,16 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formMovimientos));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.Reporte = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label6 = new System.Windows.Forms.Label();
             this.comboSucDestino = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -61,9 +64,6 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaMovimientos = new System.Windows.Forms.DataGridView();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovimientos)).BeginInit();
@@ -78,7 +78,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(611, 45);
+            this.barraControl.Size = new System.Drawing.Size(734, 45);
             this.barraControl.TabIndex = 6;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -127,9 +127,42 @@
             this.pnlBuscar.Controls.Add(this.label4);
             this.pnlBuscar.Location = new System.Drawing.Point(-4, 45);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(619, 108);
+            this.pnlBuscar.Size = new System.Drawing.Size(742, 108);
             this.pnlBuscar.TabIndex = 8;
             this.pnlBuscar.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlBuscar_Paint);
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox3.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox3.Location = new System.Drawing.Point(16, 67);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(710, 7);
+            this.groupBox3.TabIndex = 47;
+            this.groupBox3.TabStop = false;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(546, 12);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(180, 7);
+            this.groupBox2.TabIndex = 46;
+            this.groupBox2.TabStop = false;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(77, 14);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(175, 7);
+            this.groupBox1.TabIndex = 45;
+            this.groupBox1.TabStop = false;
             // 
             // label6
             // 
@@ -225,7 +258,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(376, 6);
+            this.label1.Location = new System.Drawing.Point(499, 6);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(41, 15);
             this.label1.TabIndex = 9;
@@ -235,7 +268,7 @@
             // 
             this.txtFechaDesde.CustomFormat = "dd/MM/yyyy";
             this.txtFechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaDesde.Location = new System.Drawing.Point(479, 24);
+            this.txtFechaDesde.Location = new System.Drawing.Point(602, 24);
             this.txtFechaDesde.Name = "txtFechaDesde";
             this.txtFechaDesde.Size = new System.Drawing.Size(95, 20);
             this.txtFechaDesde.TabIndex = 5;
@@ -247,7 +280,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(429, 26);
+            this.label3.Location = new System.Drawing.Point(552, 26);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 4;
@@ -257,7 +290,7 @@
             // 
             this.txtFechaHasta.CustomFormat = "dd/MM/yyyy";
             this.txtFechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaHasta.Location = new System.Drawing.Point(479, 47);
+            this.txtFechaHasta.Location = new System.Drawing.Point(602, 47);
             this.txtFechaHasta.Name = "txtFechaHasta";
             this.txtFechaHasta.Size = new System.Drawing.Size(96, 20);
             this.txtFechaHasta.TabIndex = 7;
@@ -268,7 +301,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(434, 49);
+            this.label4.Location = new System.Drawing.Point(557, 49);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
@@ -285,9 +318,9 @@
             // fechaMovimiento
             // 
             this.fechaMovimiento.DataPropertyName = "fechaMovimiento";
-            dataGridViewCellStyle4.Format = "d";
-            dataGridViewCellStyle4.NullValue = null;
-            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Format = "d";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaMovimiento.HeaderText = "Fecha Movimiento";
             this.fechaMovimiento.Name = "fechaMovimiento";
             this.fechaMovimiento.ReadOnly = true;
@@ -344,8 +377,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle2;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -353,7 +386,7 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(428, 473);
+            this.btnSeleccionar.Location = new System.Drawing.Point(551, 473);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(83, 27);
             this.btnSeleccionar.TabIndex = 15;
@@ -364,7 +397,7 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(517, 473);
+            this.btnCancelar.Location = new System.Drawing.Point(640, 473);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(82, 27);
             this.btnCancelar.TabIndex = 14;
@@ -379,62 +412,29 @@
             this.grillaMovimientos.AllowUserToResizeRows = false;
             this.grillaMovimientos.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.grillaMovimientos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.NullValue = null;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.NullValue = null;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle3;
             this.grillaMovimientos.Location = new System.Drawing.Point(12, 157);
             this.grillaMovimientos.Name = "grillaMovimientos";
             this.grillaMovimientos.ReadOnly = true;
             this.grillaMovimientos.RowHeadersVisible = false;
             this.grillaMovimientos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaMovimientos.Size = new System.Drawing.Size(587, 310);
+            this.grillaMovimientos.Size = new System.Drawing.Size(710, 310);
             this.grillaMovimientos.TabIndex = 16;
             this.grillaMovimientos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaMovimientos_CellDoubleClick);
-            // 
-            // groupBox1
-            // 
-            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(77, 14);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(175, 7);
-            this.groupBox1.TabIndex = 45;
-            this.groupBox1.TabStop = false;
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(423, 12);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(180, 7);
-            this.groupBox2.TabIndex = 46;
-            this.groupBox2.TabStop = false;
-            // 
-            // groupBox3
-            // 
-            this.groupBox3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox3.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox3.Location = new System.Drawing.Point(16, 67);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(587, 7);
-            this.groupBox3.TabIndex = 47;
-            this.groupBox3.TabStop = false;
             // 
             // formMovimientos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(611, 504);
+            this.ClientSize = new System.Drawing.Size(734, 504);
             this.Controls.Add(this.grillaMovimientos);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);

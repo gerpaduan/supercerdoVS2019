@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoMovimiento));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.Reporte = new System.Windows.Forms.ToolStripButton();
@@ -42,7 +42,6 @@
             this.txtHoraMovimiento = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtSucDestino = new System.Windows.Forms.TextBox();
             this.txtSucOrigen = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -62,10 +61,19 @@
             this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.label11 = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.eliminar = new System.Windows.Forms.ToolStripButton();
+            this.label1 = new System.Windows.Forms.Label();
+            this.pnlEliminado = new System.Windows.Forms.Panel();
+            this.lblIdOrigen = new System.Windows.Forms.Label();
+            this.lblIdDestino = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
-            this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorMovimiento)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            this.pnlEliminado.SuspendLayout();
             this.SuspendLayout();
             // 
             // barraControl
@@ -74,7 +82,8 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.modificar,
             this.Reporte,
-            this.Imprimir});
+            this.Imprimir,
+            this.eliminar});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -177,28 +186,11 @@
             this.label6.TabIndex = 16;
             this.label6.Text = "Fecha";
             // 
-            // groupBox1
-            // 
-            this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
-            this.groupBox1.Controls.Add(this.txtSucDestino);
-            this.groupBox1.Controls.Add(this.txtSucOrigen);
-            this.groupBox1.Controls.Add(this.label3);
-            this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox1.Location = new System.Drawing.Point(23, 3);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(280, 79);
-            this.groupBox1.TabIndex = 13;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Sucursales";
-            // 
             // txtSucDestino
             // 
             this.txtSucDestino.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtSucDestino.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSucDestino.Location = new System.Drawing.Point(88, 48);
+            this.txtSucDestino.Location = new System.Drawing.Point(116, 46);
             this.txtSucDestino.Name = "txtSucDestino";
             this.txtSucDestino.ReadOnly = true;
             this.txtSucDestino.Size = new System.Drawing.Size(152, 20);
@@ -208,7 +200,7 @@
             // 
             this.txtSucOrigen.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtSucOrigen.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSucOrigen.Location = new System.Drawing.Point(88, 22);
+            this.txtSucOrigen.Location = new System.Drawing.Point(116, 20);
             this.txtSucOrigen.Name = "txtSucOrigen";
             this.txtSucOrigen.ReadOnly = true;
             this.txtSucOrigen.Size = new System.Drawing.Size(152, 20);
@@ -220,7 +212,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(38, 25);
+            this.label3.Location = new System.Drawing.Point(66, 23);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(44, 15);
             this.label3.TabIndex = 10;
@@ -232,7 +224,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(33, 51);
+            this.label4.Location = new System.Drawing.Point(61, 49);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(49, 15);
             this.label4.TabIndex = 8;
@@ -343,8 +335,8 @@
             // idCorteMovimientodo
             // 
             this.idCorteMovimientodo.DataPropertyName = "idCorteMovimiento";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
-            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
+            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle9;
             this.idCorteMovimientodo.HeaderText = "Id Corte Mov.";
             this.idCorteMovimientodo.MinimumWidth = 70;
             this.idCorteMovimientodo.Name = "idCorteMovimientodo";
@@ -355,8 +347,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle10;
             this.codigo.FillWeight = 40F;
             this.codigo.HeaderText = "Código";
             this.codigo.MinimumWidth = 80;
@@ -375,8 +367,8 @@
             // cantUnidad
             // 
             this.cantUnidad.DataPropertyName = "cantUnidad";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.cantUnidad.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.cantUnidad.DefaultCellStyle = dataGridViewCellStyle11;
             this.cantUnidad.FillWeight = 45F;
             this.cantUnidad.HeaderText = "Cant. Un.";
             this.cantUnidad.Name = "cantUnidad";
@@ -385,10 +377,10 @@
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle8.Format = "N3";
-            dataGridViewCellStyle8.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle12.Format = "N3";
+            dataGridViewCellStyle12.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle12;
             this.cantKg.FillWeight = 55F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
@@ -412,6 +404,110 @@
             this.label11.TabIndex = 46;
             this.label11.Text = "Observaciones";
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.label10);
+            this.groupBox1.Controls.Add(this.label9);
+            this.groupBox1.Controls.Add(this.lblIdDestino);
+            this.groupBox1.Controls.Add(this.lblIdOrigen);
+            this.groupBox1.Controls.Add(this.txtSucDestino);
+            this.groupBox1.Controls.Add(this.txtSucOrigen);
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupBox1.Location = new System.Drawing.Point(23, 3);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(280, 79);
+            this.groupBox1.TabIndex = 13;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Sucursales";
+            // 
+            // eliminar
+            // 
+            this.eliminar.Image = ((System.Drawing.Image)(resources.GetObject("eliminar.Image")));
+            this.eliminar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.eliminar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.eliminar.Name = "eliminar";
+            this.eliminar.Padding = new System.Windows.Forms.Padding(1);
+            this.eliminar.Size = new System.Drawing.Size(56, 42);
+            this.eliminar.Text = "Eliminar";
+            this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.BackColor = System.Drawing.Color.Transparent;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(15, 10);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(106, 25);
+            this.label1.TabIndex = 47;
+            this.label1.Text = "Eliminado";
+            // 
+            // pnlEliminado
+            // 
+            this.pnlEliminado.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.pnlEliminado.Controls.Add(this.label1);
+            this.pnlEliminado.Location = new System.Drawing.Point(0, -1);
+            this.pnlEliminado.Name = "pnlEliminado";
+            this.pnlEliminado.Size = new System.Drawing.Size(605, 46);
+            this.pnlEliminado.TabIndex = 48;
+            this.pnlEliminado.Visible = false;
+            // 
+            // lblIdOrigen
+            // 
+            this.lblIdOrigen.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lblIdOrigen.AutoSize = true;
+            this.lblIdOrigen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblIdOrigen.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblIdOrigen.Location = new System.Drawing.Point(6, 23);
+            this.lblIdOrigen.Name = "lblIdOrigen";
+            this.lblIdOrigen.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblIdOrigen.Size = new System.Drawing.Size(38, 15);
+            this.lblIdOrigen.TabIndex = 13;
+            this.lblIdOrigen.Text = "IdOri";
+            // 
+            // lblIdDestino
+            // 
+            this.lblIdDestino.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lblIdDestino.AutoSize = true;
+            this.lblIdDestino.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblIdDestino.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblIdDestino.Location = new System.Drawing.Point(6, 49);
+            this.lblIdDestino.Name = "lblIdDestino";
+            this.lblIdDestino.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblIdDestino.Size = new System.Drawing.Size(44, 15);
+            this.lblIdDestino.TabIndex = 14;
+            this.lblIdDestino.Text = "IdDes";
+            // 
+            // label9
+            // 
+            this.label9.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label9.Location = new System.Drawing.Point(50, 23);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(10, 15);
+            this.label9.TabIndex = 15;
+            this.label9.Text = "|";
+            // 
+            // label10
+            // 
+            this.label10.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(50, 49);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(10, 15);
+            this.label10.TabIndex = 16;
+            this.label10.Text = "|";
+            // 
             // formInfoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -428,6 +524,7 @@
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.btnSalir);
+            this.Controls.Add(this.pnlEliminado);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formInfoMovimiento";
@@ -438,9 +535,11 @@
             this.barraControl.PerformLayout();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorMovimiento)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorMovimiento)).EndInit();
+            this.pnlEliminado.ResumeLayout(false);
+            this.pnlEliminado.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -452,7 +551,6 @@
         protected System.Windows.Forms.ToolStripButton modificar;
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.Label label6;
-        protected System.Windows.Forms.GroupBox groupBox1;
         protected System.Windows.Forms.TextBox txtSucDestino;
         protected System.Windows.Forms.TextBox txtSucOrigen;
         protected System.Windows.Forms.Label label3;
@@ -477,5 +575,13 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         private System.Windows.Forms.TextBox txtCreado;
+        protected System.Windows.Forms.GroupBox groupBox1;
+        protected System.Windows.Forms.ToolStripButton eliminar;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Panel pnlEliminado;
+        protected System.Windows.Forms.Label label10;
+        protected System.Windows.Forms.Label label9;
+        protected System.Windows.Forms.Label lblIdDestino;
+        protected System.Windows.Forms.Label lblIdOrigen;
     }
 }

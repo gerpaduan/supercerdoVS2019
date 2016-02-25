@@ -43,6 +43,11 @@ namespace Presentacion.Movimientos
 
         private void cargarCampos()
         {
+            lblIdOrigen.Text = oMovimientoE.IdMovOrigen != null && oMovimientoE.IdMovOrigen > 0 ? 
+                oMovimientoE.IdMovOrigen.ToString() : oMovimientoE.IdMovimiento.ToString();
+            lblIdDestino.Text = oMovimientoE.IdMovOrigen != null && oMovimientoE.IdMovOrigen > 0 ?
+                oMovimientoE.IdMovimiento.ToString() : "-";
+
             txtSucOrigen.Text = oMovimientoE.SucursalOrigen.sucursal;
             txtSucDestino.Text = oMovimientoE.SucursalDestino.sucursal;
             txtFechaMovimiento.Value = oMovimientoE.FechaMovimiento;
@@ -123,7 +128,8 @@ namespace Presentacion.Movimientos
             else
             {
 
-                if (Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
+                if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
+                    Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
                 {
                     formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
                     frmNuevoMovimiento.obtenerParametros(frmMovimiento, oMovimientoE, listaCortesPorMovimiento);
@@ -190,9 +196,18 @@ namespace Presentacion.Movimientos
             }
         }
 
-       
-
-       
-        
+        private void eliminar_Click(object sender, EventArgs e)
+        {
+            if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
+                    Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento) &&
+                    MessageBox.Show("¿Está seguro que desea eliminar el movimiento?", "Eliminar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2).Equals(DialogResult.Yes))
+            {
+                oCorteN.eliminarMovimiento(oMovimientoE.IdMovimiento);
+                pnlEliminado.Visible = true;
+                pnlEliminado.BringToFront();
+                frmMovimiento.cargarGrilla();
+                MessageBox.Show("El Movimiento se eliminó correctamente!");
+            }
+        }        
     }
 }

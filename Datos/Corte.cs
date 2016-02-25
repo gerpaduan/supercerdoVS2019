@@ -395,6 +395,21 @@ namespace Datos
             cmCorte.Connection.Close();
         }
 
+        public void eliminarMovimiento(int idMovimiento)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "eliminarMovimiento";
+            cmCorte.Parameters.AddWithValue("@idMovimiento", idMovimiento);
+
+            cmCorte.Connection.Open();
+            cmCorte.ExecuteNonQuery();
+            cmCorte.Connection.Close();
+        }
+
         public void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento)
         {
             cmCorte = new SqlCommand();
@@ -412,23 +427,20 @@ namespace Datos
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
-
         }
 
         public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
         {
             cmCorte = new SqlCommand();
-
             cmCorte.Connection = conn.conectar();
-            cmCorte.Connection.Open();
 
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "quitarCortesPorMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", oMovimientoE.IdMovimiento);
-           
+
+            cmCorte.Connection.Open();           
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
-
         }
 
         public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
@@ -452,11 +464,7 @@ namespace Datos
             daCorte.Fill(dtMovimientos);
 
             return dtMovimientos;
-
-
         }
-
-        
 
         public Entidades.Movimiento cargarMovimiento(int idMovimiento)
         {
@@ -483,6 +491,8 @@ namespace Datos
 
                 oMovimiento.SucursalOrigen = origen;
 
+                oMovimiento.IdMovOrigen = !string.IsNullOrEmpty(drMovimiento["idMovOrigen"].ToString()) ? Convert.ToInt32(drMovimiento["idMovOrigen"].ToString()) : 0;
+                
                 Entidades.Sucursal destino = new Entidades.Sucursal();
                 destino.idSucursal = Convert.ToInt32(drMovimiento["idDestino"].ToString());
                 destino.sucursal = drMovimiento["destino"].ToString();
@@ -494,7 +504,6 @@ namespace Datos
                 oMovimiento.Creado = drMovimiento["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(drMovimiento["creado"].ToString());
                 DateTime fechaNull = Convert.ToDateTime("01/01/1990");
                 oMovimiento.Actualizado = !String.IsNullOrEmpty(drMovimiento["actualizado"].ToString()) ? (Convert.ToDateTime(drMovimiento["actualizado"].ToString())) : fechaNull;
-                
             }
 
             cmCorte.Connection.Close();
@@ -546,8 +555,7 @@ namespace Datos
 
                 listaCortesPorMovimiento.Add(oCortePorMovimiento);
 
-                oCortePorMovimiento = null;
-               
+                oCortePorMovimiento = null;               
             }
 
             cmCorte.Connection.Close();
@@ -601,8 +609,7 @@ namespace Datos
 
             cmCorte.Connection.Close();
 
-            cmCorte = null;
-            
+            cmCorte = null;            
         }
 
 
@@ -623,7 +630,6 @@ namespace Datos
             cmCorte.Connection.Close();
 
             cmCorte = null;
-
         }
 
         public void actualizacionStockTeoricoTotal(int idActualizacion)
@@ -643,7 +649,6 @@ namespace Datos
             cmCorte.Connection.Close();
 
             cmCorte = null;
-
         }
 
         public void reiniciarStockReal(int idSucursal)

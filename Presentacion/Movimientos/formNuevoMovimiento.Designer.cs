@@ -57,6 +57,8 @@
             this.txtCorte = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblIdDestino = new System.Windows.Forms.Label();
+            this.lblIdOrigen = new System.Windows.Forms.Label();
             this.comboSucDestino = new System.Windows.Forms.ComboBox();
             this.comboSucOrigen = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -133,11 +135,11 @@
             // 
             // txtCreado
             // 
-            this.txtCreado.Location = new System.Drawing.Point(411, 44);
+            this.txtCreado.Location = new System.Drawing.Point(391, 44);
             this.txtCreado.Multiline = true;
             this.txtCreado.Name = "txtCreado";
             this.txtCreado.ReadOnly = true;
-            this.txtCreado.Size = new System.Drawing.Size(204, 53);
+            this.txtCreado.Size = new System.Drawing.Size(224, 53);
             this.txtCreado.TabIndex = 55;
             this.txtCreado.TabStop = false;
             this.txtCreado.Visible = false;
@@ -145,7 +147,7 @@
             // textBox1
             // 
             this.textBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.textBox1.Location = new System.Drawing.Point(309, 43);
+            this.textBox1.Location = new System.Drawing.Point(339, 35);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(100, 20);
             this.textBox1.TabIndex = 19;
@@ -157,7 +159,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(289, 18);
+            this.label7.Location = new System.Drawing.Point(282, 3);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(34, 15);
             this.label7.TabIndex = 18;
@@ -168,7 +170,7 @@
             // 
             this.txtHora.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtHora.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtHora.Location = new System.Drawing.Point(329, 15);
+            this.txtHora.Location = new System.Drawing.Point(322, 0);
             this.txtHora.Name = "txtHora";
             this.txtHora.Size = new System.Drawing.Size(80, 22);
             this.txtHora.TabIndex = 17;
@@ -181,7 +183,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(408, 18);
+            this.label6.Location = new System.Drawing.Point(388, 16);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(41, 15);
             this.label6.TabIndex = 16;
@@ -367,6 +369,8 @@
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.lblIdDestino);
+            this.groupBox1.Controls.Add(this.lblIdOrigen);
             this.groupBox1.Controls.Add(this.comboSucDestino);
             this.groupBox1.Controls.Add(this.comboSucOrigen);
             this.groupBox1.Controls.Add(this.label3);
@@ -380,12 +384,40 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Sucursales";
             // 
+            // lblIdDestino
+            // 
+            this.lblIdDestino.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lblIdDestino.AutoSize = true;
+            this.lblIdDestino.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblIdDestino.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblIdDestino.Location = new System.Drawing.Point(267, 59);
+            this.lblIdDestino.Name = "lblIdDestino";
+            this.lblIdDestino.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblIdDestino.Size = new System.Drawing.Size(49, 17);
+            this.lblIdDestino.TabIndex = 22;
+            this.lblIdDestino.Text = "IdDes";
+            this.lblIdDestino.Visible = false;
+            // 
+            // lblIdOrigen
+            // 
+            this.lblIdOrigen.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.lblIdOrigen.AutoSize = true;
+            this.lblIdOrigen.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblIdOrigen.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblIdOrigen.Location = new System.Drawing.Point(267, 28);
+            this.lblIdOrigen.Name = "lblIdOrigen";
+            this.lblIdOrigen.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lblIdOrigen.Size = new System.Drawing.Size(43, 17);
+            this.lblIdOrigen.TabIndex = 21;
+            this.lblIdOrigen.Text = "IdOri";
+            this.lblIdOrigen.Visible = false;
+            // 
             // comboSucDestino
             // 
             this.comboSucDestino.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucDestino.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboSucDestino.FormattingEnabled = true;
-            this.comboSucDestino.Location = new System.Drawing.Point(92, 56);
+            this.comboSucDestino.Location = new System.Drawing.Point(89, 56);
             this.comboSucDestino.Name = "comboSucDestino";
             this.comboSucDestino.Size = new System.Drawing.Size(169, 24);
             this.comboSucDestino.TabIndex = 12;
@@ -397,7 +429,7 @@
             this.comboSucOrigen.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucOrigen.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.comboSucOrigen.FormattingEnabled = true;
-            this.comboSucOrigen.Location = new System.Drawing.Point(92, 24);
+            this.comboSucOrigen.Location = new System.Drawing.Point(89, 24);
             this.comboSucOrigen.Name = "comboSucOrigen";
             this.comboSucOrigen.Size = new System.Drawing.Size(169, 24);
             this.comboSucOrigen.TabIndex = 11;
@@ -411,7 +443,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(30, 27);
+            this.label3.Location = new System.Drawing.Point(39, 27);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(44, 15);
             this.label3.TabIndex = 10;
@@ -423,7 +455,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(25, 59);
+            this.label4.Location = new System.Drawing.Point(34, 59);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(49, 15);
             this.label4.TabIndex = 8;
@@ -432,12 +464,12 @@
             // txtFechaMovimiento
             // 
             this.txtFechaMovimiento.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtFechaMovimiento.CustomFormat = "dd/MM/yyyy H:mm";
+            this.txtFechaMovimiento.CustomFormat = "dd/MM/yyyy HH:mm";
             this.txtFechaMovimiento.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaMovimiento.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaMovimiento.Location = new System.Drawing.Point(455, 16);
+            this.txtFechaMovimiento.Location = new System.Drawing.Point(435, 16);
             this.txtFechaMovimiento.Name = "txtFechaMovimiento";
-            this.txtFechaMovimiento.Size = new System.Drawing.Size(160, 22);
+            this.txtFechaMovimiento.Size = new System.Drawing.Size(179, 22);
             this.txtFechaMovimiento.TabIndex = 15;
             this.txtFechaMovimiento.TabStop = false;
             this.txtFechaMovimiento.ValueChanged += new System.EventHandler(this.txtFechaMovimiento_ValueChanged);
@@ -713,5 +745,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         private System.Windows.Forms.TextBox txtCreado;
+        protected System.Windows.Forms.Label lblIdDestino;
+        protected System.Windows.Forms.Label lblIdOrigen;
     }
 }
