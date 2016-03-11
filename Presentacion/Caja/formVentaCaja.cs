@@ -38,6 +38,8 @@ namespace Presentacion.Ventas
         Entidades.Venta oVentaE = new Entidades.Venta();
         Entidades.LineaVenta oLineaVenta;
         Entidades.StockCorteSucursal oStockCorteSucursal;
+        Entidades.Venta oUltimaVentaVendedor;
+        Entidades.TemporalLineaVenta oTemporalLineaVenta = new Entidades.TemporalLineaVenta();
 
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
@@ -54,6 +56,9 @@ namespace Presentacion.Ventas
         int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
         int sumaTitilar = 0;
         int titilarHasta = 2000;
+        int tiempoTemporalLinea = 0;
+        int tiempoRegistrarTemporal = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoRegistrarTemporal"].ToString());
+        string ultimoTextoEnTxtCodigo = "";
 
         public int SucAnterior
         {
@@ -64,6 +69,7 @@ namespace Presentacion.Ventas
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool cartelPrimerCorteVendedor = Convert.ToBoolean(ConfigurationManager.AppSettings["cartelPrimerCorteVendedor"].ToString());
+        bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "";
         float totalCorte, precioKg, cantKg;
         float totalVenta = 0, abona = 0, cambio = 0;
@@ -92,8 +98,8 @@ namespace Presentacion.Ventas
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
 
-            checkLeerPeso.Visible = (FormPrincipal.logueado && Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString()));
-            checkTicket.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
+            checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString()));
+            checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -272,9 +278,10 @@ namespace Presentacion.Ventas
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
 
-                    lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString() + "\n$ " +txtTotalS.Text;
+                    //lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString() + "\n$ " +txtTotalS.Text;
                     oVentaE.IdVenta = 0;
                     limpiarListas();
+                    ultimaVentaVendedor();
                 }
                 catch (Exception ex)
                 {
@@ -354,7 +361,7 @@ namespace Presentacion.Ventas
 
                     cargarListas();
                     cargarGrilla();
-
+                    oTemporalLineaVenta = null;
                     limpiarCamposCorte();
                     oLineaVenta = null;
 
@@ -685,11 +692,9 @@ namespace Presentacion.Ventas
                 }
                 catch (Exception ex)
                 {
-
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show("Error al cargar corte\n\n" + ex.Message);
                     limpiarCamposCorte();
                 }
-
             }
             else
             {
@@ -739,12 +744,27 @@ namespace Presentacion.Ventas
                                     precioKg = 0;
                                 }
                             }
+                        }
 
+                        //cargo el Temporal de LineaVenta
+                        try
+                        {
+                            oTemporalLineaVenta = new Entidades.TemporalLineaVenta();
+                            oTemporalLineaVenta.FechaInicioPesada = DateTime.Now;
+                            oTemporalLineaVenta.Corte = oCorteE;
+                            oTemporalLineaVenta.Vendedor = oUsuario;
+                            oTemporalLineaVenta.Sucursal = oSucursalE;
+                            oTemporalLineaVenta.CantKg = cantKg;
+                            oTemporalLineaVenta.TotalCorte = cantKg * precioKg;
+                        }
+                        catch (Exception)
+                        {
                         }
                     }
                     totalCorte = cantKg * precioKg;
                     //cargo el txt total corte
                     txtTotalCorte.Text = totalCorte.ToString("N");
+
                 }
                 catch (Exception ex)
                 {
@@ -810,14 +830,13 @@ namespace Presentacion.Ventas
                     }
 
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
                     txtPrecioKg.Text = "";
                 }
             }
         }
-
 
         private void txtCantKgs_TextChanged(object sender, EventArgs e)
         {
@@ -915,7 +934,18 @@ namespace Presentacion.Ventas
             {
                 titilarTextBoxVendedor();
             }
+
+            //si se borra el corte actual se llama a metodo registrarTemporalLinea
+            if (oCorteE != null && !ultimoTextoEnTxtCodigo.Equals(txtCodigo.Text))
+            {
+                registrarTemporalLineaVenta();
+            }
             cargarCorte();
+        }
+
+        private void txtCodigo_KeyDown(object sender, KeyEventArgs e)
+        {
+            ultimoTextoEnTxtCodigo = txtCodigo.Text;
         }
 
         private void label5_Click(object sender, EventArgs e)
@@ -1004,12 +1034,14 @@ namespace Presentacion.Ventas
                 oVentaE.Vendedor = oUsuario;
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
+                lblVendedorNombre.Text = oUsuario.Nombre;
                 this.Text = oUsuario.Nombre;
                 Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
                 grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
                 timerBloquearCaja.Start();
+                ultimaVentaVendedor();
             }
             else
             {
@@ -1301,9 +1333,11 @@ namespace Presentacion.Ventas
         private void timerTitilar_Tick(object sender, EventArgs e)
         {
             txtVendedor.BackColor = txtVendedor.BackColor.Equals(readOnlyColor) ? focusColor : readOnlyColor;
+            lblVendedorNombre.BackColor = lblVendedorNombre.BackColor.Equals(readOnlyColor) ? focusColor : readOnlyColor;
             sumaTitilar += timerTitilar.Interval;
             if (sumaTitilar > titilarHasta)
             {
+                lblVendedorNombre.Visible = false;
                 txtVendedor.BackColor = readOnlyColor;
                 timerTitilar.Stop();
             }
@@ -1312,7 +1346,66 @@ namespace Presentacion.Ventas
         private void titilarTextBoxVendedor()
         {
             sumaTitilar = 0;
+            lblVendedorNombre.Visible = true;
             timerTitilar.Start();
+        }
+
+        private void lblUltimaVenta_Click(object sender, EventArgs e)
+        {
+            if (ultimaVenta)
+            {
+                ultimaVentaVendedor();
+                if (oUltimaVentaVendedor != null)
+                {
+                    formUltimaVenta frmUltimaVenta = new formUltimaVenta();
+                    frmUltimaVenta.oUltimaVenta = oUltimaVentaVendedor;
+                    frmUltimaVenta.ShowDialog();
+                    ultimaVentaVendedor();
+                }
+                else
+                {
+                    MessageBox.Show("No se pudo cargar los datos de la última venta.", "Última venta no cargada");
+                }
+            }
+        }
+
+        private void ultimaVentaVendedor()
+        {
+            try
+            {
+                oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oUsuario.Id);
+                double totalUltimaVenta = 0;
+                foreach (Entidades.LineaVenta  linea in oUltimaVentaVendedor.LineasVenta)
+                {
+                    totalUltimaVenta += linea.PrecioKg * linea.CantKg;
+                }
+                lblHoraUltimaVenta.Text = oUltimaVentaVendedor.IdVenta.ToString() +
+                    "\n " + oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
+                    "\n " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
+                    "\n$ " + totalUltimaVenta.ToString("F2");
+            }
+            catch (Exception)
+            {
+                lblHoraUltimaVenta.Text = "No se\nobtuvieron\nlos datos";
+            }
+        }
+
+        private void registrarTemporalLineaVenta()
+        {
+            try
+            {
+                if (oTemporalLineaVenta != null && oTemporalLineaVenta.CantKg > 0 && oTemporalLineaVenta.Corte != null &&                    
+                    oTemporalLineaVenta.FechaInicioPesada.AddMilliseconds(tiempoRegistrarTemporal) <= DateTime.Now)
+                {
+                    oTemporalLineaVenta.VentaEnCurso = (grillaLineasVenta.Rows.Count > 0);
+                    oVentaN.agregarTemporalLineaVenta(oTemporalLineaVenta);
+                    oTemporalLineaVenta = null;
+                }
+            }
+            catch (Exception)
+            {
+                oTemporalLineaVenta = null;
+            }
         }
     }
 }

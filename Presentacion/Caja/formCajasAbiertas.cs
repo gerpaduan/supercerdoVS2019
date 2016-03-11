@@ -90,6 +90,11 @@ namespace Presentacion.Caja
             // Retrieve the Employee object from the "Assigned To" cell.
             int? cierreCajaId = Convert.ToInt32(grillaCajasAbiertas.Rows[e.RowIndex].Cells["id"].Value.ToString());
 
+            cerrarCajaVendedor(cierreCajaId);
+        }
+
+        private void cerrarCajaVendedor(int? cierreCajaId)
+        {
             // Request status through the Employee object if present.  
             if (cierreCajaId != null)
             {
@@ -97,7 +102,7 @@ namespace Presentacion.Caja
                 frmLogin.ShowDialog(this);
 
                 if (oUsuario != null)
-                {                    
+                {
                     formCerrarCaja frmCerrarCaja = new formCerrarCaja();
                     frmCerrarCaja.oUserCierre = oUsuario;
                     frmCerrarCaja.oCierreE.Id = cierreCajaId.Value;
@@ -111,6 +116,16 @@ namespace Presentacion.Caja
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuario = usuario;
+        }
+
+        private void grillaCajasAbiertas_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                e.SuppressKeyPress = true;
+                int? cierreCajaId = Convert.ToInt32(grillaCajasAbiertas.SelectedRows[0].Cells["id"].Value.ToString());
+                cerrarCajaVendedor(cierreCajaId);
+            }
         }
     }
 }
