@@ -46,6 +46,7 @@ namespace Datos
             return dtSucursal;
 
         }
+
         public DataTable obtenerSucursalSanLorenzo()
         {
             DataTable dtSucursal = new DataTable();
@@ -53,7 +54,6 @@ namespace Datos
             daSucursal.Fill(dtSucursal);
 
             return dtSucursal;
-
         }
     }
 }

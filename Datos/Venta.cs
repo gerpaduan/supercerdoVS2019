@@ -16,13 +16,9 @@ namespace Datos
         public int agregarVenta(Entidades.Venta oVentaE)
         {
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
-
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "agregarVenta";
-
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
@@ -33,10 +29,9 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
             cmVenta.Parameters.AddWithValue("@idPersona",oVentaE.Persona.idPersona);
             cmVenta.Parameters.AddWithValue("@nroRemito",oVentaE.NroRemito);
-
-
+            
+            cmVenta.Connection.Open();
             SqlDataReader drVenta = cmVenta.ExecuteReader();
-
             int idVenta = 0;
             while (drVenta.Read())
             {
@@ -44,23 +39,16 @@ namespace Datos
             }
 
             cmVenta.Connection.Close();
-            cmVenta = null;
-
             return idVenta;
-
         }
 
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior)
         {
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
-
             cmVenta.CommandType = CommandType.StoredProcedure;
             /// Se eliminan todas las LineaVenta, y se actualiza datos de Venta
             cmVenta.CommandText = "modificarVenta";
-
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@fechaVenta", oVentaE.FechaVenta);
             cmVenta.Parameters.AddWithValue("@idSucursal", SucAnterior);
@@ -74,21 +62,17 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito);
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
 
+            cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
             cmVenta.Connection.Close();
-
             cmVenta = null;
-
         }
 
-
-        public DataTable obtenerVentas(string sucursal, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        public DataTable obtenerVentas(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
         {
             DataTable dtVentas = new DataTable();
             daVenta = new SqlDataAdapter();
-
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
             cmVenta.Connection.Open();
             cmVenta.CommandType = CommandType.StoredProcedure;
@@ -96,31 +80,47 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
             cmVenta.Parameters.AddWithValue("@texto", texto);
-            cmVenta.Parameters.AddWithValue("@sucursal", sucursal);
+            cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmVenta.Parameters.AddWithValue("@soloAnulados", soloAnulados);
 
             cmVenta.ExecuteNonQuery();
-
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtVentas);
             cmVenta.Connection.Close();
 
-            daVenta.SelectCommand = cmVenta;
-
-            daVenta.Fill(dtVentas);
-
-            daVenta = null;
-            cmVenta = null;
-
             return dtVentas;
+        }
+
+        public DataTable getVentasVendedorCierreCaja(Entidades.CierreCaja oCierreE, bool soloAnulados)
+        {
+            DataTable dtVentasVendedorCierre = new DataTable();
+            daVenta = new SqlDataAdapter();
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandText = "ventasVendedorCierreCaja";
+            cmVenta.Parameters.AddWithValue("@idVendedor", oCierreE.UsuarioInicio.Id);
+            cmVenta.Parameters.AddWithValue("@fechaDesde", oCierreE.FechaHoraInicio);
+            //cmVenta.Parameters.AddWithValue("@texto", texto);
+            cmVenta.Parameters.AddWithValue("@idSucursal", oCierreE.Sucursal.idSucursal);
+            cmVenta.Parameters.AddWithValue("@soloAnulados", soloAnulados);
+
+            cmVenta.Connection.Open();
+            cmVenta.ExecuteNonQuery();
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtVentasVendedorCierre);
+            cmVenta.Connection.Close();
+
+            return dtVentasVendedorCierre;
         }
 
         public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
         {
             DataTable dtVentas = new DataTable();
             daVenta = new SqlDataAdapter();
-
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "obtenerTotalVentas";
             cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
@@ -128,16 +128,12 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
 
+            cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
-
             cmVenta.Connection.Close();
-
             daVenta.SelectCommand = cmVenta;
-
             daVenta.Fill(dtVentas);
 
-            daVenta = null;
-            cmVenta = null;
             float totalVentas = dtVentas.Rows[0]["totalS"].ToString().Equals("") ? 0 : float.Parse(dtVentas.Rows[0]["totalS"].ToString());
             return totalVentas;
         }
@@ -145,13 +141,9 @@ namespace Datos
         public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
         {
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
-
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "agregarLineaVenta";
-
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
             cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
@@ -159,20 +151,15 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
 
+            cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
-
             cmVenta.Connection.Close();
-
-            cmVenta=null;
         }
 
         public void modificarLineaVenta(Entidades.LineaVenta oLineaE)
         {
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
-
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "modificarLineaVenta";
 
@@ -183,34 +170,101 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
 
+            cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
-
             cmVenta.Connection.Close();
-
-            cmVenta = null;
         }
 
+        public Entidades.Venta getVentaById(int idVenta)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select Ventas.* from Ventas where idVenta =" + idVenta;
+
+            Entidades.Venta oVentaE = new Entidades.Venta();
+
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drVenta = cmVenta.ExecuteReader();
+
+                using (drVenta)
+                {
+                    while (drVenta.Read())
+                    {
+                        oVentaE.IdVenta = Convert.ToInt32(drVenta["idVenta"]);
+                        Datos.Usuario oUsuarioD = new Usuario();
+                        oVentaE.Vendedor = oUsuarioD.getUsuarioById(Convert.ToInt32(drVenta["idVendedor"]));
+                        oVentaE.FechaVenta = Convert.ToDateTime(drVenta["fechaVenta"]);
+                        oVentaE.Turno = Convert.ToString(drVenta["turno"]);
+                        Datos.Sucursal oSucursalD = new Sucursal();
+                        oVentaE.Sucursal = oSucursalD.findById(Convert.ToInt32(drVenta["idSucursal"]));
+                        oVentaE.DiaFestivo = Convert.ToString(drVenta["diaFestivo"]);
+                        oVentaE.Observaciones = Convert.ToString(drVenta["observaciones"]);
+                        Datos.Persona oPersonaD = new Datos.Persona();
+                        oVentaE.Persona = oPersonaD.findById(Convert.ToInt32(drVenta["idPersona"]));
+                        oVentaE.NroRemito = Convert.ToString(drVenta["nroRemito"]);
+                        oVentaE.Estado = Convert.ToString(drVenta["estado"]);
+                        oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
+                        oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
+
+                        oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
+                    }
+                    return oVentaE;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+                oVentaE = null;
+            }
+        }
+
+        public Entidades.Venta getUltimaVentaVendedor(int idVendedor)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select top 1 Ventas.* from Ventas where idVendedor = " + idVendedor + " order by idVenta desc";
+
+            Entidades.Venta oVentaE = new Entidades.Venta();
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drVenta = cmVenta.ExecuteReader();
+                using (drVenta)
+                {
+                    while (drVenta.Read())
+                    {
+                        oVentaE = getVentaById(Convert.ToInt32(drVenta["idVenta"]));
+                    }
+                    return oVentaE;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+                oVentaE = null;
+            }
+        }
 
         public List<Entidades.LineaVenta> obtenerLineasVenta(int idVenta)
         {
-            //DataTable dtLineasVenta = new DataTable();
-
             daVenta = new SqlDataAdapter();
             cmVenta = new SqlCommand();
 
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "obtenerLineasVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", idVenta);
 
             //creo lista de Lineas
             List<Entidades.LineaVenta> listaLineasVenta = new List<Entidades.LineaVenta>();
-
             try
             {
+                cmVenta.Connection.Open();
                 SqlDataReader drLinea = cmVenta.ExecuteReader();
-
                 using (drLinea)
                 {
                     while (drLinea.Read())
@@ -240,7 +294,6 @@ namespace Datos
                         }
                         catch (Exception)
                         {
-
                             oLinea.PesoBalanza = false;
                         }
 
@@ -258,40 +311,79 @@ namespace Datos
                         oVenta = null;
                         oCorte = null;
                         oLinea = null;
-
                     }
-
                     return listaLineasVenta;
                 }
             }
             finally
             {
+                cmVenta.Connection.Close();
                 listaLineasVenta = null;
             }
-            daVenta = null;
-            cmVenta = null;
         }
-
 
         public void agregarStockVenta(Entidades.Venta oVentaE)
         {
             cmVenta = new SqlCommand();
-
             cmVenta.Connection = conn.conectar();
-            cmVenta.Connection.Open();
-
             cmVenta.CommandType = CommandType.StoredProcedure;
             cmVenta.CommandText = "agregarStockVenta";
-
-            cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);           
+            cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
 
+            cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
             cmVenta.Connection.Close();
-
-            cmVenta = null;
-
         }
 
+        public void agregarTemporalLineaVenta(Entidades.TemporalLineaVenta oTemporalLV)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "insert into TemporalLineaVenta (idVendedor, fechaInicioPesada, idCorte, cantKg, precioKg, totalCorte, ventaEnCurso, idSucursal, creado) values " +
+                "(" + oTemporalLV.Vendedor.Id + ", @fechaInicioPesada," + oTemporalLV.Corte.idCorte +
+                ",@cantKg,@precioKg,@totalCorte, @ventaEnCurso, @idSucursal, @creado)";
+            cmVenta.Parameters.Add("@fechaInicioPesada", SqlDbType.DateTime2).Value = oTemporalLV.FechaInicioPesada;
+            cmVenta.Parameters.Add("@cantKg", SqlDbType.Decimal).Value = oTemporalLV.CantKg;
+            cmVenta.Parameters.Add("@precioKg", SqlDbType.Decimal).Value = oTemporalLV.Corte.PrecioKg;
+            cmVenta.Parameters.Add("@totalCorte", SqlDbType.Decimal).Value = oTemporalLV.TotalCorte;
+            cmVenta.Parameters.Add("@ventaEnCurso", SqlDbType.TinyInt).Value = oTemporalLV.VentaEnCurso;
+            cmVenta.Parameters.Add("@idSucursal", SqlDbType.TinyInt).Value = oTemporalLV.Sucursal.idSucursal;
+            cmVenta.Parameters.Add("@creado", SqlDbType.DateTime2).Value = DateTime.Now;
+            try
+            {
+                cmVenta.Connection.Open();
+                cmVenta.ExecuteNonQuery();
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+            }
+        }
+
+        public DataTable obtenerTemporalLineaVenta(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool conVentas)
+        {
+            DataTable dtVentas = new DataTable();
+            daVenta = new SqlDataAdapter();
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandText = "obtenerTemporalLineaVenta";
+            cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmVenta.Parameters.AddWithValue("@texto", texto);
+            cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmVenta.Parameters.AddWithValue("@conVentas", conVentas);
+
+            cmVenta.ExecuteNonQuery();
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtVentas);
+            cmVenta.Connection.Close();
+
+            return dtVentas;
+        }
     }
 }

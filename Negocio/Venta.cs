@@ -20,9 +20,19 @@ namespace Negocio
             oVentaD.modificarVenta(oVentaE, SucAnterior);
         }
 
-        public DataTable obtenerVentas(string sucursal, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        public DataTable obtenerVentas(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
         {
-            return oVentaD.obtenerVentas(sucursal, fechaDesde, fechaHasta, texto);
+            return oVentaD.obtenerVentas(idSucursal, idVendedor, fechaDesde, fechaHasta, texto, soloAnulados);
+        }
+
+        public Entidades.Venta getVentaById(int idVenta)
+        {
+            return oVentaD.getVentaById(idVenta);
+        }
+
+        public DataTable getVentasVendedorCierreCaja(Entidades.CierreCaja oCierreE, bool soloAnulados)
+        {
+            return oVentaD.getVentasVendedorCierreCaja(oCierreE, soloAnulados);
         }
 
         public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
@@ -48,6 +58,21 @@ namespace Negocio
         public void agregarStockVenta(Entidades.Venta oVentaE)
         {
             oVentaD.agregarStockVenta(oVentaE);
+        }
+
+        public Entidades.Venta getUltimaVentaVendedor(int idVendedor)
+        {
+            return oVentaD.getUltimaVentaVendedor(idVendedor);
+        }
+
+        public void agregarTemporalLineaVenta(Entidades.TemporalLineaVenta oTemporalLV)
+        {
+            oVentaD.agregarTemporalLineaVenta(oTemporalLV);
+        }
+
+        public DataTable obtenerTemporalLineaVenta(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool conVentas)
+        {
+            return oVentaD.obtenerTemporalLineaVenta(idSucursal, idVendedor, fechaDesde, fechaHasta, texto, conVentas);
         }
     }
 }

@@ -22,6 +22,41 @@ namespace Datos
             return dtUsuario;
         }
 
+        public Entidades.Usuario getUsuarioById(int idUsuario)
+        {
+            cmUsuario = new SqlCommand();
+            cmUsuario.Connection = conn.conectar();
+            cmUsuario.CommandType = CommandType.Text;
+            cmUsuario.CommandText = "Select Usuarios.* from Usuarios where id =" + idUsuario;
+
+            Entidades.Usuario oUsuarioE = new Entidades.Usuario();
+
+            try
+            {
+                cmUsuario.Connection.Open();
+                SqlDataReader drUsuario = cmUsuario.ExecuteReader();
+
+                using (drUsuario)
+                {
+                    while (drUsuario.Read())
+                    {
+                        oUsuarioE.Id = Convert.ToInt32(drUsuario["id"]);
+                        oUsuarioE.Nombre = Convert.ToString(drUsuario["nombre"]);
+                        oUsuarioE.User = Convert.ToString(drUsuario["usuario"]);
+                        oUsuarioE.Clave = Convert.ToString(drUsuario["clave"]);
+                        oUsuarioE.Admin = Convert.ToBoolean(drUsuario["admin"]);
+                        oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);	
+                    }
+                    return oUsuarioE;
+                }
+            }
+            finally
+            {
+                cmUsuario.Connection.Close();
+                oUsuarioE = null;
+            }
+        }
+
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
             cmUsuario = new SqlCommand();

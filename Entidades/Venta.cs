@@ -10,7 +10,7 @@ namespace Entidades
          int idVenta;
          DateTime fechaVenta;
          DateTime creado;
-         DateTime actualizado;
+         DateTime? actualizado;
          string turno;
          string diaFestivo;
          string observaciones;
@@ -20,6 +20,13 @@ namespace Entidades
          private string estado;
          Usuario vendedor;
          private string tipoVenta;
+         List<Entidades.LineaVenta> lineasVenta;
+
+         public List<Entidades.LineaVenta> LineasVenta
+         {
+             get { return lineasVenta; }
+             set { lineasVenta = value; }
+         }
 
          public string TipoVenta
          {
@@ -94,7 +101,7 @@ namespace Entidades
             }
         }
 
-        public DateTime Actualizado
+        public DateTime?  Actualizado
         {
             get
             {

@@ -7,7 +7,7 @@ namespace Entidades
 {
     public class CierreCaja
     {
-        public enum tipoBusqueda {FindLast, FindAll, FindById, FindOpen};
+        public enum tipoBusqueda {FindLast, FindAll, FindById, FindOpen, FindLastOpen};
         int id;
         public int Id
         {

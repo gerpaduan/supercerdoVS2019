@@ -15,6 +15,18 @@ namespace Negocio
             oSucursalD = new Datos.Sucursal();
             return oSucursalD.obtenerSucursales();
         }
+
+        public DataTable obtenerSucursalesConTodas()
+        {
+            DataTable dtSucursales = obtenerSucursales();
+            DataRow drSucursal = dtSucursales.NewRow();
+            drSucursal["idSucursal"] = -1;
+            drSucursal["sucursal"] = "Todas";
+            dtSucursales.Rows.Add(drSucursal);
+            dtSucursales.DefaultView.Sort = "idSucursal";
+            return dtSucursales;
+        }
+
         public Entidades.Sucursal findById(int id)
         {
             oSucursalD = new Datos.Sucursal();

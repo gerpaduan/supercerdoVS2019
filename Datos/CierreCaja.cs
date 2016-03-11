@@ -44,6 +44,11 @@ namespace Datos
                         selectText = "select top 1 * from CierreCaja where idSucursal = "
                             + oCierreParam.Sucursal.idSucursal + " and usuarioInicio = "+ oCierreParam.UsuarioInicio.Id +" order by id desc";
                         break;
+                case Entidades.CierreCaja.tipoBusqueda.FindLastOpen:
+                        selectText = "select top 1 * from CierreCaja where idSucursal = "
+                            + oCierreParam.Sucursal.idSucursal + " and usuarioInicio = " + oCierreParam.UsuarioInicio.Id +
+                            " and id < " + oCierreParam.Id + " order by id desc";
+                        break;
             }
             DataTable dtCierreCaja = new DataTable();
             SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());

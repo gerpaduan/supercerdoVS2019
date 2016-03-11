@@ -16,6 +16,17 @@ namespace Negocio
         {
             oUsuarioD = new Datos.Usuario();
             dtUsuarios = oUsuarioD.obtenerUsuarios();
+            return dtUsuarios;
+        }
+
+        public DataTable obtenerUsuariosConTodos()
+        {
+            dtUsuarios = obtenerUsuarios();
+            DataRow drTodos = dtUsuarios.NewRow();
+            drTodos["id"] = -1;
+            drTodos["nombre"] = "Todos";
+            dtUsuarios.Rows.Add(drTodos);
+            dtUsuarios.DefaultView.Sort = "id";
 
             return dtUsuarios;
         }
