@@ -23,6 +23,7 @@ namespace Presentacion.Ventas
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN=new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
@@ -54,15 +55,22 @@ namespace Presentacion.Ventas
         {
             InitializeComponent();
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            cargarComboVendedores();
             cargarSucursal();
             dtCortes = oCorteN.obtenerCortes();
             if (!fecha.Equals(""))
             {
                 txtFechaVenta.Value = DateTime.Parse(fecha);
             }
-            
         }
 
+        private void cargarComboVendedores()
+        {
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios();
+            comboUsuario.DisplayMember = "nombre";
+            comboUsuario.ValueMember = "id";
+            comboUsuario.SelectedValue = 0;
+        }
 
 #region Modificar_Venta
 
@@ -83,11 +91,11 @@ namespace Presentacion.Ventas
 
             cargarCamposVenta();
             cargarGrilla();
-
         }
 
         private void cargarCamposVenta()
         {
+            comboUsuario.SelectedValue = oVentaE.Vendedor.Id;
             txtCliente.Text = oVentaE.Persona.razonSocial;
             comboSucursal.SelectedIndex = oVentaE.Sucursal.idSucursal - 1;
             
@@ -111,7 +119,6 @@ namespace Presentacion.Ventas
                 cargarVenta();
                 try
                 {
-                    
                     oVentaN.modificarVenta(oVentaE, SucAnterior);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
@@ -256,13 +263,13 @@ namespace Presentacion.Ventas
         private void cargarVenta()
         {
             oVentaE.Persona = oCliente;
-            oVentaE.Turno = comboTurno.SelectedItem.ToString();
+            oVentaE.Turno = comboTurno.SelectedText;
 
             //asigo sucursal a la venta            
             oVentaE.Sucursal = oSucursalE;
 
             Entidades.Usuario oUsuario = new Entidades.Usuario();
-            oUsuario.Id = 0;
+            oUsuario.Id = Convert.ToInt32(comboUsuario.SelectedValue.ToString());
 
             oVentaE.Vendedor = oUsuario;
             oVentaE.FechaVenta = txtFechaVenta.Value;
@@ -513,7 +520,7 @@ namespace Presentacion.Ventas
             else
             {
                 string mensaje = "Complete los siguientes campos: ";
-                if (txtCliente.Text.Trim() == "" || comboSucursal.SelectedValue == null || comboTurno.SelectedIndex.Equals(-1))
+                if (txtCliente.Text.Trim() == "" || comboSucursal.SelectedValue == null)
                 {
                     if (txtCliente.Text.Trim() == "")
                     {
@@ -523,10 +530,6 @@ namespace Presentacion.Ventas
                     if (comboSucursal.SelectedValue == null)
                     {
                         mensaje += "\n" + "-Sucursal";
-                    }
-                    if (comboTurno.SelectedIndex.Equals(-1))
-                    {
-                        mensaje += "\n" + "-Turno";
                     }
                     MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
@@ -756,7 +759,7 @@ namespace Presentacion.Ventas
                         txtTotalCorte.Text = totalCorte.ToString();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     MessageBox.Show("Para fijar el Precio/Kg debe ingresar un precio válido.");
                     txtPrecioKg.Text = "";
@@ -889,6 +892,7 @@ namespace Presentacion.Ventas
                 
             }
         }
+
         private void timer1_Tick(object sender, EventArgs e)
         {
             try
@@ -952,7 +956,7 @@ namespace Presentacion.Ventas
                             txtTotalCorte.ReadOnly = true;
 
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             if (txtPrecioKg.Text.Trim() != "-")
                             {

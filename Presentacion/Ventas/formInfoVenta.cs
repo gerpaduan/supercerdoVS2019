@@ -11,10 +11,9 @@ using Presentacion.Reportes;
 namespace Presentacion.Ventas
 {
     public partial class formInfoVenta : Form
-    {        
-        formVentas frmVentas = new formVentas();
-        
-        DataRow drVenta;
+    {
+        public int idVenta = 0;
+        public formVentas frmVentas = new formVentas();
 
         Negocio.Venta oVentaN = new Negocio.Venta();
 
@@ -27,18 +26,6 @@ namespace Presentacion.Ventas
         public formInfoVenta()
         {
             InitializeComponent();
-
-        }
-
-        public void obtenerParametro(formVentas frmVentasParam, DataRow drVentaParam)
-        {
-            frmVentas = frmVentasParam;
-            drVenta = drVentaParam;
-
-            cargarCamposVenta();
-            obtenerLineasVenta();
-            cargarGrilla();
-
         }
 
         private void cargarGrilla()
@@ -49,27 +36,10 @@ namespace Presentacion.Ventas
                 grillaLineasVenta.AutoGenerateColumns = false;
                 grillaLineasVenta.DataSource = listaLineaGrilla;
 
-                cargarTotales();
-
-                ///quitar controles según Login
-                if (Presentacion.FormPrincipal.logueado==false)
-                {
-                    txtTotalS.Text = "";
-                    modificar.Enabled = false;
-                    agregaStock.Enabled = false;
-                    foreach (DataGridViewColumn col in grillaLineasVenta.Columns)
-                    {
-                        if (col.Name.Equals("totalS"))
-                        {
-                            col.Visible = false;
-                        }
-                    }
-                }
-           
+                cargarTotales();           
             }
             catch (Exception ex)
             {
-
                 MessageBox.Show(ex.Message);
             }
         }
@@ -90,17 +60,9 @@ namespace Presentacion.Ventas
             txtTotalS.Text = Convert.ToString(totalPesos);
         }
 
-
-        private void obtenerLineasVenta()
-        {
-            listaLineaVenta = oVentaN.obtenerLineasVenta(Convert.ToInt32(drVenta["idVenta"].ToString()));
-            cargarListaGrilla();
-
-        }
-
         private void cargarListaGrilla()
         {
-            foreach (Entidades.LineaVenta lineaE in listaLineaVenta)
+            foreach (Entidades.LineaVenta lineaE in oVentaE.LineasVenta)
             {
                 LineaVenta lineaVentaP = new LineaVenta();
 
@@ -123,79 +85,25 @@ namespace Presentacion.Ventas
 
                 listaLineaGrilla.Add(lineaVentaP);
                 lineaVentaP = null;
-
-            }
-                
+            }                
         }
 
         private void cargarCamposVenta()
         {
-            oVentaE.IdVenta = Convert.ToInt32(drVenta["idVenta"].ToString());
-            oVentaE.NroRemito = drVenta["nroRemito"].ToString();
-            oVentaE.FechaVenta = Convert.ToDateTime(drVenta["fechaVenta"].ToString());
-            oVentaE.DiaFestivo = drVenta["diaFestivo"].ToString();
-            oVentaE.Turno = drVenta["turno"].ToString();
-            oVentaE.Estado = drVenta["estado"].ToString();
-            oVentaE.Observaciones = drVenta["observaciones"].ToString();
-            DateTime fechaNull = Convert.ToDateTime("01/01/1990");
-           // oVentaE.Creado = Convert.ToDateTime(drVenta["creado"].ToString());
-            oVentaE.Creado = !String.IsNullOrEmpty(drVenta["creado"].ToString()) ? (Convert.ToDateTime(drVenta["creado"].ToString())) : fechaNull;
-        
-            oVentaE.Actualizado = !String.IsNullOrEmpty(drVenta["actualizado"].ToString()) ? (Convert.ToDateTime(drVenta["actualizado"].ToString())) : fechaNull ;
-
-            Entidades.Persona oPersona = new Entidades.Persona();
-            oPersona.idPersona = Convert.ToInt32(drVenta["idPersona"].ToString());
-            oPersona.razonSocial = drVenta["razonSocial"].ToString();
-
-            oVentaE.Persona = oPersona;
-
-            Entidades.Sucursal oSucursal = new Entidades.Sucursal();
-            oSucursal.idSucursal = Convert.ToInt32(drVenta["idSucursal"].ToString());
-            oSucursal.sucursal = drVenta["sucursal"].ToString();
-
-            oVentaE.Sucursal = oSucursal;
-
-
-            //carga los campos
-            txtCliente.Text = drVenta["razonSocial"].ToString();
-            txtDiaFestivo.Text = drVenta["diaFestivo"].ToString();
-            txtTurno.Text = drVenta["turno"].ToString();
-
-            DateTime fecha = new DateTime();
-            fecha = Convert.ToDateTime(drVenta["fechaVenta"].ToString());
-            txtFechaVenta.Value = DateTime.Parse( fecha.ToShortDateString());
-            
-
-            txtFechaVenta.Value = fecha;
-            txtNroRemito.Text = drVenta["nroRemito"].ToString();
-            txtObservaciones.Text = drVenta["observaciones"].ToString();
-            txtCreado.Text = drVenta["creado"].ToString();
-            txtActualizado.Text = drVenta["actualizado"].ToString();
-            txtSucursal.Text = drVenta["sucursal"].ToString();
-
-            if (!oVentaE.Estado.Equals(""))
-            {
-                agregaStock.Enabled = false;
-            }
-
-        }
-        private void agregarStock()
-        {
-            DialogResult resp = MessageBox.Show("Los Kgs. de los cortes correspondiente a la venta se ingresarán al stock.\n¿Está seguro de realizar esta acción?", "Agregar stock", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button2);
-            if (resp==DialogResult.Yes)
-            {
-                oVentaE.Estado = "Stock Agregado";
-                oVentaN.agregarStockVenta(oVentaE);
-
-                agregaStock.Enabled = false;
-                frmVentas.cargarGrilla();
-            }
+            txtIdVenta.Text = oVentaE.IdVenta.ToString();
+            txtVendedor.Text = oVentaE.Vendedor.Nombre;
+            txtSucursal.Text = oVentaE.Sucursal.sucursal;
+            txtCliente.Text = oVentaE.Persona.razonSocial;
+            txtDiaFestivo.Text = oVentaE.DiaFestivo;
+            txtFechaVenta.Text = oVentaE.FechaVenta.ToString();
+            txtObservaciones.Text = oVentaE.Observaciones;
+            txtCreado.Text = oVentaE.Creado.ToString();
+            txtActualizado.Text = oVentaE.Actualizado.ToString();
+            cargarListaGrilla();
         }
 
         private void modificarVenta()
         {
-
-
             if (Application.OpenForms["formNuevaVenta"] != null)
             {
                 Application.OpenForms["formNuevaVenta"].Activate();
@@ -203,13 +111,11 @@ namespace Presentacion.Ventas
             }
             else
             {
-
                 formNuevaVenta frmNuevaVenta = new formNuevaVenta();
-                frmNuevaVenta.parametrosModificacion(frmVentas, oVentaE, listaLineaVenta, listaLineaGrilla);
+                frmNuevaVenta.parametrosModificacion(frmVentas, oVentaE, oVentaE.LineasVenta, listaLineaGrilla);
                 frmNuevaVenta.SucAnterior = oVentaE.Sucursal.idSucursal;
                 this.Close();
                 frmNuevaVenta.Show();
-
             }
         }
 
@@ -218,26 +124,25 @@ namespace Presentacion.Ventas
             this.Close();
         }
 
-        private void anular_Click(object sender, EventArgs e)
-        {
-          //  anularVenta();
-        }
-
         private void modificar_Click(object sender, EventArgs e)
         {
             modificarVenta();
         }
 
-       
-
-        private void agregaStock_Click(object sender, EventArgs e)
-        {
-            agregarStock();
-        }
-
         private void formInfoVenta_Load(object sender, EventArgs e)
         {
-
+            try
+            {
+                oVentaE = oVentaN.getVentaById(idVenta);
+                cargarCamposVenta();
+                cargarGrilla();
+                idVentaLabel.Text = oVentaE.IdVenta.ToString();//asigno el idVenta para identificar formulario
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al obtener información de la venta\n\n" + ex.Message);
+                this.Close();
+            }
         }
 
         private void Imprimir_Click(object sender, EventArgs e)
@@ -256,17 +161,12 @@ namespace Presentacion.Ventas
                 frmReportes.Origen = oVentaE.Sucursal.SucursalNombre;
                 frmReportes.Destino = oVentaE.Sucursal.SucursalNombre;
 
-                frmReportes.Show();
-                
+                frmReportes.Show();                
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
         }
-
-       
-
-       
     }
 }
