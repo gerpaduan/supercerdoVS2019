@@ -21,6 +21,8 @@ namespace Presentacion.Caja
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         public Entidades.Usuario oUserIncio = new Entidades.Usuario();
         public Entidades.Usuario oUserCierre = new Entidades.Usuario();
+        Entidades.CierreCaja oCierreAnterior;
+               
 
         protected enum tipoCierre { AbrirCaja, CerrarCaja };
         protected tipoCierre tipoCierreActual = tipoCierre.CerrarCaja;
@@ -278,6 +280,7 @@ namespace Presentacion.Caja
                 {
                     panelTaparCamposCierre.BringToFront();
                     btnVerGastos.TabStop = false;
+                    btnCajaAnterior.Visible = false;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
                     if (oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
                     {
@@ -298,6 +301,11 @@ namespace Presentacion.Caja
                     checkTicket.Checked = true;
                     controlEleccionImporte.Value = 1;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
+                    oCierreAnterior = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLastOpen, "");
+                    lblDiferenciaEntreCaja.Visible = !oCierreAnterior.CajaInicioSiguiente.Equals(oCierreE.CajaInicio);
+
+                    Negocio.Venta oVentaN = new Negocio.Venta();
+                    lblCortesAnulados.Visible = oVentaN.getVentasVendedorCierreCaja(oCierreE, true).Rows.Count > 0;
                     //if (!oUserCierre.Admin && !oCierreE.UsuarioInicio.Id.Equals(oUserCierre.Id))
                     if (!oUserCierre.Admin)
                     {
@@ -373,6 +381,32 @@ namespace Presentacion.Caja
                 txtImporteRetirado.BackColor = SystemColors.ScrollBar;
             }
 
+        }
+
+        private void btnVentas_Click(object sender, EventArgs e)
+        {
+            formVentasVendedor frmVentasVendedor = new formVentasVendedor();
+            frmVentasVendedor.oCierreE = oCierreE;
+            frmVentasVendedor.Show();
+        }
+
+        private void btnCajaAnterior_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (oCierreAnterior != null)
+                {
+                    string mensaje = "Ultimo cierre de " + oCierreAnterior.UsuarioInicio.Nombre + "\n\n" +
+                        "Apertura: " + oCierreAnterior.FechaHoraInicio.ToString() + "\nCierre: " + oCierreAnterior.FechaHoraCierre.ToString() +
+                        "\n-------------\nQuedó en Caja anterior: " + oCierreAnterior.CajaInicioSiguiente.ToString() + "\nCaja inicio actual: "+oCierreE.CajaInicio+
+                        "\n-------------\nDiferencia: " + (oCierreAnterior.CajaInicioSiguiente-oCierreE.CajaInicio).ToString();
+                    MessageBox.Show(mensaje, "Caja Anterior");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al obtener el cierre de caja anterior.\n\n" + ex.Message);
+            }
         }
     }
 }

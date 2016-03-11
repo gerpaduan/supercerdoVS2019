@@ -30,7 +30,6 @@
         {
             this.components = new System.ComponentModel.Container();
             this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.panelTaparCamposCierre = new System.Windows.Forms.Panel();
             this.checkTicket = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lblUsuarioCierre = new System.Windows.Forms.Label();
@@ -39,6 +38,10 @@
             this.lblUsuarioInicio = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.txtUserInicio = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtFechaHoraCierre = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.controlEleccionImporte = new System.Windows.Forms.TrackBar();
             this.btnVerGastos = new System.Windows.Forms.Button();
@@ -57,12 +60,13 @@
             this.lblVentas = new System.Windows.Forms.Label();
             this.txtCajaInicial = new System.Windows.Forms.TextBox();
             this.lblCajaInicial = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.txtFechaHoraCierre = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
+            this.panelTaparCamposCierre = new System.Windows.Forms.Panel();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.btnVentas = new System.Windows.Forms.Button();
+            this.btnCajaAnterior = new System.Windows.Forms.Button();
+            this.lblDiferenciaEntreCaja = new System.Windows.Forms.Label();
+            this.lblCortesAnulados = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -87,13 +91,6 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(390, 461);
             this.pnlBuscar.TabIndex = 24;
-            // 
-            // panelTaparCamposCierre
-            // 
-            this.panelTaparCamposCierre.Location = new System.Drawing.Point(13, 221);
-            this.panelTaparCamposCierre.Name = "panelTaparCamposCierre";
-            this.panelTaparCamposCierre.Size = new System.Drawing.Size(364, 234);
-            this.panelTaparCamposCierre.TabIndex = 33;
             // 
             // checkTicket
             // 
@@ -190,9 +187,57 @@
             this.txtUserInicio.TabIndex = 14;
             this.txtUserInicio.TabStop = false;
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label3.Location = new System.Drawing.Point(198, 129);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(135, 16);
+            this.label3.TabIndex = 12;
+            this.label3.Text = "Fecha Hora Cierre";
+            // 
+            // txtFechaHoraCierre
+            // 
+            this.txtFechaHoraCierre.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaHoraCierre.Location = new System.Drawing.Point(201, 147);
+            this.txtFechaHoraCierre.Name = "txtFechaHoraCierre";
+            this.txtFechaHoraCierre.ReadOnly = true;
+            this.txtFechaHoraCierre.Size = new System.Drawing.Size(177, 22);
+            this.txtFechaHoraCierre.TabIndex = 11;
+            this.txtFechaHoraCierre.TabStop = false;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(12, 129);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(130, 16);
+            this.label2.TabIndex = 10;
+            this.label2.Text = "Fecha Hora Inicio";
+            // 
+            // txtFechaHoraInicio
+            // 
+            this.txtFechaHoraInicio.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaHoraInicio.Location = new System.Drawing.Point(15, 147);
+            this.txtFechaHoraInicio.Name = "txtFechaHoraInicio";
+            this.txtFechaHoraInicio.ReadOnly = true;
+            this.txtFechaHoraInicio.Size = new System.Drawing.Size(180, 22);
+            this.txtFechaHoraInicio.TabIndex = 9;
+            this.txtFechaHoraInicio.TabStop = false;
+            // 
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.lblCortesAnulados);
+            this.panel1.Controls.Add(this.lblDiferenciaEntreCaja);
+            this.panel1.Controls.Add(this.btnCajaAnterior);
+            this.panel1.Controls.Add(this.btnVentas);
             this.panel1.Controls.Add(this.controlEleccionImporte);
             this.panel1.Controls.Add(this.btnVerGastos);
             this.panel1.Controls.Add(this.txtImporteRetirado);
@@ -375,7 +420,7 @@
             // 
             this.txtVentas.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtVentas.Location = new System.Drawing.Point(147, 53);
+            this.txtVentas.Location = new System.Drawing.Point(147, 55);
             this.txtVentas.Name = "txtVentas";
             this.txtVentas.ReadOnly = true;
             this.txtVentas.Size = new System.Drawing.Size(162, 24);
@@ -390,7 +435,7 @@
             this.lblVentas.AutoSize = true;
             this.lblVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblVentas.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblVentas.Location = new System.Drawing.Point(85, 58);
+            this.lblVentas.Location = new System.Drawing.Point(85, 60);
             this.lblVentas.Name = "lblVentas";
             this.lblVentas.Size = new System.Drawing.Size(56, 16);
             this.lblVentas.TabIndex = 19;
@@ -418,49 +463,12 @@
             this.lblCajaInicial.TabIndex = 17;
             this.lblCajaInicial.Text = "Caja Inicial";
             // 
-            // label3
+            // panelTaparCamposCierre
             // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(198, 129);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(135, 16);
-            this.label3.TabIndex = 12;
-            this.label3.Text = "Fecha Hora Cierre";
-            // 
-            // txtFechaHoraCierre
-            // 
-            this.txtFechaHoraCierre.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFechaHoraCierre.Location = new System.Drawing.Point(201, 147);
-            this.txtFechaHoraCierre.Name = "txtFechaHoraCierre";
-            this.txtFechaHoraCierre.ReadOnly = true;
-            this.txtFechaHoraCierre.Size = new System.Drawing.Size(177, 22);
-            this.txtFechaHoraCierre.TabIndex = 11;
-            this.txtFechaHoraCierre.TabStop = false;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(12, 129);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(130, 16);
-            this.label2.TabIndex = 10;
-            this.label2.Text = "Fecha Hora Inicio";
-            // 
-            // txtFechaHoraInicio
-            // 
-            this.txtFechaHoraInicio.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFechaHoraInicio.Location = new System.Drawing.Point(15, 147);
-            this.txtFechaHoraInicio.Name = "txtFechaHoraInicio";
-            this.txtFechaHoraInicio.ReadOnly = true;
-            this.txtFechaHoraInicio.Size = new System.Drawing.Size(180, 22);
-            this.txtFechaHoraInicio.TabIndex = 9;
-            this.txtFechaHoraInicio.TabStop = false;
+            this.panelTaparCamposCierre.Location = new System.Drawing.Point(13, 221);
+            this.panelTaparCamposCierre.Name = "panelTaparCamposCierre";
+            this.panelTaparCamposCierre.Size = new System.Drawing.Size(364, 234);
+            this.panelTaparCamposCierre.TabIndex = 33;
             // 
             // btnCerrarCaja
             // 
@@ -472,6 +480,49 @@
             this.btnCerrarCaja.Text = "&Cerrar Caja";
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
+            // 
+            // btnVentas
+            // 
+            this.btnVentas.Location = new System.Drawing.Point(315, 56);
+            this.btnVentas.Name = "btnVentas";
+            this.btnVentas.Size = new System.Drawing.Size(36, 24);
+            this.btnVentas.TabIndex = 33;
+            this.btnVentas.Text = "Ver";
+            this.btnVentas.UseVisualStyleBackColor = true;
+            this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
+            // 
+            // btnCajaAnterior
+            // 
+            this.btnCajaAnterior.Location = new System.Drawing.Point(315, 19);
+            this.btnCajaAnterior.Name = "btnCajaAnterior";
+            this.btnCajaAnterior.Size = new System.Drawing.Size(36, 24);
+            this.btnCajaAnterior.TabIndex = 34;
+            this.btnCajaAnterior.Text = "Ver";
+            this.btnCajaAnterior.UseVisualStyleBackColor = true;
+            this.btnCajaAnterior.Click += new System.EventHandler(this.btnCajaAnterior_Click);
+            // 
+            // lblDiferenciaEntreCaja
+            // 
+            this.lblDiferenciaEntreCaja.AutoSize = true;
+            this.lblDiferenciaEntreCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDiferenciaEntreCaja.ForeColor = System.Drawing.Color.Orange;
+            this.lblDiferenciaEntreCaja.Location = new System.Drawing.Point(159, 5);
+            this.lblDiferenciaEntreCaja.Name = "lblDiferenciaEntreCaja";
+            this.lblDiferenciaEntreCaja.Size = new System.Drawing.Size(153, 13);
+            this.lblDiferenciaEntreCaja.TabIndex = 35;
+            this.lblDiferenciaEntreCaja.Text = "Hay diferencias entre caja";
+            // 
+            // lblCortesAnulados
+            // 
+            this.lblCortesAnulados.AutoSize = true;
+            this.lblCortesAnulados.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblCortesAnulados.ForeColor = System.Drawing.Color.Orange;
+            this.lblCortesAnulados.Location = new System.Drawing.Point(170, 43);
+            this.lblCortesAnulados.Name = "lblCortesAnulados";
+            this.lblCortesAnulados.Size = new System.Drawing.Size(141, 13);
+            this.lblCortesAnulados.TabIndex = 36;
+            this.lblCortesAnulados.Text = "Existen cortes anulados";
+            this.lblCortesAnulados.Visible = false;
             // 
             // formCerrarCaja
             // 
@@ -536,5 +587,9 @@
         private System.Windows.Forms.Panel panelTaparCamposCierre;
         private System.Windows.Forms.TrackBar controlEleccionImporte;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.Button btnVentas;
+        private System.Windows.Forms.Button btnCajaAnterior;
+        protected System.Windows.Forms.Label lblDiferenciaEntreCaja;
+        protected System.Windows.Forms.Label lblCortesAnulados;
     }
 }
