@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btnGastos = new System.Windows.Forms.Button();
@@ -51,6 +52,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
+            this.comboConexion = new System.Windows.Forms.ComboBox();
+            this.lblConectadoA = new System.Windows.Forms.Label();
             this.btnTipoConexioin = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.comprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -69,8 +72,9 @@
             this.leerPesoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.lblConectadoA = new System.Windows.Forms.Label();
-            this.comboConexion = new System.Windows.Forms.ComboBox();
+            this.verToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.timerCuentaRegresiva = new System.Windows.Forms.Timer(this.components);
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -448,6 +452,33 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Compras";
             // 
+            // comboConexion
+            // 
+            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboConexion.Enabled = false;
+            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboConexion.FormattingEnabled = true;
+            this.comboConexion.Items.AddRange(new object[] {
+            "local",
+            "sanMartin",
+            "sanMartinRemoto",
+            "sanLorenzo",
+            "sanLorenzoRemoto"});
+            this.comboConexion.Location = new System.Drawing.Point(630, 1);
+            this.comboConexion.Name = "comboConexion";
+            this.comboConexion.Size = new System.Drawing.Size(157, 23);
+            this.comboConexion.TabIndex = 103;
+            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
+            // 
+            // lblConectadoA
+            // 
+            this.lblConectadoA.AutoSize = true;
+            this.lblConectadoA.Location = new System.Drawing.Point(548, 5);
+            this.lblConectadoA.Name = "lblConectadoA";
+            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
+            this.lblConectadoA.TabIndex = 102;
+            this.lblConectadoA.Text = "|  Conectado a";
+            // 
             // btnTipoConexioin
             // 
             this.btnTipoConexioin.BackColor = System.Drawing.SystemColors.Control;
@@ -496,7 +527,8 @@
             // ventasToolStripMenuItem
             // 
             this.ventasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verVentasToolStripMenuItem});
+            this.verVentasToolStripMenuItem,
+            this.verToolStripMenuItem});
             this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
             this.ventasToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.ventasToolStripMenuItem.Text = "Ventas";
@@ -504,7 +536,7 @@
             // verVentasToolStripMenuItem
             // 
             this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
@@ -519,7 +551,7 @@
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -538,28 +570,28 @@
             // cortesToolStripMenuItem
             // 
             this.cortesToolStripMenuItem.Name = "cortesToolStripMenuItem";
-            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.cortesToolStripMenuItem.Text = "Cortes";
             this.cortesToolStripMenuItem.Click += new System.EventHandler(this.cortesToolStripMenuItem_Click);
             // 
             // personasToolStripMenuItem
             // 
             this.personasToolStripMenuItem.Name = "personasToolStripMenuItem";
-            this.personasToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.personasToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.personasToolStripMenuItem.Text = "Personas";
             this.personasToolStripMenuItem.Click += new System.EventHandler(this.personasToolStripMenuItem_Click);
             // 
             // stockCortesToolStripMenuItem
             // 
             this.stockCortesToolStripMenuItem.Name = "stockCortesToolStripMenuItem";
-            this.stockCortesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.stockCortesToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.stockCortesToolStripMenuItem.Text = "Stock Cortes";
             this.stockCortesToolStripMenuItem.Click += new System.EventHandler(this.stockCortesToolStripMenuItem_Click);
             // 
             // baseDeDatosToolStripMenuItem
             // 
             this.baseDeDatosToolStripMenuItem.Name = "baseDeDatosToolStripMenuItem";
-            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
             // 
@@ -569,21 +601,21 @@
             this.verBalanzaToolStripMenuItem,
             this.leerPesoToolStripMenuItem});
             this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
-            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(147, 22);
             this.balanzaToolStripMenuItem.Text = "Balanza";
             this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
             // 
             // verBalanzaToolStripMenuItem
             // 
             this.verBalanzaToolStripMenuItem.Name = "verBalanzaToolStripMenuItem";
-            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.verBalanzaToolStripMenuItem.Text = "Ver Balanza";
             this.verBalanzaToolStripMenuItem.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem_Click);
             // 
             // leerPesoToolStripMenuItem
             // 
             this.leerPesoToolStripMenuItem.Name = "leerPesoToolStripMenuItem";
-            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(134, 22);
             this.leerPesoToolStripMenuItem.Text = "Leer Peso";
             this.leerPesoToolStripMenuItem.Click += new System.EventHandler(this.leerPesoToolStripMenuItem_Click);
             // 
@@ -602,32 +634,22 @@
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
-            // lblConectadoA
+            // verToolStripMenuItem
             // 
-            this.lblConectadoA.AutoSize = true;
-            this.lblConectadoA.Location = new System.Drawing.Point(548, 5);
-            this.lblConectadoA.Name = "lblConectadoA";
-            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
-            this.lblConectadoA.TabIndex = 102;
-            this.lblConectadoA.Text = "|  Conectado a";
+            this.verToolStripMenuItem.Name = "verToolStripMenuItem";
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.verToolStripMenuItem.Text = "Temporal Linea Venta";
+            this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
             // 
-            // comboConexion
+            // timerInactividadAdmin
             // 
-            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboConexion.Enabled = false;
-            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboConexion.FormattingEnabled = true;
-            this.comboConexion.Items.AddRange(new object[] {
-            "local",
-            "sanMartin",
-            "sanMartinRemoto",
-            "sanLorenzo",
-            "sanLorenzoRemoto"});
-            this.comboConexion.Location = new System.Drawing.Point(630, 1);
-            this.comboConexion.Name = "comboConexion";
-            this.comboConexion.Size = new System.Drawing.Size(157, 23);
-            this.comboConexion.TabIndex = 103;
-            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
+            this.timerInactividadAdmin.Interval = 3000000;
+            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
+            // 
+            // timerCuentaRegresiva
+            // 
+            this.timerCuentaRegresiva.Interval = 5000;
+            this.timerCuentaRegresiva.Tick += new System.EventHandler(this.timerCuentaRegresiva_Tick);
             // 
             // FormPrincipal
             // 
@@ -700,6 +722,9 @@
         private System.Windows.Forms.ToolStripMenuItem imprimirTicketToolStripMenuItem;
         private System.Windows.Forms.Label lblConectadoA;
         private System.Windows.Forms.ComboBox comboConexion;
+        private System.Windows.Forms.ToolStripMenuItem verToolStripMenuItem;
+        private System.Windows.Forms.Timer timerInactividadAdmin;
+        private System.Windows.Forms.Timer timerCuentaRegresiva;
     }
 }
 

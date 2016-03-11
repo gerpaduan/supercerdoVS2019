@@ -297,11 +297,13 @@ namespace Presentacion
             }
             logueado = false;
             linkLogin.Visible = true;
-            linkCerrarSesion.Visible = false;            
+            linkCerrarSesion.Visible = false;
+            comboConexion.Enabled = false;
         }
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
+            timerInactividadAdmin.Interval = 7000;
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
 
@@ -330,6 +332,11 @@ namespace Presentacion
 
         private void linkLogin_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            login();
+        }
+
+        private void login()
+        {
             Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
             frmLogin.ShowDialog();
             logueado = frmLogin.Logueado();
@@ -339,6 +346,7 @@ namespace Presentacion
                 linkCerrarSesion.Visible = true;
                 //btnTipoConexioin.Visible = true;
                 comboConexion.Enabled = true;
+                timerInactividadAdmin.Start();
             }
             else
             {
@@ -346,6 +354,7 @@ namespace Presentacion
                 linkCerrarSesion.Visible = false;
                 //btnTipoConexioin.Visible = false;
                 comboConexion.Enabled = false;
+                timerInactividadAdmin.Stop();
             }
         }
 
@@ -681,6 +690,51 @@ namespace Presentacion
                     MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
                 }                
             }
-        }  
+        }
+
+        private void verToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formTemporalLineaVenta"] != null)
+                {
+                    Application.OpenForms["formTemporalLineaVenta"].Activate();
+                    Application.OpenForms["formTemporalLineaVenta"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formTemporalLineaVenta frmTemporalLineaVenta = new formTemporalLineaVenta();
+                    frmTemporalLineaVenta.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void timerInactividadAdmin_Tick(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                cerrarSesion();
+                timerInactividadAdmin.Stop();             
+            }
+        }
+
+        private void cerrarSesion()
+        {
+            //timerCuentaRegresiva.Start();
+            //if(MessageBox.Show("La sesión de administrador se cerrará en 5 seguntos.\n\nPresione NO si desea continuar logueado", "Cerrar sesión",
+            //    MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No) timerCuentaRegresiva.Stop();
+            //timerCuentaRegresiva.Stop();
+        }
+
+        private void timerCuentaRegresiva_Tick(object sender, EventArgs e)
+        {
+            //logueado = false;
+            //login();
+        }
     }
 }
