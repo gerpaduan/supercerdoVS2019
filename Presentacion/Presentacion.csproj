@@ -75,6 +75,12 @@
     <Compile Include="Balanza\formBalanza.Designer.cs">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formAddOrEditGasto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formAddOrEditGasto.Designer.cs">
+      <DependentUpon>formAddOrEditGasto.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formCajasAbiertas.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -99,11 +105,35 @@
     <Compile Include="Caja\formCierresDeCaja.Designer.cs">
       <DependentUpon>formCierresDeCaja.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formGastos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formGastos.Designer.cs">
+      <DependentUpon>formGastos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formGastosVendedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formGastosVendedor.Designer.cs">
+      <DependentUpon>formGastosVendedor.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\FormLoginVendedor.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Caja\FormLoginVendedor.Designer.cs">
       <DependentUpon>FormLoginVendedor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formUltimaVenta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formUltimaVenta.Designer.cs">
+      <DependentUpon>formUltimaVenta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formVentasVendedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formVentasVendedor.Designer.cs">
+      <DependentUpon>formVentasVendedor.cs</DependentUpon>
     </Compile>
     <Compile Include="CodeFile1.cs" />
     <Compile Include="Compras\formCambiarPrecioKg.cs">
@@ -332,6 +362,12 @@
     <Compile Include="Embutidos\formIngresoEmbutido.Designer.cs">
       <DependentUpon>formIngresoEmbutido.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pruebas\formTicketPrueba.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pruebas\formTicketPrueba.Designer.cs">
+      <DependentUpon>formTicketPrueba.cs</DependentUpon>
+    </Compile>
     <Compile Include="Reportes\FormReportes.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -433,6 +469,18 @@
     </Compile>
     <Compile Include="Ticket\CrearTicket.cs" />
     <Compile Include="Ticket\RawPrinterHelper.cs" />
+    <Compile Include="Usuarios\FormUsuarios.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Usuarios\FormUsuarios.Designer.cs">
+      <DependentUpon>FormUsuarios.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ventas\formTemporalLineaVenta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ventas\formTemporalLineaVenta.Designer.cs">
+      <DependentUpon>formTemporalLineaVenta.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ventas\formInfoVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -451,12 +499,6 @@
     <Compile Include="Caja\formVentaCaja.Designer.cs">
       <DependentUpon>formVentaCaja.cs</DependentUpon>
     </Compile>
-    <Compile Include="Caja\formVentaCaja2.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Caja\formVentaCaja2.Designer.cs">
-      <DependentUpon>formVentaCaja2.cs</DependentUpon>
-    </Compile>
     <Compile Include="Ventas\formVentas.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -467,6 +509,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Balanza\formBalanza.resx">
       <DependentUpon>formBalanza.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formAddOrEditGasto.resx">
+      <DependentUpon>formAddOrEditGasto.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCajasAbiertas.resx">
       <DependentUpon>formCajasAbiertas.cs</DependentUpon>
@@ -480,8 +525,20 @@
     <EmbeddedResource Include="Caja\formCierresDeCaja.resx">
       <DependentUpon>formCierresDeCaja.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formGastos.resx">
+      <DependentUpon>formGastos.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formGastosVendedor.resx">
+      <DependentUpon>formGastosVendedor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\FormLoginVendedor.resx">
       <DependentUpon>FormLoginVendedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formUltimaVenta.resx">
+      <DependentUpon>formUltimaVenta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formVentasVendedor.resx">
+      <DependentUpon>formVentasVendedor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Compras\formCambiarPrecioKg.resx">
       <DependentUpon>formCambiarPrecioKg.cs</DependentUpon>
@@ -593,6 +650,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Pruebas\formTicketPrueba.resx">
+      <DependentUpon>formTicketPrueba.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reportes\FormReportes.resx">
       <DependentUpon>FormReportes.cs</DependentUpon>
     </EmbeddedResource>
@@ -649,6 +709,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Stock\formStock.resx">
       <DependentUpon>formStock.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Usuarios\FormUsuarios.resx">
+      <DependentUpon>FormUsuarios.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Ventas\formTemporalLineaVenta.resx">
+      <DependentUpon>formTemporalLineaVenta.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formInfoVenta.resx">
       <DependentUpon>formInfoVenta.cs</DependentUpon>

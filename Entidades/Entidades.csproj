@@ -46,11 +46,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CierreCaja.cs" />
+    <Compile Include="TemporalLineaVenta.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="CortePorCompra.cs" />
     <Compile Include="CortePorEmbutido.cs" />
     <Compile Include="CortePorMovimiento.cs" />
     <Compile Include="Embutido.cs" />
+    <Compile Include="Gasto.cs" />
     <Compile Include="LineaVenta.cs" />
     <Compile Include="ListaCortePorCompra.cs" />
     <Compile Include="MediaRes.cs" />

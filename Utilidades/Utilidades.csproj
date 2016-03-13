@@ -48,6 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BarraProgreso.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BarraProgreso.Designer.cs">
+      <DependentUpon>BarraProgreso.cs</DependentUpon>
+    </Compile>
     <Compile Include="Conexion.cs" />
     <Compile Include="FormLogin.cs">
       <SubType>Form</SubType>
@@ -78,6 +84,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="BarraProgreso.resx">
+      <DependentUpon>BarraProgreso.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </EmbeddedResource>
