@@ -80,14 +80,16 @@
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(126, 21);
             this.txtTotalS.TabIndex = 32;
+            this.txtTotalS.TabStop = false;
             this.txtTotalS.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(626, 517);
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold);
+            this.btnSeleccionar.Location = new System.Drawing.Point(565, 516);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(85, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(117, 27);
             this.btnSeleccionar.TabIndex = 29;
             this.btnSeleccionar.Text = "Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
@@ -96,9 +98,10 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(717, 517);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold);
+            this.btnCancelar.Location = new System.Drawing.Point(688, 516);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 26);
+            this.btnCancelar.Size = new System.Drawing.Size(113, 26);
             this.btnCancelar.TabIndex = 28;
             this.btnCancelar.Text = "&Cerrar";
             this.btnCancelar.UseVisualStyleBackColor = true;
@@ -175,7 +178,7 @@
             this.btnVerTodas.Size = new System.Drawing.Size(113, 24);
             this.btnVerTodas.TabIndex = 51;
             this.btnVerTodas.TabStop = false;
-            this.btnVerTodas.Text = "Ver &sin ventas";
+            this.btnVerTodas.Text = "Ver &todos";
             this.btnVerTodas.UseVisualStyleBackColor = true;
             this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
             // 
@@ -198,6 +201,7 @@
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(161, 21);
             this.comboUsuario.TabIndex = 49;
+            this.comboUsuario.TabStop = false;
             this.comboUsuario.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
             // 
             // groupBox2
@@ -257,6 +261,7 @@
             this.fechaDesde.TabIndex = 5;
             this.fechaDesde.Value = new System.DateTime(2011, 7, 1, 0, 0, 0, 0);
             this.fechaDesde.ValueChanged += new System.EventHandler(this.fechaDesde_ValueChanged);
+            this.fechaDesde.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label3
             // 
@@ -281,6 +286,7 @@
             this.fechaHasta.TabIndex = 7;
             this.fechaHasta.Value = new System.DateTime(2016, 3, 2, 23, 27, 0, 0);
             this.fechaHasta.ValueChanged += new System.EventHandler(this.fechaDesde_ValueChanged);
+            this.fechaHasta.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // btnBuscar
             // 
@@ -288,6 +294,7 @@
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(58, 24);
             this.btnBuscar.TabIndex = 8;
+            this.btnBuscar.TabStop = false;
             this.btnBuscar.Text = "Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
@@ -364,6 +371,7 @@
             this.txtTotalKgs.ReadOnly = true;
             this.txtTotalKgs.Size = new System.Drawing.Size(126, 21);
             this.txtTotalKgs.TabIndex = 35;
+            this.txtTotalKgs.TabStop = false;
             this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // panel1

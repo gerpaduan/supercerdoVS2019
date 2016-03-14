@@ -43,6 +43,10 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.lblCortesAnulados = new System.Windows.Forms.Label();
+            this.lblDiferenciaEntreCaja = new System.Windows.Forms.Label();
+            this.btnCajaAnterior = new System.Windows.Forms.Button();
+            this.btnVentas = new System.Windows.Forms.Button();
             this.controlEleccionImporte = new System.Windows.Forms.TrackBar();
             this.btnVerGastos = new System.Windows.Forms.Button();
             this.txtImporteRetirado = new System.Windows.Forms.TextBox();
@@ -63,10 +67,6 @@
             this.panelTaparCamposCierre = new System.Windows.Forms.Panel();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.btnVentas = new System.Windows.Forms.Button();
-            this.btnCajaAnterior = new System.Windows.Forms.Button();
-            this.lblDiferenciaEntreCaja = new System.Windows.Forms.Label();
-            this.lblCortesAnulados = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -257,6 +257,50 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(366, 283);
             this.panel1.TabIndex = 13;
+            // 
+            // lblCortesAnulados
+            // 
+            this.lblCortesAnulados.AutoSize = true;
+            this.lblCortesAnulados.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblCortesAnulados.ForeColor = System.Drawing.Color.Orange;
+            this.lblCortesAnulados.Location = new System.Drawing.Point(170, 43);
+            this.lblCortesAnulados.Name = "lblCortesAnulados";
+            this.lblCortesAnulados.Size = new System.Drawing.Size(141, 13);
+            this.lblCortesAnulados.TabIndex = 36;
+            this.lblCortesAnulados.Text = "Existen cortes anulados";
+            this.lblCortesAnulados.Visible = false;
+            // 
+            // lblDiferenciaEntreCaja
+            // 
+            this.lblDiferenciaEntreCaja.AutoSize = true;
+            this.lblDiferenciaEntreCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDiferenciaEntreCaja.ForeColor = System.Drawing.Color.Orange;
+            this.lblDiferenciaEntreCaja.Location = new System.Drawing.Point(159, 5);
+            this.lblDiferenciaEntreCaja.Name = "lblDiferenciaEntreCaja";
+            this.lblDiferenciaEntreCaja.Size = new System.Drawing.Size(153, 13);
+            this.lblDiferenciaEntreCaja.TabIndex = 35;
+            this.lblDiferenciaEntreCaja.Text = "Hay diferencias entre caja";
+            this.lblDiferenciaEntreCaja.Visible = false;
+            // 
+            // btnCajaAnterior
+            // 
+            this.btnCajaAnterior.Location = new System.Drawing.Point(315, 19);
+            this.btnCajaAnterior.Name = "btnCajaAnterior";
+            this.btnCajaAnterior.Size = new System.Drawing.Size(36, 24);
+            this.btnCajaAnterior.TabIndex = 34;
+            this.btnCajaAnterior.Text = "Ver";
+            this.btnCajaAnterior.UseVisualStyleBackColor = true;
+            this.btnCajaAnterior.Click += new System.EventHandler(this.btnCajaAnterior_Click);
+            // 
+            // btnVentas
+            // 
+            this.btnVentas.Location = new System.Drawing.Point(315, 56);
+            this.btnVentas.Name = "btnVentas";
+            this.btnVentas.Size = new System.Drawing.Size(36, 24);
+            this.btnVentas.TabIndex = 33;
+            this.btnVentas.Text = "Ver";
+            this.btnVentas.UseVisualStyleBackColor = true;
+            this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
             // 
             // controlEleccionImporte
             // 
@@ -480,49 +524,6 @@
             this.btnCerrarCaja.Text = "&Cerrar Caja";
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
-            // 
-            // btnVentas
-            // 
-            this.btnVentas.Location = new System.Drawing.Point(315, 56);
-            this.btnVentas.Name = "btnVentas";
-            this.btnVentas.Size = new System.Drawing.Size(36, 24);
-            this.btnVentas.TabIndex = 33;
-            this.btnVentas.Text = "Ver";
-            this.btnVentas.UseVisualStyleBackColor = true;
-            this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
-            // 
-            // btnCajaAnterior
-            // 
-            this.btnCajaAnterior.Location = new System.Drawing.Point(315, 19);
-            this.btnCajaAnterior.Name = "btnCajaAnterior";
-            this.btnCajaAnterior.Size = new System.Drawing.Size(36, 24);
-            this.btnCajaAnterior.TabIndex = 34;
-            this.btnCajaAnterior.Text = "Ver";
-            this.btnCajaAnterior.UseVisualStyleBackColor = true;
-            this.btnCajaAnterior.Click += new System.EventHandler(this.btnCajaAnterior_Click);
-            // 
-            // lblDiferenciaEntreCaja
-            // 
-            this.lblDiferenciaEntreCaja.AutoSize = true;
-            this.lblDiferenciaEntreCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDiferenciaEntreCaja.ForeColor = System.Drawing.Color.Orange;
-            this.lblDiferenciaEntreCaja.Location = new System.Drawing.Point(159, 5);
-            this.lblDiferenciaEntreCaja.Name = "lblDiferenciaEntreCaja";
-            this.lblDiferenciaEntreCaja.Size = new System.Drawing.Size(153, 13);
-            this.lblDiferenciaEntreCaja.TabIndex = 35;
-            this.lblDiferenciaEntreCaja.Text = "Hay diferencias entre caja";
-            // 
-            // lblCortesAnulados
-            // 
-            this.lblCortesAnulados.AutoSize = true;
-            this.lblCortesAnulados.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCortesAnulados.ForeColor = System.Drawing.Color.Orange;
-            this.lblCortesAnulados.Location = new System.Drawing.Point(170, 43);
-            this.lblCortesAnulados.Name = "lblCortesAnulados";
-            this.lblCortesAnulados.Size = new System.Drawing.Size(141, 13);
-            this.lblCortesAnulados.TabIndex = 36;
-            this.lblCortesAnulados.Text = "Existen cortes anulados";
-            this.lblCortesAnulados.Visible = false;
             // 
             // formCerrarCaja
             // 

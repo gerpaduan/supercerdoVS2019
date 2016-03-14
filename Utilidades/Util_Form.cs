@@ -155,7 +155,20 @@ namespace Utilidades
                 MessageBox.Show("-" + nombreTextBox + " debe ser menor o igual a la fecha de hoy.", "Error fecha", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return resp;
+        }
 
+        public static string fechaFormato24Horas(DateTime? fechaParaFormatear)
+        {
+            string fechaFormateada = "";
+            try
+            {
+                fechaFormateada = fechaParaFormatear.Equals(null) ? "" : DateTime.Parse(fechaParaFormatear.ToString()).ToString("dd/MM/yyyy  HH:mm:ss");
+	        }
+	        catch (Exception)
+	        {
+                fechaFormateada = "Error formato";
+	        }
+            return fechaFormateada;
         }
 
         public static DialogResult errorBalanza(string error)

@@ -29,17 +29,25 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formVentas));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
             this.label5 = new System.Windows.Forms.Label();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.barraControl = new System.Windows.Forms.ToolStrip();
+            this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblActualizar = new System.Windows.Forms.Label();
+            this.btnVerTodas = new System.Windows.Forms.Button();
+            this.label8 = new System.Windows.Forms.Label();
+            this.comboUsuario = new System.Windows.Forms.ComboBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -52,6 +60,10 @@
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.grillaVentas = new System.Windows.Forms.DataGridView();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtTotalKgs = new System.Windows.Forms.TextBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.idVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idVendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -69,16 +81,6 @@
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.diaFestivo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.label6 = new System.Windows.Forms.Label();
-            this.txtTotalKgs = new System.Windows.Forms.TextBox();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.comboUsuario = new System.Windows.Forms.ComboBox();
-            this.label8 = new System.Windows.Forms.Label();
-            this.btnVerTodas = new System.Windows.Forms.Button();
-            this.lblActualizar = new System.Windows.Forms.Label();
-            this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
@@ -104,16 +106,17 @@
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(126, 21);
             this.txtTotalS.TabIndex = 32;
+            this.txtTotalS.TabStop = false;
             this.txtTotalS.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(605, 517);
+            this.btnSeleccionar.Location = new System.Drawing.Point(586, 517);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(106, 27);
-            this.btnSeleccionar.TabIndex = 29;
+            this.btnSeleccionar.TabIndex = 4;
             this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
@@ -122,11 +125,11 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(717, 517);
+            this.btnCancelar.Location = new System.Drawing.Point(698, 517);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 26);
-            this.btnCancelar.TabIndex = 28;
-            this.btnCancelar.Text = "&Cancelar";
+            this.btnCancelar.Size = new System.Drawing.Size(106, 27);
+            this.btnCancelar.TabIndex = 5;
+            this.btnCancelar.Text = "&Cerrar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -141,8 +144,31 @@
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.barraControl.Size = new System.Drawing.Size(816, 45);
             this.barraControl.TabIndex = 26;
-            this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
+            // 
+            // nuevo
+            // 
+            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
+            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.nuevo.Name = "nuevo";
+            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.nuevo.Size = new System.Drawing.Size(48, 42);
+            this.nuevo.Text = "&Nuevo";
+            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
+            this.menuDuplicar.Text = "&Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // pnlBuscar
             // 
@@ -168,6 +194,55 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(817, 83);
             this.pnlBuscar.TabIndex = 25;
+            // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(322, 59);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 52;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
+            // 
+            // btnVerTodas
+            // 
+            this.btnVerTodas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnVerTodas.Location = new System.Drawing.Point(692, 54);
+            this.btnVerTodas.Name = "btnVerTodas";
+            this.btnVerTodas.Size = new System.Drawing.Size(113, 24);
+            this.btnVerTodas.TabIndex = 51;
+            this.btnVerTodas.TabStop = false;
+            this.btnVerTodas.Text = "Ver &anulados";
+            this.toolTip1.SetToolTip(this.btnVerTodas, "Ver anulados: se muestran todas las ventas que contienen cortes que se han anulad" +
+                    "o.");
+            this.btnVerTodas.UseVisualStyleBackColor = true;
+            this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label8.Location = new System.Drawing.Point(25, 34);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(60, 15);
+            this.label8.TabIndex = 50;
+            this.label8.Text = "Vendedor";
+            // 
+            // comboUsuario
+            // 
+            this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboUsuario.FormattingEnabled = true;
+            this.comboUsuario.Location = new System.Drawing.Point(91, 33);
+            this.comboUsuario.Name = "comboUsuario";
+            this.comboUsuario.Size = new System.Drawing.Size(161, 21);
+            this.comboUsuario.TabIndex = 49;
+            this.comboUsuario.TabStop = false;
+            this.comboUsuario.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
             // 
             // groupBox2
             // 
@@ -224,9 +299,10 @@
             this.fechaDesde.Location = new System.Drawing.Point(498, 21);
             this.fechaDesde.Name = "fechaDesde";
             this.fechaDesde.Size = new System.Drawing.Size(128, 20);
-            this.fechaDesde.TabIndex = 5;
+            this.fechaDesde.TabIndex = 1;
             this.fechaDesde.Value = new System.DateTime(2011, 7, 1, 0, 0, 0, 0);
             this.fechaDesde.ValueChanged += new System.EventHandler(this.fechaDesde_ValueChanged);
+            this.fechaDesde.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label3
             // 
@@ -248,9 +324,10 @@
             this.fechaHasta.Location = new System.Drawing.Point(677, 21);
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(128, 20);
-            this.fechaHasta.TabIndex = 7;
+            this.fechaHasta.TabIndex = 2;
             this.fechaHasta.Value = new System.DateTime(2016, 3, 2, 23, 27, 0, 0);
             this.fechaHasta.ValueChanged += new System.EventHandler(this.fechaDesde_ValueChanged);
+            this.fechaHasta.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // btnBuscar
             // 
@@ -258,6 +335,7 @@
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(58, 24);
             this.btnBuscar.TabIndex = 8;
+            this.btnBuscar.TabStop = false;
             this.btnBuscar.Text = "&Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
@@ -331,8 +409,42 @@
             this.grillaVentas.RowHeadersVisible = false;
             this.grillaVentas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaVentas.Size = new System.Drawing.Size(790, 321);
-            this.grillaVentas.TabIndex = 27;
+            this.grillaVentas.TabIndex = 3;
             this.grillaVentas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaVentas_CellDoubleClick);
+            // 
+            // label6
+            // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(602, 465);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(67, 15);
+            this.label6.TabIndex = 36;
+            this.label6.Text = "Total Kgs";
+            // 
+            // txtTotalKgs
+            // 
+            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalKgs.Location = new System.Drawing.Point(675, 460);
+            this.txtTotalKgs.Name = "txtTotalKgs";
+            this.txtTotalKgs.ReadOnly = true;
+            this.txtTotalKgs.Size = new System.Drawing.Size(126, 21);
+            this.txtTotalKgs.TabIndex = 35;
+            this.txtTotalKgs.TabStop = false;
+            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // panel1
+            // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(12, 509);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(792, 1);
+            this.panel1.TabIndex = 37;
             // 
             // idVenta
             // 
@@ -345,9 +457,9 @@
             // 
             this.fechaVenta.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.fechaVenta.DataPropertyName = "fechaVenta";
-            dataGridViewCellStyle1.Format = "g";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle7.Format = "dd/MM/yyyy HH:mm:ss";
+            dataGridViewCellStyle7.NullValue = null;
+            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle7;
             this.fechaVenta.HeaderText = "Fecha Venta";
             this.fechaVenta.Name = "fechaVenta";
             this.fechaVenta.ReadOnly = true;
@@ -415,9 +527,9 @@
             // totalKg
             // 
             this.totalKg.DataPropertyName = "totalKg";
-            dataGridViewCellStyle2.Format = "N3";
-            dataGridViewCellStyle2.NullValue = null;
-            this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle8.Format = "N3";
+            dataGridViewCellStyle8.NullValue = null;
+            this.totalKg.DefaultCellStyle = dataGridViewCellStyle8;
             this.totalKg.HeaderText = "Total Kg";
             this.totalKg.Name = "totalKg";
             this.totalKg.ReadOnly = true;
@@ -426,9 +538,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle3.Format = "N2";
-            dataGridViewCellStyle3.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle9.Format = "N2";
+            dataGridViewCellStyle9.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle9;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -445,6 +557,8 @@
             // 
             this.creado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.creado.DataPropertyName = "creado";
+            dataGridViewCellStyle10.Format = "dd/MM/yyyy HH:mm:ss";
+            this.creado.DefaultCellStyle = dataGridViewCellStyle10;
             this.creado.HeaderText = "Creado";
             this.creado.Name = "creado";
             this.creado.ReadOnly = true;
@@ -454,6 +568,8 @@
             // 
             this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.actualizado.DataPropertyName = "actualizado";
+            dataGridViewCellStyle11.Format = "dd/MM/yyyy HH:mm:ss";
+            this.actualizado.DefaultCellStyle = dataGridViewCellStyle11;
             this.actualizado.HeaderText = "Actualizado";
             this.actualizado.Name = "actualizado";
             this.actualizado.ReadOnly = true;
@@ -469,116 +585,11 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle12.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle12;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
-            // 
-            // label6
-            // 
-            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(602, 465);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(67, 15);
-            this.label6.TabIndex = 36;
-            this.label6.Text = "Total Kgs";
-            // 
-            // txtTotalKgs
-            // 
-            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKgs.Location = new System.Drawing.Point(675, 460);
-            this.txtTotalKgs.Name = "txtTotalKgs";
-            this.txtTotalKgs.ReadOnly = true;
-            this.txtTotalKgs.Size = new System.Drawing.Size(126, 21);
-            this.txtTotalKgs.TabIndex = 35;
-            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // panel1
-            // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.panel1.Location = new System.Drawing.Point(12, 509);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(792, 1);
-            this.panel1.TabIndex = 37;
-            // 
-            // comboUsuario
-            // 
-            this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboUsuario.FormattingEnabled = true;
-            this.comboUsuario.Location = new System.Drawing.Point(91, 33);
-            this.comboUsuario.Name = "comboUsuario";
-            this.comboUsuario.Size = new System.Drawing.Size(161, 21);
-            this.comboUsuario.TabIndex = 49;
-            this.comboUsuario.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(25, 34);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(60, 15);
-            this.label8.TabIndex = 50;
-            this.label8.Text = "Vendedor";
-            // 
-            // btnVerTodas
-            // 
-            this.btnVerTodas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnVerTodas.Location = new System.Drawing.Point(692, 54);
-            this.btnVerTodas.Name = "btnVerTodas";
-            this.btnVerTodas.Size = new System.Drawing.Size(113, 24);
-            this.btnVerTodas.TabIndex = 51;
-            this.btnVerTodas.TabStop = false;
-            this.btnVerTodas.Text = "Ver &anulados";
-            this.toolTip1.SetToolTip(this.btnVerTodas, "Ver anulados: se muestran todas las ventas que contienen cortes que se han anulad" +
-                    "o.");
-            this.btnVerTodas.UseVisualStyleBackColor = true;
-            this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
-            // 
-            // lblActualizar
-            // 
-            this.lblActualizar.AutoSize = true;
-            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(322, 59);
-            this.lblActualizar.Name = "lblActualizar";
-            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
-            this.lblActualizar.TabIndex = 52;
-            this.lblActualizar.Text = "Actualizar...";
-            this.lblActualizar.Visible = false;
-            // 
-            // nuevo
-            // 
-            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
-            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.nuevo.Name = "nuevo";
-            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "&Nuevo";
-            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
-            // 
-            // menuDuplicar
-            // 
-            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
-            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.menuDuplicar.Name = "menuDuplicar";
-            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
-            this.menuDuplicar.Text = "&Duplicar";
-            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // formVentas
             // 
@@ -637,6 +648,12 @@
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox2;
+        protected System.Windows.Forms.Label label8;
+        private System.Windows.Forms.ComboBox comboUsuario;
+        private System.Windows.Forms.Button btnVerTodas;
+        protected System.Windows.Forms.Label lblActualizar;
+        protected System.Windows.Forms.ToolStripButton menuDuplicar;
+        private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.DataGridViewTextBoxColumn idVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn idVendedor;
@@ -654,11 +671,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
         private System.Windows.Forms.DataGridViewTextBoxColumn diaFestivo;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
-        protected System.Windows.Forms.Label label8;
-        private System.Windows.Forms.ComboBox comboUsuario;
-        private System.Windows.Forms.Button btnVerTodas;
-        protected System.Windows.Forms.Label lblActualizar;
-        protected System.Windows.Forms.ToolStripButton menuDuplicar;
-        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

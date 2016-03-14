@@ -48,6 +48,8 @@ namespace Presentacion
                         Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 
                         txtDescripcion.Text.Trim(), conVentas);
                     grillaVentas.DataSource = dtVentas;
+                    grillaVentas.Columns["fechaInicioPesada"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+                    grillaVentas.Columns["fechaInicioPesada"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
 
                     cargarTotales();
                 } 
@@ -88,18 +90,48 @@ namespace Presentacion
 
         private void infoVenta()
         {
-            int idVenta = Convert.ToInt32(grillaVentas.CurrentRow.Cells["idVenta"].Value.ToString());
+            try
+            {
+                int idVenta = Convert.ToInt32(grillaVentas.CurrentRow.Cells["idVenta"].Value.ToString());
 
-            if (Application.OpenForms["formInfoVenta"] != null)
-            {
-                Application.OpenForms["formInfoVenta"].Activate();
-                Application.OpenForms["formInfoVenta"].WindowState = FormWindowState.Normal;
+                bool formAbierto = false;
+                foreach (Form frm in Application.OpenForms)
+                {
+                    if (frm.GetType() == typeof(formInfoVenta))
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if (ctrl.Name.Equals("idVentaLabel") && ctrl.Text.Equals(idVenta.ToString()))
+                            {
+                                frm.BringToFront();
+                                formAbierto = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!formAbierto)
+                {
+                    formInfoVenta frmInfoVenta = new formInfoVenta();
+                    frmInfoVenta.idVenta = idVenta;
+                    frmInfoVenta.Show();
+                }
+
+                //if (Application.OpenForms["formInfoVenta"] != null)
+                //{
+                //    Application.OpenForms["formInfoVenta"].Activate();
+                //    Application.OpenForms["formInfoVenta"].WindowState = FormWindowState.Normal;
+                //}
+                //else
+                //{
+                //    formInfoVenta frmInfoVenta = new formInfoVenta();
+                //    frmInfoVenta.idVenta = idVenta;
+                //    frmInfoVenta.Show();
+                //}
             }
-            else
+            catch (Exception)
             {
-                formInfoVenta frmInfoVenta = new formInfoVenta();
-                frmInfoVenta.idVenta = idVenta;
-                frmInfoVenta.Show();
+                MessageBox.Show("No se pudo obtener la información de la venta.\nVerifique que el pesaje corresponda a una venta");
             }
         }
 

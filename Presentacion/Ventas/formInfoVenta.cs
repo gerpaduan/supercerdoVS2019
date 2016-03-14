@@ -95,10 +95,10 @@ namespace Presentacion.Ventas
             txtSucursal.Text = oVentaE.Sucursal.sucursal;
             txtCliente.Text = oVentaE.Persona.razonSocial;
             txtDiaFestivo.Text = oVentaE.DiaFestivo;
-            txtFechaVenta.Text = oVentaE.FechaVenta.ToString();
+            txtFechaVenta.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.FechaVenta);
             txtObservaciones.Text = oVentaE.Observaciones;
-            txtCreado.Text = oVentaE.Creado.ToString();
-            txtActualizado.Text = oVentaE.Actualizado.ToString();
+            txtCreado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Creado);
+            txtActualizado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Actualizado);
             cargarListaGrilla();
         }
 
