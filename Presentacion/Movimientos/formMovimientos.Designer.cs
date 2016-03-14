@@ -34,6 +34,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.actualizar = new System.Windows.Forms.ToolStripButton();
             this.Reporte = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -74,6 +75,7 @@
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.nuevo,
+            this.actualizar,
             this.Reporte});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
@@ -93,6 +95,18 @@
             this.nuevo.Text = "Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            // 
+            // actualizar
+            // 
+            this.actualizar.Image = ((System.Drawing.Image)(resources.GetObject("actualizar.Image")));
+            this.actualizar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.actualizar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.actualizar.Name = "actualizar";
+            this.actualizar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.actualizar.Size = new System.Drawing.Size(65, 42);
+            this.actualizar.Text = "Actualizar";
+            this.actualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.actualizar.Click += new System.EventHandler(this.actualizar_Click);
             // 
             // Reporte
             // 
@@ -492,5 +506,6 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
+        protected System.Windows.Forms.ToolStripButton actualizar;
     }
 }

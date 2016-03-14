@@ -132,6 +132,19 @@
         HAjXAAAAAElFTkSuQmCC
 </value>
   </data>
+  <data name="actualizar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAF7SURBVDhPzZH7L0JxGMb7j9hcNjb9FnOfo1qxQpvWMEKr
+        VmqihUrmErqoRFuZbLY0xoRJsrk0TP/No++XGqNz/OjZzs529n6e532fw/u/sqR1UB3LMJjogeFMjc/P
+        3LLfWWC7NSL07EYsH0Tk1Y/NhyXoTsagPxpnNyIwefbyIYRfPAXYR9/ep2UEcm5ok2pMxIfLm1gzBkTf
+        PlIJMJ3SwnSqwfq9C97HFbqJam/gdwPzpRb+3CqFybAs1o1YLoLoww4YXwuWsvNw3Foxm5qC3Cv5aULK
+        UhxK0BcXoTfKfBvYzYYweqCEK2ujJg0ztexdEAmDraWh7ZsAXX0hXSj4ehp1pip2A2arGZ2eJjo0l5yB
+        wMGnq5MzSZHdzo7yBgQe2ldAGZWjcZGP/rCUplqvTLBcGMCstXHD5FZ7xlpa2XiuobDUL0SPS1zeoH1D
+        QJOLYDF1MjFCk1nhosi9spCYptWbq1FrqITI2cUNfhX5TZxNc6lGX/EHAx7vHWFZDqM1C8xrAAAAAElF
+        TkSuQmCC
+</value>
+  </data>
   <data name="Reporte.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8

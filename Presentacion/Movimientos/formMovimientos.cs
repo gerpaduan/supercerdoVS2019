@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Presentacion.Movimientos;
 using Presentacion.Reportes;
 using Presentacion.Cortes;
+using System.Configuration;
 
 namespace Presentacion
 {
@@ -207,7 +208,6 @@ namespace Presentacion
 
         private void formMovimientos_Load(object sender, EventArgs e)
         {
-
         }
 
         private void Reporte_Click(object sender, EventArgs e)
@@ -223,6 +223,19 @@ namespace Presentacion
             frmReporte.obtenerParametros(oMovimientoE.SucursalDestino.idSucursal, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento, tipoReporte, oMovimientoE.IdMovimiento.ToString());
             frmReporte.Show();
         }
-       
+
+        private void actualizar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string ruta = ConfigurationManager.AppSettings["rutaActualizarMovimientos"].ToString();
+                System.Diagnostics.Process.Start(ruta);
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocurrió un error al actualizar los movimientos.\n\n" + ex.Message);
+            }
+        }       
     }
 }
