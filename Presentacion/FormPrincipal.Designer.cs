@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
             this.btnGastos = new System.Windows.Forms.Button();
             this.btnUsuarios = new System.Windows.Forms.Button();
             this.btnReportes = new System.Windows.Forms.Button();
@@ -60,6 +61,7 @@
             this.verComprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ventasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verVentasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.verToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cajaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cierresCajaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mantenimientoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -72,9 +74,7 @@
             this.leerPesoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.verToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.timerCuentaRegresiva = new System.Windows.Forms.Timer(this.components);
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -90,6 +90,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.SandyBrown;
+            this.splitContainer1.Panel1.Controls.Add(this.checkAutoDesconectar);
             this.splitContainer1.Panel1.Controls.Add(this.btnGastos);
             this.splitContainer1.Panel1.Controls.Add(this.btnUsuarios);
             this.splitContainer1.Panel1.Controls.Add(this.btnReportes);
@@ -124,6 +125,21 @@
             this.splitContainer1.Size = new System.Drawing.Size(997, 581);
             this.splitContainer1.SplitterDistance = 203;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // checkAutoDesconectar
+            // 
+            this.checkAutoDesconectar.AutoSize = true;
+            this.checkAutoDesconectar.Checked = true;
+            this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(88, 557);
+            this.checkAutoDesconectar.Name = "checkAutoDesconectar";
+            this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
+            this.checkAutoDesconectar.TabIndex = 31;
+            this.checkAutoDesconectar.TabStop = false;
+            this.checkAutoDesconectar.Text = "Auto-Desconec.";
+            this.checkAutoDesconectar.UseVisualStyleBackColor = true;
+            this.checkAutoDesconectar.Visible = false;
             // 
             // btnGastos
             // 
@@ -540,6 +556,13 @@
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
+            // verToolStripMenuItem
+            // 
+            this.verToolStripMenuItem.Name = "verToolStripMenuItem";
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.verToolStripMenuItem.Text = "Temporal Linea Venta";
+            this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
+            // 
             // cajaToolStripMenuItem
             // 
             this.cajaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -634,22 +657,10 @@
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
-            // verToolStripMenuItem
-            // 
-            this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
-            this.verToolStripMenuItem.Text = "Temporal Linea Venta";
-            this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
-            // 
             // timerInactividadAdmin
             // 
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
-            // 
-            // timerCuentaRegresiva
-            // 
-            this.timerCuentaRegresiva.Interval = 5000;
-            this.timerCuentaRegresiva.Tick += new System.EventHandler(this.timerCuentaRegresiva_Tick);
             // 
             // FormPrincipal
             // 
@@ -724,7 +735,7 @@
         private System.Windows.Forms.ComboBox comboConexion;
         private System.Windows.Forms.ToolStripMenuItem verToolStripMenuItem;
         private System.Windows.Forms.Timer timerInactividadAdmin;
-        private System.Windows.Forms.Timer timerCuentaRegresiva;
+        private System.Windows.Forms.CheckBox checkAutoDesconectar;
     }
 }
 

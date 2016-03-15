@@ -31,10 +31,11 @@ namespace Presentacion
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
+        string ultimaConnSelect;
+
         public FormPrincipal()
         {
             InitializeComponent();
-            
         }
 
         private static void compras()
@@ -291,20 +292,25 @@ namespace Presentacion
 
         private void linkCerrarSesion_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (logueado)
-            {
-                MessageBox.Show("Sesión Cerrada.");
-            }
+            cerrarSesion();
+        }
+
+        private void cerrarSesion()
+        {
             logueado = false;
             linkLogin.Visible = true;
             linkCerrarSesion.Visible = false;
+            checkAutoDesconectar.Visible = false;
             comboConexion.Enabled = false;
+            timerInactividadAdmin.Stop();
+            MessageBox.Show("Sesión Cerrada.");
         }
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-            timerInactividadAdmin.Interval = 7000;
+            timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
             comboConexion.Text = Utilidades.Conexion.connStringActual;
+            ultimaConnSelect = comboConexion.Text;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
 
             //asigo sucursal al título  
@@ -319,11 +325,9 @@ namespace Presentacion
             {
                 Application.OpenForms["formEmbutidos"].Activate();
                 Application.OpenForms["formEmbutidos"].WindowState = FormWindowState.Normal;
-
             }
             else
             {
-
                 formEmbutidos frmEmbutidos = new formEmbutidos();
                 frmEmbutidos.EsVentaClientes = true;
                 frmEmbutidos.Show();
@@ -340,6 +344,7 @@ namespace Presentacion
             Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
             frmLogin.ShowDialog();
             logueado = frmLogin.Logueado();
+            checkAutoDesconectar.Visible = logueado;
             if (logueado)
             {
                 linkLogin.Visible = false;
@@ -356,11 +361,6 @@ namespace Presentacion
                 comboConexion.Enabled = false;
                 timerInactividadAdmin.Stop();
             }
-        }
-
-        private void label4_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void verComprasToolStripMenuItem_Click(object sender, EventArgs e)
@@ -681,13 +681,18 @@ namespace Presentacion
             {
                 if (Application.OpenForms.Count == 1)
                 {
+                    ultimaConnSelect = comboConexion.Text;
                     Utilidades.Conexion.connStringActual = comboConexion.Text;
                     Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
                     MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);       
                 }
                 else
                 {
-                    MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
+                    if (!comboConexion.Text.Equals(ultimaConnSelect))
+                    {
+                        comboConexion.Text = ultimaConnSelect;
+                        MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
+                    }
                 }                
             }
         }
@@ -716,25 +721,10 @@ namespace Presentacion
 
         private void timerInactividadAdmin_Tick(object sender, EventArgs e)
         {
-            if (logueado)
+            if (logueado && checkAutoDesconectar.Checked)
             {
                 cerrarSesion();
-                timerInactividadAdmin.Stop();             
             }
-        }
-
-        private void cerrarSesion()
-        {
-            //timerCuentaRegresiva.Start();
-            //if(MessageBox.Show("La sesión de administrador se cerrará en 5 seguntos.\n\nPresione NO si desea continuar logueado", "Cerrar sesión",
-            //    MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No) timerCuentaRegresiva.Stop();
-            //timerCuentaRegresiva.Stop();
-        }
-
-        private void timerCuentaRegresiva_Tick(object sender, EventArgs e)
-        {
-            //logueado = false;
-            //login();
         }
     }
 }

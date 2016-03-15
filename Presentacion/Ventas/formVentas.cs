@@ -33,13 +33,18 @@ namespace Presentacion
         public formVentas()
         {
             InitializeComponent();
-            
         }
 
         public void cargarGrilla()
         {
             try
             {
+                if (!FormPrincipal.logueado)
+                {
+                    MessageBox.Show("No está logueado");
+                    return;
+                }
+
                 if (cargar)
                 {
                     lblActualizar.Visible = false;
@@ -65,13 +70,11 @@ namespace Presentacion
                         }
                     }
                     cargarTotales();
-                }                                
-
+                }
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Se produjo un error al cargar las ventas.\n\n"+ex.Message);
             }
         }
 
@@ -83,7 +86,6 @@ namespace Presentacion
             {
                 totalKgs += float.Parse(venta["totalKg"].ToString());
                 totalS += float.Parse(venta["totalS"].ToString());
-
             }
             txtTotalKgs.Text = String.Format("{0:0.00}", totalKgs);
             if (Presentacion.FormPrincipal.logueado)
@@ -129,20 +131,6 @@ namespace Presentacion
                 frmInfoVenta.frmVentas = this;
                 frmInfoVenta.Show();
             }
-            //
-            //if (Application.OpenForms["formInfoVenta"] != null)
-            //{
-
-            //    Application.OpenForms["formInfoVenta"].Activate();
-            //    Application.OpenForms["formInfoVenta"].WindowState = FormWindowState.Normal;
-            //}
-            //else
-            //{
-            //    formInfoVenta frmInfoVenta = new formInfoVenta();
-            //    frmInfoVenta.idVenta = idVenta;
-            //    frmInfoVenta.frmVentas = this;
-            //    frmInfoVenta.Show();
-            //}
         }
 
         private void nuevaVenta()

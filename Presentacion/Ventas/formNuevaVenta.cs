@@ -145,24 +145,30 @@ namespace Presentacion.Ventas
 
         private void esModificacion()
         {
-            //si es modificacion o agregacion
-            if (modificar)
+            if (FormPrincipal.logueado)
             {
-                modificarVenta();
-            }
-            else
-            {
-                if (grillaLineasVenta.SelectedRows.Count > 0)
+                //si es modificacion o agregacion
+                if (modificar)
                 {
-                  agregarVenta();
+                    modificarVenta();
                 }
                 else
                 {
-                    MessageBox.Show("No se ha cargado ningún corte en la venta. ", "No hay cortes cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (grillaLineasVenta.SelectedRows.Count > 0)
+                    {
+                        agregarVenta();
+                    }
+                    else
+                    {
+                        MessageBox.Show("No se ha cargado ningún corte en la venta. ", "No hay cortes cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                    }
                 }
             }
-            
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }            
         }
 
         public void asigarFormVentas(formVentas frmVentasParam)
@@ -886,10 +892,11 @@ namespace Presentacion.Ventas
         }
 
         private void formNuevaVenta_Load(object sender, EventArgs e)
-        {            
-            if (!frmVentas.Logueado)
+        {
+            if (!FormPrincipal.logueado)
             {
-                
+                MessageBox.Show("No está logueado");
+                this.Close();
             }
         }
 
