@@ -56,7 +56,7 @@ namespace Presentacion.Personas
                 frmInfoPersona.ShowDialog();
                 cargarGrilla();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show("Hubo un error al seleccionar la fila");
             }

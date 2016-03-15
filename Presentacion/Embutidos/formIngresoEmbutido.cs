@@ -15,7 +15,6 @@ namespace Presentacion
 {
     public partial class formIngresoEmbutido : formBaseColor, InterfaceCorte, InterfaceEmbutido
     {
-        bool checkAnterior = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
 
         formEmbutidos frmEmbutidos=new formEmbutidos();

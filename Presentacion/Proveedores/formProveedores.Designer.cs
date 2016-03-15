@@ -206,7 +206,6 @@
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         protected System.Windows.Forms.DataGridView grillaProveedores;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
         private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
         private System.Windows.Forms.DataGridViewTextBoxColumn otroDatos;
         private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;

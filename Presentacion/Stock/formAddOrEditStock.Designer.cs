@@ -518,8 +518,6 @@
         protected System.Windows.Forms.TextBox txtCorteNuevaCompra;
         protected System.Windows.Forms.Label label14;
         private System.Windows.Forms.DataGridView grillaCortePorCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
-        private System.Windows.Forms.DataGridViewTextBoxColumn precioKg;
         private System.Windows.Forms.TextBox txtCantKgs;
         private System.Windows.Forms.TextBox txtCantItems;
         private System.Windows.Forms.Label label12;

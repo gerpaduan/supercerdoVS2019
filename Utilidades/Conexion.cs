@@ -20,7 +20,6 @@ namespace Utilidades
             sanLorenzoRemoto
         }
         public static tipoConexion tipoConn;
-        string valueConnString = "";
         public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
         string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
 

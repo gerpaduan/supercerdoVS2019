@@ -20,7 +20,6 @@ namespace Presentacion
         
         DataTable dtCorte = new DataTable();
         DataTable dtSucursales;
-        DataTable dtCortes;
         Negocio.Compra oCompraN=new Negocio.Compra();
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN = new Negocio.Corte();
@@ -31,7 +30,6 @@ namespace Presentacion
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         CortesPorCompra cortesPorCompra;
         float totalKgs = 0;
-        float totalPesos = 0;
 
         string tipoCompra = "";
 
@@ -272,7 +270,6 @@ namespace Presentacion
         private void cargarTotales()
         {
             totalKgs = 0;
-            totalPesos = 0;
             foreach (CortesPorCompra fila in listaCortesEnGrilla)
             {
                 //sumo totales

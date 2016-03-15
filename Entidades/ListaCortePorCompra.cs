@@ -7,9 +7,6 @@ namespace Entidades
 {
     public class ListaCortePorCompra : CortePorCompra
     {
-        private int idCorte;
-        private int idSucursal;
-
         public int IdCorte
         {
             get

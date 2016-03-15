@@ -209,7 +209,6 @@
         protected System.Windows.Forms.Label Proveedor;
         private System.Windows.Forms.Button btnBuscarProv;
         protected System.Windows.Forms.DataGridView grillaProveedores;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
         private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
         private System.Windows.Forms.DataGridViewTextBoxColumn otroDatos;
         private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;

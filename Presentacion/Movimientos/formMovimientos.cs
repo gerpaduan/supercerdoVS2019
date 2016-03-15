@@ -23,8 +23,6 @@ namespace Presentacion
         Entidades.Movimiento oMovimientoE = new Entidades.Movimiento();
 
         DataTable dtMovimientos = new DataTable();
-        DataRow drMovimiento;
-
         DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
  

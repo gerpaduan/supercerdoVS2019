@@ -498,7 +498,7 @@ namespace Presentacion
                 oMediaRes.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 try
                 {
@@ -506,7 +506,7 @@ namespace Presentacion
                     oMediaRes.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 
                 }
-                catch (Exception ex1)
+                catch (Exception)
                 {
                     MessageBox.Show("Verifique que ha ingresado números en los campos 'Kg Media' y 'Precio'.", "Error de ingreso de datos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     ultimaValidacion = false;

@@ -10,7 +10,6 @@ namespace Datos
     public class OtrasClases
     {
         Utilidades.Conexion conn = new Utilidades.Conexion();
-        SqlDataAdapter daPersona;
         SqlCommand cmOtrasClases;
 
         public bool Login(string clave)

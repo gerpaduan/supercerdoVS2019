@@ -19,9 +19,7 @@ namespace Presentacion
         formInfoCorte oFrmInfoCorte;
 
         string mensaje = "";
-
         bool modificar = true;
-
         public bool finalizarMod = false;
 
         public formModificarPrecios()
@@ -118,7 +116,7 @@ namespace Presentacion
 
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "-Precio Kg";

@@ -18,8 +18,6 @@ namespace Presentacion.Ventas
         Negocio.Venta oVentaN = new Negocio.Venta();
 
         Entidades.Venta oVentaE = new Entidades.Venta();
-        Entidades.LineaVenta oLineaVenta;
-
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 

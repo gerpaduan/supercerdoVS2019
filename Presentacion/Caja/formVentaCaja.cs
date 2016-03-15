@@ -56,7 +56,6 @@ namespace Presentacion.Ventas
         int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
         int sumaTitilar = 0;
         int titilarHasta = 2000;
-        int tiempoTemporalLinea = 0;
         int tiempoRegistrarTemporal = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoRegistrarTemporal"].ToString());
         string ultimoTextoEnTxtCodigo = "";
 

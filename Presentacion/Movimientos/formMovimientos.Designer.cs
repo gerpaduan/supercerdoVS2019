@@ -485,9 +485,7 @@
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idMovimiento;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaMovimiento;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalOrigen;
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalOrigen;

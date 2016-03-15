@@ -50,7 +50,7 @@ namespace Presentacion.Caja
                     txtDetalle.Text = fila.Cells["Detalle"].Value.ToString();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show("Error al seleccionar fila");
             }

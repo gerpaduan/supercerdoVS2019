@@ -19,14 +19,10 @@ namespace Presentacion.Cortes
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         DataTable dtSucursales;
 
-        DataTable dtCierreStock;
-
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Compra oCompraN = new Negocio.Compra();
 
         DataTable dtGrillaReporte = new DataTable();
-
-        int indexUltimaSucursal = -1;
 
         public formReporteStock()
         {
@@ -37,14 +33,20 @@ namespace Presentacion.Cortes
 
         public void obtenerParametros(int sucursalParam, DateTime fechaDesdeParam, DateTime fechaHastaParam, int tipoReporteParam, string textoParam)
         {
-            comboSucursal.SelectedIndex = sucursalParam-1;
-            fechaDesde.Value = fechaDesdeParam;
-            fechaHasta.Value = fechaHastaParam;
-            comboTipoReporte.SelectedIndex = tipoReporteParam;
-            txtDescripcion.Text = textoParam;
+            try
+            {
+                comboSucursal.SelectedIndex = sucursalParam-1;
+                fechaDesde.Value = fechaDesdeParam;
+                fechaHasta.Value = fechaHastaParam;
+                comboTipoReporte.SelectedIndex = tipoReporteParam;
+                txtDescripcion.Text = textoParam;
 
-            cargarGrilla();
-        
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void imprimirReporte()
@@ -425,7 +427,7 @@ namespace Presentacion.Cortes
                         //grillaReportes.AlternatingRowsDefaultCellStyle.Font = fuente;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //MessageBox.Show(ex.Message);
                 }

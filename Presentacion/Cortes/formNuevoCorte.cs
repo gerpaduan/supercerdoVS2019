@@ -223,7 +223,7 @@ namespace Presentacion
             {
                 oCorteE.Codigo = Convert.ToInt32(txtCodigo.Text.Trim());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "-Codigo";
@@ -246,7 +246,7 @@ namespace Presentacion
 
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "-Precio Kg";
@@ -279,7 +279,7 @@ namespace Presentacion
                     oCorteE.Porcentaje = float.Parse(txtPorcentajeCorteM.Text.Trim());
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "- % Corte M";
@@ -298,7 +298,7 @@ namespace Presentacion
                     oCorteE.porcentajeHueso = float.Parse(txtPorcHueso.Text.Trim());
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "- % Hueso";
@@ -316,7 +316,7 @@ namespace Presentacion
                     oCorteE.desvioEstandar = float.Parse(txtDesvioEstandar.Text.Trim());
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "- Desvío Estandar";

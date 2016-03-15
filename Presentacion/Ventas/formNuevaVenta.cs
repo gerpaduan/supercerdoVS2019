@@ -14,7 +14,6 @@ namespace Presentacion.Ventas
 {
     public partial class formNuevaVenta : Form, InterfaceCorte, InterfacePersona
     {
-        bool checkAnterior = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         #region variables
         formVentas frmVentas;
@@ -32,7 +31,6 @@ namespace Presentacion.Ventas
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
         Entidades.Venta oVentaE = new Entidades.Venta();
         Entidades.LineaVenta oLineaVenta;
-        Entidades.StockCorteSucursal oStockCorteSucursal;
 
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();

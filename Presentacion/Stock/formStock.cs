@@ -14,7 +14,6 @@ namespace Presentacion
 
     {
         Negocio.Compra oCompraN;
-        Entidades.Compra oCompraE;
         DataTable dtCompras = new DataTable();
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();

@@ -16,7 +16,6 @@ namespace Presentacion.Movimientos
         formMovimientos frmMovimiento;
 
         Entidades.Movimiento oMovimientoE = new Entidades.Movimiento();
-        Entidades.CortePorMovimiento oCortePorMovimientoE;
 
         List<Entidades.CortePorMovimiento> listaCortesPorMovimiento = new List<Entidades.CortePorMovimiento>();
 
@@ -24,8 +23,6 @@ namespace Presentacion.Movimientos
         List<CortesPorMovimiento> listaEnGrilla;
 
         Negocio.Corte oCorteN = new Negocio.Corte();
-
-        string estado;
 
         public formInfoMovimiento()
         {

@@ -15,7 +15,6 @@ namespace Presentacion
 {
     public partial class formNuevoMovimiento : formBaseColor, InterfaceCorte
     {
-        bool checkAnterior = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Util_Form Util_Form = new Util_Form();
 

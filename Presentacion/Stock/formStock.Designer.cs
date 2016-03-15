@@ -491,15 +491,6 @@
         
         
         
-        
-        private System.Windows.Forms.TextBox txtTotalMedia;
-        private System.Windows.Forms.TextBox txtTotal;
-        private System.Windows.Forms.TextBox txtTotalKg;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label8;
-        
-        private Microsoft.VisualBasic.PowerPacks.ShapeContainer shapeContainer1;
-        private System.Windows.Forms.Label label10;
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.DateTimePicker fechaDesde;
         protected System.Windows.Forms.Label label3;
@@ -515,7 +506,6 @@
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.TextBox txtTotalKgs;
         private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
         protected System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox comboTipoCompra;
         private System.Windows.Forms.Panel panel1;

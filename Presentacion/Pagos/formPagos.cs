@@ -171,9 +171,8 @@ namespace Presentacion.Pagos
                     MessageBox.Show("Sólo se pueden seleccionar Pagos para realizar la modificación.");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                
                 throw;
             }
            

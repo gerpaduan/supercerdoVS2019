@@ -63,7 +63,7 @@ namespace Presentacion.Cortes
                 }
                 this.Close();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show("La descripción ingresada no corresponde a ningún corte.","El corte no existe",MessageBoxButtons.OK,MessageBoxIcon.Error);
             }

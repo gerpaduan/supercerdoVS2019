@@ -412,7 +412,6 @@
         private System.Windows.Forms.TextBox txtTotalS;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
         private System.Windows.Forms.DataGridView grillaVentas;
         private System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.Panel pnlBuscar;

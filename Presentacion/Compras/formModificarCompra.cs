@@ -18,7 +18,6 @@ namespace Presentacion.Compras
         bool modificado = false;
         DateTime fechaModificar;//borrar
         formCompras frmCompras;
-        //formNuevaCompra frmNuevaCompra = new formNuevaCompra();
         Entidades.Compra oCompraModificada = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra=new Entidades.Persona();
         Entidades.Corte oCorteNuevaCompra;
@@ -41,8 +40,6 @@ namespace Presentacion.Compras
         //listas que se obtienen antes de modificar la compra
         List<Entidades.MediaRes> listaMediaResAnterior = new List<Entidades.MediaRes>();
         List<Entidades.CortePorCompra> listaCortePorCompraAnterior = new List<Entidades.CortePorCompra>();
-        int inicio = 0;
-        
 
         public formModificarCompra()
         {
@@ -583,14 +580,14 @@ namespace Presentacion.Compras
                 mediaPorCompra.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 try
                 {
                     mediaPorCompra.kgMedia = float.Parse(txtKgMedia.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                     mediaPorCompra.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                 }
-                catch (Exception ex1)
+                catch (Exception)
                 {
                     MessageBox.Show("Verifique que ha ingresado datos correctos en los campos 'Kg Media' y 'Precio'.", "Error de ingreso de datos", MessageBoxButtons.OK, MessageBoxIcon.Information);              
                 }
@@ -952,7 +949,7 @@ namespace Presentacion.Compras
 
         private void cargarReporte()
         {
-            int tipoReporte=3, idSucursal=2;
+            int tipoReporte=4, idSucursal=2;
 
             formReporteStock frmReporte = new formReporteStock();
             frmReporte.obtenerParametros(idSucursal, oCompraModificada.FechaCompra, fechaModificar, tipoReporte, oCompraModificada.NroRemito);

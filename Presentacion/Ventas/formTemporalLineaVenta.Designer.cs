@@ -423,7 +423,6 @@
         private System.Windows.Forms.TextBox txtTotalS;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idProveedor;
         protected internal System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.Label label1;
