@@ -97,7 +97,7 @@ namespace Presentacion.Ventas
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
 
-            checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString()));
+            checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
             checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
         }
 
@@ -1248,38 +1248,45 @@ namespace Presentacion.Ventas
 
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
-            this.txtCodigo.BackColor = enableColor;
-            if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+            try
             {
-                checkLeerPeso.Checked = false;
-                txtCantKgs.Focus();
-            }
-            else
-            {
-                if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                this.txtCodigo.BackColor = enableColor;
+                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
                 {
-                    checkLeerPeso.Checked = true;
-                    btnAgregar.Focus();
+                    checkLeerPeso.Checked = false;
+                    txtCantKgs.Focus();
                 }
-            }
-
-            if (cartelPrimerCorteVendedor && !this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
-            {
-                int cantCajaVenta = 0;
-                foreach (Form frm in Application.OpenForms)
+                else
                 {
-                    if (frm.GetType() == typeof(formVentaCaja))
+                    if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                     {
-                        cantCajaVenta++;
-                        if (cantCajaVenta > 1)
+                        checkLeerPeso.Checked = true;
+                        btnAgregar.Focus();
+                    }
+                }
+
+                if (cartelPrimerCorteVendedor && !this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
+                {
+                    int cantCajaVenta = 0;
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(formVentaCaja))
                         {
-                            titilarTextBoxVendedor();
-                            //Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Caja de..." ,oUsuario.User.ToUpper());
-                            //barraProgreso.ShowDialog();
-                            break; 
+                            cantCajaVenta++;
+                            if (cantCajaVenta > 1)
+                            {
+                                titilarTextBoxVendedor();
+                                //Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Caja de..." ,oUsuario.User.ToUpper());
+                                //barraProgreso.ShowDialog();
+                                break; 
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hubo un error al cargar el corte.\nMetodo: txtCodigo_Leave().\n\n" + ex.Message);
             }
         }
 
