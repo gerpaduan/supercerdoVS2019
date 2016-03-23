@@ -45,13 +45,14 @@ namespace Presentacion
 
        bool ultimaValidacion = true;
        bool huboModificaciones = false;
+       bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
 
         public formAddOrEditStock()
         {
             InitializeComponent();
             cargarComboSucursal();
             dtCorte = oCorteN.obtenerCortes();
-            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
         }
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
@@ -485,7 +486,7 @@ namespace Presentacion
                                 oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteNuevaCompra.corte = fila["corte"].ToString();
-
+                                oCorteNuevaCompra.tipo = fila["tipo"].ToString();
                                 break;
                             }
                         }
@@ -563,8 +564,15 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
-                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    if (fijarPeso)
+                    {
+                        txtCantKgs.Text = "1.500";
+                    }
+                    else
+                    {
+                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    }
                 }
             }
             catch (Exception ex)
@@ -657,6 +665,23 @@ namespace Presentacion
             else
             {
                 return false;
+            }
+        }
+
+        private void txtCodigo_Leave(object sender, EventArgs e)
+        {
+            if (oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && oCorteNuevaCompra.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+            {
+                checkLeerPeso.Checked = false;
+                txtCantKgs.Focus();
+            }
+            else
+            {
+                if (oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && !oCorteNuevaCompra.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                {
+                    checkLeerPeso.Checked = true;
+                    btnAgregar.Focus();
+                }
             }
         }
     }
