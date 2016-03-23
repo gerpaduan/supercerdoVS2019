@@ -40,12 +40,13 @@ namespace Presentacion
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         bool modificacion = false, huboModificaciones = false, eliminacion = false;
+        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
 
         public formNuevoMovimiento()
         {
             InitializeComponent();
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
-            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarSucursales();
             dtCorte = oCorteN.obtenerCortes();
         }
@@ -625,8 +626,15 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
-                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    if (fijarPeso)
+                    {
+                        txtCantKgs.Text = "1.500";
+                    }
+                    else
+                    {
+                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    }
                 }
             }
             catch (Exception ex)
