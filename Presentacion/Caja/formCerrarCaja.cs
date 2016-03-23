@@ -302,7 +302,7 @@ namespace Presentacion.Caja
                     controlEleccionImporte.Value = 1;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
                     oCierreAnterior = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLastOpen, "");
-                    lblDiferenciaEntreCaja.Visible = !oCierreAnterior.CajaInicioSiguiente.Equals(oCierreE.CajaInicio);
+                    lblDiferenciaEntreCaja.Visible = oCierreAnterior != null && !oCierreAnterior.CajaInicioSiguiente.Equals(oCierreE.CajaInicio);
 
                     Negocio.Venta oVentaN = new Negocio.Venta();
                     lblCortesAnulados.Visible = oVentaN.getVentasVendedorCierreCaja(oCierreE, true).Rows.Count > 0;
