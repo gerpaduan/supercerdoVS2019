@@ -84,6 +84,30 @@ namespace Utilidades
             }
             return tipoConn;
         }
+
+        public static string getSucursalConexion()
+        {
+            string sucursalConexion = " | Suc. ";
+            switch (tipoConn)
+            {
+                case Conexion.tipoConexion.local:
+                    sucursalConexion += "local";
+                    break;
+                case Conexion.tipoConexion.sanMartin:
+                    sucursalConexion += "San Martín";
+                    break;
+                case Conexion.tipoConexion.sanMartinRemoto:
+                    sucursalConexion += "San Martín";
+                    break;
+                case Conexion.tipoConexion.sanLorenzo:
+                    sucursalConexion += "San Lorenzo";
+                    break;
+                case Conexion.tipoConexion.sanLorenzoRemoto:
+                    sucursalConexion += "San Lorenzo";
+                    break;
+            }
+             return sucursalConexion;
+        }
      }
     
 }
