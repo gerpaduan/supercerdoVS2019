@@ -182,24 +182,23 @@ namespace Datos
 
         }
 
-        public DataTable buscarEmbutido(string sucursal,string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtCortes = new DataTable();
             daCorte = new SqlDataAdapter();
 
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.Connection.Open();
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "buscarEmbutido";
-            cmCorte.Parameters.AddWithValue("@sucursal", sucursal);
+            cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@texto",texto);
             cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
 
+            cmCorte.Connection.Open();
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtCortes);
-
             cmCorte.Connection.Close();
 
             return dtCortes;

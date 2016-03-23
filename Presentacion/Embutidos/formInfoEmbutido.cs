@@ -31,7 +31,7 @@ namespace Presentacion.Embutidos
         {
 
             int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            if (!FormPrincipal.logueado && txtFechaEmbutido.Value < DateTime.Today ||
+            if (!FormPrincipal.logueado && Convert.ToDateTime(txtFechaEmbutido.Text) < DateTime.Today ||
                 !FormPrincipal.logueado && oEmbutidoE.sucursal.idSucursal != sucActual)
             {
                 anular.Enabled = false;
@@ -74,8 +74,7 @@ namespace Presentacion.Embutidos
         private void cargarCampos()
         {
             txtSucursal.Text = oEmbutidoE.sucursal.sucursal;
-            txtFechaEmbutido.Value = oEmbutidoE.fechaEmbutido;
-            txtHoraEmbutido.Text = oEmbutidoE.fechaEmbutido.ToShortTimeString();
+            txtFechaEmbutido.Text = Utilidades.Util_Form.fechaFormato24Horas(oEmbutidoE.fechaEmbutido);
             txtCodigoEmbutido.Text =Convert.ToString( oEmbutidoE.corte.codigo);
             txtEmbutido.Text = oEmbutidoE.corte.corte;
             txtObservaciones.Text = oEmbutidoE.observaciones;
@@ -85,10 +84,7 @@ namespace Presentacion.Embutidos
                 barraControl.Visible = false;
                 panelAnulado.Visible = true;
             }
-
-            
         }
-
 
         private void anularEmbutido()
         {
@@ -118,7 +114,6 @@ namespace Presentacion.Embutidos
             frmEmbutidos.cargarGrilla();
             this.Close();
         }
-
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {

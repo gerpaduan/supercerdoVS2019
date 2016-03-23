@@ -47,12 +47,12 @@
             this.sucursalSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.stockSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btnBuscarCorte = new System.Windows.Forms.Button();
             this.txtBuscarCorte = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -225,6 +225,17 @@
             this.panel1.Size = new System.Drawing.Size(443, 58);
             this.panel1.TabIndex = 22;
             // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(13, 41);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(418, 7);
+            this.groupBox1.TabIndex = 26;
+            this.groupBox1.TabStop = false;
+            // 
             // btnBuscarCorte
             // 
             this.btnBuscarCorte.AccessibleDescription = "";
@@ -245,6 +256,7 @@
             this.txtBuscarCorte.Size = new System.Drawing.Size(137, 20);
             this.txtBuscarCorte.TabIndex = 0;
             this.txtBuscarCorte.TextChanged += new System.EventHandler(this.btnBuscarCorte_Click);
+            this.txtBuscarCorte.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtBuscarCorte_KeyDown);
             // 
             // label9
             // 
@@ -260,35 +272,26 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(254, 255);
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(222, 255);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(84, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(105, 27);
             this.btnSeleccionar.TabIndex = 20;
-            this.btnSeleccionar.Text = "Seleccionar";
+            this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(344, 255);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(333, 255);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(95, 27);
             this.btnCancelar.TabIndex = 21;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
-            // 
-            // groupBox1
-            // 
-            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(13, 41);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(418, 7);
-            this.groupBox1.TabIndex = 26;
-            this.groupBox1.TabStop = false;
             // 
             // formBuscarEmbutido
             // 

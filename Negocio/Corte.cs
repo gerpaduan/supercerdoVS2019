@@ -74,19 +74,18 @@ namespace Negocio
             return dtCorte;
         }
 
-         public DataTable buscarEmbutido(string sucursal,string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.buscarEmbutido(sucursal, texto,fechaDesde,fechaHasta);
+             return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
          }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
              oCorteD = new Datos.Corte();
-
-             return oCorteD.agregarEmbutido(oEmbutido);
-         
+             return oCorteD.agregarEmbutido(oEmbutido);         
          }
+
          public void anularEmbutido(Entidades.Embutido oEmbutidoE)
          {
              oCorteD.anularEmbutido(oEmbutidoE);
@@ -94,21 +93,18 @@ namespace Negocio
 
          public DataTable obtenerCortesPorEmbutidos(Entidades.Embutido oEmbutidoE)
          {
-             
              return oCorteD.obtenerCortesPorEmbutidos(oEmbutidoE);
          }
 
          public void agregarCortePorEmbutido(Entidades.CortePorEmbutido oCortePorEmbutido)
          {
              oCorteD = new Datos.Corte();
-
              oCorteD.agregarCortePorEmbutido(oCortePorEmbutido);
          }
 
          public void actualizarStockEmbutido(DataRow cortePorEmbutido, Entidades.Embutido oEmbutidoE)
          {
              oCorteD = new Datos.Corte();
-
              oCorteD.actualizarStockEmbutido(cortePorEmbutido, oEmbutidoE);
          }
 
@@ -137,7 +133,6 @@ namespace Negocio
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
              oCorteD = new Datos.Corte();
-
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 

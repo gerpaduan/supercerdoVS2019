@@ -42,8 +42,8 @@
             this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.txtFechaEmbutido = new System.Windows.Forms.DateTimePicker();
@@ -64,6 +64,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.txtEmbutido = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.txtSucursal = new System.Windows.Forms.TextBox();
             this.txtTotalKg = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
@@ -79,9 +80,10 @@
             // btnGuardar
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGuardar.Location = new System.Drawing.Point(305, 578);
+            this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGuardar.Location = new System.Drawing.Point(275, 578);
             this.btnGuardar.Name = "btnGuardar";
-            this.btnGuardar.Size = new System.Drawing.Size(87, 27);
+            this.btnGuardar.Size = new System.Drawing.Size(102, 27);
             this.btnGuardar.TabIndex = 6;
             this.btnGuardar.TabStop = false;
             this.btnGuardar.Text = "&Guardar";
@@ -91,9 +93,10 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(401, 578);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(383, 578);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(87, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(102, 27);
             this.btnCancelar.TabIndex = 7;
             this.btnCancelar.TabStop = false;
             this.btnCancelar.Text = "&Cancelar";
@@ -190,17 +193,29 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
-            this.pnlBuscar.Controls.Add(this.groupBox3);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
+            this.pnlBuscar.Controls.Add(this.groupBox3);
             this.pnlBuscar.Controls.Add(this.label9);
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.txtFechaEmbutido);
             this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.groupBox1);
+            this.pnlBuscar.Controls.Add(this.txtSucursal);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(497, 234);
             this.pnlBuscar.TabIndex = 14;
+            // 
+            // comboSucursal
+            // 
+            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboSucursal.FormattingEnabled = true;
+            this.comboSucursal.Location = new System.Drawing.Point(81, 9);
+            this.comboSucursal.Name = "comboSucursal";
+            this.comboSucursal.Size = new System.Drawing.Size(145, 24);
+            this.comboSucursal.TabIndex = 0;
+            this.comboSucursal.TabStop = false;
             // 
             // groupBox3
             // 
@@ -212,17 +227,6 @@
             this.groupBox3.Size = new System.Drawing.Size(473, 7);
             this.groupBox3.TabIndex = 26;
             this.groupBox3.TabStop = false;
-            // 
-            // comboSucursal
-            // 
-            this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(80, 9);
-            this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(116, 24);
-            this.comboSucursal.TabIndex = 0;
-            this.comboSucursal.TabStop = false;
             // 
             // label9
             // 
@@ -241,7 +245,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(324, 10);
+            this.label6.Location = new System.Drawing.Point(262, 13);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(41, 15);
             this.label6.TabIndex = 12;
@@ -250,11 +254,12 @@
             // txtFechaEmbutido
             // 
             this.txtFechaEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFechaEmbutido.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.txtFechaEmbutido.Location = new System.Drawing.Point(374, 8);
+            this.txtFechaEmbutido.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaEmbutido.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.txtFechaEmbutido.Location = new System.Drawing.Point(309, 9);
             this.txtFechaEmbutido.Name = "txtFechaEmbutido";
-            this.txtFechaEmbutido.Size = new System.Drawing.Size(104, 22);
+            this.txtFechaEmbutido.Size = new System.Drawing.Size(176, 21);
             this.txtFechaEmbutido.TabIndex = 11;
             this.txtFechaEmbutido.TabStop = false;
             // 
@@ -371,6 +376,8 @@
             this.txtCodCorteEnEmbutido.TabIndex = 2;
             this.txtCodCorteEnEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodCorteEnEmbutido.TextChanged += new System.EventHandler(this.txtCodCorteEnEmbutido_TextChanged);
+            this.txtCodCorteEnEmbutido.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCodCorteEnEmbutido_KeyDown);
+            this.txtCodCorteEnEmbutido.Leave += new System.EventHandler(this.txtCodCorteEnEmbutido_Leave);
             this.txtCodCorteEnEmbutido.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // label2
@@ -488,6 +495,18 @@
             this.label4.TabIndex = 8;
             this.label4.Text = "Descripción";
             // 
+            // txtSucursal
+            // 
+            this.txtSucursal.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSucursal.Location = new System.Drawing.Point(81, 10);
+            this.txtSucursal.Name = "txtSucursal";
+            this.txtSucursal.ReadOnly = true;
+            this.txtSucursal.Size = new System.Drawing.Size(145, 22);
+            this.txtSucursal.TabIndex = 12;
+            this.txtSucursal.TabStop = false;
+            this.txtSucursal.Visible = false;
+            // 
             // txtTotalKg
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -566,6 +585,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Ingreso de Embutidos / Otros";
             this.Load += new System.EventHandler(this.formIngresoEmbutido_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formIngresoEmbutido_FormClosing);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
@@ -617,5 +637,6 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox3;
+        protected System.Windows.Forms.TextBox txtSucursal;
     }
 }

@@ -19,21 +19,10 @@ namespace Presentacion.Embutidos
             cargarGrilla();
         }
 
-        //private void buscarCorte()
-        //{
-        //    oCorteN = new Negocio.Corte();
-        //    string txtBusqueda = txtBuscarCorte.Text.Trim();
-
-        //    grillaCortes.AutoGenerateColumns = false;
-        //    grillaCortes.DataSource = oCorteN.buscarCorte(txtBusqueda);
-
-        //}
-
         private void cargarGrilla()
         {
             oCorteN = new Negocio.Corte();
             grillaCortes.AutoGenerateColumns = false;
-           // grillaCortes.DataSource = oCorteN.obtenerEmbutidos(txtBuscarCorte.Text.Trim());
             grillaCortes.DataSource = oCorteN.buscarCorte(txtBuscarCorte.Text.Trim());
         }
 
@@ -44,6 +33,11 @@ namespace Presentacion.Embutidos
             InterfaceEmbutido formInterface = this.Owner as InterfaceEmbutido;
             cargarDatos(oCorte);
 
+            if (oCorte == null || oCorte.idCorte == 0)
+            {
+                MessageBox.Show("No se seleccionó ningún corte");
+                return;
+            }
             if (formInterface != null)
             {
                 formInterface.EnviarEmbutido(oCorte);
@@ -53,13 +47,18 @@ namespace Presentacion.Embutidos
 
         private void cargarDatos(Entidades.Corte oCorte)
         {
-            oCorte.idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
-            oCorte.codigo = Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
+            try
+            {
+                oCorte.idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
+                oCorte.codigo = Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
 
-            oCorte.corte = grillaCortes.CurrentRow.Cells[2].Value.ToString();
-            oCorte.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
-
-
+                oCorte.corte = grillaCortes.CurrentRow.Cells[2].Value.ToString();
+                oCorte.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
+            }
+            catch (Exception)
+            {
+                oCorte = null;
+            }
         }
 
         private void btnBuscarCorte_Click(object sender, EventArgs e)
@@ -84,11 +83,25 @@ namespace Presentacion.Embutidos
 
         private void formBuscarEmbutido_Load(object sender, EventArgs e)
         {
-
+            txtBuscarCorte.Select();
         }
-      
 
-       
+        private void txtBuscarCorte_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                enviarCorte();
+            }
+        }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
     }
 }

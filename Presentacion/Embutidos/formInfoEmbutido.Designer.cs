@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoEmbutido));
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.txtTotalKg = new System.Windows.Forms.TextBox();
@@ -42,12 +42,10 @@
             this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.txtHoraEmbutido = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
-            this.txtFechaEmbutido = new System.Windows.Forms.DateTimePicker();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtCodigoEmbutido = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -61,7 +59,7 @@
             this.panelAnulado = new System.Windows.Forms.Panel();
             this.label10 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.txtFechaEmbutido = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -75,8 +73,9 @@
             this.txtObservaciones.Location = new System.Drawing.Point(6, 457);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
+            this.txtObservaciones.ReadOnly = true;
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(255, 39);
+            this.txtObservaciones.Size = new System.Drawing.Size(287, 39);
             this.txtObservaciones.TabIndex = 27;
             // 
             // txtTotalKg
@@ -97,8 +96,9 @@
             this.btnAceptar.Name = "btnAceptar";
             this.btnAceptar.Size = new System.Drawing.Size(87, 27);
             this.btnAceptar.TabIndex = 25;
-            this.btnAceptar.Text = "Aceptar";
+            this.btnAceptar.Text = "Guardar";
             this.btnAceptar.UseVisualStyleBackColor = true;
+            this.btnAceptar.Visible = false;
             this.btnAceptar.Click += new System.EventHandler(this.btnAceptar_Click);
             // 
             // btnCancelar
@@ -108,7 +108,7 @@
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(87, 27);
             this.btnCancelar.TabIndex = 24;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Salir";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -173,9 +173,9 @@
             // kgUtilizados
             // 
             this.kgUtilizados.DataPropertyName = "kgUtilizados";
-            dataGridViewCellStyle2.Format = "N2";
-            dataGridViewCellStyle2.NullValue = null;
-            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle5.Format = "N2";
+            dataGridViewCellStyle5.NullValue = null;
+            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle5;
             this.kgUtilizados.FillWeight = 82.81686F;
             this.kgUtilizados.HeaderText = "Kgs. Utilizados";
             this.kgUtilizados.Name = "kgUtilizados";
@@ -194,42 +194,27 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.txtFechaEmbutido);
             this.pnlBuscar.Controls.Add(this.groupBox2);
-            this.pnlBuscar.Controls.Add(this.txtHoraEmbutido);
-            this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.txtSucursal);
             this.pnlBuscar.Controls.Add(this.label9);
             this.pnlBuscar.Controls.Add(this.label6);
-            this.pnlBuscar.Controls.Add(this.txtFechaEmbutido);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(-1, 40);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(489, 138);
             this.pnlBuscar.TabIndex = 22;
             // 
-            // txtHoraEmbutido
+            // groupBox2
             // 
-            this.txtHoraEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtHoraEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtHoraEmbutido.Location = new System.Drawing.Point(392, 34);
-            this.txtHoraEmbutido.Name = "txtHoraEmbutido";
-            this.txtHoraEmbutido.ReadOnly = true;
-            this.txtHoraEmbutido.Size = new System.Drawing.Size(78, 20);
-            this.txtHoraEmbutido.TabIndex = 47;
-            this.txtHoraEmbutido.TabStop = false;
-            this.txtHoraEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label7
-            // 
-            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(352, 37);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(34, 15);
-            this.label7.TabIndex = 46;
-            this.label7.Text = "Hora";
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(13, 35);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(281, 7);
+            this.groupBox2.TabIndex = 48;
+            this.groupBox2.TabStop = false;
             // 
             // txtSucursal
             // 
@@ -257,20 +242,11 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(316, 10);
+            this.label6.Location = new System.Drawing.Point(285, 12);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(41, 15);
             this.label6.TabIndex = 12;
             this.label6.Text = "Fecha";
-            // 
-            // txtFechaEmbutido
-            // 
-            this.txtFechaEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtFechaEmbutido.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.txtFechaEmbutido.Location = new System.Drawing.Point(366, 8);
-            this.txtFechaEmbutido.Name = "txtFechaEmbutido";
-            this.txtFechaEmbutido.Size = new System.Drawing.Size(104, 20);
-            this.txtFechaEmbutido.TabIndex = 11;
             // 
             // groupBox1
             // 
@@ -421,16 +397,17 @@
             this.panel1.Size = new System.Drawing.Size(478, 1);
             this.panel1.TabIndex = 33;
             // 
-            // groupBox2
+            // txtFechaEmbutido
             // 
-            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(13, 35);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(281, 7);
-            this.groupBox2.TabIndex = 48;
-            this.groupBox2.TabStop = false;
+            this.txtFechaEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaEmbutido.Location = new System.Drawing.Point(332, 9);
+            this.txtFechaEmbutido.Name = "txtFechaEmbutido";
+            this.txtFechaEmbutido.ReadOnly = true;
+            this.txtFechaEmbutido.Size = new System.Drawing.Size(144, 21);
+            this.txtFechaEmbutido.TabIndex = 49;
+            this.txtFechaEmbutido.TabStop = false;
+            this.txtFechaEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // formInfoEmbutido
             // 
@@ -479,7 +456,6 @@
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.Label label9;
         protected System.Windows.Forms.Label label6;
-        private System.Windows.Forms.DateTimePicker txtFechaEmbutido;
         protected System.Windows.Forms.GroupBox groupBox1;
         protected System.Windows.Forms.TextBox txtCodigoEmbutido;
         protected System.Windows.Forms.Label label3;
@@ -499,9 +475,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         protected System.Windows.Forms.ToolStripButton Imprimir;
-        private System.Windows.Forms.TextBox txtHoraEmbutido;
-        protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.TextBox txtFechaEmbutido;
     }
 }

@@ -41,11 +41,6 @@ namespace Presentacion.Cortes
         private void cargarGrilla()
         {
             buscarCorte();
-            //oCorteN = new Negocio.Corte();
-            //grillaCortes.AutoGenerateColumns = false;
-            //grillaCortes.DataSource = oCorteN.obtenerCortes();
-
-            
         }
 
         public void enviarCorte()
@@ -103,7 +98,6 @@ namespace Presentacion.Cortes
 
                 enviarCorte();
             }
-
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -114,9 +108,6 @@ namespace Presentacion.Cortes
         private void formBuscarCorte_Load(object sender, EventArgs e)
         {
         }
-
-        
-
     }
 
     

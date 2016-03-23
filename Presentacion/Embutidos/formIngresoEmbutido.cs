@@ -17,7 +17,7 @@ namespace Presentacion
     {
         Utilidades.SingletonLeerPeso Leer_Peso;
 
-        formEmbutidos frmEmbutidos=new formEmbutidos();
+        public formEmbutidos frmEmbutidos = new formEmbutidos();
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN=new Negocio.Corte();
@@ -32,12 +32,12 @@ namespace Presentacion
 
         List<Entidades.CortePorEmbutido> listaCortePorEmbutido = new List<Entidades.CortePorEmbutido>();
 
+        bool saveChanges = false;
+        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+
         public formIngresoEmbutido()
         {
             InitializeComponent();
-            timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
-            checkLeerPeso.Visible = Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
-            cargarComboSucursal();
         }
 
         #region Métodos
@@ -53,14 +53,7 @@ namespace Presentacion
                 grillaCortesPorEmbutido.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
                 grillaCortesPorEmbutido.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
             }           
-
-            cargarTotalKg();
-            
-        }
-
-        public void obtenerParametros(formEmbutidos formEmbutidoParam)
-        {
-            frmEmbutidos = formEmbutidoParam;
+            cargarTotalKg();            
         }
 
         private void agregarEmbutido()
@@ -76,7 +69,7 @@ namespace Presentacion
                 {
                     oCorteN.agregarCortePorEmbutido(cortePorEmbutido);
                 }
-
+                saveChanges = true;
                 frmEmbutidos.cargarGrilla();
                 this.Close();
             }
@@ -84,16 +77,19 @@ namespace Presentacion
 
         private bool validacionFinal()
         {
+            if (oCorteEmbutidoE == null || oCorteEmbutidoE.corte == null || oCorteEmbutidoE.idCorte == 0)
+            {
+                MessageBox.Show("Seleccione el embutido.", "Ingresar embutido", MessageBoxButtons.OK,MessageBoxIcon.Information);
+                btnBuscarEmbutido.Select();
+                return false;
+            }
             if (grillaCortesPorEmbutido.SelectedRows.Count > 0)
             {
-                
-            
                 if (comboSucursal.SelectedItem==null)
                 {
                     MessageBox.Show("Complete el campo Sucursal.", "Completar la Sucursal", MessageBoxButtons.OK,MessageBoxIcon.Information);
                     return false;
                 }
-
                 else
                 {
                     DialogResult respuesta = MessageBox.Show("Verifique si la Fecha, Sucursal y los demás los datos ingresados están correctos.\n ¿Están correctos?. ", "Verificar Datos", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
@@ -107,13 +103,10 @@ namespace Presentacion
                         return false;
                     }
                 }
-
-
             }
             else
             {
                 MessageBox.Show("No ingresó ningún corte correspondiente al embutido.", "No existe cortes en la grilla", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                 return false;
             }
         }
@@ -127,9 +120,7 @@ namespace Presentacion
             Entidades.Sucursal oSucursalE=new Entidades.Sucursal();
             oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
             oEmbutidoE.sucursal = oSucursalE;
-
             oEmbutidoE.observaciones = txtObservaciones.Text.Trim();
-
         }
 
         private bool validarCantKgs()
@@ -182,21 +173,18 @@ namespace Presentacion
             {
                 MessageBox.Show("No hay ninguna fila seleccionada.", "Seleccione un fila", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-
             cargarGrilla();
         }
 
         private void cargarCortePorEmbutido()
         {
             oCortePorEmbutidoE = new Entidades.CortePorEmbutido();
-
             oCortePorEmbutidoE.embutido = oEmbutidoE;
             oCortePorEmbutidoE.corte = oCorteE;
             try 
 	        {
                 oCortePorEmbutidoE.kgUtilizado = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-
-             }
+            }
 	        catch (Exception)
 	        {
                 oCortePorEmbutidoE.kgUtilizado = float.Parse(txtCantKgs.Text.Trim());
@@ -206,13 +194,11 @@ namespace Presentacion
            
             //Cargar CortePorEmbutido para grilla
             cortePorEmbutido = new CortePorEmbutido();
-
             cortePorEmbutido.idCorte = oCortePorEmbutidoE.corte.idCorte;
             cortePorEmbutido.codigo = oCortePorEmbutidoE.corte.codigo;
             cortePorEmbutido.corte = oCortePorEmbutidoE.corte.corte;
             cortePorEmbutido.kgUtilizado = oCortePorEmbutidoE.kgUtilizado;
-            
- 
+            cortePorEmbutido.PesoBalanza = oCortePorEmbutidoE.PesoBalanza;
         }
 
         private void limpiarCampos()
@@ -220,7 +206,6 @@ namespace Presentacion
             txtCodCorteEnEmbutido.Text = "";
             txtCorteEnEmbutido.Text = "";
             txtCantKgs.Text = "";
-
         }
 
         private void cargarTotalKg()
@@ -231,42 +216,32 @@ namespace Presentacion
             {
                 totalKg = totalKg + corte.kgUtilizado;                
             }
-
             txtTotalKg.Text = Convert.ToString(totalKg);
-        }
-
-        private void cargarCorteEnLista()
-        {
-            
-
         }
 
         private bool validar()
         {
             string mensaje="Complete los siguientes campos:";
             if (oCorteEmbutidoE == null || oCorteE == null || txtCantKgs.Text.Trim()=="")
-            {
-                
+            {                
                 if (oCorteEmbutidoE == null)
                 {
                     mensaje += "\n" + "- Embutido";
+                    btnAgregar.Focus();
                 }
                 if (oCorteE==null)
                 {
                     mensaje += "\n" + "- Corte en Embutido";
+                    txtCodCorteEnEmbutido.Focus();
                 }
                 if (txtCantKgs.Text.Trim()=="")
                 {
                     mensaje += "\n" + "- Cant. Kgs";
+                    txtCantKgs.Focus();
                 }
-                
-
-                //MessageBox.Show("Complete todos los Campos. (Codigo, Corte en Codigo y Cant. Kgs)", "Complete todos los campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 MessageBox.Show(mensaje, "Complete todos los campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;                
             }
-
-
             else
             {
                 return true;
@@ -282,9 +257,8 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString()) - 1;//-1;//No muestra ninguna sucursal
+            comboSucursal.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());//-1;//No muestra ninguna sucursal
         }
-
 
         #endregion
 
@@ -303,6 +277,7 @@ namespace Presentacion
             oCorteEmbutidoE = corte;
             txtCodigoEmbutido.Text = Convert.ToString(oCorteEmbutidoE.codigo);
             txtEmbutido.Text = oCorteEmbutidoE.corte;
+            txtCodCorteEnEmbutido.Focus();
         }
 
         private void btnBuscarCorte_Click(object sender, EventArgs e)
@@ -332,12 +307,7 @@ namespace Presentacion
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Cerrar Formulario", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-            if ((respuesta == DialogResult.Yes))
-            {
-                this.Close();
-            }            
+            this.Close();           
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
@@ -361,9 +331,7 @@ namespace Presentacion
                 if (txtCodCorteEnEmbutido.Text.Trim() != "")
                 {
                     oCorteE = new Entidades.Corte();
-
                     DataTable dtCorte = new DataTable();
-
                     dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodCorteEnEmbutido.Text.Trim()));
 
                     if (dtCorte.Rows.Count > 0)
@@ -373,45 +341,32 @@ namespace Presentacion
                             oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                             oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                             oCorteE.corte = fila["corte"].ToString();
+                            oCorteE.tipo = fila["tipo"].ToString();
                         }
                         //se cargan los datos del corte
                         txtCorteEnEmbutido.Text = oCorteE.corte;
                     }
                     else
                     {
-                        txtCodCorteEnEmbutido.Text = "";
-                        MessageBox.Show("El código no existe");
-                        txtCodCorteEnEmbutido.Focus();
+                        txtCorteEnEmbutido.Text = "";
+                        oCorteE = null;
                     }
+                }
+                else
+                {
+                    txtCorteEnEmbutido.Text = "";
+                    oCorteE = null;
                 }
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Error en método cargarCorteEnEmbutido().\n\n"+ex.Message);
             }
         }
 
         private void txtCodCorteEnEmbutido_TextChanged(object sender, EventArgs e)
         {
             cargarCorteEnEmbutido();
-        }
-
-        const int WM_SYSCOMMAND = 0x0112;
-        const int SC_CLOSE = 0xF060;
-
-        protected override void WndProc(ref Message m)
-        {
-            if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE) )
-            {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Cerrar Formulario", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                if ((respuesta == System.Windows.Forms.DialogResult.No))
-                {
-                    return;
-                }
-            }
-            base.WndProc(ref m);
         }
 
         private void formIngresoEmbutido_Load(object sender, EventArgs e)
@@ -422,6 +377,13 @@ namespace Presentacion
                 groupBox1.Text = "Cliente ";
                 groupBox2.Text = "Cortes ";
             }
+            timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            cargarComboSucursal();
+            txtSucursal.Text = comboSucursal.Text;
+            comboSucursal.Visible = FormPrincipal.logueado;
+            txtSucursal.Visible = !FormPrincipal.logueado;
+            btnBuscarEmbutido.Select();
         }
 
         private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)
@@ -454,8 +416,15 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
-                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    if (fijarPeso)
+                    {
+                        txtCantKgs.Text = "1.500";
+                    }
+                    else
+                    {
+                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    }
                 }
             }
             catch (Exception ex)
@@ -470,6 +439,72 @@ namespace Presentacion
                     timer1.Enabled = true;
                 }
             }
+        }
+
+        private void txtCodCorteEnEmbutido_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                if (oCorteE == null || oCorteE.idCorte.Equals(0))
+                {
+                    MessageBox.Show("El código no existe");
+                    txtCodCorteEnEmbutido.Focus();
+                }
+            }
+        }
+
+        private void txtCodCorteEnEmbutido_Leave(object sender, EventArgs e)
+        {
+            try
+            {
+                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+                {
+                    checkLeerPeso.Checked = false;
+                    txtCantKgs.Focus();
+                }
+                else
+                {
+                    if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                    {
+                        checkLeerPeso.Checked = true;
+                        btnAgregar.Focus();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                
+            }
+        }
+
+        private void formIngresoEmbutido_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = salir();
+        }
+
+        private bool salir()
+        {
+            bool ret = false;
+            if (!saveChanges && (grillaCortesPorEmbutido.SelectedRows.Count > 0 || (oEmbutidoE != null && oEmbutidoE.idEmbutido > 0)))
+            {
+                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Cerrar Formulario", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if ((respuesta == DialogResult.No))
+                {
+                    ret = true;
+                } 
+            }
+            saveChanges = false;//setea en false(si esta TRUE porque se presionó btnGuardar)
+            return ret;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

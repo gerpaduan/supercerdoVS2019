@@ -214,5 +214,10 @@ namespace Utilidades
             }
             return resp;
         }
+                
+        public static int idSucursalAppConfig()
+        {           
+            return Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+        }
     }
 }
