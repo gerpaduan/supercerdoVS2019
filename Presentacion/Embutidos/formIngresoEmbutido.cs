@@ -25,7 +25,8 @@ namespace Presentacion
         Entidades.Corte oCorteEmbutidoE;
         Entidades.Corte oCorteE;
         Entidades.CortePorEmbutido oCortePorEmbutidoE;
-        Entidades.Embutido oEmbutidoE=new Entidades.Embutido();
+        Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
+        public Entidades.Usuario oUsuario;
 
         CortePorEmbutido cortePorEmbutido;
         List<CortePorEmbutido> listaCortesEnGrilla = new List<CortePorEmbutido>();
@@ -121,6 +122,16 @@ namespace Presentacion
             oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
             oEmbutidoE.sucursal = oSucursalE;
             oEmbutidoE.observaciones = txtObservaciones.Text.Trim();
+
+            Entidades.Usuario oUser = new Entidades.Usuario();
+            if (oEmbutidoE.idEmbutido.Equals(0))
+            {
+                oEmbutidoE.CreadoPor = oUsuario;
+            }
+            else
+            {
+                oEmbutidoE.ActualizadoPor = oUsuario;
+            }
         }
 
         private bool validarCantKgs()
@@ -371,19 +382,27 @@ namespace Presentacion
 
         private void formIngresoEmbutido_Load(object sender, EventArgs e)
         {
-            if (frmEmbutidos.EsVentaClientes)
+            if (oUsuario == null)
             {
-                this.Text = "Nueva Venta Cliente";
-                groupBox1.Text = "Cliente ";
-                groupBox2.Text = "Cortes ";
+                this.Close();
             }
-            timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
-            checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
-            cargarComboSucursal();
-            txtSucursal.Text = comboSucursal.Text;
-            comboSucursal.Visible = FormPrincipal.logueado;
-            txtSucursal.Visible = !FormPrincipal.logueado;
-            btnBuscarEmbutido.Select();
+            else
+            {
+                if (frmEmbutidos.EsVentaClientes)
+                {
+                    this.Text = "Nueva Venta Cliente";
+                    groupBox1.Text = "Cliente ";
+                    groupBox2.Text = "Cortes ";
+                }
+                timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+                checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+                cargarComboSucursal();
+                txtSucursal.Text = comboSucursal.Text;
+                txtUsuario.Text = oUsuario.Nombre;
+                comboSucursal.Visible = FormPrincipal.logueado;
+                txtSucursal.Visible = !FormPrincipal.logueado;
+                btnBuscarEmbutido.Select();
+            }
         }
 
         private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)

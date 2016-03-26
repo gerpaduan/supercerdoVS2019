@@ -17,6 +17,20 @@ namespace Entidades
         public float precioKg;
         public float porcentajeHueso;
         public float desvioEstandar;
+        DateTime creado;
+        DateTime? actualizado;
+
+        public DateTime Creado
+        {
+            get { return creado; }
+            set { creado = value; }
+        }
+
+        public DateTime? Actualizado
+        {
+            get { return actualizado; }
+            set { actualizado = value; }
+        }
 
 
         public int IdCorte

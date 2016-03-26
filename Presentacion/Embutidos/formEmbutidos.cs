@@ -7,10 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Embutidos;
+using Presentacion.Caja;
 
 namespace Presentacion
 {
-    public partial class formEmbutidos : Form
+    public partial class formEmbutidos : Form, InterfaceUsuario
     {
         bool esVentaClientes=false;
 
@@ -24,6 +25,8 @@ namespace Presentacion
 
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+
+        Entidades.Usuario oUsuario;
 
         bool cargar = false;
         public formEmbutidos()
@@ -60,7 +63,7 @@ namespace Presentacion
             {
                 if (!string.IsNullOrEmpty(grillaEmbutidos["Estado", index].Value.ToString().ToString()))
                 {
-                    grillaEmbutidos.Rows[index].DefaultCellStyle.BackColor = Color.Orange;
+                    grillaEmbutidos.Rows[index].DefaultCellStyle.BackColor = Color.SandyBrown;
                 }
                 string d = grillaEmbutidos.Rows[index].Cells["Estado"].ToString();
                 string e = grillaEmbutidos["Estado", index].Value.ToString();
@@ -88,28 +91,28 @@ namespace Presentacion
 
         private void informacionEmbutido()
         {
-            Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
+            //Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
 
-            oEmbutidoE.idEmbutido = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idEmbutido"].Value.ToString());
-            oEmbutidoE.fechaEmbutido = Convert.ToDateTime(grillaEmbutidos.CurrentRow.Cells["fechaEmbutido"].Value.ToString());
+            //oEmbutidoE.idEmbutido = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idEmbutido"].Value.ToString());
+            //oEmbutidoE.fechaEmbutido = Convert.ToDateTime(grillaEmbutidos.CurrentRow.Cells["fechaEmbutido"].Value.ToString());
             
-            //creo Corte correspondiente al embutido y lo asigno
-            Entidades.Corte oCorteE = new Entidades.Corte();
-            oCorteE.idCorte = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorte"].Value.ToString());
-            oCorteE.codigo = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["codigo"].Value.ToString());
-            oCorteE.corte = grillaEmbutidos.CurrentRow.Cells["corte"].Value.ToString();
+            ////creo Corte correspondiente al embutido y lo asigno
+            //Entidades.Corte oCorteE = new Entidades.Corte();
+            //oCorteE.idCorte = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorte"].Value.ToString());
+            //oCorteE.codigo = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["codigo"].Value.ToString());
+            //oCorteE.corte = grillaEmbutidos.CurrentRow.Cells["corte"].Value.ToString();
 
-            oEmbutidoE.corte = oCorteE;
+            //oEmbutidoE.corte = oCorteE;
             
-            oEmbutidoE.estado = grillaEmbutidos.CurrentRow.Cells["estado"].Value.ToString();
-            oEmbutidoE.observaciones = grillaEmbutidos.CurrentRow.Cells["observaciones"].Value.ToString();
+            //oEmbutidoE.estado = grillaEmbutidos.CurrentRow.Cells["estado"].Value.ToString();
+            //oEmbutidoE.observaciones = grillaEmbutidos.CurrentRow.Cells["observaciones"].Value.ToString();
 
-            //creo sucursal y lo asigno al embutido
-            Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-            oSucursalE.idSucursal = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idSucursal"].Value.ToString());
-            oSucursalE.sucursal = grillaEmbutidos.CurrentRow.Cells["sucursal"].Value.ToString();
+            ////creo sucursal y lo asigno al embutido
+            //Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+            //oSucursalE.idSucursal = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idSucursal"].Value.ToString());
+            //oSucursalE.sucursal = grillaEmbutidos.CurrentRow.Cells["sucursal"].Value.ToString();
 
-            oEmbutidoE.sucursal = oSucursalE;
+            //oEmbutidoE.sucursal = oSucursalE;
 
             if (Application.OpenForms["formInfoEmbutido"] != null)
             {
@@ -119,13 +122,16 @@ namespace Presentacion
             else
             {
                 formInfoEmbutido frmInfoEmbutido = new formInfoEmbutido();
-                frmInfoEmbutido.obtenerParametros(oEmbutidoE, this);
+                //frmInfoEmbutido.obtenerParametros(oEmbutidoE, this);
+                frmInfoEmbutido.frmEmbutidos = this;
+                frmInfoEmbutido.idEmbutido_ = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["Id"].Value.ToString());
                 frmInfoEmbutido.Show();
             }            
         }
 
         private void nuevo_Click(object sender, EventArgs e)
         {
+            
             if (Application.OpenForms["formIngresoEmbutido"] != null)
             {
 
@@ -134,10 +140,19 @@ namespace Presentacion
             }
             else
             {
+                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.ShowDialog(this);
                 formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();
+                frmIngresoEmbutido.oUsuario = oUsuario;
                 frmIngresoEmbutido.frmEmbutidos = this;
                 frmIngresoEmbutido.Show();
-            }            
+            }
+            oUsuario = null;
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
         }
 
         private void cargarSucursal()
@@ -204,6 +219,11 @@ namespace Presentacion
         private void comboSucursal_SelectedValueChanged(object sender, EventArgs e)
         {
             cargarGrilla();
+        }
+
+        private void grillaEmbutidos_Sorted(object sender, EventArgs e)
+        {
+            formatearGrilla();
         }
     }
 }

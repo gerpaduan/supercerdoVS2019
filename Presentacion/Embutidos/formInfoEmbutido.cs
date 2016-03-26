@@ -8,14 +8,17 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Reportes;
 using System.Configuration;
+using Presentacion.Caja;
 
 namespace Presentacion.Embutidos
 {
-    public partial class formInfoEmbutido : Form
+    public partial class formInfoEmbutido : Form, InterfaceUsuario
     {
-        formEmbutidos frmEmbutidos;
+        public formEmbutidos frmEmbutidos;
+        public int idEmbutido_ = 0;
 
-        Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
+        Entidades.Embutido oEmbutidoE;
+        Entidades.Usuario oUsuario;
 
         Negocio.Corte oCorteN = new Negocio.Corte();
 
@@ -29,34 +32,48 @@ namespace Presentacion.Embutidos
 
         private void formInfoEmbutido_Load(object sender, EventArgs e)
         {
-
-            int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            if (!FormPrincipal.logueado && Convert.ToDateTime(txtFechaEmbutido.Text) < DateTime.Today ||
-                !FormPrincipal.logueado && oEmbutidoE.sucursal.idSucursal != sucActual)
+            try
             {
-                anular.Enabled = false;
+                oEmbutidoE = oCorteN.findEmbutidoById(idEmbutido_);
+                int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+                cargarCampos();
+                cargarGrilla(); 
+                if (!FormPrincipal.logueado && Convert.ToDateTime(txtFechaEmbutido.Text) < DateTime.Today ||
+                    !FormPrincipal.logueado && oEmbutidoE.sucursal.idSucursal != sucActual)
+                {
+                    anular.Enabled = false;
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar el formulario.(Metodo: Load())\n\n" + ex.Message);
+            }  
         }
 
         public void obtenerParametros(Entidades.Embutido embutidoParam, formEmbutidos formEmbutidoParam)
         {
             frmEmbutidos = formEmbutidoParam;
-
             oEmbutidoE = embutidoParam;
-
             cargarCampos();
             cargarGrilla();            
         }
 
         private void cargarGrilla()
         {
-            grillaCortesPorEmbutido.DataSource = null;
-            grillaCortesPorEmbutido.AutoGenerateColumns = false;
+            try
+            {
+                grillaCortesPorEmbutido.DataSource = null;
+                grillaCortesPorEmbutido.AutoGenerateColumns = false;
 
-            dtCortesPorEmbutido=oCorteN.obtenerCortesPorEmbutidos(oEmbutidoE);
-            grillaCortesPorEmbutido.DataSource = dtCortesPorEmbutido;
+                dtCortesPorEmbutido=oCorteN.obtenerCortesPorEmbutidos(oEmbutidoE);
+                grillaCortesPorEmbutido.DataSource = dtCortesPorEmbutido;
 
-            cargarTotalKg();
+                cargarTotalKg();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar el formulario.(Metodo: cargarGrilla())\n\n" + ex.Message);
+            }  
         }
 
         private void cargarTotalKg()
@@ -67,7 +84,6 @@ namespace Presentacion.Embutidos
 	        {
         		 totalKg=totalKg+float.Parse(fila["kgUtilizados"].ToString());
 	        }
-
             txtTotalKg.Text = Convert.ToString(totalKg);
         }
 
@@ -92,14 +108,15 @@ namespace Presentacion.Embutidos
 
             if (respuesta == System.Windows.Forms.DialogResult.Yes)
             {
-                oCorteN.anularEmbutido(oEmbutidoE);
+                //oUsuario = null;
+                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.ShowDialog(this);
 
-                foreach (DataRow cortePorEmbutido in dtCortesPorEmbutido.Rows)
-                {
-                    oCorteN.actualizarStockEmbutido(cortePorEmbutido, oEmbutidoE);
-                }
-
-                embutidoAnulado();
+                //if (!oUsuario.Equals(null))
+                //{
+                //    oCorteN.anularEmbutido(oEmbutidoE);
+                //    embutidoAnulado();
+                //}                
             }
         }
 
@@ -128,6 +145,11 @@ namespace Presentacion.Embutidos
         private void anular_Click(object sender, EventArgs e)
         {
             anularEmbutido();
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
         }
 
         private void Imprimir_Click(object sender, EventArgs e)

@@ -225,8 +225,128 @@ namespace Datos
             return dtCorte;
         }
 
+        public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
+        {
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = "Select Corte.* from Corte where idCorte =" + idCorte;
+
+            Entidades.Corte oCorteE = new Entidades.Corte();
+            try
+            {
+                cmCorte.Connection.Open();
+                SqlDataReader drCorte = cmCorte.ExecuteReader();
+
+                using (drCorte)
+                {
+                    while (drCorte.Read())
+                    {
+                        oCorteE.idCorte = Convert.ToInt32(drCorte["idCorte"].ToString());
+                        oCorteE.codigo = Convert.ToInt32(drCorte["codigo"].ToString());
+                        oCorteE.corte = drCorte["corte"].ToString();
+                        oCorteE.tipo = drCorte["tipo"].ToString();
+                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;                     
+                        oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
+                        oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
+                        oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+                        oCorteE.porcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
+                        oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);                     
+                    }
+                    return oCorteE;
+                }
+            }
+            finally
+            {
+                cmCorte.Connection.Close();
+                oCorteE = null;
+            }
+        }
 
         #region Embutidos
+
+        public Entidades.Embutido findEmbutidoById(int idEmbutido)
+        {
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = "Select Embutidos.* from Embutidos where idEmbutido =" + idEmbutido;
+
+            Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
+
+            try
+            {
+                cmCorte.Connection.Open();
+                SqlDataReader drEmbutido = cmCorte.ExecuteReader();
+
+                using (drEmbutido)
+                {
+                    while (drEmbutido.Read())
+                    {
+                        oEmbutidoE.IdEmbutido = Convert.ToInt32(drEmbutido["idEmbutido"]);
+                        oEmbutidoE.FechaEmbutido = Convert.ToDateTime(drEmbutido["fechaEmbutido"]);
+                        oEmbutidoE.Corte = findCorteById(Convert.ToInt32(drEmbutido["idCorte"]), true);
+                        Datos.Sucursal oSucursalD = new Sucursal();
+                        oEmbutidoE.Sucursal = oSucursalD.findById(Convert.ToInt32(drEmbutido["idSucursal"]));
+                        oEmbutidoE.Observaciones = Convert.ToString(drEmbutido["observaciones"]);
+                        oEmbutidoE.Estado = Convert.ToString(drEmbutido["estado"]);
+                        oEmbutidoE.Creado = Convert.ToDateTime(drEmbutido["creado"]);
+                        oEmbutidoE.Actualizado = drEmbutido["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drEmbutido["actualizado"]);
+                        
+                        Datos.Usuario oUsuarioD = new Usuario();
+                        oEmbutidoE.CreadoPor = string.IsNullOrEmpty(drEmbutido["creadoPor"].ToString()) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drEmbutido["creadoPor"]));
+                        oEmbutidoE.ActualizadoPor = string.IsNullOrEmpty(drEmbutido["actualizadoPor"].ToString()) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drEmbutido["actualizadoPor"]));
+
+                        oEmbutidoE.CortesEnEmbutido = obtenerCortesEnEmbutido(oEmbutidoE);
+                    }
+                    return oEmbutidoE;
+                }
+            }
+            finally
+            {
+                cmCorte.Connection.Close();
+                oEmbutidoE = null;
+            }
+        }
+
+        public List<Entidades.CortePorEmbutido> obtenerCortesEnEmbutido(Entidades.Embutido oEmbutidoParam)
+        {
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = "Select CortePorEmbutido.* from CortePorEmbutido where idEmbutido =" + oEmbutidoParam.idEmbutido;
+
+            List<Entidades.CortePorEmbutido> cortesEnEmbutido = new List<Entidades.CortePorEmbutido>();
+            Entidades.CortePorEmbutido oCorteEnEmbutido;
+            try
+            {
+                cmCorte.Connection.Open();
+                SqlDataReader drEmbutido = cmCorte.ExecuteReader();
+
+                using (drEmbutido)
+                {
+                    while (drEmbutido.Read())
+                    {
+                        oCorteEnEmbutido = new Entidades.CortePorEmbutido();
+                        oCorteEnEmbutido.IdCorteEmbutido = Convert.ToInt32(drEmbutido["idCorteEmbutido"]);
+                        oCorteEnEmbutido.Embutido = oEmbutidoParam;
+                        oCorteEnEmbutido.Corte = findCorteById(Convert.ToInt32(drEmbutido["idCorte"]), false);
+                        oCorteEnEmbutido.KgUtilizado = float.Parse(drEmbutido["kgUtilizados"].ToString());
+                        oCorteEnEmbutido.PesoBalanza = Convert.ToBoolean(drEmbutido["pesoBalanza"]);
+                        
+                        cortesEnEmbutido.Add(oCorteEnEmbutido);
+                    }
+                    return cortesEnEmbutido;
+                }
+            }
+            finally
+            {
+                cmCorte.Connection.Close();
+                cortesEnEmbutido = null;
+            }
+        }
 
         public int agregarEmbutido(Entidades.Embutido oEmbutido)
         {
@@ -240,25 +360,19 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@fechaEmbutido", oEmbutido.fechaEmbutido);
             cmCorte.Parameters.AddWithValue("@idCorte", oEmbutido.corte.idCorte);
             cmCorte.Parameters.AddWithValue("@idSucursal", oEmbutido.sucursal.IdSucursal);
+            cmCorte.Parameters.AddWithValue("@creadoPor", oEmbutido.CreadoPor.Id);
             cmCorte.Parameters.AddWithValue("@observaciones", oEmbutido.observaciones);
-            
-            //cmCorte.ExecuteNonQuery();
 
             SqlDataReader drEmbutido=cmCorte.ExecuteReader();
-
             int idEmbutido=0;
             while (drEmbutido.Read())
             {
                 idEmbutido =Convert.ToInt32( drEmbutido["idEmbutido"].ToString());// Convert.ToInt32();
-                
             }
-
             cmCorte.Connection.Close();
-
             cmCorte = null;
 
-            return idEmbutido;
-        
+            return idEmbutido;        
         }
 
         public void anularEmbutido(Entidades.Embutido oEmbutidoE)
@@ -269,6 +383,7 @@ namespace Datos
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "anularEmbutido";
             cmCorte.Parameters.AddWithValue("@idEmbutido", oEmbutidoE.idEmbutido);
+            //cmCorte.Parameters.AddWithValue("@actualizadoPor", oEmbutidoE.ActualizadoPor.Id);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
@@ -346,10 +461,8 @@ namespace Datos
         public int agregarMovimiento(Entidades.Movimiento oMovimientoE)
         {
             cmCorte = new SqlCommand();
-
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "agregarMovimiento";
             cmCorte.Parameters.AddWithValue("@fechaMovimiento", oMovimientoE.FechaMovimiento);
@@ -358,16 +471,12 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@observaciones", oMovimientoE.Observaciones);
 
             SqlDataReader drMovimiento = cmCorte.ExecuteReader();
-
             int idMovimiento = 0;
-
             while (drMovimiento.Read())
             {
                 idMovimiento = Convert.ToInt32(drMovimiento["idMovimiento"].ToString());                
             }
-
             cmCorte.Connection.Close();
-
             cmCorte = null;
 
             return idMovimiento;
@@ -532,7 +641,6 @@ namespace Datos
                 oCortePorMovimiento.IdCorteMovimiento = Convert.ToInt32(drMovimiento["idCorteMovimiento"].ToString());
 
                 Entidades.Corte corte =new Entidades.Corte();
-
                 corte.idCorte = Convert.ToInt32(drMovimiento["idCorte"].ToString());
                 corte.codigo = Convert.ToInt32(drMovimiento["codigo"].ToString());
                 corte.corte = drMovimiento["corte"].ToString();
@@ -547,18 +655,12 @@ namespace Datos
                 }
                 catch (Exception)
                 {
-
                     oCortePorMovimiento.PesoBalanza = false;
                 }
-                
-
                 listaCortesPorMovimiento.Add(oCortePorMovimiento);
-
                 oCortePorMovimiento = null;               
             }
-
             cmCorte.Connection.Close();
-
             return listaCortesPorMovimiento;
         }
 

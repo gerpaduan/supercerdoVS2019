@@ -57,7 +57,7 @@
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSalir.Location = new System.Drawing.Point(639, 532);
+            this.btnSalir.Location = new System.Drawing.Point(741, 532);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(130, 26);
             this.btnSalir.TabIndex = 12;
@@ -79,8 +79,9 @@
             this.grillaEmbutidos.ReadOnly = true;
             this.grillaEmbutidos.RowHeadersVisible = false;
             this.grillaEmbutidos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaEmbutidos.Size = new System.Drawing.Size(759, 368);
+            this.grillaEmbutidos.Size = new System.Drawing.Size(861, 368);
             this.grillaEmbutidos.TabIndex = 11;
+            this.grillaEmbutidos.Sorted += new System.EventHandler(this.grillaEmbutidos_Sorted);
             this.grillaEmbutidos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaEmbutidos_CellDoubleClick);
             // 
             // barraControl
@@ -91,7 +92,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(781, 45);
+            this.barraControl.Size = new System.Drawing.Size(883, 45);
             this.barraControl.TabIndex = 13;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
@@ -126,7 +127,7 @@
             this.pnlBuscar.Controls.Add(this.label4);
             this.pnlBuscar.Location = new System.Drawing.Point(-1, 45);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(782, 73);
+            this.pnlBuscar.Size = new System.Drawing.Size(884, 73);
             this.pnlBuscar.TabIndex = 14;
             // 
             // groupBox1
@@ -135,7 +136,7 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(346, 16);
+            this.groupBox1.Location = new System.Drawing.Point(448, 16);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(422, 7);
             this.groupBox1.TabIndex = 41;
@@ -202,7 +203,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(299, 8);
+            this.label1.Location = new System.Drawing.Point(401, 8);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(41, 15);
             this.label1.TabIndex = 9;
@@ -214,7 +215,7 @@
             this.fechaDesde.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaDesde.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaDesde.Location = new System.Drawing.Point(392, 30);
+            this.fechaDesde.Location = new System.Drawing.Point(494, 30);
             this.fechaDesde.Name = "fechaDesde";
             this.fechaDesde.Size = new System.Drawing.Size(159, 21);
             this.fechaDesde.TabIndex = 5;
@@ -227,7 +228,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(343, 34);
+            this.label3.Location = new System.Drawing.Point(445, 34);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 4;
@@ -239,7 +240,7 @@
             this.fechaHasta.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaHasta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaHasta.Location = new System.Drawing.Point(602, 29);
+            this.fechaHasta.Location = new System.Drawing.Point(704, 29);
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(158, 21);
             this.fechaHasta.TabIndex = 7;
@@ -251,7 +252,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(557, 33);
+            this.label4.Location = new System.Drawing.Point(659, 33);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
@@ -261,7 +262,7 @@
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKg.Location = new System.Drawing.Point(670, 498);
+            this.txtTotalKg.Location = new System.Drawing.Point(772, 498);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
             this.txtTotalKg.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
@@ -274,7 +275,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(604, 501);
+            this.label8.Location = new System.Drawing.Point(706, 501);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 20;
@@ -288,7 +289,7 @@
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(12, 525);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(757, 1);
+            this.panel1.Size = new System.Drawing.Size(859, 1);
             this.panel1.TabIndex = 24;
             // 
             // formEmbutidos
@@ -296,7 +297,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(781, 561);
+            this.ClientSize = new System.Drawing.Size(883, 561);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.txtTotalKg);
             this.Controls.Add(this.label8);

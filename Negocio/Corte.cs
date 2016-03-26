@@ -54,8 +54,6 @@ namespace Negocio
             return dtCorte;
         }
 
-        
-
         public DataTable obtenerInfoCorte(int idCorte)
         {
             DataTable dtCorte = new DataTable();
@@ -63,6 +61,16 @@ namespace Negocio
             dtCorte = oCorteD.obtenerInfoCorte(idCorte);
 
             return dtCorte;
+        }
+
+        public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
+        {
+            return oCorteD.findCorteById(idCorte, buscarMaestro);
+        }
+
+        public Entidades.Embutido findEmbutidoById(int idEmbutido)
+        {
+            return oCorteD.findEmbutidoById(idEmbutido);
         }
 
         public DataTable obtenerEmbutidos(string txtBusqueda)

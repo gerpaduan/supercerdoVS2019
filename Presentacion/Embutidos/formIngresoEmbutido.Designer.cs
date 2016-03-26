@@ -70,7 +70,8 @@
             this.label11 = new System.Windows.Forms.Label();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -80,23 +81,25 @@
             // btnGuardar
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(275, 578);
+            this.btnGuardar.BackColor = System.Drawing.Color.SeaGreen;
+            this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
+            this.btnGuardar.ForeColor = System.Drawing.SystemColors.ControlLight;
+            this.btnGuardar.Location = new System.Drawing.Point(503, 442);
             this.btnGuardar.Name = "btnGuardar";
-            this.btnGuardar.Size = new System.Drawing.Size(102, 27);
+            this.btnGuardar.Size = new System.Drawing.Size(146, 41);
             this.btnGuardar.TabIndex = 6;
             this.btnGuardar.TabStop = false;
             this.btnGuardar.Text = "&Guardar";
-            this.btnGuardar.UseVisualStyleBackColor = true;
+            this.btnGuardar.UseVisualStyleBackColor = false;
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(383, 578);
+            this.btnCancelar.Location = new System.Drawing.Point(503, 489);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(102, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(146, 27);
             this.btnCancelar.TabIndex = 7;
             this.btnCancelar.TabStop = false;
             this.btnCancelar.Text = "&Cancelar";
@@ -134,14 +137,14 @@
             dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle3;
-            this.grillaCortesPorEmbutido.Location = new System.Drawing.Point(9, 240);
+            this.grillaCortesPorEmbutido.Location = new System.Drawing.Point(12, 244);
             this.grillaCortesPorEmbutido.MultiSelect = false;
             this.grillaCortesPorEmbutido.Name = "grillaCortesPorEmbutido";
             this.grillaCortesPorEmbutido.ReadOnly = true;
             this.grillaCortesPorEmbutido.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             this.grillaCortesPorEmbutido.RowHeadersVisible = false;
             this.grillaCortesPorEmbutido.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortesPorEmbutido.Size = new System.Drawing.Size(478, 265);
+            this.grillaCortesPorEmbutido.Size = new System.Drawing.Size(485, 272);
             this.grillaCortesPorEmbutido.StandardTab = true;
             this.grillaCortesPorEmbutido.TabIndex = 15;
             this.grillaCortesPorEmbutido.TabStop = false;
@@ -193,6 +196,8 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.txtUsuario);
+            this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.groupBox3);
             this.pnlBuscar.Controls.Add(this.label9);
@@ -203,7 +208,7 @@
             this.pnlBuscar.Controls.Add(this.txtSucursal);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(497, 234);
+            this.pnlBuscar.Size = new System.Drawing.Size(661, 234);
             this.pnlBuscar.TabIndex = 14;
             // 
             // comboSucursal
@@ -224,7 +229,7 @@
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox3.Location = new System.Drawing.Point(12, 32);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(473, 7);
+            this.groupBox3.Size = new System.Drawing.Size(637, 7);
             this.groupBox3.TabIndex = 26;
             this.groupBox3.TabStop = false;
             // 
@@ -245,7 +250,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(262, 13);
+            this.label6.Location = new System.Drawing.Point(426, 13);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(41, 15);
             this.label6.TabIndex = 12;
@@ -257,7 +262,7 @@
             this.txtFechaEmbutido.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaEmbutido.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaEmbutido.Location = new System.Drawing.Point(309, 9);
+            this.txtFechaEmbutido.Location = new System.Drawing.Point(473, 9);
             this.txtFechaEmbutido.Name = "txtFechaEmbutido";
             this.txtFechaEmbutido.Size = new System.Drawing.Size(176, 21);
             this.txtFechaEmbutido.TabIndex = 11;
@@ -279,7 +284,7 @@
             this.groupBox2.Controls.Add(this.label5);
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox2.Location = new System.Drawing.Point(11, 137);
+            this.groupBox2.Location = new System.Drawing.Point(12, 137);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(477, 86);
             this.groupBox2.TabIndex = 10;
@@ -429,7 +434,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(12, 45);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(290, 85);
+            this.groupBox1.Size = new System.Drawing.Size(310, 85);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Embutido / Otro ";
@@ -440,7 +445,7 @@
             this.btnBuscarEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnBuscarEmbutido.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarEmbutido.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarEmbutido.Image")));
-            this.btnBuscarEmbutido.Location = new System.Drawing.Point(169, 21);
+            this.btnBuscarEmbutido.Location = new System.Drawing.Point(173, 21);
             this.btnBuscarEmbutido.Name = "btnBuscarEmbutido";
             this.btnBuscarEmbutido.Size = new System.Drawing.Size(28, 24);
             this.btnBuscarEmbutido.TabIndex = 1;
@@ -452,7 +457,7 @@
             // 
             this.txtCodigoEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtCodigoEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCodigoEmbutido.Location = new System.Drawing.Point(92, 22);
+            this.txtCodigoEmbutido.Location = new System.Drawing.Point(96, 22);
             this.txtCodigoEmbutido.Name = "txtCodigoEmbutido";
             this.txtCodigoEmbutido.ReadOnly = true;
             this.txtCodigoEmbutido.Size = new System.Drawing.Size(71, 22);
@@ -466,7 +471,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(40, 25);
+            this.label3.Location = new System.Drawing.Point(44, 25);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(46, 15);
             this.label3.TabIndex = 10;
@@ -476,7 +481,7 @@
             // 
             this.txtEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtEmbutido.Location = new System.Drawing.Point(92, 51);
+            this.txtEmbutido.Location = new System.Drawing.Point(96, 51);
             this.txtEmbutido.Name = "txtEmbutido";
             this.txtEmbutido.ReadOnly = true;
             this.txtEmbutido.Size = new System.Drawing.Size(145, 22);
@@ -489,7 +494,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(14, 54);
+            this.label4.Location = new System.Drawing.Point(18, 54);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(72, 15);
             this.label4.TabIndex = 8;
@@ -499,7 +504,7 @@
             // 
             this.txtSucursal.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSucursal.Location = new System.Drawing.Point(81, 10);
+            this.txtSucursal.Location = new System.Drawing.Point(81, 11);
             this.txtSucursal.Name = "txtSucursal";
             this.txtSucursal.ReadOnly = true;
             this.txtSucursal.Size = new System.Drawing.Size(145, 22);
@@ -510,11 +515,11 @@
             // txtTotalKg
             // 
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
-            this.txtTotalKg.Location = new System.Drawing.Point(383, 511);
+            this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold);
+            this.txtTotalKg.Location = new System.Drawing.Point(503, 263);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
-            this.txtTotalKg.Size = new System.Drawing.Size(102, 22);
+            this.txtTotalKg.Size = new System.Drawing.Size(146, 24);
             this.txtTotalKg.TabIndex = 19;
             this.txtTotalKg.TabStop = false;
             this.txtTotalKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -524,7 +529,7 @@
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(317, 516);
+            this.label8.Location = new System.Drawing.Point(500, 245);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(60, 15);
             this.label8.TabIndex = 18;
@@ -534,7 +539,7 @@
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(8, 510);
+            this.label11.Location = new System.Drawing.Point(500, 299);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(76, 13);
             this.label11.TabIndex = 22;
@@ -543,11 +548,11 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(11, 525);
+            this.txtObservaciones.Location = new System.Drawing.Point(503, 315);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(255, 39);
+            this.txtObservaciones.Size = new System.Drawing.Size(146, 121);
             this.txtObservaciones.TabIndex = 5;
             this.txtObservaciones.TabStop = false;
             // 
@@ -557,21 +562,34 @@
             this.timer1.Interval = 50;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // panel1
+            // txtUsuario
             // 
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.panel1.Location = new System.Drawing.Point(9, 571);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(478, 1);
-            this.panel1.TabIndex = 24;
+            this.txtUsuario.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtUsuario.Location = new System.Drawing.Point(473, 63);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.ReadOnly = true;
+            this.txtUsuario.Size = new System.Drawing.Size(176, 22);
+            this.txtUsuario.TabIndex = 28;
+            this.txtUsuario.TabStop = false;
+            // 
+            // label7
+            // 
+            this.label7.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(470, 42);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(50, 15);
+            this.label7.TabIndex = 27;
+            this.label7.Text = "Usuario";
             // 
             // formIngresoEmbutido
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(497, 611);
-            this.Controls.Add(this.panel1);
+            this.ClientSize = new System.Drawing.Size(661, 528);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.txtObservaciones);
             this.Controls.Add(this.txtTotalKg);
@@ -635,8 +653,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
-        private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox3;
         protected System.Windows.Forms.TextBox txtSucursal;
+        protected System.Windows.Forms.TextBox txtUsuario;
+        protected System.Windows.Forms.Label label7;
     }
 }

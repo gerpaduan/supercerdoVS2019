@@ -13,6 +13,42 @@ namespace Entidades
          public Sucursal sucursal;
          public string observaciones;
          public string estado;
+         private Usuario creadoPor;
+         private Usuario actualizadoPor;
+         DateTime creado;
+         DateTime? actualizado;
+
+         public DateTime Creado
+         {
+             get { return creado; }
+             set { creado = value; }
+         }
+
+         public DateTime? Actualizado
+         {
+             get { return actualizado; }
+             set { actualizado = value; }
+         }
+
+         public Usuario CreadoPor
+         {
+             get { return creadoPor; }
+             set { creadoPor = value; }
+         }
+
+         public Usuario ActualizadoPor
+         {
+             get { return actualizadoPor; }
+             set { actualizadoPor = value; }
+         }
+
+         List<CortePorEmbutido> cortesEnEmbutido;
+
+         public List<CortePorEmbutido> CortesEnEmbutido
+         {
+             get { return cortesEnEmbutido; }
+             set { cortesEnEmbutido = value; }
+         }
 
         public int IdEmbutido
         {

@@ -7,10 +7,17 @@ namespace Entidades
 {
     public class CortePorEmbutido
     {
+        private int idCorteEmbutido;
         public float kgUtilizado;
          public Embutido embutido;
          public Corte corte;
          private bool pesoBalanza;
+
+         public int IdCorteEmbutido
+         {
+             get { return idCorteEmbutido; }
+             set { idCorteEmbutido = value; }
+         }
 
          public bool PesoBalanza
          {
