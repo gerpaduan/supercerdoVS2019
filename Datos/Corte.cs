@@ -383,7 +383,7 @@ namespace Datos
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "anularEmbutido";
             cmCorte.Parameters.AddWithValue("@idEmbutido", oEmbutidoE.idEmbutido);
-            //cmCorte.Parameters.AddWithValue("@actualizadoPor", oEmbutidoE.ActualizadoPor.Id);
+            cmCorte.Parameters.AddWithValue("@actualizadoPor", oEmbutidoE.ActualizadoPor.Id);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();

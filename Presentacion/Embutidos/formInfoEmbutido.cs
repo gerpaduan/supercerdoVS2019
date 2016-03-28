@@ -108,15 +108,16 @@ namespace Presentacion.Embutidos
 
             if (respuesta == System.Windows.Forms.DialogResult.Yes)
             {
-                //oUsuario = null;
                 FormLoginVendedor frmLogin = new FormLoginVendedor();
                 frmLogin.ShowDialog(this);
 
-                //if (!oUsuario.Equals(null))
-                //{
-                //    oCorteN.anularEmbutido(oEmbutidoE);
-                //    embutidoAnulado();
-                //}                
+                if (oUsuario != null )
+                {
+                    oEmbutidoE.ActualizadoPor = oUsuario;
+                    oCorteN.anularEmbutido(oEmbutidoE);
+                    embutidoAnulado();
+                }
+                oUsuario = null;            
             }
         }
 
