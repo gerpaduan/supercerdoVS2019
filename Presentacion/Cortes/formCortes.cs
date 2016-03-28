@@ -232,6 +232,11 @@ namespace Presentacion
         private void Imprimir_Click(object sender, EventArgs e)
         {
             imprimirReporte();
+        }
+
+        private void formCortes_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }      
     }
 }

@@ -125,7 +125,6 @@ namespace Presentacion.Ventas
 
             cargarCamposVenta();
             cargarGrilla();
-
         }
 
         private void cargarCamposVenta()
@@ -138,8 +137,6 @@ namespace Presentacion.Ventas
 
             estadoVenta = oVentaE.Estado;
         }
-
-
 
         private void modificarVenta()
         {
