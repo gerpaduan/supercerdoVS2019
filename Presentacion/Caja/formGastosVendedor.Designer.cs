@@ -40,6 +40,9 @@
             this.lblTipo = new System.Windows.Forms.Label();
             this.txtFechaTexto = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtTotalS = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaGastos)).BeginInit();
             this.SuspendLayout();
             // 
@@ -52,21 +55,22 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaGastos.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.grillaGastos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaGastos.Location = new System.Drawing.Point(2, 176);
+            this.grillaGastos.Location = new System.Drawing.Point(0, 176);
             this.grillaGastos.Name = "grillaGastos";
             this.grillaGastos.ReadOnly = true;
             this.grillaGastos.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaGastos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaGastos.Size = new System.Drawing.Size(539, 100);
+            this.grillaGastos.Size = new System.Drawing.Size(541, 178);
             this.grillaGastos.TabIndex = 44;
             this.grillaGastos.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaGastos_CellClick);
+            this.grillaGastos.SelectionChanged += new System.EventHandler(this.grillaGastos_SelectionChanged);
             // 
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(445, 282);
+            this.btnCancelar.Location = new System.Drawing.Point(430, 394);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 26);
+            this.btnCancelar.Size = new System.Drawing.Size(102, 26);
             this.btnCancelar.TabIndex = 45;
             this.btnCancelar.Text = "&Salir";
             this.btnCancelar.UseVisualStyleBackColor = true;
@@ -184,12 +188,48 @@
             this.label3.TabIndex = 54;
             this.label3.Text = "Fecha";
             // 
+            // groupBox1
+            // 
+            this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox1.Location = new System.Drawing.Point(12, 381);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(517, 7);
+            this.groupBox1.TabIndex = 56;
+            this.groupBox1.TabStop = false;
+            // 
+            // txtTotalS
+            // 
+            this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalS.Location = new System.Drawing.Point(430, 360);
+            this.txtTotalS.Name = "txtTotalS";
+            this.txtTotalS.ReadOnly = true;
+            this.txtTotalS.Size = new System.Drawing.Size(102, 21);
+            this.txtTotalS.TabIndex = 57;
+            this.txtTotalS.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(385, 362);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(39, 16);
+            this.label1.TabIndex = 58;
+            this.label1.Text = "Total";
+            // 
             // formGastosVendedor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.SteelBlue;
-            this.ClientSize = new System.Drawing.Size(541, 316);
+            this.ClientSize = new System.Drawing.Size(541, 424);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.txtTotalS);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.txtFechaTexto);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.txtTipoGasto);
@@ -228,5 +268,8 @@
         protected System.Windows.Forms.Label lblTipo;
         private System.Windows.Forms.TextBox txtFechaTexto;
         protected System.Windows.Forms.Label label3;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.TextBox txtTotalS;
+        protected System.Windows.Forms.Label label1;
     }
 }

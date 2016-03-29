@@ -51,6 +51,7 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.grillaGastos = new System.Windows.Forms.DataGridView();
+            this.lblActualizar = new System.Windows.Forms.Label();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaGastos)).BeginInit();
@@ -86,6 +87,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.lblActualizar);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label7);
@@ -109,9 +111,9 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(650, 46);
+            this.groupBox1.Location = new System.Drawing.Point(557, 46);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(302, 7);
+            this.groupBox1.Size = new System.Drawing.Size(396, 7);
             this.groupBox1.TabIndex = 41;
             this.groupBox1.TabStop = false;
             // 
@@ -167,7 +169,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(596, 41);
+            this.label1.Location = new System.Drawing.Point(503, 41);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(47, 15);
             this.label1.TabIndex = 9;
@@ -175,19 +177,22 @@
             // 
             // fechaDesde
             // 
+            this.fechaDesde.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaDesde.Location = new System.Drawing.Point(695, 59);
+            this.fechaDesde.Location = new System.Drawing.Point(602, 59);
             this.fechaDesde.Name = "fechaDesde";
-            this.fechaDesde.Size = new System.Drawing.Size(98, 20);
+            this.fechaDesde.Size = new System.Drawing.Size(147, 20);
             this.fechaDesde.TabIndex = 5;
             this.fechaDesde.Value = new System.DateTime(2011, 9, 1, 0, 0, 0, 0);
+            this.fechaDesde.ValueChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
+            this.fechaDesde.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(647, 61);
+            this.label3.Location = new System.Drawing.Point(554, 61);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 4;
@@ -195,11 +200,14 @@
             // 
             // fechaHasta
             // 
+            this.fechaHasta.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaHasta.Location = new System.Drawing.Point(854, 59);
+            this.fechaHasta.Location = new System.Drawing.Point(805, 59);
             this.fechaHasta.Name = "fechaHasta";
-            this.fechaHasta.Size = new System.Drawing.Size(98, 20);
+            this.fechaHasta.Size = new System.Drawing.Size(148, 20);
             this.fechaHasta.TabIndex = 7;
+            this.fechaHasta.ValueChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
+            this.fechaHasta.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // btnBuscar
             // 
@@ -216,7 +224,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(810, 61);
+            this.label4.Location = new System.Drawing.Point(761, 61);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
@@ -228,6 +236,8 @@
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(161, 20);
             this.txtDescripcion.TabIndex = 0;
+            this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
+            this.txtDescripcion.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label2
             // 
@@ -311,6 +321,18 @@
             this.grillaGastos.Size = new System.Drawing.Size(941, 243);
             this.grillaGastos.TabIndex = 43;
             // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(339, 61);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 53;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
+            // 
             // formGastos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -364,5 +386,6 @@
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.DataGridView grillaGastos;
+        protected System.Windows.Forms.Label lblActualizar;
     }
 }

@@ -1075,6 +1075,12 @@ namespace Presentacion.Ventas
                 case Keys.PageDown:
                     cambiarPuntoDeVenta();
                     break;
+                case Keys.F6:
+                    misGasto();
+                    break;
+                case Keys.F7:
+                    agregarGasto();
+                    break;
                 case Keys.F9:
                     buscarCliente();
                     break;
@@ -1100,6 +1106,26 @@ namespace Presentacion.Ventas
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void misGasto()
+        {
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+            oCierreE.UsuarioInicio = oUsuario;
+            oCierreE.Sucursal = oSucursalE;
+
+            formGastosVendedor frmGastosVendedor = new formGastosVendedor();
+            frmGastosVendedor.oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, null);
+            frmGastosVendedor.ShowDialog();
+        }
+
+        private void agregarGasto()
+        {
+            if (panelBloquear.Visible) return;
+            formAddOrEditGasto frmAddOrEditGasto = new formAddOrEditGasto();
+            frmAddOrEditGasto.oUsuario = oUsuario;
+            frmAddOrEditGasto.ShowDialog();
         }
 
         private void cambiarPuntoDeVenta()

@@ -270,7 +270,7 @@
             // 
             this.txtFechaGasto.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaGasto.Checked = false;
-            this.txtFechaGasto.CustomFormat = "dd/MM/yyyy hh:ss";
+            this.txtFechaGasto.CustomFormat = "dd/MM/yyyy HH:mm";
             this.txtFechaGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.txtFechaGasto.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaGasto.Location = new System.Drawing.Point(321, 13);

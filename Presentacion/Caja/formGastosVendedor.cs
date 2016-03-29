@@ -28,6 +28,15 @@ namespace Presentacion.Caja
         {
             this.Text = "Gastos "+oCierreE.UsuarioInicio.Nombre;
             grillaGastos.DataSource = oCierreN.getGastosVendedor(oCierreE);
+            grillaGastos.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaGastos.Columns["Monto"].DefaultCellStyle.Format = "F2";
+
+            decimal total = 0;
+            foreach (DataGridViewRow row in grillaGastos.Rows)
+            {
+                total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
+            }
+            txtTotalS.Text = total.ToString("F2");
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -36,6 +45,11 @@ namespace Presentacion.Caja
         }
 
         private void grillaGastos_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            seleccionarGasto();
+        }
+
+        private void seleccionarGasto()
         {
             try
             {
@@ -54,6 +68,20 @@ namespace Presentacion.Caja
             {
                 MessageBox.Show("Error al seleccionar fila");
             }
+        }
+
+        private void grillaGastos_SelectionChanged(object sender, EventArgs e)
+        {
+            seleccionarGasto();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

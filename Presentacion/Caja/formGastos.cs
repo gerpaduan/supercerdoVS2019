@@ -28,6 +28,9 @@ namespace Presentacion.Caja
 
         private void formGastos_Load(object sender, EventArgs e)
         {
+            DateTime today = DateTime.Today;
+            fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
+            fechaDesde.Value = today.AddDays(-8); 
             cargarSucursal();
             cargarTipoGasto();
             cargarGrilla();
@@ -46,8 +49,18 @@ namespace Presentacion.Caja
 
         public void cargarGrilla()
         {
-            dtGastos = oCierreN.obtenerGastos(oGastoE.Sucursal.idSucursal, oGastoE.IdTipoGasto, txtDescripcion.Text, fechaDesde.Value.Date, fechaHasta.Value.Date);
+            lblActualizar.Visible = false;
+            dtGastos = oCierreN.obtenerGastos(oGastoE.Sucursal.idSucursal, oGastoE.IdTipoGasto, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
             grillaGastos.DataSource = dtGastos;
+            grillaGastos.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaGastos.Columns["Monto"].DefaultCellStyle.Format = "F2";
+
+            decimal total = 0;
+            foreach (DataGridViewRow row in grillaGastos.Rows)
+            {
+                total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
+            }
+            txtTotalS.Text = total.ToString("F2");
         }
 
         private void cargarSucursal()
@@ -90,11 +103,19 @@ namespace Presentacion.Caja
             FormLoginVendedor frmLogin = new FormLoginVendedor();
             frmLogin.ShowDialog(this);
 
-            formAddOrEditGasto frmAddOrEditGasto = new formAddOrEditGasto();
-            frmAddOrEditGasto.oUsuario = oUsuario;
-            frmAddOrEditGasto.asignarForm(this);
-            frmAddOrEditGasto.Show();
+            if (oUsuario == null) return;
 
+            if (oUsuario.Admin)
+            {
+                formAddOrEditGasto frmAddOrEditGasto = new formAddOrEditGasto();
+                frmAddOrEditGasto.oUsuario = oUsuario;
+                frmAddOrEditGasto.asignarForm(this);
+                frmAddOrEditGasto.Show();                 
+            }
+            else
+            {
+                MessageBox.Show("Debe agregar sus gastos desde la pantalla de Caja Venta.\n");
+            }
             oUsuario = null;
         }
 
@@ -142,6 +163,28 @@ namespace Presentacion.Caja
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuario = usuario;
+        }
+
+        private void txtDescripcion_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
+        }
+
+        private void txtDescripcion_TextChanged(object sender, EventArgs e)
+        {
+            lblActualizar.Visible = true;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

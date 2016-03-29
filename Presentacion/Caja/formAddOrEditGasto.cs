@@ -89,7 +89,7 @@ namespace Presentacion.Caja
             this.Text = readOnly ? "Info Gasto" : "Modificar";
             this.btnAceptar.Text = readOnly ? "&Modificar" : "&Guardar";
             txtFechaTexto.Visible = readOnly;
-            txtFechaTexto.Text = txtFechaGasto.Value.ToShortDateString();
+            txtFechaTexto.Text = Util_Form.fechaFormato24Horas(txtFechaGasto.Value);
             txtSucursal.Visible = readOnly;
             txtTipoGasto.Visible = readOnly;
             txtSucursal.Text = comboSucursal.Text;
@@ -109,9 +109,9 @@ namespace Presentacion.Caja
             txtDescripcion.Text = oGastoE.Descripcion;
             txtMonto.Text = oGastoE.Monto.ToString();
             txtDetalle.Text = oGastoE.Detalle;
-            txtCreado.Text = oGastoE.Creado.ToString();
+            txtCreado.Text = Util_Form.fechaFormato24Horas(oGastoE.Creado);
             txtCreadoPor.Text = oGastoE.CreadoPorUser != null ? oGastoE.CreadoPorUser.Nombre : "";
-            txtModificado.Text = oGastoE.Actualizado.ToString();
+            txtModificado.Text = Util_Form.fechaFormato24Horas(oGastoE.Actualizado);
             txtModifPor.Text = oGastoE.ActualizadoPorUser != null ? oGastoE.ActualizadoPorUser.Nombre : "";
         }
 
@@ -195,6 +195,7 @@ namespace Presentacion.Caja
                                 frmGastos.cargarGrilla();
                             }
                             //huboModificaciones = false;
+                            MessageBox.Show("El gasto se guardó correctamente.");
                             this.Close();
                             //limpiarListas();
                         }
@@ -233,6 +234,15 @@ namespace Presentacion.Caja
         private void btnCancelar_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }
