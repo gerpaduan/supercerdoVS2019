@@ -80,20 +80,20 @@ namespace Entidades
         private DateTime? creado;
         private DateTime? actualizado;
 
-        //private Usuario creadoPor;
-        //private Usuario actualizadoPor;
-        
-        //public Usuario CreadoPor
-        //{
-        //    get { return creadoPor; }
-        //    set { creadoPor = value; }
-        //}
+        private Usuario creadoPor;
+        private Usuario actualizadoPor;
 
-        //public Usuario ActualizadoPor
-        //{
-        //    get { return actualizadoPor; }
-        //    set { actualizadoPor = value; }
-        //}
+        public Usuario CreadoPor
+        {
+            get { return creadoPor; }
+            set { creadoPor = value; }
+        }
+
+        public Usuario ActualizadoPor
+        {
+            get { return actualizadoPor; }
+            set { actualizadoPor = value; }
+        }
 
         public DateTime? Actualizado
         {

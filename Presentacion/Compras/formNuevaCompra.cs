@@ -18,6 +18,7 @@ namespace Presentacion
         Negocio.Compra oCompraN=new Negocio.Compra();
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN = new Negocio.Corte();
+        Entidades.Usuario oUsuario;
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra;
         Entidades.Corte oCorteNuevaCompra;
@@ -45,7 +46,9 @@ namespace Presentacion
         public formNuevaCompra()
         {
             InitializeComponent();
-            
+
+            oUsuario = new Entidades.Usuario();
+            oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)
             cambiarGrupo();
             cargarComboSucursal();
         }
@@ -211,6 +214,15 @@ namespace Presentacion
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;
             oCompraE.Sucursal = oSucursalE;
+            switch (oCompraE.IdCompra)
+            {
+                case 0:
+                    oCompraE.CreadoPor = oUsuario;
+                    break;
+                default:
+                    oCompraE.ActualizadoPor = oUsuario;
+                    break;
+            }
         }
 
         private void quitarLinea()
@@ -255,8 +267,6 @@ namespace Presentacion
 
                 MessageBox.Show(ex.Message);
             }
-            
-            
         }
 
         private void quitarMedia()

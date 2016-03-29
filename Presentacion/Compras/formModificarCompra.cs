@@ -18,6 +18,7 @@ namespace Presentacion.Compras
         bool modificado = false;
         DateTime fechaModificar;//borrar
         formCompras frmCompras;
+        Entidades.Usuario oUsuario;
         Entidades.Compra oCompraModificada = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra=new Entidades.Persona();
         Entidades.Corte oCorteNuevaCompra;
@@ -45,6 +46,8 @@ namespace Presentacion.Compras
         {
             InitializeComponent();
             cargarComboSucursal();
+            oUsuario = new Entidades.Usuario();
+            oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)
         }
 
         private void formModificarCompra_Load(object sender, EventArgs e)
@@ -259,6 +262,7 @@ namespace Presentacion.Compras
             oSucursal = oCompraModificada.Sucursal;
             oProvNuevaCompra = oCompraModificada.Proveedor;
 
+            txtUsuario.Text = oUsuario.Nombre;
             comboSucursal.SelectedValue = oSucursal.idSucursal;
             txtNroRemito.Text = oCompraModificada.NroRemito;
             txtProveedor.Text = oCompraModificada.Proveedor.razonSocial;
@@ -651,6 +655,15 @@ namespace Presentacion.Compras
                 oCompraModificada.TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);//"Cortes";
             }
             oCompraModificada.TipoCompra = oCompraModificada.TipoCompra;
+            switch (oCompraModificada.IdCompra)
+            {
+                case 0:
+                    oCompraModificada.CreadoPor = oUsuario;
+                    break;
+                default:
+                    oCompraModificada.ActualizadoPor = oUsuario;
+                    break;
+            }
         }
 
         private void modificarCompra()

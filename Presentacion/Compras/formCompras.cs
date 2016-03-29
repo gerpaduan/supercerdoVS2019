@@ -11,7 +11,6 @@ using Presentacion.Compras;
 namespace Presentacion
 {
     public partial class formCompras : formBaseColor
-
     {
         Negocio.Compra oCompraN;
         DataTable dtCompras = new DataTable();
@@ -23,6 +22,10 @@ namespace Presentacion
         public formCompras()
         {
             InitializeComponent();
+        }
+        
+        private void formCompras_Load(object sender, EventArgs e)
+        {
             cargarSucursal();
             this.comboSucursal.SelectedIndex = 2;
             this.comboTipoCompra.SelectedIndex = 0;
@@ -30,9 +33,7 @@ namespace Presentacion
             cargar = true;
             cargarGrilla();
         }
-        
       
-
         #region metodos
 
         public void cargarGrilla()
@@ -48,14 +49,11 @@ namespace Presentacion
 
                 grillaCompras.AutoGenerateColumns = false;
 
-
                 dtCompras = null;
                 dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
-
                 grillaCompras.DataSource = dtCompras;
 
                 cargarTotales();
-
                 oCompraN = null;
             }
         }
@@ -71,11 +69,6 @@ namespace Presentacion
 
             txtTotalKgs.Text = Convert.ToString( totalKg);
             txtTotalS.Text = Convert.ToString( totalS);
-        }
-
-        private void cargarCompra()
-        { 
-            
         }
 
         private void modificarCompra()
@@ -95,44 +88,30 @@ namespace Presentacion
                     frmModificarCompra.cargarParametros(this, idCompra);
                     frmModificarCompra.Show();
                 }
-
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
         }
 
         private void nuevaCompra()
         {
-            //formNuevaCompra frmNuevaCompra = new formNuevaCompra();
-            //frmNuevaCompra.asignarFormCompra(this);
-            //frmNuevaCompra.ShowDialog();
-
             if (Application.OpenForms["formNuevaCompra"] != null)
             {
 
                 Application.OpenForms["formNuevaCompra"].Activate();
                 Application.OpenForms["formNuevaCompra"].WindowState = FormWindowState.Normal;
-
-
             }
             else
             {
-
                 formNuevaCompra frmNuevaCompra = new formNuevaCompra();
                 frmNuevaCompra.asignarFormCompra(this);
                 frmNuevaCompra.Show();
-
-            }
-
-        
+            }        
         }
 
         #endregion
-
         
         #region eventos
 
@@ -145,18 +124,7 @@ namespace Presentacion
         {
             nuevaCompra();
         }
-       
 
-        private void btnSeleccionar_Click(object sender, EventArgs e)
-        {
-
-        }
-        
-        private void modificar_Click(object sender, EventArgs e)
-        {
-
-        }
-        
         private void fechaDesde_ValueChanged(object sender, EventArgs e)
         {
             cargarGrilla();
@@ -170,7 +138,6 @@ namespace Presentacion
         {
             cargarGrilla();
         }
-
         
         private void btnSeleccionar_Click_1(object sender, EventArgs e)
         {
@@ -205,8 +172,7 @@ namespace Presentacion
             if (!comboSucursal.ValueMember.Equals(""))
             {
                 cargarGrilla();
-            }
-           
+            }           
         }
 
         private void cargarSucursal()
@@ -227,32 +193,5 @@ namespace Presentacion
             comboSucursal.ValueMember = "idSucursal";
             comboSucursal.SelectedIndex = 2;
         }
-
-        private void formCompras_Load(object sender, EventArgs e)
-        {
-            //cargarSucursal();
-        }
-
-      
-        //cargar grilla del formModificarCorte
-        
-
-      
-
-        
-
-        
-
-       
-
-        
-
-        
-
-      
-
-        
-
-       
     }
 }

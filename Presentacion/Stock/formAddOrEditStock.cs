@@ -13,8 +13,9 @@ using System.Configuration;
 
 namespace Presentacion
 {
-    public partial class formAddOrEditStock : Form, InterfaceCorte       
+    public partial class formAddOrEditStock : Form, InterfaceCorte, InterfaceUsuario     
     {
+        public formStock frmStock;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         
@@ -25,6 +26,7 @@ namespace Presentacion
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra;
+        public Entidades.Usuario oUsuario;
         Entidades.Corte oCorteNuevaCompra;
         Entidades.CortePorCompra oCortePorCompra;
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
@@ -41,8 +43,6 @@ namespace Presentacion
 
        List<Entidades.CortePorCompra> listaCortePorCompra = new List<Entidades.CortePorCompra>();
 
-       formStock frmStock;
-
        bool ultimaValidacion = true;
        bool huboModificaciones = false;
        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
@@ -50,19 +50,27 @@ namespace Presentacion
         public formAddOrEditStock()
         {
             InitializeComponent();
-            cargarComboSucursal();
-            dtCorte = oCorteN.obtenerCortes();
-            checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
         }
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
-        {
+        {            
+            cargarComboSucursal();
+            dtCorte = oCorteN.obtenerCortes();
+            checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+
             if (dtCorte.Rows.Count == 0)
             {
                 MessageBox.Show("No se pudieron cargar los cortes.");
             }
             if (accion.Equals(Entidades.Compra.accion.Agregar))
             {
+                logueoUsuario();
+                if (oUsuario == null)
+                {
+                    this.Close();
+                    return;
+                }
+
                 oProvNuevaCompra = new Entidades.Persona();
                 oProvNuevaCompra.idPersona = Convert.ToInt32(tipoCompraEnum);
                 oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
@@ -79,6 +87,11 @@ namespace Presentacion
                 comboSucursal.SelectedValue = oSucursalE.idSucursal;
                 txtFechaCompra.Value = oCompraE.FechaCompra;
                 txtObservaciones.Text = oCompraE.Observaciones;
+                txtCreado.Text = Util_Form.fechaFormato24Horas(oCompraE.Creado);
+                txtCreadoPor.Text = oCompraE.CreadoPor != null ? oCompraE.CreadoPor.Nombre : "-";
+                txtActualizado.Text = oCompraE.Actualizado != null ? Util_Form.fechaFormato24Horas(oCompraE.Actualizado): "-";
+                txtActualizadoPor.Text = oCompraE.ActualizadoPor != null ? oCompraE.ActualizadoPor.Nombre : "-";
+
                 foreach (Entidades.CortePorCompra corte in listaCortePorCompra)
                 {
                     cargarCorteEnGrilla(corte);
@@ -91,11 +104,23 @@ namespace Presentacion
                 txtObservaciones.ReadOnly = true;
             }
             tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
+            txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtTipoAccion.Text = tipoCompra;
             this.Text = accion.ToString()+" "+tipoCompra;
             huboModificaciones = false;
             idCompraLabel.Text = idCompra.ToString();
         }
+
+        private void logueoUsuario()
+        {
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        } 
 
         #region eventos
 
@@ -132,9 +157,15 @@ namespace Presentacion
         {
             if (btnAceptar.Text.Equals("Modificar"))
             {
+                logueoUsuario();
+                if (oUsuario == null)
+                {
+                    return;
+                }
                 if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") &&
                 Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
+                    txtUsuario.Text = oUsuario.Nombre;
                     btnAceptar.Text = "Guardar";
                     txtFechaCompra.Enabled = true;
                     comboSucursal.Enabled = true;
@@ -151,12 +182,6 @@ namespace Presentacion
         #endregion
 
         #region Métodos
-
-        //se asigna el form compra para recargar la grilla del formCompras
-        public void asignarFormCompra(formStock frmCompra)
-        {
-            frmStock = frmCompra;
-        }
 
         private void agregarCompra()
         {
@@ -221,6 +246,15 @@ namespace Presentacion
             oCompraE.Observaciones = txtObservaciones.Text;
             oCompraE.TipoCompra = tipoCompra;
             oCompraE.Sucursal = oSucursalE;
+            switch (oCompraE.IdCompra)
+            {
+                case 0:
+                    oCompraE.CreadoPor = oUsuario;
+                    break;
+	            default:
+                    oCompraE.ActualizadoPor = oUsuario;
+                    break;
+            }
         }
 
         private void quitarLinea()

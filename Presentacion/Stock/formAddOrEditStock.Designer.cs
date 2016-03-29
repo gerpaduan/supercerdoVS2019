@@ -64,6 +64,12 @@
             this.label12 = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.idCompraLabel = new System.Windows.Forms.Label();
+            this.txtCreado = new System.Windows.Forms.TextBox();
+            this.txtCreadoPor = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtActualizadoPor = new System.Windows.Forms.TextBox();
+            this.txtActualizado = new System.Windows.Forms.TextBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
@@ -322,9 +328,9 @@
             this.btnAceptar.BackColor = System.Drawing.Color.SeaGreen;
             this.btnAceptar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
             this.btnAceptar.ForeColor = System.Drawing.SystemColors.ControlLight;
-            this.btnAceptar.Location = new System.Drawing.Point(625, 422);
+            this.btnAceptar.Location = new System.Drawing.Point(625, 517);
             this.btnAceptar.Name = "btnAceptar";
-            this.btnAceptar.Size = new System.Drawing.Size(181, 42);
+            this.btnAceptar.Size = new System.Drawing.Size(183, 42);
             this.btnAceptar.TabIndex = 10;
             this.btnAceptar.TabStop = false;
             this.btnAceptar.Text = "&Guardar";
@@ -337,9 +343,9 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.btnCancelar.Location = new System.Drawing.Point(625, 470);
+            this.btnCancelar.Location = new System.Drawing.Point(625, 565);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(181, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(183, 27);
             this.btnCancelar.TabIndex = 11;
             this.btnCancelar.TabStop = false;
             this.btnCancelar.Text = "&Cancelar";
@@ -350,11 +356,11 @@
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.txtObservaciones.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtObservaciones.Location = new System.Drawing.Point(625, 207);
+            this.txtObservaciones.Location = new System.Drawing.Point(625, 201);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(181, 209);
+            this.txtObservaciones.Size = new System.Drawing.Size(181, 186);
             this.txtObservaciones.TabIndex = 9;
             this.txtObservaciones.TabStop = false;
             this.txtObservaciones.TextChanged += new System.EventHandler(this.txtObservaciones_TextChanged);
@@ -364,7 +370,7 @@
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(622, 188);
+            this.label11.Location = new System.Drawing.Point(622, 182);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(100, 16);
             this.label11.TabIndex = 15;
@@ -398,7 +404,7 @@
             this.grillaCortePorCompra.RowHeadersVisible = false;
             this.grillaCortePorCompra.RowTemplate.DefaultCellStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grillaCortePorCompra.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortePorCompra.Size = new System.Drawing.Size(600, 371);
+            this.grillaCortePorCompra.Size = new System.Drawing.Size(600, 466);
             this.grillaCortePorCompra.TabIndex = 16;
             this.grillaCortePorCompra.TabStop = false;
             // 
@@ -433,7 +439,7 @@
             // 
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(625, 144);
+            this.txtCantItems.Location = new System.Drawing.Point(622, 154);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(119, 22);
@@ -446,7 +452,7 @@
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(625, 126);
+            this.label12.Location = new System.Drawing.Point(622, 136);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(84, 16);
             this.label12.TabIndex = 33;
@@ -469,12 +475,80 @@
             this.idCompraLabel.Text = "idCompraLabel";
             this.idCompraLabel.Visible = false;
             // 
+            // txtCreado
+            // 
+            this.txtCreado.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCreado.Location = new System.Drawing.Point(625, 410);
+            this.txtCreado.Name = "txtCreado";
+            this.txtCreado.ReadOnly = true;
+            this.txtCreado.Size = new System.Drawing.Size(181, 21);
+            this.txtCreado.TabIndex = 43;
+            this.txtCreado.TabStop = false;
+            // 
+            // txtCreadoPor
+            // 
+            this.txtCreadoPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCreadoPor.Location = new System.Drawing.Point(625, 431);
+            this.txtCreadoPor.Name = "txtCreadoPor";
+            this.txtCreadoPor.ReadOnly = true;
+            this.txtCreadoPor.Size = new System.Drawing.Size(181, 21);
+            this.txtCreadoPor.TabIndex = 46;
+            this.txtCreadoPor.TabStop = false;
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(624, 394);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(41, 13);
+            this.label1.TabIndex = 47;
+            this.label1.Text = "Creado";
+            // 
+            // label2
+            // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(625, 456);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(59, 13);
+            this.label2.TabIndex = 50;
+            this.label2.Text = "Modificado";
+            // 
+            // txtActualizadoPor
+            // 
+            this.txtActualizadoPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtActualizadoPor.Location = new System.Drawing.Point(627, 491);
+            this.txtActualizadoPor.Name = "txtActualizadoPor";
+            this.txtActualizadoPor.ReadOnly = true;
+            this.txtActualizadoPor.Size = new System.Drawing.Size(181, 21);
+            this.txtActualizadoPor.TabIndex = 49;
+            this.txtActualizadoPor.TabStop = false;
+            // 
+            // txtActualizado
+            // 
+            this.txtActualizado.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtActualizado.Location = new System.Drawing.Point(627, 470);
+            this.txtActualizado.Name = "txtActualizado";
+            this.txtActualizado.ReadOnly = true;
+            this.txtActualizado.Size = new System.Drawing.Size(181, 21);
+            this.txtActualizado.TabIndex = 48;
+            this.txtActualizado.TabStop = false;
+            // 
             // formAddOrEditStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(820, 509);
+            this.ClientSize = new System.Drawing.Size(820, 604);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.txtActualizadoPor);
+            this.Controls.Add(this.txtActualizado);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.txtCreadoPor);
+            this.Controls.Add(this.txtCreado);
             this.Controls.Add(this.idCompraLabel);
             this.Controls.Add(this.txtCantItems);
             this.Controls.Add(this.label12);
@@ -534,5 +608,11 @@
         private System.Windows.Forms.TextBox txtTipoAccion;
         private System.Windows.Forms.Timer timer1;
         protected System.Windows.Forms.Label idCompraLabel;
+        private System.Windows.Forms.TextBox txtCreado;
+        private System.Windows.Forms.TextBox txtCreadoPor;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtActualizadoPor;
+        private System.Windows.Forms.TextBox txtActualizado;
     }
 }

@@ -64,7 +64,10 @@
             this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.observaciones = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.creadoPor = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.actualizadoPor = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.lblActualizar = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -75,6 +78,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.lblActualizar);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.groupBox1);
@@ -92,7 +96,6 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(786, 89);
             this.pnlBuscar.TabIndex = 6;
-            this.pnlBuscar.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlBuscar_Paint);
             // 
             // comboSucursal
             // 
@@ -118,6 +121,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
@@ -129,7 +133,7 @@
             // 
             // label1
             // 
-            this.label1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
@@ -141,7 +145,7 @@
             // 
             // fechaDesde
             // 
-            this.fechaDesde.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.fechaDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaDesde.Location = new System.Drawing.Point(513, 59);
             this.fechaDesde.Name = "fechaDesde";
@@ -149,10 +153,11 @@
             this.fechaDesde.TabIndex = 5;
             this.fechaDesde.Value = new System.DateTime(2011, 9, 1, 0, 0, 0, 0);
             this.fechaDesde.ValueChanged += new System.EventHandler(this.fechaDesde_ValueChanged);
+            this.fechaDesde.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesde_KeyDown);
             // 
             // label3
             // 
-            this.label3.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
@@ -179,17 +184,18 @@
             // 
             // fechaHasta
             // 
-            this.fechaHasta.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.fechaHasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaHasta.Location = new System.Drawing.Point(661, 59);
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(98, 20);
             this.fechaHasta.TabIndex = 7;
             this.fechaHasta.ValueChanged += new System.EventHandler(this.fechaHasta_ValueChanged);
+            this.fechaHasta.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesde_KeyDown);
             // 
             // label4
             // 
-            this.label4.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
@@ -216,7 +222,7 @@
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(69, 24);
             this.btnBuscar.TabIndex = 8;
-            this.btnBuscar.Text = "Buscar";
+            this.btnBuscar.Text = "&Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
             // 
@@ -227,6 +233,7 @@
             this.txtDescripcion.Size = new System.Drawing.Size(161, 20);
             this.txtDescripcion.TabIndex = 0;
             this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
+            this.txtDescripcion.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesde_KeyDown);
             // 
             // label2
             // 
@@ -260,7 +267,7 @@
             this.btnIngreso.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnIngreso.Name = "btnIngreso";
             this.btnIngreso.Size = new System.Drawing.Size(50, 35);
-            this.btnIngreso.Text = "Ingreso";
+            this.btnIngreso.Text = "&Ingreso";
             this.btnIngreso.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnIngreso.Click += new System.EventHandler(this.btnIngreso_Click);
             // 
@@ -270,7 +277,7 @@
             this.btnEgreso.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnEgreso.Name = "btnEgreso";
             this.btnEgreso.Size = new System.Drawing.Size(46, 35);
-            this.btnEgreso.Text = "Egreso";
+            this.btnEgreso.Text = "&Egreso";
             this.btnEgreso.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnEgreso.Click += new System.EventHandler(this.btnEgreso_Click);
             // 
@@ -280,7 +287,7 @@
             this.btnCierre.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnCierre.Name = "btnCierre";
             this.btnCierre.Size = new System.Drawing.Size(42, 35);
-            this.btnCierre.Text = "Cierre";
+            this.btnCierre.Text = "Cie&rre";
             this.btnCierre.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnCierre.Click += new System.EventHandler(this.btnCierre_Click);
             // 
@@ -290,7 +297,9 @@
             this.grillaCompras.AllowUserToAddRows = false;
             this.grillaCompras.AllowUserToDeleteRows = false;
             this.grillaCompras.AllowUserToResizeRows = false;
-            this.grillaCompras.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.grillaCompras.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCompras.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             this.grillaCompras.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCompras.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -303,7 +312,9 @@
             this.cantKg,
             this.observaciones,
             this.creado,
-            this.actualizado});
+            this.creadoPor,
+            this.actualizado,
+            this.actualizadoPor});
             this.grillaCompras.Location = new System.Drawing.Point(12, 134);
             this.grillaCompras.MultiSelect = false;
             this.grillaCompras.Name = "grillaCompras";
@@ -317,22 +328,24 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(596, 516);
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(521, 518);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(85, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(123, 27);
             this.btnSeleccionar.TabIndex = 17;
-            this.btnSeleccionar.Text = "Seleccionar";
+            this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click_1);
             // 
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(687, 516);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(650, 518);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 26);
+            this.btnCancelar.Size = new System.Drawing.Size(123, 27);
             this.btnCancelar.TabIndex = 16;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Cerrar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -360,6 +373,8 @@
             // 
             // panel1
             // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(12, 511);
@@ -385,6 +400,7 @@
             this.fechaCompra.HeaderText = "Fecha";
             this.fechaCompra.Name = "fechaCompra";
             this.fechaCompra.ReadOnly = true;
+            this.fechaCompra.Width = 84;
             // 
             // idPersona
             // 
@@ -410,6 +426,7 @@
             this.sucursal.HeaderText = "Sucursal";
             this.sucursal.Name = "sucursal";
             this.sucursal.ReadOnly = true;
+            this.sucursal.Width = 60;
             // 
             // tipoCompra
             // 
@@ -418,6 +435,7 @@
             this.tipoCompra.HeaderText = "Acción";
             this.tipoCompra.Name = "tipoCompra";
             this.tipoCompra.ReadOnly = true;
+            this.tipoCompra.Width = 60;
             // 
             // cantKg
             // 
@@ -430,6 +448,7 @@
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
             this.cantKg.ReadOnly = true;
+            this.cantKg.Width = 61;
             // 
             // observaciones
             // 
@@ -438,6 +457,7 @@
             this.observaciones.HeaderText = "Observaciones";
             this.observaciones.Name = "observaciones";
             this.observaciones.ReadOnly = true;
+            this.observaciones.Width = 60;
             // 
             // creado
             // 
@@ -448,6 +468,14 @@
             this.creado.ReadOnly = true;
             this.creado.Width = 66;
             // 
+            // creadoPor
+            // 
+            this.creadoPor.DataPropertyName = "creadoPor";
+            this.creadoPor.HeaderText = "Creado Por";
+            this.creadoPor.Name = "creadoPor";
+            this.creadoPor.ReadOnly = true;
+            this.creadoPor.Width = 140;
+            // 
             // actualizado
             // 
             this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
@@ -456,6 +484,26 @@
             this.actualizado.Name = "actualizado";
             this.actualizado.ReadOnly = true;
             this.actualizado.Width = 87;
+            // 
+            // actualizadoPor
+            // 
+            this.actualizadoPor.DataPropertyName = "actualizadoPor";
+            this.actualizadoPor.HeaderText = "ActualizadoPor";
+            this.actualizadoPor.Name = "actualizadoPor";
+            this.actualizadoPor.ReadOnly = true;
+            this.actualizadoPor.Width = 140;
+            // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(339, 62);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 53;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
             // 
             // formStock
             // 
@@ -469,13 +517,13 @@
             this.Controls.Add(this.grillaCompras);
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.KeyPreview = true;
-            this.MaximizeBox = false;
             this.MinimizeBox = true;
             this.Name = "formStock";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Stock";
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formCompras_KeyDown);
+            this.Load += new System.EventHandler(this.formStock_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.barraControl.ResumeLayout(false);
@@ -525,7 +573,10 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
         private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
         private System.Windows.Forms.DataGridViewTextBoxColumn creado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn creadoPor;
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn actualizadoPor;
+        protected System.Windows.Forms.Label lblActualizar;
 
     }
 }

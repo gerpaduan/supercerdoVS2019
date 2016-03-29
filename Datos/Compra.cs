@@ -84,6 +84,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
+            cmCompra.Parameters.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
 
             SqlDataReader drCompra = cmCompra.ExecuteReader();
 
@@ -119,6 +120,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
+            cmCompra.Parameters.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor.Id);
 
             cmCompra.ExecuteNonQuery();
             cmCompra.Connection.Close();
