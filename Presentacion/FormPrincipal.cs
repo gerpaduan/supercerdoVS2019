@@ -726,5 +726,18 @@ namespace Presentacion
                 cerrarSesion();
             }
         }
+
+        private void configuraciónToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                Utilidades.FormAppConfig formAppConfig = new Utilidades.FormAppConfig();
+                formAppConfig.Show();
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
     }
 }
