@@ -48,6 +48,7 @@
             this.txtTotalKg = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnSeleccionar = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).BeginInit();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -61,7 +62,7 @@
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(130, 26);
             this.btnSalir.TabIndex = 12;
-            this.btnSalir.Text = "&Salir";
+            this.btnSalir.Text = "&Cerrar";
             this.btnSalir.UseVisualStyleBackColor = true;
             this.btnSalir.Click += new System.EventHandler(this.btnSalir_Click);
             // 
@@ -292,12 +293,25 @@
             this.panel1.Size = new System.Drawing.Size(859, 1);
             this.panel1.TabIndex = 24;
             // 
+            // btnSeleccionar
+            // 
+            this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(605, 532);
+            this.btnSeleccionar.Name = "btnSeleccionar";
+            this.btnSeleccionar.Size = new System.Drawing.Size(130, 26);
+            this.btnSeleccionar.TabIndex = 25;
+            this.btnSeleccionar.Text = "&Seleccionar";
+            this.btnSeleccionar.UseVisualStyleBackColor = true;
+            this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
+            // 
             // formEmbutidos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(883, 561);
+            this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.txtTotalKg);
             this.Controls.Add(this.label8);
@@ -341,5 +355,6 @@
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox1;
+        protected System.Windows.Forms.Button btnSeleccionar;
     }
 }

@@ -91,29 +91,6 @@ namespace Presentacion
 
         private void informacionEmbutido()
         {
-            //Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
-
-            //oEmbutidoE.idEmbutido = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idEmbutido"].Value.ToString());
-            //oEmbutidoE.fechaEmbutido = Convert.ToDateTime(grillaEmbutidos.CurrentRow.Cells["fechaEmbutido"].Value.ToString());
-            
-            ////creo Corte correspondiente al embutido y lo asigno
-            //Entidades.Corte oCorteE = new Entidades.Corte();
-            //oCorteE.idCorte = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorte"].Value.ToString());
-            //oCorteE.codigo = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["codigo"].Value.ToString());
-            //oCorteE.corte = grillaEmbutidos.CurrentRow.Cells["corte"].Value.ToString();
-
-            //oEmbutidoE.corte = oCorteE;
-            
-            //oEmbutidoE.estado = grillaEmbutidos.CurrentRow.Cells["estado"].Value.ToString();
-            //oEmbutidoE.observaciones = grillaEmbutidos.CurrentRow.Cells["observaciones"].Value.ToString();
-
-            ////creo sucursal y lo asigno al embutido
-            //Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-            //oSucursalE.idSucursal = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idSucursal"].Value.ToString());
-            //oSucursalE.sucursal = grillaEmbutidos.CurrentRow.Cells["sucursal"].Value.ToString();
-
-            //oEmbutidoE.sucursal = oSucursalE;
-
             if (Application.OpenForms["formInfoEmbutido"] != null)
             {
                 Application.OpenForms["formInfoEmbutido"].Activate();
@@ -122,7 +99,6 @@ namespace Presentacion
             else
             {
                 formInfoEmbutido frmInfoEmbutido = new formInfoEmbutido();
-                //frmInfoEmbutido.obtenerParametros(oEmbutidoE, this);
                 frmInfoEmbutido.frmEmbutidos = this;
                 frmInfoEmbutido.idEmbutido_ = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["Id"].Value.ToString());
                 frmInfoEmbutido.Show();
@@ -224,6 +200,11 @@ namespace Presentacion
         private void grillaEmbutidos_Sorted(object sender, EventArgs e)
         {
             formatearGrilla();
+        }
+
+        private void btnSeleccionar_Click(object sender, EventArgs e)
+        {
+            informacionEmbutido();
         }
     }
 }

@@ -234,6 +234,15 @@ namespace Presentacion
             {
                 MessageBox.Show("Ocurrió un error al actualizar los movimientos.\n\n" + ex.Message);
             }
-        }       
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }     
     }
 }
