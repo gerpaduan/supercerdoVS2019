@@ -26,6 +26,7 @@ namespace Presentacion
         
         private void formCompras_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarSucursal();
             this.comboSucursal.SelectedIndex = 2;
             this.comboTipoCompra.SelectedIndex = 0;

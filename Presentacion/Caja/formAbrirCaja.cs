@@ -18,6 +18,7 @@ namespace Presentacion.Caja
 
         private void formAbrirCaja_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             txtFechaHoraInicio.Text = DateTime.Now.ToString();
             txtFechaHoraCierre.Text = "";
             txtDiferencia.Text = "";

@@ -20,6 +20,7 @@ namespace Presentacion.Balanza
 
         private void formBalanza_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             txtVelocidadTimer.Text = timer1.Interval.ToString();
         }
 

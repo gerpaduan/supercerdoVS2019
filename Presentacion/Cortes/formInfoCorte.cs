@@ -142,5 +142,10 @@ namespace Presentacion
             }
         }
 
+        private void formInfoCorte_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+        }
+
     }
 }

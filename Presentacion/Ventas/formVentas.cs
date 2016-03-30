@@ -188,6 +188,7 @@ namespace Presentacion
 
         private void formVentas_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today.Date.AddHours(24);
             fechaHasta.Value = today.AddMilliseconds(-1);
             fechaDesde.Value = today.AddDays(-1);

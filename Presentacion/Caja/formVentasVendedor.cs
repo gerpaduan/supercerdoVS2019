@@ -100,6 +100,7 @@ namespace Presentacion
         private void formVentasVendedor_Load(object sender, EventArgs e)
         {
             this.Text = this.Text + " || " + oCierreE.UsuarioInicio.Nombre;
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             txtSucursal.Text = oCierreE.Sucursal.sucursal;
             txtVendedor.Text = oCierreE.UsuarioInicio.Nombre;
             cargarGrilla();

@@ -585,6 +585,7 @@ namespace Presentacion
 
         private void formNuevoMovimiento_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
             {
                 this.Close();

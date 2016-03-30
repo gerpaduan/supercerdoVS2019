@@ -140,7 +140,7 @@ namespace Presentacion
 
         private void formModificarPrecios_Load(object sender, EventArgs e)
         {
-
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
     }
 }

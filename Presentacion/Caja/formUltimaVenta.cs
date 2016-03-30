@@ -27,6 +27,7 @@ namespace Presentacion.Caja
 
         private void formUltimaVenta_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarGrilla();
 
             this.txtCliente.Text = oUltimaVenta.Persona.razonSocial;

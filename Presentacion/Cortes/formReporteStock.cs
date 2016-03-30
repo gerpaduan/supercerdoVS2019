@@ -560,6 +560,7 @@ namespace Presentacion.Cortes
 
         private void formReporteStock_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
 
         private void cargarComboCierreStock()

@@ -116,5 +116,11 @@ namespace Presentacion.Personas
         {
             this.Close();
         }
+
+        private void formPersonas_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+
+        }
     }
 }

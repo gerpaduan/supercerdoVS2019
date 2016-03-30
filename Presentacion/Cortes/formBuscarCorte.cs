@@ -107,6 +107,7 @@ namespace Presentacion.Cortes
 
         private void formBuscarCorte_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
     }
 

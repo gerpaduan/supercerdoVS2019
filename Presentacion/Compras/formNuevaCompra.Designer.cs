@@ -817,6 +817,7 @@
             this.Name = "formNuevaCompra";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nueva Compra";
+            this.Load += new System.EventHandler(this.formNuevaCompra_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.groupBox2.ResumeLayout(false);

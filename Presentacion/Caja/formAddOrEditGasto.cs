@@ -33,6 +33,7 @@ namespace Presentacion.Caja
 
         private void formAddOrEditGasto_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
                 bool closeForm = false;

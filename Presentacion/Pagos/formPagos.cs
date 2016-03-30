@@ -349,6 +349,7 @@ namespace Presentacion.Pagos
 
         private void formPagos_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             //leo de App.config fecha Desde
             txtFechaDesde.Value =Convert.ToDateTime(ConfigurationManager.AppSettings["FechaDesdePago"].ToString());
             cargar = true;

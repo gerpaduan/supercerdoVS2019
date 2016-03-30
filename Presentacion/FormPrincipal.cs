@@ -308,6 +308,7 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             ultimaConnSelect = comboConexion.Text;
@@ -316,7 +317,6 @@ namespace Presentacion
             //asigo sucursal al título  
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
-            this.Text = this.Text + " | Suc. " + oSucursalE.sucursal;
         }
 
         private static void embutidos()
@@ -684,7 +684,8 @@ namespace Presentacion
                     ultimaConnSelect = comboConexion.Text;
                     Utilidades.Conexion.connStringActual = comboConexion.Text;
                     Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
-                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);       
+                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);
+                    this.Text += Utilidades.Conexion.getSucursalConexion();
                 }
                 else
                 {

@@ -83,6 +83,7 @@ namespace Presentacion.Embutidos
 
         private void formBuscarEmbutido_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             txtBuscarCorte.Select();
         }
 

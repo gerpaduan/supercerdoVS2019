@@ -32,6 +32,7 @@ namespace Presentacion.Caja
 
         private void formCajasAbiertas_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarSucursal();
             cargarGrilla();
         }

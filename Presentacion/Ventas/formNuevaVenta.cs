@@ -891,6 +891,7 @@ namespace Presentacion.Ventas
 
         private void formNuevaVenta_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             if (!FormPrincipal.logueado)
             {
                 MessageBox.Show("No está logueado");

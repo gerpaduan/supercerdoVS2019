@@ -21,6 +21,7 @@ namespace Presentacion.Caja
 
         private void FormLoginVendedor_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarCombo();
         }
 

@@ -114,6 +114,7 @@ namespace Presentacion.Reportes
 
         private void FormReportes_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
 
         }
     }

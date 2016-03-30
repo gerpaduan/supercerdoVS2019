@@ -382,6 +382,7 @@ namespace Presentacion
 
         private void formIngresoEmbutido_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             if (oUsuario == null)
             {
                 this.Close();

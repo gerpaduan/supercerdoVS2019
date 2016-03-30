@@ -163,6 +163,7 @@ namespace Presentacion
 
         private void formEmbutidos_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             if (EsVentaClientes)
             {
                 this.Text = "Embutidos/Ventas Clientes/Otros";

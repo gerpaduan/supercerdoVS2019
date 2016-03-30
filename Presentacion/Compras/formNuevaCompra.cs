@@ -893,5 +893,10 @@ namespace Presentacion
         {
             btnAceptar.BackColor = System.Drawing.Color.FromName("SeaGreen");
         }
+
+        private void formNuevaCompra_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+        }
     }
 }

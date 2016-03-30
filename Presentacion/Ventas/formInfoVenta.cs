@@ -129,6 +129,7 @@ namespace Presentacion.Ventas
 
         private void formInfoVenta_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
                 oVentaE = oVentaN.getVentaById(idVenta);

@@ -87,6 +87,7 @@ namespace Utilidades
 
         private void FormLogin_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
 
         }
 

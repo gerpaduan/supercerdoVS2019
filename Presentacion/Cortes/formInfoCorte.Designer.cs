@@ -33,6 +33,8 @@
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtIdCorte = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
             this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
@@ -60,8 +62,6 @@
             this.label10 = new System.Windows.Forms.Label();
             this.txtStockSanMartin = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.txtIdCorte = new System.Windows.Forms.TextBox();
-            this.label13 = new System.Windows.Forms.Label();
             this.barraControl.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -137,6 +137,26 @@
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // txtIdCorte
+            // 
+            this.txtIdCorte.Enabled = false;
+            this.txtIdCorte.Location = new System.Drawing.Point(100, 21);
+            this.txtIdCorte.Name = "txtIdCorte";
+            this.txtIdCorte.ReadOnly = true;
+            this.txtIdCorte.Size = new System.Drawing.Size(71, 21);
+            this.txtIdCorte.TabIndex = 34;
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label13.Location = new System.Drawing.Point(44, 24);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(49, 15);
+            this.label13.TabIndex = 33;
+            this.label13.Text = "Id Corte";
             // 
             // txtDesvioEstandar
             // 
@@ -413,26 +433,6 @@
             this.label12.TabIndex = 2;
             this.label12.Text = "San Martín";
             // 
-            // txtIdCorte
-            // 
-            this.txtIdCorte.Enabled = false;
-            this.txtIdCorte.Location = new System.Drawing.Point(100, 21);
-            this.txtIdCorte.Name = "txtIdCorte";
-            this.txtIdCorte.ReadOnly = true;
-            this.txtIdCorte.Size = new System.Drawing.Size(71, 21);
-            this.txtIdCorte.TabIndex = 34;
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label13.Location = new System.Drawing.Point(44, 24);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(49, 15);
-            this.label13.TabIndex = 33;
-            this.label13.Text = "Id Corte";
-            // 
             // formInfoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -445,6 +445,7 @@
             this.Name = "formInfoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Información Corte";
+            this.Load += new System.EventHandler(this.formInfoCorte_Load);
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
             this.groupBox1.ResumeLayout(false);

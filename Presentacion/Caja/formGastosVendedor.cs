@@ -26,6 +26,7 @@ namespace Presentacion.Caja
 
         private void formGastosVendedor_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             this.Text = "Gastos "+oCierreE.UsuarioInicio.Nombre;
             grillaGastos.DataSource = oCierreN.getGastosVendedor(oCierreE);
             grillaGastos.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;

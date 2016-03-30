@@ -22,6 +22,7 @@ namespace Utilidades
 
         private void FormAppConfig_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             Configuration config =
                 ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 

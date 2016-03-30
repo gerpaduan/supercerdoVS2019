@@ -32,6 +32,7 @@ namespace Presentacion.Embutidos
 
         private void formInfoEmbutido_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
                 oEmbutidoE = oCorteN.findEmbutidoById(idEmbutido_);

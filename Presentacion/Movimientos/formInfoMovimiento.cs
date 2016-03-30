@@ -151,6 +151,7 @@ namespace Presentacion.Movimientos
 
         private void formInfoMovimiento_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
 
         }
 

@@ -206,6 +206,7 @@ namespace Presentacion
 
         private void formMovimientos_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
 
         private void Reporte_Click(object sender, EventArgs e)

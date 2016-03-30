@@ -132,7 +132,7 @@ namespace Presentacion
 
         private void formModificarCorte_Load(object sender, EventArgs e)
         {
-
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
     }
 }

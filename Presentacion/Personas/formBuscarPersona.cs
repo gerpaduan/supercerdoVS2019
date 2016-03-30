@@ -113,6 +113,7 @@ namespace Presentacion.Personas
 
         private void formBuscarPersona_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {

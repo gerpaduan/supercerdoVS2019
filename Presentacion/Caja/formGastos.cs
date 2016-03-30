@@ -28,6 +28,7 @@ namespace Presentacion.Caja
 
         private void formGastos_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today;
             fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
             fechaDesde.Value = today.AddDays(-8); 

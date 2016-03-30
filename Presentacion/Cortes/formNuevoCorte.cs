@@ -388,6 +388,7 @@ namespace Presentacion
 
         private void formNuevoCorte_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             if (Presentacion.FormPrincipal.logueado == false)
             {
                 MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");

@@ -53,7 +53,8 @@ namespace Presentacion
         }
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
-        {            
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();        
             cargarComboSucursal();
             dtCorte = oCorteN.obtenerCortes();
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());

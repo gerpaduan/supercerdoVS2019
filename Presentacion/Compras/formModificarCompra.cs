@@ -52,6 +52,7 @@ namespace Presentacion.Compras
 
         private void formModificarCompra_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             //cargarLista();
             //cargarGrilla();
         }

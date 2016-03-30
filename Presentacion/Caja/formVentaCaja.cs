@@ -1024,6 +1024,7 @@ namespace Presentacion.Ventas
 
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             if (oUsuario != null)
             {
                 validarAperturaCaja();
