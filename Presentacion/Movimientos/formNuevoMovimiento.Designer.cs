@@ -80,6 +80,7 @@
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.txtCantTotUni = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -193,6 +194,7 @@
             // 
             this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox2.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox2.Controls.Add(this.checkTicket);
             this.groupBox2.Controls.Add(this.txtCantUnidad);
             this.groupBox2.Controls.Add(this.label9);
             this.groupBox2.Controls.Add(this.checkLeerPeso);
@@ -664,6 +666,19 @@
             this.label10.TabIndex = 41;
             this.label10.Text = "Cant. Unidades";
             // 
+            // checkTicket
+            // 
+            this.checkTicket.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Location = new System.Drawing.Point(379, 25);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(58, 19);
+            this.checkTicket.TabIndex = 23;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = true;
+            // 
             // formNuevoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -747,5 +762,6 @@
         private System.Windows.Forms.TextBox txtCreado;
         protected System.Windows.Forms.Label lblIdDestino;
         protected System.Windows.Forms.Label lblIdOrigen;
+        private System.Windows.Forms.CheckBox checkTicket;
     }
 }

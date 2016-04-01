@@ -125,11 +125,11 @@ namespace Presentacion
                         oCorteN.agregarCortePorMovimiento(corteEnLista);
                     }
 
-                    //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                    //if (resp == DialogResult.Yes)
-                    //{
-                    //    imprimir();
-                    //}
+                    if (checkTicket.Checked)
+                    {
+                        Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+                        tipoTicket.movimientoAcumulado(oMovimiento.IdMovimiento);
+                    }
 
                     frmMovimiento.cargarGrilla();
                     huboModificaciones = false;

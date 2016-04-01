@@ -155,10 +155,10 @@ namespace Negocio
              oCorteD = new Datos.Corte();
              oCorteD.quitarCortesPorMovimiento(oMovimientoE);
          }
-         public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento)
+         public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.cargarCortesPorMovimiento(idMovimiento);
+             return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
          }
 
          public int agregarActualizacionStock(DateTime fechaActualizacion, string observaciones)

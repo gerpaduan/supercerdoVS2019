@@ -619,7 +619,7 @@ namespace Datos
             return oMovimiento;
         }
 
-        public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento)
+        public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
         {
             cmCorte = new SqlCommand();
 
@@ -629,6 +629,7 @@ namespace Datos
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "cargarCortesPorMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", idMovimiento);
+            cmCorte.Parameters.AddWithValue("@acumulado", acumulado);
 
             List<Entidades.CortePorMovimiento> listaCortesPorMovimiento = new List<Entidades.CortePorMovimiento>();
 

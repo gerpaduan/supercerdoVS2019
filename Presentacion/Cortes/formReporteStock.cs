@@ -56,6 +56,44 @@ namespace Presentacion.Cortes
         {
             try
             {
+                //Reporte Stock Actual
+                if (comboTipoReporte.Text == "Stock Actual")
+                {
+                    Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+                    tipoTicket.stockActual(comboInicioStock.Text, comboCierreStock.Text, grillaReportes);
+                }
+
+                //Reporte Cierre Stock
+                if (comboTipoReporte.Text == "Cierre Stock")
+                {
+                    Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+                    tipoTicket.cierreStock(comboInicioStock.Text, comboCierreStock.Text, grillaReportes);
+                    return;
+                    #region reporte anterior
+                    //ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
+
+                    //string titulo = "Reporte Cierre Stock";
+                    //foreach (DataRow fila in dtGrillaReporte.Rows)
+                    //{
+                    //    DataRow dsFila = dtCierreStock.NewRow();
+                    //    dsFila["Codigo"] = fila["Codigo"];
+                    //    dsFila["Corte"] = fila["Corte"];
+                    //    dsFila["Sucursal"] = fila["Sucursal"];
+                    //    dsFila["TotalIngresado"] = fila["Total Ingresado"];
+                    //    dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
+                    //    dsFila["TotalVendido"] = fila["Total Vendido"];
+                    //    dsFila["StockTeorico"] = fila["Stock Teorico"];
+                    //    dsFila["StockReal"] = fila["Stock Real"];
+                    //    dsFila["Faltante"] = fila["Faltante"];
+
+                    //    dtCierreStock.Rows.Add(dsFila);
+                    //}
+                    //ReporteCierreStock reporte = new ReporteCierreStock();
+                    //FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                    //frmReportes.Show();
+                    #endregion
+                }
+
                 if (comboTipoReporte.SelectedIndex == 6)
                 {
                     ReportesDataSet.dtReporteTeoricoRealDataTable dtTeoricoReal = new ReportesDataSet.dtReporteTeoricoRealDataTable();
@@ -77,31 +115,6 @@ namespace Presentacion.Cortes
                     frmReportes.Show();
                 }
 
-                //Reporte Cierre Stock
-                if (comboTipoReporte.Text == "Cierre Stock")
-                {
-                    ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
-
-                    string titulo = "Reporte Cierre Stock";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtCierreStock.NewRow();
-                        dsFila["Codigo"] = fila["Codigo"];
-                        dsFila["Corte"] = fila["Corte"];
-                        dsFila["Sucursal"] = fila["Sucursal"];
-                        dsFila["TotalIngresado"] = fila["Total Ingresado"];
-                        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
-                        dsFila["TotalVendido"] = fila["Total Vendido"];
-                        dsFila["StockTeorico"] = fila["Stock Teorico"];
-                        dsFila["StockReal"] = fila["Stock Real"];
-                        dsFila["Faltante"] = fila["Faltante"];
-
-                        dtCierreStock.Rows.Add(dsFila);
-                    }
-                    ReporteCierreStock reporte = new ReporteCierreStock();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
 
                 if (comboTipoReporte.Text == "Cierre Stock 2")
                 {

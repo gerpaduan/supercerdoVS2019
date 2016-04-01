@@ -59,7 +59,7 @@ namespace Presentacion.Movimientos
 
         private void cargarListaCortesPorMovimiento()
         {
-            listaCortesPorMovimiento= oCorteN.cargarCortesPorMovimiento(oMovimientoE.IdMovimiento);
+            listaCortesPorMovimiento= oCorteN.cargarCortesPorMovimiento(oMovimientoE.IdMovimiento, false);
             cargarGrilla();        
         }
 
@@ -124,7 +124,6 @@ namespace Presentacion.Movimientos
             }
             else
             {
-
                 if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
                     Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
                 {
@@ -157,41 +156,39 @@ namespace Presentacion.Movimientos
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
-            try
-            {
-                string titulo = "Movimiento";
-                FormReportes frmReportes;
+            Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+            tipoTicket.movimientoAcumulado(oMovimientoE.IdMovimiento);
 
-                DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
+            #region imprimir desde reportes
+            //string titulo = "Movimiento";
+            //FormReportes frmReportes;
 
-                if (resp != DialogResult.Cancel)
-                {
-                    if (resp == DialogResult.Yes)
-                    {
-                        titulo = "Movimiento Acum";
-                        Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
-                        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+            //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
 
-                    }
-                    else
-                    {
-                        Reportes.ReporteMovimiento reporte = new Reportes.ReporteMovimiento();
-                        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+            //if (resp != DialogResult.Cancel)
+            //{
+            //    if (resp == DialogResult.Yes)
+            //    {
+            //        titulo = "Movimiento Acum";
+            //        Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
+            //        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
 
-                    }
-                    frmReportes.ListaCortesPorMov = listaEnGrilla;
-                    frmReportes.Objetos = true;
-                    frmReportes.ReporteMovimiento = true;
-                    frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
-                    frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
+            //    }
+            //    else
+            //    {
+            //        Reportes.ReporteMovimiento reporte = new Reportes.ReporteMovimiento();
+            //        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
 
-                    frmReportes.Show();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            //    }
+            //    frmReportes.ListaCortesPorMov = listaEnGrilla;
+            //    frmReportes.Objetos = true;
+            //    frmReportes.ReporteMovimiento = true;
+            //    frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
+            //    frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
+
+            //    frmReportes.Show();
+            //}
+            #endregion
         }
 
         private void eliminar_Click(object sender, EventArgs e)

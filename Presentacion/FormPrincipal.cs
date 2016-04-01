@@ -212,8 +212,19 @@ namespace Presentacion
             }
         }
 
-        private static void reportes()
-        {
+        private void reportes()
+        {            
+            if (!logueado)
+            {
+                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.ShowDialog(this);
+                if (oUsuario == null) return;
+                if (!oUsuario.Admin)
+                {
+                    MessageBox.Show("No tienes permiso para ver reportes");
+                    return;
+                }                
+            }
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
         }
@@ -685,7 +696,7 @@ namespace Presentacion
                     Utilidades.Conexion.connStringActual = comboConexion.Text;
                     Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
                     MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);
-                    this.Text += Utilidades.Conexion.getSucursalConexion();
+                    this.Text = Utilidades.Conexion.getSucursalConexion();
                 }
                 else
                 {
