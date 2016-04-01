@@ -55,6 +55,12 @@
       <DependentUpon>BarraProgreso.cs</DependentUpon>
     </Compile>
     <Compile Include="Conexion.cs" />
+    <Compile Include="FormAppConfig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormAppConfig.Designer.cs">
+      <DependentUpon>FormAppConfig.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormLogin.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -86,6 +92,9 @@
   <ItemGroup>
     <EmbeddedResource Include="BarraProgreso.resx">
       <DependentUpon>BarraProgreso.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormAppConfig.resx">
+      <DependentUpon>FormAppConfig.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>

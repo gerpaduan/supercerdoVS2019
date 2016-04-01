@@ -639,6 +639,7 @@ namespace Presentacion
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Select();
                     timer1.Enabled = false;
                 }
             }

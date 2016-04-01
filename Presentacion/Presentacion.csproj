@@ -468,6 +468,12 @@
       <DependentUpon>formStock.cs</DependentUpon>
     </Compile>
     <Compile Include="Ticket\CrearTicket.cs" />
+    <Compile Include="Ticket\formTipoTicket.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ticket\formTipoTicket.Designer.cs">
+      <DependentUpon>formTipoTicket.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ticket\RawPrinterHelper.cs" />
     <Compile Include="Usuarios\FormUsuarios.cs">
       <SubType>Form</SubType>
@@ -709,6 +715,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Stock\formStock.resx">
       <DependentUpon>formStock.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Ticket\formTipoTicket.resx">
+      <DependentUpon>formTipoTicket.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Usuarios\FormUsuarios.resx">
       <DependentUpon>FormUsuarios.cs</DependentUpon>
