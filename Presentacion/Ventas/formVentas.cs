@@ -188,14 +188,21 @@ namespace Presentacion
 
         private void formVentas_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            DateTime today = DateTime.Today.Date.AddHours(24);
-            fechaHasta.Value = today.AddMilliseconds(-1);
-            fechaDesde.Value = today.AddDays(-1);
-            cargarSucursal();
-            cargarComboVendedor();
-            cargar = true;
-            cargarGrilla();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                DateTime today = DateTime.Today.Date.AddHours(24);
+                fechaHasta.Value = today.AddMilliseconds(-1);
+                fechaDesde.Value = today.AddDays(-1);
+                cargarSucursal();
+                cargarComboVendedor();
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(Utilidades.Util_Form.errorConexionBD(ex.Message));
+            }
         }
 
         private void cargarComboVendedor()

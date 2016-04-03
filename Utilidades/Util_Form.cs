@@ -17,6 +17,11 @@ namespace Utilidades
             InitializeComponent();
         }
 
+        private void Util_Form_Load(object sender, EventArgs e)
+        {
+
+        }
+
         public static bool validarCampoVacio(string texto, string nombreTextBox)
         {
             bool resp = true;
@@ -218,6 +223,16 @@ namespace Utilidades
         public static int idSucursalAppConfig()
         {           
             return Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+        }
+
+        public static string errorConexionBD(string exception)
+        {
+            string lineaDivisoria = "\n------------------\n";
+            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n"+
+                "--Si no se conecta posiblemente no haya INTERNET.--\n";
+            mensaje = exception.Contains("Error relacionado con la red") ||
+                exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
+            return mensaje;
         }
     }
 }
