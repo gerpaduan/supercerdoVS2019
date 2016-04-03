@@ -1,0 +1,5 @@
+--procedimientos a eliminar
+
+quitarCortesPorMovimiento
+agregarMovimiento
+modificarMovimiento
