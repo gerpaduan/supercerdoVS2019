@@ -18,6 +18,9 @@ namespace Presentacion
         Entidades.Corte oCorteMaestroE;
 
         DataTable dtCortes;
+        DataTable dtCortesFiltrado;
+
+        int codigoDesde, codigoHasta;
        
         public formCortes()
         {
@@ -81,7 +84,8 @@ namespace Presentacion
             grillaCortes.AutoGenerateColumns = false;
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
-            grillaCortes.DataSource = dtCortes;            
+            grillaCortes.DataSource = dtCortes;
+            filtarGrilla();
         }
 
         private void modificarCorte()
@@ -231,12 +235,51 @@ namespace Presentacion
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
-            imprimirReporte();
+            Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+            tipoTicket.cortesConPrecios(dtCortesFiltrado);
+            //imprimirReporte();
         }
 
         private void formCortes_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
-        }      
+        }
+
+        private void txtCodigoDesde_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(txtCodigoDesde.Text) && Utilidades.Util_Form.validarCampoNumeroEntero(txtCodigoDesde.Text, "Desde"))
+            {
+                codigoDesde = Convert.ToInt32(txtCodigoDesde.Text);
+            }
+            filtarGrilla();
+        }
+
+        private void txtCodigohasta_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(txtCodigohasta.Text) && Utilidades.Util_Form.validarCampoNumeroEntero(txtCodigohasta.Text, "Hasta"))
+            {
+                codigoHasta = Convert.ToInt32(txtCodigohasta.Text);
+            }
+            filtarGrilla();
+        }
+
+        public void filtarGrilla()
+        {
+            dtCortesFiltrado = dtCortes.Clone();
+            // Presuming the DataTable has a column named Date.
+            string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";
+            expresion+= " and ";
+            expresion += !string.IsNullOrEmpty(txtCodigohasta.Text) ? "codigo <= " + codigoHasta :  "true";
+
+            DataRow[] foundRows;
+            // Use the Select method to find all rows matching the filter.
+            foundRows = dtCortes.Select(expresion, "codigo");
+
+            foreach (DataRow row in foundRows)
+            {
+                dtCortesFiltrado.ImportRow(row);
+            }
+            grillaCortes.DataSource = dtCortesFiltrado;
+        }
     }
 }

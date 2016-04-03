@@ -28,16 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCortes));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle19 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle20 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle21 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle22 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle27 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
@@ -68,6 +69,12 @@
             this.txtBuscarCorte = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txtCodigoDesde = new System.Windows.Forms.TextBox();
+            this.txtCodigohasta = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.panel1.SuspendLayout();
@@ -179,8 +186,8 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.idCorte.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle19.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.idCorte.DefaultCellStyle = dataGridViewCellStyle19;
             this.idCorte.HeaderText = "ID Corte";
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -190,8 +197,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle20.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle20;
             this.codigo.HeaderText = "Código";
             this.codigo.Name = "codigo";
             this.codigo.ReadOnly = true;
@@ -201,8 +208,8 @@
             // 
             this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.corte.DataPropertyName = "corte";
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.corte.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle21.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.corte.DefaultCellStyle = dataGridViewCellStyle21;
             this.corte.HeaderText = "Corte";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -212,10 +219,10 @@
             // 
             this.precioKg.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.precioKg.DataPropertyName = "precioKg";
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle4.Format = "N2";
-            dataGridViewCellStyle4.NullValue = null;
-            this.precioKg.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle22.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle22.Format = "N2";
+            dataGridViewCellStyle22.NullValue = null;
+            this.precioKg.DefaultCellStyle = dataGridViewCellStyle22;
             this.precioKg.HeaderText = "Precio Kg.";
             this.precioKg.Name = "precioKg";
             this.precioKg.ReadOnly = true;
@@ -261,10 +268,10 @@
             // 
             this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.porcentaje.DataPropertyName = "porcentaje";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle5.Format = "N3";
-            dataGridViewCellStyle5.NullValue = null;
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle23.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle23.Format = "N3";
+            dataGridViewCellStyle23.NullValue = null;
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle23;
             this.porcentaje.HeaderText = "Porcentaje";
             this.porcentaje.Name = "porcentaje";
             this.porcentaje.ReadOnly = true;
@@ -274,10 +281,10 @@
             // 
             this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle6.Format = "N2";
-            dataGridViewCellStyle6.NullValue = null;
-            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle24.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle24.Format = "N2";
+            dataGridViewCellStyle24.NullValue = null;
+            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle24;
             this.porcentajeHueso.HeaderText = "% Desperdicio";
             this.porcentajeHueso.Name = "porcentajeHueso";
             this.porcentajeHueso.ReadOnly = true;
@@ -287,10 +294,10 @@
             // 
             this.desvioEstandar.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.desvioEstandar.DataPropertyName = "desvioEstandar";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle7.Format = "N2";
-            dataGridViewCellStyle7.NullValue = null;
-            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle25.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle25.Format = "N2";
+            dataGridViewCellStyle25.NullValue = null;
+            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle25;
             this.desvioEstandar.FillWeight = 90F;
             this.desvioEstandar.HeaderText = "Desvío Estandar";
             this.desvioEstandar.Name = "desvioEstandar";
@@ -317,11 +324,11 @@
             // 
             this.stockSL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSL.DataPropertyName = "stockSL";
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle8.Format = "N3";
-            dataGridViewCellStyle8.NullValue = null;
-            this.stockSL.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle26.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle26.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle26.Format = "N3";
+            dataGridViewCellStyle26.NullValue = null;
+            this.stockSL.DefaultCellStyle = dataGridViewCellStyle26;
             this.stockSL.FillWeight = 50F;
             this.stockSL.HeaderText = "Stock S. Lorenzo";
             this.stockSL.Name = "stockSL";
@@ -349,11 +356,11 @@
             // 
             this.stockSM.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSM.DataPropertyName = "stockSM";
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle9.Format = "N3";
-            dataGridViewCellStyle9.NullValue = null;
-            this.stockSM.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle27.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle27.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle27.Format = "N3";
+            dataGridViewCellStyle27.NullValue = null;
+            this.stockSM.DefaultCellStyle = dataGridViewCellStyle27;
             this.stockSM.FillWeight = 50F;
             this.stockSM.HeaderText = "Stock S. Martín";
             this.stockSM.Name = "stockSM";
@@ -388,6 +395,11 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.SteelBlue;
+            this.panel1.Controls.Add(this.label3);
+            this.panel1.Controls.Add(this.label2);
+            this.panel1.Controls.Add(this.txtCodigohasta);
+            this.panel1.Controls.Add(this.txtCodigoDesde);
+            this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.groupBox1);
             this.panel1.Controls.Add(this.txtBuscarCorte);
             this.panel1.Controls.Add(this.label9);
@@ -402,9 +414,9 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(15, 47);
+            this.groupBox1.Location = new System.Drawing.Point(549, 19);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(829, 7);
+            this.groupBox1.Size = new System.Drawing.Size(295, 7);
             this.groupBox1.TabIndex = 26;
             this.groupBox1.TabStop = false;
             // 
@@ -437,6 +449,59 @@
             this.btnBuscar.Text = "Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(451, 11);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(99, 15);
+            this.label1.TabIndex = 27;
+            this.label1.Text = "Filtrar por codigo";
+            // 
+            // txtCodigoDesde
+            // 
+            this.txtCodigoDesde.Location = new System.Drawing.Point(615, 33);
+            this.txtCodigoDesde.Name = "txtCodigoDesde";
+            this.txtCodigoDesde.Size = new System.Drawing.Size(88, 20);
+            this.txtCodigoDesde.TabIndex = 28;
+            this.toolTip1.SetToolTip(this.txtCodigoDesde, "Ingrese aquí el Código a partir del cual se empezará a filtrar.\r\n(Deje vacío el c" +
+                    "ampo no filtrar por este campo)");
+            this.txtCodigoDesde.TextChanged += new System.EventHandler(this.txtCodigoDesde_TextChanged);
+            // 
+            // txtCodigohasta
+            // 
+            this.txtCodigohasta.Location = new System.Drawing.Point(754, 33);
+            this.txtCodigohasta.Name = "txtCodigohasta";
+            this.txtCodigohasta.Size = new System.Drawing.Size(89, 20);
+            this.txtCodigohasta.TabIndex = 29;
+            this.toolTip1.SetToolTip(this.txtCodigohasta, "Ingrese aquí el Código hasta donde se filtrará.\r\n(Deje vacío el campo no filtrar " +
+                    "por este campo)");
+            this.txtCodigohasta.TextChanged += new System.EventHandler(this.txtCodigohasta_TextChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(566, 35);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(43, 15);
+            this.label2.TabIndex = 30;
+            this.label2.Text = "Desde";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label3.Location = new System.Drawing.Point(709, 34);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(39, 15);
+            this.label3.TabIndex = 31;
+            this.label3.Text = "Hasta";
             // 
             // formCortes
             // 
@@ -498,5 +563,11 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn stockSM;
         private System.Windows.Forms.GroupBox groupBox1;
+        protected System.Windows.Forms.Label label1;
+        protected System.Windows.Forms.Label label3;
+        protected System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtCodigohasta;
+        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.TextBox txtCodigoDesde;
     }
 }
