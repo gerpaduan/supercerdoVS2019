@@ -13,7 +13,7 @@ using System.Configuration;
 
 namespace Presentacion
 {
-    public partial class formNuevoMovimiento : formBaseColor, InterfaceCorte
+    public partial class formNuevoMovimiento : formBaseColor, InterfaceCorte, InterfaceUsuario
     {
         Utilidades.SingletonLeerPeso Leer_Peso;
         Util_Form Util_Form = new Util_Form();
@@ -24,6 +24,7 @@ namespace Presentacion
         DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
 
+        public Entidades.Usuario oUsuario;
         Entidades.Corte oCorteE = new Entidades.Corte();
         Entidades.Movimiento oMovimiento = new Entidades.Movimiento();
         Entidades.Sucursal oSucursalOrigen = new Entidades.Sucursal();
@@ -45,11 +46,44 @@ namespace Presentacion
         public formNuevoMovimiento()
         {
             InitializeComponent();
+            idMovimientoLabel.Text = "0";
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarSucursales();
             dtCorte = oCorteN.obtenerCortes();
         }
+
+        private void formNuevoMovimiento_Load(object sender, EventArgs e)
+        {
+            logueoUsuario();
+            if (oUsuario == null)
+            {
+                this.Close();
+                return;
+            }
+            txtUsuario.Text = oUsuario.Nombre;
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+            if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
+            {
+                this.Close();
+            }
+
+            if (dtCorte.Rows.Count == 0)
+            {
+                MessageBox.Show("No se pudieron cargar los cortes.");
+            }
+        }
+
+        private void logueoUsuario()
+        {
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        } 
 
         public void obtenerParametros(formMovimientos frmMovimientoParam, Entidades.Movimiento movimientoParam, List<Entidades.CortePorMovimiento> listaCortesPorMovimientoParam)
         {            
@@ -70,6 +104,8 @@ namespace Presentacion
         {
             this.Text = "Modificar Movimiento";
 
+            idMovimientoLabel.Text = oMovimiento.IdMovimiento.ToString();
+
             lblIdDestino.Visible = true;
             lblIdOrigen.Visible = true;
 
@@ -79,18 +115,15 @@ namespace Presentacion
                 oMovimiento.IdMovimiento.ToString() : "-";
 
             comboSucOrigen.SelectedValue = Convert.ToInt32(oMovimiento.SucursalOrigen.idSucursal);
-
             txtFechaMovimiento.Value = oMovimiento.FechaMovimiento;
-            txtHora.Text = oMovimiento.FechaMovimiento.TimeOfDay.ToString();
             txtObservaciones.Text = oMovimiento.Observaciones;
 
-            string datosCreado = "Creado: " + oMovimiento.Creado.ToString() + "\n\nModificado: " +
-                (oMovimiento.Actualizado > DateTime.Today.AddYears(-20) ? oMovimiento.Actualizado.ToString() : "-");
-            txtCreado.Text = datosCreado;
-            txtCreado.Visible = true;
+            txtCreado.Text = Util_Form.fechaFormato24Horas(oMovimiento.Creado);
+            txtCreadoPor.Text = oMovimiento.CreadoPor != null ? oMovimiento.CreadoPor.Nombre : "-";
+            txtActualizado.Text = oMovimiento.Actualizado != null ? Util_Form.fechaFormato24Horas(oMovimiento.Actualizado) : "-";
+            txtActualizadoPor.Text = oMovimiento.ActualizadoPor != null ? oMovimiento.ActualizadoPor.Nombre : "-";
 
             cargarGrilla();
-
         }
 
         public void agregarMovimiento()
@@ -102,21 +135,13 @@ namespace Presentacion
                 cargarMovimiento();
                 try
                 {
-                    if (modificacion)
+                    if (eliminacion)
                     {
-                        if (eliminacion)
-                        {
-                            oCorteN.eliminarMovimiento(oMovimiento.IdMovimiento);
-                        }
-                        else
-                        {
-                            oCorteN.quitarCortesPorMovimiento(oMovimiento);
-                            oCorteN.modificarMovimiento(oMovimiento);
-                        }
+                        oCorteN.eliminarMovimiento(oMovimiento.IdMovimiento, oUsuario);
                     }
                     else
                     {
-                        oMovimiento.IdMovimiento = oCorteN.agregarMovimiento(oMovimiento);
+                        oMovimiento.IdMovimiento = oCorteN.addOrEditMovimiento(oMovimiento);
                     }
 
                     foreach (Entidades.CortePorMovimiento corteEnLista in listaCortesPorMovimiento)
@@ -146,7 +171,7 @@ namespace Presentacion
         {
             try
             {
-                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(oMovimiento.IdMovimiento);
+                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(oMovimiento.IdMovimiento, true);
                 FormReportes frmReportes;
 
                 string titulo = "Movimiento Acum.";
@@ -212,7 +237,6 @@ namespace Presentacion
             oMovimiento.FechaMovimiento = txtFechaMovimiento.Value;
 
             //Se cargan sucursales y se asignan al movimiento
-
             oSucursalOrigen.idSucursal = Convert.ToInt32(comboSucOrigen.SelectedValue.ToString());
             oSucursalDestino.idSucursal = Convert.ToInt32(comboSucDestino.SelectedValue.ToString());
 
@@ -220,7 +244,15 @@ namespace Presentacion
             oMovimiento.SucursalDestino = oSucursalDestino;
 
             oMovimiento.Observaciones = txtObservaciones.Text.Trim();
-
+            switch (oMovimiento.IdMovimiento)
+            {
+                case 0:
+                    oMovimiento.CreadoPor = oUsuario;
+                    break;
+                default:
+                    oMovimiento.ActualizadoPor = oUsuario;
+                    break;
+            }
         }
 
         private bool validar()
@@ -583,20 +615,6 @@ namespace Presentacion
             cambiarMantenerCodigo();
         }
 
-        private void formNuevoMovimiento_Load(object sender, EventArgs e)
-        {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
-            {
-                this.Close();
-            }
-
-            if (dtCorte.Rows.Count == 0)
-            {
-                MessageBox.Show("No se pudieron cargar los cortes.");
-            }
-        }
-
         private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)
         {
             try
@@ -723,7 +741,7 @@ namespace Presentacion
 
         private void txtFechaMovimiento_ValueChanged(object sender, EventArgs e)
         {
-            huboModificaciones = true;
+            huboModificaciones = oMovimiento != null && oMovimiento.IdMovimiento > 0 && !oMovimiento.FechaMovimiento.Equals(txtFechaMovimiento.Value);
         }
     }
 }

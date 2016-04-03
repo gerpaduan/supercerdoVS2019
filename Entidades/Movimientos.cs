@@ -15,6 +15,15 @@ namespace Entidades
         private string observaciones;
         private DateTime? creado;
         private DateTime? actualizado;
+        private Usuario creadoPor;
+        private Usuario actualizadoPor;
+        private List<Entidades.CortePorMovimiento> listaCortesPorMov;
+
+        public List<Entidades.CortePorMovimiento> ListaCortesPorMov
+        {
+            get { return listaCortesPorMov; }
+            set { listaCortesPorMov = value; }
+        }
 
         public DateTime? Actualizado
         {
@@ -26,6 +35,18 @@ namespace Entidades
         {
             get { return creado; }
             set { creado = value; }
+        }
+
+        public Usuario CreadoPor
+        {
+            get { return creadoPor; }
+            set { creadoPor = value; }
+        }
+
+        public Usuario ActualizadoPor
+        {
+            get { return actualizadoPor; }
+            set { actualizadoPor = value; }
         }
 
         public DateTime FechaMovimiento

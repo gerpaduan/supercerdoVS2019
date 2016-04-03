@@ -25,7 +25,7 @@ namespace Presentacion.Ticket
             try
             {
                 Negocio.Corte oCorteN = new Negocio.Corte();
-                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(idMovimiento);
+                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(idMovimiento, true);
 
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();
                 ticket.imprimir = true;
@@ -205,5 +205,29 @@ namespace Presentacion.Ticket
             }
             return textoModif;
         }
+
+        public void cortesConPrecios(DataTable dtCorte)
+        {
+            try
+            {
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = true;
+                ticket.TextoCentro("Listado Cortes");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquier("123456789*123456789*123456789*12");
+                ticket.TextoIzquierda("Descripcion               Precio");
+                ticket.LineasGuion();
+                foreach (DataRow fila in dtCorte.Rows)
+                {
+                    ticket.TextoExtremos(fila["corte"].ToString(), Convert.ToDecimal(fila["precioKg"]).ToString("F2"));
+                }
+                ticket.LineasEnBlanco(3);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al imprimir ticket.\n\n" + ex.Message + "\n\n" + ex.StackTrace);
+            }
+        }
+
     }
 }

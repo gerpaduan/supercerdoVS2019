@@ -118,9 +118,9 @@ namespace Negocio
 
          #region Movimiento
 
-         public int agregarMovimiento(Entidades.Movimiento oMovimientoE)
+         public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
          {
-             return oCorteD.agregarMovimiento(oMovimientoE);
+             return oCorteD.addOrEditMovimiento(oMovimientoE);
          }
 
          public void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento)
@@ -128,14 +128,14 @@ namespace Negocio
              oCorteD.agregarCortePorMovimiento(cortePorMovimiento);
          }
 
-         public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
-         {
-             oCorteD.modificarMovimiento(oMovimientoE);
-         }
+         //public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
+         //{
+         //    oCorteD.modificarMovimiento(oMovimientoE);
+         //}
 
-         public void eliminarMovimiento(int idMovimiento)
+         public void eliminarMovimiento(int idMovimiento, Entidades.Usuario oUsuario)
          {
-             oCorteD.eliminarMovimiento(idMovimiento);
+             oCorteD.eliminarMovimiento(idMovimiento, oUsuario);
          }
 
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
@@ -144,17 +144,18 @@ namespace Negocio
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 
-         public Entidades.Movimiento cargarMovimiento(int idMovimiento)
+         public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.cargarMovimiento(idMovimiento);
+             return oCorteD.cargarMovimiento(idMovimiento, acumulado);
          }
 
-         public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
-         {
-             oCorteD = new Datos.Corte();
-             oCorteD.quitarCortesPorMovimiento(oMovimientoE);
-         }
+         //public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
+         //{
+         //    oCorteD = new Datos.Corte();
+         //    oCorteD.quitarCortesPorMovimiento(oMovimientoE);
+         //}
+
          public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
          {
              oCorteD = new Datos.Corte();

@@ -458,28 +458,37 @@ namespace Datos
 
         #region Movimiento
 
-        public int agregarMovimiento(Entidades.Movimiento oMovimientoE)
+        public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
         {
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
             cmCorte.CommandType = CommandType.StoredProcedure;
-            cmCorte.CommandText = "agregarMovimiento";
+            cmCorte.CommandText = "addOrEditMovimiento";
+            cmCorte.Parameters.AddWithValue("@idMovimiento", oMovimientoE.IdMovimiento);
             cmCorte.Parameters.AddWithValue("@fechaMovimiento", oMovimientoE.FechaMovimiento);
             cmCorte.Parameters.AddWithValue("@sucursalOrigen", oMovimientoE.SucursalOrigen.idSucursal);
             cmCorte.Parameters.AddWithValue("@sucursalDestino", oMovimientoE.SucursalDestino.idSucursal);
             cmCorte.Parameters.AddWithValue("@observaciones", oMovimientoE.Observaciones);
+            cmCorte.Parameters.AddWithValue("@creadoPor", oMovimientoE.CreadoPor.Id);
 
-            SqlDataReader drMovimiento = cmCorte.ExecuteReader();
-            int idMovimiento = 0;
-            while (drMovimiento.Read())
+            if (oMovimientoE.IdMovimiento.Equals(0))
             {
-                idMovimiento = Convert.ToInt32(drMovimiento["idMovimiento"].ToString());                
+                SqlDataReader drMovimiento = cmCorte.ExecuteReader();
+                while (drMovimiento.Read())
+                {
+                    oMovimientoE.IdMovimiento = Convert.ToInt32(drMovimiento["idMovimiento"].ToString());
+                }                
+            }
+            else
+            {
+                cmCorte.Parameters.AddWithValue("@actualizadoPor", oMovimientoE.ActualizadoPor.Id);
+                cmCorte.ExecuteNonQuery();
             }
             cmCorte.Connection.Close();
             cmCorte = null;
 
-            return idMovimiento;
+            return oMovimientoE.IdMovimiento;
         }
 
         public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
@@ -497,13 +506,14 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@sucursalOrigen", oMovimientoE.SucursalOrigen.idSucursal);
             cmCorte.Parameters.AddWithValue("@sucursalDestino", oMovimientoE.SucursalDestino.idSucursal);
             cmCorte.Parameters.AddWithValue("@observaciones", oMovimientoE.Observaciones);
+            cmCorte.Parameters.AddWithValue("@actualizadoPor", oMovimientoE.ActualizadoPor.Id);
 
             cmCorte.ExecuteNonQuery();
 
             cmCorte.Connection.Close();
         }
 
-        public void eliminarMovimiento(int idMovimiento)
+        public void eliminarMovimiento(int idMovimiento, Entidades.Usuario oUsuario)
         {
             cmCorte = new SqlCommand();
 
@@ -512,6 +522,7 @@ namespace Datos
             cmCorte.CommandType = CommandType.StoredProcedure;
             cmCorte.CommandText = "eliminarMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", idMovimiento);
+            cmCorte.Parameters.AddWithValue("@actualizadoPor", oUsuario.Id);
 
             cmCorte.Connection.Open();
             cmCorte.ExecuteNonQuery();
@@ -574,7 +585,7 @@ namespace Datos
             return dtMovimientos;
         }
 
-        public Entidades.Movimiento cargarMovimiento(int idMovimiento)
+        public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
         {
             cmCorte = new SqlCommand();
 
@@ -609,13 +620,22 @@ namespace Datos
 
                 oMovimiento.Observaciones = drMovimiento["observaciones"].ToString();
 
-                oMovimiento.Creado = drMovimiento["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(drMovimiento["creado"].ToString());
-                DateTime fechaNull = Convert.ToDateTime("01/01/1990");
-                oMovimiento.Actualizado = !String.IsNullOrEmpty(drMovimiento["actualizado"].ToString()) ? (Convert.ToDateTime(drMovimiento["actualizado"].ToString())) : fechaNull;
+                ///Borrar si funciona el seteo nuevo
+                ///
+                //oMovimiento.Creado = drMovimiento["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(drMovimiento["creado"].ToString());
+                //DateTime fechaNull = Convert.ToDateTime("01/01/1990");
+                //oMovimiento.Actualizado = !String.IsNullOrEmpty(drMovimiento["actualizado"].ToString()) ? (Convert.ToDateTime(drMovimiento["actualizado"].ToString())) : fechaNull;
+
+                oMovimiento.Creado = Convert.ToDateTime(drMovimiento["creado"]);
+                oMovimiento.Actualizado = drMovimiento["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drMovimiento["actualizado"]);          
+
+                Datos.Usuario oUsuarioD = new Usuario();
+                oMovimiento.CreadoPor = string.IsNullOrEmpty(drMovimiento["creadoPor"].ToString()) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drMovimiento["creadoPor"]));
+                oMovimiento.ActualizadoPor = string.IsNullOrEmpty(drMovimiento["actualizadoPor"].ToString()) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drMovimiento["actualizadoPor"]));
+
+                oMovimiento.ListaCortesPorMov = cargarCortesPorMovimiento(oMovimiento.IdMovimiento, acumulado);
             }
-
             cmCorte.Connection.Close();
-
             return oMovimiento;
         }
 
@@ -632,7 +652,6 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@acumulado", acumulado);
 
             List<Entidades.CortePorMovimiento> listaCortesPorMovimiento = new List<Entidades.CortePorMovimiento>();
-
             SqlDataReader drMovimiento = cmCorte.ExecuteReader();
 
             while (drMovimiento.Read())
