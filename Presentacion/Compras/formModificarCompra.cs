@@ -16,7 +16,6 @@ namespace Presentacion.Compras
         Negocio.Corte oCorteN = new Negocio.Corte();
         string estadoModificar;
         bool modificado = false;
-        DateTime fechaModificar;//borrar
         formCompras frmCompras;
         Entidades.Usuario oUsuario;
         Entidades.Compra oCompraModificada = new Entidades.Compra();
@@ -963,11 +962,11 @@ namespace Presentacion.Compras
 
         private void cargarReporte()
         {
-            int tipoReporte=4, idSucursal=2;
+            //int tipoReporte=4, idSucursal=2;
 
-            formReporteStock frmReporte = new formReporteStock();
-            frmReporte.obtenerParametros(idSucursal, oCompraModificada.FechaCompra, fechaModificar, tipoReporte, oCompraModificada.NroRemito);
-            frmReporte.Show();
+            //formReporteStock frmReporte = new formReporteStock();
+            //frmReporte.obtenerParametros(idSucursal, oCompraModificada.FechaCompra, fechaModificar, tipoReporte, oCompraModificada.NroRemito);
+            //frmReporte.Show();
         }
 
         private void PorcentajesCorte_Click(object sender, EventArgs e)

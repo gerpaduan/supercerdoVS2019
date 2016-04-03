@@ -15,16 +15,12 @@ namespace Presentacion.Ventas
 {
     public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
-        string cambiar = "";
-        bool formAbierto = false;
         bool pesoBalanza = false;
-        bool checkAnterior = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
         public string vendedor = "-";
         formVentas frmVentas;
-        DataTable dtSucursales;
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();

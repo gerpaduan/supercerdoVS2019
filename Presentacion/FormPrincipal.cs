@@ -23,13 +23,8 @@ namespace Presentacion
     {
         
         public static bool logueado = false;
-        //public enum tipoConexion { local, remota }
-        //public static tipoConexion tipoConn  = tipoConexion.local;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
-
-        Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         string ultimaConnSelect;
 
@@ -183,12 +178,6 @@ namespace Presentacion
 
         private static void stockCortes()
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formStockCortes"] != null)
@@ -262,12 +251,6 @@ namespace Presentacion
 
         private static void baseDeDatos()
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formBackUp"] != null)
@@ -324,10 +307,6 @@ namespace Presentacion
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             ultimaConnSelect = comboConexion.Text;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
-
-            //asigo sucursal al título  
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            oSucursalE = oSucursalN.findById(idSucursal);
         }
 
         private static void embutidos()
