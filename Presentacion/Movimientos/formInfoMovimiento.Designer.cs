@@ -28,16 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoMovimiento));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
-            this.modificar = new System.Windows.Forms.ToolStripButton();
-            this.Reporte = new System.Windows.Forms.ToolStripButton();
-            this.Imprimir = new System.Windows.Forms.ToolStripButton();
-            this.eliminar = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtFechaMovimiento = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
@@ -73,6 +69,11 @@
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
             this.idMovimientoLabel = new System.Windows.Forms.Label();
+            this.modificar = new System.Windows.Forms.ToolStripButton();
+            this.Reporte = new System.Windows.Forms.ToolStripButton();
+            this.Imprimir = new System.Windows.Forms.ToolStripButton();
+            this.eliminar = new System.Windows.Forms.ToolStripButton();
+            this.verAcum = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -85,6 +86,7 @@
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.modificar,
+            this.verAcum,
             this.Reporte,
             this.Imprimir,
             this.eliminar});
@@ -94,53 +96,6 @@
             this.barraControl.Size = new System.Drawing.Size(605, 45);
             this.barraControl.TabIndex = 7;
             this.barraControl.Text = "toolStrip1";
-            // 
-            // modificar
-            // 
-            this.modificar.Image = ((System.Drawing.Image)(resources.GetObject("modificar.Image")));
-            this.modificar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.modificar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.modificar.Name = "modificar";
-            this.modificar.Padding = new System.Windows.Forms.Padding(1);
-            this.modificar.Size = new System.Drawing.Size(64, 42);
-            this.modificar.Text = "Modificar";
-            this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.modificar.Click += new System.EventHandler(this.modificar_Click);
-            // 
-            // Reporte
-            // 
-            this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
-            this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.Reporte.Name = "Reporte";
-            this.Reporte.Size = new System.Drawing.Size(52, 42);
-            this.Reporte.Text = "Reporte";
-            this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.Reporte.Visible = false;
-            this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
-            // 
-            // Imprimir
-            // 
-            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
-            this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.Imprimir.Name = "Imprimir";
-            this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.Imprimir.Size = new System.Drawing.Size(59, 42);
-            this.Imprimir.Text = "Imprimir";
-            this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
-            // 
-            // eliminar
-            // 
-            this.eliminar.Image = ((System.Drawing.Image)(resources.GetObject("eliminar.Image")));
-            this.eliminar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.eliminar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.eliminar.Name = "eliminar";
-            this.eliminar.Padding = new System.Windows.Forms.Padding(1);
-            this.eliminar.Size = new System.Drawing.Size(56, 42);
-            this.eliminar.Text = "Eliminar";
-            this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
             // 
             // pnlBuscar
             // 
@@ -387,8 +342,8 @@
             // idCorteMovimientodo
             // 
             this.idCorteMovimientodo.DataPropertyName = "idCorteMovimiento";
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
-            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
+            this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle5;
             this.idCorteMovimientodo.HeaderText = "Id Corte Mov.";
             this.idCorteMovimientodo.MinimumWidth = 70;
             this.idCorteMovimientodo.Name = "idCorteMovimientodo";
@@ -399,8 +354,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle6;
             this.codigo.FillWeight = 40F;
             this.codigo.HeaderText = "Código";
             this.codigo.MinimumWidth = 80;
@@ -419,8 +374,8 @@
             // cantUnidad
             // 
             this.cantUnidad.DataPropertyName = "cantUnidad";
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.cantUnidad.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.cantUnidad.DefaultCellStyle = dataGridViewCellStyle7;
             this.cantUnidad.FillWeight = 45F;
             this.cantUnidad.HeaderText = "Cant. Un.";
             this.cantUnidad.Name = "cantUnidad";
@@ -429,10 +384,10 @@
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle12.Format = "N3";
-            dataGridViewCellStyle12.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle8.Format = "N3";
+            dataGridViewCellStyle8.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle8;
             this.cantKg.FillWeight = 55F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
@@ -551,6 +506,63 @@
             this.idMovimientoLabel.Text = "idMovimientoLabel";
             this.idMovimientoLabel.Visible = false;
             // 
+            // modificar
+            // 
+            this.modificar.Image = ((System.Drawing.Image)(resources.GetObject("modificar.Image")));
+            this.modificar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.modificar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.modificar.Name = "modificar";
+            this.modificar.Padding = new System.Windows.Forms.Padding(1);
+            this.modificar.Size = new System.Drawing.Size(64, 42);
+            this.modificar.Text = "Modificar";
+            this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.modificar.Click += new System.EventHandler(this.modificar_Click);
+            // 
+            // Reporte
+            // 
+            this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
+            this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.Reporte.Name = "Reporte";
+            this.Reporte.Size = new System.Drawing.Size(52, 42);
+            this.Reporte.Text = "Reporte";
+            this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.Reporte.Visible = false;
+            this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
+            // 
+            // Imprimir
+            // 
+            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
+            this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.Imprimir.Name = "Imprimir";
+            this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.Imprimir.Size = new System.Drawing.Size(59, 42);
+            this.Imprimir.Text = "Imprimir";
+            this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
+            // 
+            // eliminar
+            // 
+            this.eliminar.Image = ((System.Drawing.Image)(resources.GetObject("eliminar.Image")));
+            this.eliminar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.eliminar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.eliminar.Name = "eliminar";
+            this.eliminar.Padding = new System.Windows.Forms.Padding(1);
+            this.eliminar.Size = new System.Drawing.Size(56, 42);
+            this.eliminar.Text = "Eliminar";
+            this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
+            // 
+            // verAcum
+            // 
+            this.verAcum.Image = ((System.Drawing.Image)(resources.GetObject("verAcum.Image")));
+            this.verAcum.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.verAcum.Name = "verAcum";
+            this.verAcum.Size = new System.Drawing.Size(64, 42);
+            this.verAcum.Text = "Ver acum.";
+            this.verAcum.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.verAcum.Click += new System.EventHandler(this.verAcum_Click);
+            // 
             // formInfoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -637,5 +649,6 @@
         private System.Windows.Forms.TextBox txtCreadoPor;
         private System.Windows.Forms.TextBox txtCreado;
         private System.Windows.Forms.Label idMovimientoLabel;
+        private System.Windows.Forms.ToolStripButton verAcum;
     }
 }

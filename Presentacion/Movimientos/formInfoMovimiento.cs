@@ -245,6 +245,14 @@ namespace Presentacion.Movimientos
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuario = usuario;
+        }
+
+        private void verAcum_Click(object sender, EventArgs e)
+        {
+            cargarListaEnGrilla();
+            Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
+            formVerAcum.verAcumulados(listaEnGrilla);// (listaCortesPorMovimiento);
+            formVerAcum.ShowDialog();
         }         
     }
 }

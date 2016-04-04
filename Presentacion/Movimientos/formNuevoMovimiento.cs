@@ -308,7 +308,7 @@ namespace Presentacion
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
-
+                                oCorteE.tipo = fila["tipo"].ToString();
                                 break;
                             }
                         }
@@ -621,6 +621,7 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
+                    txtCodigo.Focus();
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
@@ -630,6 +631,7 @@ namespace Presentacion
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Select();
                     timer1.Enabled = false;
                 }
             }
@@ -742,6 +744,31 @@ namespace Presentacion
         private void txtFechaMovimiento_ValueChanged(object sender, EventArgs e)
         {
             huboModificaciones = oMovimiento != null && oMovimiento.IdMovimiento > 0 && !oMovimiento.FechaMovimiento.Equals(txtFechaMovimiento.Value);
+        }
+
+        private void btnVerAcum_Click(object sender, EventArgs e)
+        {
+            cargarListaEnGrilla();
+            Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
+            formVerAcum.verAcumulados(listaEnGrilla);// (listaCortesPorMovimiento);
+            formVerAcum.ShowDialog();
+        }
+
+        private void txtCantUnidad_Leave(object sender, EventArgs e)
+        {
+            if (oCorteE != null && oCorteE.IdCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+            {
+                checkLeerPeso.Checked = false;
+                txtCantKgs.Focus();
+            }
+            else
+            {
+                if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                {
+                    checkLeerPeso.Checked = true;
+                    btnAgregar.Focus();
+                }
+            }
         }
     }
 }

@@ -92,7 +92,7 @@
             this.nuevo.Name = "nuevo";
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "Nuevo";
+            this.nuevo.Text = "&Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
@@ -104,7 +104,7 @@
             this.actualizar.Name = "actualizar";
             this.actualizar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.actualizar.Size = new System.Drawing.Size(65, 42);
-            this.actualizar.Text = "Actualizar";
+            this.actualizar.Text = "&Actualizar";
             this.actualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.actualizar.Click += new System.EventHandler(this.actualizar_Click);
             // 

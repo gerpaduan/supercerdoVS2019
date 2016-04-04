@@ -69,16 +69,11 @@ namespace Presentacion
                 {
                     grillaMovimientos.DataSource = null;
 
-                    string sucOrigen = comboSucOrigen.Text, SucDestino = comboSucDestino.Text;
+                    string sucOrigen, SucDestino;
 
-                    if (sucOrigen == "Todas")
-                    {
-                        sucOrigen = "";
-                    }
-                    if (SucDestino == "Todas")
-                    {
-                        SucDestino = "";
-                    }
+                    sucOrigen = (Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()) > 0) ? comboSucOrigen.Text : "";
+                    SucDestino = (Convert.ToInt32(comboSucDestino.SelectedValue.ToString()) > 0) ? comboSucDestino.Text : "";
+
                     dtMovimientos = oCorteN.obtenerMovimientos(sucOrigen, SucDestino, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, txtDescripcion.Text.Trim());
                     grillaMovimientos.DataSource = dtMovimientos;
                     formatearGrilla();

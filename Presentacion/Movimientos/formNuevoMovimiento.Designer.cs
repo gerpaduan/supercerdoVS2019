@@ -38,6 +38,7 @@
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.btnVerAcum = new System.Windows.Forms.Button();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -126,6 +127,7 @@
             // 
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.btnVerAcum);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
             this.pnlBuscar.Controls.Add(this.label16);
             this.pnlBuscar.Controls.Add(this.label6);
@@ -136,6 +138,17 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(664, 199);
             this.pnlBuscar.TabIndex = 20;
+            // 
+            // btnVerAcum
+            // 
+            this.btnVerAcum.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnVerAcum.Location = new System.Drawing.Point(580, 88);
+            this.btnVerAcum.Name = "btnVerAcum";
+            this.btnVerAcum.Size = new System.Drawing.Size(72, 23);
+            this.btnVerAcum.TabIndex = 19;
+            this.btnVerAcum.Text = "&Ver acum.";
+            this.btnVerAcum.UseVisualStyleBackColor = true;
+            this.btnVerAcum.Click += new System.EventHandler(this.btnVerAcum_Click);
             // 
             // txtUsuario
             // 
@@ -219,6 +232,7 @@
             this.txtCantUnidad.TabIndex = 2;
             this.txtCantUnidad.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCantUnidad.TextChanged += new System.EventHandler(this.txtCantUnidad_TextChanged);
+            this.txtCantUnidad.Leave += new System.EventHandler(this.txtCantUnidad_Leave);
             this.txtCantUnidad.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtCantUnidad_KeyPress);
             // 
             // label9
@@ -829,5 +843,6 @@
         private System.Windows.Forms.TextBox txtUsuario;
         protected System.Windows.Forms.Label label16;
         private System.Windows.Forms.Label idMovimientoLabel;
+        private System.Windows.Forms.Button btnVerAcum;
     }
 }
