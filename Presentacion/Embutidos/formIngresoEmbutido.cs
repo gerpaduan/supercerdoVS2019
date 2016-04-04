@@ -412,6 +412,7 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
+                    txtCodCorteEnEmbutido.Focus();
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
@@ -421,6 +422,7 @@ namespace Presentacion
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Focus();
                     timer1.Enabled = false;
                 }
             }

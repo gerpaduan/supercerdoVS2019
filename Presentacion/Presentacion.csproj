@@ -224,6 +224,12 @@
     <Compile Include="Movimientos\formInfoMovimiento.Designer.cs">
       <DependentUpon>formInfoMovimiento.cs</DependentUpon>
     </Compile>
+    <Compile Include="Movimientos\formVerAcumulados.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Movimientos\formVerAcumulados.Designer.cs">
+      <DependentUpon>formVerAcumulados.cs</DependentUpon>
+    </Compile>
     <Compile Include="Pagos\formNuevoPago.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -584,6 +590,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Movimientos\formInfoMovimiento.resx">
       <DependentUpon>formInfoMovimiento.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Movimientos\formVerAcumulados.resx">
+      <DependentUpon>formVerAcumulados.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pagos\formNuevoPago.resx">
       <DependentUpon>formNuevoPago.cs</DependentUpon>

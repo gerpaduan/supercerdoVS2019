@@ -1051,8 +1051,19 @@ namespace Presentacion.Ventas
             oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
             if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
             {
-                MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
+                DialogResult resp = MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.\n\n¿Desea abrir caja ahora?",
+                    "Abrir Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);//, MessageBoxButtons.YesNo, MessageBoxDefaultButton.Button2);
+                if (resp.Equals(DialogResult.Yes))
+                {
+                    formAbrirCaja frmAbrirCaja = new formAbrirCaja();
+                    frmAbrirCaja.oUserIncio = oUsuario;
+                    frmAbrirCaja.ShowDialog();
+                    validarAperturaCaja();
+                }
+                else
+                {
+                    this.Close();
+                }                
             }
         }
 

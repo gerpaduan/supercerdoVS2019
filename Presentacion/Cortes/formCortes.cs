@@ -243,6 +243,7 @@ namespace Presentacion
         private void formCortes_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            this.txtBuscarCorte.Select();
         }
 
         private void txtCodigoDesde_TextChanged(object sender, EventArgs e)
@@ -281,5 +282,14 @@ namespace Presentacion
             }
             grillaCortes.DataSource = dtCortesFiltrado;
         }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }   
     }
 }
