@@ -65,11 +65,10 @@ namespace Presentacion
                 {
                     grillaEmbutidos.Rows[index].DefaultCellStyle.BackColor = Color.SandyBrown;
                 }
-                string d = grillaEmbutidos.Rows[index].Cells["Estado"].ToString();
-                string e = grillaEmbutidos["Estado", index].Value.ToString();
             }
             grillaEmbutidos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
+            grillaEmbutidos.Columns["Kgs"].DefaultCellStyle.Format = "F3";
             //formato para columna de fechas
             grillaEmbutidos.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEmbutidos.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
