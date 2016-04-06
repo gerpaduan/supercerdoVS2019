@@ -24,7 +24,7 @@ namespace Utilidades
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             Configuration config =
-                ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);            
 
             var result = (from configKey in ConfigurationManager.AppSettings.Keys.Cast<string>()
                           let configValue = ConfigurationManager.AppSettings[configKey]
@@ -109,6 +109,17 @@ namespace Utilidades
                                     if (control.Name.Equals(setting.key))
                                     {
                                         config.AppSettings.Settings[setting.key].Value = control.Text;
+                                        if (setting.key.Equals("connString") && checkServidor.Checked)
+	                                    {
+                                            string connStringActual= config.ConnectionStrings.ConnectionStrings[control.Text].ConnectionString;
+                                            string[] connStringSplit = connStringActual.Split(';');
+                                            string newConnString ="Data Source=.\\sqlexpress";
+                                            for (int i = 1; i < connStringSplit.Length; i++)
+                                            {
+                                                newConnString += ";" + connStringSplit[i];
+                                            }                                               
+                                            config.ConnectionStrings.ConnectionStrings[control.Text].ConnectionString = newConnString;
+	                                    }
                                         config.Save(ConfigurationSaveMode.Modified);
                                         //MessageBox.Show("Valores anteriores:\nKey: " + control.Name + "  - Texto: " + control.Text +
                                         //    "\n\nNuevos valores: \nKey: " + setting.key.ToString() + "  - Texto: " + setting.value.ToString());
@@ -117,6 +128,8 @@ namespace Utilidades
                                 }
                             }
                         }
+
+
 
                         respuesta = MessageBox.Show("Los cambios en la configuración se registraron correctamente.\n" +
                             "Para que los cambios se apliquen debe reiniciar la aplicación.\n\n¿Reinicar ahora la aplicación?",
