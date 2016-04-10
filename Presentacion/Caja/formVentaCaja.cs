@@ -46,7 +46,6 @@ namespace Presentacion.Ventas
 
         Color ultimoColor = Color.Green;
 
-
         int sucAnterior;
         int tiempoInactivo = 0;
         int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
@@ -482,8 +481,14 @@ namespace Presentacion.Ventas
             }
             if (!Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs."))
             {
-                txtCantKgs.Focus();
-                if (checkLeerPeso.Checked)  btnAgregar.Focus();
+                if (checkLeerPeso.Checked)
+                {
+                    btnAgregar.Focus();
+                }
+                else
+                {
+                    txtCantKgs.Focus();
+                }
                 return false;
             } 
             else
@@ -1001,6 +1006,7 @@ namespace Presentacion.Ventas
                     txtCantKgs.BackColor = SystemColors.ScrollBar;
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
+                    btnAgregar.Focus();
                     timer1.Enabled = true;
                 }
                 else
@@ -1009,6 +1015,7 @@ namespace Presentacion.Ventas
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Focus();
                     timer1.Enabled = false;
                 }
             }
@@ -1291,8 +1298,9 @@ namespace Presentacion.Ventas
                 {
                     if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                     {
-                        checkLeerPeso.Checked = true;
-                        btnAgregar.Focus();
+                        checkLeerPeso.Checked = FormPrincipal.logueado ? 
+                            checkLeerPeso.Checked : true;
+                        if (checkLeerPeso.Checked) btnAgregar.Focus();
                     }
                 }
 
