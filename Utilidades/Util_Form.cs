@@ -178,7 +178,7 @@ namespace Utilidades
 
         public static DialogResult errorBalanza(string error)
         {
-            DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + error + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + error + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             return resp;
         }
 
@@ -233,6 +233,47 @@ namespace Utilidades
             mensaje = exception.Contains("Error relacionado con la red") ||
                 exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
             return mensaje;
+        }
+
+
+        public static string leerPesoBalanza(bool huboErrorAnterior)//huboErrorAnterior es TRUE si viene de un error
+        {
+            string peso="";
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                int d = Application.OpenForms.Count;
+                if (frm.GetType() == typeof(FormPesoBalanza))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (ctrl.Name.Equals("pesoBalanzaLabel"))
+                        {                            
+                            peso = ctrl.Text;
+                            if (peso.Contains("error"))
+                            {
+                                frm.Close();
+                                throw new Exception(peso);
+                            }
+                            if (string.IsNullOrEmpty(peso))
+                            {
+                                peso = "Peso nulo";
+                                throw new Exception("Peso nulo\n\n.Verifique que la balanza esté conectada correctamente");
+                            }
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!formAbierto)
+            {
+                FormPesoBalanza frmBalanza = new FormPesoBalanza();
+                frmBalanza.MinimizeBox = true;
+                frmBalanza.Show();
+                frmBalanza.Visible = false;
+            }
+            return peso;
         }
     }
 }
