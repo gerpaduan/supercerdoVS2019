@@ -542,8 +542,8 @@ namespace Presentacion
 
         private void verBalanzaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Utilidades.FormLeer_Peso frm = Utilidades.FormLeer_Peso.CrearLeerPeso();
-            frm.Show();
+            //Utilidades.FormLeer_Peso frm = Utilidades.FormLeer_Peso.CrearLeerPeso();
+            //frm.Show();
         }
 
         private void leerPesoToolStripMenuItem_Click(object sender, EventArgs e)
@@ -669,7 +669,10 @@ namespace Presentacion
         {
             if (logueado)
             {
-                if (Application.OpenForms.Count == 1)
+                //si verifica si está abierto el formulario desde donde se obtiene el peso de la balanza
+                Form existe = Application.OpenForms.OfType<Form>().Where(pre => pre.Name == "FormPesoBalanza").SingleOrDefault<Form>();
+                
+                if (Application.OpenForms.Count == 1 || (Application.OpenForms.Count.Equals(2) && existe!=null))
                 {
                     ultimaConnSelect = comboConexion.Text;
                     Utilidades.Conexion.connStringActual = comboConexion.Text;
