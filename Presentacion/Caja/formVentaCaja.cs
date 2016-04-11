@@ -40,9 +40,9 @@ namespace Presentacion.Ventas
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
-        Color enableColor = SystemColors.Window;
-        Color readOnlyColor = SystemColors.ScrollBar;
-        Color focusColor = Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+        Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
 
         Color ultimoColor = Color.Green;
 
@@ -978,20 +978,31 @@ namespace Presentacion.Ventas
                     }
                     else
                     {
-                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                        {
+                            Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                            txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        }
+                        else
+                        {
+                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza(lblErrorBalanza.Visible);
+                            lblErrorBalanza.Visible = false;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
+                txtCantKgs.Text = "Error balanza";
                 timer1.Enabled = false;
-                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                if (FormPrincipal.logueado && Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
                     checkLeerPeso.Checked = false;
                 }
                 else
                 {
+                    lblErrorBalanza.Text = ex.Message;
+                    lblErrorBalanza.Visible = true;
                     timer1.Enabled = true;
                 }
             }
