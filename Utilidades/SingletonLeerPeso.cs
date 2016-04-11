@@ -17,11 +17,12 @@ namespace Utilidades
         SerialPort BasculaCom;
         string lineas = "Se capturó \r\n";
         private static System.Timers.Timer timer1 = new System.Timers.Timer(Convert.ToInt32(ConfigurationManager.AppSettings["timerBalanza"].ToString()));
+        string puerto = ConfigurationManager.AppSettings["puerto"].ToString();
         Label Recibidos = new Label();
         Util_Form util_form = new Util_Form();
         private SingletonLeerPeso()
         {
-            BasculaCom = new SerialPort("COM1", 9600, System.IO.Ports.Parity.None, 8, StopBits.One);
+            BasculaCom = new SerialPort(puerto, 9600, System.IO.Ports.Parity.None, 8, StopBits.One);
             timer1.Enabled = true;
             timer1.Elapsed += OnTimedEvent;
         }
