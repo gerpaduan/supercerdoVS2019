@@ -42,12 +42,12 @@
             // pesoBalanzaLabel
             // 
             this.pesoBalanzaLabel.AutoSize = true;
-            this.pesoBalanzaLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pesoBalanzaLabel.Location = new System.Drawing.Point(221, 18);
+            this.pesoBalanzaLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pesoBalanzaLabel.Location = new System.Drawing.Point(174, 15);
             this.pesoBalanzaLabel.Name = "pesoBalanzaLabel";
-            this.pesoBalanzaLabel.Size = new System.Drawing.Size(130, 22);
+            this.pesoBalanzaLabel.Size = new System.Drawing.Size(237, 18);
             this.pesoBalanzaLabel.TabIndex = 8;
-            this.pesoBalanzaLabel.Text = "Peso balanza";
+            this.pesoBalanzaLabel.Text = "Error balanza (Acá va el peso)";
             // 
             // txtPesoBalanza
             // 

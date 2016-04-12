@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Configuration;
 
 namespace Presentacion.Balanza
 {
@@ -45,8 +46,15 @@ namespace Presentacion.Balanza
         {
             try
             {
-                Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                txtPesoBalanza.Text = Leer_Peso.ObtenerPeso();
+                if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                {
+                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                    txtPesoBalanza.Text = Leer_Peso.ObtenerPeso();
+                }
+                else
+                {
+                    txtPesoBalanza.Text = Utilidades.Util_Form.leerPesoBalanza();
+                }
             }
             catch (Exception ex)
             {

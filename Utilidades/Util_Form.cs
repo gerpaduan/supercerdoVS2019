@@ -236,7 +236,7 @@ namespace Utilidades
         }
 
 
-        public static string leerPesoBalanza(bool huboErrorAnterior)//huboErrorAnterior es TRUE si viene de un error
+        public static string leerPesoBalanza()
         {
             string peso="";
             bool formAbierto = false;

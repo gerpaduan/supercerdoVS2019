@@ -51,6 +51,11 @@ namespace Presentacion.Movimientos
             this.grillaAcum.Columns["PesoBalanza"].Visible = false;
 
             this.grillaAcum.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            grillaAcum.Columns["Codigo"].DisplayIndex = 0;
+            grillaAcum.Columns["Corte"].DisplayIndex = 1;
+            grillaAcum.Columns["CantUnidad"].DisplayIndex = 2;
+            grillaAcum.Columns["CantKg"].DisplayIndex = 3;
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
