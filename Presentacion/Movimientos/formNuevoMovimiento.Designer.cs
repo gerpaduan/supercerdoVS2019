@@ -149,6 +149,8 @@
             this.btnVerAcum.Text = "&Ver acum.";
             this.btnVerAcum.UseVisualStyleBackColor = true;
             this.btnVerAcum.Click += new System.EventHandler(this.btnVerAcum_Click);
+            this.btnVerAcum.Leave += new System.EventHandler(this.control_Leave);
+            this.btnVerAcum.Enter += new System.EventHandler(this.control_Enter);
             // 
             // txtUsuario
             // 
@@ -232,8 +234,9 @@
             this.txtCantUnidad.TabIndex = 2;
             this.txtCantUnidad.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCantUnidad.TextChanged += new System.EventHandler(this.txtCantUnidad_TextChanged);
-            this.txtCantUnidad.Leave += new System.EventHandler(this.txtCantUnidad_Leave);
+            this.txtCantUnidad.Leave += new System.EventHandler(this.control_Leave);
             this.txtCantUnidad.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtCantUnidad_KeyPress);
+            this.txtCantUnidad.Enter += new System.EventHandler(this.control_Enter);
             // 
             // label9
             // 
@@ -288,6 +291,8 @@
             this.btnAgregar.TabIndex = 4;
             this.btnAgregar.UseVisualStyleBackColor = true;
             this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
+            this.btnAgregar.Leave += new System.EventHandler(this.control_Leave);
+            this.btnAgregar.Enter += new System.EventHandler(this.control_Enter);
             // 
             // txtCantKgs
             // 
@@ -300,7 +305,9 @@
             this.txtCantKgs.TabIndex = 3;
             this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCantKgs.Leave += new System.EventHandler(this.control_Leave);
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCantKgs.Enter += new System.EventHandler(this.control_Enter);
             // 
             // label1
             // 
@@ -327,6 +334,8 @@
             this.btnBuscar.TabStop = false;
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
+            this.btnBuscar.Leave += new System.EventHandler(this.control_Leave);
+            this.btnBuscar.Enter += new System.EventHandler(this.control_Enter);
             // 
             // txtCodigo
             // 
@@ -338,7 +347,9 @@
             this.txtCodigo.TabIndex = 1;
             this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
+            this.txtCodigo.Leave += new System.EventHandler(this.control_Leave);
             this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCodigo.Enter += new System.EventHandler(this.control_Enter);
             // 
             // label2
             // 

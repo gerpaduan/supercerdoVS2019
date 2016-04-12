@@ -35,6 +35,7 @@ namespace Presentacion.Ventas
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
+        bool dejarDeLeerPeso = false;
         int sucAnterior;
 
         public int SucAnterior
@@ -905,8 +906,15 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
-                    Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                    txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                    {
+                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                    }
+                    else
+                    {
+                        txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                    }
                 }
             }
             catch (Exception ex)
@@ -914,6 +922,7 @@ namespace Presentacion.Ventas
                 timer1.Enabled = false;
                 if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
+                    dejarDeLeerPeso = true;
                     checkLeerPeso.Checked = false;
                 }
                 else
@@ -929,6 +938,7 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
+                    dejarDeLeerPeso = false;
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;

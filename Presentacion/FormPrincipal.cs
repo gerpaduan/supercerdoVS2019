@@ -15,6 +15,7 @@ using Presentacion.Balanza;
 using Presentacion.Usuario;
 using Presentacion.Pruebas;
 using System.Configuration;
+using Utilidades;
 
 
 namespace Presentacion
@@ -80,7 +81,7 @@ namespace Presentacion
         {
             formAbierto = false;
 
-            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
             foreach (Form frm in Application.OpenForms)
             {
@@ -205,7 +206,7 @@ namespace Presentacion
         {            
             if (!logueado)
             {
-                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
                 frmLogin.ShowDialog(this);
                 if (oUsuario == null) return;
                 if (!oUsuario.Admin)
@@ -427,7 +428,7 @@ namespace Presentacion
 
         private void abrirCaja()
         {
-            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
             if (oUsuario != null)
             {                
@@ -542,8 +543,23 @@ namespace Presentacion
 
         private void verBalanzaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //Utilidades.FormLeer_Peso frm = Utilidades.FormLeer_Peso.CrearLeerPeso();
-            //frm.Show();
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                int d = Application.OpenForms.Count;
+                if (frm.GetType() == typeof(FormPesoBalanza))
+                {
+                    frm.BringToFront();
+                    formAbierto = true;
+                    break;                    
+                }
+            }
+            if (!formAbierto)
+            {
+                Utilidades.FormPesoBalanza frmBalanza = new Utilidades.FormPesoBalanza();
+                frmBalanza.Show();
+            }
+           
         }
 
         private void leerPesoToolStripMenuItem_Click(object sender, EventArgs e)

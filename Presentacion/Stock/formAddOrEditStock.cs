@@ -45,7 +45,13 @@ namespace Presentacion
 
        bool ultimaValidacion = true;
        bool huboModificaciones = false;
+       bool dejarDeLeerPeso = false;
        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+
+       Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+       Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+       Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+       Color ultimoColor = Color.Green;
 
         public formAddOrEditStock()
         {
@@ -131,6 +137,8 @@ namespace Presentacion
             oCorteNuevaCompra = corte;
             //this.txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
             this.txtCodigo.Text = oCorteNuevaCompra.codigo.ToString();
+            this.txtCodigo.Focus();
+            btnBuscaCorte.UseVisualStyleBackColor = true;
         }
 
         private void btnBuscaCorte_Click(object sender, EventArgs e)
@@ -605,8 +613,15 @@ namespace Presentacion
                     }
                     else
                     {
-                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                        {
+                            Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                            txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        }
+                        else
+                        {
+                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                        }
                     }
                 }
             }
@@ -615,6 +630,7 @@ namespace Presentacion
                 timer1.Enabled = false;
                 if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
+                    dejarDeLeerPeso = true;
                     checkLeerPeso.Checked = false;
                 }
                 else
@@ -630,8 +646,11 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
+                    dejarDeLeerPeso = false;
                     txtCantKgs.ReadOnly = true;
+                    txtCantKgs.BackColor = readOnlyColor;
                     txtCantKgs.TabStop = false;
+                    txtCodigo.Focus();
                     timer1.Enabled = true;
                 }
                 else
@@ -639,7 +658,7 @@ namespace Presentacion
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
-                    txtCantKgs.Select();
+                    txtCantKgs.Focus();
                     timer1.Enabled = false;
                 }
             }
@@ -706,6 +725,7 @@ namespace Presentacion
 
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
+            txtCodigo.BackColor = enableColor;
             if (oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && oCorteNuevaCompra.tipo.Equals("Unidad") && checkLeerPeso.Checked)
             {
                 checkLeerPeso.Checked = false;
@@ -713,11 +733,61 @@ namespace Presentacion
             }
             else
             {
-                if (oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && !oCorteNuevaCompra.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                if (!dejarDeLeerPeso && oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && !oCorteNuevaCompra.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                 {
                     checkLeerPeso.Checked = true;
                     btnAgregar.Focus();
                 }
+            }
+        }
+
+        private void txtCodigo_Enter(object sender, EventArgs e)
+        {
+            if (sender is TextBox )
+            {
+                TextBox objectToChangeColor = (TextBox)sender;
+                if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            } 
+
+            if (sender is MaskedTextBox)
+            {
+                MaskedTextBox objectToChangeColor = (MaskedTextBox)sender;
+                if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+
+            if (sender is Button)
+            {
+                Button objectToChangeColor = (Button)sender;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+        }
+
+        private void control_Leave(object sender, EventArgs e)
+        {
+            if (sender is TextBox)
+            {
+                TextBox objectToChangeColor = (TextBox)sender;
+                objectToChangeColor.BackColor = ultimoColor;
+                return;
+            }
+
+            if (sender is MaskedTextBox)
+            {
+                MaskedTextBox objectToChangeColor = (MaskedTextBox)sender;
+                objectToChangeColor.BackColor = ultimoColor;
+                return;
+            }
+
+            if (sender is Button)
+            {
+                Button objectToChangeColor = (Button)sender;
+                objectToChangeColor.UseVisualStyleBackColor = true;
+                return;
             }
         }
     }

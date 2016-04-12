@@ -139,6 +139,8 @@
             this.btnBuscaCorte.TabStop = false;
             this.btnBuscaCorte.UseVisualStyleBackColor = true;
             this.btnBuscaCorte.Click += new System.EventHandler(this.btnBuscaCorte_Click);
+            this.btnBuscaCorte.Leave += new System.EventHandler(this.control_Leave);
+            this.btnBuscaCorte.Enter += new System.EventHandler(this.txtCodigo_Enter);
             // 
             // txtCantKgs
             // 
@@ -150,7 +152,9 @@
             this.txtCantKgs.TabIndex = 1;
             this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCantKgs.Leave += new System.EventHandler(this.control_Leave);
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCantKgs.Enter += new System.EventHandler(this.txtCodigo_Enter);
             // 
             // btnQuitar
             // 
@@ -164,6 +168,8 @@
             this.btnQuitar.TabStop = false;
             this.btnQuitar.UseVisualStyleBackColor = true;
             this.btnQuitar.Click += new System.EventHandler(this.btnQuitar_Click);
+            this.btnQuitar.Leave += new System.EventHandler(this.control_Leave);
+            this.btnQuitar.Enter += new System.EventHandler(this.txtCodigo_Enter);
             // 
             // label13
             // 
@@ -200,6 +206,8 @@
             this.btnAgregar.TabIndex = 4;
             this.btnAgregar.UseVisualStyleBackColor = true;
             this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
+            this.btnAgregar.Leave += new System.EventHandler(this.control_Leave);
+            this.btnAgregar.Enter += new System.EventHandler(this.txtCodigo_Enter);
             // 
             // label10
             // 
@@ -232,6 +240,7 @@
             this.txtCodigo.TabIndex = 0;
             this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodigo.Leave += new System.EventHandler(this.txtCodigo_Leave);
+            this.txtCodigo.Enter += new System.EventHandler(this.txtCodigo_Enter);
             this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             // 

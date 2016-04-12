@@ -42,6 +42,8 @@
             this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -70,8 +72,6 @@
             this.label11 = new System.Windows.Forms.Label();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.txtUsuario = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -211,6 +211,29 @@
             this.pnlBuscar.Size = new System.Drawing.Size(661, 234);
             this.pnlBuscar.TabIndex = 14;
             // 
+            // txtUsuario
+            // 
+            this.txtUsuario.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtUsuario.Location = new System.Drawing.Point(473, 63);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.ReadOnly = true;
+            this.txtUsuario.Size = new System.Drawing.Size(176, 22);
+            this.txtUsuario.TabIndex = 28;
+            this.txtUsuario.TabStop = false;
+            // 
+            // label7
+            // 
+            this.label7.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(470, 42);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(50, 15);
+            this.label7.TabIndex = 27;
+            this.label7.Text = "Usuario";
+            // 
             // comboSucursal
             // 
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -331,6 +354,8 @@
             this.btnAgregar.TabIndex = 4;
             this.btnAgregar.UseVisualStyleBackColor = true;
             this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
+            this.btnAgregar.Leave += new System.EventHandler(this.control_Leave);
+            this.btnAgregar.Enter += new System.EventHandler(this.control_Enter);
             // 
             // txtCantKgs
             // 
@@ -343,7 +368,9 @@
             this.txtCantKgs.TabIndex = 3;
             this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCantKgs.Leave += new System.EventHandler(this.control_Leave);
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCantKgs.Enter += new System.EventHandler(this.control_Enter);
             // 
             // label1
             // 
@@ -370,6 +397,8 @@
             this.btnBuscarCorte.TabStop = false;
             this.btnBuscarCorte.UseVisualStyleBackColor = true;
             this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscarCorte_Click);
+            this.btnBuscarCorte.Leave += new System.EventHandler(this.control_Leave);
+            this.btnBuscarCorte.Enter += new System.EventHandler(this.control_Enter);
             // 
             // txtCodCorteEnEmbutido
             // 
@@ -382,8 +411,9 @@
             this.txtCodCorteEnEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodCorteEnEmbutido.TextChanged += new System.EventHandler(this.txtCodCorteEnEmbutido_TextChanged);
             this.txtCodCorteEnEmbutido.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCodCorteEnEmbutido_KeyDown);
-            this.txtCodCorteEnEmbutido.Leave += new System.EventHandler(this.txtCodCorteEnEmbutido_Leave);
+            this.txtCodCorteEnEmbutido.Leave += new System.EventHandler(this.control_Leave);
             this.txtCodCorteEnEmbutido.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCodCorteEnEmbutido.Enter += new System.EventHandler(this.control_Enter);
             // 
             // label2
             // 
@@ -452,6 +482,8 @@
             this.btnBuscarEmbutido.TabStop = false;
             this.btnBuscarEmbutido.UseVisualStyleBackColor = true;
             this.btnBuscarEmbutido.Click += new System.EventHandler(this.btnBuscarEmbutido_Click);
+            this.btnBuscarEmbutido.Leave += new System.EventHandler(this.control_Leave);
+            this.btnBuscarEmbutido.Enter += new System.EventHandler(this.control_Enter);
             // 
             // txtCodigoEmbutido
             // 
@@ -561,29 +593,6 @@
             this.timer1.Enabled = true;
             this.timer1.Interval = 50;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
-            // txtUsuario
-            // 
-            this.txtUsuario.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUsuario.Location = new System.Drawing.Point(473, 63);
-            this.txtUsuario.Name = "txtUsuario";
-            this.txtUsuario.ReadOnly = true;
-            this.txtUsuario.Size = new System.Drawing.Size(176, 22);
-            this.txtUsuario.TabIndex = 28;
-            this.txtUsuario.TabStop = false;
-            // 
-            // label7
-            // 
-            this.label7.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(470, 42);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(50, 15);
-            this.label7.TabIndex = 27;
-            this.label7.Text = "Usuario";
             // 
             // formIngresoEmbutido
             // 

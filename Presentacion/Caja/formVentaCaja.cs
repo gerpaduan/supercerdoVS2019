@@ -46,6 +46,7 @@ namespace Presentacion.Ventas
 
         Color ultimoColor = Color.Green;
 
+        bool dejarDeLeerPeso = false;
         int sucAnterior;
         int tiempoInactivo = 0;
         int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
@@ -985,7 +986,7 @@ namespace Presentacion.Ventas
                         }
                         else
                         {
-                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza(lblErrorBalanza.Visible);
+                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
                             lblErrorBalanza.Visible = false;
                         }
                     }
@@ -997,6 +998,7 @@ namespace Presentacion.Ventas
                 timer1.Enabled = false;
                 if (FormPrincipal.logueado && Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
+                    dejarDeLeerPeso = true;
                     checkLeerPeso.Checked = false;
                 }
                 else
@@ -1014,6 +1016,7 @@ namespace Presentacion.Ventas
             {
                 if (checkLeerPeso.Checked)
                 {
+                    dejarDeLeerPeso = false;
                     txtCantKgs.BackColor = SystemColors.ScrollBar;
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
@@ -1307,11 +1310,13 @@ namespace Presentacion.Ventas
                 }
                 else
                 {
-                    if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                    if (!dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                     {
-                        checkLeerPeso.Checked = FormPrincipal.logueado ? 
-                            checkLeerPeso.Checked : true;
-                        if (checkLeerPeso.Checked) btnAgregar.Focus();
+                        //checkLeerPeso.Checked = FormPrincipal.logueado ? 
+                        //    checkLeerPeso.Checked : true;
+                        //if (checkLeerPeso.Checked) btnAgregar.Focus();
+                        checkLeerPeso.Checked = true;
+                        btnAgregar.Focus();
                     }
                 }
 

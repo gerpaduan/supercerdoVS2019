@@ -40,8 +40,13 @@ namespace Presentacion
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        bool modificacion = false, huboModificaciones = false, eliminacion = false;
+        bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+
+        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+        Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+        Color ultimoColor = Color.Green;
 
         public formNuevoMovimiento()
         {
@@ -621,6 +626,7 @@ namespace Presentacion
             {
                 if (checkLeerPeso.Checked)
                 {
+                    dejarDeLeerPeso = false;
                     txtCodigo.Focus();
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
@@ -653,8 +659,15 @@ namespace Presentacion
                     }
                     else
                     {
-                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                        {
+                            Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                            txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        }
+                        else
+                        {
+                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                        }
                     }
                 }
             }
@@ -663,6 +676,7 @@ namespace Presentacion
                 timer1.Enabled = false;
                 if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
+                    dejarDeLeerPeso = true;
                     checkLeerPeso.Checked = false;
                 }
                 else
@@ -695,7 +709,7 @@ namespace Presentacion
                 {
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
-                }
+                    }
                 else
                 {
                     txtCantUnidad.Text = "";
@@ -754,20 +768,80 @@ namespace Presentacion
             formVerAcum.ShowDialog();
         }
 
-        private void txtCantUnidad_Leave(object sender, EventArgs e)
+        private void control_Enter(object sender, EventArgs e)
         {
-            if (oCorteE != null && oCorteE.IdCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+            if (sender is TextBox)
             {
-                checkLeerPeso.Checked = false;
-                txtCantKgs.Focus();
+                TextBox objectToChangeColor = (TextBox)sender;
+                if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
+                objectToChangeColor.BackColor = focusColor;
+                return;
             }
-            else
+
+            if (sender is MaskedTextBox)
             {
-                if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                MaskedTextBox objectToChangeColor = (MaskedTextBox)sender;
+                if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+
+            if (sender is Button)
+            {
+                Button objectToChangeColor = (Button)sender;
+                objectToChangeColor.UseVisualStyleBackColor = false;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+        }
+
+        private void control_Leave(object sender, EventArgs e)
+        {
+            if (sender is TextBox)
+            {
+                TextBox objectToChangeColor = (TextBox)sender;
+                objectToChangeColor.BackColor = ultimoColor;
+                if (objectToChangeColor.Name.Equals("txtCantUnidad")) tipoDeCorte();
+                return;
+            }
+
+            if (sender is MaskedTextBox)
+            {
+                MaskedTextBox objectToChangeColor = (MaskedTextBox)sender;
+                objectToChangeColor.BackColor = ultimoColor;
+                return;
+            }
+
+            if (sender is Button)
+            {
+                Button objectToChangeColor = (Button)sender;
+                objectToChangeColor.UseVisualStyleBackColor = true;
+                return;
+            }
+        }
+
+        private void tipoDeCorte()
+        {
+            try
+            {
+                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
                 {
-                    checkLeerPeso.Checked = true;
-                    btnAgregar.Focus();
+                    checkLeerPeso.Checked = false;
+                    txtCantKgs.Focus();
                 }
+                else
+                {
+                    if (!dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                    {
+                        checkLeerPeso.Checked = true;
+                        txtCantKgs.BackColor = readOnlyColor;
+                        btnAgregar.Focus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n" + ex.Message + "\n" + ex.StackTrace);
             }
         }
     }
