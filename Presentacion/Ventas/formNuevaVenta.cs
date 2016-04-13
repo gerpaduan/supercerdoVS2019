@@ -654,45 +654,19 @@ namespace Presentacion.Ventas
 
         private void cargarTotalCorte()
         {
-            if (!txtCantKgs.Text.Equals(""))
+            if(!checkLeerPeso.Checked && !string.IsNullOrEmpty(txtCantKgs.Text) &&
+                Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs.")) //(!txtCantKgs.Text.Equals(""))
             {
                 try
                 {
-                    try
-                    {
-                        cantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                    }
-                    catch (Exception)
-                    {
-
-                        cantKg = float.Parse(txtCantKgs.Text.Trim());
-                    }
+                    cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text);
 
                     if (oCorteE != null)
                     {
-                        try
-                        {
-                            precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                        }
-                        catch (Exception)
-                        {
-                            try
-                            {                                
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim());
-                            }
-                            catch (Exception)
-                            {
-
-                                if (checkLeerPeso.Checked)
-                                {
-                                    precioKg = 0;
-                                }
-                            }
-                            
-                        }
+                        if (Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$/Kg"))
+                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text);
                     }
                     ///si está logueado
-                    //if (frmVentas.Logueado)
                     if (Presentacion.FormPrincipal.logueado)
                     {
                         totalCorte = cantKg * precioKg;
@@ -706,7 +680,7 @@ namespace Presentacion.Ventas
                 }
                 catch (Exception ex)
                 { 
-                    if (txtCantKgs.Text.Trim() != "-" )
+                    if (txtCantKgs.Text.Trim() != "-")
                     {
                         MessageBox.Show(ex.Message);
                     }

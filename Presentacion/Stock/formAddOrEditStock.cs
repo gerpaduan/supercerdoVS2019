@@ -84,6 +84,7 @@ namespace Presentacion
             }
             if (accion.Equals(Entidades.Compra.accion.Modificar))
             {
+                timer1.Stop();
                 oCompraE = oCompraN.findById_convertToCompra(idCompra);
                 listaCortePorCompra = oCompraN.convertCortesPorCompraToList(idCompra);
 
@@ -179,7 +180,8 @@ namespace Presentacion
                     txtFechaCompra.Enabled = true;
                     comboSucursal.Enabled = true;
                     groupBox1.Enabled = true;
-                    txtObservaciones.ReadOnly = false;                    
+                    txtObservaciones.ReadOnly = false;
+                    timer1.Start();
                 }
             }
             else
