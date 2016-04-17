@@ -29,19 +29,22 @@
         private void InitializeComponent()
         {
             this.grillaCajasAbiertas = new System.Windows.Forms.DataGridView();
-            this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.usuarioInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.vendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.fechaHoraInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cerrarCaja = new System.Windows.Forms.DataGridViewButtonColumn();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.checkCajasMultiple = new System.Windows.Forms.CheckBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.txtBuscar = new System.Windows.Forms.TextBox();
             this.Proveedor = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
+            this.btnCerrarMultipleCajas = new System.Windows.Forms.Button();
+            this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.usuarioInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.vendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.fechaHoraInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cerrarCaja = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.cajero = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCajasAbiertas)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -61,7 +64,8 @@
             this.vendedor,
             this.fechaHoraInicio,
             this.cajaInicio,
-            this.cerrarCaja});
+            this.cerrarCaja,
+            this.cajero});
             this.grillaCajasAbiertas.Location = new System.Drawing.Point(12, 71);
             this.grillaCajasAbiertas.MultiSelect = false;
             this.grillaCajasAbiertas.Name = "grillaCajasAbiertas";
@@ -73,56 +77,12 @@
             this.grillaCajasAbiertas.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCajasAbiertas_CellClick);
             this.grillaCajasAbiertas.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grillaCajasAbiertas_KeyDown);
             // 
-            // id
-            // 
-            this.id.DataPropertyName = "id";
-            this.id.HeaderText = "Id";
-            this.id.Name = "id";
-            this.id.ReadOnly = true;
-            // 
-            // usuarioInicio
-            // 
-            this.usuarioInicio.DataPropertyName = "usuarioInicio";
-            this.usuarioInicio.HeaderText = "usuarioInicio";
-            this.usuarioInicio.Name = "usuarioInicio";
-            this.usuarioInicio.ReadOnly = true;
-            this.usuarioInicio.Visible = false;
-            // 
-            // vendedor
-            // 
-            this.vendedor.DataPropertyName = "vendedor";
-            this.vendedor.HeaderText = "Vendedor";
-            this.vendedor.Name = "vendedor";
-            this.vendedor.ReadOnly = true;
-            // 
-            // fechaHoraInicio
-            // 
-            this.fechaHoraInicio.DataPropertyName = "fechaHoraInicio";
-            this.fechaHoraInicio.HeaderText = "Fecha Apertura Caja";
-            this.fechaHoraInicio.Name = "fechaHoraInicio";
-            this.fechaHoraInicio.ReadOnly = true;
-            // 
-            // cajaInicio
-            // 
-            this.cajaInicio.DataPropertyName = "cajaInicio";
-            this.cajaInicio.HeaderText = "Caja Inicial";
-            this.cajaInicio.Name = "cajaInicio";
-            this.cajaInicio.ReadOnly = true;
-            // 
-            // cerrarCaja
-            // 
-            this.cerrarCaja.HeaderText = "Cerrar Caja";
-            this.cerrarCaja.Name = "cerrarCaja";
-            this.cerrarCaja.ReadOnly = true;
-            this.cerrarCaja.Text = "Cerrar Caja";
-            this.cerrarCaja.ToolTipText = "Cerrar Caja";
-            this.cerrarCaja.UseColumnTextForButtonValue = true;
-            // 
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.SteelBlue;
+            this.panel1.Controls.Add(this.checkCajasMultiple);
             this.panel1.Controls.Add(this.comboSucursal);
             this.panel1.Controls.Add(this.label7);
             this.panel1.Controls.Add(this.txtBuscar);
@@ -132,6 +92,19 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(692, 67);
             this.panel1.TabIndex = 23;
+            // 
+            // checkCajasMultiple
+            // 
+            this.checkCajasMultiple.AutoSize = true;
+            this.checkCajasMultiple.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkCajasMultiple.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkCajasMultiple.Location = new System.Drawing.Point(535, 39);
+            this.checkCajasMultiple.Name = "checkCajasMultiple";
+            this.checkCajasMultiple.Size = new System.Drawing.Size(145, 19);
+            this.checkCajasMultiple.TabIndex = 41;
+            this.checkCajasMultiple.Text = "Cerrar multiples cajas";
+            this.checkCajasMultiple.UseVisualStyleBackColor = true;
+            this.checkCajasMultiple.CheckedChanged += new System.EventHandler(this.checkCajasMultiple_CheckedChanged);
             // 
             // comboSucursal
             // 
@@ -197,12 +170,80 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
+            // btnCerrarMultipleCajas
+            // 
+            this.btnCerrarMultipleCajas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCerrarMultipleCajas.Enabled = false;
+            this.btnCerrarMultipleCajas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCerrarMultipleCajas.Location = new System.Drawing.Point(386, 341);
+            this.btnCerrarMultipleCajas.Name = "btnCerrarMultipleCajas";
+            this.btnCerrarMultipleCajas.Size = new System.Drawing.Size(169, 28);
+            this.btnCerrarMultipleCajas.TabIndex = 24;
+            this.btnCerrarMultipleCajas.Text = "&Cerrar Cajas Múltiples";
+            this.btnCerrarMultipleCajas.UseVisualStyleBackColor = true;
+            this.btnCerrarMultipleCajas.Click += new System.EventHandler(this.btnCerrarMultipleCajas_Click);
+            // 
+            // id
+            // 
+            this.id.DataPropertyName = "id";
+            this.id.HeaderText = "Id";
+            this.id.Name = "id";
+            this.id.ReadOnly = true;
+            // 
+            // usuarioInicio
+            // 
+            this.usuarioInicio.DataPropertyName = "usuarioInicio";
+            this.usuarioInicio.HeaderText = "usuarioInicio";
+            this.usuarioInicio.Name = "usuarioInicio";
+            this.usuarioInicio.ReadOnly = true;
+            this.usuarioInicio.Visible = false;
+            // 
+            // vendedor
+            // 
+            this.vendedor.DataPropertyName = "vendedor";
+            this.vendedor.HeaderText = "Vendedor";
+            this.vendedor.Name = "vendedor";
+            this.vendedor.ReadOnly = true;
+            // 
+            // fechaHoraInicio
+            // 
+            this.fechaHoraInicio.DataPropertyName = "fechaHoraInicio";
+            this.fechaHoraInicio.HeaderText = "Fecha Apertura Caja";
+            this.fechaHoraInicio.Name = "fechaHoraInicio";
+            this.fechaHoraInicio.ReadOnly = true;
+            // 
+            // cajaInicio
+            // 
+            this.cajaInicio.DataPropertyName = "cajaInicio";
+            this.cajaInicio.HeaderText = "Caja Inicial";
+            this.cajaInicio.Name = "cajaInicio";
+            this.cajaInicio.ReadOnly = true;
+            // 
+            // cerrarCaja
+            // 
+            this.cerrarCaja.HeaderText = "Cerrar Caja";
+            this.cerrarCaja.Name = "cerrarCaja";
+            this.cerrarCaja.ReadOnly = true;
+            this.cerrarCaja.Text = "Cerrar Caja";
+            this.cerrarCaja.ToolTipText = "Cerrar Caja";
+            this.cerrarCaja.UseColumnTextForButtonValue = true;
+            // 
+            // cajero
+            // 
+            this.cajero.FalseValue = "false";
+            this.cajero.HeaderText = "Cajero";
+            this.cajero.Name = "cajero";
+            this.cajero.ReadOnly = true;
+            this.cajero.TrueValue = "true";
+            this.cajero.Visible = false;
+            // 
             // formCajasAbiertas
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(691, 374);
+            this.Controls.Add(this.btnCerrarMultipleCajas);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.grillaCajasAbiertas);
@@ -229,11 +270,14 @@
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.ComboBox comboSucursal;
         protected System.Windows.Forms.Label label7;
+        private System.Windows.Forms.CheckBox checkCajasMultiple;
+        protected System.Windows.Forms.Button btnCerrarMultipleCajas;
         private System.Windows.Forms.DataGridViewTextBoxColumn id;
         private System.Windows.Forms.DataGridViewTextBoxColumn usuarioInicio;
         private System.Windows.Forms.DataGridViewTextBoxColumn vendedor;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaHoraInicio;
         private System.Windows.Forms.DataGridViewTextBoxColumn cajaInicio;
         private System.Windows.Forms.DataGridViewButtonColumn cerrarCaja;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn cajero;
     }
 }

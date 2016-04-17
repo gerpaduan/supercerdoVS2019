@@ -37,16 +37,14 @@ namespace Datos
                         + oCierreParam.Sucursal.idSucursal + " and Usuarios.nombre like '%" + texto + "%' and CierreCaja.usuarioCierre = 0 ";
                     break;
                 case Entidades.CierreCaja.tipoBusqueda.FindById:
-                        selectText = "select * from CierreCaja where idSucursal = "
-                            + oCierreParam.Sucursal.idSucursal + " and id =  " + oCierreParam.Id;
+                        selectText = "select * from CierreCaja where id =  " + oCierreParam.Id;
                         break;
                 case Entidades.CierreCaja.tipoBusqueda.FindLast:
                         selectText = "select top 1 * from CierreCaja where idSucursal = "
                             + oCierreParam.Sucursal.idSucursal + " and usuarioInicio = "+ oCierreParam.UsuarioInicio.Id +" order by id desc";
                         break;
                 case Entidades.CierreCaja.tipoBusqueda.FindLastOpen:
-                        selectText = "select top 1 * from CierreCaja where idSucursal = "
-                            + oCierreParam.Sucursal.idSucursal + " and usuarioInicio = " + oCierreParam.UsuarioInicio.Id +
+                        selectText = "select top 1 * from CierreCaja where usuarioInicio = " + oCierreParam.UsuarioInicio.Id +
                             " and id < " + oCierreParam.Id + " order by id desc";
                         break;
             }
@@ -82,6 +80,23 @@ namespace Datos
 
             cmCierreCaja.ExecuteNonQuery();
             cmCierreCaja.Connection.Close();
+        }
+
+        public DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja)
+        {
+            string selectText = "select CierreCaja.*, Usuarios.* FROM CierreCaja INNER JOIN Usuarios ON CierreCaja.usuarioInicio = Usuarios.id where ";
+            for (int nroIndex = 0; nroIndex < listaCierreCaja.Count; nroIndex++)
+			{
+                if(nroIndex > 0) selectText += " OR ";
+
+                selectText += "CierreCaja.id = " + listaCierreCaja[nroIndex].Id;
+			}
+            DataTable dtCierreCaja = new DataTable();
+            SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
+            daCierreCaja.Fill(dtCierreCaja);
+            conn.cerraConexion();
+
+            return dtCierreCaja;
         }
 
         #region Gastos

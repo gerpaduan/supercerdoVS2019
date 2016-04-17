@@ -78,6 +78,11 @@ namespace Negocio
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
 
+        public DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja)
+        {
+            return oCierreD.findCierreCajaMultiples(listaCierreCaja);
+        }
+
         public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaInicioCaja, DateTime? fechaCierreCaja)
         {
             return oVentaN.obtenerTotalVentas(idVendedor, idSucursal, fechaInicioCaja, fechaCierreCaja);
