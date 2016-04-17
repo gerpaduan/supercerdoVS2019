@@ -706,6 +706,26 @@ namespace Presentacion.Ventas
 
         private void cargarTotalCorte()
         {
+            //calcular total corte para peso inestable
+            if (txtCantKgs.Text.Contains("i"))
+            {
+                try 
+	            {
+                    float kgPesoInestable = Utilidades.Util_Form.convertFloat(txtCantKgs.Text.Substring(0, 7), false);
+                    float precioKgCorte = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
+
+                    float totalCorteInestable = kgPesoInestable * precioKgCorte;
+                    //cargo el txt total corte
+                    txtTotalCorte.Text = totalCorteInestable.ToString("F2");
+	            }
+	            catch (Exception)
+	            {
+            		txtTotalCorte.Text = "";
+	            }
+                return;
+            }
+
+
             if (!txtCantKgs.Text.Equals("") && (checkLeerPeso.Checked  || 
                 ( !checkLeerPeso.Checked && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))))
             {

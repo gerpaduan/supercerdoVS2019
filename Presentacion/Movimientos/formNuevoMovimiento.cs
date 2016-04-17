@@ -362,7 +362,7 @@ namespace Presentacion
                     oCortePorMovimientoE = new Entidades.CortePorMovimiento();
                     oCortePorMovimientoE.Corte = oCorteE;
                     oCortePorMovimientoE.CantUnidad = Convert.ToInt32(txtCantUnidad.Text);
-                    oCortePorMovimientoE.CantKg = Util_Form.convertFloat(txtCantKgs.Text);
+                    oCortePorMovimientoE.CantKg = Util_Form.convertFloat(txtCantKgs.Text, true);
                     oCortePorMovimientoE.PesoBalanza = checkLeerPeso.Checked;
 
                     listaCortesPorMovimiento.Add(oCortePorMovimientoE);

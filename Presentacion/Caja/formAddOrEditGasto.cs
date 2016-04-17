@@ -215,7 +215,7 @@ namespace Presentacion.Caja
             oGastoE.Fecha = txtFechaGasto.Value;
             oGastoE.IdTipoGasto = (int)comboTipoGasto.SelectedValue;
             oGastoE.Descripcion = txtDescripcion.Text;
-            oGastoE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text);
+            oGastoE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true);
             oGastoE.Detalle = txtDetalle.Text;
             oGastoE.Sucursal = oSucursalE;
             oGastoE.CreadoPor = oGastoE.Id > 0 ? oGastoE.CreadoPor : oUsuario.Id;

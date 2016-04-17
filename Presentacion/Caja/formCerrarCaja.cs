@@ -64,13 +64,13 @@ namespace Presentacion.Caja
                     }
                     oCierreE.UsuarioCierre = oUserCierre;
                     oCierreE.FechaHoraCierre = string.IsNullOrEmpty(txtFechaHoraCierre.Text) ? (DateTime?)null : Convert.ToDateTime(txtFechaHoraCierre.Text.ToString());
-                    oCierreE.CajaInicio = Util_Form.convertFloat(txtCajaInicial.Text);
-                    oCierreE.Ventas = string.IsNullOrEmpty(txtVentas.Text) ? (float?)null : Util_Form.convertFloat(txtVentas.Text);
-                    oCierreE.Gastos = string.IsNullOrEmpty(txtGastos.Text) ? (float?)null : Util_Form.convertFloat(txtGastos.Text);
-                    oCierreE.CajaCierre = string.IsNullOrEmpty(txtCajaCierre.Text) ? (float?)null : Util_Form.convertFloat(txtCajaCierre.Text);
-                    oCierreE.Diferencia = string.IsNullOrEmpty(txtDiferencia.Text) ? (float?)null : Util_Form.convertFloat(txtDiferencia.Text);
-                    oCierreE.CajaInicioSiguiente = string.IsNullOrEmpty(txtCajaInicioSiguiente.Text) ? (float?)null : Util_Form.convertFloat(txtCajaInicioSiguiente.Text);
-                    oCierreE.ImporteRetirado = string.IsNullOrEmpty(txtImporteRetirado.Text) ? (float?)null : Util_Form.convertFloat(txtImporteRetirado.Text);
+                    oCierreE.CajaInicio = Util_Form.convertFloat(txtCajaInicial.Text, true);
+                    oCierreE.Ventas = string.IsNullOrEmpty(txtVentas.Text) ? (float?)null : Util_Form.convertFloat(txtVentas.Text, true);
+                    oCierreE.Gastos = string.IsNullOrEmpty(txtGastos.Text) ? (float?)null : Util_Form.convertFloat(txtGastos.Text, true);
+                    oCierreE.CajaCierre = string.IsNullOrEmpty(txtCajaCierre.Text) ? (float?)null : Util_Form.convertFloat(txtCajaCierre.Text, true);
+                    oCierreE.Diferencia = string.IsNullOrEmpty(txtDiferencia.Text) ? (float?)null : Util_Form.convertFloat(txtDiferencia.Text, true);
+                    oCierreE.CajaInicioSiguiente = string.IsNullOrEmpty(txtCajaInicioSiguiente.Text) ? (float?)null : Util_Form.convertFloat(txtCajaInicioSiguiente.Text, true);
+                    oCierreE.ImporteRetirado = string.IsNullOrEmpty(txtImporteRetirado.Text) ? (float?)null : Util_Form.convertFloat(txtImporteRetirado.Text, true);
                     
                     DialogResult respuesta = DialogResult.No;
                     switch (tipoCierreActual)
@@ -189,13 +189,13 @@ namespace Presentacion.Caja
         {
             if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
             {
-                float cero = Util_Form.convertFloat("0"),
-                cajaInicial = txtCajaInicial.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicial.Text),
-                ventas = txtVentas.Text.Equals("") ? cero : Util_Form.convertFloat(txtVentas.Text),
-                gastos = txtGastos.Text.Equals("") ? cero : Util_Form.convertFloat(txtGastos.Text),
-                cajaCierre = txtCajaCierre.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaCierre.Text),
-                cajaInicioSiguiente = txtCajaInicioSiguiente.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicioSiguiente.Text),
-                importeRetirado = txtImporteRetirado.Text.Equals("") ? cero : Util_Form.convertFloat(txtImporteRetirado.Text),
+                float cero = Util_Form.convertFloat("0", true),
+                cajaInicial = txtCajaInicial.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicial.Text, true),
+                ventas = txtVentas.Text.Equals("") ? cero : Util_Form.convertFloat(txtVentas.Text, true),
+                gastos = txtGastos.Text.Equals("") ? cero : Util_Form.convertFloat(txtGastos.Text, true),
+                cajaCierre = txtCajaCierre.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaCierre.Text, true),
+                cajaInicioSiguiente = txtCajaInicioSiguiente.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicioSiguiente.Text, true),
+                importeRetirado = txtImporteRetirado.Text.Equals("") ? cero : Util_Form.convertFloat(txtImporteRetirado.Text, true),
                 diferencia = 0;
 
                 diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);

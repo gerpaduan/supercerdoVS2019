@@ -659,12 +659,12 @@ namespace Presentacion.Ventas
             {
                 try
                 {
-                    cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text);
+                    cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, true);
 
                     if (oCorteE != null)
                     {
                         if (Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$/Kg"))
-                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text);
+                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, true);
                     }
                     ///si está logueado
                     if (Presentacion.FormPrincipal.logueado)
@@ -941,7 +941,7 @@ namespace Presentacion.Ventas
                     {
                         try
                         {
-                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text);
+                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, true);
                             txtPrecioKg.ReadOnly = true;
                             txtTotalCorte.ReadOnly = true;
 

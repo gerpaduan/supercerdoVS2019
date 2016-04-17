@@ -121,7 +121,7 @@ namespace Utilidades
 
         }
 
-        public static float convertFloat(string toFloat)
+        public static float convertFloat(string toFloat, bool messageBox)
         {
             float? value = null;
             try 
@@ -131,17 +131,17 @@ namespace Utilidades
 	        }
 	        catch (Exception ex)
 	        {
-        		MessageBox.Show("Error al convertir a tipo Float\n"+ex.Message, "Convertir a float");
+                if(messageBox) MessageBox.Show("Error al convertir a tipo Float\n"+ex.Message, "Convertir a float");
 	        }
             return (float)value;
-        }
+        }        
 
         public static bool validarNumeroMayorACero(string valor, string nombreTextBox)
         {
             bool resp = validarCampoNumerico(valor, nombreTextBox);
             if (resp)
             {
-                float? value = valor.Contains("-") ? 0 : convertFloat(valor);
+                float? value = valor.Contains("-") ? 0 : convertFloat(valor, true);
                 if (value.Equals(null) || value <= 0)
                 {
                     resp = false;
@@ -258,7 +258,7 @@ namespace Utilidades
                             if (string.IsNullOrEmpty(peso))
                             {
                                 peso = "Peso nulo";
-                                throw new Exception("Peso nulo\n\n.Verifique que la balanza esté conectada correctamente");
+                                //throw new Exception("Peso nulo\n\n.Verifique que la balanza esté conectada correctamente");
                             }
                             formAbierto = true;
                             break;

@@ -362,7 +362,7 @@ namespace Presentacion
                 oCortePorCompra.corte = oCorteNuevaCompra;
                 cargarCompra();//cargo datos en oCompraE
                 oCortePorCompra.compra = oCompraE;
-                oCortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                oCortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text, true); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                 oCortePorCompra.precioKg = float.Parse("0.00");
 
                 if (ultimaValidacion)
@@ -452,7 +452,7 @@ namespace Presentacion
                 }
                 else
                 {
-                    float cantKgs = Utilidades.Util_Form.convertFloat(txtCantKgs.Text);
+                    float cantKgs = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, true);
                     if (cantKgs <= 0)
                     {
                         MessageBox.Show("Ingrese una cantidad de Kgs mayor a 0 (cero).", "Ingrese una cantidad", MessageBoxButtons.OK, MessageBoxIcon.Information);

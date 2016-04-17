@@ -108,6 +108,31 @@ namespace Utilidades
             }
              return sucursalConexion;
         }
+
+        //Se obtiene el id de Sucursal par a la conexión actual
+        public static int getIdSucursalConexion()
+        {
+            int idSucursal = 0;
+            switch (tipoConn)
+            {
+                case Conexion.tipoConexion.local:
+                    idSucursal = 1;
+                    break;
+                case Conexion.tipoConexion.sanMartin:
+                    idSucursal = 2;
+                    break;
+                case Conexion.tipoConexion.sanMartinRemoto:
+                    idSucursal = 2;
+                    break;
+                case Conexion.tipoConexion.sanLorenzo:
+                    idSucursal = 1;
+                    break;
+                case Conexion.tipoConexion.sanLorenzoRemoto:
+                    idSucursal = 1;
+                    break;
+            }
+            return idSucursal;
+        }
      }
     
 }
