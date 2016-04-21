@@ -49,6 +49,7 @@
             this.label8 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.lblActualizar = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).BeginInit();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -115,6 +116,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.lblActualizar);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label7);
@@ -185,6 +187,7 @@
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(146, 21);
             this.txtDescripcion.TabIndex = 12;
+            this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             this.txtDescripcion.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label2
@@ -221,6 +224,7 @@
             this.fechaDesde.Size = new System.Drawing.Size(159, 21);
             this.fechaDesde.TabIndex = 5;
             this.fechaDesde.Value = new System.DateTime(2016, 3, 22, 0, 0, 0, 0);
+            this.fechaDesde.ValueChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             this.fechaDesde.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label3
@@ -245,6 +249,7 @@
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(158, 21);
             this.fechaHasta.TabIndex = 7;
+            this.fechaHasta.ValueChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             this.fechaHasta.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label4
@@ -305,6 +310,18 @@
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(285, 42);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 54;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
+            // 
             // formEmbutidos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -356,5 +373,6 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox1;
         protected System.Windows.Forms.Button btnSeleccionar;
+        protected System.Windows.Forms.Label lblActualizar;
     }
 }

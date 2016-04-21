@@ -116,7 +116,7 @@ namespace Presentacion.Movimientos
             }
 
             txtCantItems.Text = Convert.ToString(grillaCortesPorMovimiento.Rows.Count);
-            txtTotalKg.Text = Convert.ToString(totalKg);
+            txtTotalKg.Text = totalKg.ToString("F3");
 
         }
 

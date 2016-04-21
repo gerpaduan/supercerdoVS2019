@@ -47,8 +47,8 @@ namespace Presentacion
                     grillaEmbutidos.DataSource = dtEmbutidos;
 
                     formatearGrilla();
-
                     cargarCampoTotal();
+                    lblActualizar.Visible = false;
                 }
                 catch (Exception ex)
                 {
@@ -205,6 +205,11 @@ namespace Presentacion
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
             informacionEmbutido();
+        }
+
+        private void txtDescripcion_TextChanged(object sender, EventArgs e)
+        {
+            lblActualizar.Visible = true;
         }
     }
 }
