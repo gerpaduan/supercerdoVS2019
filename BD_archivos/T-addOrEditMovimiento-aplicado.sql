@@ -18,7 +18,7 @@ GO
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
 -- =============================================
-CREATE PROCEDURE addOrEditMovimiento
+alter PROCEDURE addOrEditMovimiento
 	-- Add the parameters for the stored procedure here	
 	@idMovimiento int = 0,
 	@fechaMovimiento datetime,
