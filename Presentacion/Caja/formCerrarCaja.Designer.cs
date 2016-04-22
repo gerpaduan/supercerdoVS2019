@@ -43,6 +43,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnIngresoBilletes = new System.Windows.Forms.Button();
             this.lblCortesAnulados = new System.Windows.Forms.Label();
             this.lblDiferenciaEntreCaja = new System.Windows.Forms.Label();
             this.btnCajaAnterior = new System.Windows.Forms.Button();
@@ -234,6 +235,7 @@
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.btnIngresoBilletes);
             this.panel1.Controls.Add(this.lblCortesAnulados);
             this.panel1.Controls.Add(this.lblDiferenciaEntreCaja);
             this.panel1.Controls.Add(this.btnCajaAnterior);
@@ -257,6 +259,18 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(366, 283);
             this.panel1.TabIndex = 13;
+            // 
+            // btnIngresoBilletes
+            // 
+            this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(315, 131);
+            this.btnIngresoBilletes.Name = "btnIngresoBilletes";
+            this.btnIngresoBilletes.Size = new System.Drawing.Size(36, 24);
+            this.btnIngresoBilletes.TabIndex = 37;
+            this.btnIngresoBilletes.Text = "...";
+            this.toolTip1.SetToolTip(this.btnIngresoBilletes, "Presione este botón para ingresar las cantidades de billetes");
+            this.btnIngresoBilletes.UseVisualStyleBackColor = true;
+            this.btnIngresoBilletes.Click += new System.EventHandler(this.btnIngresoBilletes_Click);
             // 
             // lblCortesAnulados
             // 
@@ -592,5 +606,6 @@
         private System.Windows.Forms.Button btnCajaAnterior;
         protected System.Windows.Forms.Label lblDiferenciaEntreCaja;
         protected System.Windows.Forms.Label lblCortesAnulados;
+        private System.Windows.Forms.Button btnIngresoBilletes;
     }
 }

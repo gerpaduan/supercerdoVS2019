@@ -195,6 +195,7 @@ namespace Presentacion.Caja
                         "Si está seguro presione 'Si' para continuar con el cierre de cajas.","Mensaje error",
                             MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                         if(resp.Equals(DialogResult.No))return;
+                        break;
                     }
                 }
 
@@ -217,5 +218,6 @@ namespace Presentacion.Caja
                 MessageBox.Show("Se deben seleccionar más de un vendedor para poder cerrar cajas múltiples","Cajas múltiples", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
+
     }
 }

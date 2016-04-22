@@ -409,5 +409,12 @@ namespace Presentacion.Caja
                 MessageBox.Show("Error al obtener el cierre de caja anterior.\n\n" + ex.Message);
             }
         }
+
+        private void btnIngresoBilletes_Click(object sender, EventArgs e)
+        {
+            formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
+            frmIngresoBilletes.txtBoxAcargar = this.txtCajaCierre;
+            frmIngresoBilletes.ShowDialog();
+        }
     }
 }

@@ -29,6 +29,13 @@
         private void InitializeComponent()
         {
             this.grillaCajasAbiertas = new System.Windows.Forms.DataGridView();
+            this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.usuarioInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.vendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.fechaHoraInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cerrarCaja = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.cajero = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.panel1 = new System.Windows.Forms.Panel();
             this.checkCajasMultiple = new System.Windows.Forms.CheckBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
@@ -38,13 +45,6 @@
             this.btnBuscar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.btnCerrarMultipleCajas = new System.Windows.Forms.Button();
-            this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.usuarioInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.vendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.fechaHoraInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cerrarCaja = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.cajero = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCajasAbiertas)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -70,12 +70,67 @@
             this.grillaCajasAbiertas.MultiSelect = false;
             this.grillaCajasAbiertas.Name = "grillaCajasAbiertas";
             this.grillaCajasAbiertas.ReadOnly = true;
+            this.grillaCajasAbiertas.RowHeadersVisible = false;
             this.grillaCajasAbiertas.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaCajasAbiertas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaCajasAbiertas.Size = new System.Drawing.Size(667, 262);
             this.grillaCajasAbiertas.TabIndex = 1;
             this.grillaCajasAbiertas.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCajasAbiertas_CellClick);
             this.grillaCajasAbiertas.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grillaCajasAbiertas_KeyDown);
+            // 
+            // id
+            // 
+            this.id.DataPropertyName = "id";
+            this.id.HeaderText = "Id";
+            this.id.Name = "id";
+            this.id.ReadOnly = true;
+            // 
+            // usuarioInicio
+            // 
+            this.usuarioInicio.DataPropertyName = "usuarioInicio";
+            this.usuarioInicio.HeaderText = "usuarioInicio";
+            this.usuarioInicio.Name = "usuarioInicio";
+            this.usuarioInicio.ReadOnly = true;
+            this.usuarioInicio.Visible = false;
+            // 
+            // vendedor
+            // 
+            this.vendedor.DataPropertyName = "vendedor";
+            this.vendedor.HeaderText = "Vendedor";
+            this.vendedor.Name = "vendedor";
+            this.vendedor.ReadOnly = true;
+            // 
+            // fechaHoraInicio
+            // 
+            this.fechaHoraInicio.DataPropertyName = "fechaHoraInicio";
+            this.fechaHoraInicio.HeaderText = "Fecha Apertura Caja";
+            this.fechaHoraInicio.Name = "fechaHoraInicio";
+            this.fechaHoraInicio.ReadOnly = true;
+            // 
+            // cajaInicio
+            // 
+            this.cajaInicio.DataPropertyName = "cajaInicio";
+            this.cajaInicio.HeaderText = "Caja Inicial";
+            this.cajaInicio.Name = "cajaInicio";
+            this.cajaInicio.ReadOnly = true;
+            // 
+            // cerrarCaja
+            // 
+            this.cerrarCaja.HeaderText = "Cerrar Caja";
+            this.cerrarCaja.Name = "cerrarCaja";
+            this.cerrarCaja.ReadOnly = true;
+            this.cerrarCaja.Text = "Cerrar Caja";
+            this.cerrarCaja.ToolTipText = "Cerrar Caja";
+            this.cerrarCaja.UseColumnTextForButtonValue = true;
+            // 
+            // cajero
+            // 
+            this.cajero.FalseValue = "false";
+            this.cajero.HeaderText = "Cajero";
+            this.cajero.Name = "cajero";
+            this.cajero.ReadOnly = true;
+            this.cajero.TrueValue = "true";
+            this.cajero.Visible = false;
             // 
             // panel1
             // 
@@ -182,60 +237,6 @@
             this.btnCerrarMultipleCajas.Text = "&Cerrar Cajas Múltiples";
             this.btnCerrarMultipleCajas.UseVisualStyleBackColor = true;
             this.btnCerrarMultipleCajas.Click += new System.EventHandler(this.btnCerrarMultipleCajas_Click);
-            // 
-            // id
-            // 
-            this.id.DataPropertyName = "id";
-            this.id.HeaderText = "Id";
-            this.id.Name = "id";
-            this.id.ReadOnly = true;
-            // 
-            // usuarioInicio
-            // 
-            this.usuarioInicio.DataPropertyName = "usuarioInicio";
-            this.usuarioInicio.HeaderText = "usuarioInicio";
-            this.usuarioInicio.Name = "usuarioInicio";
-            this.usuarioInicio.ReadOnly = true;
-            this.usuarioInicio.Visible = false;
-            // 
-            // vendedor
-            // 
-            this.vendedor.DataPropertyName = "vendedor";
-            this.vendedor.HeaderText = "Vendedor";
-            this.vendedor.Name = "vendedor";
-            this.vendedor.ReadOnly = true;
-            // 
-            // fechaHoraInicio
-            // 
-            this.fechaHoraInicio.DataPropertyName = "fechaHoraInicio";
-            this.fechaHoraInicio.HeaderText = "Fecha Apertura Caja";
-            this.fechaHoraInicio.Name = "fechaHoraInicio";
-            this.fechaHoraInicio.ReadOnly = true;
-            // 
-            // cajaInicio
-            // 
-            this.cajaInicio.DataPropertyName = "cajaInicio";
-            this.cajaInicio.HeaderText = "Caja Inicial";
-            this.cajaInicio.Name = "cajaInicio";
-            this.cajaInicio.ReadOnly = true;
-            // 
-            // cerrarCaja
-            // 
-            this.cerrarCaja.HeaderText = "Cerrar Caja";
-            this.cerrarCaja.Name = "cerrarCaja";
-            this.cerrarCaja.ReadOnly = true;
-            this.cerrarCaja.Text = "Cerrar Caja";
-            this.cerrarCaja.ToolTipText = "Cerrar Caja";
-            this.cerrarCaja.UseColumnTextForButtonValue = true;
-            // 
-            // cajero
-            // 
-            this.cajero.FalseValue = "false";
-            this.cajero.HeaderText = "Cajero";
-            this.cajero.Name = "cajero";
-            this.cajero.ReadOnly = true;
-            this.cajero.TrueValue = "true";
-            this.cajero.Visible = false;
             // 
             // formCajasAbiertas
             // 

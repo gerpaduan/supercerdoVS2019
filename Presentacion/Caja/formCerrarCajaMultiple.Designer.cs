@@ -29,11 +29,21 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle29 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle30 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle31 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle32 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.grillaCajasACerrar = new System.Windows.Forms.DataGridView();
+            this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.usuarioInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.vendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.fechaHoraInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.gastos = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ventas = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.verGastos = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.verVentas = new System.Windows.Forms.DataGridViewButtonColumn();
             this.checkTicket = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lblUsuarioCierre = new System.Windows.Forms.Label();
@@ -63,22 +73,13 @@
             this.lblCajaInicial = new System.Windows.Forms.Label();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.grillaCajasACerrar = new System.Windows.Forms.DataGridView();
-            this.id = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.usuarioInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.vendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.fechaHoraInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.gastos = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ventas = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.verGastos = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.verVentas = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.btnIngresoBilletes = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaCajasACerrar)).BeginInit();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.controlEleccionImporte)).BeginInit();
             this.panel3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaCajasACerrar)).BeginInit();
             this.SuspendLayout();
             // 
             // pnlBuscar
@@ -94,6 +95,122 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(937, 323);
             this.pnlBuscar.TabIndex = 24;
+            // 
+            // grillaCajasACerrar
+            // 
+            this.grillaCajasACerrar.AllowUserToAddRows = false;
+            this.grillaCajasACerrar.AllowUserToDeleteRows = false;
+            this.grillaCajasACerrar.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaCajasACerrar.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.ColumnHeader;
+            this.grillaCajasACerrar.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.grillaCajasACerrar.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.id,
+            this.usuarioInicio,
+            this.vendedor,
+            this.fechaHoraInicio,
+            this.cajaInicio,
+            this.gastos,
+            this.ventas,
+            this.verGastos,
+            this.verVentas});
+            this.grillaCajasACerrar.Location = new System.Drawing.Point(11, 117);
+            this.grillaCajasACerrar.MultiSelect = false;
+            this.grillaCajasACerrar.Name = "grillaCajasACerrar";
+            this.grillaCajasACerrar.ReadOnly = true;
+            this.grillaCajasACerrar.RowHeadersVisible = false;
+            this.grillaCajasACerrar.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            this.grillaCajasACerrar.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaCajasACerrar.Size = new System.Drawing.Size(542, 178);
+            this.grillaCajasACerrar.TabIndex = 49;
+            this.grillaCajasACerrar.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCajasACerrar_CellClick);
+            // 
+            // id
+            // 
+            this.id.DataPropertyName = "id";
+            this.id.HeaderText = "Id";
+            this.id.Name = "id";
+            this.id.ReadOnly = true;
+            this.id.Visible = false;
+            this.id.Width = 22;
+            // 
+            // usuarioInicio
+            // 
+            this.usuarioInicio.DataPropertyName = "usuarioInicio";
+            this.usuarioInicio.HeaderText = "usuarioInicio";
+            this.usuarioInicio.Name = "usuarioInicio";
+            this.usuarioInicio.ReadOnly = true;
+            this.usuarioInicio.Visible = false;
+            this.usuarioInicio.Width = 72;
+            // 
+            // vendedor
+            // 
+            this.vendedor.DataPropertyName = "nombre";
+            this.vendedor.HeaderText = "Vendedor";
+            this.vendedor.Name = "vendedor";
+            this.vendedor.ReadOnly = true;
+            this.vendedor.Width = 78;
+            // 
+            // fechaHoraInicio
+            // 
+            this.fechaHoraInicio.DataPropertyName = "fechaHoraInicio";
+            dataGridViewCellStyle29.Format = "dd/MM/yyyy HH:mm";
+            this.fechaHoraInicio.DefaultCellStyle = dataGridViewCellStyle29;
+            this.fechaHoraInicio.HeaderText = "Fecha Apertura Caja";
+            this.fechaHoraInicio.Name = "fechaHoraInicio";
+            this.fechaHoraInicio.ReadOnly = true;
+            this.fechaHoraInicio.Width = 99;
+            // 
+            // cajaInicio
+            // 
+            this.cajaInicio.DataPropertyName = "cajaInicio";
+            dataGridViewCellStyle30.Format = "F2";
+            this.cajaInicio.DefaultCellStyle = dataGridViewCellStyle30;
+            this.cajaInicio.HeaderText = "Caja Inicial";
+            this.cajaInicio.Name = "cajaInicio";
+            this.cajaInicio.ReadOnly = true;
+            this.cajaInicio.Width = 77;
+            // 
+            // gastos
+            // 
+            this.gastos.DataPropertyName = "gastos";
+            dataGridViewCellStyle31.Format = "F2";
+            this.gastos.DefaultCellStyle = dataGridViewCellStyle31;
+            this.gastos.HeaderText = "Gastos";
+            this.gastos.Name = "gastos";
+            this.gastos.ReadOnly = true;
+            this.gastos.Width = 65;
+            // 
+            // ventas
+            // 
+            this.ventas.DataPropertyName = "ventas";
+            dataGridViewCellStyle32.Format = "F2";
+            this.ventas.DefaultCellStyle = dataGridViewCellStyle32;
+            this.ventas.HeaderText = "Ventas";
+            this.ventas.Name = "ventas";
+            this.ventas.ReadOnly = true;
+            this.ventas.Width = 65;
+            // 
+            // verGastos
+            // 
+            this.verGastos.HeaderText = "Ver Gastos";
+            this.verGastos.Name = "verGastos";
+            this.verGastos.ReadOnly = true;
+            this.verGastos.Text = "Ver";
+            this.verGastos.ToolTipText = "Ver Gastos";
+            this.verGastos.UseColumnTextForButtonValue = true;
+            this.verGastos.Width = 59;
+            // 
+            // verVentas
+            // 
+            this.verVentas.HeaderText = "Ver Ventas";
+            this.verVentas.Name = "verVentas";
+            this.verVentas.ReadOnly = true;
+            this.verVentas.Text = "Ver";
+            this.verVentas.ToolTipText = "Ver Ventas";
+            this.verVentas.UseColumnTextForButtonValue = true;
+            this.verVentas.Width = 59;
             // 
             // checkTicket
             // 
@@ -193,6 +310,7 @@
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.btnIngresoBilletes);
             this.panel1.Controls.Add(this.lblDiferenciaEntreCaja);
             this.panel1.Controls.Add(this.btnCajaAnterior);
             this.panel1.Controls.Add(this.controlEleccionImporte);
@@ -442,121 +560,19 @@
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
-            // grillaCajasACerrar
+            // btnIngresoBilletes
             // 
-            this.grillaCajasACerrar.AllowUserToAddRows = false;
-            this.grillaCajasACerrar.AllowUserToDeleteRows = false;
-            this.grillaCajasACerrar.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.grillaCajasACerrar.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.ColumnHeader;
-            this.grillaCajasACerrar.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaCajasACerrar.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.id,
-            this.usuarioInicio,
-            this.vendedor,
-            this.fechaHoraInicio,
-            this.cajaInicio,
-            this.gastos,
-            this.ventas,
-            this.verGastos,
-            this.verVentas});
-            this.grillaCajasACerrar.Location = new System.Drawing.Point(11, 117);
-            this.grillaCajasACerrar.MultiSelect = false;
-            this.grillaCajasACerrar.Name = "grillaCajasACerrar";
-            this.grillaCajasACerrar.ReadOnly = true;
-            this.grillaCajasACerrar.RowHeadersVisible = false;
-            this.grillaCajasACerrar.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            this.grillaCajasACerrar.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCajasACerrar.Size = new System.Drawing.Size(542, 178);
-            this.grillaCajasACerrar.TabIndex = 49;
-            this.grillaCajasACerrar.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCajasACerrar_CellClick);
-            // 
-            // id
-            // 
-            this.id.DataPropertyName = "id";
-            this.id.HeaderText = "Id";
-            this.id.Name = "id";
-            this.id.ReadOnly = true;
-            this.id.Visible = false;
-            this.id.Width = 22;
-            // 
-            // usuarioInicio
-            // 
-            this.usuarioInicio.DataPropertyName = "usuarioInicio";
-            this.usuarioInicio.HeaderText = "usuarioInicio";
-            this.usuarioInicio.Name = "usuarioInicio";
-            this.usuarioInicio.ReadOnly = true;
-            this.usuarioInicio.Visible = false;
-            this.usuarioInicio.Width = 72;
-            // 
-            // vendedor
-            // 
-            this.vendedor.DataPropertyName = "nombre";
-            this.vendedor.HeaderText = "Vendedor";
-            this.vendedor.Name = "vendedor";
-            this.vendedor.ReadOnly = true;
-            this.vendedor.Width = 78;
-            // 
-            // fechaHoraInicio
-            // 
-            this.fechaHoraInicio.DataPropertyName = "fechaHoraInicio";
-            dataGridViewCellStyle13.Format = "dd/MM/yyyy HH:mm";
-            this.fechaHoraInicio.DefaultCellStyle = dataGridViewCellStyle13;
-            this.fechaHoraInicio.HeaderText = "Fecha Apertura Caja";
-            this.fechaHoraInicio.Name = "fechaHoraInicio";
-            this.fechaHoraInicio.ReadOnly = true;
-            this.fechaHoraInicio.Width = 99;
-            // 
-            // cajaInicio
-            // 
-            this.cajaInicio.DataPropertyName = "cajaInicio";
-            dataGridViewCellStyle14.Format = "F2";
-            this.cajaInicio.DefaultCellStyle = dataGridViewCellStyle14;
-            this.cajaInicio.HeaderText = "Caja Inicial";
-            this.cajaInicio.Name = "cajaInicio";
-            this.cajaInicio.ReadOnly = true;
-            this.cajaInicio.Width = 77;
-            // 
-            // gastos
-            // 
-            this.gastos.DataPropertyName = "gastos";
-            dataGridViewCellStyle15.Format = "F2";
-            this.gastos.DefaultCellStyle = dataGridViewCellStyle15;
-            this.gastos.HeaderText = "Gastos";
-            this.gastos.Name = "gastos";
-            this.gastos.ReadOnly = true;
-            this.gastos.Width = 65;
-            // 
-            // ventas
-            // 
-            this.ventas.DataPropertyName = "ventas";
-            dataGridViewCellStyle16.Format = "F2";
-            this.ventas.DefaultCellStyle = dataGridViewCellStyle16;
-            this.ventas.HeaderText = "Ventas";
-            this.ventas.Name = "ventas";
-            this.ventas.ReadOnly = true;
-            this.ventas.Width = 65;
-            // 
-            // verGastos
-            // 
-            this.verGastos.HeaderText = "Ver Gastos";
-            this.verGastos.Name = "verGastos";
-            this.verGastos.ReadOnly = true;
-            this.verGastos.Text = "Ver";
-            this.verGastos.ToolTipText = "Ver Gastos";
-            this.verGastos.UseColumnTextForButtonValue = true;
-            this.verGastos.Width = 59;
-            // 
-            // verVentas
-            // 
-            this.verVentas.HeaderText = "Ver Ventas";
-            this.verVentas.Name = "verVentas";
-            this.verVentas.ReadOnly = true;
-            this.verVentas.Text = "Ver";
-            this.verVentas.ToolTipText = "Ver Ventas";
-            this.verVentas.UseColumnTextForButtonValue = true;
-            this.verVentas.Width = 59;
+            this.btnIngresoBilletes.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(315, 130);
+            this.btnIngresoBilletes.Name = "btnIngresoBilletes";
+            this.btnIngresoBilletes.Size = new System.Drawing.Size(36, 24);
+            this.btnIngresoBilletes.TabIndex = 38;
+            this.btnIngresoBilletes.Text = "...";
+            this.btnIngresoBilletes.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.toolTip1.SetToolTip(this.btnIngresoBilletes, "Presione este botón para ingresar las cantidades de billetes");
+            this.btnIngresoBilletes.UseVisualStyleBackColor = true;
+            this.btnIngresoBilletes.Click += new System.EventHandler(this.btnIngresoBilletes_Click);
             // 
             // formCerrarCajaMultiple
             // 
@@ -574,6 +590,7 @@
             this.Load += new System.EventHandler(this.formCerrarCajaMultiple_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaCajasACerrar)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             this.panel1.ResumeLayout(false);
@@ -581,7 +598,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.controlEleccionImporte)).EndInit();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaCajasACerrar)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -628,5 +644,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn ventas;
         private System.Windows.Forms.DataGridViewButtonColumn verGastos;
         private System.Windows.Forms.DataGridViewButtonColumn verVentas;
+        private System.Windows.Forms.Button btnIngresoBilletes;
     }
 }

@@ -398,23 +398,30 @@ namespace Presentacion.Caja
 
         private void grillaCajasACerrar_CellClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex < 0) return;
+
             int idSelected = Convert.ToInt32(grillaCajasACerrar.Rows[e.RowIndex].Cells["id"].Value);
             Entidades.CierreCaja oCierreSelected = ListCierreE.Find(x => x.Id == idSelected);
-            if (e.RowIndex >= 0 && e.ColumnIndex ==
-                grillaCajasACerrar.Columns["verGastos"].Index)
+            if (e.ColumnIndex == grillaCajasACerrar.Columns["verGastos"].Index)
             {                
                 formGastosVendedor frmGastosVendedor = new formGastosVendedor();
                 frmGastosVendedor.oCierreE = oCierreSelected;
                 frmGastosVendedor.ShowDialog();
             }
 
-            if (e.RowIndex >= 0 && e.ColumnIndex ==
-                grillaCajasACerrar.Columns["verVentas"].Index)
+            if (e.ColumnIndex == grillaCajasACerrar.Columns["verVentas"].Index)
             {
                 formVentasVendedor frmVentasVendedor = new formVentasVendedor();
                 frmVentasVendedor.oCierreE = oCierreSelected;
                 frmVentasVendedor.Show();
             }
+        }
+
+        private void btnIngresoBilletes_Click(object sender, EventArgs e)
+        {
+            formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
+            frmIngresoBilletes.txtBoxAcargar = txtCajaCierre;
+            frmIngresoBilletes.ShowDialog();
         }
 
     }
