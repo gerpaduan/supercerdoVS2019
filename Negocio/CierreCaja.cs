@@ -56,7 +56,7 @@ namespace Negocio
                     oCierreE.FechaHoraCierre = string.IsNullOrEmpty(drCierreCaja["fechaHoraCierre"].ToString()) ? (DateTime?)null : Convert.ToDateTime(drCierreCaja["fechaHoraCierre"].ToString());
                     oCierreE.CajaInicio = string.IsNullOrEmpty(drCierreCaja["cajaInicio"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaInicio"].ToString());
                     oCierreE.Ventas = string.IsNullOrEmpty(drCierreCaja["ventas"].ToString()) ? (float?)null : float.Parse(drCierreCaja["ventas"].ToString());
-                    oCierreE.Gastos = string.IsNullOrEmpty(drCierreCaja["gastos"].ToString()) ? (float?)null : float.Parse(drCierreCaja["gastos"].ToString());
+                    oCierreE.EgresosCaja = string.IsNullOrEmpty(drCierreCaja["gastos"].ToString()) ? (float?)null : float.Parse(drCierreCaja["gastos"].ToString());
                     oCierreE.CajaCierre = string.IsNullOrEmpty(drCierreCaja["cajaCierre"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaCierre"].ToString());
                     oCierreE.Diferencia = string.IsNullOrEmpty(drCierreCaja["diferencia"].ToString()) ? (float?)null : float.Parse(drCierreCaja["diferencia"].ToString());
                     oCierreE.CajaInicioSiguiente = string.IsNullOrEmpty(drCierreCaja["cajaInicioSiguiente"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaInicioSiguiente"].ToString());
@@ -87,44 +87,45 @@ namespace Negocio
         {
             return oVentaN.obtenerTotalVentas(idVendedor, idSucursal, fechaInicioCaja, fechaCierreCaja);
         }
-        #region TipoGasto
-        public DataTable obtenerTipoGasto()
+
+        #region TipoEgresoCaja
+        public DataTable obtenerTiposEgresoCaja()
         {
-            return oCierreD.obtenerTipoGasto();
+            return oCierreD.obtenerTiposEgresoCaja();
         }
 
-        public DataTable obtenerGastos(int idSucursal, int idTipoGasto, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerEgresosCaja(int idSucursal, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            return oCierreD.obtenerGastos(idSucursal, idTipoGasto, texto, fechaDesde, fechaHasta);
+            return oCierreD.obtenerEgresosCaja(idSucursal, idTipoEgresoCaja, texto, fechaDesde, fechaHasta);
         }
 
-        public void addOrEditGasto(Entidades.Gasto oGasto)
+        public void addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
-            oCierreD.addOrEditGasto(oGasto);
+            oCierreD.addOrEditEgresoCaja(oEgresoCaja);
         }
-        public Entidades.Gasto getGastoById(int idGasto)
+        public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)
         {
-            Entidades.Gasto oGasto = oCierreD.getGastoById(idGasto);
+            Entidades.EgresoCaja oEgresoCaja = oCierreD.getEgresoCajaById(idEgresoCaja);
 
-            if (oGasto != null)
+            if (oEgresoCaja != null)
             {
                 Negocio.Usuario oUserN = new Usuario();
 
-                oGasto.CreadoPorUser = oUserN.getUserById(oGasto.CreadoPor);
-                oGasto.ActualizadoPorUser = oUserN.getUserById(oGasto.ActualizadoPor);
+                oEgresoCaja.CreadoPorUser = oUserN.getUserById(oEgresoCaja.CreadoPor);
+                oEgresoCaja.ActualizadoPorUser = oUserN.getUserById(oEgresoCaja.ActualizadoPor);
             }
 
-            return oGasto;
+            return oEgresoCaja;
         }
 
-        public float getMontoGastosVendedor(Entidades.CierreCaja oCierreE)
+        public float getMontoEgresosCajaVendedor(Entidades.CierreCaja oCierreE)
         {
-            return  oCierreD.getMontoGastosVendedor(oCierreE);
+            return  oCierreD.getMontoEgresosCajaVendedor(oCierreE);
         }
 
-        public DataTable getGastosVendedor(Entidades.CierreCaja oCierreE)
+        public DataTable getEgresosCajaVendedor(Entidades.CierreCaja oCierreE)
         {
-            return oCierreD.getGastosVendedor(oCierreE);
+            return oCierreD.getEgresosCajaVendedor(oCierreE);
         }
         #endregion
     }

@@ -24,7 +24,7 @@ namespace Datos
             {
                 case Entidades.CierreCaja.tipoBusqueda.FindAll:
                     selectText = "select Usuarios.nombre as Iniciada_Por, fechaHoraInicio as Inicio, fechaHoraCierre as Cierre, " +
-                        "round(cajaInicio, 2) as Caja_Inicial, round(ventas, 2) as Ventas, round(gastos, 2) as Gastos, round(cajaCierre, 2) as Caja_Cierre, round(diferencia, 2) as Diferencia, " +
+                        "round(cajaInicio, 2) as Caja_Inicial, round(ventas, 2) as Ventas, round(gastos, 2) as EgresosCaja, round(cajaCierre, 2) as Caja_Cierre, round(diferencia, 2) as Diferencia, " +
                         "round(cajaInicioSiguiente, 2) as Caja_Ini_Sig, round(importeRetirado, 2) as Retirado, " +
                         "UsuarioCierre.nombre as Cerrada_Por from CierreCaja, Usuarios, Usuarios as UsuarioCierre " +
                         "where CierreCaja.usuarioInicio = Usuarios.id and CierreCaja.usuarioCierre = UsuarioCierre.id and idSucursal = "
@@ -70,7 +70,7 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@fechaHoraCierre", oCierreCajaE.FechaHoraCierre);
             cmCierreCaja.Parameters.AddWithValue("@cajaInicio", oCierreCajaE.CajaInicio);
             cmCierreCaja.Parameters.AddWithValue("@ventas", oCierreCajaE.Ventas);
-            cmCierreCaja.Parameters.AddWithValue("@gastos", oCierreCajaE.Gastos);
+            cmCierreCaja.Parameters.AddWithValue("@gastos", oCierreCajaE.EgresosCaja);
             cmCierreCaja.Parameters.AddWithValue("@cajaCierre", oCierreCajaE.CajaCierre);
             cmCierreCaja.Parameters.AddWithValue("@diferencia", oCierreCajaE.Diferencia);
             cmCierreCaja.Parameters.AddWithValue("@cajaInicioSiguiente", oCierreCajaE.CajaInicioSiguiente);
@@ -99,66 +99,66 @@ namespace Datos
             return dtCierreCaja;
         }
 
-        #region Gastos
+        #region EgresosCaja
 
-        public DataTable obtenerTipoGasto()
+        public DataTable obtenerTiposEgresoCaja()
         {
-            string selectText = "Select * from TipoGasto";
-            DataTable dtTipoGasto = new DataTable();
+            string selectText = "Select * from TiposEgresoCaja";
+            DataTable dtTipoEgresoCaja = new DataTable();
             SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
-            daCierreCaja.Fill(dtTipoGasto);           
+            daCierreCaja.Fill(dtTipoEgresoCaja);           
             conn.cerraConexion();
 
-            return dtTipoGasto;
+            return dtTipoEgresoCaja;
         }
 
-        public DataTable obtenerGastos(int idSucursal, int idTipoGasto, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerEgresosCaja(int idSucursal, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            DataTable dtGastos = new DataTable();
+            DataTable dtEgresosCaja = new DataTable();
             daCierreCaja = new SqlDataAdapter();
 
             cmCierreCaja = new SqlCommand();
             cmCierreCaja.Connection = conn.conectar();
             cmCierreCaja.Connection.Open();
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
-            cmCierreCaja.CommandText = "obtenerGastos";
+            cmCierreCaja.CommandText = "obtenerEgresosCaja";
             cmCierreCaja.Parameters.AddWithValue("@texto", texto);
             cmCierreCaja.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCierreCaja.Parameters.AddWithValue("@fechaHasta", fechaHasta);
-            cmCierreCaja.Parameters.AddWithValue("@idTipoGasto", idTipoGasto);
+            cmCierreCaja.Parameters.AddWithValue("@idTipoEgresoCaja", idTipoEgresoCaja);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", idSucursal);
 
             daCierreCaja.SelectCommand = cmCierreCaja;
-            daCierreCaja.Fill(dtGastos);
+            daCierreCaja.Fill(dtEgresosCaja);
 
             cmCierreCaja.Connection.Close();
 
-            return dtGastos;
+            return dtEgresosCaja;
         }
 
-        public void addOrEditGasto(Entidades.Gasto oGasto)
+        public void addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
             cmCierreCaja = new SqlCommand();
 
             cmCierreCaja.Connection = conn.conectar();
             cmCierreCaja.Connection.Open();
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
-            cmCierreCaja.CommandText = "addOrEditGasto";
-            cmCierreCaja.Parameters.AddWithValue("@id", oGasto.Id);
-            cmCierreCaja.Parameters.AddWithValue("@fecha", oGasto.Fecha);
-            cmCierreCaja.Parameters.AddWithValue("@idTipoGasto", oGasto.IdTipoGasto);
-            cmCierreCaja.Parameters.AddWithValue("@descripcion", oGasto.Descripcion);
-            cmCierreCaja.Parameters.AddWithValue("@detalle", oGasto.Detalle);
-            cmCierreCaja.Parameters.AddWithValue("@monto", oGasto.Monto);
-            cmCierreCaja.Parameters.AddWithValue("@idSucursal", oGasto.Sucursal.idSucursal);
-            cmCierreCaja.Parameters.AddWithValue("@creadoPor", oGasto.CreadoPor);
-            cmCierreCaja.Parameters.AddWithValue("@actualizadoPor", oGasto.ActualizadoPor);
+            cmCierreCaja.CommandText = "addOrEditEgresoCaja";
+            cmCierreCaja.Parameters.AddWithValue("@id", oEgresoCaja.Id);
+            cmCierreCaja.Parameters.AddWithValue("@fecha", oEgresoCaja.Fecha);
+            cmCierreCaja.Parameters.AddWithValue("@idTipoEgresoCaja", oEgresoCaja.IdTipoEgresoCaja);
+            cmCierreCaja.Parameters.AddWithValue("@descripcion", oEgresoCaja.Descripcion);
+            cmCierreCaja.Parameters.AddWithValue("@detalle", oEgresoCaja.Detalle);
+            cmCierreCaja.Parameters.AddWithValue("@monto", oEgresoCaja.Monto);
+            cmCierreCaja.Parameters.AddWithValue("@idSucursal", oEgresoCaja.Sucursal.idSucursal);
+            cmCierreCaja.Parameters.AddWithValue("@creadoPor", oEgresoCaja.CreadoPor);
+            cmCierreCaja.Parameters.AddWithValue("@actualizadoPor", oEgresoCaja.ActualizadoPor);
 
             cmCierreCaja.ExecuteNonQuery();
             cmCierreCaja.Connection.Close();
         }
 
-        public Entidades.Gasto getGastoById(int idGasto)
+        public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)
         {
             cmCierreCaja = new SqlCommand();
 
@@ -166,37 +166,37 @@ namespace Datos
             cmCierreCaja.Connection.Open();
 
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
-            cmCierreCaja.CommandText = "obtenerGastos";
-            cmCierreCaja.Parameters.AddWithValue("@id", idGasto);
+            cmCierreCaja.CommandText = "obtenerEgresosCaja";
+            cmCierreCaja.Parameters.AddWithValue("@id", idEgresoCaja);
 
-            SqlDataReader drGasto = cmCierreCaja.ExecuteReader();
+            SqlDataReader drEgresoCaja = cmCierreCaja.ExecuteReader();
 
-            Entidades.Gasto oGasto = new Entidades.Gasto();
+            Entidades.EgresoCaja oEgresoCaja = new Entidades.EgresoCaja();
             Datos.Sucursal oSucD = new Datos.Sucursal();
             Datos.Usuario oUserD = new Datos.Usuario();
 
-            while (drGasto.Read())
+            while (drEgresoCaja.Read())
             {
-                oGasto.Id = Convert.ToInt32(drGasto["id"].ToString());
-                oGasto.Fecha = Convert.ToDateTime(drGasto["fechaHora"].ToString());
-                oGasto.IdTipoGasto = Convert.ToInt32(drGasto["idTipoGasto"].ToString());
-                oGasto.TipoGasto = drGasto["tipoGasto"].ToString();
-                oGasto.Descripcion = drGasto["descripcion"].ToString();
-                oGasto.Detalle = drGasto["detalle"].ToString();
-                oGasto.Monto =  float.Parse(drGasto["monto"].ToString());
-                oGasto.Sucursal = oSucD.findById(Convert.ToInt32(drGasto["idSucursal"].ToString()));
-                oGasto.Creado = drGasto["creado"].Equals(null) ? (DateTime?)null : Convert.ToDateTime(drGasto["creado"].ToString());
-                oGasto.CreadoPor = Convert.ToInt32(drGasto["creadoPor"].ToString());
+                oEgresoCaja.Id = Convert.ToInt32(drEgresoCaja["id"].ToString());
+                oEgresoCaja.Fecha = Convert.ToDateTime(drEgresoCaja["fechaHora"].ToString());
+                oEgresoCaja.IdTipoEgresoCaja = Convert.ToInt32(drEgresoCaja["idTipoEgresoCaja"].ToString());
+                oEgresoCaja.TipoEgresoCaja = drEgresoCaja["tipoEgresoCaja"].ToString();
+                oEgresoCaja.Descripcion = drEgresoCaja["descripcion"].ToString();
+                oEgresoCaja.Detalle = drEgresoCaja["detalle"].ToString();
+                oEgresoCaja.Monto =  float.Parse(drEgresoCaja["monto"].ToString());
+                oEgresoCaja.Sucursal = oSucD.findById(Convert.ToInt32(drEgresoCaja["idSucursal"].ToString()));
+                oEgresoCaja.Creado = drEgresoCaja["creado"].Equals(null) ? (DateTime?)null : Convert.ToDateTime(drEgresoCaja["creado"].ToString());
+                oEgresoCaja.CreadoPor = Convert.ToInt32(drEgresoCaja["creadoPor"].ToString());
                 DateTime? fechaNull = null;
-                oGasto.Actualizado = !String.IsNullOrEmpty(drGasto["actualizado"].ToString()) ? (Convert.ToDateTime(drGasto["actualizado"].ToString())) : fechaNull;
-                oGasto.ActualizadoPor = drGasto["actualizadoPor"].ToString().Length > 0 ? Convert.ToInt32(drGasto["actualizadoPor"]) : 0;
+                oEgresoCaja.Actualizado = !String.IsNullOrEmpty(drEgresoCaja["actualizado"].ToString()) ? (Convert.ToDateTime(drEgresoCaja["actualizado"].ToString())) : fechaNull;
+                oEgresoCaja.ActualizadoPor = drEgresoCaja["actualizadoPor"].ToString().Length > 0 ? Convert.ToInt32(drEgresoCaja["actualizadoPor"]) : 0;
             }
 
             cmCierreCaja.Connection.Close();
-            return oGasto;
+            return oEgresoCaja;
         }
 
-        public float getMontoGastosVendedor(Entidades.CierreCaja oCierre)
+        public float getMontoEgresosCajaVendedor(Entidades.CierreCaja oCierre)
         {
             cmCierreCaja = new SqlCommand();
 
@@ -204,48 +204,48 @@ namespace Datos
             cmCierreCaja.Connection.Open();
 
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
-            cmCierreCaja.CommandText = "obtenerGastos";
+            cmCierreCaja.CommandText = "obtenerEgresosCaja";
             cmCierreCaja.Parameters.AddWithValue("@fechaDesde", oCierre.FechaHoraInicio);
             cmCierreCaja.Parameters.AddWithValue("@fechaHasta", DateTime.Now.Date);
             cmCierreCaja.Parameters.AddWithValue("@idVendedor", oCierre.UsuarioInicio.Id);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", oCierre.Sucursal.idSucursal);
-            cmCierreCaja.Parameters.AddWithValue("@montoGasto", true);
+            cmCierreCaja.Parameters.AddWithValue("@montoEgresoCaja", true);
 
-            SqlDataReader drGasto = cmCierreCaja.ExecuteReader();
-            float gasto = 0;
-            while (drGasto.Read())
+            SqlDataReader drEgresoCaja = cmCierreCaja.ExecuteReader();
+            float egresoCaja = 0;
+            while (drEgresoCaja.Read())
             {
-                if (drGasto["monto"] != DBNull.Value)
+                if (drEgresoCaja["monto"] != DBNull.Value)
                 {
-                    gasto = float.Parse(drGasto["monto"].ToString());                    
+                    egresoCaja = float.Parse(drEgresoCaja["monto"].ToString());                    
                 }
             }
             cmCierreCaja.Connection.Close();
-            return gasto;
+            return egresoCaja;
         }
 
-        public DataTable getGastosVendedor(Entidades.CierreCaja oCierre)
+        public DataTable getEgresosCajaVendedor(Entidades.CierreCaja oCierre)
         {
-            DataTable dtGastos = new DataTable();
+            DataTable dtEgresosCaja = new DataTable();
             daCierreCaja = new SqlDataAdapter();
 
             cmCierreCaja = new SqlCommand();
             cmCierreCaja.Connection = conn.conectar();
             cmCierreCaja.Connection.Open();
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
-            cmCierreCaja.CommandText = "obtenerGastos";
+            cmCierreCaja.CommandText = "obtenerEgresosCaja";
             cmCierreCaja.Parameters.AddWithValue("@fechaDesde", oCierre.FechaHoraInicio);
             cmCierreCaja.Parameters.AddWithValue("@fechaHasta", DateTime.Now.Date);
             cmCierreCaja.Parameters.AddWithValue("@idVendedor", oCierre.UsuarioInicio.Id);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", oCierre.Sucursal.idSucursal);
-            cmCierreCaja.Parameters.AddWithValue("@verGasto", true);
+            cmCierreCaja.Parameters.AddWithValue("@verEgresoCaja", true);
 
             daCierreCaja.SelectCommand = cmCierreCaja;
-            daCierreCaja.Fill(dtGastos);
+            daCierreCaja.Fill(dtEgresosCaja);
 
             cmCierreCaja.Connection.Close();
 
-            return dtGastos;
+            return dtEgresosCaja;
         }
 
         #endregion

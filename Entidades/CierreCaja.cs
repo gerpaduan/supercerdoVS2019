@@ -51,7 +51,7 @@ namespace Entidades
         }
         float? gastos;
 
-        public float? Gastos
+        public float? EgresosCaja
         {
             get { return gastos; }
             set { gastos = value; }

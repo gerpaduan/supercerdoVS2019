@@ -9,31 +9,34 @@ using System.Windows.Forms;
 
 namespace Presentacion.Caja
 {
-    public partial class formGastosVendedor : Form
+    public partial class formEgresosCajaVendedor : Form
     {
         protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        protected Entidades.Gasto oGastoE = new Entidades.Gasto();
+        protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
 
         public Entidades.CierreCaja oCierreE;
 
-        public formGastosVendedor()
+        public formEgresosCajaVendedor()
         {
             InitializeComponent();
         }
 
-        private void formGastosVendedor_Load(object sender, EventArgs e)
+        private void formEgresosCajaVendedor_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            this.Text = "Gastos "+oCierreE.UsuarioInicio.Nombre;
-            grillaGastos.DataSource = oCierreN.getGastosVendedor(oCierreE);
-            grillaGastos.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaGastos.Columns["Monto"].DefaultCellStyle.Format = "F2";
+            this.Text = "Egresos Caja "+oCierreE.UsuarioInicio.Nombre;
+            grillaEgresosCaja.DataSource = oCierreN.getEgresosCajaVendedor(oCierreE);
+            grillaEgresosCaja.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            grillaEgresosCaja.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaEgresosCaja.Columns["Monto"].DefaultCellStyle.Format = "F2";
+            grillaEgresosCaja.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            grillaEgresosCaja.Columns["Actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
 
             decimal total = 0;
-            foreach (DataGridViewRow row in grillaGastos.Rows)
+            foreach (DataGridViewRow row in grillaEgresosCaja.Rows)
             {
                 total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
             }
@@ -45,21 +48,21 @@ namespace Presentacion.Caja
             this.Close();
         }
 
-        private void grillaGastos_CellClick(object sender, DataGridViewCellEventArgs e)
+        private void grillaEgresosCaja_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            seleccionarGasto();
+            seleccionarEgresoCaja();
         }
 
-        private void seleccionarGasto()
+        private void seleccionarEgresoCaja()
         {
             try
             {
-                DataGridViewRow fila = grillaGastos.CurrentRow;
+                DataGridViewRow fila = grillaEgresosCaja.CurrentRow;
 
                 if (fila != null)
                 {
                     txtFechaTexto.Text = fila.Cells["Fecha"].Value.ToString();
-                    txtTipoGasto.Text = fila.Cells["Tipo Gasto"].Value.ToString();
+                    txtTipoEgresoCaja.Text = fila.Cells["Tipo EgresoCaja"].Value.ToString();
                     txtDescripcion.Text = fila.Cells["Descripción"].Value.ToString();
                     txtMonto.Text = fila.Cells["Monto"].Value.ToString();
                     txtDetalle.Text = fila.Cells["Detalle"].Value.ToString();
@@ -71,9 +74,9 @@ namespace Presentacion.Caja
             }
         }
 
-        private void grillaGastos_SelectionChanged(object sender, EventArgs e)
+        private void grillaEgresosCaja_SelectionChanged(object sender, EventArgs e)
         {
-            seleccionarGasto();
+            seleccionarEgresoCaja();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

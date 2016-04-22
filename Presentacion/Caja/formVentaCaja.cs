@@ -1125,10 +1125,10 @@ namespace Presentacion.Ventas
                     cambiarPuntoDeVenta();
                     break;
                 case Keys.F6:
-                    misGasto();
+                    misEgresoCaja();
                     break;
                 case Keys.F7:
-                    agregarGasto();
+                    agregarEgresoCaja();
                     break;
                 case Keys.F9:
                     buscarCliente();
@@ -1157,24 +1157,24 @@ namespace Presentacion.Ventas
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private void misGasto()
+        private void misEgresoCaja()
         {
             Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE.Sucursal = oSucursalE;
 
-            formGastosVendedor frmGastosVendedor = new formGastosVendedor();
-            frmGastosVendedor.oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, null);
-            frmGastosVendedor.ShowDialog();
+            formEgresosCajaVendedor frmEgresosCajaVendedor = new formEgresosCajaVendedor();
+            frmEgresosCajaVendedor.oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, null);
+            frmEgresosCajaVendedor.ShowDialog();
         }
 
-        private void agregarGasto()
+        private void agregarEgresoCaja()
         {
             if (panelBloquear.Visible) return;
-            formAddOrEditGasto frmAddOrEditGasto = new formAddOrEditGasto();
-            frmAddOrEditGasto.oUsuario = oUsuario;
-            frmAddOrEditGasto.ShowDialog();
+            formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
+            frmAddOrEditEgresoCaja.oUsuario = oUsuario;
+            frmAddOrEditEgresoCaja.ShowDialog();
         }
 
         private void cambiarPuntoDeVenta()

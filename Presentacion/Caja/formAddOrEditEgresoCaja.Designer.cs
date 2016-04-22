@@ -1,6 +1,6 @@
 ﻿namespace Presentacion.Caja
 {
-    partial class formAddOrEditGasto
+    partial class formAddOrEditEgresoCaja
     {
         /// <summary>
         /// Required designer variable.
@@ -32,22 +32,22 @@
             this.txtFechaTexto = new System.Windows.Forms.TextBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.txtTipoGasto = new System.Windows.Forms.TextBox();
+            this.txtTipoEgresoCaja = new System.Windows.Forms.TextBox();
             this.lblDetalle = new System.Windows.Forms.Label();
             this.lblMonto = new System.Windows.Forms.Label();
             this.txtMonto = new System.Windows.Forms.TextBox();
             this.lblDescripcion = new System.Windows.Forms.Label();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
-            this.comboTipoGasto = new System.Windows.Forms.ComboBox();
+            this.comboTipoEgresoCaja = new System.Windows.Forms.ComboBox();
             this.txtDetalle = new System.Windows.Forms.TextBox();
             this.lblTipo = new System.Windows.Forms.Label();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
-            this.txtFechaGasto = new System.Windows.Forms.DateTimePicker();
+            this.txtFechaEgresoCaja = new System.Windows.Forms.DateTimePicker();
             this.label3 = new System.Windows.Forms.Label();
-            this.idGastoLabel = new System.Windows.Forms.Label();
+            this.idEgresoCajaLabel = new System.Windows.Forms.Label();
             this.btnAceptar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.txtCreado = new System.Windows.Forms.TextBox();
@@ -74,7 +74,7 @@
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label4);
             this.pnlBuscar.Controls.Add(this.label16);
-            this.pnlBuscar.Controls.Add(this.txtFechaGasto);
+            this.pnlBuscar.Controls.Add(this.txtFechaEgresoCaja);
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Location = new System.Drawing.Point(-1, -1);
             this.pnlBuscar.Name = "pnlBuscar";
@@ -105,13 +105,13 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.txtTipoGasto);
+            this.groupBox1.Controls.Add(this.txtTipoEgresoCaja);
             this.groupBox1.Controls.Add(this.lblDetalle);
             this.groupBox1.Controls.Add(this.lblMonto);
             this.groupBox1.Controls.Add(this.txtMonto);
             this.groupBox1.Controls.Add(this.lblDescripcion);
             this.groupBox1.Controls.Add(this.txtDescripcion);
-            this.groupBox1.Controls.Add(this.comboTipoGasto);
+            this.groupBox1.Controls.Add(this.comboTipoEgresoCaja);
             this.groupBox1.Controls.Add(this.txtDetalle);
             this.groupBox1.Controls.Add(this.lblTipo);
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -121,18 +121,18 @@
             this.groupBox1.Size = new System.Drawing.Size(469, 208);
             this.groupBox1.TabIndex = 48;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Gasto";
+            this.groupBox1.Text = "Egreso Caja";
             // 
-            // txtTipoGasto
+            // txtTipoEgresoCaja
             // 
-            this.txtTipoGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTipoGasto.Location = new System.Drawing.Point(92, 22);
-            this.txtTipoGasto.Name = "txtTipoGasto";
-            this.txtTipoGasto.ReadOnly = true;
-            this.txtTipoGasto.Size = new System.Drawing.Size(158, 22);
-            this.txtTipoGasto.TabIndex = 50;
-            this.txtTipoGasto.TabStop = false;
-            this.txtTipoGasto.Visible = false;
+            this.txtTipoEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTipoEgresoCaja.Location = new System.Drawing.Point(92, 22);
+            this.txtTipoEgresoCaja.Name = "txtTipoEgresoCaja";
+            this.txtTipoEgresoCaja.ReadOnly = true;
+            this.txtTipoEgresoCaja.Size = new System.Drawing.Size(158, 22);
+            this.txtTipoEgresoCaja.TabIndex = 50;
+            this.txtTipoEgresoCaja.TabStop = false;
+            this.txtTipoEgresoCaja.Visible = false;
             // 
             // lblDetalle
             // 
@@ -187,18 +187,18 @@
             this.txtDescripcion.Size = new System.Drawing.Size(355, 22);
             this.txtDescripcion.TabIndex = 1;
             // 
-            // comboTipoGasto
+            // comboTipoEgresoCaja
             // 
-            this.comboTipoGasto.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipoGasto.FormattingEnabled = true;
-            this.comboTipoGasto.Items.AddRange(new object[] {
+            this.comboTipoEgresoCaja.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipoEgresoCaja.FormattingEnabled = true;
+            this.comboTipoEgresoCaja.Items.AddRange(new object[] {
             "Todos",
             "Media Res",
             "Cortes"});
-            this.comboTipoGasto.Location = new System.Drawing.Point(92, 21);
-            this.comboTipoGasto.Name = "comboTipoGasto";
-            this.comboTipoGasto.Size = new System.Drawing.Size(158, 24);
-            this.comboTipoGasto.TabIndex = 0;
+            this.comboTipoEgresoCaja.Location = new System.Drawing.Point(92, 21);
+            this.comboTipoEgresoCaja.Name = "comboTipoEgresoCaja";
+            this.comboTipoEgresoCaja.Size = new System.Drawing.Size(158, 24);
+            this.comboTipoEgresoCaja.TabIndex = 0;
             // 
             // txtDetalle
             // 
@@ -266,18 +266,18 @@
             this.label16.TabIndex = 10;
             this.label16.Text = "Usuario";
             // 
-            // txtFechaGasto
+            // txtFechaEgresoCaja
             // 
-            this.txtFechaGasto.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFechaGasto.Checked = false;
-            this.txtFechaGasto.CustomFormat = "dd/MM/yyyy HH:mm";
-            this.txtFechaGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.txtFechaGasto.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaGasto.Location = new System.Drawing.Point(321, 13);
-            this.txtFechaGasto.Name = "txtFechaGasto";
-            this.txtFechaGasto.Size = new System.Drawing.Size(161, 23);
-            this.txtFechaGasto.TabIndex = 1;
-            this.txtFechaGasto.TabStop = false;
+            this.txtFechaEgresoCaja.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaEgresoCaja.Checked = false;
+            this.txtFechaEgresoCaja.CustomFormat = "dd/MM/yyyy HH:mm";
+            this.txtFechaEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.txtFechaEgresoCaja.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.txtFechaEgresoCaja.Location = new System.Drawing.Point(321, 13);
+            this.txtFechaEgresoCaja.Name = "txtFechaEgresoCaja";
+            this.txtFechaEgresoCaja.Size = new System.Drawing.Size(161, 23);
+            this.txtFechaEgresoCaja.TabIndex = 1;
+            this.txtFechaEgresoCaja.TabStop = false;
             // 
             // label3
             // 
@@ -290,17 +290,17 @@
             this.label3.TabIndex = 4;
             this.label3.Text = "Fecha";
             // 
-            // idGastoLabel
+            // idEgresoCajaLabel
             // 
-            this.idGastoLabel.AutoSize = true;
-            this.idGastoLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.idGastoLabel.ForeColor = System.Drawing.Color.DarkBlue;
-            this.idGastoLabel.Location = new System.Drawing.Point(288, 281);
-            this.idGastoLabel.Name = "idGastoLabel";
-            this.idGastoLabel.Size = new System.Drawing.Size(69, 13);
-            this.idGastoLabel.TabIndex = 48;
-            this.idGastoLabel.Text = "idGastoLabel";
-            this.idGastoLabel.Visible = false;
+            this.idEgresoCajaLabel.AutoSize = true;
+            this.idEgresoCajaLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.idEgresoCajaLabel.ForeColor = System.Drawing.Color.DarkBlue;
+            this.idEgresoCajaLabel.Location = new System.Drawing.Point(288, 281);
+            this.idEgresoCajaLabel.Name = "idEgresoCajaLabel";
+            this.idEgresoCajaLabel.Size = new System.Drawing.Size(95, 13);
+            this.idEgresoCajaLabel.TabIndex = 48;
+            this.idEgresoCajaLabel.Text = "idEgresoCajaLabel";
+            this.idEgresoCajaLabel.Visible = false;
             // 
             // btnAceptar
             // 
@@ -414,23 +414,23 @@
             this.panel1.Size = new System.Drawing.Size(292, 96);
             this.panel1.TabIndex = 15;
             // 
-            // formAddOrEditGasto
+            // formAddOrEditEgresoCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(493, 374);
             this.Controls.Add(this.btnCancelar);
-            this.Controls.Add(this.idGastoLabel);
+            this.Controls.Add(this.idEgresoCajaLabel);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnAceptar);
             this.Controls.Add(this.pnlBuscar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-            this.Name = "formAddOrEditGasto";
+            this.Name = "formAddOrEditEgresoCaja";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Agregar Gasto";
-            this.Load += new System.EventHandler(this.formAddOrEditGasto_Load);
+            this.Text = "Agregar Egreso Caja";
+            this.Load += new System.EventHandler(this.formAddOrEditEgresoCaja_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.groupBox1.ResumeLayout(false);
@@ -449,14 +449,14 @@
         private System.Windows.Forms.ComboBox comboSucursal;
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.Label label16;
-        protected System.Windows.Forms.DateTimePicker txtFechaGasto;
+        protected System.Windows.Forms.DateTimePicker txtFechaEgresoCaja;
         protected System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txtDetalle;
         protected System.Windows.Forms.Button btnAceptar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.GroupBox groupBox1;
         protected System.Windows.Forms.Label lblTipo;
-        private System.Windows.Forms.ComboBox comboTipoGasto;
+        private System.Windows.Forms.ComboBox comboTipoEgresoCaja;
         protected System.Windows.Forms.TextBox txtDescripcion;
         protected System.Windows.Forms.Label lblDescripcion;
         protected System.Windows.Forms.Label lblDetalle;
@@ -469,9 +469,9 @@
         protected System.Windows.Forms.TextBox txtModificado;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Panel panel1;
-        protected System.Windows.Forms.Label idGastoLabel;
+        protected System.Windows.Forms.Label idEgresoCajaLabel;
         private System.Windows.Forms.TextBox txtSucursal;
-        private System.Windows.Forms.TextBox txtTipoGasto;
+        private System.Windows.Forms.TextBox txtTipoEgresoCaja;
         private System.Windows.Forms.TextBox txtFechaTexto;
     }
 }

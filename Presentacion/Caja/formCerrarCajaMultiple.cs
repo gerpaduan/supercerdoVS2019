@@ -65,7 +65,7 @@ namespace Presentacion.Caja
                         {
                             ListCierreE[index].CajaInicio = Util_Form.convertFloat(txtCajaInicial.Text, true);
                             ListCierreE[index].Ventas = string.IsNullOrEmpty(txtVentas.Text) ? (float?)null : Util_Form.convertFloat(txtVentas.Text, true);
-                            ListCierreE[index].Gastos = string.IsNullOrEmpty(txtGastos.Text) ? (float?)null : Util_Form.convertFloat(txtGastos.Text, true);
+                            ListCierreE[index].EgresosCaja = string.IsNullOrEmpty(txtEgresosCaja.Text) ? (float?)null : Util_Form.convertFloat(txtEgresosCaja.Text, true);
                             ListCierreE[index].CajaCierre = string.IsNullOrEmpty(txtCajaCierre.Text) ? (float?)null : Util_Form.convertFloat(txtCajaCierre.Text, true);
                             ListCierreE[index].Diferencia = string.IsNullOrEmpty(txtDiferencia.Text) ? (float?)null : Util_Form.convertFloat(txtDiferencia.Text, true);
                             ListCierreE[index].CajaInicioSiguiente = string.IsNullOrEmpty(txtCajaInicioSiguiente.Text) ? (float?)null : Util_Form.convertFloat(txtCajaInicioSiguiente.Text, true);
@@ -99,7 +99,7 @@ namespace Presentacion.Caja
                         ticket.LineasGuion();
                         ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreCajero.CajaInicio));
                         ticket.AgregaTotales("Ventas", Convert.ToDouble(oCierreCajero.Ventas));
-                        ticket.AgregaTotales("Gastos", Convert.ToDouble(oCierreCajero.Gastos));
+                        ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreCajero.EgresosCaja));
                         ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreCajero.CajaCierre));
                         ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreCajero.Diferencia));
                         ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreCajero.CajaInicioSiguiente));
@@ -155,8 +155,8 @@ namespace Presentacion.Caja
                 textBoxes[nroFilas, valorTextBox] = txtVentas.Text;
                 textBoxes[nroFilas++, nombreTextBox] = lblVentas.Text;
 
-                textBoxes[nroFilas, valorTextBox] = txtGastos.Text;
-                textBoxes[nroFilas++, nombreTextBox] = lblGastos.Text;
+                textBoxes[nroFilas, valorTextBox] = txtEgresosCaja.Text;
+                textBoxes[nroFilas++, nombreTextBox] = lblEgresosCaja.Text;
 
                 textBoxes[nroFilas, valorTextBox] = txtCajaCierre.Text;
                 textBoxes[nroFilas++, nombreTextBox] = lblCajaCierre.Text;
@@ -174,7 +174,7 @@ namespace Presentacion.Caja
             float cero = Util_Form.convertFloat("0", true),
             cajaInicial = txtCajaInicial.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicial.Text, true),
             ventas = txtVentas.Text.Equals("") ? cero : Util_Form.convertFloat(txtVentas.Text, true),
-            gastos = txtGastos.Text.Equals("") ? cero : Util_Form.convertFloat(txtGastos.Text, true),
+            gastos = txtEgresosCaja.Text.Equals("") ? cero : Util_Form.convertFloat(txtEgresosCaja.Text, true),
             cajaCierre = txtCajaCierre.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaCierre.Text, true),
             cajaInicioSiguiente = txtCajaInicioSiguiente.Text.Equals("") ? cero : Util_Form.convertFloat(txtCajaInicioSiguiente.Text, true),
             importeRetirado = txtImporteRetirado.Text.Equals("") ? cero : Util_Form.convertFloat(txtImporteRetirado.Text, true),
@@ -212,11 +212,11 @@ namespace Presentacion.Caja
             calcularCierreCaja();
         }
 
-        private void txtGastos_TextChanged(object sender, EventArgs e)
+        private void txtEgresosCaja_TextChanged(object sender, EventArgs e)
         {
-            if (!(txtGastos.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtGastos.Text, "Gastos")))
+            if (!(txtEgresosCaja.Text != "" && Utilidades.Util_Form.validarCampoNumerico(txtEgresosCaja.Text, "EgresosCaja")))
             {
-                txtGastos.Text = "";
+                txtEgresosCaja.Text = "";
             }
             calcularCierreCaja();
         }
@@ -303,13 +303,13 @@ namespace Presentacion.Caja
                 txtCajaInicial.Text = oCierreCajero.CajaInicio.ToString();
 
                 decimal totalventas = 0;
-                decimal totalGastos = 0;
+                decimal totalEgresosCaja = 0;
 
                 for (int index = 0; index < ListCierreE.Count; index++)
                 {
                     ListCierreE[index] = oCierreN.findByIdOrLast(ListCierreE[index], Entidades.CierreCaja.tipoBusqueda.FindById, "");
                     ListCierreE[index].Ventas = oCierreN.obtenerTotalVentas(ListCierreE[index].UsuarioInicio.Id, ListCierreE[index].Sucursal.idSucursal, ListCierreE[index].FechaHoraInicio, DateTime.Now);
-                    ListCierreE[index].Gastos = oCierreN.getMontoGastosVendedor(ListCierreE[index]);
+                    ListCierreE[index].EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(ListCierreE[index]);
 
                     for (int idx = 0; idx < grillaCajasACerrar.Rows.Count; idx++)
                     {
@@ -321,17 +321,17 @@ namespace Presentacion.Caja
                                 grillaCajasACerrar.Rows[idx].Cells["vendedor"].Value += " (C)";
                             }
                             grillaCajasACerrar.Rows[idx].Cells["ventas"].Value = ListCierreE[index].Ventas;
-                            grillaCajasACerrar.Rows[idx].Cells["gastos"].Value = ListCierreE[index].Gastos;
+                            grillaCajasACerrar.Rows[idx].Cells["gastos"].Value = ListCierreE[index].EgresosCaja;
                             break;
                         }
                     }
 
                     totalventas += Convert.ToDecimal(ListCierreE[index].Ventas);
-                    totalGastos += Convert.ToDecimal(ListCierreE[index].Gastos);
+                    totalEgresosCaja += Convert.ToDecimal(ListCierreE[index].EgresosCaja);
                 }
 
                 txtVentas.Text = totalventas.ToString("F2");
-                txtGastos.Text = totalGastos.ToString("F2");
+                txtEgresosCaja.Text = totalEgresosCaja.ToString("F2");
 
                 txtCajaCierre.Text = oCierreCajero.CajaCierre.ToString();
                 txtDiferencia.Text = oCierreCajero.Diferencia.ToString();
@@ -344,11 +344,11 @@ namespace Presentacion.Caja
             }            
         }
 
-        private void btnVerGastos_Click(object sender, EventArgs e)
+        private void btnVerEgresosCaja_Click(object sender, EventArgs e)
         {
-            formGastosVendedor frmGastosVendedor = new formGastosVendedor();
-            frmGastosVendedor.oCierreE = oCierreCajero;
-            frmGastosVendedor.ShowDialog();
+            formEgresosCajaVendedor frmEgresosCajaVendedor = new formEgresosCajaVendedor();
+            frmEgresosCajaVendedor.oCierreE = oCierreCajero;
+            frmEgresosCajaVendedor.ShowDialog();
         }
 
         private void controlEleccionImporte_ValueChanged(object sender, EventArgs e)
@@ -402,11 +402,11 @@ namespace Presentacion.Caja
 
             int idSelected = Convert.ToInt32(grillaCajasACerrar.Rows[e.RowIndex].Cells["id"].Value);
             Entidades.CierreCaja oCierreSelected = ListCierreE.Find(x => x.Id == idSelected);
-            if (e.ColumnIndex == grillaCajasACerrar.Columns["verGastos"].Index)
+            if (e.ColumnIndex == grillaCajasACerrar.Columns["verEgresosCaja"].Index)
             {                
-                formGastosVendedor frmGastosVendedor = new formGastosVendedor();
-                frmGastosVendedor.oCierreE = oCierreSelected;
-                frmGastosVendedor.ShowDialog();
+                formEgresosCajaVendedor frmEgresosCajaVendedor = new formEgresosCajaVendedor();
+                frmEgresosCajaVendedor.oCierreE = oCierreSelected;
+                frmEgresosCajaVendedor.ShowDialog();
             }
 
             if (e.ColumnIndex == grillaCajasACerrar.Columns["verVentas"].Index)

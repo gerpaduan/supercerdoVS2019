@@ -32,7 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
-            this.btnGastos = new System.Windows.Forms.Button();
+            this.btnEgresosCaja = new System.Windows.Forms.Button();
             this.btnUsuarios = new System.Windows.Forms.Button();
             this.btnReportes = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
@@ -92,7 +92,7 @@
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.SandyBrown;
             this.splitContainer1.Panel1.Controls.Add(this.checkAutoDesconectar);
-            this.splitContainer1.Panel1.Controls.Add(this.btnGastos);
+            this.splitContainer1.Panel1.Controls.Add(this.btnEgresosCaja);
             this.splitContainer1.Panel1.Controls.Add(this.btnUsuarios);
             this.splitContainer1.Panel1.Controls.Add(this.btnReportes);
             this.splitContainer1.Panel1.Controls.Add(this.label6);
@@ -142,23 +142,23 @@
             this.checkAutoDesconectar.UseVisualStyleBackColor = true;
             this.checkAutoDesconectar.Visible = false;
             // 
-            // btnGastos
+            // btnEgresosCaja
             // 
-            this.btnGastos.BackColor = System.Drawing.Color.PeachPuff;
-            this.btnGastos.FlatAppearance.BorderSize = 0;
-            this.btnGastos.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
-            this.btnGastos.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
-            this.btnGastos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
-            this.btnGastos.ForeColor = System.Drawing.Color.Black;
-            this.btnGastos.Location = new System.Drawing.Point(15, 209);
-            this.btnGastos.Name = "btnGastos";
-            this.btnGastos.Size = new System.Drawing.Size(170, 27);
-            this.btnGastos.TabIndex = 30;
-            this.btnGastos.TabStop = false;
-            this.btnGastos.Text = "&Gastos";
-            this.btnGastos.UseVisualStyleBackColor = false;
-            this.btnGastos.Click += new System.EventHandler(this.btnGastos_Click);
+            this.btnEgresosCaja.BackColor = System.Drawing.Color.PeachPuff;
+            this.btnEgresosCaja.FlatAppearance.BorderSize = 0;
+            this.btnEgresosCaja.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnEgresosCaja.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.btnEgresosCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnEgresosCaja.ForeColor = System.Drawing.Color.Black;
+            this.btnEgresosCaja.Location = new System.Drawing.Point(15, 209);
+            this.btnEgresosCaja.Name = "btnEgresosCaja";
+            this.btnEgresosCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnEgresosCaja.TabIndex = 30;
+            this.btnEgresosCaja.TabStop = false;
+            this.btnEgresosCaja.Text = "&EgresosCaja";
+            this.btnEgresosCaja.UseVisualStyleBackColor = false;
+            this.btnEgresosCaja.Click += new System.EventHandler(this.btnEgresosCaja_Click);
             // 
             // btnUsuarios
             // 
@@ -737,7 +737,7 @@
         private System.Windows.Forms.Button btnUsuarios;
         private System.Windows.Forms.ToolStripMenuItem cajaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cierresCajaToolStripMenuItem;
-        private System.Windows.Forms.Button btnGastos;
+        private System.Windows.Forms.Button btnEgresosCaja;
         private System.Windows.Forms.ToolStripMenuItem probarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem imprimirTicketToolStripMenuItem;
         private System.Windows.Forms.Label lblConectadoA;

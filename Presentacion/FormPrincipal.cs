@@ -641,17 +641,17 @@ namespace Presentacion
 
         private static void gastos()
         {
-            if (Application.OpenForms["formGastos"] != null)
+            if (Application.OpenForms["formEgresosCaja"] != null)
             {
 
-                Application.OpenForms["formGastos"].Activate();
-                Application.OpenForms["formGastos"].WindowState = FormWindowState.Normal;
+                Application.OpenForms["formEgresosCaja"].Activate();
+                Application.OpenForms["formEgresosCaja"].WindowState = FormWindowState.Normal;
 
             }
             else
             {
-                formGastos frmGastos = new formGastos();
-                frmGastos.Show();
+                formEgresosCaja frmEgresosCaja = new formEgresosCaja();
+                frmEgresosCaja.Show();
             }
         }
 
@@ -660,7 +660,7 @@ namespace Presentacion
             cierresCaja();
         }
 
-        private void btnGastos_Click(object sender, EventArgs e)
+        private void btnEgresosCaja_Click(object sender, EventArgs e)
         {
             gastos();
         }

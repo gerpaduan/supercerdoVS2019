@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Entidades
 {
-    public class Gasto
+    public class EgresoCaja
     {
         int id;
 
@@ -21,20 +21,20 @@ namespace Entidades
             get { return fecha; }
             set { fecha = value; }
         }
-        int idTipoGasto;
+        int idTipoEgresoCaja;
 
-        public int IdTipoGasto
+        public int IdTipoEgresoCaja
         {
-            get { return idTipoGasto; }
-            set { idTipoGasto = value; }
+            get { return idTipoEgresoCaja; }
+            set { idTipoEgresoCaja = value; }
         }
 
-        string tipoGasto;
+        string tipoEgresoCaja;
 
-        public string TipoGasto
+        public string TipoEgresoCaja
         {
-            get { return tipoGasto; }
-            set { tipoGasto = value; }
+            get { return tipoEgresoCaja; }
+            set { tipoEgresoCaja = value; }
         }
 
         string descripcion;

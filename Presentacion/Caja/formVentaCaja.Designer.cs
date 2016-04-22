@@ -844,7 +844,7 @@
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(776, 30);
             this.label10.TabIndex = 45;
-            this.label10.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F6 = Mis Gastos  |  F7 = Gas" +
+            this.label10.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F6 = Mis EgresosCaja  |  F7 = Gas" +
                 "to  |  F2 = Pant.Principal  |   F9 = Buscar Cliente  |  F12 = Bloquear  |\r\n     " +
                 "    ";
             // 

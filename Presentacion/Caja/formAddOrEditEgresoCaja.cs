@@ -11,46 +11,46 @@ using Utilidades;
 
 namespace Presentacion.Caja
 {
-    public partial class formAddOrEditGasto : Form, InterfaceUsuario
+    public partial class formAddOrEditEgresoCaja : Form, InterfaceUsuario
     {
         protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        protected Entidades.Gasto oGastoE = new Entidades.Gasto();
+        protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
 
         public Entidades.Usuario oUsuario;
 
-        formGastos frmGastos;
+        formEgresosCaja frmEgresosCaja;
 
-        public int idGasto = 0;
+        public int idEgresoCaja = 0;
         bool readOnly = false;
 
-        public formAddOrEditGasto()
+        public formAddOrEditEgresoCaja()
         {
             InitializeComponent();
         }
 
-        private void formAddOrEditGasto_Load(object sender, EventArgs e)
+        private void formAddOrEditEgresoCaja_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
                 bool closeForm = false;
-                if (idGasto == 0 && oUsuario == null) closeForm = true;
+                if (idEgresoCaja == 0 && oUsuario == null) closeForm = true;
 
                 if (!closeForm)
                 {
                     cargarSucursal();
-                    cargarTipoGasto();
+                    cargarTiposEgresoCaja();
                     txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
-                    if (idGasto > 0)
+                    if (idEgresoCaja > 0)
                     {
-                        oGastoE = oCierreN.getGastoById(idGasto);
+                        oEgresoCajaE = oCierreN.getEgresoCajaById(idEgresoCaja);
                         cargarCampos();
                         readOnly = true;
                         setearPropiedadesForm();
-                        idGastoLabel.Text = idGasto.ToString();//asigno id para identificar el formulario al llamar
+                        idEgresoCajaLabel.Text = idEgresoCaja.ToString();//asigno id para identificar el formulario al llamar
                     }
                 }
                 else
@@ -75,7 +75,7 @@ namespace Presentacion.Caja
             {
                 MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar gastos.", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 oUsuario = null;
-                if (idGasto == 0)this.Close();
+                if (idEgresoCaja == 0)this.Close();
             }
         }
 
@@ -87,14 +87,14 @@ namespace Presentacion.Caja
 
         private void setearPropiedadesForm()
         {            
-            this.Text = readOnly ? "Info Gasto" : "Modificar";
+            this.Text = readOnly ? "Info EgresoCaja" : "Modificar";
             this.btnAceptar.Text = readOnly ? "&Modificar" : "&Guardar";
             txtFechaTexto.Visible = readOnly;
-            txtFechaTexto.Text = Util_Form.fechaFormato24Horas(txtFechaGasto.Value);
+            txtFechaTexto.Text = Util_Form.fechaFormato24Horas(txtFechaEgresoCaja.Value);
             txtSucursal.Visible = readOnly;
-            txtTipoGasto.Visible = readOnly;
+            txtTipoEgresoCaja.Visible = readOnly;
             txtSucursal.Text = comboSucursal.Text;
-            txtTipoGasto.Text = comboTipoGasto.Text;
+            txtTipoEgresoCaja.Text = comboTipoEgresoCaja.Text;
             txtDescripcion.ReadOnly = readOnly;
             txtMonto.ReadOnly = readOnly;
             txtDetalle.ReadOnly = readOnly;
@@ -103,29 +103,29 @@ namespace Presentacion.Caja
         private void cargarCampos()
         {
             //cargar campos en pantalla
-            comboSucursal.SelectedValue = oGastoE.Sucursal.idSucursal;
+            comboSucursal.SelectedValue = oEgresoCajaE.Sucursal.idSucursal;
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
-            txtFechaGasto.Value = oGastoE.Fecha;
-            comboTipoGasto.SelectedValue = oGastoE.IdTipoGasto;
-            txtDescripcion.Text = oGastoE.Descripcion;
-            txtMonto.Text = oGastoE.Monto.ToString();
-            txtDetalle.Text = oGastoE.Detalle;
-            txtCreado.Text = Util_Form.fechaFormato24Horas(oGastoE.Creado);
-            txtCreadoPor.Text = oGastoE.CreadoPorUser != null ? oGastoE.CreadoPorUser.Nombre : "";
-            txtModificado.Text = Util_Form.fechaFormato24Horas(oGastoE.Actualizado);
-            txtModifPor.Text = oGastoE.ActualizadoPorUser != null ? oGastoE.ActualizadoPorUser.Nombre : "";
+            txtFechaEgresoCaja.Value = oEgresoCajaE.Fecha;
+            comboTipoEgresoCaja.SelectedValue = oEgresoCajaE.IdTipoEgresoCaja;
+            txtDescripcion.Text = oEgresoCajaE.Descripcion;
+            txtMonto.Text = oEgresoCajaE.Monto.ToString();
+            txtDetalle.Text = oEgresoCajaE.Detalle;
+            txtCreado.Text = Util_Form.fechaFormato24Horas(oEgresoCajaE.Creado);
+            txtCreadoPor.Text = oEgresoCajaE.CreadoPorUser != null ? oEgresoCajaE.CreadoPorUser.Nombre : "";
+            txtModificado.Text = Util_Form.fechaFormato24Horas(oEgresoCajaE.Actualizado);
+            txtModifPor.Text = oEgresoCajaE.ActualizadoPorUser != null ? oEgresoCajaE.ActualizadoPorUser.Nombre : "";
         }
 
-        public void asignarForm(formGastos form)
+        public void asignarForm(formEgresosCaja form)
         {
-            frmGastos = form;
+            frmEgresosCaja = form;
         }
 
         private void cargarSucursal()
         {
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
-            oGastoE.Sucursal = oSucursalE;
+            oEgresoCajaE.Sucursal = oSucursalE;
 
             comboSucursal.DataSource = oSucursalN.obtenerSucursales();
             comboSucursal.DisplayMember = "sucursal";
@@ -133,13 +133,30 @@ namespace Presentacion.Caja
             comboSucursal.SelectedIndex = idSucursal - 1;
         }
 
-        private void cargarTipoGasto()
+        private void cargarTiposEgresoCaja()
         {
-            DataTable dtTipoGastos = oCierreN.obtenerTipoGasto();
-            dtTipoGastos.Rows[0][1] = dtTipoGastos.Rows[0][0].Equals(0) ? "Seleccione un tipo" : dtTipoGastos.Rows[0][1].ToString();
-            comboTipoGasto.DataSource = dtTipoGastos;
-            comboTipoGasto.DisplayMember = "tipoGasto";
-            comboTipoGasto.ValueMember = "id";
+            DataTable dtTipoEgresosCaja = oCierreN.obtenerTiposEgresoCaja();
+            dtTipoEgresosCaja.Rows[0][1] = dtTipoEgresosCaja.Rows[0][0].Equals(0) ? "Seleccione un tipo" : dtTipoEgresosCaja.Rows[0][1].ToString();
+            comboTipoEgresoCaja.DataSource = dtTipoEgresosCaja;
+            comboTipoEgresoCaja.DisplayMember = "tipoEgresoCaja";
+            comboTipoEgresoCaja.ValueMember = "id";
+        }
+
+        private bool validarCajaAbiertaVendedeor()
+        {
+            bool resp = true;
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+            oCierreE.Sucursal = oSucursalE;
+            oCierreE.UsuarioInicio = oUsuario;
+            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
+            {
+                MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.\n\n¿Desea abrir caja ahora?",
+                    "Abrir Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);//, MessageBoxButtons.YesNo, MessageBoxDefaultButton.Button2);
+            }
+
+            return resp;
         }
 
         private void btnAceptar_Click(object sender, EventArgs e)
@@ -151,7 +168,7 @@ namespace Presentacion.Caja
                 {
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
                     frmLogin.ShowDialog(this);
-                    tienePermiso = oUsuario != null && (oGastoE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
+                    tienePermiso = oUsuario != null && (oEgresoCajaE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
                     if (!tienePermiso)
                     {
                         MessageBox.Show("No tiene permisos para modificar gastos de otra persona");
@@ -159,11 +176,13 @@ namespace Presentacion.Caja
                     }
                 }
 
-                if (tienePermiso && Util_Form.validarFechaConAdmin((Presentacion.FormPrincipal.logueado || oUsuario.Admin), txtFechaGasto.Value, "Fecha") 
+                bool cajaAbierta = (Presentacion.FormPrincipal.logueado || oUsuario.Admin) ? true : validarCajaAbiertaVendedeor();
+
+                if (tienePermiso && Util_Form.validarFechaConAdmin((Presentacion.FormPrincipal.logueado || oUsuario.Admin), txtFechaEgresoCaja.Value, "Fecha") 
                     && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, 
                         Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
-                    if (oGastoE.Id > 0 && readOnly)
+                    if (oEgresoCajaE.Id > 0 && readOnly)
                     {
                         readOnly = false;
                         setearPropiedadesForm();
@@ -176,7 +195,7 @@ namespace Presentacion.Caja
                         int valorTextBox = 0;
                         //string[valor_campo][nombre_textBox]
                         string[,] textBoxes = new string[3, 2];
-                        textBoxes[nroFilas, valorTextBox] = (int)comboTipoGasto.SelectedValue == 0 ? "" : "tiene_valor";
+                        textBoxes[nroFilas, valorTextBox] = (int)comboTipoEgresoCaja.SelectedValue == 0 ? "" : "tiene_valor";
                         textBoxes[nroFilas++, nombreTextBox] = lblTipo.Text;
 
                         textBoxes[nroFilas, valorTextBox] = txtDescripcion.Text;
@@ -186,17 +205,17 @@ namespace Presentacion.Caja
                         textBoxes[nroFilas++, nombreTextBox] = lblMonto.Text;
 
                         //TODO: hacer validacion a los campos y guardar los datos
-                        if (Util_Form.validarArrayCamposVacios(textBoxes) && Util_Form.validarFecha(txtFechaGasto.Value, "Fecha")
+                        if (Util_Form.validarArrayCamposVacios(textBoxes) && Util_Form.validarFecha(txtFechaEgresoCaja.Value, "Fecha")
                            && Util_Form.validarCampoNumerico(txtMonto.Text, "Monto"))
                         {
-                            cargarGasto();//se cargan datos del gasto
-                            oCierreN.addOrEditGasto(oGastoE);
-                            if (frmGastos != null)
+                            cargarEgresoCaja();//se cargan datos del egresoCaja
+                            oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                            if (frmEgresosCaja != null)
                             {
-                                frmGastos.cargarGrilla();
+                                frmEgresosCaja.cargarGrilla();
                             }
                             //huboModificaciones = false;
-                            MessageBox.Show("El gasto se guardó correctamente.");
+                            MessageBox.Show("El egreso de caja se guardó correctamente.");
                             this.Close();
                             //limpiarListas();
                         }
@@ -205,21 +224,21 @@ namespace Presentacion.Caja
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar gasto.\n\n"+ex.Message, 
+                MessageBox.Show("Error al guardar egreso de caja.\n\n"+ex.Message, 
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }          
         }
 
-        private void cargarGasto()
+        private void cargarEgresoCaja()
         {
-            oGastoE.Fecha = txtFechaGasto.Value;
-            oGastoE.IdTipoGasto = (int)comboTipoGasto.SelectedValue;
-            oGastoE.Descripcion = txtDescripcion.Text;
-            oGastoE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true);
-            oGastoE.Detalle = txtDetalle.Text;
-            oGastoE.Sucursal = oSucursalE;
-            oGastoE.CreadoPor = oGastoE.Id > 0 ? oGastoE.CreadoPor : oUsuario.Id;
-            oGastoE.ActualizadoPor = oGastoE.Id > 0 ? oUsuario.Id : 0;
+            oEgresoCajaE.Fecha = txtFechaEgresoCaja.Value;
+            oEgresoCajaE.IdTipoEgresoCaja = (int)comboTipoEgresoCaja.SelectedValue;
+            oEgresoCajaE.Descripcion = txtDescripcion.Text;
+            oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true);
+            oEgresoCajaE.Detalle = txtDetalle.Text;
+            oEgresoCajaE.Sucursal = oSucursalE;
+            oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oEgresoCajaE.CreadoPor : oUsuario.Id;
+            oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oUsuario.Id : 0;
         }
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
@@ -228,7 +247,7 @@ namespace Presentacion.Caja
             {
                 int idSucursal = (int)comboSucursal.SelectedValue;
                 oSucursalE = oSucursalN.findById(idSucursal);
-                oGastoE.Sucursal = oSucursalE;
+                oEgresoCajaE.Sucursal = oSucursalE;
             }
         }
 

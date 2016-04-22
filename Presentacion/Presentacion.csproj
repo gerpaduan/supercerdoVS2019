@@ -81,11 +81,11 @@
     <Compile Include="Caja\formCerrarCajaMultiple.Designer.cs">
       <DependentUpon>formCerrarCajaMultiple.cs</DependentUpon>
     </Compile>
-    <Compile Include="Caja\formAddOrEditGasto.cs">
+    <Compile Include="Caja\formAddOrEditEgresoCaja.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Caja\formAddOrEditGasto.Designer.cs">
-      <DependentUpon>formAddOrEditGasto.cs</DependentUpon>
+    <Compile Include="Caja\formAddOrEditEgresoCaja.Designer.cs">
+      <DependentUpon>formAddOrEditEgresoCaja.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formCajasAbiertas.cs">
       <SubType>Form</SubType>
@@ -111,17 +111,17 @@
     <Compile Include="Caja\formCierresDeCaja.Designer.cs">
       <DependentUpon>formCierresDeCaja.cs</DependentUpon>
     </Compile>
-    <Compile Include="Caja\formGastos.cs">
+    <Compile Include="Caja\formEgresosCaja.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Caja\formGastos.Designer.cs">
-      <DependentUpon>formGastos.cs</DependentUpon>
+    <Compile Include="Caja\formEgresosCaja.Designer.cs">
+      <DependentUpon>formEgresosCaja.cs</DependentUpon>
     </Compile>
-    <Compile Include="Caja\formGastosVendedor.cs">
+    <Compile Include="Caja\formEgresosCajaVendedor.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Caja\formGastosVendedor.Designer.cs">
-      <DependentUpon>formGastosVendedor.cs</DependentUpon>
+    <Compile Include="Caja\formEgresosCajaVendedor.Designer.cs">
+      <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formIngresoBilletes.cs">
       <SubType>Form</SubType>
@@ -537,8 +537,8 @@
     <EmbeddedResource Include="Caja\formCerrarCajaMultiple.resx">
       <DependentUpon>formCerrarCajaMultiple.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Caja\formAddOrEditGasto.resx">
-      <DependentUpon>formAddOrEditGasto.cs</DependentUpon>
+    <EmbeddedResource Include="Caja\formAddOrEditEgresoCaja.resx">
+      <DependentUpon>formAddOrEditEgresoCaja.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCajasAbiertas.resx">
       <DependentUpon>formCajasAbiertas.cs</DependentUpon>
@@ -552,11 +552,11 @@
     <EmbeddedResource Include="Caja\formCierresDeCaja.resx">
       <DependentUpon>formCierresDeCaja.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Caja\formGastos.resx">
-      <DependentUpon>formGastos.cs</DependentUpon>
+    <EmbeddedResource Include="Caja\formEgresosCaja.resx">
+      <DependentUpon>formEgresosCaja.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Caja\formGastosVendedor.resx">
-      <DependentUpon>formGastosVendedor.cs</DependentUpon>
+    <EmbeddedResource Include="Caja\formEgresosCajaVendedor.resx">
+      <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formIngresoBilletes.resx">
       <DependentUpon>formIngresoBilletes.cs</DependentUpon>

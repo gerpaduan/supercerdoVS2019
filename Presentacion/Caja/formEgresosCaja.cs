@@ -10,30 +10,30 @@ using System.Configuration;
 
 namespace Presentacion.Caja
 {
-    public partial class formGastos : Form, InterfaceUsuario
+    public partial class formEgresosCaja : Form, InterfaceUsuario
     {
         protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        protected Entidades.Gasto oGastoE = new Entidades.Gasto();
+        protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Usuario oUsuario;
 
-        DataTable dtGastos = null;
+        DataTable dtEgresosCaja = null;
 
-        public formGastos()
+        public formEgresosCaja()
         {
             InitializeComponent();
         }
 
-        private void formGastos_Load(object sender, EventArgs e)
+        private void formEgresosCaja_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today;
             fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
             fechaDesde.Value = today.AddDays(-8); 
             cargarSucursal();
-            cargarTipoGasto();
+            cargarTiposEgresoCaja();
             cargarGrilla();
         }
 
@@ -43,7 +43,7 @@ namespace Presentacion.Caja
             {
                 int idSucursal = (int)comboSucursal.SelectedValue;
                 oSucursalE = oSucursalN.findById(idSucursal);
-                oGastoE.Sucursal = oSucursalE;
+                oEgresoCajaE.Sucursal = oSucursalE;
                 cargarGrilla();
             }
         }
@@ -51,13 +51,16 @@ namespace Presentacion.Caja
         public void cargarGrilla()
         {
             lblActualizar.Visible = false;
-            dtGastos = oCierreN.obtenerGastos(oGastoE.Sucursal.idSucursal, oGastoE.IdTipoGasto, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
-            grillaGastos.DataSource = dtGastos;
-            grillaGastos.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaGastos.Columns["Monto"].DefaultCellStyle.Format = "F2";
+            dtEgresosCaja = oCierreN.obtenerEgresosCaja(oEgresoCajaE.Sucursal.idSucursal, oEgresoCajaE.IdTipoEgresoCaja, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
+            grillaEgresosCaja.DataSource = dtEgresosCaja;
+            grillaEgresosCaja.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            grillaEgresosCaja.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaEgresosCaja.Columns["Monto"].DefaultCellStyle.Format = "F2";
+            grillaEgresosCaja.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            grillaEgresosCaja.Columns["Actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
 
             decimal total = 0;
-            foreach (DataGridViewRow row in grillaGastos.Rows)
+            foreach (DataGridViewRow row in grillaEgresosCaja.Rows)
             {
                 total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
             }
@@ -68,7 +71,7 @@ namespace Presentacion.Caja
         {
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             oSucursalE = oSucursalN.findById(idSucursal);
-            oGastoE.Sucursal = oSucursalE;
+            oEgresoCajaE.Sucursal = oSucursalE;
 
             comboSucursal.DataSource = oSucursalN.obtenerSucursales();
             comboSucursal.DisplayMember = "sucursal";
@@ -76,11 +79,11 @@ namespace Presentacion.Caja
             comboSucursal.SelectedIndex = idSucursal - 1;
         }
 
-        private void cargarTipoGasto()
+        private void cargarTiposEgresoCaja()
         {
-            comboTipoGasto.DataSource = oCierreN.obtenerTipoGasto();
-            comboTipoGasto.DisplayMember = "tipoGasto";
-            comboTipoGasto.ValueMember = "id";
+            comboTipoEgresoCaja.DataSource = oCierreN.obtenerTiposEgresoCaja();
+            comboTipoEgresoCaja.DisplayMember = "tipoEgresoCaja";
+            comboTipoEgresoCaja.ValueMember = "id";
             //comboSucursal.SelectedIndex = idSucursal - 1;
         }
 
@@ -89,12 +92,12 @@ namespace Presentacion.Caja
             cargarGrilla();
         }
 
-        private void comboTipoGasto_SelectedIndexChanged(object sender, EventArgs e)
+        private void comboTipoEgresoCaja_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!comboTipoGasto.ValueMember.Equals(""))
+            if (!comboTipoEgresoCaja.ValueMember.Equals(""))
             {
-                int idTipoGasto = (int)comboTipoGasto.SelectedValue;
-                oGastoE.IdTipoGasto = idTipoGasto;
+                int idTipoEgresoCaja = (int)comboTipoEgresoCaja.SelectedValue;
+                oEgresoCajaE.IdTipoEgresoCaja = idTipoEgresoCaja;
                 cargarGrilla();
             }
         }
@@ -108,10 +111,10 @@ namespace Presentacion.Caja
 
             if (oUsuario.Admin)
             {
-                formAddOrEditGasto frmAddOrEditGasto = new formAddOrEditGasto();
-                frmAddOrEditGasto.oUsuario = oUsuario;
-                frmAddOrEditGasto.asignarForm(this);
-                frmAddOrEditGasto.Show();                 
+                formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
+                frmAddOrEditEgresoCaja.oUsuario = oUsuario;
+                frmAddOrEditEgresoCaja.asignarForm(this);
+                frmAddOrEditEgresoCaja.Show();                 
             }
             else
             {
@@ -129,15 +132,15 @@ namespace Presentacion.Caja
         {
             try
             {                
-                int idGasto = Convert.ToInt32(grillaGastos.CurrentRow.Cells["id"].Value.ToString());
+                int idEgresoCaja = Convert.ToInt32(grillaEgresosCaja.CurrentRow.Cells["id"].Value.ToString());
                 bool formAbierto = false;
                 foreach (Form frm in Application.OpenForms)
                 {
-                    if (frm.GetType() == typeof(formAddOrEditGasto))
+                    if (frm.GetType() == typeof(formAddOrEditEgresoCaja))
                     {
                         foreach (Control ctrl in frm.Controls)
                         {
-                            if (ctrl.Name.Equals("idGastoLabel") && ctrl.Text.Equals(idGasto.ToString())) //(oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+                            if (ctrl.Name.Equals("idEgresoCajaLabel") && ctrl.Text.Equals(idEgresoCaja.ToString())) //(oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
                             {
                                 frm.BringToFront();
                                 formAbierto = true;
@@ -148,10 +151,10 @@ namespace Presentacion.Caja
                 }
                 if (!formAbierto)
                 {
-                    formAddOrEditGasto frmAddOrEditGasto = new formAddOrEditGasto();
-                    frmAddOrEditGasto.idGasto = idGasto;
-                    frmAddOrEditGasto.asignarForm(this);
-                    frmAddOrEditGasto.Show();
+                    formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
+                    frmAddOrEditEgresoCaja.idEgresoCaja = idEgresoCaja;
+                    frmAddOrEditEgresoCaja.asignarForm(this);
+                    frmAddOrEditEgresoCaja.Show();
                 }
                 oUsuario = null;
             }

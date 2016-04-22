@@ -1,6 +1,6 @@
 ﻿namespace Presentacion.Caja
 {
-    partial class formGastos
+    partial class formEgresosCaja
     {
         /// <summary>
         /// Required designer variable.
@@ -28,14 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formGastos));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formEgresosCaja));
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblActualizar = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.comboTipoGasto = new System.Windows.Forms.ComboBox();
+            this.comboTipoEgresoCaja = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.fechaDesde = new System.Windows.Forms.DateTimePicker();
@@ -50,11 +51,10 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.grillaGastos = new System.Windows.Forms.DataGridView();
-            this.lblActualizar = new System.Windows.Forms.Label();
+            this.grillaEgresosCaja = new System.Windows.Forms.DataGridView();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaGastos)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).BeginInit();
             this.SuspendLayout();
             // 
             // barraControl
@@ -78,7 +78,7 @@
             this.nuevo.Name = "nuevo";
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "Nuevo";
+            this.nuevo.Text = "&Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
@@ -91,7 +91,7 @@
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label7);
-            this.pnlBuscar.Controls.Add(this.comboTipoGasto);
+            this.pnlBuscar.Controls.Add(this.comboTipoEgresoCaja);
             this.pnlBuscar.Controls.Add(this.label6);
             this.pnlBuscar.Controls.Add(this.label1);
             this.pnlBuscar.Controls.Add(this.fechaDesde);
@@ -105,6 +105,18 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(965, 84);
             this.pnlBuscar.TabIndex = 8;
+            // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(335, 61);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 53;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
             // 
             // groupBox1
             // 
@@ -121,7 +133,7 @@
             // 
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(97, 4);
+            this.comboSucursal.Location = new System.Drawing.Point(93, 4);
             this.comboSucursal.Name = "comboSucursal";
             this.comboSucursal.Size = new System.Drawing.Size(134, 21);
             this.comboSucursal.TabIndex = 39;
@@ -133,36 +145,36 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(36, 8);
+            this.label7.Location = new System.Drawing.Point(32, 8);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(55, 15);
             this.label7.TabIndex = 40;
             this.label7.Text = "Sucursal";
             // 
-            // comboTipoGasto
+            // comboTipoEgresoCaja
             // 
-            this.comboTipoGasto.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipoGasto.FormattingEnabled = true;
-            this.comboTipoGasto.Items.AddRange(new object[] {
+            this.comboTipoEgresoCaja.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipoEgresoCaja.FormattingEnabled = true;
+            this.comboTipoEgresoCaja.Items.AddRange(new object[] {
             "Todos",
             "Media Res",
             "Cortes"});
-            this.comboTipoGasto.Location = new System.Drawing.Point(97, 31);
-            this.comboTipoGasto.Name = "comboTipoGasto";
-            this.comboTipoGasto.Size = new System.Drawing.Size(134, 21);
-            this.comboTipoGasto.TabIndex = 12;
-            this.comboTipoGasto.SelectedIndexChanged += new System.EventHandler(this.comboTipoGasto_SelectedIndexChanged);
+            this.comboTipoEgresoCaja.Location = new System.Drawing.Point(93, 31);
+            this.comboTipoEgresoCaja.Name = "comboTipoEgresoCaja";
+            this.comboTipoEgresoCaja.Size = new System.Drawing.Size(134, 21);
+            this.comboTipoEgresoCaja.TabIndex = 12;
+            this.comboTipoEgresoCaja.SelectedIndexChanged += new System.EventHandler(this.comboTipoEgresoCaja_SelectedIndexChanged);
             // 
             // label6
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(25, 35);
+            this.label6.Location = new System.Drawing.Point(14, 32);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(66, 15);
+            this.label6.Size = new System.Drawing.Size(73, 15);
             this.label6.TabIndex = 11;
-            this.label6.Text = "Tipo Gasto";
+            this.label6.Text = "Tipo Egreso";
             // 
             // label1
             // 
@@ -211,11 +223,11 @@
             // 
             // btnBuscar
             // 
-            this.btnBuscar.Location = new System.Drawing.Point(264, 56);
+            this.btnBuscar.Location = new System.Drawing.Point(260, 56);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(69, 24);
             this.btnBuscar.TabIndex = 8;
-            this.btnBuscar.Text = "Buscar";
+            this.btnBuscar.Text = "&Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
             // 
@@ -232,7 +244,7 @@
             // 
             // txtDescripcion
             // 
-            this.txtDescripcion.Location = new System.Drawing.Point(97, 58);
+            this.txtDescripcion.Location = new System.Drawing.Point(93, 58);
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(161, 20);
             this.txtDescripcion.TabIndex = 0;
@@ -244,7 +256,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(19, 59);
+            this.label2.Location = new System.Drawing.Point(15, 59);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 2;
@@ -275,22 +287,24 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(774, 424);
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(699, 424);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(85, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(124, 27);
             this.btnSeleccionar.TabIndex = 27;
-            this.btnSeleccionar.Text = "Seleccionar";
+            this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(865, 424);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(829, 424);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 26);
+            this.btnCancelar.Size = new System.Drawing.Size(124, 27);
             this.btnCancelar.TabIndex = 26;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Cerrar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -304,42 +318,31 @@
             this.panel1.Size = new System.Drawing.Size(941, 1);
             this.panel1.TabIndex = 30;
             // 
-            // grillaGastos
+            // grillaEgresosCaja
             // 
-            this.grillaGastos.AllowUserToAddRows = false;
-            this.grillaGastos.AllowUserToDeleteRows = false;
-            this.grillaGastos.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            this.grillaEgresosCaja.AllowUserToAddRows = false;
+            this.grillaEgresosCaja.AllowUserToDeleteRows = false;
+            this.grillaEgresosCaja.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.grillaGastos.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
-            this.grillaGastos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaGastos.Location = new System.Drawing.Point(12, 138);
-            this.grillaGastos.Name = "grillaGastos";
-            this.grillaGastos.ReadOnly = true;
-            this.grillaGastos.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
-            this.grillaGastos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaGastos.Size = new System.Drawing.Size(941, 243);
-            this.grillaGastos.TabIndex = 43;
+            this.grillaEgresosCaja.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
+            this.grillaEgresosCaja.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.grillaEgresosCaja.Location = new System.Drawing.Point(12, 138);
+            this.grillaEgresosCaja.Name = "grillaEgresosCaja";
+            this.grillaEgresosCaja.ReadOnly = true;
+            this.grillaEgresosCaja.RowHeadersVisible = false;
+            this.grillaEgresosCaja.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            this.grillaEgresosCaja.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaEgresosCaja.Size = new System.Drawing.Size(941, 243);
+            this.grillaEgresosCaja.TabIndex = 43;
             // 
-            // lblActualizar
-            // 
-            this.lblActualizar.AutoSize = true;
-            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(339, 61);
-            this.lblActualizar.Name = "lblActualizar";
-            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
-            this.lblActualizar.TabIndex = 53;
-            this.lblActualizar.Text = "Actualizar...";
-            this.lblActualizar.Visible = false;
-            // 
-            // formGastos
+            // formEgresosCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(965, 456);
-            this.Controls.Add(this.grillaGastos);
+            this.Controls.Add(this.grillaEgresosCaja);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.txtTotalS);
@@ -348,15 +351,15 @@
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
             this.MaximizeBox = false;
-            this.Name = "formGastos";
+            this.Name = "formEgresosCaja";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Gastos";
-            this.Load += new System.EventHandler(this.formGastos_Load);
+            this.Text = "Egresos de Caja";
+            this.Load += new System.EventHandler(this.formEgresosCaja_Load);
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaGastos)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -370,7 +373,7 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ComboBox comboSucursal;
         protected System.Windows.Forms.Label label7;
-        private System.Windows.Forms.ComboBox comboTipoGasto;
+        private System.Windows.Forms.ComboBox comboTipoEgresoCaja;
         protected System.Windows.Forms.Label label6;
         protected System.Windows.Forms.Label label1;
         protected System.Windows.Forms.DateTimePicker fechaDesde;
@@ -385,7 +388,7 @@
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.Panel panel1;
-        protected System.Windows.Forms.DataGridView grillaGastos;
+        protected System.Windows.Forms.DataGridView grillaEgresosCaja;
         protected System.Windows.Forms.Label lblActualizar;
     }
 }

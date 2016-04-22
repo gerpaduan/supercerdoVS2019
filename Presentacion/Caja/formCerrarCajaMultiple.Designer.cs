@@ -42,7 +42,7 @@
             this.cajaInicio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.gastos = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ventas = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.verGastos = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.verEgresosCaja = new System.Windows.Forms.DataGridViewButtonColumn();
             this.verVentas = new System.Windows.Forms.DataGridViewButtonColumn();
             this.checkTicket = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
@@ -65,8 +65,8 @@
             this.label9 = new System.Windows.Forms.Label();
             this.txtCajaCierre = new System.Windows.Forms.TextBox();
             this.lblCajaCierre = new System.Windows.Forms.Label();
-            this.txtGastos = new System.Windows.Forms.TextBox();
-            this.lblGastos = new System.Windows.Forms.Label();
+            this.txtEgresosCaja = new System.Windows.Forms.TextBox();
+            this.lblEgresosCaja = new System.Windows.Forms.Label();
             this.txtVentas = new System.Windows.Forms.TextBox();
             this.lblVentas = new System.Windows.Forms.Label();
             this.txtCajaInicial = new System.Windows.Forms.TextBox();
@@ -113,7 +113,7 @@
             this.cajaInicio,
             this.gastos,
             this.ventas,
-            this.verGastos,
+            this.verEgresosCaja,
             this.verVentas});
             this.grillaCajasACerrar.Location = new System.Drawing.Point(11, 117);
             this.grillaCajasACerrar.MultiSelect = false;
@@ -177,7 +177,7 @@
             this.gastos.DataPropertyName = "gastos";
             dataGridViewCellStyle31.Format = "F2";
             this.gastos.DefaultCellStyle = dataGridViewCellStyle31;
-            this.gastos.HeaderText = "Gastos";
+            this.gastos.HeaderText = "EgresosCaja";
             this.gastos.Name = "gastos";
             this.gastos.ReadOnly = true;
             this.gastos.Width = 65;
@@ -192,15 +192,15 @@
             this.ventas.ReadOnly = true;
             this.ventas.Width = 65;
             // 
-            // verGastos
+            // verEgresosCaja
             // 
-            this.verGastos.HeaderText = "Ver Gastos";
-            this.verGastos.Name = "verGastos";
-            this.verGastos.ReadOnly = true;
-            this.verGastos.Text = "Ver";
-            this.verGastos.ToolTipText = "Ver Gastos";
-            this.verGastos.UseColumnTextForButtonValue = true;
-            this.verGastos.Width = 59;
+            this.verEgresosCaja.HeaderText = "Ver EgresosCaja";
+            this.verEgresosCaja.Name = "verEgresosCaja";
+            this.verEgresosCaja.ReadOnly = true;
+            this.verEgresosCaja.Text = "Ver";
+            this.verEgresosCaja.ToolTipText = "Ver EgresosCaja";
+            this.verEgresosCaja.UseColumnTextForButtonValue = true;
+            this.verEgresosCaja.Width = 59;
             // 
             // verVentas
             // 
@@ -321,8 +321,8 @@
             this.panel1.Controls.Add(this.panel3);
             this.panel1.Controls.Add(this.txtCajaCierre);
             this.panel1.Controls.Add(this.lblCajaCierre);
-            this.panel1.Controls.Add(this.txtGastos);
-            this.panel1.Controls.Add(this.lblGastos);
+            this.panel1.Controls.Add(this.txtEgresosCaja);
+            this.panel1.Controls.Add(this.lblEgresosCaja);
             this.panel1.Controls.Add(this.txtVentas);
             this.panel1.Controls.Add(this.lblVentas);
             this.panel1.Controls.Add(this.txtCajaInicial);
@@ -477,30 +477,30 @@
             this.lblCajaCierre.Text = "Caja Cierre";
             this.toolTip1.SetToolTip(this.lblCajaCierre, "Aquí ingrese el total de \r\ndinero que hay en la caja.\r\n");
             // 
-            // txtGastos
+            // txtEgresosCaja
             // 
-            this.txtGastos.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtGastos.Location = new System.Drawing.Point(147, 91);
-            this.txtGastos.Name = "txtGastos";
-            this.txtGastos.ReadOnly = true;
-            this.txtGastos.Size = new System.Drawing.Size(162, 24);
-            this.txtGastos.TabIndex = 22;
-            this.txtGastos.TabStop = false;
-            this.txtGastos.Text = "0";
-            this.txtGastos.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtGastos.TextChanged += new System.EventHandler(this.txtGastos_TextChanged);
+            this.txtEgresosCaja.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtEgresosCaja.Location = new System.Drawing.Point(147, 91);
+            this.txtEgresosCaja.Name = "txtEgresosCaja";
+            this.txtEgresosCaja.ReadOnly = true;
+            this.txtEgresosCaja.Size = new System.Drawing.Size(162, 24);
+            this.txtEgresosCaja.TabIndex = 22;
+            this.txtEgresosCaja.TabStop = false;
+            this.txtEgresosCaja.Text = "0";
+            this.txtEgresosCaja.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtEgresosCaja.TextChanged += new System.EventHandler(this.txtEgresosCaja_TextChanged);
             // 
-            // lblGastos
+            // lblEgresosCaja
             // 
-            this.lblGastos.AutoSize = true;
-            this.lblGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblGastos.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblGastos.Location = new System.Drawing.Point(84, 96);
-            this.lblGastos.Name = "lblGastos";
-            this.lblGastos.Size = new System.Drawing.Size(57, 16);
-            this.lblGastos.TabIndex = 21;
-            this.lblGastos.Text = "Gastos";
+            this.lblEgresosCaja.AutoSize = true;
+            this.lblEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblEgresosCaja.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblEgresosCaja.Location = new System.Drawing.Point(84, 96);
+            this.lblEgresosCaja.Name = "lblEgresosCaja";
+            this.lblEgresosCaja.Size = new System.Drawing.Size(57, 16);
+            this.lblEgresosCaja.TabIndex = 21;
+            this.lblEgresosCaja.Text = "EgresosCaja";
             // 
             // txtVentas
             // 
@@ -612,8 +612,8 @@
         protected System.Windows.Forms.Label lblCajaInicial;
         protected System.Windows.Forms.TextBox txtCajaCierre;
         protected System.Windows.Forms.Label lblCajaCierre;
-        protected System.Windows.Forms.TextBox txtGastos;
-        protected System.Windows.Forms.Label lblGastos;
+        protected System.Windows.Forms.TextBox txtEgresosCaja;
+        protected System.Windows.Forms.Label lblEgresosCaja;
         protected System.Windows.Forms.TextBox txtVentas;
         protected System.Windows.Forms.Label lblVentas;
         protected System.Windows.Forms.TextBox txtDiferencia;
@@ -642,7 +642,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn cajaInicio;
         private System.Windows.Forms.DataGridViewTextBoxColumn gastos;
         private System.Windows.Forms.DataGridViewTextBoxColumn ventas;
-        private System.Windows.Forms.DataGridViewButtonColumn verGastos;
+        private System.Windows.Forms.DataGridViewButtonColumn verEgresosCaja;
         private System.Windows.Forms.DataGridViewButtonColumn verVentas;
         private System.Windows.Forms.Button btnIngresoBilletes;
     }
