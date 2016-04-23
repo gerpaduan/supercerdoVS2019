@@ -150,10 +150,13 @@ namespace Presentacion.Caja
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
+            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0) || oCierreE.FechaHoraInicio > txtFechaEgresoCaja.Value)
             {
-                MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.\n\n¿Desea abrir caja ahora?",
-                    "Abrir Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);//, MessageBoxButtons.YesNo, MessageBoxDefaultButton.Button2);
+                resp = false;
+                MessageBox.Show("La fecha y hora del egreso de caja ("+ Utilidades.Util_Form.fechaFormato24Horas(txtFechaEgresoCaja.Value) +") debe ser mayor a la fecha de apertura de caja ("+
+                Utilidades.Util_Form.fechaFormato24Horas(oCierreE.FechaHoraInicio) + ")",
+                    "Mensaje de Error", MessageBoxButtons.OK,MessageBoxIcon.Stop);
+
             }
 
             return resp;
@@ -178,8 +181,7 @@ namespace Presentacion.Caja
 
                 bool cajaAbierta = (Presentacion.FormPrincipal.logueado || oUsuario.Admin) ? true : validarCajaAbiertaVendedeor();
 
-                if (tienePermiso && Util_Form.validarFechaConAdmin((Presentacion.FormPrincipal.logueado || oUsuario.Admin), txtFechaEgresoCaja.Value, "Fecha") 
-                    && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, 
+                if (tienePermiso && cajaAbierta && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, 
                         Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     if (oEgresoCajaE.Id > 0 && readOnly)
