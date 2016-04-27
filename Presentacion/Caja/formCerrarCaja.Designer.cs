@@ -468,11 +468,11 @@
             this.lblEgresosCaja.AutoSize = true;
             this.lblEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblEgresosCaja.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblEgresosCaja.Location = new System.Drawing.Point(84, 96);
+            this.lblEgresosCaja.Location = new System.Drawing.Point(39, 96);
             this.lblEgresosCaja.Name = "lblEgresosCaja";
-            this.lblEgresosCaja.Size = new System.Drawing.Size(57, 16);
+            this.lblEgresosCaja.Size = new System.Drawing.Size(102, 16);
             this.lblEgresosCaja.TabIndex = 21;
-            this.lblEgresosCaja.Text = "EgresosCaja";
+            this.lblEgresosCaja.Text = "Egresos Caja";
             // 
             // txtVentas
             // 
