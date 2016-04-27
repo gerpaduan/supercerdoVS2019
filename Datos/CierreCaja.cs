@@ -189,7 +189,7 @@ namespace Datos
                 oEgresoCaja.CreadoPor = Convert.ToInt32(drEgresoCaja["creadoPor"].ToString());
                 DateTime? fechaNull = null;
                 oEgresoCaja.Actualizado = !String.IsNullOrEmpty(drEgresoCaja["actualizado"].ToString()) ? (Convert.ToDateTime(drEgresoCaja["actualizado"].ToString())) : fechaNull;
-                oEgresoCaja.ActualizadoPor = drEgresoCaja["actualizadoPor"].ToString().Length > 0 ? Convert.ToInt32(drEgresoCaja["actualizadoPor"]) : 0;
+                oEgresoCaja.ActualizadoPor = drEgresoCaja["actualizadoPor"].ToString().Length > 0 ? Convert.ToInt32(drEgresoCaja["actualizadoPor"]) : -1;
             }
 
             cmCierreCaja.Connection.Close();

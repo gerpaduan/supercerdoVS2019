@@ -25,6 +25,7 @@ namespace Presentacion.Caja
 
         public int idEgresoCaja = 0;
         bool readOnly = false;
+        bool huboModificacion = false;
 
         public formAddOrEditEgresoCaja()
         {
@@ -211,15 +212,18 @@ namespace Presentacion.Caja
                            && Util_Form.validarCampoNumerico(txtMonto.Text, "Monto"))
                         {
                             cargarEgresoCaja();//se cargan datos del egresoCaja
+                            if (!huboModificacion)
+                            {
+                                MessageBox.Show("No se han realizado modificaciones.\n\nPresione Cancelar para salir sin realizar modificaciones", "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                return;
+                            }
                             oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
                             if (frmEgresosCaja != null)
                             {
                                 frmEgresosCaja.cargarGrilla();
                             }
-                            //huboModificaciones = false;
                             MessageBox.Show("El egreso de caja se guardó correctamente.");
                             this.Close();
-                            //limpiarListas();
                         }
                     }
                 }
@@ -233,6 +237,20 @@ namespace Presentacion.Caja
 
         private void cargarEgresoCaja()
         {
+            huboModificacion = true;
+            //Se valida que se hayan realizado modificaciones en el registro
+            if (oEgresoCajaE.Id > 0)
+            {
+                huboModificacion = !(oEgresoCajaE.Fecha.Equals(txtFechaEgresoCaja.Value) &&
+                    oEgresoCajaE.IdTipoEgresoCaja.Equals((int)comboTipoEgresoCaja.SelectedValue) &&
+                    oEgresoCajaE.Descripcion.Equals(txtDescripcion.Text) &&
+                    oEgresoCajaE.Monto.Equals(Utilidades.Util_Form.convertFloat(txtMonto.Text, false)) &&
+                    oEgresoCajaE.Detalle.Equals(txtDetalle.Text) &&
+                    oEgresoCajaE.Sucursal.idSucursal.Equals(oSucursalE.idSucursal)
+                    );
+                if (!huboModificacion) return;
+            }
+
             oEgresoCajaE.Fecha = txtFechaEgresoCaja.Value;
             oEgresoCajaE.IdTipoEgresoCaja = (int)comboTipoEgresoCaja.SelectedValue;
             oEgresoCajaE.Descripcion = txtDescripcion.Text;
