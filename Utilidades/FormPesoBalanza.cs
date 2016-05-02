@@ -88,8 +88,8 @@ namespace Utilidades
                 nuevoPeso[i] = indices[i];
             }
             peso = new string(nuevoPeso);
-            
-            pesoBalanzaLabel.Text = texto.Contains('i') ? peso + " i" : peso;
+
+            pesoBalanzaLabel.Text = texto.Contains('i') && !texto.Contains("ei") ? peso + " i" : peso;
         }
     }
 }
