@@ -14,12 +14,11 @@ namespace Presentacion.Cortes
         
         Negocio.Corte oCorteN;
         bool tabStop = false;
+        public bool corteSinMaestro = true;
+
         public formBuscarCorte()
         {
             InitializeComponent();
-            cargarGrilla();
-            txtBuscarCorte.Focus();
-            txtBuscarCorte.Select();
         }
 
         private void buscarCorte()
@@ -35,7 +34,7 @@ namespace Presentacion.Cortes
             string txtBusqueda = txtBuscarCorte.Text.Trim();
 
             grillaCortes.AutoGenerateColumns = false;
-            grillaCortes.DataSource = oCorteN.buscarCorteSinMaestro(txtBusqueda);                        
+            grillaCortes.DataSource = corteSinMaestro ? oCorteN.buscarCorteSinMaestro(txtBusqueda) : oCorteN.buscarCorte(txtBusqueda);                     
         }
 
         private void cargarGrilla()
@@ -105,9 +104,13 @@ namespace Presentacion.Cortes
             this.Close();
         }
 
+
         private void formBuscarCorte_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            cargarGrilla();
+            txtBuscarCorte.Focus();
+            txtBuscarCorte.Select();
         }
     }
 

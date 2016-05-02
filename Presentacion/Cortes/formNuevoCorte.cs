@@ -45,6 +45,7 @@ namespace Presentacion
         private void btnBuscarCorteM_Click(object sender, EventArgs e)
         {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
+            frmBuscarCorte.corteSinMaestro = false;
             frmBuscarCorte.Show(this);
         }
 
