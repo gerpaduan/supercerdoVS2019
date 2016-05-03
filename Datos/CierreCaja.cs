@@ -103,7 +103,7 @@ namespace Datos
 
         public DataTable obtenerTiposEgresoCaja()
         {
-            string selectText = "Select * from TiposEgresoCaja order by orden";
+            string selectText = "Select * from TiposEgresoCaja order by orden, tipoEgresoCaja";
             DataTable dtTipoEgresoCaja = new DataTable();
             SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
             daCierreCaja.Fill(dtTipoEgresoCaja);           
