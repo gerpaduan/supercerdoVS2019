@@ -151,11 +151,13 @@ namespace Presentacion
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarLinea();
+            capturarPantalla();
         }
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
-            agregarLinea();            
+            agregarLinea();
+            capturarPantalla();
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -310,6 +312,13 @@ namespace Presentacion
         {
             cargarCortesPorCompra();
             cargarGrilla();            
+        }
+
+        private void capturarPantalla()
+        {
+            //se refresca para que se muestren los datos
+            this.Refresh();
+            Util_Form.capturarPantalla(txtTipoAccion.Text, txtFechaCompra.Value);        
         }
 
         //carga textBox de totales

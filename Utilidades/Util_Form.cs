@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Configuration;
+using System.IO;
+using IWshRuntimeLibrary;
 
 namespace Utilidades
 {
@@ -274,6 +276,37 @@ namespace Utilidades
                 frmBalanza.Visible = false;
             }
             return peso;
+        }
+
+        public static void capturarPantalla(string nameCaptura, DateTime fechaRegistro)
+        {
+            try
+            {
+                string nombreCarpeta = "Capturas";
+                string fullNameCaptura = fechaRegistro.ToString("dd-mm-yyyy HHmmss") + " - " + nameCaptura + ".jpg";
+                string escritorio = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                string fullPath = Path.GetFullPath(escritorio + "\\" + nombreCarpeta);// (@"\" + nombreCarpeta);
+
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
+
+                Bitmap BmpScreen = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
+                                          Screen.PrimaryScreen.Bounds.Height,
+                                  System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+
+                Graphics ScreenShot = Graphics.FromImage(BmpScreen);
+
+                ScreenShot.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
+                                     Screen.PrimaryScreen.Bounds.Y, 0, 0,
+                    Screen.PrimaryScreen.Bounds.Size, CopyPixelOperation.SourceCopy);
+
+                BmpScreen.Save(fullPath + "\\" + fullNameCaptura, System.Drawing.Imaging.ImageFormat.Png);
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

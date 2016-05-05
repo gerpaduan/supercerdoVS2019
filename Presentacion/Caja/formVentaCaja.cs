@@ -16,6 +16,7 @@ namespace Presentacion.Ventas
     public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
         bool pesoBalanza = false;
+        bool capturarPantallaFinal = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
@@ -920,6 +921,8 @@ namespace Presentacion.Ventas
         {
             tiempoInactivo = 0;
             esModificacion();
+            if (capturarPantallaFinal) capturarPantalla();
+            capturarPantallaFinal = false;
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -1487,6 +1490,17 @@ namespace Presentacion.Ventas
             {
                 oTemporalLineaVenta = null;
             }
+        }
+
+        private void checkLeerPeso_Enter(object sender, EventArgs e)
+        {
+            capturarPantalla();
+            capturarPantallaFinal = true;
+        }
+
+        private void capturarPantalla()
+        {
+            Utilidades.Util_Form.capturarPantalla(txtVendedor.Text, DateTime.Now);
         }
     }
 }

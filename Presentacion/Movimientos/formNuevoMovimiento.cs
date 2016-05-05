@@ -10,6 +10,7 @@ using Presentacion.Cortes;
 using Presentacion.Reportes;
 using Utilidades;
 using System.Configuration;
+using System.IO;
 
 namespace Presentacion
 {
@@ -353,6 +354,7 @@ namespace Presentacion
             }
             return resp;
         }
+
         private void cargarCortePorMovimiento()
         {
             if (validar() && validarCantKgs())
@@ -383,7 +385,7 @@ namespace Presentacion
                     txtCodigo.Focus();
                 }
             }
-        }
+        }      
 
         private void limpiarCampos()
         {
@@ -583,6 +585,13 @@ namespace Presentacion
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCorteEnMovimiento();
+        }
+
+        private void capturarPantalla()
+        {
+            //se refresca para que se muestren los datos
+            this.Refresh();
+            Util_Form.capturarPantalla("Movimiento", txtFechaMovimiento.Value);
         }
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)

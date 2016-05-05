@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Cortes;
 using System.Configuration;
+using Utilidades;
 
 
 namespace Presentacion
@@ -315,6 +316,7 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
+            capturarPantalla();
         }        
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -330,6 +332,14 @@ namespace Presentacion
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCortePorEmbutido();
+            capturarPantalla();
+        }
+
+        private void capturarPantalla()
+        {
+            //se refresca para que se muestren los datos
+            this.Refresh();
+            Util_Form.capturarPantalla("Embutido", txtFechaEmbutido.Value);
         }
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
