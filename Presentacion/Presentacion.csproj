@@ -499,6 +499,12 @@
     <Compile Include="Usuarios\FormUsuarios.Designer.cs">
       <DependentUpon>FormUsuarios.cs</DependentUpon>
     </Compile>
+    <Compile Include="Ventas\formGetAllLineaVenta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ventas\formGetAllLineaVenta.Designer.cs">
+      <DependentUpon>formGetAllLineaVenta.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ventas\formTemporalLineaVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -748,6 +754,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Usuarios\FormUsuarios.resx">
       <DependentUpon>FormUsuarios.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Ventas\formGetAllLineaVenta.resx">
+      <DependentUpon>formGetAllLineaVenta.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formTemporalLineaVenta.resx">
       <DependentUpon>formTemporalLineaVenta.cs</DependentUpon>

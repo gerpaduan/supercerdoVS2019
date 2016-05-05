@@ -385,5 +385,28 @@ namespace Datos
 
             return dtVentas;
         }
+
+        public DataTable getAllLineasVenta(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        {
+            DataTable dtVentas = new DataTable();
+            daVenta = new SqlDataAdapter();
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandText = "getAllLineasVenta";
+            cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmVenta.Parameters.AddWithValue("@texto", texto);
+            cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+
+            cmVenta.ExecuteNonQuery();
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtVentas);
+            cmVenta.Connection.Close();
+
+            return dtVentas;
+        }
     }
 }
