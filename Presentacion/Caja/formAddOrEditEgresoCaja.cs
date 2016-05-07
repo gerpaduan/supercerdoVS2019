@@ -267,7 +267,6 @@ namespace Presentacion.Caja
             {
                 int idSucursal = (int)comboSucursal.SelectedValue;
                 oSucursalE = oSucursalN.findById(idSucursal);
-                oEgresoCajaE.Sucursal = oSucursalE;
             }
         }
 
