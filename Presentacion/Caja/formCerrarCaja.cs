@@ -22,9 +22,9 @@ namespace Presentacion.Caja
         public Entidades.Usuario oUserIncio = new Entidades.Usuario();
         public Entidades.Usuario oUserCierre = new Entidades.Usuario();
         Entidades.CierreCaja oCierreAnterior;
-               
 
-        protected enum tipoCierre { AbrirCaja, CerrarCaja };
+
+        protected enum tipoCierre { AbrirCaja, CerrarCaja, ModificarCaja };
         protected tipoCierre tipoCierreActual = tipoCierre.CerrarCaja;
 
         public formCerrarCaja()
@@ -308,17 +308,17 @@ namespace Presentacion.Caja
                     Negocio.Venta oVentaN = new Negocio.Venta();
                     lblCortesAnulados.Visible = oVentaN.getVentasVendedorCierreCaja(oCierreE, true).Rows.Count > 0;
                     //if (!oUserCierre.Admin && !oCierreE.UsuarioInicio.Id.Equals(oUserCierre.Id))
-                    if (!oUserCierre.Admin)
-                    {
-                        MessageBox.Show(oUserCierre.Nombre + "\nNo tienes permiso para los cierres de caja.","Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.Close();
-                    }
-                    if (!oCierreE.FechaHoraCierre.Equals(null))
-                    {
-                        MessageBox.Show("No puede Cerrar Caja porque no se ha iniciado caja anteriormente.\n" + "Fecha Ultimo Cierre: " + oCierreE.FechaHoraCierre.ToString(),
-                            "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        this.Close();
-                    }
+                    //if (!oUserCierre.Admin)
+                    //{
+                    //    MessageBox.Show(oUserCierre.Nombre + "\nNo tienes permiso para los cierres de caja.","Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    //    this.Close();
+                    //}
+                    //if (!oCierreE.FechaHoraCierre.Equals(null))
+                    //{
+                    //    MessageBox.Show("No puede Cerrar Caja porque no se ha iniciado caja anteriormente.\n" + "Fecha Ultimo Cierre: " + oCierreE.FechaHoraCierre.ToString(),
+                    //        "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    //    this.Close();
+                    //}
 
                     foreach (Form frm in Application.OpenForms)
                     {
