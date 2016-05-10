@@ -23,7 +23,7 @@ namespace Presentacion.Embutidos
         {
             oCorteN = new Negocio.Corte();
             grillaCortes.AutoGenerateColumns = false;
-            grillaCortes.DataSource = oCorteN.buscarCorte(txtBuscarCorte.Text.Trim());
+            grillaCortes.DataSource = oCorteN.buscarCorteSinMaestro(txtBuscarCorte.Text.Trim());
         }
 
         public void enviarCorte()

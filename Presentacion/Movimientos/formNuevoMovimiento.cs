@@ -580,11 +580,13 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnMovimiento();
+            capturarPantalla();
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCorteEnMovimiento();
+            capturarPantalla();
         }
 
         private void capturarPantalla()
