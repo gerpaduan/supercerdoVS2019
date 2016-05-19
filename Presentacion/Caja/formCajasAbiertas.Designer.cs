@@ -228,7 +228,6 @@
             // btnCerrarMultipleCajas
             // 
             this.btnCerrarMultipleCajas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCerrarMultipleCajas.Enabled = false;
             this.btnCerrarMultipleCajas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCerrarMultipleCajas.Location = new System.Drawing.Point(386, 341);
             this.btnCerrarMultipleCajas.Name = "btnCerrarMultipleCajas";
@@ -236,6 +235,7 @@
             this.btnCerrarMultipleCajas.TabIndex = 24;
             this.btnCerrarMultipleCajas.Text = "&Cerrar Cajas Múltiples";
             this.btnCerrarMultipleCajas.UseVisualStyleBackColor = true;
+            this.btnCerrarMultipleCajas.Visible = false;
             this.btnCerrarMultipleCajas.Click += new System.EventHandler(this.btnCerrarMultipleCajas_Click);
             // 
             // formCajasAbiertas

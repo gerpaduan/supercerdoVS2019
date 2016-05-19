@@ -123,6 +123,12 @@
     <Compile Include="Caja\formEgresosCajaVendedor.Designer.cs">
       <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formLineasVendedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formLineasVendedor.Designer.cs">
+      <DependentUpon>formLineasVendedor.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formIngresoBilletes.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -563,6 +569,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formEgresosCajaVendedor.resx">
       <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formLineasVendedor.resx">
+      <DependentUpon>formLineasVendedor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formIngresoBilletes.resx">
       <DependentUpon>formIngresoBilletes.cs</DependentUpon>

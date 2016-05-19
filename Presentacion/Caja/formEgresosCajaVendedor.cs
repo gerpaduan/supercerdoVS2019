@@ -87,5 +87,33 @@ namespace Presentacion.Caja
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
+
+        private void btnNuevoGasto_Click(object sender, EventArgs e)
+        {
+            formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
+            frmAddOrEditEgresoCaja.oUsuario = oCierreE.UsuarioInicio;
+            frmAddOrEditEgresoCaja.ShowDialog();
+
+            formEgresosCajaVendedor_Load(null, null);
+        }
+
+        private void btnVerGasto_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int idEgresoCaja = Convert.ToInt32(grillaEgresosCaja.CurrentRow.Cells["id"].Value.ToString());
+                
+                formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
+                frmAddOrEditEgresoCaja.oUsuario = oCierreE.UsuarioInicio;
+                frmAddOrEditEgresoCaja.idEgresoCaja = idEgresoCaja;
+                frmAddOrEditEgresoCaja.ShowDialog();
+
+                formEgresosCajaVendedor_Load(null, null);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
     }
 }

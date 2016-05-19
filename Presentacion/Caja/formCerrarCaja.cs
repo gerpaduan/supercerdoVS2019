@@ -363,6 +363,9 @@ namespace Presentacion.Caja
             formEgresosCajaVendedor frmEgresosCajaVendedor = new formEgresosCajaVendedor();
             frmEgresosCajaVendedor.oCierreE = oCierreE;
             frmEgresosCajaVendedor.ShowDialog();
+            //se actualiza el egreso
+            oCierreE.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE);
+            txtEgresosCaja.Text = oCierreE.EgresosCaja.ToString();
         }
 
         private void controlEleccionImporte_ValueChanged(object sender, EventArgs e)

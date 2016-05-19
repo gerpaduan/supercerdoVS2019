@@ -28,6 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grillaEgresosCaja = new System.Windows.Forms.DataGridView();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.txtDetalle = new System.Windows.Forms.TextBox();
@@ -43,6 +46,8 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.btnNuevoGasto = new System.Windows.Forms.Button();
+            this.btnVerGasto = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).BeginInit();
             this.SuspendLayout();
             // 
@@ -54,10 +59,34 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaEgresosCaja.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaEgresosCaja.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaEgresosCaja.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaEgresosCaja.DefaultCellStyle = dataGridViewCellStyle2;
             this.grillaEgresosCaja.Location = new System.Drawing.Point(0, 176);
             this.grillaEgresosCaja.Name = "grillaEgresosCaja";
             this.grillaEgresosCaja.ReadOnly = true;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaEgresosCaja.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.grillaEgresosCaja.RowHeadersVisible = false;
             this.grillaEgresosCaja.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaEgresosCaja.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
@@ -87,7 +116,7 @@
             this.txtDetalle.Name = "txtDetalle";
             this.txtDetalle.ReadOnly = true;
             this.txtDetalle.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtDetalle.Size = new System.Drawing.Size(401, 64);
+            this.txtDetalle.Size = new System.Drawing.Size(348, 58);
             this.txtDetalle.TabIndex = 46;
             this.txtDetalle.TabStop = false;
             // 
@@ -223,12 +252,38 @@
             this.label1.TabIndex = 58;
             this.label1.Text = "Total";
             // 
+            // btnNuevoGasto
+            // 
+            this.btnNuevoGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnNuevoGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnNuevoGasto.Location = new System.Drawing.Point(457, 138);
+            this.btnNuevoGasto.Name = "btnNuevoGasto";
+            this.btnNuevoGasto.Size = new System.Drawing.Size(75, 26);
+            this.btnNuevoGasto.TabIndex = 59;
+            this.btnNuevoGasto.Text = "&Nuevo";
+            this.btnNuevoGasto.UseVisualStyleBackColor = true;
+            this.btnNuevoGasto.Click += new System.EventHandler(this.btnNuevoGasto_Click);
+            // 
+            // btnVerGasto
+            // 
+            this.btnVerGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnVerGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnVerGasto.Location = new System.Drawing.Point(457, 106);
+            this.btnVerGasto.Name = "btnVerGasto";
+            this.btnVerGasto.Size = new System.Drawing.Size(75, 26);
+            this.btnVerGasto.TabIndex = 60;
+            this.btnVerGasto.Text = "&Ver";
+            this.btnVerGasto.UseVisualStyleBackColor = true;
+            this.btnVerGasto.Click += new System.EventHandler(this.btnVerGasto_Click);
+            // 
             // formEgresosCajaVendedor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.SteelBlue;
             this.ClientSize = new System.Drawing.Size(541, 424);
+            this.Controls.Add(this.btnVerGasto);
+            this.Controls.Add(this.btnNuevoGasto);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.txtTotalS);
             this.Controls.Add(this.groupBox1);
@@ -273,5 +328,7 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TextBox txtTotalS;
         protected System.Windows.Forms.Label label1;
+        protected System.Windows.Forms.Button btnNuevoGasto;
+        protected System.Windows.Forms.Button btnVerGasto;
     }
 }

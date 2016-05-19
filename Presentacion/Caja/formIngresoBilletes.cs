@@ -95,6 +95,7 @@ namespace Presentacion.Caja
                 }
             }
             total = cien + cincuenta + veinte + diez + cinco + dos + monedas;
+            txtTotalCambio.Text = (total - cien).ToString("F2");
             txtTotal.Text = total.ToString("F2");
         }
 
