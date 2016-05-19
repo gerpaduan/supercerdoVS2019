@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditEgresoCaja));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtFechaTexto = new System.Windows.Forms.TextBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
@@ -57,6 +58,8 @@
             this.txtModifPor = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
+            this.btnImprimir = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -67,6 +70,8 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.checkTicket);
+            this.pnlBuscar.Controls.Add(this.btnImprimir);
             this.pnlBuscar.Controls.Add(this.txtFechaTexto);
             this.pnlBuscar.Controls.Add(this.txtSucursal);
             this.pnlBuscar.Controls.Add(this.groupBox1);
@@ -414,6 +419,37 @@
             this.panel1.Size = new System.Drawing.Size(292, 96);
             this.panel1.TabIndex = 15;
             // 
+            // checkTicket
+            // 
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkTicket.Location = new System.Drawing.Point(418, 43);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(64, 20);
+            this.checkTicket.TabIndex = 51;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = true;
+            // 
+            // btnImprimir
+            // 
+            this.btnImprimir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnImprimir.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.btnImprimir.Image = ((System.Drawing.Image)(resources.GetObject("btnImprimir.Image")));
+            this.btnImprimir.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnImprimir.Location = new System.Drawing.Point(400, 40);
+            this.btnImprimir.Name = "btnImprimir";
+            this.btnImprimir.Size = new System.Drawing.Size(82, 27);
+            this.btnImprimir.TabIndex = 52;
+            this.btnImprimir.TabStop = false;
+            this.btnImprimir.Text = "&Imprimir";
+            this.btnImprimir.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.btnImprimir.UseVisualStyleBackColor = true;
+            this.btnImprimir.Visible = false;
+            this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
+            // 
             // formAddOrEditEgresoCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -473,5 +509,7 @@
         private System.Windows.Forms.TextBox txtSucursal;
         private System.Windows.Forms.TextBox txtTipoEgresoCaja;
         private System.Windows.Forms.TextBox txtFechaTexto;
+        private System.Windows.Forms.CheckBox checkTicket;
+        protected System.Windows.Forms.Button btnImprimir;
     }
 }

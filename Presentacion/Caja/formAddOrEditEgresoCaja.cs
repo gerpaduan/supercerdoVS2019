@@ -53,6 +53,13 @@ namespace Presentacion.Caja
                         setearPropiedadesForm();
                         idEgresoCajaLabel.Text = idEgresoCaja.ToString();//asigno id para identificar el formulario al llamar
                     }
+                    //se valida que sea Admin para cambiar de sucursal
+                    comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
+                    //if (!((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado))
+                    //{
+                    //    txtSucursal.Visible = true;
+                    //    txtSucursal.Text = comboSucursal.Text;
+                    //}
                 }
                 else
                 {
@@ -92,13 +99,16 @@ namespace Presentacion.Caja
             this.btnAceptar.Text = readOnly ? "&Modificar" : "&Guardar";
             txtFechaTexto.Visible = readOnly;
             txtFechaTexto.Text = Util_Form.fechaFormato24Horas(txtFechaEgresoCaja.Value);
-            txtSucursal.Visible = readOnly;
+            txtSucursal.Visible = readOnly || !((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
+            comboSucursal.Visible = !txtSucursal.Visible;
             txtTipoEgresoCaja.Visible = readOnly;
             txtSucursal.Text = comboSucursal.Text;
             txtTipoEgresoCaja.Text = comboTipoEgresoCaja.Text;
             txtDescripcion.ReadOnly = readOnly;
             txtMonto.ReadOnly = readOnly;
             txtDetalle.ReadOnly = readOnly;
+            checkTicket.Visible = !readOnly;
+            btnImprimir.Visible = readOnly;
         }
 
         private void cargarCampos()
@@ -172,11 +182,13 @@ namespace Presentacion.Caja
                 {
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
                     frmLogin.ShowDialog(this);
-                    tienePermiso = oUsuario != null && (oEgresoCajaE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
+                    if (oUsuario == null) return;
+                    tienePermiso = (oEgresoCajaE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
                     if (!tienePermiso)
                     {
                         MessageBox.Show("No tiene permisos para modificar gastos de otra persona");
                         oUsuario = null;
+                        return;
                     }
                 }
 
@@ -218,6 +230,9 @@ namespace Presentacion.Caja
                                 return;
                             }
                             oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+
+                            imprimirTicket();
+
                             if (frmEgresosCaja != null)
                             {
                                 frmEgresosCaja.cargarGrilla();
@@ -233,6 +248,37 @@ namespace Presentacion.Caja
                 MessageBox.Show("Error al guardar egreso de caja.\n\n"+ex.Message, 
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }          
+        }
+
+        private void imprimirTicket()
+        {
+            try
+            {
+                //imprimir ticket
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = checkTicket.Checked;
+                ticket.TextoCentro("Egreso Caja");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                ticket.TextoIzquierda("Sucursal: " + oEgresoCajaE.Sucursal.sucursal);
+                ticket.TextoIzquierda("Vendedor: " + oUsuario.Nombre);
+                ticket.TextoIzquierda("Id: " + oEgresoCajaE.Id.ToString());
+                ticket.TextoIzquierda("Fecha: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Fecha));
+                ticket.LineasGuion();
+                ticket.TextoIzquierda("Tipo: " + oEgresoCajaE.TipoEgresoCaja);
+                ticket.TextoMuchasLineas("Descripción: " + oEgresoCajaE.Descripcion);
+                ticket.TextoIzquierda("Monto: " + oEgresoCajaE.Monto);
+                ticket.TextoMuchasLineas("Detalle: " + oEgresoCajaE.Detalle);
+                DateTime? creado = oEgresoCajaE.Id.Equals(0) ? DateTime.Now : oEgresoCajaE.Creado;
+                ticket.TextoIzquierda("Creado: " + Utilidades.Util_Form.fechaFormato24Horas(creado));
+                if(oEgresoCajaE.Actualizado!= null) ticket.TextoIzquierda("Modif.: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Actualizado));
+                ticket.LineasEnBlanco(5);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error al imprimir el Ticket");
+                return;
+            }
         }
 
         private void cargarEgresoCaja()
@@ -253,6 +299,7 @@ namespace Presentacion.Caja
 
             oEgresoCajaE.Fecha = txtFechaEgresoCaja.Value;
             oEgresoCajaE.IdTipoEgresoCaja = (int)comboTipoEgresoCaja.SelectedValue;
+            oEgresoCajaE.Descripcion = comboTipoEgresoCaja.Text;
             oEgresoCajaE.Descripcion = txtDescripcion.Text;
             oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true);
             oEgresoCajaE.Detalle = txtDetalle.Text;
@@ -282,6 +329,11 @@ namespace Presentacion.Caja
                 this.Close();
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnImprimir_Click(object sender, EventArgs e)
+        {
+            imprimirTicket();
         }
     }
 }
