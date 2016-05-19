@@ -801,5 +801,78 @@ namespace Presentacion
                 return;
             }
         }
+
+        private void grillaCortePorCompra_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            DataGridView grid = (DataGridView)sender;
+            SortOrder so = SortOrder.None;
+            if (grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection == SortOrder.None ||
+                grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection == SortOrder.Ascending)
+            {
+                so = SortOrder.Descending;
+            }
+            else
+            {
+                so = SortOrder.Ascending;
+            }
+            //set SortGlyphDirection after databinding otherwise will always be none 
+            Sort(grid.Columns[e.ColumnIndex].Name, so);
+            listaCortesEnGrilla.Clear();
+            foreach (Entidades.CortePorCompra corteOrdenado in listaCortePorCompra)
+            {
+                cargarCorteEnGrilla(corteOrdenado);
+            }
+            cargarGrilla();
+            grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection = so;
+        }
+        /// <summary>
+        /// Sort the DataGridView
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="sortOrder"></param>
+        private void Sort(string column, SortOrder sortOrder)
+        {
+            switch (column)
+            {
+                case "Codigo":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.Corte.codigo).ToList();
+                        //grillaCortePorCompra.DataSource = listaCortesEnGrilla.OrderBy(x => x.codigo).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.Corte.codigo).ToList();
+                        //grillaCortePorCompra.DataSource = listaCortesEnGrilla.OrderByDescending(x => x.codigo).ToList();
+                    }
+                    break;
+                }
+                case "Corte":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.Corte.corte).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.Corte.corte).ToList();
+                    }
+                    break;
+                }
+                case "cantKgs":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.cantKgs).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.cantKgs).ToList();
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
