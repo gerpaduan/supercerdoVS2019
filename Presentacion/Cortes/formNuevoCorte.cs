@@ -40,8 +40,6 @@ namespace Presentacion
             this.Close();
         }
 
-       
-
         private void btnBuscarCorteM_Click(object sender, EventArgs e)
         {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
@@ -150,7 +148,6 @@ namespace Presentacion
             //}
 
             this.txtCorteMaestro.Text = oCorteMaestroE.corte;
-
             this.txtPorcentajeCorteM.Text = Convert.ToString(oCorteE.porcentaje);
         }
 
@@ -159,16 +156,12 @@ namespace Presentacion
             frmCorte = formCorteParam;
         }
 
-
         private void agregarCorte()
         {
             if (validar())
             {   
-                //oCorteE = new Entidades.Corte();
-
                 if (cargarDatosCorte(oCorteE))	
                 {
-                
                     if (oCorteE.porcentaje <= 100 && oCorteE.porcentajeHueso <= 100 && oCorteE.porcentajeHueso >= 0 && oCorteE.porcentaje >= 0)
                     {
                         if (modificar)
@@ -177,14 +170,11 @@ namespace Presentacion
                             if (frmCorte != null)
                             {
                                 frmCorte.cargarGrilla();
-                                //oFrmInfoCorte.recibirCorteModificado(oCorteE);
                             }
                             else
                             {
                                 oFrmInfoCorte.recibirCorteModificado(oCorteE);
                             }
-
-
                         }
                         else
                         {
@@ -194,24 +184,18 @@ namespace Presentacion
                                 frmCorte.cargarGrilla();
                             }
                         }
-
-
                         this.Close();
-
                     }
                     else
                     {
                         MessageBox.Show("El porcentaje del Corte Maestro y Porcentaje en Hueso debe estar entre 0 y 100%.", "Error en ingreso de porcentaje",
-                       MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-
                 }
                 else
                 {
                     MessageBox.Show("Los siguiente campos tienen ingresado datos erroneos:\n" + mensaje);
                 }
-
-
             }
         }
 
@@ -229,30 +213,16 @@ namespace Presentacion
                 resp = false;
                 mensaje += "\n" + "-Codigo";
             }
-            
-            
-            
             oCorteE.CorteDesc = txtDescCorte.Text.Trim();
-
             try
             {
-                try
-                {
-                    oCorteE.PrecioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                }
-                catch (Exception)
-                {
-
-                    oCorteE.PrecioKg = float.Parse(txtPrecioKg.Text.Trim());
-
-                }
+                oCorteE.precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
             }
             catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "-Precio Kg";
             }
-
 
             oCorteE.Tipo = comboTipo.Text;
 
@@ -270,34 +240,16 @@ namespace Presentacion
 
             try
             {
-                try
-                {
-                    oCorteE.Porcentaje = float.Parse(txtPorcentajeCorteM.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                }
-                catch (Exception)
-                {
-
-                    oCorteE.Porcentaje = float.Parse(txtPorcentajeCorteM.Text.Trim());
-                }
+                oCorteE.Porcentaje = Utilidades.Util_Form.convertFloat(txtPorcentajeCorteM.Text, false);
             }
             catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "- % Corte M";
             }
-
-
             try
             {
-                try
-                {
-                    oCorteE.porcentajeHueso = float.Parse(txtPorcHueso.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                }
-                catch (Exception)
-                {
-
-                    oCorteE.porcentajeHueso = float.Parse(txtPorcHueso.Text.Trim());
-                }
+                oCorteE.porcentajeHueso = Utilidades.Util_Form.convertFloat(txtPorcHueso.Text, false);
             }
             catch (Exception)
             {
@@ -307,23 +259,13 @@ namespace Presentacion
 
             try
             {
-                try
-                {
-                    oCorteE.desvioEstandar = float.Parse(txtDesvioEstandar.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                }
-                catch (Exception)
-                {
-
-                    oCorteE.desvioEstandar = float.Parse(txtDesvioEstandar.Text.Trim());
-                }
+                oCorteE.desvioEstandar = Utilidades.Util_Form.convertFloat(txtDesvioEstandar.Text, false);
             }
             catch (Exception)
             {
                 resp = false;
                 mensaje += "\n" + "- Desvío Estandar";
             }
-
-
             return resp;
         }
 
@@ -344,7 +286,6 @@ namespace Presentacion
 
         private bool validar()
         {
-
             if (this.txtCodigo.Text.Equals("") || this.txtDescCorte.Text.Equals("") 
                 || this.comboTipo.Text.Equals("")|| this.txtCorteMaestro.Text.Equals("")
                 || this.txtPorcentajeCorteM.Text.Equals(""))
@@ -353,7 +294,6 @@ namespace Presentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
-
             else
             {
                 if (this.txtPorcentajeCorteM.Text.Equals("0"))
@@ -361,30 +301,23 @@ namespace Presentacion
                     MessageBox.Show("% en Corte M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Corte Maestro", "Complete los campos",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
-                } else{
+                } 
+                else
+                {
                     return true;
                 }
-
-                
             }
         }
 
-
         #endregion
-
-
+        
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
             if (e.KeyChar == (char)(Keys.Enter))
             {
-
                 e.Handled = true;
-
                 SendKeys.Send("{TAB}");
-
             }
-
         }
 
         private void formNuevoCorte_Load(object sender, EventArgs e)

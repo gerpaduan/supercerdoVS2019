@@ -104,7 +104,7 @@
             this.nuevo.Name = "nuevo";
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "Nuevo";
+            this.nuevo.Text = "&Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
@@ -116,7 +116,7 @@
             this.modificar.Name = "modificar";
             this.modificar.Padding = new System.Windows.Forms.Padding(1);
             this.modificar.Size = new System.Drawing.Size(64, 42);
-            this.modificar.Text = "Modificar";
+            this.modificar.Text = "&Modificar";
             this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.modificar.Click += new System.EventHandler(this.modificar_Click);
             // 
@@ -128,7 +128,7 @@
             this.modificarPrecios.Name = "modificarPrecios";
             this.modificarPrecios.Padding = new System.Windows.Forms.Padding(1);
             this.modificarPrecios.Size = new System.Drawing.Size(82, 42);
-            this.modificarPrecios.Text = "Mod. Precios";
+            this.modificarPrecios.Text = "Mod. &Precios";
             this.modificarPrecios.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.modificarPrecios.Click += new System.EventHandler(this.modificarPrecios_Click);
             // 
@@ -375,7 +375,7 @@
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(84, 28);
             this.btnSeleccionar.TabIndex = 3;
-            this.btnSeleccionar.Text = "Seleccionar";
+            this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
@@ -386,7 +386,7 @@
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(84, 27);
             this.btnCancelar.TabIndex = 4;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
