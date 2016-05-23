@@ -59,8 +59,7 @@ namespace Presentacion
         }
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
-        {
-            this.Text += Utilidades.Conexion.getSucursalConexion();        
+        {       
             cargarComboSucursal();
             dtCorte = oCorteN.obtenerCortes();
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
@@ -114,9 +113,15 @@ namespace Presentacion
             tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtTipoAccion.Text = tipoCompra;
-            this.Text = accion.ToString()+" "+tipoCompra;
             huboModificaciones = false;
             idCompraLabel.Text = idCompra.ToString();
+            setTituloForm();
+        }
+
+        private void setTituloForm()
+        {
+            this.Text = (btnAceptar.Text.Equals("Guardar") ? accion.ToString() : "Info") + " " + tipoCompra;
+            this.Text += Utilidades.Conexion.getSucursalConexion(); 
         }
 
         private void logueoUsuario()
