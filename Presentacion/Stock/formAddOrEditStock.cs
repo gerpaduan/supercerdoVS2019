@@ -104,7 +104,7 @@ namespace Presentacion
                     cargarCorteEnGrilla(corte);
                 }
                 cargarGrilla();
-                btnAceptar.Text = "Modificar";
+                btnAceptar.Text = "&Modificar";
                 txtFechaCompra.Enabled = false;
                 comboSucursal.Enabled = false;
                 groupBox1.Enabled = false;
@@ -120,7 +120,7 @@ namespace Presentacion
 
         private void setTituloForm()
         {
-            this.Text = (btnAceptar.Text.Equals("Guardar") ? accion.ToString() : "Info") + " " + tipoCompra;
+            this.Text = (btnAceptar.Text.Contains("Guardar") ? accion.ToString() : "Info") + " " + tipoCompra;
             this.Text += Utilidades.Conexion.getSucursalConexion(); 
         }
 
@@ -172,7 +172,7 @@ namespace Presentacion
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
-            if (btnAceptar.Text.Equals("Modificar"))
+            if (btnAceptar.Text.Contains("Modificar"))
             {
                 logueoUsuario();
                 if (oUsuario == null)
@@ -183,12 +183,13 @@ namespace Presentacion
                 Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     txtUsuario.Text = oUsuario.Nombre;
-                    btnAceptar.Text = "Guardar";
+                    btnAceptar.Text = "&Guardar";
+                    setTituloForm();//se setea el titulo luego de cambiar el text a BtnAceptar 
                     txtFechaCompra.Enabled = true;
                     comboSucursal.Enabled = true;
                     groupBox1.Enabled = true;
                     txtObservaciones.ReadOnly = false;
-                    timer1.Start();
+                    timer1.Start();               
                 }
             }
             else
