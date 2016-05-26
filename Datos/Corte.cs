@@ -12,8 +12,47 @@ namespace Datos
         private SqlCommand cmCorte;
         Utilidades.Conexion conn=new Utilidades.Conexion();
         private SqlDataAdapter daCorte;
-    
-        public void agregarCorte(Entidades.Corte oCorteE)
+
+        public Entidades.Corte getCorteById(int id, bool cargarMaestro)
+        {
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = "Select Corte.* from Corte where idCorte = " + id;
+            Entidades.Corte oCorteE = new Entidades.Corte();
+            try
+            {
+                cmCorte.Connection.Open();
+                SqlDataReader drCorte = cmCorte.ExecuteReader();
+                using (drCorte)
+                {
+                    while (drCorte.Read())
+                    {
+                        oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
+                        oCorteE.Codigo = Convert.ToInt32(drCorte["codigo"]);
+                        oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
+                        oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
+                        if (cargarMaestro) 
+                            oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
+                        oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
+                        oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
+                        oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
+                        oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+                        oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+                    }
+                    return oCorteE;
+                }
+            }
+            finally
+            {
+                cmCorte.Connection.Close();
+                oCorteE = null;
+            }
+        }
+
+        public void addOrEditCorte(Entidades.Corte oCorteE)
         {
             cmCorte = new SqlCommand();
 
@@ -21,22 +60,23 @@ namespace Datos
             cmCorte.Connection.Open();
 
             cmCorte.CommandType = CommandType.StoredProcedure;
-            cmCorte.CommandText = "agregarCorte";
+            cmCorte.CommandText = "addOrEditCorte";
+
+            cmCorte.Parameters.AddWithValue("@idCorte", oCorteE.idCorte);
             cmCorte.Parameters.AddWithValue("@codigo", oCorteE.codigo);
             cmCorte.Parameters.AddWithValue("@corte", oCorteE.corte);
-            cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
             cmCorte.Parameters.AddWithValue("@tipo", oCorteE.tipo);
             cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
+            cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
             cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro.idCorte);
             cmCorte.Parameters.AddWithValue("@porcentaje", oCorteE.porcentaje);
             cmCorte.Parameters.AddWithValue("@porcentajeHueso", oCorteE.porcentajeHueso);
             cmCorte.Parameters.AddWithValue("@desvioEstandar", oCorteE.desvioEstandar);
- 
+
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
 
             cmCorte = null;
-
         }
 
         public DataTable buscarCorte(string txtBusqueda)
@@ -95,34 +135,7 @@ namespace Datos
 
             return dtCortes;
         }
-
-        public void modificarCorte(Entidades.Corte oCorteE)
-        {
-            cmCorte = new SqlCommand();
-
-            cmCorte.Connection = conn.conectar();
-            cmCorte.Connection.Open();
-
-            cmCorte.CommandType = CommandType.StoredProcedure;
-            cmCorte.CommandText = "modificarCorte";
-            
-            cmCorte.Parameters.AddWithValue("@idCorte", oCorteE.idCorte);
-            cmCorte.Parameters.AddWithValue("@codigo", oCorteE.codigo);
-            cmCorte.Parameters.AddWithValue("@corte", oCorteE.corte);
-            cmCorte.Parameters.AddWithValue("@tipo", oCorteE.tipo);
-            cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
-            cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
-            cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro.idCorte);
-            cmCorte.Parameters.AddWithValue("@porcentaje", oCorteE.porcentaje);
-            cmCorte.Parameters.AddWithValue("@porcentajeHueso", oCorteE.porcentajeHueso);
-            cmCorte.Parameters.AddWithValue("@desvioEstandar", oCorteE.desvioEstandar);
-
-            cmCorte.ExecuteNonQuery();
-            cmCorte.Connection.Close();
-
-            cmCorte = null;
-        }
-
+       
         public void eliminarCorte(Entidades.Corte oCorteE)
         {
             cmCorte = new SqlCommand();

@@ -32,7 +32,7 @@ namespace Presentacion
         private void nuevo_Click(object sender, EventArgs e)
         {
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-            frmNuevoCorte.obtenerFormCorte(this);
+            frmNuevoCorte.frmCorte = this;
             frmNuevoCorte.ShowDialog();
         }
 
@@ -92,9 +92,10 @@ namespace Presentacion
         {
             try
             {
+                int idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorte"].Value.ToString());
                 formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-                cargarCorte();
-                frmNuevoCorte.obtenerCorteFormCortes(oCorteE, this);
+                frmNuevoCorte.idCorte = idCorte;
+                frmNuevoCorte.frmCorte = this;
                 frmNuevoCorte.ShowDialog();
             }
             catch (Exception ex)
@@ -133,37 +134,23 @@ namespace Presentacion
             catch (Exception ex)
             {                
                 MessageBox.Show(ex.Message);
-            }
-            
+            }            
         }
 
         private void infoCorte()
         {
-            cargarCorte();            
-
-            formInfoCorte frmInfoCorte=new formInfoCorte();
-            frmInfoCorte.obtenerParametros(oCorteE, this);
-            frmInfoCorte.ShowDialog();
-
-        }
-
-        private void cargarCorte()
-        {
-            oCorteE = new Entidades.Corte();
-            oCorteMaestroE=new Entidades.Corte();
-
-            oCorteE.idCorte =Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorte"].Value.ToString());
-            oCorteE.codigo =Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
-            oCorteE.corte = grillaCortes.CurrentRow.Cells["corte"].Value.ToString();
-            oCorteE.precioKg = float.Parse(grillaCortes.CurrentRow.Cells["precioKg"].Value.ToString());
-            oCorteE.independiente = Convert.ToInt32(grillaCortes.CurrentRow.Cells["independiente"].Value.ToString());
-            oCorteE.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
-            oCorteE.corteMaestro=oCorteMaestroE;
-            oCorteE.corteMaestro.idCorte=Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorteMaestro"].Value.ToString());
-            oCorteE.corteMaestro.corte = grillaCortes.CurrentRow.Cells["corteMaestro"].Value.ToString();
-            oCorteE.porcentaje = float.Parse(grillaCortes.CurrentRow.Cells["porcentaje"].Value.ToString());
-            oCorteE.desvioEstandar = float.Parse(grillaCortes.CurrentRow.Cells["desvioEstandar"].Value.ToString());
-            oCorteE.porcentajeHueso = float.Parse(grillaCortes.CurrentRow.Cells["porcentajeHueso"].Value.ToString());
+            try
+            {
+                int idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorte"].Value.ToString());
+                formInfoCorte frmInfoCorte = new formInfoCorte();
+                frmInfoCorte.idCorte = idCorte;
+                frmInfoCorte.oFrmCortes = this;
+                frmInfoCorte.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void cargarCorte(int fila)

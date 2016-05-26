@@ -11,23 +11,22 @@ namespace Presentacion
 {
     public partial class formInfoCorte : formBaseColor
     {
+        public int idCorte = 0;
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE = new Entidades.Corte();
-        formCortes oFrmCortes=new formCortes();
+        public formCortes oFrmCortes;
         DataTable dtCorte;
-
-        int idCorte;
 
         public formInfoCorte()
         {
-            InitializeComponent();
-           
+            InitializeComponent();           
         }
 
         private void modificar_Click(object sender, EventArgs e)
         {
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-            frmNuevoCorte.obtenerCorteFormInfoCorte(oCorteE, this);
+            frmNuevoCorte.idCorte = oCorteE.idCorte;
+            frmNuevoCorte.oFrmInfoCorte = this;
             frmNuevoCorte.ShowDialog();
         }
 
@@ -36,20 +35,11 @@ namespace Presentacion
             formIngresoEmbutido frmStockCorte = new formIngresoEmbutido();
             frmStockCorte.ShowDialog();
         }
-
-
-        public void obtenerParametros(Entidades.Corte corteParam, formCortes frmCortesParam)
-        {
-            oFrmCortes = frmCortesParam;
-            oCorteE = corteParam;
-            idCorte = oCorteE.idCorte;
-            cargarCorte();
-        }
-
+        
         private void cargarCorte()
         { 
             dtCorte=new DataTable();
-            dtCorte = oCorteN.obtenerInfoCorte(idCorte);
+            dtCorte = oCorteN.obtenerInfoCorte(oCorteE.idCorte);
 
             cargarCampos();
         }
@@ -84,14 +74,11 @@ namespace Presentacion
 
                     txtTotalStock.Text = Convert.ToString(total);
                 }
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
-           
         }
 
         public void recibirCorteModificado(Entidades.Corte oCorteMod)
@@ -144,8 +131,23 @@ namespace Presentacion
 
         private void formInfoCorte_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-        }
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
 
+                oCorteE = oCorteN.getCorteById(idCorte, true);
+                cargarCorte();
+
+                if (Presentacion.FormPrincipal.logueado == false)
+                {
+                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+                    this.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
     }
 }

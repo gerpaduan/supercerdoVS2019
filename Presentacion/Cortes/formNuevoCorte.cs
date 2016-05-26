@@ -13,15 +13,17 @@ namespace Presentacion
 {
     public partial class formNuevoCorte : formBaseColor, InterfaceCorte
     {
+        public int idCorte = 0;
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE=new Entidades.Corte();
-        formCortes frmCorte;// = new formCortes();
-        formInfoCorte oFrmInfoCorte;
+        public formCortes frmCorte;// = new formCortes();
+        public formInfoCorte oFrmInfoCorte;
 
         string mensaje = "";
 
         bool modificar = false;
+        bool huboModificacion = false;
 
         public formNuevoCorte()
         {
@@ -37,6 +39,13 @@ namespace Presentacion
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
+            if (huboModificacion)
+            {
+                DialogResult resp = MessageBox.Show("¿Está seguro que desea salir sin guardar los datos?"
+                    , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                if (resp.Equals(DialogResult.No))
+                    return;
+            }
             this.Close();
         }
 
@@ -52,30 +61,12 @@ namespace Presentacion
             oCorteMaestroE = corteMaestro;
             this.txtCorteMaestro.Text = oCorteMaestroE.corte;
             txtPorcentajeCorteM.Focus();
-        }
-
-        private void comboTipo_TextChanged(object sender, EventArgs e)
-        {
-            cambiaTipo();
+            huboModificacion = true;
         }
 
         #endregion
 
         #region Modificar
-
-        public void obtenerCorteFormInfoCorte(Entidades.Corte corteParam, formInfoCorte frmInfoCorteParam)
-        {
-            oFrmInfoCorte = frmInfoCorteParam;
-            oCorteE = corteParam;
-            cargarCampos();
-        }
-
-        public void obtenerCorteFormCortes(Entidades.Corte corteParam, formCortes frmCortesParam)
-        {
-            frmCorte = frmCortesParam;
-            oCorteE = corteParam;
-            cargarCampos();
-        }
 
         private void cargarCampos()
         {
@@ -87,70 +78,28 @@ namespace Presentacion
             txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
             oCorteMaestroE = oCorteE.corteMaestro;
             comboTipo.Text = oCorteE.tipo;
+            txtIndependiente.Checked = oCorteE.independiente == 1;
 
-            if (oCorteE.independiente==1)
+            if (oCorteE.idCorte != oCorteE.corteMaestro.idCorte)
             {
-                txtIndependiente.Checked = true;
+                checkAsignarMaestro.Checked = true;
             }
-            
-            //txtCorteMaestro.Text = oCorteE.corteMaestro.corte;
+            cargarCampoCorteMaestro();
+        }
+
+        private void cargarCampoCorteMaestro()
+        {
+            txtCorteMaestro.Text = oCorteE.corteMaestro.corte;
             txtPorcentajeCorteM.Text = Convert.ToString(oCorteE.porcentaje);
             txtPorcHueso.Text = Convert.ToString(oCorteE.porcentajeHueso);
             txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
-
         }
 
         #endregion
 
         #region métodos
 
-        private void cambiaTipo()
-        {
-            //if (comboTipo.Text.Equals("Embutido") || comboTipo.Text.Equals("Otro"))
-            //{
-            //    if (comboTipo.Text.Equals("Embutido"))
-            //    {
-            //        txtCorteMaestro.Text = "Embutido";
-            //        txtPorcentajeCorteM.Text = "100";
-
-            //        btnBuscarCorteM.Visible = false;
-
-            //        txtPorcentajeCorteM.ReadOnly = true;
-            //    }
-            //    else
-            //    {
-            //        txtCorteMaestro.Text = "Otro";
-            //        txtPorcentajeCorteM.Text = "100";
-
-            //        btnBuscarCorteM.Visible = false;
-
-            //        txtPorcentajeCorteM.ReadOnly = true;
-            //    }
-            //}
-            
-
-            //else
-            //{
-            //    txtPorcentajeCorteM.Text = "";
-
-            //    if (comboTipo.Text.Equals("Corte") )
-            //    {
-            //        btnBuscarCorteM.Visible = true;
-                                        
-            //        txtPorcentajeCorteM.ReadOnly = false;
-
-            //        this.txtCorteMaestro.Text = oCorteMaestroE.corte;
-
-            //        this.txtPorcentajeCorteM.Text = Convert.ToString(oCorteE.porcentaje);
-                                       
-            //    }
-               
-            //}
-
-            this.txtCorteMaestro.Text = oCorteMaestroE.corte;
-            this.txtPorcentajeCorteM.Text = Convert.ToString(oCorteE.porcentaje);
-        }
-
+        
         public void obtenerFormCorte(formCortes formCorteParam)
         {
             frmCorte = formCorteParam;
@@ -164,27 +113,23 @@ namespace Presentacion
                 {
                     if (oCorteE.porcentaje <= 100 && oCorteE.porcentajeHueso <= 100 && oCorteE.porcentajeHueso >= 0 && oCorteE.porcentaje >= 0)
                     {
-                        if (modificar)
+                        bool cerrarForm = false;
+
+                        if (!existeCodigoCorte())
                         {
-                            oCorteN.modificarCorte(oCorteE);
+                            oCorteN.addOrEditCorte(oCorteE);
+                            cerrarForm = true;
                             if (frmCorte != null)
                             {
                                 frmCorte.cargarGrilla();
                             }
                             else
                             {
-                                oFrmInfoCorte.recibirCorteModificado(oCorteE);
+                                if(oFrmInfoCorte != null) oFrmInfoCorte.recibirCorteModificado(oCorteE);
                             }
                         }
-                        else
-                        {
-                            if (existeCodigoCorte())
-                            {
-                                oCorteN.agregarCorte(oCorteE);
-                                frmCorte.cargarGrilla();
-                            }
-                        }
-                        this.Close();
+                        
+                        if(cerrarForm) this.Close();
                     }
                     else
                     {
@@ -240,7 +185,7 @@ namespace Presentacion
 
             try
             {
-                oCorteE.Porcentaje = Utilidades.Util_Form.convertFloat(txtPorcentajeCorteM.Text, false);
+                oCorteE.Porcentaje = checkAsignarMaestro.Checked ? Utilidades.Util_Form.convertFloat(txtPorcentajeCorteM.Text, false) : 100;
             }
             catch (Exception)
             {
@@ -249,7 +194,7 @@ namespace Presentacion
             }
             try
             {
-                oCorteE.porcentajeHueso = Utilidades.Util_Form.convertFloat(txtPorcHueso.Text, false);
+                oCorteE.porcentajeHueso = checkAsignarMaestro.Checked ? Utilidades.Util_Form.convertFloat(txtPorcHueso.Text, false) : 0;
             }
             catch (Exception)
             {
@@ -259,7 +204,7 @@ namespace Presentacion
 
             try
             {
-                oCorteE.desvioEstandar = Utilidades.Util_Form.convertFloat(txtDesvioEstandar.Text, false);
+                oCorteE.desvioEstandar = checkAsignarMaestro.Checked ? Utilidades.Util_Form.convertFloat(txtDesvioEstandar.Text, false) : 0;
             }
             catch (Exception)
             {
@@ -272,23 +217,26 @@ namespace Presentacion
         private bool existeCodigoCorte()
         {
             //Si la cantidad de filas es cero en el DataTable el codigo no existe y se la asigna al nuevo corte
-            if (oCorteN.buscarCodigoCorte(oCorteE.codigo).Rows.Count == 0)
+            bool existeCodigo = false;
+            DataTable dt = oCorteN.buscarCodigoCorte(oCorteE.codigo);
+            foreach (DataRow  fila in dt.Rows)
             {
-                return true;
+                if (!fila["idCorte"].ToString().Equals(oCorteE.idCorte.ToString()))
+                {
+                    existeCodigo = true;
+                    MessageBox.Show("El código ingresado ya está asignado a un corte. Elija otro código o modifique el código del corte que lo tiene asignado.", "Complete los campos",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+                }
             }
-            else
-            {
-                MessageBox.Show("El código ingresado ya está asignado a un corte. Elija otro código o modifique el código del corte que lo tiene asignado.", "Complete los campos",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return false;
-            }
+            return existeCodigo;
         }
 
         private bool validar()
         {
             if (this.txtCodigo.Text.Equals("") || this.txtDescCorte.Text.Equals("") 
-                || this.comboTipo.Text.Equals("")|| this.txtCorteMaestro.Text.Equals("")
-                || this.txtPorcentajeCorteM.Text.Equals(""))
+                || this.comboTipo.Text.Equals("")|| (checkAsignarMaestro.Checked && 
+                ( this.txtCorteMaestro.Text.Equals("") || this.txtPorcentajeCorteM.Text.Equals(""))))
             {
                 MessageBox.Show("Debe Completar todos los campos.", "Complete los campos", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -296,7 +244,7 @@ namespace Presentacion
             }
             else
             {
-                if (this.txtPorcentajeCorteM.Text.Equals("0"))
+                if (checkAsignarMaestro.Checked && this.txtPorcentajeCorteM.Text.Equals("0"))
                 {
                     MessageBox.Show("% en Corte M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Corte Maestro", "Complete los campos",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -322,12 +270,60 @@ namespace Presentacion
 
         private void formNuevoCorte_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (Presentacion.FormPrincipal.logueado == false)
+            try
             {
-                MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
-                this.Close();
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+
+                if (idCorte > 0)
+                {
+                    oCorteE = oCorteN.getCorteById(idCorte, true);
+                    cargarCampos();
+                }
+
+                if (Presentacion.FormPrincipal.logueado == false)
+                {
+                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+                    this.Close();
+                }
+                groupBox1.Select();
+                huboModificacion = false;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void checkAsignarMaestro_CheckedChanged(object sender, EventArgs e)
+        {
+            //si cambia a unChecked y tiene corteMaestro se informa
+            if (!checkAsignarMaestro.Checked && oCorteMaestroE != null && oCorteMaestroE.idCorte > 0)
+            {
+                DialogResult resp = MessageBox.Show("Si quita la asignación se borrará el Corte Maestro.\n\n¿Desea quitar el corte maestro?"
+                    , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                if (resp.Equals(DialogResult.Yes))
+                {
+                    oCorteMaestroE = oCorteE;
+                    oCorteE.CorteMaestro = oCorteMaestroE;
+                    cargarCampoCorteMaestro();
+                }
+                else
+                {
+                    checkAsignarMaestro.Checked = !checkAsignarMaestro.Checked;
+                }
+            }
+            groupMaestro.Enabled = checkAsignarMaestro.Checked;
+            huboModificacion = true;
+        }
+
+        private void txtCodigo_TextChanged(object sender, EventArgs e)
+        {
+            huboModificacion = true;
+        }
+
+        private void txtIndependiente_CheckedChanged(object sender, EventArgs e)
+        {
+            huboModificacion = true;
         }
     }
 }

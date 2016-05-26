@@ -10,9 +10,14 @@ namespace Negocio
     {
         Datos.Corte oCorteD=new Datos.Corte();
 
-        public void agregarCorte(Entidades.Corte oCorteE)
+        public Entidades.Corte getCorteById(int id, bool cargarMaestro)
         {
-            oCorteD.agregarCorte(oCorteE);
+            return oCorteD.getCorteById(id, cargarMaestro);
+        }
+
+        public void addOrEditCorte(Entidades.Corte oCorteE)
+        {
+            oCorteD.addOrEditCorte(oCorteE);
         }
 
         public DataTable buscarCorte(string txtBusqueda)
@@ -37,12 +42,6 @@ namespace Negocio
         {
             oCorteD = new Datos.Corte();
             oCorteD.eliminarCorte(oCorteE);
-        }
-
-        public void modificarCorte(Entidades.Corte oCorteE)
-        {
-            oCorteD = new Datos.Corte();
-            oCorteD.modificarCorte(oCorteE);
         }
 
         public DataTable obtenerCortes()
