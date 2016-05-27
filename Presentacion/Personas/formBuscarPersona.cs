@@ -127,5 +127,11 @@ namespace Presentacion.Personas
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        private void btnAgregar_Click(object sender, EventArgs e)
+        {
+            formNuevaPersona frmNuevaPersona = new formNuevaPersona();
+            frmNuevaPersona.ShowDialog();
+            cargarGrilla();
+        }
     }
 }
