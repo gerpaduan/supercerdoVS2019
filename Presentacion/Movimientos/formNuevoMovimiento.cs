@@ -54,6 +54,7 @@ namespace Presentacion
             InitializeComponent();
             idMovimientoLabel.Text = "0";
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            checkTicket.Checked = Convert.ToBoolean(ConfigurationManager.AppSettings["ticketForms"].ToString());
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarSucursales();
             dtCorte = oCorteN.obtenerCortes();

@@ -31,7 +31,8 @@ namespace Presentacion.Ticket
                 ticket.imprimir = true;
                 ticket.TextoCentro("Movimiento");
                 ticket.LineasEnBlanco(1);
-                ticket.TextoIzquierda("Origen: " + oMovimientoE.SucursalOrigen.sucursal + " - ID: " + oMovimientoE.IdMovOrigen);
+                string idMovOrigen = oMovimientoE.IdMovOrigen != 0 ? oMovimientoE.IdMovOrigen.ToString() : oMovimientoE.IdMovimiento.ToString();
+                ticket.TextoIzquierda("Origen: " + oMovimientoE.SucursalOrigen.sucursal + " - ID: " + idMovOrigen);
                 ticket.TextoIzquierda("Destino: " + oMovimientoE.SucursalDestino.sucursal);
                 ticket.LineasEnBlanco(1);
                 ticket.TextoIzquierda("Fecha: " + Utilidades.Util_Form.fechaFormato24Horas(oMovimientoE.FechaMovimiento));

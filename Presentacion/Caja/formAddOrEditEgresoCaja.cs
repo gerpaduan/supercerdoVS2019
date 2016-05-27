@@ -37,6 +37,7 @@ namespace Presentacion.Caja
             this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
+                checkTicket.Checked = Convert.ToBoolean(ConfigurationManager.AppSettings["ticketForms"].ToString());
                 bool closeForm = false;
                 if (idEgresoCaja == 0 && oUsuario == null) closeForm = true;
 
@@ -55,11 +56,6 @@ namespace Presentacion.Caja
                     }
                     //se valida que sea Admin para cambiar de sucursal
                     comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
-                    //if (!((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado))
-                    //{
-                    //    txtSucursal.Visible = true;
-                    //    txtSucursal.Text = comboSucursal.Text;
-                    //}
                 }
                 else
                 {
@@ -115,6 +111,7 @@ namespace Presentacion.Caja
         {
             //cargar campos en pantalla
             comboSucursal.SelectedValue = oEgresoCajaE.Sucursal.idSucursal;
+            txtIdEgresoCaja.Text = oEgresoCajaE.Id.ToString();
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtFechaEgresoCaja.Value = oEgresoCajaE.Fecha;
             comboTipoEgresoCaja.SelectedValue = oEgresoCajaE.IdTipoEgresoCaja;
@@ -229,7 +226,7 @@ namespace Presentacion.Caja
                                 MessageBox.Show("No se han realizado modificaciones.\n\nPresione Cancelar para salir sin realizar modificaciones", "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 return;
                             }
-                            oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                            oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
 
                             imprimirTicket();
 
@@ -254,6 +251,7 @@ namespace Presentacion.Caja
         {
             try
             {
+                oEgresoCajaE = oCierreN.getEgresoCajaById(oEgresoCajaE.Id);
                 //imprimir ticket
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();
                 ticket.imprimir = checkTicket.Checked;
@@ -261,7 +259,7 @@ namespace Presentacion.Caja
                 ticket.LineasEnBlanco(1);
                 //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                 ticket.TextoIzquierda("Sucursal: " + oEgresoCajaE.Sucursal.sucursal);
-                ticket.TextoIzquierda("Vendedor: " + oUsuario.Nombre);
+                ticket.TextoIzquierda("Vendedor: " + oEgresoCajaE.CreadoPorUser.Nombre);
                 ticket.TextoIzquierda("Id: " + oEgresoCajaE.Id.ToString());
                 ticket.TextoIzquierda("Fecha: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Fecha));
                 ticket.LineasGuion();
@@ -299,6 +297,7 @@ namespace Presentacion.Caja
 
             oEgresoCajaE.Fecha = txtFechaEgresoCaja.Value;
             oEgresoCajaE.IdTipoEgresoCaja = (int)comboTipoEgresoCaja.SelectedValue;
+            oEgresoCajaE.TipoEgresoCaja = comboTipoEgresoCaja.Text;
             oEgresoCajaE.Descripcion = comboTipoEgresoCaja.Text;
             oEgresoCajaE.Descripcion = txtDescripcion.Text;
             oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true);
@@ -333,6 +332,7 @@ namespace Presentacion.Caja
 
         private void btnImprimir_Click(object sender, EventArgs e)
         {
+            checkTicket.Checked = true;
             imprimirTicket();
         }
     }
