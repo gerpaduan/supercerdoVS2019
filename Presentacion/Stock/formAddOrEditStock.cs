@@ -59,8 +59,7 @@ namespace Presentacion
         }
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
-        {
-            this.Text += Utilidades.Conexion.getSucursalConexion();        
+        {       
             cargarComboSucursal();
             dtCorte = oCorteN.obtenerCortes();
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
@@ -105,7 +104,7 @@ namespace Presentacion
                     cargarCorteEnGrilla(corte);
                 }
                 cargarGrilla();
-                btnAceptar.Text = "Modificar";
+                btnAceptar.Text = "&Modificar";
                 txtFechaCompra.Enabled = false;
                 comboSucursal.Enabled = false;
                 groupBox1.Enabled = false;
@@ -114,9 +113,15 @@ namespace Presentacion
             tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtTipoAccion.Text = tipoCompra;
-            this.Text = accion.ToString()+" "+tipoCompra;
             huboModificaciones = false;
             idCompraLabel.Text = idCompra.ToString();
+            setTituloForm();
+        }
+
+        private void setTituloForm()
+        {
+            this.Text = (btnAceptar.Text.Contains("Guardar") ? accion.ToString() : "Info") + " " + tipoCompra;
+            this.Text += Utilidades.Conexion.getSucursalConexion(); 
         }
 
         private void logueoUsuario()
@@ -167,7 +172,7 @@ namespace Presentacion
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
-            if (btnAceptar.Text.Equals("Modificar"))
+            if (btnAceptar.Text.Contains("Modificar"))
             {
                 logueoUsuario();
                 if (oUsuario == null)
@@ -178,12 +183,13 @@ namespace Presentacion
                 Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     txtUsuario.Text = oUsuario.Nombre;
-                    btnAceptar.Text = "Guardar";
+                    btnAceptar.Text = "&Guardar";
+                    setTituloForm();//se setea el titulo luego de cambiar el text a BtnAceptar 
                     txtFechaCompra.Enabled = true;
                     comboSucursal.Enabled = true;
                     groupBox1.Enabled = true;
                     txtObservaciones.ReadOnly = false;
-                    timer1.Start();
+                    timer1.Start();               
                 }
             }
             else
@@ -799,6 +805,79 @@ namespace Presentacion
                 Button objectToChangeColor = (Button)sender;
                 objectToChangeColor.UseVisualStyleBackColor = true;
                 return;
+            }
+        }
+
+        private void grillaCortePorCompra_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            DataGridView grid = (DataGridView)sender;
+            SortOrder so = SortOrder.None;
+            if (grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection == SortOrder.None ||
+                grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection == SortOrder.Ascending)
+            {
+                so = SortOrder.Descending;
+            }
+            else
+            {
+                so = SortOrder.Ascending;
+            }
+            //set SortGlyphDirection after databinding otherwise will always be none 
+            Sort(grid.Columns[e.ColumnIndex].Name, so);
+            listaCortesEnGrilla.Clear();
+            foreach (Entidades.CortePorCompra corteOrdenado in listaCortePorCompra)
+            {
+                cargarCorteEnGrilla(corteOrdenado);
+            }
+            cargarGrilla();
+            grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection = so;
+        }
+        /// <summary>
+        /// Sort the DataGridView
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="sortOrder"></param>
+        private void Sort(string column, SortOrder sortOrder)
+        {
+            switch (column)
+            {
+                case "Codigo":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.Corte.codigo).ToList();
+                        //grillaCortePorCompra.DataSource = listaCortesEnGrilla.OrderBy(x => x.codigo).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.Corte.codigo).ToList();
+                        //grillaCortePorCompra.DataSource = listaCortesEnGrilla.OrderByDescending(x => x.codigo).ToList();
+                    }
+                    break;
+                }
+                case "Corte":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.Corte.corte).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.Corte.corte).ToList();
+                    }
+                    break;
+                }
+                case "cantKgs":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.cantKgs).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.cantKgs).ToList();
+                    }
+                    break;
+                }
             }
         }
     }

@@ -134,5 +134,12 @@ namespace Presentacion
                 infoVenta();
             }
         }
+
+        private void btnLineasVenta_Click(object sender, EventArgs e)
+        {
+            formLineasVendedor frmLineasVendedor = new formLineasVendedor();
+            frmLineasVendedor.oCierreE = oCierreE;
+            frmLineasVendedor.Show();
+        }
     }
 }

@@ -28,7 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditEgresoCaja));
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
+            this.btnImprimir = new System.Windows.Forms.Button();
             this.txtFechaTexto = new System.Windows.Forms.TextBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -57,6 +60,8 @@
             this.txtModifPor = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txtIdEgresoCaja = new System.Windows.Forms.TextBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -67,6 +72,8 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.checkTicket);
+            this.pnlBuscar.Controls.Add(this.btnImprimir);
             this.pnlBuscar.Controls.Add(this.txtFechaTexto);
             this.pnlBuscar.Controls.Add(this.txtSucursal);
             this.pnlBuscar.Controls.Add(this.groupBox1);
@@ -76,10 +83,41 @@
             this.pnlBuscar.Controls.Add(this.label16);
             this.pnlBuscar.Controls.Add(this.txtFechaEgresoCaja);
             this.pnlBuscar.Controls.Add(this.label3);
-            this.pnlBuscar.Location = new System.Drawing.Point(-1, -1);
+            this.pnlBuscar.Location = new System.Drawing.Point(-1, -3);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(494, 283);
+            this.pnlBuscar.Size = new System.Drawing.Size(494, 311);
             this.pnlBuscar.TabIndex = 4;
+            // 
+            // checkTicket
+            // 
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkTicket.Location = new System.Drawing.Point(418, 43);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(64, 20);
+            this.checkTicket.TabIndex = 51;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = true;
+            // 
+            // btnImprimir
+            // 
+            this.btnImprimir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnImprimir.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.btnImprimir.Image = ((System.Drawing.Image)(resources.GetObject("btnImprimir.Image")));
+            this.btnImprimir.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnImprimir.Location = new System.Drawing.Point(400, 39);
+            this.btnImprimir.Name = "btnImprimir";
+            this.btnImprimir.Size = new System.Drawing.Size(82, 27);
+            this.btnImprimir.TabIndex = 52;
+            this.btnImprimir.TabStop = false;
+            this.btnImprimir.Text = "&Imprimir";
+            this.btnImprimir.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.btnImprimir.UseVisualStyleBackColor = true;
+            this.btnImprimir.Visible = false;
+            this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
             // 
             // txtFechaTexto
             // 
@@ -105,6 +143,8 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.txtIdEgresoCaja);
+            this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.txtTipoEgresoCaja);
             this.groupBox1.Controls.Add(this.lblDetalle);
             this.groupBox1.Controls.Add(this.lblMonto);
@@ -118,7 +158,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(13, 69);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(469, 208);
+            this.groupBox1.Size = new System.Drawing.Size(469, 237);
             this.groupBox1.TabIndex = 48;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Egreso Caja";
@@ -126,7 +166,7 @@
             // txtTipoEgresoCaja
             // 
             this.txtTipoEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTipoEgresoCaja.Location = new System.Drawing.Point(92, 22);
+            this.txtTipoEgresoCaja.Location = new System.Drawing.Point(92, 52);
             this.txtTipoEgresoCaja.Name = "txtTipoEgresoCaja";
             this.txtTipoEgresoCaja.ReadOnly = true;
             this.txtTipoEgresoCaja.Size = new System.Drawing.Size(158, 22);
@@ -139,7 +179,7 @@
             this.lblDetalle.AutoSize = true;
             this.lblDetalle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblDetalle.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblDetalle.Location = new System.Drawing.Point(35, 107);
+            this.lblDetalle.Location = new System.Drawing.Point(35, 136);
             this.lblDetalle.Name = "lblDetalle";
             this.lblDetalle.Size = new System.Drawing.Size(51, 16);
             this.lblDetalle.TabIndex = 47;
@@ -150,7 +190,7 @@
             this.lblMonto.AutoSize = true;
             this.lblMonto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMonto.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblMonto.Location = new System.Drawing.Point(41, 82);
+            this.lblMonto.Location = new System.Drawing.Point(41, 112);
             this.lblMonto.Name = "lblMonto";
             this.lblMonto.Size = new System.Drawing.Size(45, 16);
             this.lblMonto.TabIndex = 46;
@@ -161,7 +201,7 @@
             this.txtMonto.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtMonto.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtMonto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtMonto.Location = new System.Drawing.Point(92, 79);
+            this.txtMonto.Location = new System.Drawing.Point(92, 109);
             this.txtMonto.Name = "txtMonto";
             this.txtMonto.Size = new System.Drawing.Size(158, 22);
             this.txtMonto.TabIndex = 2;
@@ -171,7 +211,7 @@
             this.lblDescripcion.AutoSize = true;
             this.lblDescripcion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblDescripcion.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblDescripcion.Location = new System.Drawing.Point(6, 54);
+            this.lblDescripcion.Location = new System.Drawing.Point(6, 84);
             this.lblDescripcion.Name = "lblDescripcion";
             this.lblDescripcion.Size = new System.Drawing.Size(80, 16);
             this.lblDescripcion.TabIndex = 44;
@@ -182,7 +222,7 @@
             this.txtDescripcion.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtDescripcion.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtDescripcion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDescripcion.Location = new System.Drawing.Point(92, 51);
+            this.txtDescripcion.Location = new System.Drawing.Point(92, 81);
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(355, 22);
             this.txtDescripcion.TabIndex = 1;
@@ -195,7 +235,7 @@
             "Todos",
             "Media Res",
             "Cortes"});
-            this.comboTipoEgresoCaja.Location = new System.Drawing.Point(92, 21);
+            this.comboTipoEgresoCaja.Location = new System.Drawing.Point(92, 51);
             this.comboTipoEgresoCaja.Name = "comboTipoEgresoCaja";
             this.comboTipoEgresoCaja.Size = new System.Drawing.Size(158, 24);
             this.comboTipoEgresoCaja.TabIndex = 0;
@@ -204,7 +244,7 @@
             // 
             this.txtDetalle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.txtDetalle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDetalle.Location = new System.Drawing.Point(92, 107);
+            this.txtDetalle.Location = new System.Drawing.Point(92, 136);
             this.txtDetalle.Multiline = true;
             this.txtDetalle.Name = "txtDetalle";
             this.txtDetalle.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -216,7 +256,7 @@
             this.lblTipo.AutoSize = true;
             this.lblTipo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTipo.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblTipo.Location = new System.Drawing.Point(50, 26);
+            this.lblTipo.Location = new System.Drawing.Point(50, 56);
             this.lblTipo.Name = "lblTipo";
             this.lblTipo.Size = new System.Drawing.Size(36, 16);
             this.lblTipo.TabIndex = 41;
@@ -295,7 +335,7 @@
             this.idEgresoCajaLabel.AutoSize = true;
             this.idEgresoCajaLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.idEgresoCajaLabel.ForeColor = System.Drawing.Color.DarkBlue;
-            this.idEgresoCajaLabel.Location = new System.Drawing.Point(288, 281);
+            this.idEgresoCajaLabel.Location = new System.Drawing.Point(293, 309);
             this.idEgresoCajaLabel.Name = "idEgresoCajaLabel";
             this.idEgresoCajaLabel.Size = new System.Drawing.Size(95, 13);
             this.idEgresoCajaLabel.TabIndex = 48;
@@ -308,7 +348,7 @@
             this.btnAceptar.BackColor = System.Drawing.Color.SeaGreen;
             this.btnAceptar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
             this.btnAceptar.ForeColor = System.Drawing.SystemColors.ControlLight;
-            this.btnAceptar.Location = new System.Drawing.Point(300, 293);
+            this.btnAceptar.Location = new System.Drawing.Point(300, 322);
             this.btnAceptar.Name = "btnAceptar";
             this.btnAceptar.Size = new System.Drawing.Size(181, 42);
             this.btnAceptar.TabIndex = 13;
@@ -321,7 +361,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.btnCancelar.Location = new System.Drawing.Point(300, 341);
+            this.btnCancelar.Location = new System.Drawing.Point(300, 370);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(181, 27);
             this.btnCancelar.TabIndex = 14;
@@ -409,17 +449,40 @@
             this.panel1.Controls.Add(this.txtCreado);
             this.panel1.Controls.Add(this.label5);
             this.panel1.Controls.Add(this.txtCreadoPor);
-            this.panel1.Location = new System.Drawing.Point(-1, 282);
+            this.panel1.Location = new System.Drawing.Point(-1, 308);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(292, 96);
             this.panel1.TabIndex = 15;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(65, 26);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(21, 16);
+            this.label1.TabIndex = 51;
+            this.label1.Text = "ID";
+            // 
+            // txtIdEgresoCaja
+            // 
+            this.txtIdEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtIdEgresoCaja.Location = new System.Drawing.Point(92, 23);
+            this.txtIdEgresoCaja.Name = "txtIdEgresoCaja";
+            this.txtIdEgresoCaja.ReadOnly = true;
+            this.txtIdEgresoCaja.Size = new System.Drawing.Size(158, 22);
+            this.txtIdEgresoCaja.TabIndex = 53;
+            this.txtIdEgresoCaja.TabStop = false;
+            this.txtIdEgresoCaja.Text = "-";
+            this.txtIdEgresoCaja.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // formAddOrEditEgresoCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(493, 374);
+            this.ClientSize = new System.Drawing.Size(493, 403);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.idEgresoCajaLabel);
             this.Controls.Add(this.panel1);
@@ -473,5 +536,9 @@
         private System.Windows.Forms.TextBox txtSucursal;
         private System.Windows.Forms.TextBox txtTipoEgresoCaja;
         private System.Windows.Forms.TextBox txtFechaTexto;
+        private System.Windows.Forms.CheckBox checkTicket;
+        protected System.Windows.Forms.Button btnImprimir;
+        private System.Windows.Forms.TextBox txtIdEgresoCaja;
+        protected System.Windows.Forms.Label label1;
     }
 }

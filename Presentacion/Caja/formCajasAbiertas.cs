@@ -151,7 +151,7 @@ namespace Presentacion.Caja
             //MessageBox.Show("Para cerrar múltiples cajas debe seleccionar primero la caja que corresponde al cajero.");
 
             grillaCajasAbiertas.MultiSelect = checkCajasMultiple.Checked;
-            btnCerrarMultipleCajas.Enabled = checkCajasMultiple.Checked;
+            btnCerrarMultipleCajas.Visible = checkCajasMultiple.Checked;
             grillaCajasAbiertas.Columns["cerrarCaja"].Visible = !checkCajasMultiple.Checked;
             grillaCajasAbiertas.Columns["cajero"].Visible = checkCajasMultiple.Checked;
         }

@@ -28,18 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.label5 = new System.Windows.Forms.Label();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaVentas = new System.Windows.Forms.DataGridView();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.btnVerTodas = new System.Windows.Forms.Button();
             this.idVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idVendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -57,10 +54,14 @@
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.diaFestivo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtVendedor = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.btnVerTodas = new System.Windows.Forms.Button();
+            this.btnLineasVenta = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.SuspendLayout();
@@ -152,44 +153,6 @@
             this.grillaVentas.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grillaVentas_KeyDown);
             this.grillaVentas.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.grillaVentas_KeyPress);
             // 
-            // panel1
-            // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.panel1.Location = new System.Drawing.Point(12, 509);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(963, 1);
-            this.panel1.TabIndex = 37;
-            // 
-            // pnlBuscar
-            // 
-            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
-            this.pnlBuscar.Controls.Add(this.txtVendedor);
-            this.pnlBuscar.Controls.Add(this.label17);
-            this.pnlBuscar.Controls.Add(this.txtSucursal);
-            this.pnlBuscar.Controls.Add(this.label2);
-            this.pnlBuscar.Controls.Add(this.btnVerTodas);
-            this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
-            this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(988, 79);
-            this.pnlBuscar.TabIndex = 0;
-            // 
-            // btnVerTodas
-            // 
-            this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnVerTodas.Location = new System.Drawing.Point(863, 52);
-            this.btnVerTodas.Name = "btnVerTodas";
-            this.btnVerTodas.Size = new System.Drawing.Size(113, 24);
-            this.btnVerTodas.TabIndex = 0;
-            this.btnVerTodas.TabStop = false;
-            this.btnVerTodas.Text = "Ver &todas";
-            this.btnVerTodas.UseVisualStyleBackColor = true;
-            this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
-            // 
             // idVenta
             // 
             this.idVenta.DataPropertyName = "idVenta";
@@ -201,9 +164,9 @@
             // 
             this.fechaVenta.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.fechaVenta.DataPropertyName = "fechaVenta";
-            dataGridViewCellStyle5.Format = "g";
-            dataGridViewCellStyle5.NullValue = null;
-            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle1.Format = "g";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaVenta.HeaderText = "Fecha Venta";
             this.fechaVenta.Name = "fechaVenta";
             this.fechaVenta.ReadOnly = true;
@@ -274,9 +237,9 @@
             // totalKg
             // 
             this.totalKg.DataPropertyName = "totalKg";
-            dataGridViewCellStyle6.Format = "N3";
-            dataGridViewCellStyle6.NullValue = null;
-            this.totalKg.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle2.Format = "N3";
+            dataGridViewCellStyle2.NullValue = null;
+            this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
             this.totalKg.HeaderText = "Total Kg";
             this.totalKg.Name = "totalKg";
             this.totalKg.ReadOnly = true;
@@ -285,9 +248,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle7.Format = "N2";
-            dataGridViewCellStyle7.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle3.Format = "N2";
+            dataGridViewCellStyle3.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -329,11 +292,38 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle8.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle4;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
+            // 
+            // panel1
+            // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(12, 509);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(963, 1);
+            this.panel1.TabIndex = 37;
+            // 
+            // pnlBuscar
+            // 
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.btnLineasVenta);
+            this.pnlBuscar.Controls.Add(this.txtVendedor);
+            this.pnlBuscar.Controls.Add(this.label17);
+            this.pnlBuscar.Controls.Add(this.txtSucursal);
+            this.pnlBuscar.Controls.Add(this.label2);
+            this.pnlBuscar.Controls.Add(this.btnVerTodas);
+            this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
+            this.pnlBuscar.Name = "pnlBuscar";
+            this.pnlBuscar.Size = new System.Drawing.Size(988, 79);
+            this.pnlBuscar.TabIndex = 0;
             // 
             // txtVendedor
             // 
@@ -378,6 +368,30 @@
             this.label2.Size = new System.Drawing.Size(71, 20);
             this.label2.TabIndex = 43;
             this.label2.Text = "Sucursal";
+            // 
+            // btnVerTodas
+            // 
+            this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnVerTodas.Location = new System.Drawing.Point(863, 52);
+            this.btnVerTodas.Name = "btnVerTodas";
+            this.btnVerTodas.Size = new System.Drawing.Size(113, 24);
+            this.btnVerTodas.TabIndex = 0;
+            this.btnVerTodas.TabStop = false;
+            this.btnVerTodas.Text = "Ver &todas";
+            this.btnVerTodas.UseVisualStyleBackColor = true;
+            this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
+            // 
+            // btnLineasVenta
+            // 
+            this.btnLineasVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnLineasVenta.Location = new System.Drawing.Point(744, 52);
+            this.btnLineasVenta.Name = "btnLineasVenta";
+            this.btnLineasVenta.Size = new System.Drawing.Size(113, 24);
+            this.btnLineasVenta.TabIndex = 47;
+            this.btnLineasVenta.TabStop = false;
+            this.btnLineasVenta.Text = "&Lineas venta";
+            this.btnLineasVenta.UseVisualStyleBackColor = true;
+            this.btnLineasVenta.Click += new System.EventHandler(this.btnLineasVenta_Click);
             // 
             // formVentasVendedor
             // 
@@ -437,5 +451,6 @@
         protected System.Windows.Forms.Label label17;
         private System.Windows.Forms.TextBox txtSucursal;
         protected System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button btnLineasVenta;
     }
 }

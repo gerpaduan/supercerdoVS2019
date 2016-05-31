@@ -31,6 +31,8 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditStock));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
@@ -57,9 +59,6 @@
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.grillaCortePorCompra = new System.Windows.Forms.DataGridView();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idSucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cantKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -70,6 +69,9 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtActualizadoPor = new System.Windows.Forms.TextBox();
             this.txtActualizado = new System.Windows.Forms.TextBox();
+            this.Codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cantKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
@@ -388,6 +390,7 @@
             // grillaCortePorCompra
             // 
             this.grillaCortePorCompra.AllowUserToAddRows = false;
+            this.grillaCortePorCompra.AllowUserToOrderColumns = true;
             this.grillaCortePorCompra.AllowUserToResizeRows = false;
             this.grillaCortePorCompra.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
@@ -403,46 +406,36 @@
             this.grillaCortePorCompra.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaCortePorCompra.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortePorCompra.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.corte,
-            this.idSucursal,
+            this.Codigo,
+            this.Corte,
             this.cantKgs});
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortePorCompra.DefaultCellStyle = dataGridViewCellStyle4;
             this.grillaCortePorCompra.Location = new System.Drawing.Point(19, 126);
             this.grillaCortePorCompra.MultiSelect = false;
             this.grillaCortePorCompra.Name = "grillaCortePorCompra";
             this.grillaCortePorCompra.ReadOnly = true;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortePorCompra.RowHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.grillaCortePorCompra.RowHeadersVisible = false;
             this.grillaCortePorCompra.RowTemplate.DefaultCellStyle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grillaCortePorCompra.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaCortePorCompra.Size = new System.Drawing.Size(600, 466);
             this.grillaCortePorCompra.TabIndex = 16;
             this.grillaCortePorCompra.TabStop = false;
-            // 
-            // corte
-            // 
-            this.corte.DataPropertyName = "Codigo";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.corte.DefaultCellStyle = dataGridViewCellStyle2;
-            this.corte.HeaderText = "Codigo";
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            // 
-            // idSucursal
-            // 
-            this.idSucursal.DataPropertyName = "Corte";
-            this.idSucursal.HeaderText = "Corte";
-            this.idSucursal.Name = "idSucursal";
-            this.idSucursal.ReadOnly = true;
-            // 
-            // cantKgs
-            // 
-            this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle3.Format = "N3";
-            dataGridViewCellStyle3.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle3;
-            this.cantKgs.HeaderText = "Cant. Kgs";
-            this.cantKgs.Name = "cantKgs";
-            this.cantKgs.ReadOnly = true;
+            this.grillaCortePorCompra.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.grillaCortePorCompra_ColumnHeaderMouseClick);
             // 
             // txtCantItems
             // 
@@ -546,6 +539,33 @@
             this.txtActualizado.TabIndex = 48;
             this.txtActualizado.TabStop = false;
             // 
+            // Codigo
+            // 
+            this.Codigo.DataPropertyName = "Codigo";
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.Codigo.DefaultCellStyle = dataGridViewCellStyle2;
+            this.Codigo.HeaderText = "Codigo";
+            this.Codigo.Name = "Codigo";
+            this.Codigo.ReadOnly = true;
+            // 
+            // Corte
+            // 
+            this.Corte.DataPropertyName = "Corte";
+            this.Corte.HeaderText = "Corte";
+            this.Corte.Name = "Corte";
+            this.Corte.ReadOnly = true;
+            // 
+            // cantKgs
+            // 
+            this.cantKgs.DataPropertyName = "cantKgs";
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle3.Format = "N3";
+            dataGridViewCellStyle3.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle3;
+            this.cantKgs.HeaderText = "Cant. Kgs";
+            this.cantKgs.Name = "cantKgs";
+            this.cantKgs.ReadOnly = true;
+            // 
             // formAddOrEditStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -609,9 +629,6 @@
         protected System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox txtUsuario;
         protected System.Windows.Forms.Label label16;
-        private System.Windows.Forms.DataGridViewTextBoxColumn corte;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idSucursal;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cantKgs;
         private System.Windows.Forms.CheckBox checkLeerPeso;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TextBox txtTipoAccion;
@@ -623,5 +640,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtActualizadoPor;
         private System.Windows.Forms.TextBox txtActualizado;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Codigo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Corte;
+        private System.Windows.Forms.DataGridViewTextBoxColumn cantKgs;
     }
 }

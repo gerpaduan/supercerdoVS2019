@@ -54,6 +54,7 @@ namespace Presentacion
             InitializeComponent();
             idMovimientoLabel.Text = "0";
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            checkTicket.Checked = Convert.ToBoolean(ConfigurationManager.AppSettings["ticketForms"].ToString());
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarSucursales();
             dtCorte = oCorteN.obtenerCortes();
@@ -580,11 +581,13 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnMovimiento();
+            capturarPantalla();
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCorteEnMovimiento();
+            capturarPantalla();
         }
 
         private void capturarPantalla()

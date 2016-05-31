@@ -43,6 +43,8 @@ namespace Presentacion
         Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
         Color ultimoColor = Color.Green;
 
+        float totalKg = 0;//totalPesoEmbutidos
+
         public formIngresoEmbutido()
         {
             InitializeComponent();
@@ -72,6 +74,11 @@ namespace Presentacion
             {
                 cargarEmbutido();
                 oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
+
+                if (oEmbutidoE.corte.codigo.Equals(17))
+                {
+                    cargarRebozado();
+                }
 
                 foreach (Entidades.CortePorEmbutido cortePorEmbutido in listaCortePorEmbutido)
                 {
@@ -228,7 +235,7 @@ namespace Presentacion
 
         private void cargarTotalKg()
         {
-            float totalKg = 0;
+            totalKg = 0;
 
             foreach (Entidades.CortePorEmbutido corte in listaCortePorEmbutido)
             {
@@ -350,6 +357,17 @@ namespace Presentacion
                 SendKeys.Send("{TAB}");
             }
         }
+        
+        //Agregando rebozado si es Milanesa
+        private void cargarRebozado()
+        {
+            txtCodCorteEnEmbutido.Text = "301";
+            float rebozado = totalKg * float.Parse("0,20");
+            txtCantKgs.Text = rebozado.ToString();
+            cargarCortePorEmbutido();
+            agregarCorteEnEmbutido();
+        }
+        //Fin rebozado
 
         private void cargarCorteEnEmbutido()
         {

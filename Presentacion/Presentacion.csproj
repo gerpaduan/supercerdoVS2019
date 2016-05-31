@@ -123,6 +123,12 @@
     <Compile Include="Caja\formEgresosCajaVendedor.Designer.cs">
       <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formLineasVendedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formLineasVendedor.Designer.cs">
+      <DependentUpon>formLineasVendedor.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formIngresoBilletes.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -325,12 +331,6 @@
     </Compile>
     <Compile Include="Proveedores\formInfoProveedor.Designer.cs">
       <DependentUpon>formInfoProveedor.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Cortes\formModificarCorte.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Cortes\formModificarCorte.Designer.cs">
-      <DependentUpon>formModificarCorte.cs</DependentUpon>
     </Compile>
     <Compile Include="Proveedores\formModificarProveedor.cs">
       <SubType>Form</SubType>
@@ -564,6 +564,9 @@
     <EmbeddedResource Include="Caja\formEgresosCajaVendedor.resx">
       <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formLineasVendedor.resx">
+      <DependentUpon>formLineasVendedor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formIngresoBilletes.resx">
       <DependentUpon>formIngresoBilletes.cs</DependentUpon>
     </EmbeddedResource>
@@ -656,9 +659,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Proveedores\formInfoProveedor.resx">
       <DependentUpon>formInfoProveedor.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Cortes\formModificarCorte.resx">
-      <DependentUpon>formModificarCorte.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Proveedores\formModificarProveedor.resx">
       <DependentUpon>formModificarProveedor.cs</DependentUpon>

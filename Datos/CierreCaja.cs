@@ -136,7 +136,7 @@ namespace Datos
             return dtEgresosCaja;
         }
 
-        public void addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
+        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
             cmCierreCaja = new SqlCommand();
 
@@ -154,8 +154,10 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@creadoPor", oEgresoCaja.CreadoPor);
             cmCierreCaja.Parameters.AddWithValue("@actualizadoPor", oEgresoCaja.ActualizadoPor);
 
-            cmCierreCaja.ExecuteNonQuery();
+            oEgresoCaja.Id = (int)cmCierreCaja.ExecuteScalar();
             cmCierreCaja.Connection.Close();
+
+            return oEgresoCaja;
         }
 
         public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)

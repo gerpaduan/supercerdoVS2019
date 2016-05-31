@@ -99,9 +99,9 @@ namespace Negocio
             return oCierreD.obtenerEgresosCaja(idSucursal, idTipoEgresoCaja, texto, fechaDesde, fechaHasta);
         }
 
-        public void addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
+        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
         {
-            oCierreD.addOrEditEgresoCaja(oEgresoCaja);
+            return oCierreD.addOrEditEgresoCaja(oEgresoCaja);
         }
         public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)
         {

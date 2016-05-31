@@ -85,7 +85,7 @@ namespace Presentacion
         {
             if (cargarDatosCorte(oCorteE))	
             {   
-                oCorteN.modificarCorte(oCorteE);
+                oCorteN.addOrEditCorte(oCorteE);
                 if (frmCorte != null)
                 {
                     frmCorte.cargarGrilla();
