@@ -107,8 +107,9 @@ namespace Presentacion.Caja
                             ticket.TextoIzquierda("Hasta: " + oCierreE.FechaHoraCierre.Value.ToString());
                             ticket.LineasGuion();
                             ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
+                            ticket.LineasEnBlanco(1);
                             ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreE.EgresosCaja));
-                            ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
+                            //ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
                             ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
                             ticket.AgregaTotales("Queda en Caja:", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
                             ticket.LineasEnBlanco(3);

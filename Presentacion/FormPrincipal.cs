@@ -21,8 +21,7 @@ using Utilidades;
 namespace Presentacion
 {
     public partial class FormPrincipal : Form, InterfaceUsuario
-    {
-        
+    {        
         public static bool logueado = false;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
@@ -386,6 +385,8 @@ namespace Presentacion
 
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (e.CloseReason == CloseReason.WindowsShutDown) return;
+
             bool permitirCerrar = true;
             e.Cancel = true;
             foreach (Form frm in Application.OpenForms)
@@ -413,12 +414,6 @@ namespace Presentacion
         {
             formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
             frmCajasAbiertas.Show();
-            //FormLoginVendedor frmLogin = new FormLoginVendedor();
-            //frmLogin.ShowDialog(this);
-
-            //formCerrarCaja frmCerrarCaja = new formCerrarCaja();
-            //frmCerrarCaja.oUserCierre = oUsuario;
-            //frmCerrarCaja.ShowDialog();
         }
 
         private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
