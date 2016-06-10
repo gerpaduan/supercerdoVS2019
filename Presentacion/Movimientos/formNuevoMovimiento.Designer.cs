@@ -87,6 +87,7 @@
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
             this.idMovimientoLabel = new System.Windows.Forms.Label();
+            this.checkSinBalanza = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -189,6 +190,7 @@
             // 
             this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox2.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox2.Controls.Add(this.checkSinBalanza);
             this.groupBox2.Controls.Add(this.checkTicket);
             this.groupBox2.Controls.Add(this.txtCantUnidad);
             this.groupBox2.Controls.Add(this.label9);
@@ -758,6 +760,19 @@
             this.idMovimientoLabel.Text = "idMovimientoLabel";
             this.idMovimientoLabel.Visible = false;
             // 
+            // checkSinBalanza
+            // 
+            this.checkSinBalanza.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.checkSinBalanza.AutoSize = true;
+            this.checkSinBalanza.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkSinBalanza.Location = new System.Drawing.Point(459, 25);
+            this.checkSinBalanza.Name = "checkSinBalanza";
+            this.checkSinBalanza.Size = new System.Drawing.Size(92, 19);
+            this.checkSinBalanza.TabIndex = 24;
+            this.checkSinBalanza.TabStop = false;
+            this.checkSinBalanza.Text = "&Sin Balanza";
+            this.checkSinBalanza.UseVisualStyleBackColor = true;
+            // 
             // formNuevoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -855,5 +870,6 @@
         protected System.Windows.Forms.Label label16;
         private System.Windows.Forms.Label idMovimientoLabel;
         private System.Windows.Forms.Button btnVerAcum;
+        private System.Windows.Forms.CheckBox checkSinBalanza;
     }
 }

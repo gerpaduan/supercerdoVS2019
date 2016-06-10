@@ -219,7 +219,7 @@ namespace Presentacion
             }
             else
             {
-                if (huboModificaciones)
+                if (true || huboModificaciones)
                 {
                     DialogResult resp = MessageBox.Show("Verifique si la Sucursal Origen - Destino y la fecha ingresada son correctas.\n¿Están correctas?", "Verificar Datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (resp == DialogResult.Yes)
@@ -836,7 +836,7 @@ namespace Presentacion
         {
             try
             {
-                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+                if (checkSinBalanza.Checked || (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked))
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
