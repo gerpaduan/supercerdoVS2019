@@ -261,7 +261,7 @@ namespace Presentacion.Cortes
 
                     fila["Diferencia"] = Convert.ToDecimal(stockTeorico) - Convert.ToDecimal(stockReal);
                 }
-                grillaReportes.DataSource = dtGrillaReporte; 
+                grillaReportes.DataSource = dtGrillaReporte;
             }
 
             //Cierre Stock
@@ -544,7 +544,26 @@ namespace Presentacion.Cortes
                 grillaReportes.Columns["Total Unidades"].DefaultCellStyle.Font = fuente;
                 grillaReportes.Columns["Total Kgs"].DefaultCellStyle.BackColor = Color.LightBlue;
                 grillaReportes.Columns["Total Kgs"].DefaultCellStyle.Font = fuente;
-            }        
+            }
+
+            try
+            {
+                switch (comboOrdenStock.Text)
+                {
+                    case "Ascendente":
+                        grillaReportes.Sort(grillaReportes.Columns["Faltante"], ListSortDirection.Ascending);
+                        break;
+                    case "Descendente":
+                        grillaReportes.Sort(grillaReportes.Columns["Faltante"], ListSortDirection.Descending);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                
+            }
         }
         
         private void cargarSucursales()
@@ -574,6 +593,7 @@ namespace Presentacion.Cortes
         private void formReporteStock_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            comboOrdenStock.SelectedIndex = 0;
         }
 
         private void cargarComboCierreStock()
