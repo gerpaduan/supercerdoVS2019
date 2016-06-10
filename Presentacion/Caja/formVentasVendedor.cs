@@ -16,7 +16,7 @@ namespace Presentacion
         public Negocio.Venta oVentaN = new Negocio.Venta();
 
         public DataTable dtVentas;
-        bool soloAnulados = true;
+        bool soloAnulados = false;
 
         public formVentasVendedor()
         {
@@ -99,6 +99,8 @@ namespace Presentacion
 
         private void formVentasVendedor_Load(object sender, EventArgs e)
         {
+            soloAnulados = true;
+            verSoloAnulados();
             this.Text = this.Text + " || " + oCierreE.UsuarioInicio.Nombre;
             this.Text += Utilidades.Conexion.getSucursalConexion();
             txtSucursal.Text = oCierreE.Sucursal.sucursal;
@@ -107,6 +109,12 @@ namespace Presentacion
         }
 
         private void btnVerTodas_Click(object sender, EventArgs e)
+        {
+            verSoloAnulados();
+            cargarGrilla();
+        }
+
+        private void verSoloAnulados()
         {
             if (soloAnulados)
             {
@@ -118,12 +126,6 @@ namespace Presentacion
                 soloAnulados = true;
                 btnVerTodas.Text = "Ver &todas";
             }
-            cargarGrilla();
-        }
-
-        private void grillaVentas_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            
         }
 
         private void grillaVentas_KeyDown(object sender, KeyEventArgs e)

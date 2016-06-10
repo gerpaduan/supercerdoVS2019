@@ -56,12 +56,12 @@
             this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.panel1 = new System.Windows.Forms.Panel();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.btnLineasVenta = new System.Windows.Forms.Button();
             this.txtVendedor = new System.Windows.Forms.TextBox();
             this.label17 = new System.Windows.Forms.Label();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnVerTodas = new System.Windows.Forms.Button();
-            this.btnLineasVenta = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.SuspendLayout();
@@ -151,7 +151,6 @@
             this.grillaVentas.TabIndex = 27;
             this.grillaVentas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaVentas_CellDoubleClick);
             this.grillaVentas.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grillaVentas_KeyDown);
-            this.grillaVentas.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.grillaVentas_KeyPress);
             // 
             // idVenta
             // 
@@ -325,6 +324,19 @@
             this.pnlBuscar.Size = new System.Drawing.Size(988, 79);
             this.pnlBuscar.TabIndex = 0;
             // 
+            // btnLineasVenta
+            // 
+            this.btnLineasVenta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnLineasVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnLineasVenta.Location = new System.Drawing.Point(744, 52);
+            this.btnLineasVenta.Name = "btnLineasVenta";
+            this.btnLineasVenta.Size = new System.Drawing.Size(113, 24);
+            this.btnLineasVenta.TabIndex = 47;
+            this.btnLineasVenta.TabStop = false;
+            this.btnLineasVenta.Text = "&Lineas venta";
+            this.btnLineasVenta.UseVisualStyleBackColor = true;
+            this.btnLineasVenta.Click += new System.EventHandler(this.btnLineasVenta_Click);
+            // 
             // txtVendedor
             // 
             this.txtVendedor.BackColor = System.Drawing.SystemColors.ScrollBar;
@@ -371,6 +383,7 @@
             // 
             // btnVerTodas
             // 
+            this.btnVerTodas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnVerTodas.Location = new System.Drawing.Point(863, 52);
             this.btnVerTodas.Name = "btnVerTodas";
@@ -380,18 +393,6 @@
             this.btnVerTodas.Text = "Ver &todas";
             this.btnVerTodas.UseVisualStyleBackColor = true;
             this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
-            // 
-            // btnLineasVenta
-            // 
-            this.btnLineasVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLineasVenta.Location = new System.Drawing.Point(744, 52);
-            this.btnLineasVenta.Name = "btnLineasVenta";
-            this.btnLineasVenta.Size = new System.Drawing.Size(113, 24);
-            this.btnLineasVenta.TabIndex = 47;
-            this.btnLineasVenta.TabStop = false;
-            this.btnLineasVenta.Text = "&Lineas venta";
-            this.btnLineasVenta.UseVisualStyleBackColor = true;
-            this.btnLineasVenta.Click += new System.EventHandler(this.btnLineasVenta_Click);
             // 
             // formVentasVendedor
             // 
@@ -406,7 +407,6 @@
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.grillaVentas);
             this.Controls.Add(this.pnlBuscar);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.KeyPreview = true;
             this.Name = "formVentasVendedor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
