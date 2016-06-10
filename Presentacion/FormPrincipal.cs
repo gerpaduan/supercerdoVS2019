@@ -466,7 +466,7 @@ namespace Presentacion
 
         private static void cierresCaja()
         {
-            if (logueado)
+            if (Usuarios.FormValidarPermiso.validarPermiso())
             {
                 if (Application.OpenForms["formCierresDeCaja"] != null)
                 {
@@ -478,10 +478,6 @@ namespace Presentacion
                     formCierresDeCaja frmCierresDeCaja = new formCierresDeCaja();
                     frmCierresDeCaja.Show();
                 }
-            }
-            else
-            {
-                MessageBox.Show("No está logueado");
             }
         }
 

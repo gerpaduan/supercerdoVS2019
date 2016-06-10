@@ -1,6 +1,6 @@
-﻿namespace Utilidades
+﻿namespace Presentacion.Usuarios
 {
-    partial class FormLoginVendedor
+    partial class FormValidarPermiso
     {
         /// <summary>
         /// Required designer variable.
@@ -30,14 +30,14 @@
         {
             this.SuspendLayout();
             // 
-            // FormLoginVendedor
+            // FormValidarPermiso
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 262);
-            this.Name = "FormLoginVendedor";
-            this.Text = "FormLoginVendedor";
-            this.Load += new System.EventHandler(this.FormLoginVendedor_Load);
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "FormValidarPermiso";
+            this.Text = "FormValidarPermiso";
+            this.Load += new System.EventHandler(this.FormValidarPermiso_Load);
             this.ResumeLayout(false);
 
         }
