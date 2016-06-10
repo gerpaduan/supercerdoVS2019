@@ -439,18 +439,18 @@ namespace Presentacion.Caja
         private void readOnlyCampos()
         {
             bool esCerrarCaja = tipoCierreActual.Equals(tipoCierre.CerrarCaja);
-            txtCajaInicial.ReadOnly = esModificarCaja && !esCerrarCaja;
-            txtCajaInicial.TabStop = esModificarCaja && esCerrarCaja;
+            txtCajaInicial.ReadOnly = (esModificarCaja && !esCerrarCaja) || (!esModificarCaja && esCerrarCaja);
+            txtCajaInicial.TabStop = !txtCajaInicial.ReadOnly;
             txtCajaInicial.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
             panelTaparCamposCierre.Visible = true;
             checkTicket.Visible = true;
             checkTicket.Checked = true;
             controlEleccionImporte.Value = 1;
-            controlEleccionImporte.Visible = esModificarCaja && esCerrarCaja;
-            txtCajaCierre.ReadOnly = esModificarCaja && !esCerrarCaja;
-            txtCajaCierre.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
-            txtCajaInicioSiguiente.ReadOnly = esModificarCaja && !esCerrarCaja;
-            txtCajaInicioSiguiente.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
+            controlEleccionImporte.Visible = esCerrarCaja;
+            txtCajaCierre.ReadOnly = !esCerrarCaja;
+            txtCajaCierre.BackColor = Util_Form.getBackColorTextBox(txtCajaCierre.ReadOnly);
+            txtCajaInicioSiguiente.ReadOnly = !esCerrarCaja;
+            txtCajaInicioSiguiente.BackColor = Util_Form.getBackColorTextBox(txtCajaInicioSiguiente.ReadOnly);
         }
 
         private void btnVerEgresosCaja_Click(object sender, EventArgs e)
