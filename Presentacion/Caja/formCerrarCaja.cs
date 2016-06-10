@@ -24,8 +24,9 @@ namespace Presentacion.Caja
         Entidades.CierreCaja oCierreAnterior;
 
 
-        protected enum tipoCierre { AbrirCaja, CerrarCaja, ModificarCaja };
-        protected tipoCierre tipoCierreActual = tipoCierre.CerrarCaja;
+        public enum tipoCierre { AbrirCaja, CerrarCaja, ReAbrirCaja, ModificarCaja };
+        public tipoCierre tipoCierreActual = tipoCierre.CerrarCaja;
+        bool esModificarCaja = false;
 
         public formCerrarCaja()
         {
@@ -41,7 +42,6 @@ namespace Presentacion.Caja
             oCierreE.UsuarioInicio = oUserIncio;
             validarAperturaForm();
             txtSucursal.Text = oSucursalE.sucursal;
-            txtFechaHoraCierre.Text = DateTime.Now.ToString();
         }
 
         private void btnCerrarCaja_Click(object sender, EventArgs e)
@@ -81,14 +81,44 @@ namespace Presentacion.Caja
                                 MessageBoxDefaultButton.Button2);    
                             break;
                         case tipoCierre.CerrarCaja:
-                            respuesta = MessageBox.Show("¿Está seguro que desea cerrar caja?."
-                                , "Cerrar Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+                            string pregunta = esModificarCaja ? "--La modificación del cierre de caja puede acarrear "+
+                                "errores irreversibles si ingresa datos incorrectos--"+"\n\n¿Está seguro que desea modificar el cierre de caja?." : "¿Está seguro que desea cerrar caja?.";
+                            respuesta = MessageBox.Show(pregunta, "Cerrar Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+                                MessageBoxDefaultButton.Button2);
+                            break;
+                        case tipoCierre.ModificarCaja:
+                            respuesta = MessageBox.Show("¿Está seguro que desea realizar modificaciones a la caja?." +
+                                "\n\nNota: se actualizarán aquellos campos donde hubo modificaciones."
+                                , "Modificar Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+                                MessageBoxDefaultButton.Button2);
+                            break;
+                        case tipoCierre.ReAbrirCaja:
+                            respuesta = MessageBox.Show("--Si modifica la Fecha Hora Inicio de caja asegúrese que no se interponga con otro " +
+                                "cierre de caja para evitar errores--" + "\n\n¿Está seguro que desea re-abrir caja?." +
+                                "\n"
+                                , "Re-Abrir Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
                                 MessageBoxDefaultButton.Button2);
                             break;
                     }
 
                     if (respuesta == DialogResult.Yes)
                     {
+                        if (tipoCierreActual.Equals(tipoCierre.ReAbrirCaja))
+                        {
+                            oCierreE.FechaHoraCierre = null;
+                            oCierreE.UsuarioCierre.Id = 0;
+                        }
+                        if (tipoCierreActual.Equals(tipoCierre.ModificarCaja))
+                        {
+                            tipoCierreActual = tipoCierre.CerrarCaja;
+                            btnCerrarCaja.Text = "&Cerrar Caja";
+                            pickerFechaHoraInicio.Visible = true;
+                            pickerFechaHoraCierre.Visible = true;
+                            pickerFechaHoraCierre.Visible = true;
+                            validarAperturaForm();
+                            return;
+                        }
+
                         oCierreN.addOrEditCierreCaja(oCierreE);
 
                         if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
@@ -301,48 +331,41 @@ namespace Presentacion.Caja
         {
             try
             {
-                if (tipoCierreActual.Equals(tipoCierre.AbrirCaja))
+                if (tipoCierreActual.Equals(tipoCierre.AbrirCaja) || tipoCierreActual.Equals(tipoCierre.ReAbrirCaja))
                 {
                     panelTaparCamposCierre.BringToFront();
                     btnVerEgresosCaja.TabStop = false;
                     btnCajaAnterior.Visible = false;
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-                    if (oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
+                    if (!tipoCierreActual.Equals(tipoCierre.ReAbrirCaja) && oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
                     {
                         MessageBox.Show(oUserIncio.Nombre +" ya ha abierto la caja en la siguiente fecha\n" + "Fecha: " + oCierreE.FechaHoraInicio.ToString() +
                             "\n\nDebe Cerrar Caja para volver a abrir", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         this.Close();
                     }
-                    txtUserInicio.Text = oUserIncio.Nombre;
-                    txtCajaInicial.Text = oCierreE != null ? oCierreE.CajaInicioSiguiente.ToString() : "";
+                    txtUserInicio.Text = tipoCierreActual.Equals(tipoCierre.ReAbrirCaja) ? oCierreE.UsuarioInicio.Nombre : oUserIncio.Nombre;
+                    txtCajaInicial.Text = tipoCierreActual.Equals(tipoCierre.ReAbrirCaja) ? oCierreE.CajaInicio.ToString() : 
+                        (oCierreE != null ? oCierreE.CajaInicioSiguiente.ToString() : "");
+                    if (tipoCierreActual.Equals(tipoCierre.ReAbrirCaja))
+                    {
+                        pickerFechaHoraInicio.Visible = true;
+                        pickerFechaHoraInicio.Value = oCierreE.FechaHoraInicio.Value;
+                        txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.Value.ToString();
+                    }
                 }
+
                 if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
                 {
-                    txtCajaInicial.ReadOnly = true;
-                    txtCajaInicial.TabStop = false;
-                    txtCajaInicial.BackColor = SystemColors.ScrollBar;
-                    panelTaparCamposCierre.Visible = false;
-                    checkTicket.Visible = true;
-                    checkTicket.Checked = true;
-                    controlEleccionImporte.Value = 1;
-                    oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
+                    readOnlyCampos();
+                    //si se está modificando no se obtiene el cierre
+                    if(!esModificarCaja) 
+                        oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
                     oCierreAnterior = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLastOpen, "");
                     lblDiferenciaEntreCaja.Visible = oCierreAnterior != null && !oCierreAnterior.CajaInicioSiguiente.Equals(oCierreE.CajaInicio);
 
                     Negocio.Venta oVentaN = new Negocio.Venta();
+                    oCierreE.FechaHoraCierre = oCierreE.FechaHoraCierre != null ? oCierreE.FechaHoraCierre : DateTime.Now;
                     lblCortesAnulados.Visible = oVentaN.getVentasVendedorCierreCaja(oCierreE, true).Rows.Count > 0;
-                    //if (!oUserCierre.Admin && !oCierreE.UsuarioInicio.Id.Equals(oUserCierre.Id))
-                    //if (!oUserCierre.Admin)
-                    //{
-                    //    MessageBox.Show(oUserCierre.Nombre + "\nNo tienes permiso para los cierres de caja.","Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    //    this.Close();
-                    //}
-                    //if (!oCierreE.FechaHoraCierre.Equals(null))
-                    //{
-                    //    MessageBox.Show("No puede Cerrar Caja porque no se ha iniciado caja anteriormente.\n" + "Fecha Ultimo Cierre: " + oCierreE.FechaHoraCierre.ToString(),
-                    //        "Cerrar Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    //    this.Close();
-                    //}
 
                     foreach (Form frm in Application.OpenForms)
                     {
@@ -366,7 +389,8 @@ namespace Presentacion.Caja
                     txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
                     txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
                     txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
-                    txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oSucursalE.idSucursal, oCierreE.FechaHoraInicio, DateTime.Now).ToString();
+                    txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oSucursalE.idSucursal, 
+                        oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString();
                     oCierreE.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE);
                     txtEgresosCaja.Text = oCierreE.EgresosCaja.ToString();
                     txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
@@ -374,12 +398,59 @@ namespace Presentacion.Caja
                     txtCajaInicioSiguiente.Text = oCierreE.CajaInicioSiguiente.ToString();
                     txtImporteRetirado.Text = oCierreE.ImporteRetirado.ToString();
                 }
+
+                if (tipoCierreActual.Equals(tipoCierre.ModificarCaja))
+                {
+                    oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");
+
+                    //si fecha cierre es vacia abrir cada
+                    if (oCierreE.FechaHoraCierre == null)
+                    {
+                        btnCerrarCaja.Text = "&Re-Abrir Caja";
+                        tipoCierreActual = tipoCierre.ReAbrirCaja;
+                        validarAperturaForm();
+                        return;
+                    }
+
+                    txtUserInicio.Text = oCierreE.UsuarioInicio.Nombre;
+                    txtUserCierre.Text = oUserCierre.Nombre;
+                    txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
+                    txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
+                    pickerFechaHoraInicio.Value = oCierreE.FechaHoraInicio.Value;
+                    pickerFechaHoraCierre.Value = oCierreE.FechaHoraCierre.Value;
+                    txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
+                    txtVentas.Text = oCierreE.Ventas.ToString();
+                    txtEgresosCaja.Text = oCierreE.EgresosCaja.ToString();
+                    txtCajaCierre.Text = oCierreE.CajaCierre.ToString();
+                    txtDiferencia.Text = oCierreE.Diferencia.ToString();
+                    txtCajaInicioSiguiente.Text = oCierreE.CajaInicioSiguiente.ToString();
+                    txtImporteRetirado.Text = oCierreE.ImporteRetirado.ToString();
+                    btnCerrarCaja.Text = "&Modificar Caja";
+                    esModificarCaja = true;
+                    readOnlyCampos();
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error en validarAperturaForm() \n" + ex.Message);
-            }
-            
+            }            
+        }
+
+        private void readOnlyCampos()
+        {
+            bool esCerrarCaja = tipoCierreActual.Equals(tipoCierre.CerrarCaja);
+            txtCajaInicial.ReadOnly = esModificarCaja && !esCerrarCaja;
+            txtCajaInicial.TabStop = esModificarCaja && esCerrarCaja;
+            txtCajaInicial.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
+            panelTaparCamposCierre.Visible = true;
+            checkTicket.Visible = true;
+            checkTicket.Checked = true;
+            controlEleccionImporte.Value = 1;
+            controlEleccionImporte.Visible = esModificarCaja && esCerrarCaja;
+            txtCajaCierre.ReadOnly = esModificarCaja && !esCerrarCaja;
+            txtCajaCierre.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
+            txtCajaInicioSiguiente.ReadOnly = esModificarCaja && !esCerrarCaja;
+            txtCajaInicioSiguiente.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
         }
 
         private void btnVerEgresosCaja_Click(object sender, EventArgs e)
@@ -442,6 +513,35 @@ namespace Presentacion.Caja
             formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
             frmIngresoBilletes.txtBoxAcargar = this.txtCajaCierre;
             frmIngresoBilletes.ShowDialog();
+        }
+
+        private void btnReAbrir_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                txtCajaInicial.ReadOnly = false;
+                txtCajaInicial.BackColor = Util_Form.getBackColorTextBox(txtCajaInicial.ReadOnly);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void pickerDate_ValueChanged(object sender, EventArgs e)
+        {
+            if (esModificarCaja)
+            {
+                oCierreE.FechaHoraInicio = pickerFechaHoraInicio.Value;
+                oCierreE.FechaHoraCierre = pickerFechaHoraCierre.Value;
+                validarAperturaForm();
+                return;
+            }
+            if (tipoCierreActual.Equals(tipoCierre.ReAbrirCaja))
+            {
+                oCierreE.FechaHoraInicio = pickerFechaHoraInicio.Value;
+                return;
+            }
         }
     }
 }

@@ -308,5 +308,20 @@ namespace Utilidades
             {
             }
         }
+
+        public static Color getBackColorTextBox(bool readOnly)
+        {
+            try
+            {
+                Color color = readOnly ? ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString()) :
+                    ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString());
+
+                return color;
+            }
+            catch (Exception)
+            {
+                return Color.White;
+            }
+        }
     }
 }

@@ -95,15 +95,19 @@ namespace Presentacion.Caja
             {
                 FormLoginVendedor frmLogin = new FormLoginVendedor();
                 frmLogin.ShowDialog(this);
-
-                if (oUsuario != null)
+                if (oUsuario == null) return;
+                if (oUsuario.Admin)
                 {
                     formCerrarCaja frmCerrarCaja = new formCerrarCaja();
                     frmCerrarCaja.oUserCierre = oUsuario;
-                    //frmCerrarCaja.tipoCierreActual = formCerrarCaja.tipoCierre.ModificarCaja;
+                    frmCerrarCaja.tipoCierreActual = formCerrarCaja.tipoCierre.ModificarCaja;
                     frmCerrarCaja.oCierreE.Id = cierreCajaId.Value;
                     frmCerrarCaja.ShowDialog();
                     cargarGrilla();
+                }
+                else
+                {
+                    MessageBox.Show("No tienes permiso");
                 }
                 oUsuario = null;
             }

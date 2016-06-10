@@ -208,7 +208,7 @@ namespace Datos
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
             cmCierreCaja.CommandText = "obtenerEgresosCaja";
             cmCierreCaja.Parameters.AddWithValue("@fechaDesde", oCierre.FechaHoraInicio);
-            cmCierreCaja.Parameters.AddWithValue("@fechaHasta", DateTime.Now.Date);
+            cmCierreCaja.Parameters.AddWithValue("@fechaHasta", oCierre.FechaHoraCierre);
             cmCierreCaja.Parameters.AddWithValue("@idVendedor", oCierre.UsuarioInicio.Id);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", oCierre.Sucursal.idSucursal);
             cmCierreCaja.Parameters.AddWithValue("@montoEgresoCaja", true);
@@ -237,7 +237,7 @@ namespace Datos
             cmCierreCaja.CommandType = CommandType.StoredProcedure;
             cmCierreCaja.CommandText = "obtenerEgresosCaja";
             cmCierreCaja.Parameters.AddWithValue("@fechaDesde", oCierre.FechaHoraInicio);
-            cmCierreCaja.Parameters.AddWithValue("@fechaHasta", DateTime.Now.Date);
+            cmCierreCaja.Parameters.AddWithValue("@fechaHasta", oCierre.FechaHoraCierre);
             cmCierreCaja.Parameters.AddWithValue("@idVendedor", oCierre.UsuarioInicio.Id);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", oCierre.Sucursal.idSucursal);
             cmCierreCaja.Parameters.AddWithValue("@verEgresoCaja", true);
