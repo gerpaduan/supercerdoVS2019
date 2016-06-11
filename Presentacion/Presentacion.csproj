@@ -499,6 +499,12 @@
     <Compile Include="Usuarios\FormUsuarios.Designer.cs">
       <DependentUpon>FormUsuarios.cs</DependentUpon>
     </Compile>
+    <Compile Include="Usuarios\FormValidarPermiso.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Usuarios\FormValidarPermiso.Designer.cs">
+      <DependentUpon>FormValidarPermiso.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ventas\formGetAllLineaVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -754,6 +760,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Usuarios\FormUsuarios.resx">
       <DependentUpon>FormUsuarios.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Usuarios\FormValidarPermiso.resx">
+      <DependentUpon>FormValidarPermiso.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ventas\formGetAllLineaVenta.resx">
       <DependentUpon>formGetAllLineaVenta.cs</DependentUpon>
