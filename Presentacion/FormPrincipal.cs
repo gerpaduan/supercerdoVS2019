@@ -412,8 +412,16 @@ namespace Presentacion
 
         private void cerrarCaja()
         {
-            formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
-            frmCajasAbiertas.Show();
+            if (Application.OpenForms["formCajasAbiertas"] != null)
+            {
+                Application.OpenForms["formCajasAbiertas"].Activate();
+                Application.OpenForms["formCajasAbiertas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
+                frmCajasAbiertas.Show();
+            }
         }
 
         private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)

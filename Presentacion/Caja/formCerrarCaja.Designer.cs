@@ -30,6 +30,8 @@
         {
             this.components = new System.ComponentModel.Container();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.pickerFechaHoraInicio = new System.Windows.Forms.DateTimePicker();
+            this.pickerFechaHoraCierre = new System.Windows.Forms.DateTimePicker();
             this.checkTicket = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lblUsuarioCierre = new System.Windows.Forms.Label();
@@ -68,8 +70,7 @@
             this.panelTaparCamposCierre = new System.Windows.Forms.Panel();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.pickerFechaHoraCierre = new System.Windows.Forms.DateTimePicker();
-            this.pickerFechaHoraInicio = new System.Windows.Forms.DateTimePicker();
+            this.btnImprimir = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -82,6 +83,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.btnImprimir);
             this.pnlBuscar.Controls.Add(this.pickerFechaHoraInicio);
             this.pnlBuscar.Controls.Add(this.pickerFechaHoraCierre);
             this.pnlBuscar.Controls.Add(this.checkTicket);
@@ -96,6 +98,32 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(390, 461);
             this.pnlBuscar.TabIndex = 24;
+            // 
+            // pickerFechaHoraInicio
+            // 
+            this.pickerFechaHoraInicio.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraInicio.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.pickerFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraInicio.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.pickerFechaHoraInicio.Location = new System.Drawing.Point(15, 146);
+            this.pickerFechaHoraInicio.Name = "pickerFechaHoraInicio";
+            this.pickerFechaHoraInicio.Size = new System.Drawing.Size(180, 22);
+            this.pickerFechaHoraInicio.TabIndex = 49;
+            this.pickerFechaHoraInicio.Visible = false;
+            this.pickerFechaHoraInicio.ValueChanged += new System.EventHandler(this.pickerDate_ValueChanged);
+            // 
+            // pickerFechaHoraCierre
+            // 
+            this.pickerFechaHoraCierre.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraCierre.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.pickerFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraCierre.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.pickerFechaHoraCierre.Location = new System.Drawing.Point(201, 146);
+            this.pickerFechaHoraCierre.Name = "pickerFechaHoraCierre";
+            this.pickerFechaHoraCierre.Size = new System.Drawing.Size(177, 22);
+            this.pickerFechaHoraCierre.TabIndex = 38;
+            this.pickerFechaHoraCierre.Visible = false;
+            this.pickerFechaHoraCierre.ValueChanged += new System.EventHandler(this.pickerDate_ValueChanged);
             // 
             // checkTicket
             // 
@@ -543,31 +571,16 @@
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
-            // pickerFechaHoraCierre
+            // btnImprimir
             // 
-            this.pickerFechaHoraCierre.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pickerFechaHoraCierre.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
-            this.pickerFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pickerFechaHoraCierre.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.pickerFechaHoraCierre.Location = new System.Drawing.Point(201, 146);
-            this.pickerFechaHoraCierre.Name = "pickerFechaHoraCierre";
-            this.pickerFechaHoraCierre.Size = new System.Drawing.Size(177, 22);
-            this.pickerFechaHoraCierre.TabIndex = 38;
-            this.pickerFechaHoraCierre.Visible = false;
-            this.pickerFechaHoraCierre.ValueChanged += new System.EventHandler(this.pickerDate_ValueChanged);
-            // 
-            // pickerFechaHoraInicio
-            // 
-            this.pickerFechaHoraInicio.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pickerFechaHoraInicio.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
-            this.pickerFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pickerFechaHoraInicio.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.pickerFechaHoraInicio.Location = new System.Drawing.Point(15, 146);
-            this.pickerFechaHoraInicio.Name = "pickerFechaHoraInicio";
-            this.pickerFechaHoraInicio.Size = new System.Drawing.Size(180, 22);
-            this.pickerFechaHoraInicio.TabIndex = 49;
-            this.pickerFechaHoraInicio.Visible = false;
-            this.pickerFechaHoraInicio.ValueChanged += new System.EventHandler(this.pickerDate_ValueChanged);
+            this.btnImprimir.Location = new System.Drawing.Point(312, 22);
+            this.btnImprimir.Name = "btnImprimir";
+            this.btnImprimir.Size = new System.Drawing.Size(66, 24);
+            this.btnImprimir.TabIndex = 38;
+            this.btnImprimir.Text = "&Imprimir";
+            this.btnImprimir.UseVisualStyleBackColor = true;
+            this.btnImprimir.Visible = false;
+            this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
             // 
             // formCerrarCaja
             // 
@@ -639,5 +652,6 @@
         private System.Windows.Forms.Button btnIngresoBilletes;
         private System.Windows.Forms.DateTimePicker pickerFechaHoraCierre;
         private System.Windows.Forms.DateTimePicker pickerFechaHoraInicio;
+        private System.Windows.Forms.Button btnImprimir;
     }
 }

@@ -37,11 +37,15 @@ namespace Presentacion.Caja
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            oSucursalE = oSucursalN.findById(idSucursal);
-            oCierreE.Sucursal = oSucursalE;
-            oCierreE.UsuarioInicio = oUserIncio;
+            btnImprimir.Visible = tipoCierreActual.Equals(tipoCierre.ModificarCaja);
+            if (oCierreE == null || oCierreE.Id == 0)
+            {
+                oSucursalE = oSucursalN.findById(idSucursal);
+                oCierreE.Sucursal = oSucursalE;
+                oCierreE.UsuarioInicio = oUserIncio;
+            }
             validarAperturaForm();
-            txtSucursal.Text = oSucursalE.sucursal;
+            txtSucursal.Text = oCierreE.Sucursal.sucursal;
         }
 
         private void btnCerrarCaja_Click(object sender, EventArgs e)
@@ -123,48 +127,7 @@ namespace Presentacion.Caja
 
                         if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
                         {
-                            //imprimir ticket
-                            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
-                            ticket.imprimir = checkTicket.Checked;
-
-                            ///Copia Cajero
-                            ticket.TextoCentro("Cierre Caja");
-                            ticket.TextoCentro("--Copia Cajero--");
-                            ticket.LineasEnBlanco(1);
-                            //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
-                            ticket.TextoIzquierda("Vendedor: " + oCierreE.UsuarioInicio.Nombre);
-                            ticket.TextoIzquierda("Desde: " + oCierreE.FechaHoraInicio.Value.ToString());
-                            ticket.TextoIzquierda("Hasta: " + oCierreE.FechaHoraCierre.Value.ToString());
-                            ticket.LineasGuion();
-                            ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
-                            ticket.LineasEnBlanco(1);
-                            ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreE.EgresosCaja));
-                            //ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
-                            ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
-                            ticket.AgregaTotales("Queda en Caja:", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
-                            ticket.LineasEnBlanco(3);
-
-                            if (MessageBox.Show("¿Imprimir copia para administrador?", "",
-                                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
-                            {
-                                ///Copia Encargado 
-                                ticket.TextoCentro("Cierre Caja");
-                                ticket.TextoCentro("--Copia Admin--");
-                                ticket.LineasEnBlanco(1);
-                                //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
-                                ticket.TextoIzquierda("Vendedor: " + oCierreE.UsuarioInicio.Nombre);
-                                ticket.TextoIzquierda("Desde: " + oCierreE.FechaHoraInicio.Value.ToString());
-                                ticket.TextoIzquierda("Hasta: " + oCierreE.FechaHoraCierre.Value.ToString());
-                                ticket.LineasGuion();
-                                ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
-                                ticket.AgregaTotales("Ventas", Convert.ToDouble(oCierreE.Ventas));
-                                ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreE.EgresosCaja));
-                                ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
-                                ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
-                                ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
-                                ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreE.ImporteRetirado));
-                                ticket.LineasEnBlanco(3);
-                            }
+                            imprimirTicket();
                         }
 
                         this.Close();
@@ -176,6 +139,52 @@ namespace Presentacion.Caja
                 MessageBox.Show(ex.Message, "Exception cargarCierreCaja");
             }
             
+        }
+
+        private void imprimirTicket()
+        {
+            //imprimir ticket
+            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+            ticket.imprimir = checkTicket.Checked;
+
+            ///Copia Cajero
+            ticket.TextoCentro("Cierre Caja");
+            ticket.TextoCentro("--Copia Cajero--");
+            ticket.LineasEnBlanco(1);
+            //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+            ticket.TextoIzquierda("Vendedor: " + oCierreE.UsuarioInicio.Nombre);
+            ticket.TextoIzquierda("Desde: " + oCierreE.FechaHoraInicio.Value.ToString());
+            ticket.TextoIzquierda("Hasta: " + oCierreE.FechaHoraCierre.Value.ToString());
+            ticket.LineasGuion();
+            ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
+            ticket.LineasEnBlanco(1);
+            ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreE.EgresosCaja));
+            //ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
+            ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
+            ticket.AgregaTotales("Queda en Caja:", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
+            ticket.LineasEnBlanco(3);
+
+            if (MessageBox.Show("¿Imprimir copia para administrador?", "",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
+            {
+                ///Copia Encargado 
+                ticket.TextoCentro("Cierre Caja");
+                ticket.TextoCentro("--Copia Admin--");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                ticket.TextoIzquierda("Vendedor: " + oCierreE.UsuarioInicio.Nombre);
+                ticket.TextoIzquierda("Desde: " + oCierreE.FechaHoraInicio.Value.ToString());
+                ticket.TextoIzquierda("Hasta: " + oCierreE.FechaHoraCierre.Value.ToString());
+                ticket.LineasGuion();
+                ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
+                ticket.AgregaTotales("Ventas", Convert.ToDouble(oCierreE.Ventas));
+                ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreE.EgresosCaja));
+                ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
+                ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
+                ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
+                ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreE.ImporteRetirado));
+                ticket.LineasEnBlanco(3);
+            }
         }
 
         protected bool validaciones()
@@ -384,12 +393,13 @@ namespace Presentacion.Caja
                             }
                         }
                     }
+
                     txtUserInicio.Text = oCierreE.UsuarioInicio.Nombre;
                     txtUserCierre.Text = oUserCierre.Nombre;
                     txtFechaHoraInicio.Text = oCierreE.FechaHoraInicio.ToString();
                     txtFechaHoraCierre.Text = oCierreE.FechaHoraCierre.ToString();
                     txtCajaInicial.Text = oCierreE.CajaInicio.ToString();
-                    txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oSucursalE.idSucursal, 
+                    txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal, 
                         oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString();
                     oCierreE.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE);
                     txtEgresosCaja.Text = oCierreE.EgresosCaja.ToString();
@@ -459,8 +469,7 @@ namespace Presentacion.Caja
             frmEgresosCajaVendedor.oCierreE = oCierreE;
             frmEgresosCajaVendedor.ShowDialog();
             //se actualiza el egreso
-            oCierreE.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE);
-            txtEgresosCaja.Text = oCierreE.EgresosCaja.ToString();
+            actualizarVentas_Egresos();
         }
 
         private void controlEleccionImporte_ValueChanged(object sender, EventArgs e)
@@ -486,7 +495,21 @@ namespace Presentacion.Caja
         {
             formVentasVendedor frmVentasVendedor = new formVentasVendedor();
             frmVentasVendedor.oCierreE = oCierreE;
-            frmVentasVendedor.Show();
+            frmVentasVendedor.ShowDialog();
+
+            actualizarVentas_Egresos();
+        }
+
+        private void actualizarVentas_Egresos()
+        {
+            if (tipoCierreActual.Equals(tipoCierre.CerrarCaja))
+            {
+                txtFechaHoraCierre.Text = Util_Form.fechaFormato24Horas(esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now);
+                oCierreE.FechaHoraCierre = esModificarCaja ? oCierreE.FechaHoraCierre : null;
+                txtVentas.Text = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
+                    oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString();
+                txtEgresosCaja.Text  = oCierreN.getMontoEgresosCajaVendedor(oCierreE).ToString();
+            }
         }
 
         private void btnCajaAnterior_Click(object sender, EventArgs e)
@@ -542,6 +565,11 @@ namespace Presentacion.Caja
                 oCierreE.FechaHoraInicio = pickerFechaHoraInicio.Value;
                 return;
             }
+        }
+
+        private void btnImprimir_Click(object sender, EventArgs e)
+        {
+            imprimirTicket();
         }
     }
 }

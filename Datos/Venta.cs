@@ -102,7 +102,7 @@ namespace Datos
             cmVenta.CommandText = "ventasVendedorCierreCaja";
             cmVenta.Parameters.AddWithValue("@idVendedor", oCierreE.UsuarioInicio.Id);
             cmVenta.Parameters.AddWithValue("@fechaDesde", oCierreE.FechaHoraInicio);
-            cmVenta.Parameters.AddWithValue("@fechaHasta", oCierreE.FechaHoraCierre);
+            cmVenta.Parameters.AddWithValue("@fechaHasta", oCierreE.FechaHoraCierre == null ? DateTime.Now : oCierreE.FechaHoraCierre);
             //cmVenta.Parameters.AddWithValue("@texto", texto);
             cmVenta.Parameters.AddWithValue("@idSucursal", oCierreE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@soloAnulados", soloAnulados);
