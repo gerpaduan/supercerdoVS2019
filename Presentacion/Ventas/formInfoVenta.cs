@@ -69,6 +69,7 @@ namespace Presentacion.Ventas
                 lineaVentaP.corte = lineaE.Corte.corte;
                 lineaVentaP.cantKgs = lineaE.CantKg;
                 lineaVentaP.precioKg = lineaE.PrecioKg;
+                lineaVentaP.bonificacion = lineaE.Bonificacion;
                 lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
                 lineaVentaP.PesoBalanza = lineaE.PesoBalanza;
 

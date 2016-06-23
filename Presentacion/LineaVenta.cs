@@ -13,8 +13,15 @@ namespace Presentacion
         public float cantKgs;
         public float precioKg;
         public float totalS;
+        public float bonificacion;
         public string estado;
         private bool pesoBalanza;
+
+        public float Bonificacion
+        {
+            get { return bonificacion; }
+            set { bonificacion = value; }
+        }
 
         public bool PesoBalanza
         {

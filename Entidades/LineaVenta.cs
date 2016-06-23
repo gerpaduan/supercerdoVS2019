@@ -9,6 +9,8 @@ namespace Entidades
     {
          float cantKg;
          float precioKg;
+         float bonificacion;
+         float precioReal;
          Corte corte;
          Venta venta;
          int estado;
@@ -49,6 +51,18 @@ namespace Entidades
             {
                 precioKg = value;
             }
+        }
+
+        public float Bonificacion
+        {
+            get { return bonificacion; }
+            set { bonificacion = value; }
+        }
+
+        public float PrecioReal
+        {
+            get { return precioReal; }
+            set { precioReal = value; }
         }
 
         public Corte Corte

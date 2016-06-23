@@ -151,6 +151,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
+            cmVenta.Parameters.AddWithValue("@bonificacion", oLineaE.Bonificacion);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
@@ -170,6 +171,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
+            cmVenta.Parameters.AddWithValue("@bonificacioin", oLineaE.Bonificacion);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
@@ -288,6 +290,7 @@ namespace Datos
 
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
+                        oLinea.Bonificacion = string.IsNullOrEmpty(drLinea["bonificacion"].ToString()) ? 0 : float.Parse(drLinea["bonificacion"].ToString());
 
                         try
                         {

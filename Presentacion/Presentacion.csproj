@@ -75,6 +75,12 @@
     <Compile Include="Balanza\formBalanza.Designer.cs">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formBonificar.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formBonificar.Designer.cs">
+      <DependentUpon>formBonificar.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formCerrarCajaMultiple.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -545,6 +551,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Balanza\formBalanza.resx">
       <DependentUpon>formBalanza.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formBonificar.resx">
+      <DependentUpon>formBonificar.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCerrarCajaMultiple.resx">
       <DependentUpon>formCerrarCajaMultiple.cs</DependentUpon>

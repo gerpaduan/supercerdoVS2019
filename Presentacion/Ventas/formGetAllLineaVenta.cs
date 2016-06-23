@@ -51,7 +51,9 @@ namespace Presentacion
                     grillaVentas.Columns["fechaVenta"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
                     grillaVentas.Columns["cantKg"].DefaultCellStyle.Format = "F3";
                     grillaVentas.Columns["precioKg"].DefaultCellStyle.Format = "F2";
+                    grillaVentas.Columns["bonificacion"].DefaultCellStyle.Format = "F2";
                     grillaVentas.Columns["totalCorte"].DefaultCellStyle.Format = "F2";
+
 
                     cargarTotales();
                 } 
@@ -87,7 +89,7 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            comboSucursal.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
         private void infoVenta()

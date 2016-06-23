@@ -65,6 +65,12 @@ namespace Presentacion
                     grillaVentas.Columns["cantKg"].DefaultCellStyle.Format = "F3";
                     grillaVentas.Columns["precioKg"].DefaultCellStyle.Format = "F2";
                     grillaVentas.Columns["totalCorte"].DefaultCellStyle.Format = "F2";
+                    grillaVentas.Columns["bonificacion"].DefaultCellStyle.Format = "F2";
+                    grillaVentas.Columns["bonificacion"].HeaderText = "Bonif.";
+                    grillaVentas.Columns["pesoBalanza"].HeaderText = "Balanza";
+                    grillaVentas.Columns["idAnulado"].HeaderText = "Anulado";
+
+                    grillaVentas.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
 
                     cargarTotales();
                 } 

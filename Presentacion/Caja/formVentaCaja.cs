@@ -11,7 +11,7 @@ using Presentacion.Cortes;
 using Presentacion.Caja;
 using System.Configuration;
 
-namespace Presentacion.Ventas
+namespace Presentacion.Caja
 {
     public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
@@ -21,6 +21,7 @@ namespace Presentacion.Ventas
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
         public string vendedor = "-";
+        public string precioBonificado = "";
         formVentas frmVentas;
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
@@ -80,7 +81,7 @@ namespace Presentacion.Ventas
             this.KeyPreview = true;
 
             //asigo sucursal a la venta  
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
@@ -204,21 +205,19 @@ namespace Presentacion.Ventas
                     grillaLineasVenta.FirstDisplayedScrollingRowIndex = listaLineaGrilla.Count - 1;
 
                     for (int nroFila = 0; nroFila < grillaLineasVenta.Rows.Count; nroFila++)
-                    {
-                        
+                    {                        
                         foreach (Entidades.LineaVenta linea in listaLineaVenta)
                         {
+                            if (grillaLineasVenta.Rows[nroFila].Cells["Corte"].Value.ToString().Length > 22)
+                            {
+                                grillaLineasVenta.Rows[nroFila].Cells["Corte"].Style.Font = new Font(grillaLineasVenta.Font.ToString(), 13);
+                            }
                             if (Convert.ToInt32(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo &&
                                 linea.IndexAnulado == nroFila)
                             {
                                 grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
                             }
-                        }
-                        //if (grillaLineasVenta.Rows[nroFila].Cells["ind == nroFila)
-                        //{
-                        //    grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
-                        //}
-                        
+                        }                        
                     }
                 }
 
@@ -256,7 +255,7 @@ namespace Presentacion.Ventas
                     {
                         oVentaN.agregarLineaVenta(linea);
                         ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                            linea.PrecioKg, linea.CantKg, linea.PrecioKg * linea.CantKg);
+                            linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
                     //ticket.LineasEnBlanco(1);
                     ticket.TextoDerecha("-------");
@@ -293,6 +292,7 @@ namespace Presentacion.Ventas
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
+            txtTotalKgs.Text = "0,000";
             txtTotalS.Text = "000,00";
             txtAbona.Text = "";
             txtCambio.Text = "";
@@ -333,6 +333,7 @@ namespace Presentacion.Ventas
             }
 
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
+            txtTotalKgs.Text = totalKgs.ToString("N3");
             txtTotalS.Text = totalPesos.ToString("N2");
             totalVenta = float.Parse(txtTotalS.Text.Trim());
             abonar();
@@ -430,6 +431,8 @@ namespace Presentacion.Ventas
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
+            oLineaVenta.Bonificacion = ((precioKg / oCorteE.precioKg) - 1) * 100;
+            oLineaVenta.PrecioReal = oCorteE.precioKg;
 
             if (oLineaVenta.CantKg < 0)
             {
@@ -441,9 +444,19 @@ namespace Presentacion.Ventas
             }
         }
 
-
         private bool validarLinea()
         {
+            //si es consumidor final no se permite precios mayorista excepto que esté logueado como admin
+            int inicioCodigoMayorista = (ConfigurationManager.AppSettings["codigoPrecioMayorista"]) != null ?
+                Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioMayorista"].ToString()) : 0;
+            if (oCorteE != null && oCorteE.Codigo >= inicioCodigoMayorista && !FormPrincipal.logueado && !oUsuario.Admin && 
+                oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+            {
+                MessageBox.Show("No tienes permiso para realizar ventas con precio mayorista a un consumidor final.\n\n"+
+                    "Busque el cliente o agréguelo para poder realizar la venta con precios mayoristas", "Precio mayorista");
+                return false;
+            }
+
             string mensaje = "Complete los siguientes campos: ";
             if (txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")
             {
@@ -525,6 +538,34 @@ namespace Presentacion.Ventas
             else
             {
                 string mensaje = "Complete los siguientes campos: ";
+                
+                //se valida que no finalice venta con bonificacion para consumidor final
+                //foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                for (int index = 0; index < listaLineaVenta.Count; index++)
+                {
+                    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
+                        oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                    {
+                        bool esAnulado = false;
+                        //se valida que el corte no hay sido anulado
+                        for (int nroFila = 0; nroFila < listaLineaVenta.Count; nroFila++)
+                        {
+                            if (listaLineaVenta[index].IndexAnulado >= 0 || (listaLineaVenta[index].Corte.codigo == listaLineaVenta[nroFila].Corte.codigo &&
+                                listaLineaVenta[nroFila].IndexAnulado == index))
+                            {                                
+                                esAnulado = true;
+                                break;
+                            }
+                        }
+
+                        if (!esAnulado)
+                        {
+                            mensaje = "No tienes permiso para poder bonificar a un cliente Consumidor Final";
+                            MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return false;
+                        }  
+                    }                  
+                }
 
                 //valido que no haya ningún corte seleccionado al finalizar venta
                 if (txtCodigo.Text.Length > 0)
@@ -687,6 +728,7 @@ namespace Presentacion.Ventas
                         this.txtTotalCorte.Text = "";
                         this.txtPrecioKg.Text = "";
                         this.txtCorte.Text = "";
+                        totalesParciales(0, 0);
                     }
                 }
                 catch (Exception ex)
@@ -702,6 +744,7 @@ namespace Presentacion.Ventas
                 txtCorte.Text = null;
                 txtTotalCorte.Text = null;
                 txtPrecioKg.Text = null;
+                totalesParciales(0,0);
             }
         }
 
@@ -718,6 +761,9 @@ namespace Presentacion.Ventas
                     float totalCorteInestable = kgPesoInestable * precioKgCorte;
                     //cargo el txt total corte
                     txtTotalCorte.Text = totalCorteInestable.ToString("F2");
+
+                    totalesParciales(kgPesoInestable, totalCorteInestable);
+
 	            }
 	            catch (Exception)
 	            {
@@ -784,6 +830,8 @@ namespace Presentacion.Ventas
                     //cargo el txt total corte
                     txtTotalCorte.Text = totalCorte.ToString("N");
 
+                    totalesParciales(cantKg, totalCorte);
+
                 }
                 catch (Exception ex)
                 {
@@ -794,6 +842,17 @@ namespace Presentacion.Ventas
                 }
             }
 
+        }
+
+        private void totalesParciales(float kgsCorte, float totalCorte)
+        {
+            cargarTotales();
+
+            if (totalCorte > 0)
+            {
+                txtTotalKgs.Text = (Utilidades.Util_Form.convertFloat(txtTotalKgs.Text, false) + kgsCorte).ToString("F3");
+                txtTotalS.Text = (Utilidades.Util_Form.convertFloat(txtTotalS.Text, false) + totalCorte).ToString("F2");  
+            }      
         }
 
         private void establecerPrecioKg()
@@ -946,7 +1005,7 @@ namespace Presentacion.Ventas
         {
             oCliente = persona;
             this.txtCliente.Text = oCliente.razonSocial;
-
+            this.txtCodigo.Focus();
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -1065,6 +1124,9 @@ namespace Presentacion.Ventas
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   "+
+                "F5 = Bonificación  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |  F9 = Buscar Cliente  |  "+
+                "\nF10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |";
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -1111,6 +1173,10 @@ namespace Presentacion.Ventas
             }
         }
 
+        private bool estaBloqueado()
+        {
+            return panelBloquear.Visible;
+        }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             switch (keyData)
@@ -1122,19 +1188,11 @@ namespace Presentacion.Ventas
                     txtCodigo.Focus();
                     break;
                 case Keys.End:
+                    if (!estaBloqueado())
                     mostrarPago();
                     break;
                 case Keys.PageDown:
                     cambiarPuntoDeVenta();
-                    break;
-                case Keys.F6:
-                    misEgresoCaja();
-                    break;
-                case Keys.F7:
-                    agregarEgresoCaja();
-                    break;
-                case Keys.F9:
-                    buscarCliente();
                     break;
                 case Keys.F2:
                     foreach (Form frm in Application.OpenForms)
@@ -1146,7 +1204,27 @@ namespace Presentacion.Ventas
                         }
                     }
                     break;
+                case Keys.F4:
+                        sumarUltimasDosVentas();
+                    break;
+                case Keys.F5:
+                    if (!estaBloqueado())
+                    bonificarCorte();
+                    break;
+                case Keys.F6:
+                    if (!estaBloqueado())
+                    misEgresoCaja();
+                    break;
+                case Keys.F7:
+                    if (!estaBloqueado())
+                    agregarEgresoCaja();
+                    break;
+                case Keys.F9:
+                    if (!estaBloqueado())
+                    buscarCliente();
+                    break;
                 case Keys.F10:
+                    if (!estaBloqueado())
                     buscarCorte();
                     break;
                 case Keys.F11:
@@ -1158,6 +1236,74 @@ namespace Presentacion.Ventas
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void sumarUltimasDosVentas()
+        {
+            //try
+            //{
+            //    oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oUsuario.Id);
+            //    double totalUltimaVenta = 0;
+            //    foreach (Entidades.LineaVenta linea in oUltimaVentaVendedor.LineasVenta)
+            //    {
+            //        totalUltimaVenta += linea.PrecioKg * linea.CantKg;
+            //    }
+            //    MessageBox.Show(totalUltimaVenta.ToString());
+            //}
+            //catch (Exception)
+            //{
+                
+            //}
+        }
+
+        private void bonificarCorte()
+        {
+            if (grillaLineasVenta.SelectedRows.Count > 0)
+            {
+                int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
+
+                Entidades.LineaVenta oLineaVentaSelect = new Entidades.LineaVenta();
+                oLineaVentaSelect = listaLineaVenta[nroFila];
+
+                //se valida que el corte no haya sido anulado para poder bonificar
+                foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                {
+                    if (oLineaVentaSelect.IndexAnulado >= 0 || (oLineaVentaSelect.Corte.codigo == linea.Corte.codigo &&
+                        linea.IndexAnulado == nroFila))
+                    {
+                        MessageBox.Show("No se pueden bonificar cortes anulados");
+                        return;
+                    }
+                }
+
+                //si es consumidor final no se permite bonificacion excepto que esté logueado como admin
+                if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                {
+                    MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
+                    return;
+                }
+
+                formBonificar frmBonificar = new formBonificar();
+                frmBonificar.oLineaVenta = oLineaVentaSelect;
+                frmBonificar.frmVentaCaja = this;
+                frmBonificar.ShowDialog();
+
+                listaLineaVenta[nroFila].PrecioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
+                listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].PrecioReal)) * 100;
+                listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? oLineaVentaSelect.Corte.CorteDesc :
+                    (oLineaVentaSelect.Corte.CorteDesc.Length < 9 ? oLineaVentaSelect.Corte.CorteDesc : oLineaVentaSelect.Corte.CorteDesc.Substring(0,9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
+                listaLineaGrilla[nroFila].precioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
+                listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].cantKgs;
+
+                cargarGrilla();
+
+                txtCodigo.Focus();
+            }
+            else
+            {
+                MessageBox.Show("No hay ninguna fila seleccionada.", "Seleccione un fila", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            oLineaVenta = null;
         }
 
         private void misEgresoCaja()
@@ -1245,6 +1391,8 @@ namespace Presentacion.Ventas
             grupoCortes.Enabled = false;
             pnlBuscar.Enabled = false;
             panelPago.Enabled = false;
+            grillaLineasVenta.Enabled = false;
+
             txtClave.Focus();
         }
 
@@ -1267,6 +1415,7 @@ namespace Presentacion.Ventas
                 grupoCortes.Enabled = true;
                 pnlBuscar.Enabled = true;
                 panelPago.Enabled = true;
+                grillaLineasVenta.Enabled = true;
 
                 timerBloquearCaja.Start();
                 tiempoInactivo = 0;
