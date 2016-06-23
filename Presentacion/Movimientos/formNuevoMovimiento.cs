@@ -462,7 +462,7 @@ namespace Presentacion
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
 
-            comboSucOrigen.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());//-1;//No muestra ninguna sucursal
+            comboSucOrigen.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());//-1;//No muestra ninguna sucursal
             cambiarSucursalDestino();
         }
 

@@ -36,7 +36,7 @@ namespace Presentacion.Caja
         private void formCerrarCaja_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
             btnImprimir.Visible = tipoCierreActual.Equals(tipoCierre.ModificarCaja);
             if (oCierreE == null || oCierreE.Id == 0)
             {

@@ -116,7 +116,7 @@ namespace Utilidades
             switch (tipoConn)
             {
                 case Conexion.tipoConexion.local:
-                    idSucursal = 1;
+                    idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
                     break;
                 case Conexion.tipoConexion.sanMartin:
                     idSucursal = 2;

@@ -199,7 +199,7 @@ namespace Utilidades
         public static bool validarSucursal(bool esAdmin, int idSucursal)
         {
             bool resp = true;
-            int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int sucActual = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             if (!esAdmin && idSucursal != sucActual)
             {
                 resp = false;
@@ -224,7 +224,7 @@ namespace Utilidades
                 
         public static int idSucursalAppConfig()
         {           
-            return Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            return Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
         public static string errorConexionBD(string exception)

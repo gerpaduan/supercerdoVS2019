@@ -571,7 +571,7 @@ namespace Presentacion
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
 
-            comboSucursal.SelectedIndex = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString()) - 1;
+            comboSucursal.SelectedIndex = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion()) - 1;
         }
 
         #endregion
