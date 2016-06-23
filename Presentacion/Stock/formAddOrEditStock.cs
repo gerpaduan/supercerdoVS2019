@@ -63,6 +63,7 @@ namespace Presentacion
             cargarComboSucursal();
             dtCorte = oCorteN.obtenerCortes();
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            huboModificaciones = false;
 
             if (dtCorte.Rows.Count == 0)
             {
@@ -179,8 +180,8 @@ namespace Presentacion
                 {
                     return;
                 }
-                if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") &&
-                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
+                if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
+                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     txtUsuario.Text = oUsuario.Nombre;
                     btnAceptar.Text = "&Guardar";
@@ -208,8 +209,8 @@ namespace Presentacion
             {
                 if (listaCortePorCompra.Count > 0 || accion.Equals(Entidades.Compra.accion.Modificar))
                 {
-                    if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") && 
-                        Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
+                    if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
+                        Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
                         && Util_Form.validarFecha(txtFechaCompra.Value, "Fecha") && validaciónFinal())
                     {
                         cargarCompra();//se cargan datos de la compra
@@ -484,6 +485,11 @@ namespace Presentacion
 
         private bool validaciónFinal()
         {
+            if (!huboModificaciones)
+            {
+                MessageBox.Show("No se realizaron modificaciones.\n\nPresione el boton Cancelar para salir sin realizar modificaciones");
+                return false;
+            }
             DialogResult respuesta;
             respuesta = MessageBox.Show("¿Guardar la modificación en el stock de los cortes ingresados?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
