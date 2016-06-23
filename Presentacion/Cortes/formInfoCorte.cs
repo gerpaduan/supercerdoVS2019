@@ -119,14 +119,10 @@ namespace Presentacion
 
         private void eliminar_Click(object sender, EventArgs e)
         {
-            if (Presentacion.FormPrincipal.logueado == false)
-            {
-                MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
-            }
-            else
-            {
-                eliminarCorte();
-            }
+            if (!Usuarios.FormValidarPermiso.validarPermiso())
+                return;
+
+            eliminarCorte();
         }
 
         private void formInfoCorte_Load(object sender, EventArgs e)
@@ -137,12 +133,6 @@ namespace Presentacion
 
                 oCorteE = oCorteN.getCorteById(idCorte, true);
                 cargarCorte();
-
-                if (Presentacion.FormPrincipal.logueado == false)
-                {
-                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
-                    this.Close();
-                }
             }
             catch (Exception ex)
             {

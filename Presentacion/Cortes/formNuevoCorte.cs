@@ -280,9 +280,8 @@ namespace Presentacion
                     cargarCampos();
                 }
 
-                if (Presentacion.FormPrincipal.logueado == false)
+                if (!Usuarios.FormValidarPermiso.validarPermiso())
                 {
-                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
                     this.Close();
                 }
                 groupBox1.Select();
