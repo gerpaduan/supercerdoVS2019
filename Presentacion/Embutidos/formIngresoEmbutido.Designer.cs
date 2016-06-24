@@ -320,12 +320,12 @@
             this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkLeerPeso.Location = new System.Drawing.Point(204, 26);
+            this.checkLeerPeso.Location = new System.Drawing.Point(316, 26);
             this.checkLeerPeso.Name = "checkLeerPeso";
-            this.checkLeerPeso.Size = new System.Drawing.Size(130, 19);
+            this.checkLeerPeso.Size = new System.Drawing.Size(71, 19);
             this.checkLeerPeso.TabIndex = 23;
             this.checkLeerPeso.TabStop = false;
-            this.checkLeerPeso.Text = "Leer Peso &Balanza";
+            this.checkLeerPeso.Text = "&Balanza";
             this.checkLeerPeso.UseVisualStyleBackColor = true;
             this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 

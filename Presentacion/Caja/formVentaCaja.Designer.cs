@@ -247,7 +247,7 @@
             this.checkTicket.Checked = true;
             this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.Location = new System.Drawing.Point(525, 18);
+            this.checkTicket.Location = new System.Drawing.Point(553, 18);
             this.checkTicket.Name = "checkTicket";
             this.checkTicket.Size = new System.Drawing.Size(70, 24);
             this.checkTicket.TabIndex = 46;
@@ -313,12 +313,12 @@
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkLeerPeso.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkLeerPeso.Location = new System.Drawing.Point(338, 18);
+            this.checkLeerPeso.Location = new System.Drawing.Point(414, 18);
             this.checkLeerPeso.Name = "checkLeerPeso";
-            this.checkLeerPeso.Size = new System.Drawing.Size(162, 24);
+            this.checkLeerPeso.Size = new System.Drawing.Size(86, 24);
             this.checkLeerPeso.TabIndex = 45;
             this.checkLeerPeso.TabStop = false;
-            this.checkLeerPeso.Text = "Leer Peso &Balanza";
+            this.checkLeerPeso.Text = "&Balanza";
             this.checkLeerPeso.UseVisualStyleBackColor = true;
             this.checkLeerPeso.Visible = false;
             this.checkLeerPeso.Enter += new System.EventHandler(this.checkLeerPeso_Enter);

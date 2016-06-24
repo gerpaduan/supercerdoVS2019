@@ -43,6 +43,7 @@
             this.label16 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkSinBalanza = new System.Windows.Forms.CheckBox();
             this.checkTicket = new System.Windows.Forms.CheckBox();
             this.txtCantUnidad = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -87,7 +88,6 @@
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
             this.idMovimientoLabel = new System.Windows.Forms.Label();
-            this.checkSinBalanza = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -213,6 +213,19 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Corte";
             // 
+            // checkSinBalanza
+            // 
+            this.checkSinBalanza.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.checkSinBalanza.AutoSize = true;
+            this.checkSinBalanza.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkSinBalanza.Location = new System.Drawing.Point(459, 25);
+            this.checkSinBalanza.Name = "checkSinBalanza";
+            this.checkSinBalanza.Size = new System.Drawing.Size(92, 19);
+            this.checkSinBalanza.TabIndex = 24;
+            this.checkSinBalanza.TabStop = false;
+            this.checkSinBalanza.Text = "&Sin Balanza";
+            this.checkSinBalanza.UseVisualStyleBackColor = true;
+            // 
             // checkTicket
             // 
             this.checkTicket.Anchor = System.Windows.Forms.AnchorStyles.None;
@@ -259,12 +272,12 @@
             this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkLeerPeso.Location = new System.Drawing.Point(225, 25);
+            this.checkLeerPeso.Location = new System.Drawing.Point(285, 25);
             this.checkLeerPeso.Name = "checkLeerPeso";
-            this.checkLeerPeso.Size = new System.Drawing.Size(130, 19);
+            this.checkLeerPeso.Size = new System.Drawing.Size(71, 19);
             this.checkLeerPeso.TabIndex = 20;
             this.checkLeerPeso.TabStop = false;
-            this.checkLeerPeso.Text = "Leer Peso &Balanza";
+            this.checkLeerPeso.Text = "&Balanza";
             this.checkLeerPeso.UseVisualStyleBackColor = true;
             this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 
@@ -759,19 +772,6 @@
             this.idMovimientoLabel.TabIndex = 64;
             this.idMovimientoLabel.Text = "idMovimientoLabel";
             this.idMovimientoLabel.Visible = false;
-            // 
-            // checkSinBalanza
-            // 
-            this.checkSinBalanza.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.checkSinBalanza.AutoSize = true;
-            this.checkSinBalanza.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkSinBalanza.Location = new System.Drawing.Point(459, 25);
-            this.checkSinBalanza.Name = "checkSinBalanza";
-            this.checkSinBalanza.Size = new System.Drawing.Size(92, 19);
-            this.checkSinBalanza.TabIndex = 24;
-            this.checkSinBalanza.TabStop = false;
-            this.checkSinBalanza.Text = "&Sin Balanza";
-            this.checkSinBalanza.UseVisualStyleBackColor = true;
             // 
             // formNuevoMovimiento
             // 
