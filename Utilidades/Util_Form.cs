@@ -283,9 +283,16 @@ namespace Utilidades
             try
             {
                 string nombreCarpeta = "Capturas";
-                string fullNameCaptura = fechaRegistro.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura + ".jpg";
+                string fullNameCaptura = DateTime.Now.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura + ".jpg";
+                string folderCaptura = fechaRegistro.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura;
                 string escritorio = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                string fullPath = Path.GetFullPath(escritorio + "\\" + nombreCarpeta);// (@"\" + nombreCarpeta);
+                string capturasPath = Path.GetFullPath(escritorio + "\\" + nombreCarpeta);// (@"\" + nombreCarpeta);
+                if (!Directory.Exists(capturasPath))
+                {
+                    Directory.CreateDirectory(capturasPath);
+                }
+
+                string fullPath = Path.GetFullPath(capturasPath + "\\" + folderCaptura);// (@"\" + nombreCarpeta);
 
                 if (!Directory.Exists(fullPath))
                 {
