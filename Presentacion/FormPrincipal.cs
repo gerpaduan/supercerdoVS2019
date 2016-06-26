@@ -496,8 +496,18 @@ namespace Presentacion
 
         private static void stock()
         {
-            formStock frm = new formStock();
-            frm.Show();
+            if (Application.OpenForms["formStock"] != null)
+            {
+
+                Application.OpenForms["formStock"].Activate();
+                Application.OpenForms["formStock"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formStock frm = new formStock();
+                frm.Show();
+            }
         }
 
         private void balanzaToolStripMenuItem_Click(object sender, EventArgs e)

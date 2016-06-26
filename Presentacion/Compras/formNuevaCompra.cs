@@ -432,47 +432,24 @@ namespace Presentacion
 
                     oCortePorCompra.sucursal = oSucursalE;
 
-
-                    int nroFila = validarCorteEnGrilla();
-                    if (nroFila == -1)
-                    {
                         listaCortePorCompra.Add(oCortePorCompra);
 
 
-                        //creo CortesPorCompra y cargo la lista de la grilla
-                        cortesPorCompra = new CortesPorCompra();
+                    //creo CortesPorCompra y cargo la lista de la grilla
+                    cortesPorCompra = new CortesPorCompra();
 
-                        cortesPorCompra.codigo = oCortePorCompra.corte.codigo;
-                        cortesPorCompra.corte = oCortePorCompra.corte.corte;
-                        cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
-                        cortesPorCompra.precioKg = oCortePorCompra.precioKg;
-                        cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
-                        cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
+                    cortesPorCompra.codigo = oCortePorCompra.corte.codigo;
+                    cortesPorCompra.corte = oCortePorCompra.corte.corte;
+                    cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
+                    cortesPorCompra.precioKg = oCortePorCompra.precioKg;
+                    cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
+                    cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
 
-                        listaCortesEnGrilla.Add(cortesPorCompra);
+                    listaCortesEnGrilla.Add(cortesPorCompra);
 
-                        oCortePorCompra = null;
-                        cortesPorCompra = null;
-
-                    }
-
-                    if (nroFila == -2)
-                    {
-                        oCortePorCompra = null;
-                        cortesPorCompra = null;
-                    }
-                    if (nroFila > -1)
-                    {
-                        listaCortePorCompra[nroFila].cantKgs = listaCortePorCompra[nroFila].cantKgs + oCortePorCompra.cantKgs;
-
-                        listaCortesEnGrilla[nroFila].cantKgs = listaCortePorCompra[nroFila].cantKgs;
-                        listaCortesEnGrilla[nroFila].totalS = listaCortesEnGrilla[nroFila].totalS + (oCortePorCompra.cantKgs * oCortePorCompra.precioKg);
-
-                        oCortePorCompra = null;
-                        cortesPorCompra = null;
-                    }
-                }
-                
+                    oCortePorCompra = null;
+                    cortesPorCompra = null;
+                }              
 
 	        }
 	        catch (Exception)

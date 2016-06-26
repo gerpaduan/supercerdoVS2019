@@ -79,9 +79,15 @@ namespace Entidades
         private Sucursal sucursal;
         private DateTime? creado;
         private DateTime? actualizado;
-
         private Usuario creadoPor;
         private Usuario actualizadoPor;
+        private List<Entidades.CortePorCompra> lineasCortes;
+
+        public List<Entidades.CortePorCompra> LineasCortes
+        {
+            get { return lineasCortes; }
+            set { lineasCortes = value; }
+        }
 
         public Usuario CreadoPor
         {

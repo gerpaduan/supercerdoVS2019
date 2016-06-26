@@ -91,6 +91,9 @@ namespace Negocio
             DataTable dtCortesPorCompra = obtenerCortesPorCompra(idCompra);
             if (dtCortesPorCompra.Rows.Count > 0)
             {
+                Negocio.Usuario oUsuarioN = new Usuario();
+                List<Entidades.Usuario> listaUsuario = oUsuarioN.listaUsuario();
+
                 Negocio.Corte oCorteN = new Corte();
                 DataTable dtCortes = oCorteN.obtenerCortes();
                 Entidades.Corte oCorte;
@@ -102,9 +105,23 @@ namespace Negocio
                     corte = new Entidades.CortePorCompra();
 
                     corte.Compra = oCompra;
+
+                    corte.IdCortePorCompra = row["idCortePorCompra"] != null ? Convert.ToInt32(row["idCortePorCompra"].ToString()) : 0;
                     corte.precioKgs = float.Parse(row["precioKg"].ToString());
                     corte.CantKgs = float.Parse(row["cantKg"].ToString());
+                    corte.Creado = row["creado"] != DBNull.Value ? (DateTime?)(row["creado"]) : oCompra.Creado;
+                    int idUser = row["creadoPor"] != null ? Convert.ToInt32(row["creadoPor"].ToString()) : 0;
+                    foreach (Entidades.Usuario  user in listaUsuario)
+                    {
+                        if (user.Id.Equals(idUser))
+                        {
+                            corte.CreadoPor = user;
+                            break;
+                        }
+                    }
+
                     oCorte = new Entidades.Corte();
+
                     foreach (DataRow rowCorte in dtCortes.Rows)
                     {
                         if (row["idCorte"].Equals(rowCorte["idCorte"]))
