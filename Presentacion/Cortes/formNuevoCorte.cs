@@ -79,6 +79,8 @@ namespace Presentacion
             oCorteMaestroE = oCorteE.corteMaestro;
             comboTipo.Text = oCorteE.tipo;
             txtIndependiente.Checked = oCorteE.independiente == 1;
+            checkMayorista.Checked = oCorteE.Mayorista;
+            checkEnCierreStock.Checked = oCorteE.EnCierreStock;
 
             if (oCorteE.idCorte != oCorteE.corteMaestro.idCorte)
             {
@@ -170,6 +172,10 @@ namespace Presentacion
             }
 
             oCorteE.Tipo = comboTipo.Text;
+
+            oCorteE.Mayorista = checkMayorista.Checked;
+
+            oCorteE.EnCierreStock = checkEnCierreStock.Checked;
 
             if (txtIndependiente.Checked.Equals(true))
             {

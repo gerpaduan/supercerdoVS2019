@@ -73,6 +73,7 @@ namespace Presentacion
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
             grillaCortes.DataSource = dtCortes;
+            filtarGrilla();
         }
         
         public void buscarCorte()

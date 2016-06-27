@@ -36,6 +36,8 @@ namespace Datos
                             oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
                         oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
+                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
                         oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
                         oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
                         oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
@@ -68,6 +70,8 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@tipo", oCorteE.tipo);
             cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
             cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
+            cmCorte.Parameters.AddWithValue("@mayorista", oCorteE.Mayorista);
+            cmCorte.Parameters.AddWithValue("@enCierreStock", oCorteE.EnCierreStock);
             cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro.idCorte);
             cmCorte.Parameters.AddWithValue("@porcentaje", oCorteE.porcentaje);
             cmCorte.Parameters.AddWithValue("@porcentajeHueso", oCorteE.porcentajeHueso);
@@ -259,8 +263,10 @@ namespace Datos
                         oCorteE.codigo = Convert.ToInt32(drCorte["codigo"].ToString());
                         oCorteE.corte = drCorte["corte"].ToString();
                         oCorteE.tipo = drCorte["tipo"].ToString();
-                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;                     
+                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
                         oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
+                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
                         oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
                         oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());

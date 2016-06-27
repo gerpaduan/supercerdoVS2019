@@ -33,6 +33,8 @@
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
+            this.checkMayorista = new System.Windows.Forms.CheckBox();
             this.txtIdCorte = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
             this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
@@ -62,6 +64,8 @@
             this.label10 = new System.Windows.Forms.Label();
             this.txtStockSanMartin = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
             this.barraControl.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -109,6 +113,10 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.label15);
+            this.groupBox1.Controls.Add(this.label14);
+            this.groupBox1.Controls.Add(this.checkEnCierreStock);
+            this.groupBox1.Controls.Add(this.checkMayorista);
             this.groupBox1.Controls.Add(this.txtIdCorte);
             this.groupBox1.Controls.Add(this.label13);
             this.groupBox1.Controls.Add(this.txtDesvioEstandar);
@@ -133,10 +141,32 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(12, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(476, 158);
+            this.groupBox1.Size = new System.Drawing.Size(476, 202);
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // checkEnCierreStock
+            // 
+            this.checkEnCierreStock.AutoSize = true;
+            this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkEnCierreStock.Enabled = false;
+            this.checkEnCierreStock.Location = new System.Drawing.Point(100, 176);
+            this.checkEnCierreStock.Name = "checkEnCierreStock";
+            this.checkEnCierreStock.Size = new System.Drawing.Size(15, 14);
+            this.checkEnCierreStock.TabIndex = 36;
+            this.checkEnCierreStock.UseVisualStyleBackColor = true;
+            // 
+            // checkMayorista
+            // 
+            this.checkMayorista.AutoSize = true;
+            this.checkMayorista.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkMayorista.Enabled = false;
+            this.checkMayorista.Location = new System.Drawing.Point(100, 156);
+            this.checkMayorista.Name = "checkMayorista";
+            this.checkMayorista.Size = new System.Drawing.Size(15, 14);
+            this.checkMayorista.TabIndex = 35;
+            this.checkMayorista.UseVisualStyleBackColor = true;
             // 
             // txtIdCorte
             // 
@@ -160,7 +190,7 @@
             // 
             // txtDesvioEstandar
             // 
-            this.txtDesvioEstandar.Location = new System.Drawing.Point(351, 129);
+            this.txtDesvioEstandar.Location = new System.Drawing.Point(351, 153);
             this.txtDesvioEstandar.Name = "txtDesvioEstandar";
             this.txtDesvioEstandar.ReadOnly = true;
             this.txtDesvioEstandar.Size = new System.Drawing.Size(75, 21);
@@ -172,7 +202,7 @@
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label11.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label11.Location = new System.Drawing.Point(249, 132);
+            this.label11.Location = new System.Drawing.Point(249, 156);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(96, 15);
             this.label11.TabIndex = 32;
@@ -183,7 +213,7 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(227, 24);
+            this.label9.Location = new System.Drawing.Point(227, 48);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(118, 15);
             this.label9.TabIndex = 30;
@@ -193,7 +223,7 @@
             // 
             this.txtIndependiente.AutoSize = true;
             this.txtIndependiente.Enabled = false;
-            this.txtIndependiente.Location = new System.Drawing.Point(351, 25);
+            this.txtIndependiente.Location = new System.Drawing.Point(351, 49);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(15, 14);
             this.txtIndependiente.TabIndex = 29;
@@ -201,7 +231,7 @@
             // 
             // txtPorcHueso
             // 
-            this.txtPorcHueso.Location = new System.Drawing.Point(351, 102);
+            this.txtPorcHueso.Location = new System.Drawing.Point(351, 126);
             this.txtPorcHueso.Name = "txtPorcHueso";
             this.txtPorcHueso.ReadOnly = true;
             this.txtPorcHueso.Size = new System.Drawing.Size(75, 21);
@@ -213,7 +243,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(258, 105);
+            this.label7.Location = new System.Drawing.Point(258, 129);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(87, 15);
             this.label7.TabIndex = 28;
@@ -221,7 +251,7 @@
             // 
             // txtPorcentajeCorte
             // 
-            this.txtPorcentajeCorte.Location = new System.Drawing.Point(351, 75);
+            this.txtPorcentajeCorte.Location = new System.Drawing.Point(351, 99);
             this.txtPorcentajeCorte.Name = "txtPorcentajeCorte";
             this.txtPorcentajeCorte.ReadOnly = true;
             this.txtPorcentajeCorte.Size = new System.Drawing.Size(71, 21);
@@ -272,7 +302,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(264, 78);
+            this.label2.Location = new System.Drawing.Point(264, 102);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(81, 15);
             this.label2.TabIndex = 15;
@@ -299,7 +329,7 @@
             // 
             // txtCorteMaestro
             // 
-            this.txtCorteMaestro.Location = new System.Drawing.Point(351, 48);
+            this.txtCorteMaestro.Location = new System.Drawing.Point(351, 72);
             this.txtCorteMaestro.Name = "txtCorteMaestro";
             this.txtCorteMaestro.ReadOnly = true;
             this.txtCorteMaestro.Size = new System.Drawing.Size(106, 21);
@@ -310,7 +340,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(261, 51);
+            this.label3.Location = new System.Drawing.Point(261, 75);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(84, 15);
             this.label3.TabIndex = 4;
@@ -338,7 +368,7 @@
             // btnSalir
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSalir.Location = new System.Drawing.Point(403, 300);
+            this.btnSalir.Location = new System.Drawing.Point(403, 346);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(82, 27);
             this.btnSalir.TabIndex = 18;
@@ -355,7 +385,7 @@
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 40);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(497, 254);
+            this.pnlBuscar.Size = new System.Drawing.Size(497, 302);
             this.pnlBuscar.TabIndex = 17;
             // 
             // groupBox2
@@ -369,7 +399,7 @@
             this.groupBox2.Controls.Add(this.label12);
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox2.Location = new System.Drawing.Point(12, 167);
+            this.groupBox2.Location = new System.Drawing.Point(12, 211);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(476, 84);
             this.groupBox2.TabIndex = 19;
@@ -433,11 +463,33 @@
             this.label12.TabIndex = 2;
             this.label12.Text = "San Martín";
             // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label14.Location = new System.Drawing.Point(34, 155);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(60, 15);
+            this.label14.TabIndex = 37;
+            this.label14.Text = "Mayorista";
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label15.Location = new System.Drawing.Point(3, 175);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(91, 15);
+            this.label15.TabIndex = 38;
+            this.label15.Text = "En Cierre Stock";
+            // 
             // formInfoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(497, 331);
+            this.ClientSize = new System.Drawing.Size(497, 377);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
@@ -493,5 +545,9 @@
         protected System.Windows.Forms.Label label11;
         protected System.Windows.Forms.TextBox txtIdCorte;
         protected System.Windows.Forms.Label label13;
+        private System.Windows.Forms.CheckBox checkEnCierreStock;
+        private System.Windows.Forms.CheckBox checkMayorista;
+        protected System.Windows.Forms.Label label15;
+        protected System.Windows.Forms.Label label14;
     }
 }

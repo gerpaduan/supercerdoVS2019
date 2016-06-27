@@ -330,5 +330,18 @@ namespace Utilidades
                 return Color.White;
             }
         }
+        public static Color getBackColorCheckBox(bool isChecked)
+        {
+            try
+            {
+                Color color = isChecked ? Color.LimeGreen :ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
+
+                return color;
+            }
+            catch (Exception)
+            {
+                return Color.White;
+            }
+        }
     }
 }

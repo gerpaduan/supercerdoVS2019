@@ -13,6 +13,8 @@ namespace Entidades
         public float porcentaje;
         public string tipo;
         public int independiente;
+        private bool mayorista;
+        private bool enCierreStock;
         public Corte corteMaestro;
         public float precioKg;
         public float porcentajeHueso;
@@ -92,6 +94,19 @@ namespace Entidades
             {
                 tipo = value;
             }
+        }
+
+
+        public bool Mayorista
+        {
+            get { return mayorista; }
+            set { mayorista = value; }
+        }
+
+        public bool EnCierreStock
+        {
+            get { return enCierreStock; }
+            set { enCierreStock = value; }
         }
 
         public int Independiente

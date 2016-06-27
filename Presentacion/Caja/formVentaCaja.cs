@@ -449,11 +449,12 @@ namespace Presentacion.Caja
             //si es consumidor final no se permite precios mayorista excepto que esté logueado como admin
             int inicioCodigoMayorista = (ConfigurationManager.AppSettings["codigoPrecioMayorista"]) != null ?
                 Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioMayorista"].ToString()) : 0;
-            if (oCorteE != null && oCorteE.Codigo >= inicioCodigoMayorista && !FormPrincipal.logueado && !oUsuario.Admin && 
+            if (oCorteE != null && oCorteE.Mayorista && !FormPrincipal.logueado && !oUsuario.Admin && 
                 oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
             {
                 MessageBox.Show("No tienes permiso para realizar ventas con precio mayorista a un consumidor final.\n\n"+
                     "Busque el cliente o agréguelo para poder realizar la venta con precios mayoristas", "Precio mayorista");
+                txtCodigo.Focus();
                 return false;
             }
 
@@ -540,10 +541,9 @@ namespace Presentacion.Caja
                 string mensaje = "Complete los siguientes campos: ";
                 
                 //se valida que no finalice venta con bonificacion para consumidor final
-                //foreach (Entidades.LineaVenta linea in listaLineaVenta)
                 for (int index = 0; index < listaLineaVenta.Count; index++)
                 {
-                    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
+                    if ((listaLineaVenta[index].Bonificacion != 0 || listaLineaVenta[index].Corte.Mayorista) && !FormPrincipal.logueado && !oUsuario.Admin && 
                         oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
                     {
                         bool esAnulado = false;
@@ -560,7 +560,7 @@ namespace Presentacion.Caja
 
                         if (!esAnulado)
                         {
-                            mensaje = "No tienes permiso para poder bonificar a un cliente Consumidor Final";
+                            mensaje = "No tienes permiso para poder bonificar y/o vender productos mayoristas a un cliente Consumidor Final";
                             MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return false;
                         }  
@@ -715,6 +715,8 @@ namespace Presentacion.Caja
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.tipo = fila["tipo"].ToString();
+                                oCorteE.Mayorista = Convert.ToBoolean(fila["mayorista"]);
+                                oCorteE.EnCierreStock = Convert.ToBoolean(fila["enCierreStock"]);
                         }
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
@@ -1096,6 +1098,8 @@ namespace Presentacion.Caja
         {
             try
             {
+                checkLeerPeso.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkLeerPeso.Checked);
+
                 if (checkLeerPeso.Checked)
                 {
                     dejarDeLeerPeso = false;
@@ -1106,7 +1110,7 @@ namespace Presentacion.Caja
                     timer1.Enabled = true;
                 }
                 else
-                {
+                {                    
                     txtCantKgs.BackColor = SystemColors.Window;
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
@@ -1550,6 +1554,7 @@ namespace Presentacion.Caja
 
         private void checkTicket_CheckedChanged(object sender, EventArgs e)
         {
+            checkTicket.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkTicket.Checked);
             txtCodigo.Focus();
         }
 

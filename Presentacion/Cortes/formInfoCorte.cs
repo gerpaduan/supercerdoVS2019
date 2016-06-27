@@ -60,6 +60,9 @@ namespace Presentacion
                         txtIndependiente.Checked = true;
                     }
 
+                    checkMayorista.Checked = Convert.ToBoolean(fila["mayorista"]);
+                    checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
+
                     txtCorteMaestro.Text = fila["corteMaestro"].ToString();
                     txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
                     txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
