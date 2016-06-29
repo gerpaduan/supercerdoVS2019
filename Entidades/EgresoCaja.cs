@@ -58,6 +58,15 @@ namespace Entidades
             get { return monto; }
             set { monto = value; }
         }
+
+        private int? idCompra;
+
+        public int? IdCompra
+        {
+            get { return idCompra; }
+            set { idCompra = value; }
+        }
+
         Sucursal sucursal;
 
         public Sucursal Sucursal

@@ -1017,10 +1017,13 @@ namespace Presentacion
                 case 0:
                     break;
                 case 1:
-                    grillaSinStock.Rows[e.RowIndex - 1].Selected = true;
+                    grillaSinStock.Rows[0].Selected = true;
+                    grillaSinStock.FirstDisplayedScrollingRowIndex = 0;
                     break;
 		        default:
-                    grillaSinStock.Rows[e.RowIndex == grillaSinStock.Rows.Count ? e.RowIndex - 1 : e.RowIndex].Selected = true;
+                    selectRow = e.RowIndex == grillaSinStock.Rows.Count ? e.RowIndex - 1 : e.RowIndex;
+                    grillaSinStock.Rows[selectRow].Selected = true;
+                    grillaSinStock.FirstDisplayedScrollingRowIndex = selectRow == 0 ? 0 : (selectRow-1); 
                     break;
 	        }
         }
