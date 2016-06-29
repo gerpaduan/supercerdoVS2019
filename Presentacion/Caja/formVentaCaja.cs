@@ -187,7 +187,6 @@ namespace Presentacion.Caja
                     txtCodigo.Focus();
                 }
             }
-
         }
 
         public void cargarGrilla()
@@ -227,7 +226,6 @@ namespace Presentacion.Caja
             {
                 MessageBox.Show(ex.Message);
             }
-
         }
 
         private void agregarVenta()
@@ -280,8 +278,8 @@ namespace Presentacion.Caja
                     MessageBox.Show(ex.Message);
                 }
             }
-
         }
+
         private void limpiarListas()
         {
             Negocio.Persona oPersonaN = new Negocio.Persona();
@@ -374,8 +372,6 @@ namespace Presentacion.Caja
             cargarListaGrilla(oLineaVenta);
         }
 
-
-
         private void sumarCorte(int nroLinea)
         {
             listaLineaVenta[nroLinea].CantKg = listaLineaVenta[nroLinea].CantKg + oLineaVenta.CantKg;
@@ -386,7 +382,6 @@ namespace Presentacion.Caja
 
         private void limpiarCamposCorte()
         {
-
             txtCodigo.Text = "";
             txtCorte.Text = "";
             txtCantKgs.Text = "";
@@ -418,7 +413,6 @@ namespace Presentacion.Caja
 
             listaLineaGrilla.Add(lineaVentaP);
             lineaVentaP = null;
-
         }
 
         private void cargarLinea()
@@ -950,7 +944,17 @@ namespace Presentacion.Caja
             }
             else
             {
-                return false;
+                DialogResult respuesta;
+                respuesta = MessageBox.Show("¿Cerrar Caja Venta de "+oUsuario.Nombre+"?.", "Cerrar Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (respuesta == DialogResult.Yes)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
 
@@ -1129,8 +1133,8 @@ namespace Presentacion.Caja
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   "+
-                "F5 = Bonificación  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |  F9 = Buscar Cliente  |  "+
-                "\nF10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |";
+                "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F9 = Buscar Cliente  |  " +
+                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |";
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -1208,12 +1212,16 @@ namespace Presentacion.Caja
                         }
                     }
                     break;
-                case Keys.F4:
+                case Keys.F3:
                         sumarUltimasDosVentas();
-                    break;
+                        break;
+                case Keys.F4:
+                        if (!estaBloqueado())
+                            bonificarCorte();
+                        break;
                 case Keys.F5:
                     if (!estaBloqueado())
-                    bonificarCorte();
+                        agregarCompra();
                     break;
                 case Keys.F6:
                     if (!estaBloqueado())
@@ -1240,6 +1248,14 @@ namespace Presentacion.Caja
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void agregarCompra()
+        {
+            formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+            frmNuevaCompra.oUsuario  = oUsuario;
+            frmNuevaCompra.esEgresoCaja = true;
+            frmNuevaCompra.ShowDialog();
         }
 
         private void sumarUltimasDosVentas()
