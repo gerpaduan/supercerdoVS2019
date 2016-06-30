@@ -42,7 +42,7 @@ namespace Datos
             return idVenta;
         }
 
-        public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior)
+        public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas)
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
@@ -61,6 +61,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idPersona", oVentaE.Persona.idPersona);
             cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito);
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
+            cmVenta.Parameters.AddWithValue("@eliminarLineas", eliminarLineas);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
@@ -139,7 +140,7 @@ namespace Datos
             return totalVentas;
         }
 
-        public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
+        public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE)
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
@@ -152,10 +153,13 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
             cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
             cmVenta.Parameters.AddWithValue("@bonificacion", oLineaE.Bonificacion);
+            cmVenta.Parameters.AddWithValue("@idLineaVentaAnulado", oLineaE.IndexAnulado);
 
             cmVenta.Connection.Open();
-            cmVenta.ExecuteNonQuery();
+            oLineaE.IdLineaVenta = (int)cmVenta.ExecuteScalar();
             cmVenta.Connection.Close();
+
+            return oLineaE;
         }
 
         public void modificarLineaVenta(Entidades.LineaVenta oLineaE)
@@ -274,6 +278,7 @@ namespace Datos
                     {
                         Entidades.LineaVenta oLinea = new Entidades.LineaVenta();
 
+                        oLinea.IdLineaVenta = Convert.ToInt32(drLinea["idLineaVenta"]);
                         //se crea y asiga la venta
                         Entidades.Venta oVenta=new Entidades.Venta();
                         oVenta.IdVenta= Convert.ToInt32(drLinea["idVenta"]);
@@ -291,7 +296,8 @@ namespace Datos
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
                         oLinea.Bonificacion = string.IsNullOrEmpty(drLinea["bonificacion"].ToString()) ? 0 : float.Parse(drLinea["bonificacion"].ToString());
-
+                        oLinea.IndexAnulado = DBNull.Value.Equals(drLinea["idLineaVentaAnulado"]) ? -1 : Convert.ToInt32(drLinea["idLineaVentaAnulado"].ToString());
+                        
                         try
                         {
                             oLinea.PesoBalanza = Convert.ToBoolean(drLinea["pesoBalanza"]);

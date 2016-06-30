@@ -144,7 +144,7 @@ namespace Presentacion.Caja
                 try
                 {
 
-                    oVentaN.modificarVenta(oVentaE, SucAnterior);
+                    oVentaN.modificarVenta(oVentaE, SucAnterior, true);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
                     {
@@ -212,7 +212,7 @@ namespace Presentacion.Caja
                                 grillaLineasVenta.Rows[nroFila].Cells["Corte"].Style.Font = new Font(grillaLineasVenta.Font.ToString(), 13);
                             }
                             if (Convert.ToInt32(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo &&
-                                linea.IndexAnulado == nroFila)
+                                linea.IndexAnulado == nroFila && Entidades.LineaVenta.esAnulado(linea.Estado))
                             {
                                 grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
                             }
@@ -249,12 +249,23 @@ namespace Presentacion.Caja
                     //ticket.LineasEnBlanco(0);
                     ticket.LineasGuion();
 
-                    foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                    for (int index = 0; index < listaLineaVenta.Count; index++)
                     {
-                        oVentaN.agregarLineaVenta(linea);
+                        Entidades.LineaVenta linea = listaLineaVenta[index];
+                        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta : 
+                            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                        listaLineaVenta[index] = oVentaN.agregarLineaVenta(linea);
                         ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
                             linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
+                    //foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                    //{
+                    //    oVentaN.agregarLineaVenta(linea);
+                    //    ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                    //        linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+                    //}
                     //ticket.LineasEnBlanco(1);
                     ticket.TextoDerecha("-------");
                     ticket.AgregaTotales("Total", totalVenta);
@@ -532,6 +543,17 @@ namespace Presentacion.Caja
             }
             else
             {
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                if (!oCierreN.validarCajaAbiertaVendedor(Convert.ToDateTime(txtFecVenta.Text), oVentaE.Sucursal, oUsuario))
+                {
+                    MessageBox.Show(oUsuario.Nombre + " debes abrir caja para poder registrar la venta.\n\n"+
+                    "Si abrió caja inténtelo nuevamente.", "No abrió caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    txtFecVenta.Text = DateTime.Now.ToString();//se actualiza la hora
+
+                    return false;
+                }
+
                 string mensaje = "Complete los siguientes campos: ";
                 
                 //se valida que no finalice venta con bonificacion para consumidor final
@@ -659,15 +681,17 @@ namespace Presentacion.Caja
                     if (respuesta == System.Windows.Forms.DialogResult.Yes)
                     {
                         oLineaVenta = new Entidades.LineaVenta();
-
-                        oLineaVenta = new Entidades.LineaVenta();
                         oLineaVenta.Corte = oLineaVentaSelect.Corte;
                         oLineaVenta.Venta = oLineaVentaSelect.Venta;
                         oLineaVenta.CantKg = oLineaVentaSelect.CantKg * -1;
                         oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.IndexAnulado = nroFila;
+
                         cargarListas();
+                        //se agrega el index del anulado al corte seleccionado para anular
+                        listaLineaVenta[nroFila].IndexAnulado = listaLineaVenta.Count;
+
                         cargarGrilla();
 
                         txtCodigo.Focus();
@@ -846,8 +870,15 @@ namespace Presentacion.Caja
 
             if (totalCorte > 0)
             {
-                txtTotalKgs.Text = (Utilidades.Util_Form.convertFloat(txtTotalKgs.Text, false) + kgsCorte).ToString("F3");
-                txtTotalS.Text = (Utilidades.Util_Form.convertFloat(txtTotalS.Text, false) + totalCorte).ToString("F2");  
+                try
+                {
+                    txtTotalKgs.Text = (Utilidades.Util_Form.convertFloat(txtTotalKgs.Text, false) + kgsCorte).ToString("N3");
+                    txtTotalS.Text = (Utilidades.Util_Form.convertFloat(txtTotalS.Text, false) + totalCorte).ToString("N2");
+                }
+                catch (Exception)
+                {
+                    cargarTotales();
+                }
             }      
         }
 
@@ -945,7 +976,7 @@ namespace Presentacion.Caja
             else
             {
                 DialogResult respuesta;
-                respuesta = MessageBox.Show("¿Cerrar Caja Venta de "+oUsuario.Nombre+"?.", "Cerrar Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                respuesta = MessageBox.Show("¿Cerrar la ventana de Venta de "+oUsuario.Nombre+"?.", "Cerrar ventana", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                 if (respuesta == DialogResult.Yes)
                 {
@@ -1606,9 +1637,18 @@ namespace Presentacion.Caja
 
         private void lblUltimaVenta_Click(object sender, EventArgs e)
         {
+
             if (ultimaVenta)
             {
                 ultimaVentaVendedor();
+                //se valida que no hay pasado el limite de tiempo para editar la venta
+                if (!FormPrincipal.logueado && oUltimaVentaVendedor.Creado.AddMinutes(10) < DateTime.Now)
+                {
+                    MessageBox.Show("Caducó el tiempo para modificar la venta.\n\n(Inicie sesión como admin para poder modificar)",
+                        "Tiempo Caducado");
+                    return;
+                }
+
                 if (oUltimaVentaVendedor != null)
                 {
                     formUltimaVenta frmUltimaVenta = new formUltimaVenta();

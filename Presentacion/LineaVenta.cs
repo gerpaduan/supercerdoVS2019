@@ -7,6 +7,7 @@ namespace Presentacion
 {
     public class LineaVenta
     {
+        int idLineaVenta;
         public int idCorte;
         public int codigo;
         public string corte;
@@ -16,6 +17,19 @@ namespace Presentacion
         public float bonificacion;
         public string estado;
         private bool pesoBalanza;
+        int indexAnulado = -1;
+
+        public int IdLineaVenta
+        {
+            get { return idLineaVenta; }
+            set { idLineaVenta = value; }
+        }
+
+        public int IndexAnulado
+        {
+            get { return indexAnulado; }
+            set { indexAnulado = value; }
+        }
 
         public float Bonificacion
         {

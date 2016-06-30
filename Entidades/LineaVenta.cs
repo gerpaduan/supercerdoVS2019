@@ -7,6 +7,23 @@ namespace Entidades
 {
     public class LineaVenta
     {
+        public enum estados
+        {
+            NoAnulado = 0,
+            Anulado = 1,
+        }
+
+        public static int getIdEstado(estados estadoParam)
+        {
+            return Convert.ToInt32(estadoParam);
+        }
+
+        public static bool esAnulado(int estadoLineaVenta)
+        {
+            return estadoLineaVenta.Equals(Convert.ToInt32(estados.Anulado));
+        }
+
+        int idLineaVenta;
          float cantKg;
          float precioKg;
          float bonificacion;
@@ -16,6 +33,12 @@ namespace Entidades
          int estado;
          int indexAnulado = -1;
          private bool pesoBalanza;
+
+         public int IdLineaVenta
+         {
+             get { return idLineaVenta; }
+             set { idLineaVenta = value; }
+         }
 
          public bool PesoBalanza
          {

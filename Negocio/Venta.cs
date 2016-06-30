@@ -15,9 +15,9 @@ namespace Negocio
            return oVentaD.agregarVenta(oVentaE);
         }
 
-        public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior)
+        public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas)
         {
-            oVentaD.modificarVenta(oVentaE, SucAnterior);
+            oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
         }
 
         public DataTable obtenerVentas(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
@@ -40,9 +40,9 @@ namespace Negocio
             return oVentaD.obtenerTotalVentas(idVendedor, idSucursal, fechaDesde, fechaHasta);
         } 
 
-        public void agregarLineaVenta(Entidades.LineaVenta oLineaE)
+        public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE)
         {
-            oVentaD.agregarLineaVenta(oLineaE);
+            return oVentaD.agregarLineaVenta(oLineaE);
         }
 
         public void modificarLineaVenta(Entidades.LineaVenta oLineaE)

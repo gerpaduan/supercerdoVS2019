@@ -128,6 +128,7 @@ namespace Utilidades
             float? value = null;
             try 
 	        {
+                toFloat = !toFloat.Contains("..") && toFloat.Contains('.') && toFloat.Contains(',') ? toFloat.Replace(".", "") : toFloat;
                 toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
         		value =  float.Parse( toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 	        }
