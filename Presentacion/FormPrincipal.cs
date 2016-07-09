@@ -659,6 +659,7 @@ namespace Presentacion
             }
             else
             {
+                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
                 formEgresosCaja frmEgresosCaja = new formEgresosCaja();
                 frmEgresosCaja.Show();
             }

@@ -975,6 +975,8 @@ namespace Presentacion.Caja
             }
             else
             {
+                if (oUsuario == null) return false;
+
                 DialogResult respuesta;
                 respuesta = MessageBox.Show("¿Cerrar la ventana de Venta de "+oUsuario.Nombre+"?.", "Cerrar ventana", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
