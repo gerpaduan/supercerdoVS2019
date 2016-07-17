@@ -83,6 +83,8 @@ namespace Presentacion
                 oProvNuevaCompra = new Entidades.Persona();
                 oProvNuevaCompra.idPersona = Convert.ToInt32(tipoCompraEnum);
                 oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
+
+                btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
             }
             if (accion.Equals(Entidades.Compra.accion.Modificar))
             {

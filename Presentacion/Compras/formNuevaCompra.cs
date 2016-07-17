@@ -228,7 +228,9 @@ namespace Presentacion
 
                         if(oFrmCompra != null) oFrmCompra.cargarGrilla();
                         //this.Close();
-                        limpiarListas(); 
+                        limpiarListas();
+                        oCompraE.IdCompra = 0;
+                        txtFechaCompra.Focus();
                     }
                 }
                 else
@@ -674,7 +676,7 @@ namespace Presentacion
             oCorteNuevaCompra=null;
             txtCodigo.Text = "";
             txtCorteNuevaCompra.Text = "";
-            txtPrecioKg.Text = "";
+            txtPrecioKg.Text = radioCorte.Checked ? "" : txtPrecioKg.Text;
             txtCantKgs.Text = "";
         }
 

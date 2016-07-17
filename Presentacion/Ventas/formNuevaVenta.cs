@@ -234,6 +234,7 @@ namespace Presentacion.Ventas
 
                     limpiarListas();
                     //this.Close();
+                    txtFechaVenta.Focus();
 
                 }
                 catch (Exception ex)

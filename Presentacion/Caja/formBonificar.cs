@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Configuration;
 
 namespace Presentacion.Caja
 {
@@ -15,6 +16,12 @@ namespace Presentacion.Caja
         public formVentaCaja frmVentaCaja;
         float precio, total;
         bool validado = true;
+
+        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+        Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+
+        Color ultimoColor = Color.Green;
 
         public formBonificar()
         {
@@ -28,7 +35,6 @@ namespace Presentacion.Caja
             txtPrecioKg.Text = oLineaVenta.PrecioKg.ToString("F2");
             txtCantKgs.Text = oLineaVenta.CantKg.ToString("F3");
             txtTotalCorte.Text = (oLineaVenta.PrecioKg * oLineaVenta.CantKg).ToString("F2");
-            frmVentaCaja.precioBonificado = oLineaVenta.PrecioKg.ToString("F2");
             btnPrecioReal.Text = "Quitar Bonif.";
             btnPrecioReal.Visible = !oLineaVenta.PrecioKg.Equals(oLineaVenta.Corte.precioKg);
 
@@ -60,9 +66,17 @@ namespace Presentacion.Caja
         {
             if (validado)
             {
-                frmVentaCaja.precioBonificado = txtPrecioKg.Text;
-                MessageBox.Show("La bonificación se realizó correctamente.");
-                this.Close();
+                if (precio.Equals(oLineaVenta.Corte.precioKg) && oLineaVenta.Bonificacion == 0)
+                {
+                    MessageBox.Show("No se puede bonificar porque no se realizó cambios en el precio.\n"+
+                        "Para salir presione la tecla Esc","No se realizó bonificación");
+                }
+                else
+                {
+                    frmVentaCaja.precioBonificado = txtPrecioKg.Text;
+                    MessageBox.Show("La bonificación se realizó correctamente.");
+                    this.Close();
+                }
             }
             else
             {
@@ -83,6 +97,38 @@ namespace Presentacion.Caja
         private void btnPrecioReal_Click(object sender, EventArgs e)
         {
             txtPrecioKg.Text = oLineaVenta.Corte.precioKg.ToString("F2");
+            btnBonificar.Focus();
         }
+
+        private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)(Keys.Enter))
+            {
+                btnBonificar.Focus();
+            }
+        }
+
+        private void txtPrecioKg_Enter(object sender, EventArgs e)
+        {
+            this.txtPrecioKg.BackColor = focusColor;
+        }
+
+        private void txtPrecioKg_Leave(object sender, EventArgs e)
+        {
+            this.txtPrecioKg.BackColor = enableColor;
+        }
+
+        private void btnBonificar_Enter(object sender, EventArgs e)
+        {
+            this.btnBonificar.UseVisualStyleBackColor = false;
+            this.btnBonificar.BackColor = focusColor;
+
+        }
+
+        private void btnBonificar_Leave(object sender, EventArgs e)
+        {
+            this.btnBonificar.UseVisualStyleBackColor = true;
+        }
+
     }
 }

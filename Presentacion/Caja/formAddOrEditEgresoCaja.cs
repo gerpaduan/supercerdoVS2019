@@ -257,13 +257,25 @@ namespace Presentacion.Caja
                             oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
 
                             imprimirTicket();
-
+                            MessageBox.Show("El egreso de caja se guardó correctamente.");
+                            
+                            //si nuevoEgresoCaja es llamado desde FrmEgresos no se cierra
                             if (frmEgresosCaja != null)
                             {
                                 frmEgresosCaja.cargarGrilla();
+                                txtFechaEgresoCaja.Focus();
+
+                                //se limpian los campos y objeto
+                                oEgresoCajaE = new Entidades.EgresoCaja();
+                                comboTipoEgresoCaja.SelectedIndex = 0;
+                                txtDescripcion.Text = "";
+                                txtMonto.Text = "";
+                                txtDetalle.Text = "";
                             }
-                            MessageBox.Show("El egreso de caja se guardó correctamente.");
-                            this.Close();
+                            else
+                            {
+                                this.Close();
+                            }
                         }
                     }
                 }

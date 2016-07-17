@@ -416,6 +416,7 @@ namespace Presentacion.Caja
             if (lineaE.Estado == 1)
             {
                 lineaVentaP.estado = "Anulado";
+                lineaVentaP.corte += " (Anulado)";
             }
             else
             {
@@ -688,10 +689,11 @@ namespace Presentacion.Caja
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.IndexAnulado = nroFila;
 
-                        cargarListas();
                         //se agrega el index del anulado al corte seleccionado para anular
+                        //--el index equivale a la cantidad en listaLineaVenta antes de cargarLista--
                         listaLineaVenta[nroFila].IndexAnulado = listaLineaVenta.Count;
 
+                        cargarListas();
                         cargarGrilla();
 
                         txtCodigo.Focus();
@@ -861,7 +863,6 @@ namespace Presentacion.Caja
                     }
                 }
             }
-
         }
 
         private void totalesParciales(float kgsCorte, float totalCorte)
@@ -1171,6 +1172,9 @@ namespace Presentacion.Caja
             if (oUsuario != null)
             {
                 validarAperturaCaja();
+                //se vuelve a validar que el usuario no sea nulo(sucede cuando no quiere abrir caja)
+                if (oUsuario == null) return;
+
                 oVentaE.Vendedor = oUsuario;
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
@@ -1209,7 +1213,9 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    this.Close();
+                    //si estable nulo el Usuario porque decidió no abrir caja
+                    oUsuario = null;
+                    formVentaCaja_Load(null, null);
                 }                
             }
         }
@@ -1334,6 +1340,18 @@ namespace Presentacion.Caja
                 {
                     MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
                     return;
+                }
+
+                precioBonificado = oLineaVentaSelect.PrecioKg.ToString("F2");
+                //se busca si el producto seleccionado ya tiene bonificacion
+                foreach (Entidades.LineaVenta lineaCargada in listaLineaVenta)
+                {
+                    if (!Entidades.LineaVenta.esAnulado(lineaCargada.Estado) && lineaCargada.Bonificacion != 0 && 
+                        lineaCargada.Corte.codigo.Equals(oLineaVentaSelect.Corte.codigo))
+                    {
+                        oLineaVentaSelect.PrecioKg = lineaCargada.PrecioKg;
+                        break;
+                    }
                 }
 
                 formBonificar frmBonificar = new formBonificar();

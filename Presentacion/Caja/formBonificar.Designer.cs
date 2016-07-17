@@ -119,6 +119,9 @@
             this.txtPrecioKg.Size = new System.Drawing.Size(111, 29);
             this.txtPrecioKg.TabIndex = 1;
             this.txtPrecioKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPrecioKg.Leave += new System.EventHandler(this.txtPrecioKg_Leave);
+            this.txtPrecioKg.Enter += new System.EventHandler(this.txtPrecioKg_Enter);
+            this.txtPrecioKg.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             this.txtPrecioKg.TextChanged += new System.EventHandler(this.txtPrecioKg_TextChanged);
             // 
             // label13
@@ -166,6 +169,8 @@
             this.btnBonificar.Text = "&Bonificar";
             this.btnBonificar.UseVisualStyleBackColor = false;
             this.btnBonificar.Click += new System.EventHandler(this.btnBonificar_Click);
+            this.btnBonificar.Leave += new System.EventHandler(this.btnBonificar_Leave);
+            this.btnBonificar.Enter += new System.EventHandler(this.btnBonificar_Enter);
             // 
             // btnPrecioReal
             // 
@@ -173,7 +178,7 @@
             this.btnPrecioReal.Name = "btnPrecioReal";
             this.btnPrecioReal.Size = new System.Drawing.Size(112, 29);
             this.btnPrecioReal.TabIndex = 55;
-            this.btnPrecioReal.Text = "Precio Real";
+            this.btnPrecioReal.Text = "Precio &Real";
             this.btnPrecioReal.UseVisualStyleBackColor = true;
             this.btnPrecioReal.Click += new System.EventHandler(this.btnPrecioReal_Click);
             // 
