@@ -211,6 +211,12 @@ namespace Negocio
              return oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta);
          }
 
+         public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         {
+             oCorteD = new Datos.Corte();
+             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta);
+         }
+
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
              oCorteD = new Datos.Corte();

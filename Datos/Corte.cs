@@ -884,6 +884,31 @@ namespace Datos
             return dtCierreStock;
         }
 
+        public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtStockIngresoEgreso = new DataTable();
+            daCorte = new SqlDataAdapter();
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "Acum_Ventas";
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+            cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtStockIngresoEgreso);
+            cmCorte.Connection.Close();
+
+            cmCorte = null;
+            daCorte = null;
+
+            return dtStockIngresoEgreso;
+        }
+
         public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtStockIngresoEgreso = new DataTable();
