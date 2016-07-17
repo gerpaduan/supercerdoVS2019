@@ -31,7 +31,11 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.comboOrdenStock = new System.Windows.Forms.ComboBox();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.btnExportar = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -53,8 +57,7 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.grillaReportes = new System.Windows.Forms.DataGridView();
-            this.comboOrdenStock = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.fechaDesdeProgresivo = new System.Windows.Forms.DateTimePicker();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -83,6 +86,32 @@
             this.panel1.Size = new System.Drawing.Size(1007, 91);
             this.panel1.TabIndex = 12;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(888, 41);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(74, 15);
+            this.label1.TabIndex = 55;
+            this.label1.Text = "Orden Stock";
+            // 
+            // comboOrdenStock
+            // 
+            this.comboOrdenStock.DisplayMember = "Sin Orden";
+            this.comboOrdenStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboOrdenStock.FormattingEnabled = true;
+            this.comboOrdenStock.Items.AddRange(new object[] {
+            "Sin Orden",
+            "Ascendente",
+            "Descendente"});
+            this.comboOrdenStock.Location = new System.Drawing.Point(891, 59);
+            this.comboOrdenStock.Name = "comboOrdenStock";
+            this.comboOrdenStock.Size = new System.Drawing.Size(99, 21);
+            this.comboOrdenStock.TabIndex = 54;
+            this.comboOrdenStock.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
+            // 
             // lblActualizar
             // 
             this.lblActualizar.AutoSize = true;
@@ -110,6 +139,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.fechaDesdeProgresivo);
             this.groupBox1.Controls.Add(this.txtFechaHastaProgresivo);
             this.groupBox1.Controls.Add(this.comboCierreStock);
             this.groupBox1.Controls.Add(this.comboInicioStock);
@@ -246,6 +276,7 @@
             "Stock Progresivo",
             "Cierre Stock 2",
             "Ingreso - Egreso",
+            "Acum. Ventas",
             "Total Cortes Vendidos",
             "Total Kgs Corte/Compra",
             "Movimiento/Corte",
@@ -331,51 +362,53 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle9.BackColor = System.Drawing.Color.WhiteSmoke;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.WindowText;
             dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle10.BackColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle10;
             this.grillaReportes.Location = new System.Drawing.Point(12, 142);
             this.grillaReportes.Name = "grillaReportes";
             this.grillaReportes.ReadOnly = true;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle11.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle11.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle11.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle11.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle11.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle11;
             this.grillaReportes.RowHeadersVisible = false;
             this.grillaReportes.RowHeadersWidth = 300;
-            dataGridViewCellStyle10.Format = "N2";
-            dataGridViewCellStyle10.NullValue = null;
-            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle12.Format = "N2";
+            dataGridViewCellStyle12.NullValue = null;
+            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle12;
             this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaReportes.Size = new System.Drawing.Size(973, 468);
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
             // 
-            // comboOrdenStock
+            // fechaDesdeProgresivo
             // 
-            this.comboOrdenStock.DisplayMember = "Sin Orden";
-            this.comboOrdenStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboOrdenStock.FormattingEnabled = true;
-            this.comboOrdenStock.Items.AddRange(new object[] {
-            "Sin Orden",
-            "Ascendente",
-            "Descendente"});
-            this.comboOrdenStock.Location = new System.Drawing.Point(891, 59);
-            this.comboOrdenStock.Name = "comboOrdenStock";
-            this.comboOrdenStock.Size = new System.Drawing.Size(99, 21);
-            this.comboOrdenStock.TabIndex = 54;
-            this.comboOrdenStock.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(888, 41);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(74, 15);
-            this.label1.TabIndex = 55;
-            this.label1.Text = "Orden Stock";
+            this.fechaDesdeProgresivo.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.fechaDesdeProgresivo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.fechaDesdeProgresivo.Location = new System.Drawing.Point(77, 19);
+            this.fechaDesdeProgresivo.Name = "fechaDesdeProgresivo";
+            this.fechaDesdeProgresivo.Size = new System.Drawing.Size(151, 20);
+            this.fechaDesdeProgresivo.TabIndex = 25;
+            this.fechaDesdeProgresivo.Visible = false;
+            this.fechaDesdeProgresivo.ValueChanged += new System.EventHandler(this.txtFechaHastaProgresivo_ValueChanged);
+            this.fechaDesdeProgresivo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesdeProgresivo_KeyDown);
             // 
             // formReporteStock
             // 
@@ -429,5 +462,6 @@
         protected System.Windows.Forms.Label lblActualizar;
         protected System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboOrdenStock;
+        private System.Windows.Forms.DateTimePicker fechaDesdeProgresivo;
     }
 }

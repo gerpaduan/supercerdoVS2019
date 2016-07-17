@@ -25,6 +25,7 @@ namespace Presentacion.Cortes
         DataTable dtGrillaReporte = new DataTable();
         bool stockActual = false;
         bool stockProgresivo = false;
+        bool acumVentas = false;
         bool combosCierresCargados = false;
 
         public formReporteStock()
@@ -61,6 +62,7 @@ namespace Presentacion.Cortes
                 {
                     Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
                     tipoTicket.stockActual(comboInicioStock.Text, comboCierreStock.Text, grillaReportes);
+                    return;
                 }
 
                 //Reporte Cierre Stock
@@ -491,6 +493,18 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
+            //Acumulado de ventas
+            if (comboTipoReporte.Text.Equals("Acum. Ventas"))
+            {
+                grillaReportes.DataSource = null;
+                dtGrillaReporte = null;
+
+                dtGrillaReporte = oCorteN.acum_Ventas(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
+                    fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value);
+
+                grillaReportes.DataSource = dtGrillaReporte;
+            }
+
             //TotalPorCortesVendidos
             if (comboTipoReporte.Text.Equals("Total Cortes Vendidos"))
             {
@@ -599,7 +613,8 @@ namespace Presentacion.Cortes
         private void cargarComboCierreStock()
         {
             if (comboSucursal.ValueMember != "" && (comboTipoReporte.Text.Equals("Cierre Stock") ||
-                comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Progresivo")))
+                comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Progresivo") ||
+                comboTipoReporte.Text.Equals("Acum. Ventas")))
             {
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
@@ -610,10 +625,12 @@ namespace Presentacion.Cortes
                 comboInicioStock.ValueMember = "idCompra";
                 comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
 
-                txtFechaHastaProgresivo.Visible = stockProgresivo;
+                fechaDesdeProgresivo.Visible = acumVentas;
+                txtFechaHastaProgresivo.Visible = stockProgresivo || acumVentas;
                 DataTable dtCierreStock;
-                if (stockProgresivo)
+                if (stockProgresivo || acumVentas)
                 {
+                    fechaDesdeProgresivo.Value = DateTime.Now;
                     txtFechaHastaProgresivo.Value = DateTime.Now; 
                 }
                 else
@@ -739,12 +756,14 @@ namespace Presentacion.Cortes
             combosCierresCargados = false;
             if (comboTipoReporte.Text.Equals("Cierre Stock") ||
                 comboTipoReporte.Text.Equals("Stock Actual") ||
-                comboTipoReporte.Text.Equals("Stock Progresivo"))
+                comboTipoReporte.Text.Equals("Stock Progresivo") ||
+                comboTipoReporte.Text.Equals("Acum. Ventas"))
             {
                 stockActual = comboTipoReporte.Text.Equals("Stock Actual");
+                acumVentas = comboTipoReporte.Text.Equals("Acum. Ventas");
                 stockProgresivo = comboTipoReporte.Text.Equals("Stock Progresivo");
-                comboInicioStock.Visible = true;
-                comboCierreStock.Visible = !stockProgresivo;
+                comboInicioStock.Visible = !acumVentas;
+                comboCierreStock.Visible = !stockProgresivo && !acumVentas;
                 cargarComboCierreStock();
             }
             else
@@ -765,6 +784,14 @@ namespace Presentacion.Cortes
         private void txtFechaHastaProgresivo_ValueChanged(object sender, EventArgs e)
         {
             lblActualizar.Visible = true;
+        }
+
+        private void fechaDesdeProgresivo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
         }
     }
 }
