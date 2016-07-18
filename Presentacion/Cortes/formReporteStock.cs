@@ -613,12 +613,12 @@ namespace Presentacion.Cortes
                     {
                         if (filaStock["Codigo"].ToString().Equals(fila["Codigo"].ToString()))
                         {
-                            fila["DIF"] = Convert.ToDecimal(filaStock["Faltante"]) - Convert.ToDecimal(fila["Ventas"]);
+                            fila["StockActual"] = Convert.ToDecimal(filaStock["Faltante"]);
+                            fila["DIF"] = Convert.ToDecimal(fila["StockActual"]) - Convert.ToDecimal(fila["Ventas"]);
                             break;
                         }
                     }
                 }
-
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
@@ -740,7 +740,7 @@ namespace Presentacion.Cortes
                 comboInicioStock.DataSource = dtInicioStock;
                 comboInicioStock.DisplayMember = "fechaCompra";
                 comboInicioStock.ValueMember = "idCompra";
-                comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
+                comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo && !acumVentas ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
 
                 fechaDesdeProgresivo.Visible = acumVentas;
                 txtFechaHastaProgresivo.Visible = stockProgresivo || acumVentas;
@@ -769,6 +769,7 @@ namespace Presentacion.Cortes
                     comboCierreStock.DisplayMember = "fechaCompra";
                     comboCierreStock.ValueMember = "idCompra";
                 }
+
             }
         }
 
