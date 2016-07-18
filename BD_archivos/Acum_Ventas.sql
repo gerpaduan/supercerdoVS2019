@@ -1,14 +1,6 @@
--- ================================================
--- Template generated from Template Explorer using:
--- Create Procedure (New Menu).SQL
---
--- Use the Specify Values for Template Parameters 
--- command (Ctrl-Shift-M) to fill in the parameter 
--- values below.
---
--- This block of comments will not be included in
--- the definition of the procedure.
--- ================================================
+USE [SuperCerdo]
+GO
+/****** Object:  StoredProcedure [dbo].[Acum_Ventas]    Script Date: 07/18/2016 18:11:09 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +10,7 @@ GO
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
 -- =============================================
-CREATE PROCEDURE Acum_Ventas
+ALTER PROCEDURE [dbo].[Acum_Ventas]
 	-- Add the parameters for the stored procedure here
 	@texto nvarchar(50),
 	@idsucursal int,
@@ -30,7 +22,7 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
-select cast(AllCortes.codigo as NCHAR(5)) as Codigo ,AllCortes.corte as 'Corte', EgresoVentas.TotalVenta as 'Ventas', 0.00 as 'DIF'
+select cast(AllCortes.codigo as NCHAR(5)) as Codigo ,AllCortes.corte as 'Corte', 0.00 as 'StockActual', EgresoVentas.TotalVenta as 'Ventas', 0.00 as 'DIF'
 	from
 		--Seleccion de todos los cortes
 		(SELECT     CorteP.idCorte as idCorte, CorteP.codigo,CorteP.corte, dbo.Sucursal.idSucursal, dbo.Sucursal.sucursal, 0.00 AS StockIngreso 
@@ -99,4 +91,3 @@ where (@texto like '')
 order by AllCortes.codigo
 
 END
-GO

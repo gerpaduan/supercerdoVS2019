@@ -502,6 +502,123 @@ namespace Presentacion.Cortes
                 dtGrillaReporte = oCorteN.acum_Ventas(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                     fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value);
 
+                DataTable dtStockActual = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
+                            Convert.ToDateTime(comboInicioStock.Text), DateTime.Now);
+
+                foreach (DataRow fila in dtStockActual.Rows)
+                {
+                    decimal TotINGR = 0, TotEGR = 0;
+                    if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
+                    {
+                        fila["Stock.Ini"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
+                    }
+
+                    if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
+                    {
+                        fila["Compras"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Compras"]);
+                    }
+
+                    if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
+                    {
+                        fila["Ingr.Emb"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
+                    }
+
+                    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
+                    {
+                        fila["Ingr.Stock"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
+                    }
+
+                    if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
+                    {
+                        fila["Ingr. Mov"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
+                    }
+
+                    if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
+                    {
+                        fila["Egr.Stock"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
+                    }
+
+                    if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
+                    {
+                        fila["Egr.Mov"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
+                    }
+
+                    if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
+                    {
+                        fila["Egr.Emb"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
+                    }
+
+                    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
+                    {
+                        fila["Ventas"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Ventas"]);
+                    }
+
+                    if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
+                    {
+                        fila["Stock.Cierre"] = 0;
+                    }
+
+                    fila["Tot.INGR"] = TotINGR;
+                    fila["Tot.EGR"] = TotEGR;
+                    fila["DIF"] = TotINGR - TotEGR;
+
+                    fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
+                }
+
+                foreach (DataRow fila in dtGrillaReporte.Rows)
+                {
+                    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == ""
+                        || fila["Ventas"] == DBNull.Value)
+                    {
+                        fila["Ventas"] = 0;
+                    }
+
+                    foreach (DataRow filaStock in dtStockActual.Rows)
+                    {
+                        if (filaStock["Codigo"].ToString().Equals(fila["Codigo"].ToString()))
+                        {
+                            fila["DIF"] = Convert.ToDecimal(filaStock["Faltante"]) - Convert.ToDecimal(fila["Ventas"]);
+                            break;
+                        }
+                    }
+                }
+
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
