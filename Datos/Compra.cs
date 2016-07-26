@@ -83,6 +83,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
             cmCompra.Parameters.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
 
@@ -119,6 +120,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
             cmCompra.Parameters.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor.Id);
 

@@ -46,6 +46,7 @@ namespace Presentacion
        formCompras oFrmCompra;
 
        bool ultimaValidacion = true;
+        bool mostrarCartelCierre = true;
 
         public formNuevaCompra()
         {
@@ -93,7 +94,12 @@ namespace Presentacion
         private void btnBuscarProv_Click(object sender, EventArgs e)
         {
             Personas.formBuscarPersona frmBuscarPersona = new Personas.formBuscarPersona();
-            frmBuscarPersona.Show(this);
+            frmBuscarPersona.ShowDialog(this);
+
+            if (radioMediaRes.Checked)
+                txtKgMedia.Select();
+            else
+                txtCodigo.Select();
         }
 
         //comunicación con interface
@@ -101,7 +107,6 @@ namespace Presentacion
         {
             oProvNuevaCompra = proveedor;
             this.txtProveedor.Text = oProvNuevaCompra.razonSocial;
-            txtCodigo.Focus();
         }
 
         //comunicación con interface
@@ -131,12 +136,7 @@ namespace Presentacion
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-            if ((respuesta == System.Windows.Forms.DialogResult.Yes))
-            {
-                this.Close();
-            }            
+            this.Close(); 
         }
 
         private void btnAceptar_Click(object sender, EventArgs e)
@@ -174,6 +174,7 @@ namespace Presentacion
                             }
                         }
 
+                        mostrarCartelCierre = false;
                         if (oCompraE.IdCompra != null && oCompraE.IdCompra > 0)
                         {
                             oCompraN.modificarCompra(oCompraE);
@@ -231,6 +232,7 @@ namespace Presentacion
                         limpiarListas();
                         oCompraE.IdCompra = 0;
                         txtFechaCompra.Focus();
+                        mostrarCartelCierre = true;
                     }
                 }
                 else
@@ -303,6 +305,7 @@ namespace Presentacion
             oCompraE.Proveedor = oProvNuevaCompra;
             oCompraE.FechaCompra = txtFechaCompra.Value;
             oCompraE.Estado = "";
+            oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || tipoCompra=="Cortes" ? null :  (int?)Convert.ToInt32(txtCantMedias.Text);
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;
             oCompraE.Sucursal = oSucursalE;
@@ -635,7 +638,10 @@ namespace Presentacion
                 {
                     MessageBox.Show("Debe Completar todos los campos.", "Complete los campos vacíos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     if(txtPrecioKg.Text.Equals("")) txtPrecioKg.Focus();
-                    if (txtCantKgs.Text.Equals("")) txtCantKgs.Focus();
+
+                    if (txtCantKgs.Text.Equals("") && tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))) txtCantKgs.Focus();
+                    if (txtKgMedia.Text.Equals("") && tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))) txtKgMedia.Focus();
+                    
                     return false;
                 }
                 else
@@ -647,6 +653,13 @@ namespace Presentacion
 
         private bool validaciónFinal()
         {
+            if (tipoCompra == "Media Res" && string.IsNullOrEmpty(txtCantMedias.Text))
+            {
+                MessageBox.Show("Ingrese la cantidad de medias.", "Complete el campo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtCantMedias.Focus();
+                return false;
+            }
+
             if (txtProveedor.Text.Equals(""))
             {
                 MessageBox.Show("Debe ingresar un Proveedor.", "Complete el campo Proveedor", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -690,9 +703,11 @@ namespace Presentacion
                     grillaMediaRes.DataSource = null;
                     grillaMediaRes.DataSource = listaMediasEnGrilla;
 
-                    grillaMediaRes.Rows[listaMediasEnGrilla.Count - 1].Selected = true;
-                    grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;
-
+                    if (listaMediasEnGrilla.Count > 0)
+                    {
+                        grillaMediaRes.Rows[listaMediasEnGrilla.Count - 1].Selected = true;
+                        grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;                        
+                    }
                 }
 
                 if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
@@ -701,14 +716,15 @@ namespace Presentacion
                     grillaCortePorCompra.DataSource = null;
                     grillaCortePorCompra.DataSource = listaCortesEnGrilla;
 
-                    grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
-                    grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
+                    if (listaCortesEnGrilla.Count > 0)
+                    {
+                        grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
+                        grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
+                    }
                 }
 
                 cargarTotales();
-
-                validarListas();
-  
+                validarListas();  
             }
             catch (Exception ex)
             {
@@ -759,6 +775,7 @@ namespace Presentacion
 
                 txtCantKgs.TabStop = false;
                 txtPrecioKg.TabStop = false;
+                groupCantMedias.Visible = true;
             }
 
             if (radioCorte.Checked == true )
@@ -776,6 +793,7 @@ namespace Presentacion
 
                 txtCantKgs.TabStop = true;
                 txtPrecioKg.TabStop = true;
+                groupCantMedias.Visible = false;
             }
         }
 
@@ -880,26 +898,6 @@ namespace Presentacion
             txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
         }
 
-
-        const int WM_SYSCOMMAND = 0x0112;
-        const int SC_CLOSE = 0xF060;
-
-        protected override void WndProc(ref Message m)
-        {
-            if ((m.Msg == WM_SYSCOMMAND) && (m.WParam == (IntPtr)SC_CLOSE))
-            {
-                DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan los datos ingresados.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-
-                if ((respuesta == System.Windows.Forms.DialogResult.No))
-                {
-                    return;
-                }
-
-            }
-
-            base.WndProc(ref m);
-        }
-
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
@@ -950,6 +948,8 @@ namespace Presentacion
             //se valida que sea Admin para cambiar de sucursal
             comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
             txtSucursal.Visible = !comboSucursal.Visible;
+
+            btnBuscarProv.Select();
         }
                 
         private void cargarCorteEnGrilla(Entidades.CortePorCompra oCortePorCompra)
@@ -1016,6 +1016,33 @@ namespace Presentacion
         private bool validarCampoNumerico(string valor, string nombreTextBox)
         {
             return string.IsNullOrEmpty(valor) ? true : Utilidades.Util_Form.validarCampoNumerico(valor, "El valor");
+        }
+
+        private void txtCantMedias_TextChanged(object sender, EventArgs e)
+        {
+            if(!Utilidades.Util_Form.validarCampoNumeroEntero(txtCantKgs.Text, "Cant. Medias"))
+                txtCantMedias.Text = "";
+        }
+
+        private void formNuevaCompra_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = salir();
+        }
+
+        private bool salir()
+        {
+            if (!mostrarCartelCierre) return false;
+
+            DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+            if ((respuesta == System.Windows.Forms.DialogResult.Yes))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
     }
 }

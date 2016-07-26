@@ -76,6 +76,7 @@ namespace Entidades
         private string estado;
         private Persona proveedor;
         private string tipoCompra;
+        private int? cantMedias;
         private Sucursal sucursal;
         private DateTime? creado;
         private DateTime? actualizado;
@@ -87,6 +88,12 @@ namespace Entidades
         {
             get { return lineasCortes; }
             set { lineasCortes = value; }
+        }
+
+        public int? CantMedias
+        {
+            get { return cantMedias; }
+            set { cantMedias = value; }
         }
 
         public Usuario CreadoPor

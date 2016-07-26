@@ -33,6 +33,7 @@ namespace Negocio
                 Negocio.Persona oPersonaN = new Persona();
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
+                oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();
                 oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));

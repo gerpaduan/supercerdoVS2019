@@ -61,15 +61,17 @@ namespace Presentacion
 
         private void cargarTotales()
         {
-            float totalKg=0, totalS=0;
+            float totalKg = 0, totalS = 0;
+            int cantMedias = 0;
             foreach (DataRow fila in dtCompras.Rows)
             {
-                totalKg = totalKg + float.Parse( fila[6].ToString());
+                cantMedias += string.IsNullOrEmpty(fila["cantMedias"].ToString()) ? 0 : Convert.ToInt32(fila["cantMedias"]);
+                totalKg = totalKg + float.Parse(fila["cantKg"].ToString());
                 totalS = totalS + float.Parse(fila["totalS"].ToString());
             }
-
-            txtTotalKgs.Text = Convert.ToString( totalKg);
-            txtTotalS.Text = Convert.ToString( totalS);
+            txtCantMedias.Text = cantMedias.ToString();
+            txtTotalKgs.Text = totalKg.ToString("F3");
+            txtTotalS.Text = totalS.ToString("F2");
         }
 
         private void modificarCompra()
