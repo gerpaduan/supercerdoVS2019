@@ -27,6 +27,7 @@ namespace Presentacion.Cortes
         bool stockProgresivo = false;
         bool acumVentas = false;
         bool combosCierresCargados = false;
+        DateTime fechaUltimoCierreStock;
 
         public formReporteStock()
         {
@@ -501,9 +502,9 @@ namespace Presentacion.Cortes
 
                 dtGrillaReporte = oCorteN.acum_Ventas(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                     fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value);
-
+                
                 DataTable dtStockActual = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                            Convert.ToDateTime(comboInicioStock.Text), DateTime.Now);
+                            fechaUltimoCierreStock, DateTime.Now);
 
                 foreach (DataRow fila in dtStockActual.Rows)
                 {
@@ -742,13 +743,16 @@ namespace Presentacion.Cortes
                 comboInicioStock.ValueMember = "idCompra";
                 comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo && !acumVentas ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
 
+                //setea ultima fecha de cierre para obtener stock actual para comparar en AcumVentas
+                fechaUltimoCierreStock = Convert.ToDateTime(dtInicioStock.Rows[0]["fechaCompra"]);
+
                 fechaDesdeProgresivo.Visible = acumVentas;
                 txtFechaHastaProgresivo.Visible = stockProgresivo || acumVentas;
                 DataTable dtCierreStock;
                 if (stockProgresivo || acumVentas)
                 {
                     fechaDesdeProgresivo.Value = DateTime.Now;
-                    txtFechaHastaProgresivo.Value = DateTime.Now; 
+                    txtFechaHastaProgresivo.Value = DateTime.Now;
                 }
                 else
                 {
