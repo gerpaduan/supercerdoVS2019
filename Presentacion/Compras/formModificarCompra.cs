@@ -122,6 +122,7 @@ namespace Presentacion.Compras
             oCortePorCompraE.corte.idCorte = cortePorCompra.idCorte;            
             oCortePorCompraE.cantKgs = cortePorCompra.cantKgs;
             oCortePorCompraE.precioKg = cortePorCompra.precioKg;
+            oCortePorCompraE.Creado = DateTime.Now;
 
             Entidades.Sucursal sucursalCorte = new Entidades.Sucursal();
             oCortePorCompraE.sucursal = sucursalCorte;

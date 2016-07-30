@@ -97,136 +97,140 @@ namespace Presentacion.Cortes
                     #endregion
                 }
 
-                if (comboTipoReporte.SelectedIndex == 6)
-                {
-                    ReportesDataSet.dtReporteTeoricoRealDataTable dtTeoricoReal = new ReportesDataSet.dtReporteTeoricoRealDataTable();
+                #region Codigo comentado
 
-                    string titulo = "Reporte Kg. Corte Teórico - Real";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTeoricoReal.NewRow();
+                //if (comboTipoReporte.SelectedIndex == 6)
+                //{
+                //    ReportesDataSet.dtReporteTeoricoRealDataTable dtTeoricoReal = new ReportesDataSet.dtReporteTeoricoRealDataTable();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTeoricoReal.Rows.Add(dsFila);
-                    }
-                    Reportes.Reportes reporte = new Reportes.Reportes();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTeoricoReal, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    string titulo = "Reporte Kg. Corte Teórico - Real";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTeoricoReal.NewRow();
 
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTeoricoReal.Rows.Add(dsFila);
+                //    }
+                //    Reportes.Reportes reporte = new Reportes.Reportes();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTeoricoReal, fechaDesde.Value.Date, fechaHasta.Value.Date);
+
+                //    frmReportes.Show();
+                //}
 
 
-                if (comboTipoReporte.Text == "Cierre Stock 2")
-                {
-                    ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
+                //if (comboTipoReporte.Text == "Cierre Stock 2")
+                //{
+                //    ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
 
-                    string titulo = "Reporte Cierre Stock 2";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtCierreStock.NewRow();
-                        dsFila["Codigo"] = fila["Codigo"];
-                        dsFila["Corte"] = fila["Corte"];
-                        dsFila["Sucursal"] = fila["Sucursal"];
-                        dsFila["TotalIngresado"] = fila["Total Ingresado"];
-                        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
-                        dsFila["TotalVendido"] = fila["Total Vendido"];
-                        dsFila["StockTeorico"] = fila["Stock Teorico"];
-                        dsFila["StockReal"] = fila["Stock Real"];
-                        dsFila["Faltante"] = fila["Faltante"];
+                //    string titulo = "Reporte Cierre Stock 2";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtCierreStock.NewRow();
+                //        dsFila["Codigo"] = fila["Codigo"];
+                //        dsFila["Corte"] = fila["Corte"];
+                //        dsFila["Sucursal"] = fila["Sucursal"];
+                //        dsFila["TotalIngresado"] = fila["Total Ingresado"];
+                //        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
+                //        dsFila["TotalVendido"] = fila["Total Vendido"];
+                //        dsFila["StockTeorico"] = fila["Stock Teorico"];
+                //        dsFila["StockReal"] = fila["Stock Real"];
+                //        dsFila["Faltante"] = fila["Faltante"];
 
-                        dtCierreStock.Rows.Add(dsFila);
-                    }
-                    ReporteCierreStock reporte = new ReporteCierreStock();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        dtCierreStock.Rows.Add(dsFila);
+                //    }
+                //    ReporteCierreStock reporte = new ReporteCierreStock();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                //Reporte Ingreso-Egreso
-                if (comboTipoReporte.SelectedIndex == 2)
-                {
-                    ReportesDataSet.dtIngresoEgresoDataTable dtIngresoEgreso = new ReportesDataSet.dtIngresoEgresoDataTable();
+                ////Reporte Ingreso-Egreso
+                //if (comboTipoReporte.SelectedIndex == 2)
+                //{
+                //    ReportesDataSet.dtIngresoEgresoDataTable dtIngresoEgreso = new ReportesDataSet.dtIngresoEgresoDataTable();
 
-                    string titulo = "Reporte Ingreso - Egreso";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtIngresoEgreso.NewRow();
-                        dsFila["Codigo"] = fila["Codigo"];
-                        dsFila["Corte"] = fila["Corte"];
-                        dsFila["Sucursal"] = fila["Sucursal"];
-                        dsFila["TotalIngresado"] = fila["Total Ingresado"];
-                        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
-                        dsFila["TotalVendido"] = fila["Total Vendido"];
-                        dsFila["DiferenciaStock"] = fila["Diferencia Stock"];
+                //    string titulo = "Reporte Ingreso - Egreso";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtIngresoEgreso.NewRow();
+                //        dsFila["Codigo"] = fila["Codigo"];
+                //        dsFila["Corte"] = fila["Corte"];
+                //        dsFila["Sucursal"] = fila["Sucursal"];
+                //        dsFila["TotalIngresado"] = fila["Total Ingresado"];
+                //        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
+                //        dsFila["TotalVendido"] = fila["Total Vendido"];
+                //        dsFila["DiferenciaStock"] = fila["Diferencia Stock"];
                     
-                        dtIngresoEgreso.Rows.Add(dsFila);
-                    }
-                    ReporteIngresoEgreso reporte = new ReporteIngresoEgreso();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtIngresoEgreso, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        dtIngresoEgreso.Rows.Add(dsFila);
+                //    }
+                //    ReporteIngresoEgreso reporte = new ReporteIngresoEgreso();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtIngresoEgreso, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                if (comboTipoReporte.SelectedIndex == 3)
-                {
-                    ReportesDataSet.dtTotalPorCortesDataTable dtTotalPorCortes = new ReportesDataSet.dtTotalPorCortesDataTable();
+                //if (comboTipoReporte.SelectedIndex == 3)
+                //{
+                //    ReportesDataSet.dtTotalPorCortesDataTable dtTotalPorCortes = new ReportesDataSet.dtTotalPorCortesDataTable();
 
-                    string titulo = "Reporte Total Cortes Vendidos";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTotalPorCortes.NewRow();
+                //    string titulo = "Reporte Total Cortes Vendidos";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTotalPorCortes.NewRow();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTotalPorCortes.Rows.Add(dsFila);
-                    }
-                    ReporteTotalPorCortes reporte = new ReporteTotalPorCortes();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalPorCortes, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTotalPorCortes.Rows.Add(dsFila);
+                //    }
+                //    ReporteTotalPorCortes reporte = new ReporteTotalPorCortes();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalPorCortes, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                if (comboTipoReporte.SelectedIndex == 4)
-                {
-                    ReportesDataSet.dtTotalCortePorCompraDataTable dtTotalCortePorCompra = new ReportesDataSet.dtTotalCortePorCompraDataTable();
+                //if (comboTipoReporte.SelectedIndex == 4)
+                //{
+                //    ReportesDataSet.dtTotalCortePorCompraDataTable dtTotalCortePorCompra = new ReportesDataSet.dtTotalCortePorCompraDataTable();
 
-                    string titulo = "Reporte Total Kgs Corte Por Compra";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTotalCortePorCompra.NewRow();
+                //    string titulo = "Reporte Total Kgs Corte Por Compra";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTotalCortePorCompra.NewRow();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTotalCortePorCompra.Rows.Add(dsFila);                        
-                    }
-                    ReporteKgsCortePorCompra reporte = new ReporteKgsCortePorCompra();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalCortePorCompra, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTotalCortePorCompra.Rows.Add(dsFila);                        
+                //    }
+                //    ReporteKgsCortePorCompra reporte = new ReporteKgsCortePorCompra();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalCortePorCompra, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                if (comboTipoReporte.SelectedIndex == 5)
-                {
-                    ReportesDataSet.dtTotalMovimientosDataTable dtTotalMovimientos = new ReportesDataSet.dtTotalMovimientosDataTable();
+                //if (comboTipoReporte.SelectedIndex == 5)
+                //{
+                //    ReportesDataSet.dtTotalMovimientosDataTable dtTotalMovimientos = new ReportesDataSet.dtTotalMovimientosDataTable();
 
-                    string titulo = "Total Movimiento Por Corte";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTotalMovimientos.NewRow();
+                //    string titulo = "Total Movimiento Por Corte";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTotalMovimientos.NewRow();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTotalMovimientos.Rows.Add(dsFila);
-                    }
-                    ReporteMovimientosPorCorte reporte = new ReporteMovimientosPorCorte();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalMovimientos, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTotalMovimientos.Rows.Add(dsFila);
+                //    }
+                //    ReporteMovimientosPorCorte reporte = new ReporteMovimientosPorCorte();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalMovimientos, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
+
+                #endregion
             }
             catch (Exception ex)
             {

@@ -254,6 +254,9 @@ namespace Presentacion.Caja
                                 MessageBox.Show("No se han realizado modificaciones.\n\nPresione Cancelar para salir sin realizar modificaciones", "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 return;
                             }
+                            //si es modificacion cerrar form
+                            bool cerrarForm = oEgresoCajaE.Id > 0;
+
                             oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
 
                             imprimirTicket();
@@ -271,6 +274,8 @@ namespace Presentacion.Caja
                                 txtDescripcion.Text = "";
                                 txtMonto.Text = "";
                                 txtDetalle.Text = "";
+
+                                if (cerrarForm) this.Close();
                             }
                             else
                             {
