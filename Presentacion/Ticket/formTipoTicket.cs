@@ -196,6 +196,54 @@ namespace Presentacion.Ticket
             }
         }
 
+        public void acumVentas(string fechaDesde, string fechaHasta, DataGridView grilla)
+        {
+            try
+            {
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = true;
+                ticket.TextoCentro("Acum ventas");
+                ticket.LineasEnBlanco(1);
+                ticket.TextoIzquierda("Desde: " + fechaDesde);
+                ticket.TextoIzquierda("Hasta: " + fechaHasta);
+                //ticket.TextoIzquier("123456789*123456789*123456789*12");
+                //                   ("4 Choriz    0,00    6,00    0,00")
+                //                     1 Carré    33,52    9,62   23,90
+                ticket.TextoIzquierda("Descrip.   Stock  Ventas   Diff.");
+                ticket.LineasGuion();
+                string descripcion, stockActualString, cantVentasString, diffString;
+                decimal stockActual, cantVentas, diff;
+                int longDesc = 8;
+                int longPeso = 7;
+                foreach (DataGridViewRow fila in grilla.Rows)
+                {
+                    descripcion = fila.Cells["Codigo"].Value.ToString().Trim() + " " + fila.Cells["Corte"].Value.ToString();
+                    if (descripcion.Length < longDesc)
+                    {
+                        for (int i = descripcion.Length; i < (longDesc - 1); i++)
+                        {
+                            descripcion += " ";
+                        }
+                    }
+                    stockActual = Convert.ToDecimal(fila.Cells["StockActual"].Value);
+                    cantVentas = Convert.ToDecimal(fila.Cells["Ventas"].Value);//en grilla col. Stock es Faltante
+                    diff = Convert.ToDecimal(fila.Cells["DIF"].Value);//en grilla col. Stock es Faltante
+                    descripcion = descripcion.Length > longDesc ? descripcion.Substring(0, longDesc) : agregarCamposEnblanco(descripcion, longDesc, false);
+                    stockActualString = stockActual.ToString("F2").Length.Equals(longPeso) ? stockActual.ToString("F2") : agregarCamposEnblanco(stockActual.ToString("F2"), longPeso, true);
+                    cantVentasString = cantVentas.ToString("F2").Length.Equals(longPeso) ? cantVentas.ToString("F2") : agregarCamposEnblanco(cantVentas.ToString("F2"), longPeso, true);
+                    diffString = diff.ToString("F2").Length.Equals(longPeso) ? diff.ToString("F2") : agregarCamposEnblanco(diff.ToString("F2"), longPeso, true);
+                    //return;
+                    int leng = (descripcion + " " + stockActualString + " " + cantVentasString + " " + diffString).Length;
+                    ticket.TextoIzquierda(descripcion + " " + stockActualString + " " + cantVentasString + " " + diffString);
+                }
+                ticket.LineasEnBlanco(4);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al imprimir ticket.\n\n" + ex.Message + "\n\n" + ex.StackTrace);
+            }
+        }
+
         //completa espacios en blanco al texto hasta llegar a la longitud seteada en longitudTexto
         private string agregarCamposEnblanco(string texto, int longitudTexto, bool agregarAntes)
         {

@@ -66,6 +66,14 @@ namespace Presentacion.Cortes
                     return;
                 }
 
+                //Reporte Acum
+                if (comboTipoReporte.Text == "Acum. Ventas")
+                {
+                    Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+                    tipoTicket.acumVentas(fechaDesdeProgresivo.Value.ToString(), txtFechaHastaProgresivo.Value.ToString(), grillaReportes);
+                    return;
+                }
+
                 //Reporte Cierre Stock
                 if (comboTipoReporte.Text == "Cierre Stock")
                 {
