@@ -81,20 +81,17 @@ namespace Presentacion
             txtIndependiente.Checked = oCorteE.independiente == 1;
             checkMayorista.Checked = oCorteE.Mayorista;
             checkEnCierreStock.Checked = oCorteE.EnCierreStock;
-
-            if (oCorteE.idCorte != oCorteE.corteMaestro.idCorte)
-            {
-                checkAsignarMaestro.Checked = true;
-            }
+            checkAsignarMaestro.Checked = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0);
+            
             cargarCampoCorteMaestro();
         }
 
         private void cargarCampoCorteMaestro()
         {
-            txtCorteMaestro.Text = oCorteE.corteMaestro.corte;
-            txtPorcentajeCorteM.Text = Convert.ToString(oCorteE.porcentaje);
-            txtPorcHueso.Text = Convert.ToString(oCorteE.porcentajeHueso);
-            txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+            txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.corteMaestro.corte : "-";
+            txtPorcentajeCorteM.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? Convert.ToString(oCorteE.porcentaje) : "";
+            txtPorcHueso.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? Convert.ToString(oCorteE.porcentajeHueso) : "";
+            txtDesvioEstandar.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.desvioEstandar.ToString() : "";
         }
 
         #endregion
@@ -172,20 +169,9 @@ namespace Presentacion
             }
 
             oCorteE.Tipo = comboTipo.Text;
-
             oCorteE.Mayorista = checkMayorista.Checked;
-
             oCorteE.EnCierreStock = checkEnCierreStock.Checked;
-
-            if (txtIndependiente.Checked.Equals(true))
-            {
-                oCorteE.independiente = 1;
-                
-            }
-            else
-            {
-                oCorteE.independiente = 0;
-            }
+            oCorteE.independiente = txtIndependiente.Checked ? 1 : 0;
 
             oCorteE.CorteMaestro = oCorteMaestroE;
 
@@ -240,9 +226,16 @@ namespace Presentacion
 
         private bool validar()
         {
+            //validar Corte Maestro
+            if (checkAsignarMaestro.Checked && (oCorteMaestroE == null || oCorteMaestroE.idCorte == 0))
+            {
+                MessageBox.Show("Debe ingresar el corte maestro", "Ingrese Corte Maestro",
+                      MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return false;
+            }
+
             if (this.txtCodigo.Text.Equals("") || this.txtDescCorte.Text.Equals("") 
-                || this.comboTipo.Text.Equals("")|| (checkAsignarMaestro.Checked && 
-                ( this.txtCorteMaestro.Text.Equals("") || this.txtPorcentajeCorteM.Text.Equals(""))))
+                || this.comboTipo.Text.Equals(""))
             {
                 MessageBox.Show("Debe Completar todos los campos.", "Complete los campos", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -308,7 +301,9 @@ namespace Presentacion
                     , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 if (resp.Equals(DialogResult.Yes))
                 {
-                    oCorteMaestroE = oCorteE;
+                    //oCorteMaestroE = oCorteE;
+                    //oCorteE.CorteMaestro = oCorteMaestroE;
+                    oCorteMaestroE = null;
                     oCorteE.CorteMaestro = oCorteMaestroE;
                     cargarCampoCorteMaestro();
                 }

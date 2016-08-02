@@ -756,7 +756,7 @@ namespace Presentacion.Cortes
                 comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo && !acumVentas ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
 
                 //setea ultima fecha de cierre para obtener stock actual para comparar en AcumVentas
-                fechaUltimoCierreStock = Convert.ToDateTime(dtInicioStock.Rows[0]["fechaCompra"]);
+                fechaUltimoCierreStock = dtInicioStock.Rows.Count > 0 ? Convert.ToDateTime(dtInicioStock.Rows[0]["fechaCompra"]) : fechaUltimoCierreStock;
 
                 fechaDesdeProgresivo.Visible = acumVentas;
                 txtFechaHastaProgresivo.Visible = stockProgresivo || acumVentas;

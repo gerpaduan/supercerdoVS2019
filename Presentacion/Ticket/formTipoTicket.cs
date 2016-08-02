@@ -207,8 +207,6 @@ namespace Presentacion.Ticket
                 ticket.TextoIzquierda("Desde: " + fechaDesde);
                 ticket.TextoIzquierda("Hasta: " + fechaHasta);
                 //ticket.TextoIzquier("123456789*123456789*123456789*12");
-                //                   ("4 Choriz    0,00    6,00    0,00")
-                //                     1 Carré    33,52    9,62   23,90
                 ticket.TextoIzquierda("Descrip.   Stock  Ventas   Diff.");
                 ticket.LineasGuion();
                 string descripcion, stockActualString, cantVentasString, diffString;

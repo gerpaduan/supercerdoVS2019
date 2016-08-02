@@ -55,11 +55,7 @@ namespace Presentacion
                     txtDescCorte.Text = fila["corte"].ToString();
                     txtPrecioKg.Text = fila["precioKg"].ToString();
                     txtTipo.Text = fila["tipo"].ToString();
-                    if (oCorteE.independiente == 1)
-                    {
-                        txtIndependiente.Checked = true;
-                    }
-
+                    txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
                     checkMayorista.Checked = Convert.ToBoolean(fila["mayorista"]);
                     checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
 
@@ -67,15 +63,6 @@ namespace Presentacion
                     txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
                     txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
                     txtDesvioEstandar.Text = fila["desvioEstandar"].ToString();
-                    txtStockSanLorenzo.Text = fila["stockSL"].ToString();
-                    txtStockSanMartin.Text = fila["stockSM"].ToString();
-
-                    float stockSL, stockSM, total;
-                    stockSL = float.Parse(fila["stockSL"].ToString());
-                    stockSM = float.Parse(fila["stockSM"].ToString());
-                    total = stockSL + stockSM;
-
-                    txtTotalStock.Text = Convert.ToString(total);
                 }
             }
             catch (Exception ex)
@@ -98,9 +85,13 @@ namespace Presentacion
             txtCodigo.Text =Convert.ToString( oCorteE.codigo);
             txtDescCorte.Text = oCorteE.corte;
             txtTipo.Text = oCorteE.tipo;
-            txtCorteMaestro.Text = oCorteE.corteMaestro.corte;
+            txtIndependiente.Checked = oCorteE.independiente.Equals(1);
+            checkMayorista.Checked = oCorteE.Mayorista.Equals(1);
+            //checkEnCierreStock.Checked = oCorteE.
+            txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null) ? oCorteE.corteMaestro.corte : "-";
             txtPorcentajeCorte.Text =Convert.ToString( oCorteE.porcentaje);
             txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+            txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
         }
 
         private void eliminarCorte()

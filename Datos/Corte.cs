@@ -72,7 +72,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
             cmCorte.Parameters.AddWithValue("@mayorista", oCorteE.Mayorista);
             cmCorte.Parameters.AddWithValue("@enCierreStock", oCorteE.EnCierreStock);
-            cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro.idCorte);
+            cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro != null ? oCorteE.corteMaestro.idCorte : 0);
             cmCorte.Parameters.AddWithValue("@porcentaje", oCorteE.porcentaje);
             cmCorte.Parameters.AddWithValue("@porcentajeHueso", oCorteE.porcentajeHueso);
             cmCorte.Parameters.AddWithValue("@desvioEstandar", oCorteE.desvioEstandar);
