@@ -351,7 +351,7 @@ namespace Presentacion.Pagos
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             //leo de App.config fecha Desde
-            txtFechaDesde.Value =Convert.ToDateTime(ConfigurationManager.AppSettings["FechaDesdePago"].ToString());
+            txtFechaDesde.Value = DateTime.Now;
             cargar = true;
             cargarGrilla();
         }

@@ -87,6 +87,7 @@ namespace Utilidades
 
         public static string getSucursalConexion()
         {
+            getTipoConexion();
             string sucursalConexion = " | Suc. ";
             switch (tipoConn)
             {

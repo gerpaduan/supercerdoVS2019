@@ -302,11 +302,11 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             ultimaConnSelect = comboConexion.Text;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
 
         private static void embutidos()

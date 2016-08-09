@@ -712,11 +712,13 @@ namespace Presentacion.Cortes
         
         private void cargarSucursales()
         {
+            int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
             dtSucursales = oSucursalN.obtenerSucursales();
 
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idsucursal";
+            comboSucursal.SelectedIndex = idSucursal - 1;
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)

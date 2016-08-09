@@ -87,7 +87,8 @@ namespace Presentacion
                 totalKgs += float.Parse(venta["totalKg"].ToString());
                 totalS += float.Parse(venta["totalS"].ToString());
             }
-            txtTotalKgs.Text = String.Format("{0:0.00}", totalKgs);
+            txtCantItems.Text = dtVentas.Rows.Count.ToString();
+            txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
             if (Presentacion.FormPrincipal.logueado)
             {
                 txtTotalS.Text = String.Format("{0:0.00}", totalS );
