@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Caja;
+using System.Configuration;
 
 namespace Presentacion
 {
@@ -28,6 +29,8 @@ namespace Presentacion
 
         Entidades.Usuario oUsuario;
 
+        int cantDiasLimitFechaDesde = Convert.ToInt32(ConfigurationManager.AppSettings["cantDiasLimitFechaDesde"].ToString());
+        DateTime limitFechaDesde;
         bool cargar = false;
         public formEmbutidos()
         {
@@ -169,7 +172,8 @@ namespace Presentacion
             }
             DateTime today = DateTime.Today;
             fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
-            fechaDesde.Value = today.AddDays(-8);            
+            limitFechaDesde = today.AddDays(-cantDiasLimitFechaDesde);
+            fechaDesde.Value = limitFechaDesde;            
             cargarSucursal();
             cargar = true;
             cargarGrilla();   
@@ -209,6 +213,11 @@ namespace Presentacion
 
         private void txtDescripcion_TextChanged(object sender, EventArgs e)
         {
+            if (!FormPrincipal.logueado && fechaDesde.Value < limitFechaDesde)
+            {
+                MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                fechaDesde.Value = limitFechaDesde;
+            }
             lblActualizar.Visible = true;
         }
     }

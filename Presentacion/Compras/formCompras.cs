@@ -28,7 +28,6 @@ namespace Presentacion
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarSucursal();
-            this.comboSucursal.SelectedIndex = 2;
             this.comboTipoCompra.SelectedIndex = 0;
             fechaDesde.Value = DateTime.Today.AddMonths(-2);
             cargar = true;
@@ -182,19 +181,12 @@ namespace Presentacion
         {
             dtSucursales = new DataTable();
             oSucursalN = new Negocio.Sucursal();
-            dtSucursales = oSucursalN.obtenerSucursales();
-
-            DataRow nuevaFila = dtSucursales.NewRow();
-
-            nuevaFila[0] = 0;
-            nuevaFila[1] = "Todas";
-
-            dtSucursales.Rows.Add(nuevaFila);
+            dtSucursales = oSucursalN.obtenerSucursalesConTodas();
 
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = 2;
+            comboSucursal.SelectedValue = -1;
         }
     }
 }
