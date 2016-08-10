@@ -282,6 +282,8 @@ namespace Presentacion
         private void limpiarListas()
         {
             //limpio campos
+            txtPrecioKg.Text = "";
+            txtCantMedias.Text = "";
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
 
@@ -859,11 +861,16 @@ namespace Presentacion
                 {
             		 radioCorte.TabStop = false;
                 }
+                //si txtBoxPrecio es vacio se mueve el foco a éste
+                if ((txtKgMedia.Focused || txtPrecioKg.Focused) && txtPrecioKg.Text.Equals(""))
+                {
+                    txtPrecioKg.Focus();
+                    return;
+                }
                 e.Handled = true;
 
                 SendKeys.Send("{TAB}");
-
-                }
+            }
         }
 
         //Métodos autocompletar
