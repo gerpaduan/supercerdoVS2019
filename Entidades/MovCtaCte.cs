@@ -5,12 +5,12 @@ using System.Text;
 
 namespace Entidades
 {
-    public class Pagos
+    public class MovCtaCte
     {
-        public enum formaPago
-        {
-            Efectivo,
-            Cheque,
+        public enum tipoMov
+        { 
+            Debito,
+            Credito,
         }
 
         private int id;
@@ -20,19 +20,13 @@ namespace Entidades
             get { return id; }
             set { id = value; }
         }
+
         Persona persona;
 
         public Persona Persona
         {
             get { return persona; }
             set { persona = value; }
-        }
-        private string nroRecibo;
-
-        public string NroRecibo
-        {
-            get { return nroRecibo; }
-            set { nroRecibo = value; }
         }
         private DateTime fecha;
 
@@ -41,41 +35,39 @@ namespace Entidades
             get { return fecha; }
             set { fecha = value; }
         }
-        private bool aProveedor;
 
-        public bool AProveedor
-        {
-            get { return aProveedor; }
-            set { aProveedor = value; }
-        }
-        private string tipoPago;
+        private string tabla;
 
-        public string TipoPago
+        public string Tabla
         {
-            get { return tipoPago; }
-            set { tipoPago = value; }
+            get { return tabla; }
+            set { tabla = value; }
         }
-        private string banco;
 
-        public string Banco
-        {
-            get { return banco; }
-            set { banco = value; }
-        }
-        private string nroCheque;
+        int idTabla;
 
-        public string NroCheque
+        public int IdTabla
         {
-            get { return nroCheque; }
-            set { nroCheque = value; }
+            get { return idTabla; }
+            set { idTabla = value; }
         }
-        private string titularCheque;
 
-        public string TitularCheque
+        private string detalle;
+
+        public string Detalle
         {
-            get { return titularCheque; }
-            set { titularCheque = value; }
+            get { return detalle; }
+            set { detalle = value; }
         }
+
+        private string tipo;
+
+        public string Tipo
+        {
+            get { return tipo; }
+            set { tipo = value; }
+        }
+	    
         private float importe;
 
         public float Importe
@@ -83,14 +75,8 @@ namespace Entidades
             get { return importe; }
             set { importe = value; }
         }
-        private string observaciones;
 
-        public string Observaciones
-        {
-            get { return observaciones; }
-            set { observaciones = value; }
-        }
-        Sucursal sucursal;
+	    Sucursal sucursal;
 
         public Sucursal Sucursal
         {
@@ -124,7 +110,6 @@ namespace Entidades
         {
             get { return actualizadoPor; }
             set { actualizadoPor = value; }
-        }        
-        
+        }  
     }
 }

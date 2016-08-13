@@ -13,7 +13,7 @@ namespace Presentacion.Pagos
     public partial class formNuevoPago : Form, InterfaceProveedor
     {
         formPagos frmPagos;
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         Entidades.Persona oProveedorE=new Entidades.Persona();
         Entidades.Pagos oPagoE=new Entidades.Pagos();
 
@@ -73,7 +73,7 @@ namespace Presentacion.Pagos
         {
             txtProveedor.Text = oPagoE.Persona.razonSocial;
             txtNroRecibo.Text = oPagoE.NroRecibo;
-            txtFechaPago.Value = oPagoE.FechaPago;
+            txtFechaPago.Value = oPagoE.Fecha;
             comboTipoPago.Text = oPagoE.TipoPago;
             txtImporte.Text = oPagoE.Importe.ToString();
             txtObservaciones.Text = oPagoE.Observaciones;
@@ -93,11 +93,11 @@ namespace Presentacion.Pagos
                     {
                         if (modificar)//si se modifica el pago
                         {
-                            oCompraN.modificarPago(oPagoE);
+                            oCtaCteN.modificarPago(oPagoE);
                         }
                         else
                         {
-                            oCompraN.agregarPago(oPagoE);
+                            oCtaCteN.agregarPago(oPagoE);
                         }
 
                         frmPagos.cargarGrilla();
@@ -136,19 +136,19 @@ namespace Presentacion.Pagos
                 oPagoE.NroRecibo = txtNroRecibo.Text.Trim();
                 oPagoE.Persona = oProveedorE;
                 oPagoE.TipoPago = comboTipoPago.Text.Trim();
-                oPagoE.FechaPago = txtFechaPago.Value;
+                oPagoE.Fecha = txtFechaPago.Value;
 
                 try
                 {
                     //oPagoE.Importe = float.Parse(txtImporte.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                     float importe = float.Parse(txtImporte.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                    oPagoE.Importe = Convert.ToDecimal(importe);
+                    oPagoE.Importe = importe;
                 }
                 catch (Exception)
                 {
                     try
                     {
-                        oPagoE.Importe = Convert.ToDecimal(txtImporte.Text.Trim());
+                        oPagoE.Importe = float.Parse(txtImporte.Text.Trim());
                     }
                     catch (Exception ex1)
                     {

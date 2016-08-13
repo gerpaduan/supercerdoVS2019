@@ -14,6 +14,7 @@ using Presentacion.Caja;
 using Presentacion.Balanza;
 using Presentacion.Usuario;
 using Presentacion.Pruebas;
+using Presentacion.CuentaCorriente;
 using System.Configuration;
 using Utilidades;
 
@@ -780,6 +781,13 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
+        }
+
+        private void ctasCtesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            formCtasCtes frmCtasCtes = new formCtasCtes();
+            frmCtasCtes.Show();
         }
     }
 }

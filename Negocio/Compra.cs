@@ -189,33 +189,6 @@ namespace Negocio
 
         }
 
-        #region Pagos
-
-        public void agregarPago(Entidades.Pagos oPagoE)
-        {
-            oCompraD.agregarPago(oPagoE);
-        }
-
-        public void modificarPago(Entidades.Pagos oPagoE)
-        {
-            oCompraD.modificarPago(oPagoE);
-        }
-
-        public void eliminarPago(Entidades.Pagos oPagoE)
-        {
-            oCompraD.eliminarPago(oPagoE);
-        }
-
-        public DataTable obtenerPagos(string tipoTramite, string texto, DateTime fechaDesde, DateTime fechaHasta)
-        {
-            return oCompraD.obtenerPagos(tipoTramite, texto, fechaDesde, fechaHasta);
-        }
-
-        public Entidades.Pagos buscarPago(Entidades.Pagos oPagoE)
-        {
-            return oCompraD.buscarPago(oPagoE);
-        }
-
         public void backup(string destino)
         {
             oCompraD.backup(destino);
@@ -225,9 +198,5 @@ namespace Negocio
         {
             oCompraD.restaurarBD(dataSource,bdAuxiliar, rutaOrigen);
         }
-
-        #endregion
-
-
     }
 }

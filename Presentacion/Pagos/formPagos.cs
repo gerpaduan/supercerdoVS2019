@@ -13,7 +13,7 @@ namespace Presentacion.Pagos
 {
     public partial class formPagos : Form
     {
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         Entidades.Pagos oPagoE=new Entidades.Pagos();
 
         DataTable dtPagos = new DataTable();
@@ -80,7 +80,7 @@ namespace Presentacion.Pagos
                     tipoTramite = comboTipoTramite.Text;
                 }
 
-                dtPagos = oCompraN.obtenerPagos(tipoTramite, descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
+                dtPagos = oCtaCteN.obtenerPagos(tipoTramite, descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
                 grillaPagos.DataSource = null;
                 grillaPagos.DataSource = dtPagos;
                 foreach (DataGridViewRow filaPago in grillaPagos.Rows)
@@ -150,8 +150,8 @@ namespace Presentacion.Pagos
                 cargarFilaSeleccionada();
                 if (tramite == "Pago")
                 {
-                    oPagoE.IdPago = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
-                    oPagoE = oCompraN.buscarPago(oPagoE);
+                    oPagoE.Id = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
+                    oPagoE = oCtaCteN.buscarPago(oPagoE);
 
                     if (Application.OpenForms["formNuevoPago"] != null)
                     {
@@ -186,10 +186,10 @@ namespace Presentacion.Pagos
                 DialogResult resp = MessageBox.Show("Está seguro que desea eliminar el Pago?.", "Eliminar Pago", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 if (resp == DialogResult.Yes)
                 {
-                    oPagoE.IdPago = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
-                    oPagoE = oCompraN.buscarPago(oPagoE);
+                    oPagoE.Id = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
+                    oPagoE = oCtaCteN.buscarPago(oPagoE);
 
-                    oCompraN.eliminarPago(oPagoE);
+                    oCtaCteN.eliminarPago(oPagoE);
 
                     cargarGrilla();
                 }
