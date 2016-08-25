@@ -205,6 +205,12 @@
     <Compile Include="Cortes\formStockCortes.Designer.cs">
       <DependentUpon>formStockCortes.cs</DependentUpon>
     </Compile>
+    <Compile Include="CuentaCorriente\formCtaCtePersona.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CuentaCorriente\formCtaCtePersona.Designer.cs">
+      <DependentUpon>formCtaCtePersona.cs</DependentUpon>
+    </Compile>
     <Compile Include="CuentaCorriente\formCtasCtes.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -620,6 +626,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Cortes\formStockCortes.resx">
       <DependentUpon>formStockCortes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CuentaCorriente\formCtaCtePersona.resx">
+      <DependentUpon>formCtaCtePersona.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="CuentaCorriente\formCtasCtes.resx">
       <DependentUpon>formCtasCtes.cs</DependentUpon>

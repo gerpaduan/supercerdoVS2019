@@ -20,6 +20,14 @@ namespace Entidades
          private string estado;
          Usuario vendedor;
          private string tipoVenta;
+         bool enCtaCte;
+
+         public bool EnCtaCte
+         {
+             get { return enCtaCte; }
+             set { enCtaCte = value; }
+         }
+
          List<Entidades.LineaVenta> lineasVenta;
 
          public List<Entidades.LineaVenta> LineasVenta

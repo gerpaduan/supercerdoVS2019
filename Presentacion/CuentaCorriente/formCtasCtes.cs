@@ -11,6 +11,8 @@ namespace Presentacion.CuentaCorriente
 {
     public partial class formCtasCtes : Form
     {
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+
         public formCtasCtes()
         {
             InitializeComponent();
@@ -18,11 +20,20 @@ namespace Presentacion.CuentaCorriente
 
         private void formCtasCtes_Load(object sender, EventArgs e)
         {
-
+            cargarGrilla();
         }
 
         private void cargarGrilla()
-        { 
+        {
+            try
+            {
+                grillaCtasCtes.DataSource = oCtaCteN.obtenerCtasCtes(txtDescripcion.Text);
+                grillaCtasCtes.AutoGenerateColumns = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void txtDescripcion_TextChanged(object sender, EventArgs e)
@@ -32,17 +43,26 @@ namespace Presentacion.CuentaCorriente
 
         private void btnBuscar_Click(object sender, EventArgs e)
         {
-
+            cargarGrilla();
         }
 
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
-
+            try
+            {
+                formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
+                frmCtaCtePersona.idPersona = Convert.ToInt32(grillaCtasCtes.CurrentRow.Cells["IdPersona"].Value.ToString());
+                frmCtaCtePersona.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-
+            this.Close();
         }
 
         private void txtDescripcion_KeyDown(object sender, KeyEventArgs e)

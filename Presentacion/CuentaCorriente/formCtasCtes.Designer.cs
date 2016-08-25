@@ -31,13 +31,13 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.grillaVentas = new System.Windows.Forms.DataGridView();
+            this.grillaCtasCtes = new System.Windows.Forms.DataGridView();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaCtasCtes)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -76,25 +76,25 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
-            // grillaVentas
+            // grillaCtasCtes
             // 
-            this.grillaVentas.AllowDrop = true;
-            this.grillaVentas.AllowUserToAddRows = false;
-            this.grillaVentas.AllowUserToDeleteRows = false;
-            this.grillaVentas.AllowUserToResizeRows = false;
-            this.grillaVentas.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            this.grillaCtasCtes.AllowDrop = true;
+            this.grillaCtasCtes.AllowUserToAddRows = false;
+            this.grillaCtasCtes.AllowUserToDeleteRows = false;
+            this.grillaCtasCtes.AllowUserToResizeRows = false;
+            this.grillaCtasCtes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.grillaVentas.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            this.grillaVentas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaVentas.Location = new System.Drawing.Point(12, 66);
-            this.grillaVentas.MultiSelect = false;
-            this.grillaVentas.Name = "grillaVentas";
-            this.grillaVentas.ReadOnly = true;
-            this.grillaVentas.RowHeadersVisible = false;
-            this.grillaVentas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaVentas.Size = new System.Drawing.Size(581, 246);
-            this.grillaVentas.TabIndex = 28;
+            this.grillaCtasCtes.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            this.grillaCtasCtes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.grillaCtasCtes.Location = new System.Drawing.Point(12, 66);
+            this.grillaCtasCtes.MultiSelect = false;
+            this.grillaCtasCtes.Name = "grillaCtasCtes";
+            this.grillaCtasCtes.ReadOnly = true;
+            this.grillaCtasCtes.RowHeadersVisible = false;
+            this.grillaCtasCtes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaCtasCtes.Size = new System.Drawing.Size(581, 246);
+            this.grillaCtasCtes.TabIndex = 28;
             // 
             // pnlBuscar
             // 
@@ -159,7 +159,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(602, 357);
             this.Controls.Add(this.pnlBuscar);
-            this.Controls.Add(this.grillaVentas);
+            this.Controls.Add(this.grillaCtasCtes);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
@@ -167,7 +167,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Cuentas Corrientes";
             this.Load += new System.EventHandler(this.formCtasCtes_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaCtasCtes)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.ResumeLayout(false);
@@ -179,7 +179,7 @@
         private System.Windows.Forms.Panel panel1;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
-        private System.Windows.Forms.DataGridView grillaVentas;
+        private System.Windows.Forms.DataGridView grillaCtasCtes;
         protected System.Windows.Forms.Panel pnlBuscar;
         protected System.Windows.Forms.Label lblActualizar;
         protected System.Windows.Forms.Button btnBuscar;

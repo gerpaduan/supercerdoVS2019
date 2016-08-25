@@ -28,7 +28,8 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
             cmVenta.Parameters.AddWithValue("@idPersona",oVentaE.Persona.idPersona);
-            cmVenta.Parameters.AddWithValue("@nroRemito",oVentaE.NroRemito);
+            cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito);
+            cmVenta.Parameters.AddWithValue("@enCtaCte", oVentaE.EnCtaCte);
             
             cmVenta.Connection.Open();
             SqlDataReader drVenta = cmVenta.ExecuteReader();
@@ -62,6 +63,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito);
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
             cmVenta.Parameters.AddWithValue("@eliminarLineas", eliminarLineas);
+            cmVenta.Parameters.AddWithValue("@enCtaCte", oVentaE.EnCtaCte);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
@@ -115,6 +117,24 @@ namespace Datos
             cmVenta.Connection.Close();
 
             return dtVentasVendedorCierre;
+        }
+
+        public float getTotalVenta(int idVenta)
+        {
+            DataTable dtTotalVenta = new DataTable();
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            string consulta = "SELECT SUM(cantKg * precioKg) AS total "+
+                                "FROM dbo.LineaVenta "+
+                                "WHERE     idVenta = "+idVenta+" "+
+                                "GROUP BY idVenta";
+            cmVenta.CommandText = consulta;
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.Connection.Open();
+            double totalVentaD = (double)cmVenta.ExecuteScalar();
+            float totalVenta = (float)totalVentaD;
+            cmVenta.Connection.Close();
+            return totalVenta;
         }
 
         public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaDesde, DateTime? fechaHasta)
@@ -213,6 +233,7 @@ namespace Datos
                         oVentaE.Persona = oPersonaD.findById(Convert.ToInt32(drVenta["idPersona"]));
                         oVentaE.NroRemito = Convert.ToString(drVenta["nroRemito"]);
                         oVentaE.Estado = Convert.ToString(drVenta["estado"]);
+                        oVentaE.EnCtaCte = Convert.ToBoolean(drVenta["enCtaCte"]);
                         oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
                         oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
 

@@ -83,6 +83,13 @@ namespace Entidades
         private Usuario creadoPor;
         private Usuario actualizadoPor;
         private List<Entidades.CortePorCompra> lineasCortes;
+        bool enCtaCte;
+
+        public bool EnCtaCte
+        {
+            get { return enCtaCte; }
+            set { enCtaCte = value; }
+        }
 
         public List<Entidades.CortePorCompra> LineasCortes
         {

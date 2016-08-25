@@ -97,6 +97,7 @@ namespace Presentacion.Ventas
             comboUsuario.SelectedValue = oVentaE.Vendedor.Id;
             txtCliente.Text = oVentaE.Persona.razonSocial;
             comboSucursal.SelectedIndex = oVentaE.Sucursal.idSucursal - 1;
+            checkCtaCte.Checked = oVentaE.EnCtaCte;
             
             txtFechaVenta.Value =oVentaE.FechaVenta;
             txtNroRemito.Text = oVentaE.NroRemito;
@@ -107,9 +108,7 @@ namespace Presentacion.Ventas
             txtActualizado.Text = oVentaE.Actualizado >= oVentaE.Creado ? oVentaE.Actualizado.ToString() : "";
 
             estadoVenta = oVentaE.Estado;
-        }
-
-      
+        }      
 
         private void modificarVenta()
         {
@@ -146,22 +145,34 @@ namespace Presentacion.Ventas
         {
             if (FormPrincipal.logueado)
             {
+                bool aCtaCte = false;
                 //si es modificacion o agregacion
                 if (modificar)
                 {
                     modificarVenta();
+                    aCtaCte = true;
                 }
                 else
                 {
                     if (grillaLineasVenta.SelectedRows.Count > 0)
                     {
                         agregarVenta();
+                        aCtaCte = true;
                     }
                     else
                     {
                         MessageBox.Show("No se ha cargado ningún corte en la venta. ", "No hay cortes cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                     }
+                }
+
+                try
+                {
+                    if (aCtaCte) 
+                        oVentaN.crearMovCtaCteVenta(oVentaE);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Hubo un error y no se registró el movimiento en la Cta. Cta\n\n"+ex.Message);
                 }
             }
             else
@@ -204,15 +215,13 @@ namespace Presentacion.Ventas
                         }
                     }
                 }
-                
 
                 cargarTotales();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-            }
-            
+            }            
         }
 
         private void agregarVenta()
@@ -283,6 +292,7 @@ namespace Presentacion.Ventas
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta ;
+            oVentaE.EnCtaCte = checkCtaCte.Checked;
         }
 
         private void cargarTotales()
@@ -972,6 +982,11 @@ namespace Presentacion.Ventas
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
     }
 }

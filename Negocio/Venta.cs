@@ -12,12 +12,27 @@ namespace Negocio
 
         public int agregarVenta(Entidades.Venta oVentaE)
         {
-           return oVentaD.agregarVenta(oVentaE);
+            oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
+            return oVentaE.IdVenta;
         }
 
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas)
         {
             oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
+        }
+
+        public void crearMovCtaCteVenta(Entidades.Venta oVentaE)
+        {
+            oVentaE = oVentaD.getVentaById(oVentaE.IdVenta);
+            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            oCtaCteN.crearMovCtaCte(oVentaE.Persona, oVentaE.FechaVenta, Entidades.MovCtaCte.tablas.Ventas, oVentaE.IdVenta,
+                "", Entidades.MovCtaCte.tipoMov.Debito, oVentaE.LineasVenta.Count == 0 ? 0 : oVentaD.getTotalVenta(oVentaE.IdVenta), oVentaE.Sucursal,
+                oVentaE.Creado, oVentaE.Vendedor, oVentaE.Actualizado, null, oVentaE.EnCtaCte);      
+        }
+
+        public float getTotalVenta(int idVenta)
+        {
+            return oVentaD.getTotalVenta(idVenta);
         }
 
         public DataTable obtenerVentas(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)

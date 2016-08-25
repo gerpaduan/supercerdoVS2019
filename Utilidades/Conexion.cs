@@ -29,8 +29,8 @@ namespace Utilidades
             conString = getConnString();
             conn = new SqlConnection(conString);
             return conn;
-
         }
+
         public void cerraConexion()
         {
             conn.Close();

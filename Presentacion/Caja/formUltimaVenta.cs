@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
+using System.Configuration;
 
 namespace Presentacion.Caja
 {
@@ -39,7 +40,16 @@ namespace Presentacion.Caja
             txtSucursal.Text = oUltimaVenta.Sucursal.sucursal;
             txtNroTicket.Text = oUltimaVenta.IdVenta.ToString();
             txtObservaciones.Text = oUltimaVenta.Observaciones;
+            checkCtaCte.Checked = oUltimaVenta.EnCtaCte;
+            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
             huboModificaciones = false;
+            
+            if (oUltimaVenta.EnCtaCte )
+            {
+                btnBuscarCliente.Visible = false;
+                panelInfoCtaCte.Visible = true;
+                //MessageBox.Show("No se permiten modificar el cliente en ventas que son a Cuenta Corriente.", "Cta. Cte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         public void cargarGrilla()
@@ -237,6 +247,26 @@ namespace Presentacion.Caja
                             oVentaN.agregarLineaVenta(lineaNuevoAnulado);
                         }
 
+                        //Agregar en Cta Cte
+                        try
+                        {
+                            oVentaN.crearMovCtaCteVenta(oUltimaVenta);
+                            //se genera el egreso de caja por Cta. Cte
+                            if (oUltimaVenta.EnCtaCte)
+                            {
+                                ///generar egreso para modificacion de Vta en Cta Cte
+                                ///**anular registro y volver a cargar**
+                                formVentaCaja fVtaCaja = new formVentaCaja();
+                                fVtaCaja.egresoCajaPorCtaCte(oUltimaVenta);
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n"+
+                                "**La Venta se registró correctamente**\n\n" + ex.Message + "\n" + ex.Source);
+                        }
+
                         if(checkTicket.Checked)
                             imprimirTicket();
 
@@ -270,6 +300,8 @@ namespace Presentacion.Caja
         {
             huboModificaciones = true;
             oUltimaVenta.Persona = persona;
+            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Checked = oUltimaVenta.Persona.CtaCte;
             this.txtCliente.Text = oUltimaVenta.Persona.razonSocial;
         }
 
@@ -413,6 +445,15 @@ namespace Presentacion.Caja
         {
 
             checkTicket.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkTicket.Checked);
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
+
+            if(!huboModificaciones)
+                huboModificaciones = checkCtaCte.Checked != oUltimaVenta.EnCtaCte;
+            oUltimaVenta.EnCtaCte = checkCtaCte.Checked;
         }
     }
 }

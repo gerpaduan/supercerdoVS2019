@@ -26,6 +26,7 @@ namespace Presentacion.Caja
         public int idEgresoCaja = 0;
         bool readOnly = false;
         bool huboModificacion = false;
+        public bool egresoDesdeCajaVenta = false;
 
         public formAddOrEditEgresoCaja()
         {
@@ -197,13 +198,22 @@ namespace Presentacion.Caja
                     }
                 }
 
-                bool cajaAbierta = (Presentacion.FormPrincipal.logueado || oUsuario.Admin) ? true : validarCajaAbiertaVendedeor();
+                bool cajaAbierta = (!egresoDesdeCajaVenta && (Presentacion.FormPrincipal.logueado || oUsuario.Admin)) ? true : validarCajaAbiertaVendedeor();
 
                 if (tienePermiso && cajaAbierta && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado,
                         Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     if (oEgresoCajaE.Id > 0 && readOnly)
                     {
+                        //se valida que no sea egreso por Cta Cte
+                        if (oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja))
+                        {
+                            MessageBox.Show("No puede modificar los egresos de caja que son por Cuenta Corriente.\n\n",
+                            "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            return;
+                        }
+
                         //se valida que no sea un egreso por compra
                         if (oEgresoCajaE.IdCompra != null && oEgresoCajaE.IdCompra > 0)
                         {

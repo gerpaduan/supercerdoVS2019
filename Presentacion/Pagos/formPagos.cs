@@ -14,7 +14,7 @@ namespace Presentacion.Pagos
     public partial class formPagos : Form
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Entidades.Pagos oPagoE=new Entidades.Pagos();
+        Entidades.Pago oPagoE=new Entidades.Pago();
 
         DataTable dtPagos = new DataTable();
 

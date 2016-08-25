@@ -43,30 +43,25 @@ namespace Presentacion.Personas
         public void enviarPersona()
         {
             Entidades.Persona oPersonaE = new Entidades.Persona();
-
-            cargarDatos(oPersonaE);
-
-            InterfacePersona formInterface = this.Owner as InterfacePersona;
-            if (formInterface != null)
-            {
-                formInterface.EnviarPersona(oPersonaE);
-            }
-            this.Close();
-        }
-
-        private void cargarDatos(Entidades.Persona oPersonaE)
-        {
             try
-            {                
-                oPersonaE.idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
-                oPersonaE.razonSocial = grillaPersonas.CurrentRow.Cells[1].Value.ToString();
-                oPersonaE.otrosDatos = grillaPersonas.CurrentRow.Cells[2].Value.ToString();
+            {
+                int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
+                oPersonaN = new Negocio.Persona();
+                oPersonaE = oPersonaN.findById(idPersona);
+
+                InterfacePersona formInterface = this.Owner as InterfacePersona;
+                if (formInterface != null)
+                {
+                    formInterface.EnviarPersona(oPersonaE);
+                }
             }
             catch (Exception)
             {
                 MessageBox.Show("No se seleccionó ningún cliente");
             }
+            this.Close();
         }
+
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!tabStop)

@@ -279,7 +279,20 @@ namespace Presentacion.Caja
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
 
-                    //lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString() + "\n$ " +txtTotalS.Text;
+                    //Agregar en Cta Cte
+                    try
+                    {
+                        oVentaN.crearMovCtaCteVenta(oVentaE);
+
+                        //se genera el egreso de caja por Cta. Cte
+                        if(oVentaE.EnCtaCte) 
+                            egresoCajaPorCtaCte(oVentaE);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
+                    }
+                    
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                     ultimaVentaVendedor();
@@ -288,6 +301,67 @@ namespace Presentacion.Caja
                 {
                     MessageBox.Show(ex.Message);
                 }
+            }
+        }
+
+        public  void egresoCajaPorCtaCte(Entidades.Venta oVentaConEgresoCaja)
+        {
+            try
+            {
+                Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
+
+                oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
+                oEgresoCajaE.IdTipoEgresoCaja = 100;
+                oEgresoCajaE.Descripcion = "Venta a " + oVentaConEgresoCaja.Persona.razonSocial + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                oEgresoCajaE.Monto = oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                oEgresoCajaE.Detalle = oVentaConEgresoCaja.Observaciones;
+                oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
+                oEgresoCajaE.IdCompra = 0;
+                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
+                oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
+                oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                imprimirTicket(oEgresoCajaE);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al guardar el Egreso.\n\nLa Venta y el movimiento en la Cta. Cte se registró correctamente.");
+            }
+        }
+
+        private void imprimirTicket(Entidades.EgresoCaja oEgresoCajaE)
+        {
+            try
+            {
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                oEgresoCajaE = oCierreN.getEgresoCajaById(oEgresoCajaE.Id);
+                //imprimir ticket
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = true;//checkTicket.Checked;
+                ticket.TextoCentro("Egreso Caja");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                ticket.TextoIzquierda("Sucursal: " + oEgresoCajaE.Sucursal.sucursal);
+                ticket.TextoIzquierda("Vendedor: " + oEgresoCajaE.CreadoPorUser.Nombre);
+                ticket.TextoIzquierda("Id: " + oEgresoCajaE.Id.ToString());
+                ticket.TextoIzquierda("Fecha: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Fecha));
+                ticket.LineasGuion();
+                ticket.TextoIzquierda("Tipo: " + oEgresoCajaE.TipoEgresoCaja);
+                ticket.TextoMuchasLineas("Descripción: " + oEgresoCajaE.Descripcion);
+                ticket.TextoIzquierda("Monto: " + oEgresoCajaE.Monto);
+                ticket.TextoMuchasLineas("Detalle: " + oEgresoCajaE.Detalle);
+                DateTime? creado = oEgresoCajaE.Id.Equals(0) ? DateTime.Now : oEgresoCajaE.Creado;
+                ticket.TextoIzquierda("Creado: " + Utilidades.Util_Form.fechaFormato24Horas(creado));
+                if (oEgresoCajaE.Actualizado != null) ticket.TextoIzquierda("Modif.: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Actualizado));
+                ticket.LineasEnBlanco(5);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error al imprimir el Ticket");
+                return;
             }
         }
 
@@ -307,6 +381,8 @@ namespace Presentacion.Caja
             txtCambio.Text = "";
             panelPago.Visible = false;
             panelAbonar.Visible = true;
+            checkCtaCte.Visible = false;
+            checkCtaCte.Checked = false;
 
             totalVenta = 0;
             abona = 0;
@@ -328,6 +404,7 @@ namespace Presentacion.Caja
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
+            oVentaE.EnCtaCte = checkCtaCte.Checked;
         }
 
         private void cargarTotales()
@@ -1044,6 +1121,8 @@ namespace Presentacion.Caja
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
+            checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCodigo.Focus();
         }
@@ -1394,6 +1473,7 @@ namespace Presentacion.Caja
             if (panelBloquear.Visible) return;
             formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
             frmAddOrEditEgresoCaja.oUsuario = oUsuario;
+            frmAddOrEditEgresoCaja.egresoDesdeCajaVenta = true;
             frmAddOrEditEgresoCaja.ShowDialog();
         }
 
@@ -1731,6 +1811,11 @@ namespace Presentacion.Caja
         private void capturarPantalla()
         {
             Utilidades.Util_Form.capturarPantalla(txtVendedor.Text, DateTime.Now);
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
     }
 }

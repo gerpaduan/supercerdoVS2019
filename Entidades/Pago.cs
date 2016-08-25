@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Entidades
 {
-    public class Pagos
+    public class Pago
     {
-        public enum formaPago
+        public enum formasPago
         {
             Efectivo,
             Cheque,
@@ -48,13 +48,14 @@ namespace Entidades
             get { return aProveedor; }
             set { aProveedor = value; }
         }
-        private string tipoPago;
+        private string formaPago;
 
-        public string TipoPago
+        public string FormaPago
         {
-            get { return tipoPago; }
-            set { tipoPago = value; }
+            get { return formaPago; }
+            set { formaPago = value; }
         }
+
         private string banco;
 
         public string Banco

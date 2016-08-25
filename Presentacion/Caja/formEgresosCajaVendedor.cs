@@ -92,6 +92,7 @@ namespace Presentacion.Caja
         {
             formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
             frmAddOrEditEgresoCaja.oUsuario = oCierreE.UsuarioInicio;
+            frmAddOrEditEgresoCaja.egresoDesdeCajaVenta = true;
             frmAddOrEditEgresoCaja.ShowDialog();
 
             formEgresosCajaVendedor_Load(null, null);

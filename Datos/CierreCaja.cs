@@ -151,6 +151,8 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@detalle", oEgresoCaja.Detalle);
             cmCierreCaja.Parameters.AddWithValue("@monto", oEgresoCaja.Monto);
             cmCierreCaja.Parameters.AddWithValue("@idCompra", oEgresoCaja.IdCompra);
+            cmCierreCaja.Parameters.AddWithValue("@tabla", oEgresoCaja.Tabla);
+            cmCierreCaja.Parameters.AddWithValue("@idTabla", oEgresoCaja.IdTabla);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", oEgresoCaja.Sucursal.idSucursal);
             cmCierreCaja.Parameters.AddWithValue("@creadoPor", oEgresoCaja.CreadoPor);
             cmCierreCaja.Parameters.AddWithValue("@actualizadoPor", oEgresoCaja.ActualizadoPor);
@@ -188,6 +190,8 @@ namespace Datos
                 oEgresoCaja.Detalle = drEgresoCaja["detalle"].ToString();
                 oEgresoCaja.Monto = float.Parse(drEgresoCaja["monto"].ToString());
                 oEgresoCaja.IdCompra = drEgresoCaja["idCompra"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idCompra"].ToString()) : oEgresoCaja.IdCompra;
+                //oEgresoCaja.Tabla = drEgresoCaja["tabla"].ToString();
+                //oEgresoCaja.IdTabla = drEgresoCaja["idTabla"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idTabla"].ToString()) : oEgresoCaja.IdCompra;
                 oEgresoCaja.Sucursal = oSucD.findById(Convert.ToInt32(drEgresoCaja["idSucursal"].ToString()));
                 oEgresoCaja.Creado = drEgresoCaja["creado"].Equals(null) ? (DateTime?)null : Convert.ToDateTime(drEgresoCaja["creado"].ToString());
                 oEgresoCaja.CreadoPor = Convert.ToInt32(drEgresoCaja["creadoPor"].ToString());

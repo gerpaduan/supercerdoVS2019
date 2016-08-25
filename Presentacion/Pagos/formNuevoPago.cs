@@ -15,7 +15,7 @@ namespace Presentacion.Pagos
         formPagos frmPagos;
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         Entidades.Persona oProveedorE=new Entidades.Persona();
-        Entidades.Pagos oPagoE=new Entidades.Pagos();
+        Entidades.Pago oPagoE=new Entidades.Pago();
 
 
         bool modificar=false;
@@ -57,7 +57,7 @@ namespace Presentacion.Pagos
             frmPagos = frmPagosParam;
         }
 
-        public void obtenerParametros(Entidades.Pagos oPagoParam, formPagos frmPagosParam)
+        public void obtenerParametros(Entidades.Pago oPagoParam, formPagos frmPagosParam)
         {
             modificar = true;
             this.Text = "Modificar Pago";
@@ -74,7 +74,7 @@ namespace Presentacion.Pagos
             txtProveedor.Text = oPagoE.Persona.razonSocial;
             txtNroRecibo.Text = oPagoE.NroRecibo;
             txtFechaPago.Value = oPagoE.Fecha;
-            comboTipoPago.Text = oPagoE.TipoPago;
+            comboTipoPago.Text = oPagoE.FormaPago;
             txtImporte.Text = oPagoE.Importe.ToString();
             txtObservaciones.Text = oPagoE.Observaciones;
 
@@ -91,14 +91,8 @@ namespace Presentacion.Pagos
 
                     if (ultimaValidacion)
                     {
-                        if (modificar)//si se modifica el pago
-                        {
-                            oCtaCteN.modificarPago(oPagoE);
-                        }
-                        else
-                        {
-                            oCtaCteN.agregarPago(oPagoE);
-                        }
+
+                        oPagoE = oCtaCteN.addOrEditPago(oPagoE);
 
                         frmPagos.cargarGrilla();
 
@@ -135,7 +129,7 @@ namespace Presentacion.Pagos
 
                 oPagoE.NroRecibo = txtNroRecibo.Text.Trim();
                 oPagoE.Persona = oProveedorE;
-                oPagoE.TipoPago = comboTipoPago.Text.Trim();
+                oPagoE.FormaPago = comboTipoPago.Text.Trim();
                 oPagoE.Fecha = txtFechaPago.Value;
 
                 try
@@ -155,8 +149,6 @@ namespace Presentacion.Pagos
                         MessageBox.Show(ex1.Message);
                         ultimaValidacion = false;
                     }
-                    
-
                 }
                 oPagoE.Observaciones = txtObservaciones.Text.Trim();
             }
@@ -164,7 +156,6 @@ namespace Presentacion.Pagos
             {
                 MessageBox.Show(ex.Message);
             }
-         
         }
 
         private bool validar()
@@ -199,12 +190,8 @@ namespace Presentacion.Pagos
                 MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             }
-
-            return respuesta;
-        
+            return respuesta;        
         }
-
-
 
         #endregion
 
