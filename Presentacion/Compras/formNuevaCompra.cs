@@ -106,6 +106,7 @@ namespace Presentacion
         public void EnviarPersona(Entidades.Persona proveedor)
         {
             oProvNuevaCompra = proveedor;
+            checkCtaCte.Checked = oProvNuevaCompra.CtaCte;
             this.txtProveedor.Text = oProvNuevaCompra.razonSocial;
         }
 
@@ -197,6 +198,16 @@ namespace Presentacion
                             {
                                 oCompraN.agregarCortePorCompra(cortePorCompra);
                             }
+                        }
+
+                        //Cuenta Corriente
+                        try
+                        {
+                            oCompraN.crearMovCtaCteCompra(oCompraE);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Error al guardar Mov en Cta Cte");
                         }
 
                         if (esEgresoCaja)
@@ -310,7 +321,8 @@ namespace Presentacion
             oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || tipoCompra=="Cortes" ? null :  (int?)Convert.ToInt32(txtCantMedias.Text);
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;
-            oCompraE.Sucursal = oSucursalE;
+            oCompraE.Sucursal = oSucursalE; 
+            oCompraE.EnCtaCte = checkCtaCte.Checked;
             switch (oCompraE.IdCompra)
             {
                 case 0:
@@ -1050,6 +1062,11 @@ namespace Presentacion
             {
                 return true;
             }
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {            
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
     }
 }

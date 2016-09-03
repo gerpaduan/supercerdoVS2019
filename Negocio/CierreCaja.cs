@@ -131,6 +131,11 @@ namespace Negocio
             return oEgresoCaja;
         }
 
+        public Entidades.EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID)
+        {
+            return oCierreD.findEgresoCajaByTablaYId(tabla, tablaID);
+        }
+
         public float getMontoEgresosCajaVendedor(Entidades.CierreCaja oCierreE)
         {
             return  oCierreD.getMontoEgresosCajaVendedor(oCierreE);

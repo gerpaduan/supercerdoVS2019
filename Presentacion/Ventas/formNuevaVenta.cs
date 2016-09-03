@@ -36,6 +36,7 @@ namespace Presentacion.Ventas
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
         bool dejarDeLeerPeso = false;
+        bool aCtaCte = false;
         int sucAnterior;
 
         public int SucAnterior
@@ -124,6 +125,7 @@ namespace Presentacion.Ventas
                         oVentaN.agregarLineaVenta(linea);
                     }
 
+                    aCtaCte = true;
                     frmVentas.cargarGrilla();
 
                     this.Close();
@@ -145,19 +147,17 @@ namespace Presentacion.Ventas
         {
             if (FormPrincipal.logueado)
             {
-                bool aCtaCte = false;
+                aCtaCte = false;
                 //si es modificacion o agregacion
                 if (modificar)
                 {
                     modificarVenta();
-                    aCtaCte = true;
                 }
                 else
                 {
                     if (grillaLineasVenta.SelectedRows.Count > 0)
                     {
                         agregarVenta();
-                        aCtaCte = true;
                     }
                     else
                     {
@@ -167,8 +167,29 @@ namespace Presentacion.Ventas
 
                 try
                 {
-                    if (aCtaCte) 
+                    if (aCtaCte)
+                    {
                         oVentaN.crearMovCtaCteVenta(oVentaE);
+
+                        try
+                        {                            
+                            ///Se busca si la venta está asociada a un egreso de caja
+                            ///si ultimo egreso de caja es negativo se lo crea
+                            ///
+                            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                            Entidades.EgresoCaja oEgresoCaja = oCierreN.findEgresoCajaByTablaYId(Entidades.EgresoCaja.tablas.Ventas.ToString(), oVentaE.IdVenta);
+                            if (oEgresoCaja != null && !oEgresoCaja.Id.Equals(0) && oEgresoCaja.Monto < 0)
+                            {
+                                Caja.formVentaCaja frmCajaVenta = new Presentacion.Caja.formVentaCaja();
+                                frmCajaVenta.egresoCajaPorCtaCte(oVentaE);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                            MessageBox.Show("Hubo un error y no se actualizó el Egreso de Caja.\n\nMas Info:" + ex.StackTrace);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -238,6 +259,7 @@ namespace Presentacion.Ventas
                     {
                         oVentaN.agregarLineaVenta(linea);
                     }
+                    aCtaCte = true;
 
                     frmVentas.cargarGrilla();
 
@@ -833,6 +855,8 @@ namespace Presentacion.Ventas
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
+            checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
         }
 

@@ -269,6 +269,7 @@ namespace Presentacion.Compras
             txtProveedor.Text = oCompraModificada.Proveedor.razonSocial;
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtCantMedias.Text = oCompraModificada.CantMedias.ToString();
+            checkCtaCte.Checked = oCompraModificada.EnCtaCte;
             txtObservaciones.Text = oCompraModificada.Observaciones;
 
             txtCreado.Text = oCompraModificada.Creado.ToString();
@@ -461,7 +462,6 @@ namespace Presentacion.Compras
             try
             {
                 //creo y Cargar la Entidad CortePorCompra
-
                 cortePorCompra = new CortesPorCompra();
 
                 cortePorCompra.idCorte = oCorteNuevaCompra.idCorte;
@@ -532,7 +532,6 @@ namespace Presentacion.Compras
                     cargarCortePorCompra(nroFila, cortePorCompra);
                     cortePorCompra = null;
                 }
-
             }
             catch (Exception ex)
             {
@@ -650,6 +649,7 @@ namespace Presentacion.Compras
             oCompraModificada.Sucursal = oSucursal;
             oCompraModificada.Proveedor = oProvNuevaCompra;
             oCompraModificada.Estado = "";//Vuelvo a cargar el stock- Estado=" "
+            oCompraModificada.EnCtaCte = checkCtaCte.Checked;
             oCompraModificada.Observaciones = txtObservaciones.Text.Trim();
 
             if (radioIngresoStock.Checked==true)
@@ -723,10 +723,21 @@ namespace Presentacion.Compras
                             oCompraN.agregarCortePorCompra(cortePorCompra);
                         }
                     }
+
+                    //Cuenta Corriente
+                    try
+                    {
+                        oCompraN.crearMovCtaCteCompra(oCompraModificada);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Hubo un error al guardar Mov en Cta Cte");
+                    }
+
                      //se establece el estado a vacío
                     estadoModificar = "";
                     validarEstado();
-                    frmCompras.cargarGrilla();
+                    if(frmCompras != null) frmCompras.cargarGrilla();
                     modificado = false;
                     this.Close();
                  }
@@ -1094,6 +1105,11 @@ namespace Presentacion.Compras
 
             if (!Utilidades.Util_Form.validarCampoNumeroEntero(txtCantKgs.Text, "Cant. Medias"))
                 txtCantMedias.Text = "";
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
     }
 }

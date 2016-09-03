@@ -609,6 +609,7 @@
             this.panelInfoCtaCte.Name = "panelInfoCtaCte";
             this.panelInfoCtaCte.Size = new System.Drawing.Size(191, 34);
             this.panelInfoCtaCte.TabIndex = 57;
+            this.panelInfoCtaCte.Visible = false;
             // 
             // label4
             // 

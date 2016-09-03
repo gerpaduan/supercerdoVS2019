@@ -34,6 +34,7 @@ namespace Negocio
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
+                oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();
                 oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));
@@ -51,6 +52,15 @@ namespace Negocio
         public void modificarCompra(Entidades.Compra oCompraE)
         {
             oCompraD.ModificarCompra(oCompraE);
+        }
+        
+        public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
+        {
+            oCompraE = findById_convertToCompra(oCompraE.IdCompra);
+            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra,
+                "\'"+oCompraE.TipoCompra+"\'", Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
+                oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte);
         }
 
         public void modificarPrecioMedia(int idCompra, float precioKg)

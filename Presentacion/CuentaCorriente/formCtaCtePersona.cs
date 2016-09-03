@@ -77,6 +77,11 @@ namespace Presentacion.CuentaCorriente
                     case Entidades.MovCtaCte.tablas.Ventas:
                         infoVenta(idTabla);
                         break;
+                    case Entidades.MovCtaCte.tablas.Compras: 
+                        Compras.formModificarCompra frmModificarCompra = new Compras.formModificarCompra();
+                        frmModificarCompra.cargarParametros(null, idTabla);
+                        frmModificarCompra.Show();
+                        break;
                     default:
                         break;
                 }

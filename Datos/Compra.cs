@@ -84,6 +84,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
             cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
             cmCompra.Parameters.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
 
@@ -121,6 +122,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
             cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
             cmCompra.Parameters.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor.Id);
 
@@ -128,6 +130,38 @@ namespace Datos
             cmCompra.Connection.Close();
 
             cmCompra = null;
+        }
+        
+        public float getTotalCompra(int idCompra, string tipoCompra)
+        {
+            DataTable dtTotalCompra = new DataTable();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            string consulta = "";
+
+            switch (Entidades.Compra.tipoCompraToEnum(tipoCompra))
+            {
+                case Entidades.Compra.tipoCompraEnum.Cortes:
+                    consulta = "SELECT SUM(cantKg * precioKg) AS total " +
+                                "FROM dbo.CortePorCompra " +
+                                "WHERE     idCompra = " + idCompra + " " +
+                                "GROUP BY idCompra";
+                    break;
+                case Entidades.Compra.tipoCompraEnum.MediaRes:
+                    consulta = "SELECT SUM(kgMedia * precioMedia) AS total " +
+                                "FROM dbo.MediaRes " +
+                                "WHERE     idCompra = " + idCompra + " " +
+                                "GROUP BY idCompra";
+                    break;
+            }
+
+            cmCompra.CommandText = consulta;
+            cmCompra.CommandType = CommandType.Text;
+            cmCompra.Connection.Open();
+            double totalCompraD = cmCompra.ExecuteScalar().Equals(DBNull.Value) ? 0 : (double)cmCompra.ExecuteScalar();
+            float totalCompra = (float)totalCompraD;
+            cmCompra.Connection.Close();
+            return totalCompra;
         }
 
         public void modificarPrecioMedia(int idCompra, float precioKg)
@@ -190,8 +224,6 @@ namespace Datos
             cmCompra.Connection.Close();
 
             cmCompra = null;
-
-
         }
 
         //actualiza stock del los cortes salidos de la media res
