@@ -28,6 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCtaCtePersona));
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSeleccionar = new System.Windows.Forms.Button();
@@ -42,6 +45,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.menuNuevoPago = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovCtaCte)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -92,11 +96,35 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaMovCtaCte.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaMovCtaCte.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaMovCtaCte.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMovCtaCte.DefaultCellStyle = dataGridViewCellStyle2;
             this.grillaMovCtaCte.Location = new System.Drawing.Point(12, 127);
             this.grillaMovCtaCte.MultiSelect = false;
             this.grillaMovCtaCte.Name = "grillaMovCtaCte";
             this.grillaMovCtaCte.ReadOnly = true;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaMovCtaCte.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.grillaMovCtaCte.RowHeadersVisible = false;
             this.grillaMovCtaCte.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaMovCtaCte.Size = new System.Drawing.Size(787, 329);
@@ -156,6 +184,7 @@
             // 
             // btnBuscar
             // 
+            this.btnBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnBuscar.Location = new System.Drawing.Point(646, 36);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(74, 24);
@@ -190,6 +219,7 @@
             // 
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuNuevoPago,
             this.nuevo});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
@@ -208,6 +238,18 @@
             this.nuevo.Size = new System.Drawing.Size(78, 42);
             this.nuevo.Text = "&Nuevo Mov.";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            // 
+            // menuNuevoPago
+            // 
+            this.menuNuevoPago.Image = ((System.Drawing.Image)(resources.GetObject("menuNuevoPago.Image")));
+            this.menuNuevoPago.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuNuevoPago.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuNuevoPago.Name = "menuNuevoPago";
+            this.menuNuevoPago.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuNuevoPago.Size = new System.Drawing.Size(78, 42);
+            this.menuNuevoPago.Text = "&Nuevo Pago";
+            this.menuNuevoPago.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuNuevoPago.Click += new System.EventHandler(this.menuNuevoPago_Click);
             // 
             // formCtaCtePersona
             // 
@@ -249,5 +291,6 @@
         protected System.Windows.Forms.ToolStripButton nuevo;
         protected System.Windows.Forms.DateTimePicker fechaDesdePick;
         protected System.Windows.Forms.Label label3;
+        protected System.Windows.Forms.ToolStripButton menuNuevoPago;
     }
 }

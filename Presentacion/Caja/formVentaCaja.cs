@@ -328,7 +328,7 @@ namespace Presentacion.Caja
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar el Egreso.\n\nLa Venta y el movimiento en la Cta. Cte se registró correctamente.");
+                MessageBox.Show("Error al guardar el Egreso.\n\nLa Venta y el movimiento en la Cta. Cte se registró correctamente." + "\n\n" + ex.Source);
             }
         }
 

@@ -7,14 +7,17 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Ventas;
+using Presentacion.Caja;
 
 namespace Presentacion.CuentaCorriente
 {
-    public partial class formCtaCtePersona : Form
+    public partial class formCtaCtePersona : Form, InterfaceUsuario
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+        Entidades.Usuario oUsuario;
 
         public int idPersona;
+        Entidades.Persona oPersonaE;
         DateTime fechaDesde = DateTime.Now.AddDays(-30);
 
         public formCtaCtePersona()
@@ -27,7 +30,7 @@ namespace Presentacion.CuentaCorriente
             try
             {
                 Negocio.Persona oPersonaN = new Negocio.Persona();
-                Entidades.Persona oPersonaE = oPersonaN.findById(idPersona);
+                oPersonaE = oPersonaN.findById(idPersona);
                 txtPersona.Text = oPersonaE.razonSocial;
                 fechaDesdePick.Value = fechaDesde;
                 cargarGrilla();
@@ -82,6 +85,11 @@ namespace Presentacion.CuentaCorriente
                         frmModificarCompra.cargarParametros(null, idTabla);
                         frmModificarCompra.Show();
                         break;
+                    case Entidades.MovCtaCte.tablas.Pagos:
+                        Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
+                        frmAddOrEditPago.idPago = idTabla;
+                        frmAddOrEditPago.Show();
+                        break;
                     default:
                         break;
                 }
@@ -128,6 +136,32 @@ namespace Presentacion.CuentaCorriente
                 frmInfoVenta.idVenta = idVenta;
                 frmInfoVenta.Show();
             }
+        }
+
+        private void menuNuevoPago_Click(object sender, EventArgs e)
+        {
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+
+            if (oUsuario == null) return;
+
+            if (oUsuario.Admin)
+            {
+                Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
+                frmAddOrEditPago.oPersonaE = oPersonaE;
+                frmAddOrEditPago.oUsuario = oUsuario;
+                frmAddOrEditPago.Show();
+            }
+            else
+            {
+                MessageBox.Show("Debe agregar sus gastos desde la pantalla de Caja Venta.\n");
+            }
+            oUsuario = null;
+        }
+        
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
         }
     }
 }

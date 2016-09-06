@@ -115,6 +115,11 @@ namespace Negocio
 
         #region Pagos
 
+        public Entidades.Pago getPagoById(int idPago)
+        {
+            return oCtaCteD.getPagoById(idPago);
+        }
+
         public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE)
         {
             return oCtaCteD.addOrEditPago(oPagoE);
@@ -130,9 +135,13 @@ namespace Negocio
             return oCtaCteD.obtenerPagos(tipoTramite, texto, fechaDesde, fechaHasta);
         }
 
-        public Entidades.Pago buscarPago(Entidades.Pago oPagoE)
+        public void crearMovCtaCtePago(Entidades.Pago oPagoE)
         {
-            return oCtaCteD.buscarPago(oPagoE);
+            oPagoE = oCtaCteD.getPagoById(oPagoE.Id);
+            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id,
+                 "Recibo: " + oPagoE.NroRecibo + " - " + oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
+                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true);
         }
 
         #endregion

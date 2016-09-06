@@ -41,8 +41,8 @@ namespace Presentacion.Pagos
             else
             {
 
-                formNuevoPago frmNuevoPago = new formNuevoPago();
-                frmNuevoPago.asignarForm(this);
+                formAddOrEditPago frmNuevoPago = new formAddOrEditPago();
+                //frmNuevoPago.asignarForm(this);
                 frmNuevoPago.Show();
 
             }
@@ -151,7 +151,7 @@ namespace Presentacion.Pagos
                 if (tramite == "Pago")
                 {
                     oPagoE.Id = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
-                    oPagoE = oCtaCteN.buscarPago(oPagoE);
+                    oPagoE = oCtaCteN.getPagoById(oPagoE.Id);
 
                     if (Application.OpenForms["formNuevoPago"] != null)
                     {
@@ -160,9 +160,9 @@ namespace Presentacion.Pagos
                     }
                     else
                     {
-                        formNuevoPago frmNuevoPago = new formNuevoPago();
-                        frmNuevoPago.obtenerParametros(oPagoE, this);
-                        frmNuevoPago.Show();
+                        //formAddOrEditPago frmNuevoPago = new formAddOrEditPago();
+                        //frmNuevoPago.obtenerParametros(oPagoE, this);
+                        //frmNuevoPago.Show();
 
                     }
                 }
@@ -187,7 +187,7 @@ namespace Presentacion.Pagos
                 if (resp == DialogResult.Yes)
                 {
                     oPagoE.Id = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
-                    oPagoE = oCtaCteN.buscarPago(oPagoE);
+                    oPagoE = oCtaCteN.getPagoById(oPagoE.Id);
 
                     oCtaCteN.eliminarPago(oPagoE);
 

@@ -11,6 +11,8 @@ namespace Entidades
         {
             Efectivo,
             Cheque,
+            EftvoCheque,
+            Otro,
         }
 
         private int id;

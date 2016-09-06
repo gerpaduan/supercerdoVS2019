@@ -46,6 +46,7 @@ namespace Datos
 
             return dtMovCtaCte;
         }
+
         public Entidades.MovCtaCte getMovCtaCteBy(int id, Entidades.MovCtaCte.tablas tabla, int idTabla, Entidades.MovCtaCte.getBy getBy)
         {
 	        cmCtaCte = new SqlCommand();
@@ -103,7 +104,6 @@ namespace Datos
             }
         }
 
-
         public Entidades.MovCtaCte addOrEditMovCtaCte(Entidades.MovCtaCte oMovCtaCteE)
         {
             cmCtaCte = new SqlCommand();
@@ -152,10 +152,8 @@ namespace Datos
             cmCtaCte.Parameters.AddWithValue("@importe", oPagoE.Importe);
             cmCtaCte.Parameters.AddWithValue("@observaciones", oPagoE.Observaciones);
             cmCtaCte.Parameters.AddWithValue("@idSucursal", oPagoE.Sucursal.idSucursal);
-            cmCtaCte.Parameters.AddWithValue("@creado", oPagoE.Creado);
-            cmCtaCte.Parameters.AddWithValue("@creadoPor", oPagoE.CreadoPor);
-            cmCtaCte.Parameters.AddWithValue("@actualizado", oPagoE.Actualizado);
-            cmCtaCte.Parameters.AddWithValue("@actualizadoPor", oPagoE.ActualizadoPor);
+            cmCtaCte.Parameters.AddWithValue("@creadoPor", oPagoE.CreadoPor.Id);
+            cmCtaCte.Parameters.AddWithValue("@actualizadoPor", oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.Id : 0);
 
             cmCtaCte.Connection.Open();
             cmCtaCte.ExecuteNonQuery();
@@ -208,42 +206,55 @@ namespace Datos
             return dtPagos;
         }
 
-        public Entidades.Pago buscarPago(Entidades.Pago oPagoE)
+        public Entidades.Pago getPagoById(int idPago)
         {
             cmCtaCte = new SqlCommand();
-
             cmCtaCte.Connection = conn.conectar();
-            cmCtaCte.Connection.Open();
-            cmCtaCte.CommandType = CommandType.StoredProcedure;
-            cmCtaCte.CommandText = "buscarPago";
+            cmCtaCte.CommandType = CommandType.Text;
+            cmCtaCte.CommandText = "Select Pagos.* from Pagos where id = " + idPago;
 
-            cmCtaCte.Parameters.AddWithValue("@Id", oPagoE.Id);
-
-
-            SqlDataReader drPago = cmCtaCte.ExecuteReader();
-
-            while (drPago.Read())
+            Entidades.Pago oPagoE = new Entidades.Pago();
+            try
             {
-                oPagoE.NroRecibo = drPago["nroRecibo"].ToString();
-                oPagoE.Fecha = Convert.ToDateTime(drPago["Fecha"].ToString());
+                cmCtaCte.Connection.Open();
+                SqlDataReader drPago = cmCtaCte.ExecuteReader();
+                using (drPago)
+                {
+                    while (drPago.Read())
+                    {
+                        oPagoE.Id = Convert.ToInt32(drPago["id"]);
+                        Datos.Persona oPersonaD = new Datos.Persona();
+                        oPagoE.Persona = oPersonaD.findById(Convert.ToInt32(drPago["idPersona"]));
 
-                Entidades.Persona oProveedor = new Entidades.Persona();
-                oProveedor.idPersona = Convert.ToInt32(drPago["idProveedor"].ToString());
-                oProveedor.razonSocial = drPago["razonSocial"].ToString();
+                        oPagoE.Fecha = Convert.ToDateTime(drPago["fecha"]);
+                        oPagoE.NroRecibo = Convert.ToString(drPago["nroRecibo"]);
+                        oPagoE.AProveedor = drPago["aProveedor"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drPago["aProveedor"]);
+                        oPagoE.FormaPago = Convert.ToString(drPago["formaPago"]);
+                        oPagoE.Banco = Convert.ToString(drPago["banco"]);
+                        oPagoE.NroCheque = Convert.ToString(drPago["nroCheque"]);
+                        oPagoE.TitularCheque = Convert.ToString(drPago["titularCheque"]);
+                        oPagoE.Importe = float.Parse(drPago["importe"].ToString());
+                        oPagoE.Observaciones = Convert.ToString(drPago["nroCheque"]);
 
-                oPagoE.Persona = oProveedor;
-                oPagoE.FormaPago = drPago["tipoPago"].ToString();
-                oPagoE.Importe = float.Parse(drPago["importe"].ToString());
-                oPagoE.Observaciones = drPago["observaciones"].ToString();
+                        Datos.Sucursal oSucursalD = new Sucursal();
+                        oPagoE.Sucursal = oSucursalD.findById(Convert.ToInt32(drPago["idSucursal"]));
 
+
+                        oPagoE.Creado = Convert.ToDateTime(drPago["creado"]);
+                        oPagoE.Actualizado = drPago["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drPago["actualizado"]);
+
+                        Datos.Usuario oUsuarioD = new Usuario();
+                        oPagoE.CreadoPor = oUsuarioD.getUsuarioById(Convert.ToInt32(drPago["creadoPor"]));
+                        oPagoE.ActualizadoPor = drPago["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drPago["actualizadoPor"]));
+                    }
+                    return oPagoE;
+                }
             }
-
-            cmCtaCte.Connection.Close();
-
-            cmCtaCte = null;
-
-            return oPagoE;
-
+            finally
+            {
+                cmCtaCte.Connection.Close();
+                oPagoE = null;
+            }
         }
 
         #endregion

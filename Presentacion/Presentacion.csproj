@@ -266,11 +266,11 @@
     <Compile Include="Movimientos\formVerAcumulados.Designer.cs">
       <DependentUpon>formVerAcumulados.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pagos\formNuevoPago.cs">
+    <Compile Include="Pagos\formAddOrEditPago.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Pagos\formNuevoPago.Designer.cs">
-      <DependentUpon>formNuevoPago.cs</DependentUpon>
+    <Compile Include="Pagos\formAddOrEditPago.Designer.cs">
+      <DependentUpon>formAddOrEditPago.cs</DependentUpon>
     </Compile>
     <Compile Include="Pagos\formPagos.cs">
       <SubType>Form</SubType>
@@ -654,8 +654,8 @@
     <EmbeddedResource Include="Movimientos\formVerAcumulados.resx">
       <DependentUpon>formVerAcumulados.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Pagos\formNuevoPago.resx">
-      <DependentUpon>formNuevoPago.cs</DependentUpon>
+    <EmbeddedResource Include="Pagos\formAddOrEditPago.resx">
+      <DependentUpon>formAddOrEditPago.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pagos\formPagos.resx">
       <DependentUpon>formPagos.cs</DependentUpon>

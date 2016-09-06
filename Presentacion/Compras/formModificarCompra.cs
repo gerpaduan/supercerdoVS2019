@@ -731,7 +731,7 @@ namespace Presentacion.Compras
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Hubo un error al guardar Mov en Cta Cte");
+                        MessageBox.Show("Hubo un error al guardar Mov en Cta Cte"+"\n\n"+ex.Source);
                     }
 
                      //se establece el estado a vacío

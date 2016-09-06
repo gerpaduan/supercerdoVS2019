@@ -176,7 +176,7 @@ namespace Presentacion
                         }
 
                         mostrarCartelCierre = false;
-                        if (oCompraE.IdCompra != null && oCompraE.IdCompra > 0)
+                        if (oCompraE != null && oCompraE.IdCompra > 0)
                         {
                             oCompraN.modificarCompra(oCompraE);
                         }
@@ -207,7 +207,7 @@ namespace Presentacion
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show("Error al guardar Mov en Cta Cte");
+                            MessageBox.Show("Error al guardar Mov en Cta Cte"+"\n\n"+ex.Source);
                         }
 
                         if (esEgresoCaja)
@@ -234,7 +234,7 @@ namespace Presentacion
                             }
                             catch (Exception ex)
                             {
-                                MessageBox.Show("Error al guardar el Egreso.\n\nLa compra se registró correctamente.");
+                                MessageBox.Show("Error al guardar el Egreso.\n\nLa compra se registró correctamente." + "\n\n" + ex.Source);
                             }
                         }
 
