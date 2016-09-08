@@ -182,21 +182,24 @@ namespace Datos
             cmCtaCte = null;
         }
 
-        public DataTable obtenerPagos(string tipoTramite, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerPagos(string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtPagos = new DataTable();
             daCtaCte = new SqlDataAdapter();
 
             cmCtaCte = new SqlCommand();
             cmCtaCte.Connection = conn.conectar();
-            cmCtaCte.Connection.Open();
-            cmCtaCte.CommandType = CommandType.StoredProcedure;
-            //cmCtaCte.CommandText = "obtenerPagos";
-            cmCtaCte.CommandText = "obtenerPagos_1";
-            cmCtaCte.Parameters.AddWithValue("@texto", texto);
-            cmCtaCte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
-            cmCtaCte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
-            cmCtaCte.Parameters.AddWithValue("@tipoTramite", tipoTramite);
+            cmCtaCte.CommandType = CommandType.Text;
+            cmCtaCte.CommandText = "SELECT     dbo.Pagos.id, dbo.Pagos.fecha, dbo.Personas.razonSocial, " +
+                " dbo.Pagos.nroRecibo, dbo.Pagos.importe, dbo.Pagos.aProveedor, dbo.Pagos.formaPago, dbo.Pagos.banco, dbo.Pagos.nroCheque, " +
+                " dbo.Pagos.titularCheque, dbo.Pagos.observaciones, dbo.Pagos.creado, CreadoPor.nombre AS CreadoPor, " +
+                " dbo.Pagos.actualizado, ActualizadoPor.nombre AS ActualizadoPor " +
+                " FROM  dbo.Pagos INNER JOIN dbo.Personas ON dbo.Pagos.idPersona = dbo.Personas.idPersona LEFT OUTER JOIN " +
+                " dbo.Usuarios AS ActualizadoPor ON dbo.Pagos.creadoPor = ActualizadoPor.id LEFT OUTER JOIN " +
+                " dbo.Usuarios AS CreadoPor ON dbo.Pagos.actualizadoPor = CreadoPor.id " +
+                " WHERE dbo.Pagos.fecha between '" + fechaDesde + "' and '" + fechaHasta.AddDays(1) + "'" +
+                " and (dbo.Personas.razonSocial like '%" + texto + "%' or dbo.Pagos.nroRecibo like '%" + texto + "%')"+
+                " ORDER BY dbo.Pagos.fecha DESC";
 
             daCtaCte.SelectCommand = cmCtaCte;
             daCtaCte.Fill(dtPagos);

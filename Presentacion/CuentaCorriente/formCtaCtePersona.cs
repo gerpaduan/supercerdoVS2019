@@ -17,6 +17,7 @@ namespace Presentacion.CuentaCorriente
         Entidades.Usuario oUsuario;
 
         public int idPersona;
+        DataTable dtMov;
         Entidades.Persona oPersonaE;
         DateTime fechaDesde = DateTime.Now.AddDays(-30);
 
@@ -45,14 +46,60 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
-                grillaMovCtaCte.DataSource = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+                dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+
+                if (!checkSinRegRepetidos.Checked)
+                {
+                    int[] aBorrar = new int[dtMov.Rows.Count];
+                    for (int i = 0; i < aBorrar.Length; i++)
+                    {
+                        aBorrar[i] = -1;
+                    }
+
+                    for (int filaPrimer = 0; filaPrimer < dtMov.Rows.Count; filaPrimer++)
+                    {
+                        for (int fila = 0; fila < dtMov.Rows.Count; fila++)
+                        {
+                            if (aBorrar[filaPrimer] == 1)
+                                break;
+
+                            string tablaPrimer = dtMov.Rows[filaPrimer]["tabla"].ToString();
+                            string idtablaPrimer = dtMov.Rows[filaPrimer]["idTabla"].ToString();
+                            string sucursalPrimer = dtMov.Rows[filaPrimer]["sucursal"].ToString();
+                            int idPrimer = Convert.ToInt32(dtMov.Rows[filaPrimer]["id"].ToString());
+
+                            string tabla = dtMov.Rows[fila]["tabla"].ToString();
+                            string idtabla = dtMov.Rows[fila]["idTabla"].ToString();
+                            string sucursal = dtMov.Rows[fila]["sucursal"].ToString();
+                            int id = Convert.ToInt32(dtMov.Rows[fila]["id"].ToString());
+
+                            if (tabla.Equals(tablaPrimer) && idtabla.Equals(idtablaPrimer) &&
+                                 sucursal.Equals(sucursalPrimer) && id < idPrimer)
+                            {
+                                aBorrar[fila] = 1;
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < aBorrar.Length; i++)
+                    {
+                        if (aBorrar[i] == 1)
+                            dtMov.Rows[i].Delete();
+                    }
+
+                    dtMov.AcceptChanges();
+                }
+
+                grillaMovCtaCte.DataSource = dtMov;
                 grillaMovCtaCte.AutoGenerateColumns = false;
 
                 grillaMovCtaCte.Columns["idPersona"].Visible = false;
                 grillaMovCtaCte.Columns["razonSocial"].Visible = false;
-                grillaMovCtaCte.Columns["id"].Visible = false;
+                grillaMovCtaCte.Columns["id"].Visible = true;// false;
 
                 grillaMovCtaCte.Rows[0].Selected =false;
+
+                lblActualizar.Visible = false;
             }
             catch (Exception ex)
             {
@@ -162,6 +209,25 @@ namespace Presentacion.CuentaCorriente
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuario = usuario;
+        }
+
+        private void checkSinRegRepetidos_CheckedChanged(object sender, EventArgs e)
+        {
+            cargarGrilla();
+        }
+
+        private void fechaDesdePick_KeyDown(object sender, KeyEventArgs e)
+        {
+            lblActualizar.Visible = true;
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
+        }
+
+        private void fechaDesdePick_ValueChanged(object sender, EventArgs e)
+        {
+            lblActualizar.Visible = true;
         }
     }
 }

@@ -789,5 +789,11 @@ namespace Presentacion
             formCtasCtes frmCtasCtes = new formCtasCtes();
             frmCtasCtes.Show();
         }
+
+        private void pagosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Pagos.formPagos frmPagos = new formPagos();
+            frmPagos.Show();
+        }
     }
 }

@@ -130,9 +130,9 @@ namespace Negocio
             oCtaCteD.eliminarPago(oPagoE);
         }
 
-        public DataTable obtenerPagos(string tipoTramite, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerPagos(string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            return oCtaCteD.obtenerPagos(tipoTramite, texto, fechaDesde, fechaHasta);
+            return oCtaCteD.obtenerPagos(texto, fechaDesde, fechaHasta);
         }
 
         public void crearMovCtaCtePago(Entidades.Pago oPagoE)

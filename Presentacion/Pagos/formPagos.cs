@@ -68,79 +68,14 @@ namespace Presentacion.Pagos
         {
             if (cargar)
             {
-
-                string tipoTramite = "";
                 string descripcion = txtDescripcion.Text.Trim();
-                if (comboTipoTramite.Text == "Todos")
-                {
-                    tipoTramite = "";
-                }
-                else
-                {
-                    tipoTramite = comboTipoTramite.Text;
-                }
 
-                dtPagos = oCtaCteN.obtenerPagos(tipoTramite, descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
+                dtPagos = oCtaCteN.obtenerPagos(descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
                 grillaPagos.DataSource = null;
                 grillaPagos.DataSource = dtPagos;
-                foreach (DataGridViewRow filaPago in grillaPagos.Rows)
-                {
-
-                    if (filaPago.Cells["Tramite"].Value.ToString() == "Pago")
-                    {
-                        grillaPagos.Rows[filaPago.Index].DefaultCellStyle.BackColor = Color.FromArgb(209, 227, 254);
-
-                    }
-                }
-                cargarTotales();
-                formatearGrilla();
+                //cargarTotales();
+                //formatearGrilla();
             }
-
-            
-        }
-
-        private void cargarTotales()
-        {
-            float totalCompra = 0, totalPagos = 0, saldoAnterior=0, saldo=0;
-            
-        
-            foreach (DataRow  fila in dtPagos.Rows)
-            {
-                
-                if (fila["Tramite"].ToString() == "Saldo")
-                {
-                    saldoAnterior += float.Parse(fila["Importe"].ToString());
-                }
-
-                if (fila["Tramite"].ToString() == "Compra")
-                {
-                    totalCompra += float.Parse(fila["Importe"].ToString());
-                }
-
-                if (fila["Tramite"].ToString() == "Pago")
-                {
-                    totalPagos += float.Parse(fila["Importe"].ToString());
-                }
-
-                fila["Saldo"] = totalPagos - totalCompra + saldoAnterior;
-                
-            }
-
-            txtPagos.Text = totalPagos.ToString();
-            txtCompras.Text = totalCompra.ToString();
-            txtSaldoAnterior.Text = saldoAnterior.ToString();
-
-            saldo = totalPagos - totalCompra + saldoAnterior;
-            if (saldo < 0)
-            {
-                saldo = saldo * -1; // quita el signo negativo
-                this.txtSaldo.BackColor = System.Drawing.Color.Tomato;
-            }
-            else
-	        {
-                this.txtSaldo.BackColor = System.Drawing.Color.LightGreen;
-	        }
-            txtSaldo.Text = Convert.ToString(saldo);
         }
 
         private void modificarPago()
@@ -351,7 +286,7 @@ namespace Presentacion.Pagos
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             //leo de App.config fecha Desde
-            txtFechaDesde.Value = DateTime.Now;
+            txtFechaDesde.Value = DateTime.Now.AddDays(-30);
             cargar = true;
             cargarGrilla();
         }

@@ -7,10 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
+using Utilidades;
+using Presentacion.Caja;
 
 namespace Presentacion.Pagos
 {
-    public partial class formAddOrEditPago : Form
+    public partial class formAddOrEditPago : Form, InterfaceUsuario, InterfacePersona
     {
         formPagos frmPagos;
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
@@ -23,7 +25,8 @@ namespace Presentacion.Pagos
         
         public int idPago = 0;
         bool huboModif = true;
-        bool modificar=false;
+        bool modificar = false;
+        bool readOnly = false;
         bool ultimaValidacion = true;//valida que los ingresos estén correctos antes de ingresar datos al DB
 
         public formAddOrEditPago()
@@ -46,8 +49,10 @@ namespace Presentacion.Pagos
                     {
                         oPagoE = oCtaCteN.getPagoById(idPago);
                         oPersonaE = oPagoE.Persona;
-                        oPagoSinMod = oCtaCteN.getPagoById(idPago); 
+                        oPagoSinMod = oCtaCteN.getPagoById(idPago);
                         cargarCampos();
+                        readOnly = true;
+                        setearPropiedadesForm();
                         idPagoLabel.Text = idPago.ToString();//asigno id para identificar el formulario al llamar
                     }
 
@@ -66,6 +71,27 @@ namespace Presentacion.Pagos
             {
                 MessageBox.Show("Error en evento Load()\n" + ex.Message);
             }
+        }
+
+        private void setearPropiedadesForm()
+        {
+            this.Text = readOnly ? "Info Pago" : "Modificar Pago";
+            this.btnGuardar.Text = readOnly ? "&Modificar" : "&Guardar";
+            txtSucursal.Visible = readOnly || !((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
+            comboSucursal.Visible = !txtSucursal.Visible;
+            txtSucursal.Text = comboSucursal.Text;
+            btnBuscarProv.Visible = !readOnly;
+            txtFechaPago.Enabled = !readOnly;
+            comboTipoPago.Enabled = !readOnly;
+            //txtTipoEgresoCaja.Visible = readOnly;
+            //txtTipoEgresoCaja.Text = comboTipoEgresoCaja.Text;
+            comboTipoPago.Enabled = !readOnly;
+            txtNroRecibo.ReadOnly = readOnly;
+            txtImporte.ReadOnly = readOnly;
+            txtBanco.ReadOnly = readOnly;
+            txtNroCheque.ReadOnly = !readOnly;
+            txtTitular.ReadOnly = !readOnly;
+            txtObservaciones.ReadOnly = readOnly;
         }
 
         private void cargarSucursal()
@@ -89,10 +115,16 @@ namespace Presentacion.Pagos
         }
 
         //comunicación con interface
-        public void EnviarProveedor(Entidades.Persona persona)
+        public void EnviarPersona(Entidades.Persona persona)
         {
             oPersonaE = persona;
             this.txtPersona.Text = oPersonaE.razonSocial;
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+            this.txtUsuario.Text = oUsuario.Nombre;
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -142,6 +174,27 @@ namespace Presentacion.Pagos
             {                
                 try
                 {
+                    //
+                    if (oUsuario == null)
+                    {
+                        FormLoginVendedor frmLogin = new FormLoginVendedor();
+                        frmLogin.ShowDialog(this);
+                        if (oUsuario == null) return;
+
+                        if (!oUsuario.Admin)
+                        {
+                            MessageBox.Show("No tiene permisos para modificar gastos de otra persona");
+                            oUsuario = null;
+                            return;
+                        }
+
+                        formNuevoPago_Load(null, null);
+                        readOnly = false;
+                        setearPropiedadesForm();
+                        return;
+                    }
+                    //
+
                     cargarPago();
 
                     if (!huboModificaciones()) 
@@ -279,6 +332,9 @@ namespace Presentacion.Pagos
 
         private void checkAProveedor_CheckedChanged(object sender, EventArgs e)
         {
+            if (readOnly) 
+                return;
+
             if (checkAProveedor.Checked)
             {
                 checkAProveedor.Text = "Pagar a ...";
