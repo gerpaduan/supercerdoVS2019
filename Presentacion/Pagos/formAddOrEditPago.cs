@@ -14,7 +14,7 @@ namespace Presentacion.Pagos
 {
     public partial class formAddOrEditPago : Form, InterfaceUsuario, InterfacePersona
     {
-        formPagos frmPagos;
+        public  formPagos frmPagos;
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         public Entidades.Persona oPersonaE = new Entidades.Persona();
@@ -297,6 +297,9 @@ namespace Presentacion.Pagos
         private bool validar()
         {
             bool respuesta = true;
+
+            if(!Util_Form.validarFecha(txtFechaPago.Value, "Fecha"))
+                return false; ;
 
             if (txtNroRecibo.Text=="" || txtPersona.Text ==""  || comboTipoPago.Text==""
                 || txtImporte.Text=="")

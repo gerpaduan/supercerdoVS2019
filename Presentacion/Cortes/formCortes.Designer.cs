@@ -39,6 +39,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
@@ -63,6 +64,7 @@
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.precioKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.promedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idCorteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.independiente = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -93,7 +95,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(936, 45);
+            this.barraControl.Size = new System.Drawing.Size(989, 45);
             this.barraControl.TabIndex = 5;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
@@ -162,6 +164,7 @@
             this.corte,
             this.precioKg,
             this.tipo,
+            this.promedio,
             this.idCorteMaestro,
             this.corteMaestro,
             this.independiente,
@@ -182,7 +185,7 @@
             this.grillaCortes.ReadOnly = true;
             this.grillaCortes.RowHeadersVisible = false;
             this.grillaCortes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortes.Size = new System.Drawing.Size(913, 445);
+            this.grillaCortes.Size = new System.Drawing.Size(966, 445);
             this.grillaCortes.StandardTab = true;
             this.grillaCortes.TabIndex = 2;
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
@@ -191,7 +194,7 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(672, 567);
+            this.btnSeleccionar.Location = new System.Drawing.Point(725, 567);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(123, 28);
             this.btnSeleccionar.TabIndex = 3;
@@ -203,7 +206,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(801, 567);
+            this.btnCancelar.Location = new System.Drawing.Point(854, 567);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(123, 28);
             this.btnCancelar.TabIndex = 4;
@@ -227,11 +230,12 @@
             this.panel1.Controls.Add(this.btnBuscar);
             this.panel1.Location = new System.Drawing.Point(0, 45);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(936, 62);
+            this.panel1.Size = new System.Drawing.Size(989, 62);
             this.panel1.TabIndex = 7;
             // 
             // label3
             // 
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
@@ -243,6 +247,7 @@
             // 
             // label2
             // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
@@ -254,6 +259,7 @@
             // 
             // txtCodigohasta
             // 
+            this.txtCodigohasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCodigohasta.Location = new System.Drawing.Point(831, 32);
             this.txtCodigohasta.Name = "txtCodigohasta";
             this.txtCodigohasta.Size = new System.Drawing.Size(89, 20);
@@ -264,6 +270,7 @@
             // 
             // txtCodigoDesde
             // 
+            this.txtCodigoDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCodigoDesde.Location = new System.Drawing.Point(692, 32);
             this.txtCodigoDesde.Name = "txtCodigoDesde";
             this.txtCodigoDesde.Size = new System.Drawing.Size(88, 20);
@@ -274,6 +281,7 @@
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
@@ -285,6 +293,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
@@ -378,6 +387,18 @@
             this.tipo.ReadOnly = true;
             this.tipo.Width = 80;
             // 
+            // promedio
+            // 
+            this.promedio.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.promedio.DataPropertyName = "promedio";
+            dataGridViewCellStyle5.Format = "F3";
+            this.promedio.DefaultCellStyle = dataGridViewCellStyle5;
+            this.promedio.HeaderText = "Promedio";
+            this.promedio.Name = "promedio";
+            this.promedio.ReadOnly = true;
+            this.promedio.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.promedio.Width = 76;
+            // 
             // idCorteMaestro
             // 
             this.idCorteMaestro.DataPropertyName = "idCorteMaestro";
@@ -409,10 +430,10 @@
             // 
             this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.porcentaje.DataPropertyName = "porcentaje";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle5.Format = "N3";
-            dataGridViewCellStyle5.NullValue = null;
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle6.Format = "N3";
+            dataGridViewCellStyle6.NullValue = null;
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle6;
             this.porcentaje.HeaderText = "Porcentaje";
             this.porcentaje.Name = "porcentaje";
             this.porcentaje.ReadOnly = true;
@@ -422,10 +443,10 @@
             // 
             this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle6.Format = "N2";
-            dataGridViewCellStyle6.NullValue = null;
-            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle7.Format = "N2";
+            dataGridViewCellStyle7.NullValue = null;
+            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle7;
             this.porcentajeHueso.HeaderText = "% Desperdicio";
             this.porcentajeHueso.Name = "porcentajeHueso";
             this.porcentajeHueso.ReadOnly = true;
@@ -435,10 +456,10 @@
             // 
             this.desvioEstandar.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.desvioEstandar.DataPropertyName = "desvioEstandar";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle7.Format = "N2";
-            dataGridViewCellStyle7.NullValue = null;
-            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle8.Format = "N2";
+            dataGridViewCellStyle8.NullValue = null;
+            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle8;
             this.desvioEstandar.FillWeight = 90F;
             this.desvioEstandar.HeaderText = "Desvío Estandar";
             this.desvioEstandar.Name = "desvioEstandar";
@@ -479,11 +500,11 @@
             // 
             this.stockSL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSL.DataPropertyName = "stockSL";
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle8.Format = "N3";
-            dataGridViewCellStyle8.NullValue = null;
-            this.stockSL.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle9.Format = "N3";
+            dataGridViewCellStyle9.NullValue = null;
+            this.stockSL.DefaultCellStyle = dataGridViewCellStyle9;
             this.stockSL.FillWeight = 50F;
             this.stockSL.HeaderText = "Stock S. Lorenzo";
             this.stockSL.Name = "stockSL";
@@ -511,11 +532,11 @@
             // 
             this.stockSM.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSM.DataPropertyName = "stockSM";
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle9.Format = "N3";
-            dataGridViewCellStyle9.NullValue = null;
-            this.stockSM.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle10.Format = "N3";
+            dataGridViewCellStyle10.NullValue = null;
+            this.stockSM.DefaultCellStyle = dataGridViewCellStyle10;
             this.stockSM.FillWeight = 50F;
             this.stockSM.HeaderText = "Stock S. Martín";
             this.stockSM.Name = "stockSM";
@@ -527,14 +548,14 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(936, 602);
+            this.ClientSize = new System.Drawing.Size(989, 602);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.grillaCortes);
             this.Controls.Add(this.barraControl);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.KeyPreview = true;
-            this.MaximizeBox = false;
             this.MinimizeBox = true;
             this.Name = "formCortes";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -577,6 +598,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn precioKg;
         private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn promedio;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMaestro;
         private System.Windows.Forms.DataGridViewTextBoxColumn corteMaestro;
         private System.Windows.Forms.DataGridViewCheckBoxColumn independiente;

@@ -49,6 +49,7 @@ namespace Presentacion.Movimientos
             this.grillaAcum.Columns["IdCortePorMovimiento"].Visible = false;
             this.grillaAcum.Columns["IdCorte"].Visible = false;
             this.grillaAcum.Columns["PesoBalanza"].Visible = false;
+            this.grillaAcum.Columns["permitirIngreso"].Visible = false;
 
             this.grillaAcum.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 

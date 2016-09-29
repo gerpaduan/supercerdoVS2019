@@ -38,6 +38,7 @@
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.checkPermitirIngreso = new System.Windows.Forms.CheckBox();
             this.btnVerAcum = new System.Windows.Forms.Button();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
@@ -128,6 +129,7 @@
             // 
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.checkPermitirIngreso);
             this.pnlBuscar.Controls.Add(this.btnVerAcum);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
             this.pnlBuscar.Controls.Add(this.label16);
@@ -139,6 +141,22 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(664, 199);
             this.pnlBuscar.TabIndex = 20;
+            // 
+            // checkPermitirIngreso
+            // 
+            this.checkPermitirIngreso.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.checkPermitirIngreso.AutoSize = true;
+            this.checkPermitirIngreso.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkPermitirIngreso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkPermitirIngreso.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkPermitirIngreso.Location = new System.Drawing.Point(354, 88);
+            this.checkPermitirIngreso.Name = "checkPermitirIngreso";
+            this.checkPermitirIngreso.Size = new System.Drawing.Size(129, 19);
+            this.checkPermitirIngreso.TabIndex = 25;
+            this.checkPermitirIngreso.TabStop = false;
+            this.checkPermitirIngreso.Text = "Permitir Ingreso";
+            this.checkPermitirIngreso.UseVisualStyleBackColor = false;
+            this.checkPermitirIngreso.Visible = false;
             // 
             // btnVerAcum
             // 
@@ -871,5 +889,6 @@
         private System.Windows.Forms.Label idMovimientoLabel;
         private System.Windows.Forms.Button btnVerAcum;
         private System.Windows.Forms.CheckBox checkSinBalanza;
+        private System.Windows.Forms.CheckBox checkPermitirIngreso;
     }
 }

@@ -18,6 +18,13 @@ namespace Presentacion
         public string estado;
         private bool pesoBalanza;
         int indexAnulado = -1;
+        int random;
+
+        public int Random
+        {
+            get { return random; }
+            set { random = value; }
+        }
 
         public int IdLineaVenta
         {

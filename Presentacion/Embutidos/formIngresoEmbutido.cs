@@ -14,7 +14,7 @@ using Utilidades;
 
 namespace Presentacion
 {
-    public partial class formIngresoEmbutido : formBaseColor, InterfaceCorte, InterfaceEmbutido
+    public partial class formIngresoEmbutido : formBaseColor, InterfaceCorte, InterfaceEmbutido, InterfaceUsuario
     {
         Utilidades.SingletonLeerPeso Leer_Peso;
 
@@ -29,11 +29,14 @@ namespace Presentacion
         Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
         public Entidades.Usuario oUsuario;
 
+        Entidades.Usuario oUsuarioNuevoEmbutido;
+
         CortePorEmbutido cortePorEmbutido;
         List<CortePorEmbutido> listaCortesEnGrilla = new List<CortePorEmbutido>();
 
         List<Entidades.CortePorEmbutido> listaCortePorEmbutido = new List<Entidades.CortePorEmbutido>();
 
+        bool esDuplicado = false;
         bool saveChanges = false;
         bool dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
@@ -305,6 +308,19 @@ namespace Presentacion
             txtCodCorteEnEmbutido.Focus();
         }
 
+        private void calcularFormula()
+        {
+            switch (oCorteEmbutidoE.codigo)
+            {
+                case 4:
+                    break;
+                case 33:
+                    break;
+                default:
+                    break;
+            }
+        }
+
         private void btnBuscarCorte_Click(object sender, EventArgs e)
         {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
@@ -416,6 +432,9 @@ namespace Presentacion
 
         private void formIngresoEmbutido_Load(object sender, EventArgs e)
         {
+            if (esDuplicado)
+                this.Left += 50;
+            
             this.Text += Utilidades.Conexion.getSucursalConexion();
             if (oUsuario == null)
             {
@@ -623,6 +642,23 @@ namespace Presentacion
             {
                 MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n"+ ex.Message + "\n" + ex.StackTrace);
             }
+        }
+
+        private void btnNuevo_Click(object sender, EventArgs e)
+        {
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();
+            frmIngresoEmbutido.oUsuario = oUsuarioNuevoEmbutido;
+            frmIngresoEmbutido.frmEmbutidos = frmEmbutidos;
+            frmIngresoEmbutido.esDuplicado = true;
+            frmIngresoEmbutido.Show();
+            this.Left -= 200;
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuarioNuevoEmbutido = usuario;
         }
     }
 }

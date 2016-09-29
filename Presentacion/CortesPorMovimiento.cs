@@ -13,13 +13,20 @@ namespace Presentacion
         private string corte;
         private float cantKg;
         private int cantUnidad;
+        private bool pesoBalanza;
+        private bool permitirIngreso;
+
+        public bool PermitirIngreso
+        {
+            get { return permitirIngreso; }
+            set { permitirIngreso = value; }
+        }
 
         public int CantUnidad
         {
             get { return cantUnidad; }
             set { cantUnidad = value; }
         }
-        private bool pesoBalanza;
 
         public bool PesoBalanza
         {

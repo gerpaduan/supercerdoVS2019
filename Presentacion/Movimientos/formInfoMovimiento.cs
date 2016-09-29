@@ -90,6 +90,7 @@ namespace Presentacion.Movimientos
                 cortePorMovimiento.CantUnidad = lineaCorte.CantUnidad;
                 cortePorMovimiento.CantKg = lineaCorte.CantKg;
                 cortePorMovimiento.PesoBalanza = lineaCorte.PesoBalanza;
+                cortePorMovimiento.PermitirIngreso = lineaCorte.PermitirIngreso;
 
                 listaEnGrilla.Add(cortePorMovimiento);
             }

@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
+            this.checkMayorista = new System.Windows.Forms.CheckBox();
             this.checkAsignarMaestro = new System.Windows.Forms.CheckBox();
             this.groupMaestro = new System.Windows.Forms.GroupBox();
             this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
@@ -53,8 +55,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.btnGuardar = new System.Windows.Forms.Button();
-            this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
-            this.checkMayorista = new System.Windows.Forms.CheckBox();
+            this.txtPromedio = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
@@ -74,6 +76,8 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.txtPromedio);
+            this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.checkEnCierreStock);
             this.groupBox1.Controls.Add(this.checkMayorista);
             this.groupBox1.Controls.Add(this.checkAsignarMaestro);
@@ -95,6 +99,28 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // checkEnCierreStock
+            // 
+            this.checkEnCierreStock.AutoSize = true;
+            this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkEnCierreStock.Location = new System.Drawing.Point(267, 58);
+            this.checkEnCierreStock.Name = "checkEnCierreStock";
+            this.checkEnCierreStock.Size = new System.Drawing.Size(110, 19);
+            this.checkEnCierreStock.TabIndex = 32;
+            this.checkEnCierreStock.Text = "En Cierre Stock";
+            this.checkEnCierreStock.UseVisualStyleBackColor = true;
+            // 
+            // checkMayorista
+            // 
+            this.checkMayorista.AutoSize = true;
+            this.checkMayorista.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkMayorista.Location = new System.Drawing.Point(298, 31);
+            this.checkMayorista.Name = "checkMayorista";
+            this.checkMayorista.Size = new System.Drawing.Size(79, 19);
+            this.checkMayorista.TabIndex = 31;
+            this.checkMayorista.Text = "Mayorista";
+            this.checkMayorista.UseVisualStyleBackColor = true;
             // 
             // checkAsignarMaestro
             // 
@@ -270,6 +296,7 @@
             this.comboTipo.Name = "comboTipo";
             this.comboTipo.Size = new System.Drawing.Size(117, 23);
             this.comboTipo.TabIndex = 3;
+            this.comboTipo.SelectedIndexChanged += new System.EventHandler(this.comboTipo_SelectedIndexChanged);
             this.comboTipo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             this.comboTipo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             // 
@@ -348,27 +375,23 @@
             this.btnGuardar.UseVisualStyleBackColor = true;
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
-            // checkEnCierreStock
+            // txtPromedio
             // 
-            this.checkEnCierreStock.AutoSize = true;
-            this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkEnCierreStock.Location = new System.Drawing.Point(267, 58);
-            this.checkEnCierreStock.Name = "checkEnCierreStock";
-            this.checkEnCierreStock.Size = new System.Drawing.Size(110, 19);
-            this.checkEnCierreStock.TabIndex = 32;
-            this.checkEnCierreStock.Text = "En Cierre Stock";
-            this.checkEnCierreStock.UseVisualStyleBackColor = true;
+            this.txtPromedio.Location = new System.Drawing.Point(93, 139);
+            this.txtPromedio.Name = "txtPromedio";
+            this.txtPromedio.Size = new System.Drawing.Size(71, 21);
+            this.txtPromedio.TabIndex = 33;
             // 
-            // checkMayorista
+            // label8
             // 
-            this.checkMayorista.AutoSize = true;
-            this.checkMayorista.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkMayorista.Location = new System.Drawing.Point(298, 31);
-            this.checkMayorista.Name = "checkMayorista";
-            this.checkMayorista.Size = new System.Drawing.Size(79, 19);
-            this.checkMayorista.TabIndex = 31;
-            this.checkMayorista.Text = "Mayorista";
-            this.checkMayorista.UseVisualStyleBackColor = true;
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label8.Location = new System.Drawing.Point(26, 142);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(61, 15);
+            this.label8.TabIndex = 34;
+            this.label8.Text = "Promedio";
             // 
             // formNuevoCorte
             // 
@@ -420,5 +443,7 @@
         private System.Windows.Forms.CheckBox checkAsignarMaestro;
         private System.Windows.Forms.CheckBox checkEnCierreStock;
         private System.Windows.Forms.CheckBox checkMayorista;
+        protected System.Windows.Forms.TextBox txtPromedio;
+        protected System.Windows.Forms.Label label8;
     }
 }

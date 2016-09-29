@@ -78,6 +78,7 @@ namespace Presentacion
             txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
             oCorteMaestroE = oCorteE.corteMaestro;
             comboTipo.Text = oCorteE.tipo;
+            txtPromedio.Text = oCorteE.Promedio.ToString("F3");
             txtIndependiente.Checked = oCorteE.independiente == 1;
             checkMayorista.Checked = oCorteE.Mayorista;
             checkEnCierreStock.Checked = oCorteE.EnCierreStock;
@@ -166,6 +167,16 @@ namespace Presentacion
             {
                 resp = false;
                 mensaje += "\n" + "-Precio Kg";
+            }
+
+            try
+            {
+                oCorteE.Promedio = Utilidades.Util_Form.convertFloat(txtPromedio.Text, false);
+            }
+            catch (Exception)
+            {
+                resp = false;
+                mensaje += "\n" + "-Promedio";
             }
 
             oCorteE.Tipo = comboTipo.Text;
@@ -324,6 +335,33 @@ namespace Presentacion
         private void txtIndependiente_CheckedChanged(object sender, EventArgs e)
         {
             huboModificacion = true;
+        }
+
+        private void comboTipo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Corte
+            //Embutido
+            //Unidad
+            //Otro
+            switch (comboTipo.Text)
+            {
+                case "Corte":
+                    txtPromedio.ReadOnly = false;
+                    txtPromedio.Text = oCorteE.Promedio.ToString("F3");
+                    break;
+                case "Unidad":
+                    txtPromedio.ReadOnly = true;
+                    txtPromedio.Text = "1";
+                    break;
+                case "Embutido":
+                    txtPromedio.ReadOnly = false;
+                    txtPromedio.Text = "0";
+                    break;
+                default:
+                    txtPromedio.ReadOnly = false;
+                    txtPromedio.Text = "0";
+                    break;
+            }
         }
     }
 }

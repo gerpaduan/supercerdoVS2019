@@ -26,13 +26,13 @@ namespace Datos
             cmCompra = null;
         }
 
-        public DataTable obtenerCompras(int idSucursal,string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
             DataTable dtCompras = new DataTable();
             daCompra = new SqlDataAdapter();
 
             cmCompra = new SqlCommand();
-            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
             cmCompra.Connection.Open();
             cmCompra.CommandType = CommandType.StoredProcedure;
             cmCompra.CommandText = "obtenerCompras";

@@ -785,15 +785,61 @@ namespace Presentacion
 
         private void ctasCtesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (logueado)
+            {
+                if (Application.OpenForms["formCtasCtes"] != null)
+                {
+                    Application.OpenForms["formCtasCtes"].Activate();
+                    Application.OpenForms["formCtasCtes"].WindowState = FormWindowState.Normal;
 
-            formCtasCtes frmCtasCtes = new formCtasCtes();
-            frmCtasCtes.Show();
+                }
+                else
+                {
+                    formCtasCtes frmCtasCtes = new formCtasCtes();
+                    frmCtasCtes.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
         }
 
         private void pagosToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Pagos.formPagos frmPagos = new formPagos();
-            frmPagos.Show();
+            if (logueado)
+            {
+                if (Application.OpenForms["formPagos"] != null)
+                {
+                    Application.OpenForms["formPagos"].Activate();
+                    Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    Pagos.formPagos frmPagos = new formPagos();
+                    frmPagos.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void stockActualToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formStockActual"] != null)
+            {
+                Application.OpenForms["formStockActual"].Activate();
+                Application.OpenForms["formStockActual"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formStockActual frmStockActual = new formStockActual();
+                frmStockActual.Show();
+            }
         }
     }
 }

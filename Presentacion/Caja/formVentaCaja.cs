@@ -10,6 +10,8 @@ using Presentacion.Personas;
 using Presentacion.Cortes;
 using Presentacion.Caja;
 using System.Configuration;
+using System.Collections;
+using System.Reflection;
 
 namespace Presentacion.Caja
 {
@@ -56,6 +58,7 @@ namespace Presentacion.Caja
         int titilarHasta = 2000;
         int tiempoRegistrarTemporal = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoRegistrarTemporal"].ToString());
         string ultimoTextoEnTxtCodigo = "";
+        Random randomClass = new Random();
 
         public int SucAnterior
         {
@@ -94,9 +97,10 @@ namespace Presentacion.Caja
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
-
+            checkCtaCte_CheckedChanged(null,null);
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
             checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
+
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -242,6 +246,8 @@ namespace Presentacion.Caja
                     ticket.TextoCentro("x");
                     ticket.NoValidoComoFactura();
                     ticket.LineasEnBlanco(1);
+                    if (oVentaE.EnCtaCte)
+                        ticket.TextoCentro("A Cta. Cte.");
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
                     ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
@@ -269,9 +275,12 @@ namespace Presentacion.Caja
                     //ticket.LineasEnBlanco(1);
                     ticket.TextoDerecha("-------");
                     ticket.AgregaTotales("Total", totalVenta);
-                    abona = abona > 0 ? abona : totalVenta;
-                    ticket.AgregaTotales("Pago", abona);
-                    ticket.AgregaTotales("Vuelto", cambio);
+                    //si se ingresa la cantidad del pago se imprime
+                    if (abona > 0)
+                    {
+                        ticket.AgregaTotales("Pago", abona);
+                        ticket.AgregaTotales("Vuelto", cambio);
+                    }
                     ticket.LineasEnBlanco(1);
                     ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
                     //ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
@@ -340,7 +349,7 @@ namespace Presentacion.Caja
                 oEgresoCajaE = oCierreN.getEgresoCajaById(oEgresoCajaE.Id);
                 //imprimir ticket
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();
-                ticket.imprimir = true;//checkTicket.Checked;
+                ticket.imprimir = checkTicket.Checked;
                 ticket.TextoCentro("Egreso Caja");
                 ticket.LineasEnBlanco(1);
                 //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
@@ -383,6 +392,7 @@ namespace Presentacion.Caja
             panelAbonar.Visible = true;
             checkCtaCte.Visible = false;
             checkCtaCte.Checked = false;
+            lblClienteConBonif.Visible = false;
 
             totalVenta = 0;
             abona = 0;
@@ -486,9 +496,15 @@ namespace Presentacion.Caja
             lineaVentaP.idCorte = lineaE.Corte.idCorte;
             lineaVentaP.codigo = lineaE.Corte.codigo;
             lineaVentaP.corte = lineaE.Corte.corte;
+            lineaVentaP.corte = lineaE.Bonificacion == 0 ? lineaE.Corte.CorteDesc :
+                    (lineaE.Corte.CorteDesc.Length < 9 ? lineaE.Corte.CorteDesc :
+                    lineaE.Corte.CorteDesc.Substring(0, 9)) + 
+                    " (Bonif. " + lineaE.Bonificacion.ToString("F2") + "%)";
             lineaVentaP.cantKgs = lineaE.CantKg;
-            lineaVentaP.precioKg = lineaE.PrecioKg;
+            //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.Mayorista);
+            lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.Mayorista);
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
+            lineaVentaP.Random = lineaE.Random;
 
             if (lineaE.Estado == 1)
             {
@@ -514,8 +530,9 @@ namespace Presentacion.Caja
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
-            oLineaVenta.Bonificacion = ((precioKg / oCorteE.precioKg) - 1) * 100;
+            oLineaVenta.Bonificacion = (1 - (precioKg / oCorteE.precioKg)) * 100;
             oLineaVenta.PrecioReal = oCorteE.precioKg;
+            oLineaVenta.Random = randomClass.Next(0, 1000000);
 
             if (oLineaVenta.CantKg < 0)
             {
@@ -753,7 +770,8 @@ namespace Presentacion.Caja
                 {
                     string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " +
                         oLineaVentaSelect.Corte.corte +
-                        "    |   Cantidad:  " + oLineaVentaSelect.CantKg + "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.Corte.precioKg;
+                        "    |   Cantidad:  " + oLineaVentaSelect.CantKg + 
+                        "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.PrecioKg;
                     string mensaje = "¿Está seguro de anular el corte seleccionado?" + datosLinea;
                     DialogResult respuesta = MessageBox.Show(mensaje, "Anular Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (respuesta == System.Windows.Forms.DialogResult.Yes)
@@ -818,7 +836,7 @@ namespace Presentacion.Caja
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
-                        this.txtPrecioKg.Text = oCorteE.precioKg.ToString("N");
+                        this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
                         cargarTotalCorte();
                     }
                     else
@@ -877,10 +895,9 @@ namespace Presentacion.Caja
             {
                 try
                 {
-                    //bool d = Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs");
                     try
                     {
-                        cantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                        cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, false);
                     }
                     catch (Exception)
                     {
@@ -892,21 +909,14 @@ namespace Presentacion.Caja
                     {
                         try
                         {
-                            precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
                         }
                         catch (Exception)
                         {
-                            try
-                            {
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim());
-                            }
-                            catch (Exception)
-                            {
 
-                                if (checkLeerPeso.Checked)
-                                {
-                                    precioKg = 0;
-                                }
+                            if (checkLeerPeso.Checked)
+                            {
+                                precioKg = 0;
                             }
                         }
 
@@ -968,7 +978,7 @@ namespace Presentacion.Caja
                 {
                     try
                     {
-                        totalCorte = float.Parse(txtTotalCorte.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                        totalCorte = Utilidades.Util_Form.convertFloat(txtTotalCorte.Text, false);
                     }
                     catch (Exception)
                     {
@@ -984,7 +994,6 @@ namespace Presentacion.Caja
                 }
                 catch (Exception ex)
                 {
-
                     MessageBox.Show(ex.Message);
                 }
             }
@@ -998,11 +1007,10 @@ namespace Presentacion.Caja
                 {
                     try
                     {
-                        precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                        precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
                     }
                     catch (Exception)
                     {
-
                         precioKg = float.Parse(txtPrecioKg.Text.Trim());
                     }
                     totalCorte = precioKg * cantKg;
@@ -1124,6 +1132,9 @@ namespace Presentacion.Caja
             checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
             checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
+            lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
+            lblClienteConBonif.Text = lblClienteConBonif.Visible ? 
+                "Cliente con Bonificación ("+oCliente.Bonificacion.ToString("N2")+" %)" : "";
             this.txtCodigo.Focus();
         }
 
@@ -1262,6 +1273,7 @@ namespace Presentacion.Caja
                 Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
+                comboColors.Text = colorUser.ToString();
                 grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
                 timerBloquearCaja.Start();
                 ultimaVentaVendedor();
@@ -1426,7 +1438,8 @@ namespace Presentacion.Caja
                 foreach (Entidades.LineaVenta lineaCargada in listaLineaVenta)
                 {
                     if (!Entidades.LineaVenta.esAnulado(lineaCargada.Estado) && lineaCargada.Bonificacion != 0 && 
-                        lineaCargada.Corte.codigo.Equals(oLineaVentaSelect.Corte.codigo))
+                        lineaCargada.Corte.codigo.Equals(oLineaVentaSelect.Corte.codigo) &&
+                        lineaCargada.Random.Equals(oLineaVentaSelect.Random))
                     {
                         oLineaVentaSelect.PrecioKg = lineaCargada.PrecioKg;
                         break;
@@ -1816,6 +1829,73 @@ namespace Presentacion.Caja
         private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
         {
             checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
+        }
+
+        private void comboColors_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            try
+            {
+                if (comboColors.Items.Count < 13)
+                {
+                    comboColors.Items.Add(Color.SteelBlue);
+                    comboColors.Items.Add(Color.DarkCyan);
+                    comboColors.Items.Add(Color.DarkOrchid);
+                    comboColors.Items.Add(Color.SeaGreen);
+                    comboColors.Items.Add(Color.DarkCyan);
+                    comboColors.Items.Add(Color.Black);
+                    comboColors.Items.Add(Color.Red);
+                    comboColors.Items.Add(Color.Green);
+                    comboColors.Items.Add(Color.Firebrick);
+                    comboColors.Items.Add(Color.Teal);
+                    comboColors.Items.Add(Color.DarkSlateBlue);
+                    comboColors.Items.Add(Color.DimGray);
+                }
+
+                ComboBox cmb = sender as ComboBox;
+                if (cmb == null) return;
+                if (e.Index < 0) return;
+                if (!(cmb.Items[e.Index] is Color)) return;
+                Color color = (Color)cmb.Items[e.Index];
+                // Dibujamos el fondo
+                e.DrawBackground();
+                // Creamos los objetos GDI+
+                Brush brush = new SolidBrush(color);
+                Pen forePen = new Pen(e.ForeColor);
+                Brush foreBrush = new SolidBrush(e.ForeColor);
+                // Dibujamos el borde del rectángulo
+                e.Graphics.DrawRectangle(
+                    forePen,
+                    new Rectangle(e.Bounds.Left + 2, e.Bounds.Top + 2, 19,
+                        e.Bounds.Size.Height - 4));
+                // Rellenamos el rectángulo con el Color seleccionado
+                // en la combo
+                e.Graphics.FillRectangle(brush,
+                    new Rectangle(e.Bounds.Left + 3, e.Bounds.Top + 3, 18,
+                        e.Bounds.Size.Height - 5));
+                // Dibujamos el nombre del color
+                e.Graphics.DrawString(color.Name, cmb.Font,
+                    foreBrush, e.Bounds.Left + 25, e.Bounds.Top + 2);
+                // Eliminamos objetos GDI+
+                brush.Dispose();
+                forePen.Dispose();
+                foreBrush.Dispose();
+            }
+            catch (Exception)
+            {
+                
+            }
+        }
+
+        private void comboColors_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                this.pnlBuscar.BackColor = (Color)comboColors.SelectedItem;
+                this.grupoCortes.BackColor = (Color)comboColors.SelectedItem;
+            }
+            catch (Exception)
+            {
+            }
         }
     }
 }

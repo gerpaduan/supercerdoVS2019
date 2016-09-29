@@ -42,5 +42,17 @@ namespace Negocio
             oSucursalD = new Datos.Sucursal();
             return oSucursalD.obtenerSucursalSanLorenzo();
         }
+
+        public DataTable obtenerConexiones(bool? mostrarEnPrincipal, bool? mostrarEnStockActual)
+        {
+            oSucursalD = new Datos.Sucursal();
+            return oSucursalD.obtenerConexiones(mostrarEnPrincipal, mostrarEnStockActual);
+        }
+
+        public int getIdSucursalByConexion(string nameConnString)
+        {
+            oSucursalD = new Datos.Sucursal();
+            return oSucursalD.getIdSucursalByConexion(nameConnString);
+        }
     }
 }

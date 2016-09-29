@@ -50,7 +50,7 @@ namespace Presentacion
                 grillaCompras.AutoGenerateColumns = false;
 
                 dtCompras = null;
-                dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaCompras.DataSource = dtCompras;
 
                 cargarTotales();

@@ -141,8 +141,6 @@
             this.checkCtaCte.AutoSize = true;
             this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkCtaCte.Checked = true;
-            this.checkCtaCte.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
             this.checkCtaCte.Location = new System.Drawing.Point(546, 48);
@@ -150,7 +148,7 @@
             this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
             this.checkCtaCte.TabIndex = 52;
             this.checkCtaCte.TabStop = false;
-            this.checkCtaCte.Text = "A &Cta. Cte.";
+            this.checkCtaCte.Text = "&A Cta. Cte.";
             this.checkCtaCte.UseVisualStyleBackColor = false;
             this.checkCtaCte.CheckedChanged += new System.EventHandler(this.checkCtaCte_CheckedChanged);
             // 

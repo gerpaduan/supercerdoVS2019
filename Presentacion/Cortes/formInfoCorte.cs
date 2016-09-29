@@ -63,6 +63,7 @@ namespace Presentacion
                     txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
                     txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
                     txtDesvioEstandar.Text = fila["desvioEstandar"].ToString();
+                    txtPromedio.Text = fila["promedio"].ToString();
                 }
             }
             catch (Exception ex)
@@ -73,11 +74,7 @@ namespace Presentacion
 
         public void recibirCorteModificado(Entidades.Corte oCorteMod)
         {
-            oCorteE = oCorteMod;
-
-            cargarCamposCorteMod();
-
-            oFrmCortes.cargarGrilla();
+            formInfoCorte_Load(null, null);
         }
 
         private void cargarCamposCorteMod()

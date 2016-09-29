@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formVentaCaja));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle18 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -38,8 +39,10 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formVentaCaja));
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblClienteConBonif = new System.Windows.Forms.Label();
+            this.comboColors = new System.Windows.Forms.ComboBox();
+            this.checkCtaCte = new System.Windows.Forms.CheckBox();
             this.lblErrorBalanza = new System.Windows.Forms.Label();
             this.txtFecVenta = new System.Windows.Forms.TextBox();
             this.txtVendedor = new System.Windows.Forms.TextBox();
@@ -48,10 +51,13 @@
             this.grupoCortes = new System.Windows.Forms.GroupBox();
             this.lblVendedorNombre = new System.Windows.Forms.Label();
             this.checkTicket = new System.Windows.Forms.CheckBox();
+            this.btnQuitar = new System.Windows.Forms.Button();
             this.txtCorte = new System.Windows.Forms.TextBox();
+            this.btnAgregar = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.checkLeerPeso = new System.Windows.Forms.CheckBox();
+            this.btnBuscarCorte = new System.Windows.Forms.Button();
             this.txtTotalCorte = new System.Windows.Forms.MaskedTextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.txtCodigo = new System.Windows.Forms.MaskedTextBox();
@@ -64,6 +70,7 @@
             this.txtNroRemito = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.btnBuscarCliente = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.txtCliente = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
@@ -93,6 +100,7 @@
             this.lblHoraUltimaVenta = new System.Windows.Forms.Label();
             this.panelBloquear = new System.Windows.Forms.Panel();
             this.lblErrorClave = new System.Windows.Forms.Label();
+            this.btnIngresar = new System.Windows.Forms.Button();
             this.txtClave = new System.Windows.Forms.TextBox();
             this.label18 = new System.Windows.Forms.Label();
             this.usuario = new System.Windows.Forms.Label();
@@ -104,12 +112,6 @@
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.btnBloquear = new System.Windows.Forms.Button();
-            this.btnIngresar = new System.Windows.Forms.Button();
-            this.btnQuitar = new System.Windows.Forms.Button();
-            this.btnAgregar = new System.Windows.Forms.Button();
-            this.btnBuscarCorte = new System.Windows.Forms.Button();
-            this.btnBuscarCliente = new System.Windows.Forms.Button();
-            this.checkCtaCte = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -122,7 +124,9 @@
             // 
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.BackColor = System.Drawing.Color.Gray;
+            this.pnlBuscar.Controls.Add(this.lblClienteConBonif);
+            this.pnlBuscar.Controls.Add(this.comboColors);
             this.pnlBuscar.Controls.Add(this.checkCtaCte);
             this.pnlBuscar.Controls.Add(this.lblErrorBalanza);
             this.pnlBuscar.Controls.Add(this.txtFecVenta);
@@ -143,13 +147,59 @@
             this.pnlBuscar.Size = new System.Drawing.Size(975, 200);
             this.pnlBuscar.TabIndex = 4;
             // 
+            // lblClienteConBonif
+            // 
+            this.lblClienteConBonif.AutoSize = true;
+            this.lblClienteConBonif.BackColor = System.Drawing.Color.SandyBrown;
+            this.lblClienteConBonif.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblClienteConBonif.ForeColor = System.Drawing.Color.Black;
+            this.lblClienteConBonif.Location = new System.Drawing.Point(89, 104);
+            this.lblClienteConBonif.Name = "lblClienteConBonif";
+            this.lblClienteConBonif.Size = new System.Drawing.Size(161, 15);
+            this.lblClienteConBonif.TabIndex = 51;
+            this.lblClienteConBonif.Text = "Cliente con Bonificación del ";
+            this.lblClienteConBonif.Visible = false;
+            // 
+            // comboColors
+            // 
+            this.comboColors.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.comboColors.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboColors.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboColors.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboColors.FormattingEnabled = true;
+            this.comboColors.Location = new System.Drawing.Point(842, 75);
+            this.comboColors.Name = "comboColors";
+            this.comboColors.Size = new System.Drawing.Size(121, 22);
+            this.comboColors.TabIndex = 50;
+            this.comboColors.TabStop = false;
+            this.comboColors.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboColors_DrawItem);
+            this.comboColors.SelectedIndexChanged += new System.EventHandler(this.comboColors_SelectedIndexChanged);
+            // 
+            // checkCtaCte
+            // 
+            this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkCtaCte.AutoSize = true;
+            this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkCtaCte.Location = new System.Drawing.Point(364, 75);
+            this.checkCtaCte.Name = "checkCtaCte";
+            this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
+            this.checkCtaCte.TabIndex = 49;
+            this.checkCtaCte.TabStop = false;
+            this.checkCtaCte.Text = "A &Cta. Cte.";
+            this.checkCtaCte.UseVisualStyleBackColor = false;
+            this.checkCtaCte.Visible = false;
+            this.checkCtaCte.CheckedChanged += new System.EventHandler(this.checkCtaCte_CheckedChanged);
+            // 
             // lblErrorBalanza
             // 
             this.lblErrorBalanza.AutoSize = true;
             this.lblErrorBalanza.BackColor = System.Drawing.Color.SandyBrown;
             this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
-            this.lblErrorBalanza.Location = new System.Drawing.Point(403, 56);
+            this.lblErrorBalanza.Location = new System.Drawing.Point(466, 58);
             this.lblErrorBalanza.Name = "lblErrorBalanza";
             this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
             this.lblErrorBalanza.TabIndex = 48;
@@ -203,7 +253,7 @@
             // 
             // grupoCortes
             // 
-            this.grupoCortes.BackColor = System.Drawing.Color.SteelBlue;
+            this.grupoCortes.BackColor = System.Drawing.Color.Gray;
             this.grupoCortes.Controls.Add(this.lblVendedorNombre);
             this.grupoCortes.Controls.Add(this.checkTicket);
             this.grupoCortes.Controls.Add(this.btnQuitar);
@@ -260,6 +310,19 @@
             this.checkTicket.UseVisualStyleBackColor = false;
             this.checkTicket.CheckedChanged += new System.EventHandler(this.checkTicket_CheckedChanged);
             // 
+            // btnQuitar
+            // 
+            this.btnQuitar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnQuitar.ForeColor = System.Drawing.Color.Black;
+            this.btnQuitar.Image = ((System.Drawing.Image)(resources.GetObject("btnQuitar.Image")));
+            this.btnQuitar.Location = new System.Drawing.Point(908, 49);
+            this.btnQuitar.Name = "btnQuitar";
+            this.btnQuitar.Size = new System.Drawing.Size(35, 29);
+            this.btnQuitar.TabIndex = 32;
+            this.btnQuitar.TabStop = false;
+            this.btnQuitar.UseVisualStyleBackColor = true;
+            this.btnQuitar.Click += new System.EventHandler(this.btnQuitar_Click);
+            // 
             // txtCorte
             // 
             this.txtCorte.BackColor = System.Drawing.SystemColors.ScrollBar;
@@ -270,6 +333,21 @@
             this.txtCorte.Size = new System.Drawing.Size(249, 29);
             this.txtCorte.TabIndex = 36;
             this.txtCorte.TabStop = false;
+            // 
+            // btnAgregar
+            // 
+            this.btnAgregar.AccessibleDescription = "";
+            this.btnAgregar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAgregar.ForeColor = System.Drawing.Color.Black;
+            this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
+            this.btnAgregar.Location = new System.Drawing.Point(830, 49);
+            this.btnAgregar.Name = "btnAgregar";
+            this.btnAgregar.Size = new System.Drawing.Size(74, 29);
+            this.btnAgregar.TabIndex = 4;
+            this.btnAgregar.UseVisualStyleBackColor = true;
+            this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
+            this.btnAgregar.Leave += new System.EventHandler(this.btnAgregar_Leave);
+            this.btnAgregar.Enter += new System.EventHandler(this.btnAgregar_Enter);
             // 
             // label14
             // 
@@ -312,6 +390,23 @@
             this.checkLeerPeso.Visible = false;
             this.checkLeerPeso.Enter += new System.EventHandler(this.checkLeerPeso_Enter);
             this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
+            // 
+            // btnBuscarCorte
+            // 
+            this.btnBuscarCorte.AccessibleDescription = "";
+            this.btnBuscarCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorte.Image")));
+            this.btnBuscarCorte.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnBuscarCorte.Location = new System.Drawing.Point(156, 19);
+            this.btnBuscarCorte.Name = "btnBuscarCorte";
+            this.btnBuscarCorte.Size = new System.Drawing.Size(57, 28);
+            this.btnBuscarCorte.TabIndex = 29;
+            this.btnBuscarCorte.TabStop = false;
+            this.btnBuscarCorte.Text = "(F10)";
+            this.btnBuscarCorte.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnBuscarCorte.UseVisualStyleBackColor = true;
+            this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscaCorte_Click);
             // 
             // txtTotalCorte
             // 
@@ -422,7 +517,7 @@
             this.txtFechaVenta.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.txtFechaVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaVenta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaVenta.Location = new System.Drawing.Point(788, 79);
+            this.txtFechaVenta.Location = new System.Drawing.Point(796, 75);
             this.txtFechaVenta.Name = "txtFechaVenta";
             this.txtFechaVenta.Size = new System.Drawing.Size(167, 26);
             this.txtFechaVenta.TabIndex = 20;
@@ -462,6 +557,20 @@
             this.label3.Size = new System.Drawing.Size(54, 20);
             this.label3.TabIndex = 14;
             this.label3.Text = "Fecha";
+            // 
+            // btnBuscarCliente
+            // 
+            this.btnBuscarCliente.AccessibleDescription = "";
+            this.btnBuscarCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBuscarCliente.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarCliente.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCliente.Image")));
+            this.btnBuscarCliente.Location = new System.Drawing.Point(320, 76);
+            this.btnBuscarCliente.Name = "btnBuscarCliente";
+            this.btnBuscarCliente.Size = new System.Drawing.Size(34, 29);
+            this.btnBuscarCliente.TabIndex = 12;
+            this.btnBuscarCliente.TabStop = false;
+            this.btnBuscarCliente.UseVisualStyleBackColor = true;
+            this.btnBuscarCliente.Click += new System.EventHandler(this.btnBuscarCliente_Click);
             // 
             // label1
             // 
@@ -862,6 +971,24 @@
             this.lblErrorClave.Text = "Contraseña incorrecta";
             this.lblErrorClave.Visible = false;
             // 
+            // btnIngresar
+            // 
+            this.btnIngresar.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnIngresar.BackColor = System.Drawing.Color.Azure;
+            this.btnIngresar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresar.Image = global::Presentacion.Properties.Resources._16__Lock_off_;
+            this.btnIngresar.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnIngresar.Location = new System.Drawing.Point(381, 44);
+            this.btnIngresar.Name = "btnIngresar";
+            this.btnIngresar.Size = new System.Drawing.Size(100, 26);
+            this.btnIngresar.TabIndex = 7;
+            this.btnIngresar.Text = "Desbloquear";
+            this.btnIngresar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnIngresar.UseVisualStyleBackColor = false;
+            this.btnIngresar.Click += new System.EventHandler(this.btnIngresar_Click);
+            // 
             // txtClave
             // 
             this.txtClave.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -984,103 +1111,6 @@
             this.btnBloquear.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnBloquear.UseVisualStyleBackColor = true;
             this.btnBloquear.Click += new System.EventHandler(this.btnBloquear_Click);
-            // 
-            // btnIngresar
-            // 
-            this.btnIngresar.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnIngresar.BackColor = System.Drawing.Color.Azure;
-            this.btnIngresar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnIngresar.Image = global::Presentacion.Properties.Resources._16__Lock_off_;
-            this.btnIngresar.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnIngresar.Location = new System.Drawing.Point(381, 44);
-            this.btnIngresar.Name = "btnIngresar";
-            this.btnIngresar.Size = new System.Drawing.Size(100, 26);
-            this.btnIngresar.TabIndex = 7;
-            this.btnIngresar.Text = "Desbloquear";
-            this.btnIngresar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnIngresar.UseVisualStyleBackColor = false;
-            this.btnIngresar.Click += new System.EventHandler(this.btnIngresar_Click);
-            // 
-            // btnQuitar
-            // 
-            this.btnQuitar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnQuitar.ForeColor = System.Drawing.Color.Black;
-            this.btnQuitar.Image = ((System.Drawing.Image)(resources.GetObject("btnQuitar.Image")));
-            this.btnQuitar.Location = new System.Drawing.Point(908, 49);
-            this.btnQuitar.Name = "btnQuitar";
-            this.btnQuitar.Size = new System.Drawing.Size(35, 29);
-            this.btnQuitar.TabIndex = 32;
-            this.btnQuitar.TabStop = false;
-            this.btnQuitar.UseVisualStyleBackColor = true;
-            this.btnQuitar.Click += new System.EventHandler(this.btnQuitar_Click);
-            // 
-            // btnAgregar
-            // 
-            this.btnAgregar.AccessibleDescription = "";
-            this.btnAgregar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAgregar.ForeColor = System.Drawing.Color.Black;
-            this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
-            this.btnAgregar.Location = new System.Drawing.Point(830, 49);
-            this.btnAgregar.Name = "btnAgregar";
-            this.btnAgregar.Size = new System.Drawing.Size(74, 29);
-            this.btnAgregar.TabIndex = 4;
-            this.btnAgregar.UseVisualStyleBackColor = true;
-            this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
-            this.btnAgregar.Leave += new System.EventHandler(this.btnAgregar_Leave);
-            this.btnAgregar.Enter += new System.EventHandler(this.btnAgregar_Enter);
-            // 
-            // btnBuscarCorte
-            // 
-            this.btnBuscarCorte.AccessibleDescription = "";
-            this.btnBuscarCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorte.Image")));
-            this.btnBuscarCorte.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnBuscarCorte.Location = new System.Drawing.Point(156, 19);
-            this.btnBuscarCorte.Name = "btnBuscarCorte";
-            this.btnBuscarCorte.Size = new System.Drawing.Size(57, 28);
-            this.btnBuscarCorte.TabIndex = 29;
-            this.btnBuscarCorte.TabStop = false;
-            this.btnBuscarCorte.Text = "(F10)";
-            this.btnBuscarCorte.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnBuscarCorte.UseVisualStyleBackColor = true;
-            this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscaCorte_Click);
-            // 
-            // btnBuscarCliente
-            // 
-            this.btnBuscarCliente.AccessibleDescription = "";
-            this.btnBuscarCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBuscarCliente.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarCliente.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCliente.Image")));
-            this.btnBuscarCliente.Location = new System.Drawing.Point(320, 76);
-            this.btnBuscarCliente.Name = "btnBuscarCliente";
-            this.btnBuscarCliente.Size = new System.Drawing.Size(34, 29);
-            this.btnBuscarCliente.TabIndex = 12;
-            this.btnBuscarCliente.TabStop = false;
-            this.btnBuscarCliente.UseVisualStyleBackColor = true;
-            this.btnBuscarCliente.Click += new System.EventHandler(this.btnBuscarCliente_Click);
-            // 
-            // checkCtaCte
-            // 
-            this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkCtaCte.AutoSize = true;
-            this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkCtaCte.Checked = true;
-            this.checkCtaCte.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkCtaCte.Location = new System.Drawing.Point(364, 75);
-            this.checkCtaCte.Name = "checkCtaCte";
-            this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
-            this.checkCtaCte.TabIndex = 49;
-            this.checkCtaCte.TabStop = false;
-            this.checkCtaCte.Text = "A &Cta. Cte.";
-            this.checkCtaCte.UseVisualStyleBackColor = false;
-            this.checkCtaCte.Visible = false;
-            this.checkCtaCte.CheckedChanged += new System.EventHandler(this.checkCtaCte_CheckedChanged);
             // 
             // formVentaCaja
             // 
@@ -1205,5 +1235,7 @@
         private System.Windows.Forms.TextBox txtTotalKgs;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.CheckBox checkCtaCte;
+        private System.Windows.Forms.ComboBox comboColors;
+        protected System.Windows.Forms.Label lblClienteConBonif;
     }
 }

@@ -229,5 +229,11 @@ namespace Presentacion.CuentaCorriente
         {
             lblActualizar.Visible = true;
         }
+
+        private void Imprimir_Click(object sender, EventArgs e)
+        {
+            Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+            tipoTicket.ctaCtePersona(oPersonaE, dtMov);
+        }
     }
 }

@@ -7,6 +7,12 @@ namespace Entidades
 {
     public class Venta
     {
+        //se bonifican sólo si no son precios mayoristas
+        public float bonificar(Entidades.Persona oCliente, float precio, bool esPrecioMayorista)
+        {
+            return oCliente.Bonificacion != 0 && !esPrecioMayorista ? (precio * (1 - (oCliente.Bonificacion / 100))) : precio;
+        }
+
          int idVenta;
          DateTime fechaVenta;
          DateTime creado;

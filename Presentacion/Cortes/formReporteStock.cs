@@ -297,7 +297,7 @@ namespace Presentacion.Cortes
 
                         string fechaHastaString = stockProgresivo ? txtFechaHastaProgresivo.Text : comboCierreStock.Text;
                         dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                            Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString));
+                            Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null);
                         foreach (DataRow fila in dtGrillaReporte.Rows)
                         {
                             decimal TotINGR = 0, TotEGR =0;
@@ -393,6 +393,11 @@ namespace Presentacion.Cortes
 
                             fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
 
+                            float stockKg = Utilidades.Util_Form.convertFloat(fila["Faltante"].ToString(), false);
+                            //string stockUn = Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";
+                            string stock = Convert.ToDecimal(fila["promedio"]) == 0 ? stockKg.ToString("F2") :
+                                Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";//stockUn;// stockUn.ToString("F1") + " u";
+                            fila["Stock.Un"] = stock;
                         }
                         grillaReportes.DataSource = dtGrillaReporte;
 
@@ -408,6 +413,10 @@ namespace Presentacion.Cortes
                         grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Faltante"].DefaultCellStyle.Font = fuente;
 
+                        grillaReportes.Columns["Stock.Un"].DefaultCellStyle.BackColor = Color.LightBlue;
+                        grillaReportes.Columns["Stock.Un"].DefaultCellStyle.Font = fuente;
+                        
+                        grillaReportes.Columns["promedio"].Visible = false;
                         //si es consulta Stock Actual
                         if (stockActual)
                         {
@@ -433,7 +442,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
                     if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
@@ -516,7 +525,7 @@ namespace Presentacion.Cortes
                     fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value);
                 
                 DataTable dtStockActual = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                            fechaUltimoCierreStock, DateTime.Now);
+                            fechaUltimoCierreStock, DateTime.Now, null);
 
                 foreach (DataRow fila in dtStockActual.Rows)
                 {
@@ -751,7 +760,7 @@ namespace Presentacion.Cortes
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
 
-                DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
+                DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta, null);
                 comboInicioStock.DataSource = dtInicioStock;
                 comboInicioStock.DisplayMember = "fechaCompra";
                 comboInicioStock.ValueMember = "idCompra";
@@ -772,7 +781,7 @@ namespace Presentacion.Cortes
                 {
                     if (stockActual)
                     {
-                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), DateTime.Now, DateTime.Now);
+                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), DateTime.Now, DateTime.Now, null);
                         DataRow fechaActual = dtCierreStock.NewRow();
                         fechaActual["idCompra"] = 0;
                         fechaActual["fechaCompra"] = DateTime.Now;
@@ -780,7 +789,7 @@ namespace Presentacion.Cortes
                     }
                     else
                     {
-                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
+                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta, null);
                     }
                     combosCierresCargados = true;
                     comboCierreStock.DataSource = dtCierreStock;

@@ -33,6 +33,13 @@ namespace Entidades
          int estado;
          int indexAnulado = -1;
          private bool pesoBalanza;
+         int random;
+
+         public int Random
+         {
+             get { return random; }
+             set { random = value; }
+         }
 
          public int IdLineaVenta
          {

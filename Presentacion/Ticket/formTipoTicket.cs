@@ -181,10 +181,12 @@ namespace Presentacion.Ticket
                         }
                     }
                     stockIni = Convert.ToDecimal(fila.Cells["Stock.Ini"].Value);
-                    stockReal = Convert.ToDecimal(fila.Cells["Faltante"].Value);//en grilla col. Stock es Faltante
+                    //stockReal = Convert.ToDecimal(fila.Cells["Faltante"].Value);//en grilla col. Stock es Faltante
                     descripcion = descripcion.Length > longDesc ? descripcion.Substring(0, longDesc) : agregarCamposEnblanco(descripcion, longDesc, false);
                     stockIniString = stockIni.ToString("F2").Length.Equals(longPeso) ? stockIni.ToString("F2") : agregarCamposEnblanco(stockIni.ToString("F2"), longPeso, true);
-                    stockRealString = stockReal.ToString("F2").Length.Equals(longPeso) ? stockReal.ToString("F2") : agregarCamposEnblanco(stockReal.ToString("F2"), longPeso, true);
+                    //stockRealString = stockReal.ToString("F2").Length.Equals(longPeso) ? stockReal.ToString("F2") : agregarCamposEnblanco(stockReal.ToString("F2"), longPeso, true);
+                    stockRealString = fila.Cells["Stock.Un"].Value.ToString().Length.Equals(longPeso) ? fila.Cells["Stock.Un"].Value.ToString() : agregarCamposEnblanco(fila.Cells["Stock.Un"].Value.ToString(), longPeso, true);
+                   
                     //return;
                     ticket.TextoIzquierda(descripcion + "   " + stockIniString + "   " + stockRealString);
                 }
@@ -276,5 +278,32 @@ namespace Presentacion.Ticket
             }
         }
 
+        public void ctaCtePersona(Entidades.Persona oPersona,DataTable dtMov)
+        {
+            try
+            {
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = true;
+                ticket.TextoCentro("Cuenta Corriente");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquier("123456789*123456789*123456789*12");
+                ticket.TextoIzquierda(oPersona.razonSocial);
+                ticket.LineasGuion();
+                foreach (DataRow fila in dtMov.Rows)
+                {
+
+                    ticket.TextoIzquierda(fila["fecha"].ToString());
+                    //string detalle = fila["tabla"].ToString()+" ";
+                    //detalle += fila["detalle"].ToString().Length > 9 ? fila["detalle"].ToString().Remove(8) : fila["detalle"].ToString();
+                    ticket.TextoIzquierda(fila["tabla"].ToString() + " " + fila["detalle"].ToString());
+                    ticket.TextoExtremos("   " + Convert.ToDecimal(fila["importe"]).ToString("F2"), "   " + Convert.ToDecimal(fila["saldo"]).ToString("F2"));
+                }
+                ticket.LineasEnBlanco(3);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al imprimir ticket.\n\n" + ex.Message + "\n\n" + ex.StackTrace);
+            }
+        }
     }
 }

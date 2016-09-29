@@ -11,41 +11,60 @@ using System.Configuration;
 
 namespace Presentacion.Pagos
 {
-    public partial class formPagos : Form
+    public partial class formPagos : Form, InterfaceUsuario
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Entidades.Pago oPagoE=new Entidades.Pago();
+        Entidades.Pago oPagoE = new Entidades.Pago();
+        Entidades.Persona oPersonaE;
+        Entidades.Usuario oUsuario;
 
         DataTable dtPagos = new DataTable();
 
         DataGridViewRow fila;
         string tramite;
-
         bool cargar = false;
+
         public formPagos()
         {
             InitializeComponent();
-            //cargarGrilla();
         }
 
         private void nuevo_Click(object sender, EventArgs e)
         {
-            if (Application.OpenForms["formNuevoPago"] != null)
+            if (Application.OpenForms["formAddOrEditPago"] != null)
             {
 
-                Application.OpenForms["formNuevoPago"].Activate();
-                Application.OpenForms["formNuevoPago"].WindowState = FormWindowState.Normal;
+                Application.OpenForms["formAddOrEditPago"].Activate();
+                Application.OpenForms["formAddOrEditPago"].WindowState = FormWindowState.Normal;
 
 
             }
             else
             {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.ShowDialog(this);
 
-                formAddOrEditPago frmNuevoPago = new formAddOrEditPago();
-                //frmNuevoPago.asignarForm(this);
-                frmNuevoPago.Show();
+                if (oUsuario == null) return;
 
+                if (oUsuario.Admin)
+                {
+                    Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
+                    frmAddOrEditPago.oPersonaE = oPersonaE;
+                    frmAddOrEditPago.oUsuario = oUsuario;
+                    frmAddOrEditPago.Show();
+                }
+                else
+                {
+                    MessageBox.Show("Debe agregar sus gastos desde la pantalla de Caja Venta.\n");
+                }
             }
+
+            oUsuario = null;
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
         }
 
         private void btnBuscarCorte_Click(object sender, EventArgs e)
@@ -73,8 +92,6 @@ namespace Presentacion.Pagos
                 dtPagos = oCtaCteN.obtenerPagos(descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
                 grillaPagos.DataSource = null;
                 grillaPagos.DataSource = dtPagos;
-                //cargarTotales();
-                //formatearGrilla();
             }
         }
 
@@ -82,35 +99,12 @@ namespace Presentacion.Pagos
         {
             try
             {
-                cargarFilaSeleccionada();
-                if (tramite == "Pago")
-                {
-                    oPagoE.Id = Convert.ToInt32(fila.Cells["Id"].Value.ToString());
-                    oPagoE = oCtaCteN.getPagoById(oPagoE.Id);
-
-                    if (Application.OpenForms["formNuevoPago"] != null)
-                    {
-                        Application.OpenForms["formNuevoPago"].Activate();
-                        Application.OpenForms["formNuevoPago"].WindowState = FormWindowState.Normal;
-                    }
-                    else
-                    {
-                        //formAddOrEditPago frmNuevoPago = new formAddOrEditPago();
-                        //frmNuevoPago.obtenerParametros(oPagoE, this);
-                        //frmNuevoPago.Show();
-
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Sólo se pueden seleccionar Pagos para realizar la modificación.");
-                }
+                
             }
             catch (Exception)
             {
                 throw;
-            }
-           
+            }           
         }
 
         private void eliminarPago()
@@ -125,15 +119,13 @@ namespace Presentacion.Pagos
                     oPagoE = oCtaCteN.getPagoById(oPagoE.Id);
 
                     oCtaCteN.eliminarPago(oPagoE);
-
                     cargarGrilla();
                 }
             }
             else
             {
                 MessageBox.Show("Sólo se pueden eliminar Pagos. Asegúrese de seleccionar un Pago.");
-            }
-            
+            }            
         }
 
         private void cargarFilaSeleccionada()
@@ -141,108 +133,19 @@ namespace Presentacion.Pagos
             if (grillaPagos.CurrentRow != null && grillaPagos.Rows.Count >0)
             {
                 fila = grillaPagos.CurrentRow;
-                tramite = fila.Cells["Tramite"].Value.ToString();
             }
             else
             {
                 MessageBox.Show("Asegurese de seleccionar una fila de la grilla.");
-            }
-            
-        }
-
-        private void imprimirReporte()
-        {
-            ReportesDataSet.dtPagosCompraDataTable dtPagosCompra = new ReportesDataSet.dtPagosCompraDataTable();
-
-            string titulo = "Reporte de Pagos";
-            foreach (DataRow fila in dtPagos.Rows)
-            {
-                DataRow dsFila = dtPagosCompra.NewRow();
-
-                dsFila["NroIdentificacion"] = fila["Nro Identificacion"];
-                dsFila["Fecha"] = fila["Fecha"];
-                dsFila["RazonSocial"] = fila["Razon Social"];
-                dsFila["Tramite"] = fila["Tramite"];
-                dsFila["Kgs"] = fila["Kgs"];
-                dsFila["PrecioKg"] = fila["Precio/Kg"];
-
-                if (dsFila["Tramite"].ToString()=="Compra")
-                {
-                    decimal importe = Convert.ToDecimal(fila["Importe"].ToString());
-                    dsFila["Importe"] = -1*importe;
-                }
-                else
-                {
-                    dsFila["Importe"] = fila["Importe"];
-                }
-
-                dsFila["Saldo"] = fila["Saldo"];
-
-                dtPagosCompra.Rows.Add(dsFila);
-            }
-
-            Reportes.ReportePagos reporte = new Reportes.ReportePagos();
-            FormReportes frmReportes = new FormReportes(reporte, titulo, dtPagosCompra, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
-
-            frmReportes.Show();
-        
+            }            
         }
 
         private void formatearGrilla()
         {
             if (dtPagos.Rows.Count > 0)
             {
-                grillaPagos.Columns["Id"].Visible = false;
-
-                //fecha
-                System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-                dataGridViewCellStyle1.Format = "d";
-                dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-                dataGridViewCellStyle1.NullValue = null;
-                grillaPagos.Columns["Fecha"].DefaultCellStyle = dataGridViewCellStyle1;
-
-                //Nro Id
-                System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-               
-                dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-                dataGridViewCellStyle2.NullValue = null;
-                grillaPagos.Columns["Nro Identificacion"].DefaultCellStyle = dataGridViewCellStyle2;
-
-                //Precio/Kg
-                System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-                dataGridViewCellStyle4.Format = "N2";
-                dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-                dataGridViewCellStyle4.NullValue = null;
-                grillaPagos.Columns["Precio/Kg"].DefaultCellStyle = dataGridViewCellStyle4;
-
-                //Importe
-                System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3= new System.Windows.Forms.DataGridViewCellStyle();
-                dataGridViewCellStyle3.Format = "N2";
-                dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-                dataGridViewCellStyle3.NullValue = null;
-                grillaPagos.Columns["Importe"].DefaultCellStyle = dataGridViewCellStyle3;
-
-                foreach (DataGridViewRow  filaPago in grillaPagos.Rows)
-                {
-
-                    if (filaPago.Cells["Tramite"].Value.ToString() == "Pago")
-                    {
-                        grillaPagos.Rows[filaPago.Index].DefaultCellStyle.BackColor = Color.FromArgb(209, 227, 254);
-                    
-                    }
-                    if (filaPago.Cells["Tramite"].Value.ToString() == "Saldo")
-                    {
-                        grillaPagos.Rows[filaPago.Index].DefaultCellStyle.BackColor = Color.Wheat;
-
-                    }
-                }
-
-                //Saldo               
-                grillaPagos.Columns["Saldo"].DefaultCellStyle = dataGridViewCellStyle3;
+                
             }
-
-
-            
 
         }
         #endregion
@@ -277,10 +180,6 @@ namespace Presentacion.Pagos
             eliminarPago();
         }
 
-        private void Imprimir_Click(object sender, EventArgs e)
-        {
-            imprimirReporte();
-        }
 
         private void formPagos_Load(object sender, EventArgs e)
         {
@@ -302,6 +201,41 @@ namespace Presentacion.Pagos
             {
                 cargarGrilla();
             }
+        }
+
+        private void btnSeleccionar_Click_1(object sender, EventArgs e)
+        {
+            int idPago = Convert.ToInt32(grillaPagos.CurrentRow.Cells["id"].Value.ToString());
+
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formAddOrEditPago))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (ctrl.Name.Equals("idPagoLabel") && ctrl.Text.Equals(idPago.ToString()))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!formAbierto)
+            {
+                formAddOrEditPago frmAddOrEditPago = new formAddOrEditPago();
+                frmAddOrEditPago.idPago = idPago;
+                frmAddOrEditPago.frmPagos = this;
+                frmAddOrEditPago.Show();
+            }
+        }
+
+        private void menuDuplicar_Click(object sender, EventArgs e)
+        {
+            formPagos frmPago = new formPagos();
+            frmPago.Show();
         }
     }
 }

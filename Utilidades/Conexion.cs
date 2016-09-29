@@ -31,6 +31,13 @@ namespace Utilidades
             return conn;
         }
 
+        public SqlConnection conectar(string conexionSucursal)
+        {
+            conString = ConfigurationManager.ConnectionStrings[conexionSucursal].ToString();
+            conn = new SqlConnection(conString);
+            return conn;
+        }
+
         public void cerraConexion()
         {
             conn.Close();
@@ -129,6 +136,31 @@ namespace Utilidades
                     idSucursal = 1;
                     break;
                 case Conexion.tipoConexion.sanLorenzoRemoto:
+                    idSucursal = 1;
+                    break;
+            }
+            return idSucursal;
+        }
+
+        //Se obtiene el id de Sucursal par a la conexión actual
+        public static int getIdSucursalConexion(string conexionSucursal)
+        {
+            int idSucursal = 0;
+            switch (conexionSucursal)
+            {
+                case "local":
+                    idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+                    break;
+                case "sanMartin":
+                    idSucursal = 2;
+                    break;
+                case "sanMartinRemoto":
+                    idSucursal = 2;
+                    break;
+                case "sanLorenzo":
+                    idSucursal = 1;
+                    break;
+                case "sanLorenzoRemoto":
                     idSucursal = 1;
                     break;
             }

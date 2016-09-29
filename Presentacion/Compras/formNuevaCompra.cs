@@ -938,6 +938,8 @@ namespace Presentacion
             txtUsuario.Text = oUsuario.Nombre;
             cargarSucursal();
 
+            checkCtaCte.Checked = false;
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
             radioCorte.Checked = esEgresoCaja;
             radioMediaRes.Enabled = !esEgresoCaja;
             if (idCompra > 0)

@@ -21,6 +21,13 @@ namespace Entidades
         public float desvioEstandar;
         DateTime creado;
         DateTime? actualizado;
+        private float promedio;
+
+        public float Promedio
+        {
+            get { return promedio; }
+            set { promedio = value; }
+        }
 
         public DateTime Creado
         {

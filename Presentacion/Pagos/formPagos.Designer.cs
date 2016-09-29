@@ -48,7 +48,8 @@
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
-            this.Imprimir = new System.Windows.Forms.ToolStripButton();
+            this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPagos)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -242,7 +243,7 @@
             this.nuevo,
             this.modificar,
             this.eliminar,
-            this.Imprimir});
+            this.menuDuplicar});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -286,17 +287,29 @@
             this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
             // 
-            // Imprimir
+            // btnSeleccionar
             // 
-            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
-            this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.Imprimir.Name = "Imprimir";
-            this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.Imprimir.Size = new System.Drawing.Size(59, 42);
-            this.Imprimir.Text = "Imprimir";
-            this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
+            this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(629, 440);
+            this.btnSeleccionar.Name = "btnSeleccionar";
+            this.btnSeleccionar.Size = new System.Drawing.Size(139, 27);
+            this.btnSeleccionar.TabIndex = 22;
+            this.btnSeleccionar.Text = "&Seleccionar";
+            this.btnSeleccionar.UseVisualStyleBackColor = true;
+            this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click_1);
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
+            this.menuDuplicar.Text = "&Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // formPagos
             // 
@@ -304,6 +317,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
             this.ClientSize = new System.Drawing.Size(925, 471);
+            this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.grillaPagos);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
@@ -340,7 +354,8 @@
         protected System.Windows.Forms.ToolStripButton nuevo;
         protected System.Windows.Forms.ToolStripButton modificar;
         protected System.Windows.Forms.ToolStripButton eliminar;
-        protected System.Windows.Forms.ToolStripButton Imprimir;
         private System.Windows.Forms.GroupBox groupBox2;
+        protected System.Windows.Forms.Button btnSeleccionar;
+        protected System.Windows.Forms.ToolStripButton menuDuplicar;
     }
 }

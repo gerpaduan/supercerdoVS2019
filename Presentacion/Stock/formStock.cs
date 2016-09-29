@@ -45,7 +45,7 @@ namespace Presentacion
                 grillaCompras.AutoGenerateColumns = false;
 
                 dtCompras = null;
-                dtCompras = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtCompras = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaCompras.DataSource = dtCompras;
                 formatearGrilla();
                 cargarTotales();
