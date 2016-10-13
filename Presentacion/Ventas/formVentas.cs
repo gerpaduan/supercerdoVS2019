@@ -202,7 +202,10 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show(Utilidades.Util_Form.errorConexionBD(ex.Message));
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message)) 
+                    formVentas_Load(null, null);
+
+                this.Close();
             }
         }
 

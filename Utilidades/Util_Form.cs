@@ -238,6 +238,17 @@ namespace Utilidades
             return mensaje;
         }
 
+        public static bool errorConexionBD_Return(string exception)
+        {
+            string lineaDivisoria = "\n------------------\n";
+            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n" +
+                "--Si no se conecta posiblemente no haya INTERNET.--\n";
+            mensaje = exception.Contains("Error relacionado con la red") ||
+                exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
+
+            DialogResult resp = MessageBox.Show(mensaje, "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            return resp.Equals(DialogResult.Yes) ? true : false;
+        }
 
         public static string leerPesoBalanza()
         {

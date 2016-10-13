@@ -33,15 +33,25 @@ namespace Presentacion
         public formMovimientos()
         {
             InitializeComponent();
-            cargarSucursales();
-            txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
-            cargar = true;
-            cargarGrilla();
         }
         
         private void formMovimientos_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursales();
+                txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formMovimientos_Load(null, null);
+
+                this.Close();
+            }
         }
 
         private void cargarSucursales()

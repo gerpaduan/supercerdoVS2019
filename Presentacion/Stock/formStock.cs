@@ -26,13 +26,23 @@ namespace Presentacion
 
         private void formStock_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            cargarSucursal();
-            this.comboTipoCompra.SelectedIndex = 0;
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursal();
+                this.comboTipoCompra.SelectedIndex = 0;
 
-            fechaDesde.Value = DateTime.Now.AddMonths(-2);
-            cargar = true;
-            cargarGrilla();
+                fechaDesde.Value = DateTime.Now.AddMonths(-2);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formStock_Load(null, null);
+
+                this.Close();
+            }
         }       
 
         #region metodos

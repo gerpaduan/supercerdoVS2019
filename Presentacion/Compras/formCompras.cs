@@ -26,12 +26,22 @@ namespace Presentacion
         
         private void formCompras_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            cargarSucursal();
-            this.comboTipoCompra.SelectedIndex = 0;
-            fechaDesde.Value = DateTime.Today.AddMonths(-2);
-            cargar = true;
-            cargarGrilla();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursal();
+                this.comboTipoCompra.SelectedIndex = 0;
+                fechaDesde.Value = DateTime.Today.AddMonths(-2);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formCompras_Load(null, null);
+
+                this.Close();
+            }
         }
       
         #region metodos

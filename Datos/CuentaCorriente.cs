@@ -237,7 +237,7 @@ namespace Datos
                         oPagoE.NroCheque = Convert.ToString(drPago["nroCheque"]);
                         oPagoE.TitularCheque = Convert.ToString(drPago["titularCheque"]);
                         oPagoE.Importe = float.Parse(drPago["importe"].ToString());
-                        oPagoE.Observaciones = Convert.ToString(drPago["nroCheque"]);
+                        oPagoE.Observaciones = Convert.ToString(drPago["observaciones"]);
 
                         Datos.Sucursal oSucursalD = new Sucursal();
                         oPagoE.Sucursal = oSucursalD.findById(Convert.ToInt32(drPago["idSucursal"]));

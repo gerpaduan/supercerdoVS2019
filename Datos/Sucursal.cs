@@ -24,7 +24,7 @@ namespace Datos
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener sucursales.", ex);
+                throw new Exception(ex.Message);
             }
 
         }
