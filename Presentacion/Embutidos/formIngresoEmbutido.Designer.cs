@@ -29,9 +29,10 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formIngresoEmbutido));
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
@@ -42,6 +43,19 @@
             this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.panelFormula = new System.Windows.Forms.Panel();
+            this.txtProducto = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.txtPimenton = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.txtBracolor = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.txtNuez = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.txtPimienta = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.txtSal = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.btnNuevo = new System.Windows.Forms.Button();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -73,22 +87,11 @@
             this.label11 = new System.Windows.Forms.Label();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.panelFormula = new System.Windows.Forms.Panel();
-            this.txtSal = new System.Windows.Forms.TextBox();
-            this.label10 = new System.Windows.Forms.Label();
-            this.txtPimienta = new System.Windows.Forms.TextBox();
-            this.label12 = new System.Windows.Forms.Label();
-            this.txtNuez = new System.Windows.Forms.TextBox();
-            this.label13 = new System.Windows.Forms.Label();
-            this.txtBracolor = new System.Windows.Forms.TextBox();
-            this.label14 = new System.Windows.Forms.Label();
-            this.txtPimenton = new System.Windows.Forms.TextBox();
-            this.label15 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
+            this.panelFormula.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            this.panelFormula.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnGuardar
@@ -127,14 +130,14 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCortesPorEmbutido.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaCortesPorEmbutido.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortesPorEmbutido.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idCorte,
@@ -142,14 +145,14 @@
             this.corte,
             this.kgUtilizados,
             this.Balanza});
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle4;
             this.grillaCortesPorEmbutido.Location = new System.Drawing.Point(12, 244);
             this.grillaCortesPorEmbutido.MultiSelect = false;
             this.grillaCortesPorEmbutido.Name = "grillaCortesPorEmbutido";
@@ -174,8 +177,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
             this.codigo.FillWeight = 80F;
             this.codigo.HeaderText = "Codigo";
             this.codigo.Name = "codigo";
@@ -192,6 +195,8 @@
             // kgUtilizados
             // 
             this.kgUtilizados.DataPropertyName = "kgUtilizado";
+            dataGridViewCellStyle3.Format = "N3";
+            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle3;
             this.kgUtilizados.HeaderText = "Kgs. Utilizados";
             this.kgUtilizados.Name = "kgUtilizados";
             this.kgUtilizados.ReadOnly = true;
@@ -226,10 +231,168 @@
             this.pnlBuscar.Size = new System.Drawing.Size(661, 234);
             this.pnlBuscar.TabIndex = 14;
             // 
+            // panelFormula
+            // 
+            this.panelFormula.Controls.Add(this.txtProducto);
+            this.panelFormula.Controls.Add(this.label16);
+            this.panelFormula.Controls.Add(this.txtPimenton);
+            this.panelFormula.Controls.Add(this.label15);
+            this.panelFormula.Controls.Add(this.txtBracolor);
+            this.panelFormula.Controls.Add(this.label14);
+            this.panelFormula.Controls.Add(this.txtNuez);
+            this.panelFormula.Controls.Add(this.label13);
+            this.panelFormula.Controls.Add(this.txtPimienta);
+            this.panelFormula.Controls.Add(this.label12);
+            this.panelFormula.Controls.Add(this.txtSal);
+            this.panelFormula.Controls.Add(this.label10);
+            this.panelFormula.Location = new System.Drawing.Point(495, 87);
+            this.panelFormula.Name = "panelFormula";
+            this.panelFormula.Size = new System.Drawing.Size(154, 136);
+            this.panelFormula.TabIndex = 30;
+            this.panelFormula.Visible = false;
+            // 
+            // txtProducto
+            // 
+            this.txtProducto.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtProducto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtProducto.Location = new System.Drawing.Point(79, 109);
+            this.txtProducto.Name = "txtProducto";
+            this.txtProducto.ReadOnly = true;
+            this.txtProducto.Size = new System.Drawing.Size(71, 22);
+            this.txtProducto.TabIndex = 34;
+            this.txtProducto.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label16
+            // 
+            this.label16.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label16.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label16.Location = new System.Drawing.Point(17, 112);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(56, 15);
+            this.label16.TabIndex = 35;
+            this.label16.Text = "Producto";
+            // 
+            // txtPimenton
+            // 
+            this.txtPimenton.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtPimenton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtPimenton.Location = new System.Drawing.Point(79, 88);
+            this.txtPimenton.Name = "txtPimenton";
+            this.txtPimenton.ReadOnly = true;
+            this.txtPimenton.Size = new System.Drawing.Size(71, 22);
+            this.txtPimenton.TabIndex = 32;
+            this.txtPimenton.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label15
+            // 
+            this.label15.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label15.Location = new System.Drawing.Point(13, 91);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(60, 15);
+            this.label15.TabIndex = 33;
+            this.label15.Text = "Pimentón";
+            // 
+            // txtBracolor
+            // 
+            this.txtBracolor.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtBracolor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtBracolor.Location = new System.Drawing.Point(79, 67);
+            this.txtBracolor.Name = "txtBracolor";
+            this.txtBracolor.ReadOnly = true;
+            this.txtBracolor.Size = new System.Drawing.Size(71, 22);
+            this.txtBracolor.TabIndex = 30;
+            this.txtBracolor.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label14
+            // 
+            this.label14.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label14.Location = new System.Drawing.Point(20, 70);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(53, 15);
+            this.label14.TabIndex = 31;
+            this.label14.Text = "Bracolor";
+            // 
+            // txtNuez
+            // 
+            this.txtNuez.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtNuez.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtNuez.Location = new System.Drawing.Point(79, 46);
+            this.txtNuez.Name = "txtNuez";
+            this.txtNuez.ReadOnly = true;
+            this.txtNuez.Size = new System.Drawing.Size(71, 22);
+            this.txtNuez.TabIndex = 28;
+            this.txtNuez.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label13
+            // 
+            this.label13.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label13.Location = new System.Drawing.Point(37, 49);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(36, 15);
+            this.label13.TabIndex = 29;
+            this.label13.Text = "Nuez";
+            // 
+            // txtPimienta
+            // 
+            this.txtPimienta.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtPimienta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtPimienta.Location = new System.Drawing.Point(79, 25);
+            this.txtPimienta.Name = "txtPimienta";
+            this.txtPimienta.ReadOnly = true;
+            this.txtPimienta.Size = new System.Drawing.Size(71, 22);
+            this.txtPimienta.TabIndex = 26;
+            this.txtPimienta.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label12
+            // 
+            this.label12.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label12.Location = new System.Drawing.Point(17, 28);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(56, 15);
+            this.label12.TabIndex = 27;
+            this.label12.Text = "Pimienta";
+            // 
+            // txtSal
+            // 
+            this.txtSal.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txtSal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSal.Location = new System.Drawing.Point(79, 4);
+            this.txtSal.Name = "txtSal";
+            this.txtSal.ReadOnly = true;
+            this.txtSal.Size = new System.Drawing.Size(71, 22);
+            this.txtSal.TabIndex = 24;
+            this.txtSal.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label10
+            // 
+            this.label10.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(48, 7);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(25, 15);
+            this.label10.TabIndex = 25;
+            this.label10.Text = "Sal";
+            // 
             // btnNuevo
             // 
             this.btnNuevo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnNuevo.Location = new System.Drawing.Point(529, 199);
+            this.btnNuevo.Location = new System.Drawing.Point(328, 98);
             this.btnNuevo.Name = "btnNuevo";
             this.btnNuevo.Size = new System.Drawing.Size(120, 32);
             this.btnNuevo.TabIndex = 29;
@@ -620,139 +783,6 @@
             this.timer1.Interval = 50;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // panelFormula
-            // 
-            this.panelFormula.Controls.Add(this.txtPimenton);
-            this.panelFormula.Controls.Add(this.label15);
-            this.panelFormula.Controls.Add(this.txtBracolor);
-            this.panelFormula.Controls.Add(this.label14);
-            this.panelFormula.Controls.Add(this.txtNuez);
-            this.panelFormula.Controls.Add(this.label13);
-            this.panelFormula.Controls.Add(this.txtPimienta);
-            this.panelFormula.Controls.Add(this.label12);
-            this.panelFormula.Controls.Add(this.txtSal);
-            this.panelFormula.Controls.Add(this.label10);
-            this.panelFormula.Location = new System.Drawing.Point(495, 87);
-            this.panelFormula.Name = "panelFormula";
-            this.panelFormula.Size = new System.Drawing.Size(154, 112);
-            this.panelFormula.TabIndex = 30;
-            this.panelFormula.Visible = false;
-            // 
-            // txtSal
-            // 
-            this.txtSal.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtSal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSal.Location = new System.Drawing.Point(79, -1);
-            this.txtSal.Name = "txtSal";
-            this.txtSal.ReadOnly = true;
-            this.txtSal.Size = new System.Drawing.Size(71, 22);
-            this.txtSal.TabIndex = 24;
-            this.txtSal.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label10
-            // 
-            this.label10.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(48, 2);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(25, 15);
-            this.label10.TabIndex = 25;
-            this.label10.Text = "Sal";
-            // 
-            // txtPimienta
-            // 
-            this.txtPimienta.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtPimienta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPimienta.Location = new System.Drawing.Point(79, 20);
-            this.txtPimienta.Name = "txtPimienta";
-            this.txtPimienta.ReadOnly = true;
-            this.txtPimienta.Size = new System.Drawing.Size(71, 22);
-            this.txtPimienta.TabIndex = 26;
-            this.txtPimienta.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label12
-            // 
-            this.label12.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label12.AutoSize = true;
-            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label12.Location = new System.Drawing.Point(17, 23);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(56, 15);
-            this.label12.TabIndex = 27;
-            this.label12.Text = "Pimienta";
-            // 
-            // txtNuez
-            // 
-            this.txtNuez.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtNuez.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtNuez.Location = new System.Drawing.Point(79, 41);
-            this.txtNuez.Name = "txtNuez";
-            this.txtNuez.ReadOnly = true;
-            this.txtNuez.Size = new System.Drawing.Size(71, 22);
-            this.txtNuez.TabIndex = 28;
-            this.txtNuez.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label13
-            // 
-            this.label13.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label13.AutoSize = true;
-            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label13.Location = new System.Drawing.Point(37, 44);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(36, 15);
-            this.label13.TabIndex = 29;
-            this.label13.Text = "Nuez";
-            // 
-            // txtBracolor
-            // 
-            this.txtBracolor.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtBracolor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBracolor.Location = new System.Drawing.Point(79, 62);
-            this.txtBracolor.Name = "txtBracolor";
-            this.txtBracolor.ReadOnly = true;
-            this.txtBracolor.Size = new System.Drawing.Size(71, 22);
-            this.txtBracolor.TabIndex = 30;
-            this.txtBracolor.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label14
-            // 
-            this.label14.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label14.AutoSize = true;
-            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label14.Location = new System.Drawing.Point(20, 65);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(53, 15);
-            this.label14.TabIndex = 31;
-            this.label14.Text = "Bracolor";
-            // 
-            // txtPimenton
-            // 
-            this.txtPimenton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txtPimenton.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPimenton.Location = new System.Drawing.Point(79, 83);
-            this.txtPimenton.Name = "txtPimenton";
-            this.txtPimenton.ReadOnly = true;
-            this.txtPimenton.Size = new System.Drawing.Size(71, 22);
-            this.txtPimenton.TabIndex = 32;
-            this.txtPimenton.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label15
-            // 
-            this.label15.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(13, 86);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(60, 15);
-            this.label15.TabIndex = 33;
-            this.label15.Text = "Pimentón";
-            // 
             // formIngresoEmbutido
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -775,12 +805,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
+            this.panelFormula.ResumeLayout(false);
+            this.panelFormula.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            this.panelFormula.ResumeLayout(false);
-            this.panelFormula.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -818,11 +848,6 @@
         private System.Windows.Forms.TextBox txtObservaciones;
         private System.Windows.Forms.CheckBox checkLeerPeso;
         private System.Windows.Forms.Timer timer1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
-        private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
-        private System.Windows.Forms.DataGridViewTextBoxColumn corte;
-        private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         private System.Windows.Forms.GroupBox groupBox3;
         protected System.Windows.Forms.TextBox txtSucursal;
         protected System.Windows.Forms.TextBox txtUsuario;
@@ -839,5 +864,12 @@
         protected System.Windows.Forms.Label label10;
         protected System.Windows.Forms.TextBox txtPimenton;
         protected System.Windows.Forms.Label label15;
+        protected System.Windows.Forms.TextBox txtProducto;
+        protected System.Windows.Forms.Label label16;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
+        private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn corte;
+        private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
     }
 }

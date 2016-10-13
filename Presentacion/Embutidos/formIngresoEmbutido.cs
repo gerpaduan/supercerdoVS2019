@@ -78,6 +78,7 @@ namespace Presentacion
                 cargarEmbutido();
                 oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
 
+                //Se carga el rebozado - 17 es el equivalente al codigo de la milanesa
                 if (oEmbutidoE.corte.codigo.Equals(17))
                 {
                     cargarRebozado();
@@ -305,20 +306,53 @@ namespace Presentacion
             oCorteEmbutidoE = corte;
             txtCodigoEmbutido.Text = Convert.ToString(oCorteEmbutidoE.codigo);
             txtEmbutido.Text = oCorteEmbutidoE.corte;
+            calcularFormula();
             txtCodCorteEnEmbutido.Focus();
         }
 
         private void calcularFormula()
         {
+            if (!oCorteEmbutidoE.tipo.Equals(Entidades.Corte.tipoCorte.Embutido.ToString()))
+            {
+                panelFormula.Visible = false;
+                return;
+            }
+
+            panelFormula.Visible = true;
+            string sal, pimienta, nuez, bracolor, pimenton, producto;
+            sal = pimienta = nuez = bracolor = pimenton = producto = "-";
+            int cantDecimales = 3;
+
             switch (oCorteEmbutidoE.codigo)
             {
                 case 4:
+                    sal = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
+                    bracolor = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    break;
+                case 11:
+                    sal = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.025", false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
+                    producto = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0018", false))), cantDecimales)).ToString("F3"));
                     break;
                 case 33:
+                    sal = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
+                    pimenton = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.001", false))), cantDecimales)).ToString("F3"));
+                    bracolor = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
                     break;
                 default:
                     break;
             }
+
+            txtSal.Text = sal;
+            txtPimienta.Text = pimienta;
+            txtNuez.Text = nuez;
+            txtBracolor.Text = bracolor;
+            txtPimenton.Text = pimenton;
+            txtProducto.Text = producto;
         }
 
         private void btnBuscarCorte_Click(object sender, EventArgs e)
@@ -339,6 +373,7 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
+            calcularFormula();
             capturarPantalla();
         }        
 
@@ -355,6 +390,7 @@ namespace Presentacion
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCortePorEmbutido();
+            calcularFormula();
             capturarPantalla();
         }
 
