@@ -55,6 +55,23 @@ namespace Datos
             }
         }
 
+        public void editPrecioCorte(Entidades.Corte oCorteE)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            cmCorte.CommandType = CommandType.Text;            
+            cmCorte.CommandText = "UPDATE Corte SET precioKg = @precioKg WHERE idCorte = "+oCorteE.idCorte;
+            cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
+
+            cmCorte.ExecuteNonQuery();
+            cmCorte.Connection.Close();
+
+            cmCorte = null;
+        }
+
         public void addOrEditCorte(Entidades.Corte oCorteE)
         {
             cmCorte = new SqlCommand();

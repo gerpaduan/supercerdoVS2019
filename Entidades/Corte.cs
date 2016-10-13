@@ -7,6 +7,14 @@ namespace Entidades
 {
     public class Corte
     {
+        public enum tipoCorte
+        {
+            Embutido,
+            Corte,
+            Unidad,
+            Otro
+        }
+
         public int idCorte;
         public string corte;
         public int codigo;

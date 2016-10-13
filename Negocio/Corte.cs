@@ -15,6 +15,11 @@ namespace Negocio
             return oCorteD.getCorteById(id, cargarMaestro);
         }
 
+        public void editPrecioCorte(Entidades.Corte oCorteE)
+        {
+            oCorteD.editPrecioCorte(oCorteE);
+        }
+
         public void addOrEditCorte(Entidades.Corte oCorteE)
         {
             oCorteD.addOrEditCorte(oCorteE);
