@@ -314,11 +314,13 @@ namespace Presentacion
         {
             if (!oCorteEmbutidoE.tipo.Equals(Entidades.Corte.tipoCorte.Embutido.ToString()))
             {
-                panelFormula.Visible = false;
+                //panelFormula.Visible = false;
+                btnCalcularForm.Visible = false;
                 return;
             }
 
-            panelFormula.Visible = true;
+            //panelFormula.Visible = true;
+            btnCalcularForm.Visible = true;
             string sal, pimienta, nuez, bracolor, pimenton, producto;
             sal = pimienta = nuez = bracolor = pimenton = producto = "-";
             int cantDecimales = 3;
@@ -373,7 +375,7 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
-            calcularFormula();
+            //calcularFormula();
             capturarPantalla();
         }        
 
@@ -390,7 +392,7 @@ namespace Presentacion
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCortePorEmbutido();
-            calcularFormula();
+            //calcularFormula();
             capturarPantalla();
         }
 
@@ -695,6 +697,20 @@ namespace Presentacion
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuarioNuevoEmbutido = usuario;
+        }
+
+        private void btnCalcularForm_Click(object sender, EventArgs e)
+        {
+            if (!panelFormula.Visible && MessageBox.Show("Si ya finalizó con la carga y desea obtener la fórmula presione 'Sí'", "Calcular fórmula",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2).Equals(DialogResult.No))
+                return;
+            
+            if (panelFormula.Visible && MessageBox.Show("¿Está seguro que desea actualizar la fórmula de los condimientos?", "Actualizar fórmula",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2).Equals(DialogResult.No))
+                return;
+
+            panelFormula.Visible = true;
+            calcularFormula();
         }
     }
 }
