@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formIngresoEmbutido));
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
@@ -43,6 +43,7 @@
             this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblErrorBalanza = new System.Windows.Forms.Label();
             this.btnCalcularForm = new System.Windows.Forms.Button();
             this.panelFormula = new System.Windows.Forms.Panel();
             this.txtProducto = new System.Windows.Forms.TextBox();
@@ -131,14 +132,14 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCortesPorEmbutido.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle13.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle13.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle13.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle13.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle13.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle13;
             this.grillaCortesPorEmbutido.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortesPorEmbutido.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idCorte,
@@ -146,14 +147,14 @@
             this.corte,
             this.kgUtilizados,
             this.Balanza});
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle16.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle16.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle16.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle16.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle16.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle16.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle16;
             this.grillaCortesPorEmbutido.Location = new System.Drawing.Point(12, 274);
             this.grillaCortesPorEmbutido.MultiSelect = false;
             this.grillaCortesPorEmbutido.Name = "grillaCortesPorEmbutido";
@@ -178,8 +179,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle14;
             this.codigo.FillWeight = 80F;
             this.codigo.HeaderText = "Codigo";
             this.codigo.Name = "codigo";
@@ -196,8 +197,8 @@
             // kgUtilizados
             // 
             this.kgUtilizados.DataPropertyName = "kgUtilizado";
-            dataGridViewCellStyle3.Format = "N3";
-            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle15.Format = "N3";
+            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle15;
             this.kgUtilizados.HeaderText = "Kgs. Utilizados";
             this.kgUtilizados.Name = "kgUtilizados";
             this.kgUtilizados.ReadOnly = true;
@@ -215,6 +216,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.lblErrorBalanza);
             this.pnlBuscar.Controls.Add(this.btnCalcularForm);
             this.pnlBuscar.Controls.Add(this.panelFormula);
             this.pnlBuscar.Controls.Add(this.btnNuevo);
@@ -233,15 +235,30 @@
             this.pnlBuscar.Size = new System.Drawing.Size(661, 268);
             this.pnlBuscar.TabIndex = 14;
             // 
+            // lblErrorBalanza
+            // 
+            this.lblErrorBalanza.AutoSize = true;
+            this.lblErrorBalanza.BackColor = System.Drawing.Color.SandyBrown;
+            this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
+            this.lblErrorBalanza.Location = new System.Drawing.Point(328, 98);
+            this.lblErrorBalanza.Name = "lblErrorBalanza";
+            this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
+            this.lblErrorBalanza.TabIndex = 49;
+            this.lblErrorBalanza.Text = "Error Balanza";
+            this.lblErrorBalanza.Visible = false;
+            // 
             // btnCalcularForm
             // 
+            this.btnCalcularForm.BackColor = System.Drawing.Color.CadetBlue;
             this.btnCalcularForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCalcularForm.Location = new System.Drawing.Point(495, 84);
+            this.btnCalcularForm.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.btnCalcularForm.Location = new System.Drawing.Point(495, 82);
             this.btnCalcularForm.Name = "btnCalcularForm";
-            this.btnCalcularForm.Size = new System.Drawing.Size(154, 26);
+            this.btnCalcularForm.Size = new System.Drawing.Size(154, 28);
             this.btnCalcularForm.TabIndex = 31;
             this.btnCalcularForm.Text = "&Calcular Fórmula";
-            this.btnCalcularForm.UseVisualStyleBackColor = true;
+            this.btnCalcularForm.UseVisualStyleBackColor = false;
             this.btnCalcularForm.Visible = false;
             this.btnCalcularForm.Click += new System.EventHandler(this.btnCalcularForm_Click);
             // 
@@ -508,17 +525,20 @@
             // 
             // checkLeerPeso
             // 
+            this.checkLeerPeso.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkLeerPeso.AutoSize = true;
+            this.checkLeerPeso.BackColor = System.Drawing.Color.LimeGreen;
             this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkLeerPeso.Location = new System.Drawing.Point(316, 26);
+            this.checkLeerPeso.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkLeerPeso.Location = new System.Drawing.Point(316, 20);
             this.checkLeerPeso.Name = "checkLeerPeso";
-            this.checkLeerPeso.Size = new System.Drawing.Size(71, 19);
+            this.checkLeerPeso.Size = new System.Drawing.Size(67, 26);
             this.checkLeerPeso.TabIndex = 23;
             this.checkLeerPeso.TabStop = false;
             this.checkLeerPeso.Text = "&Balanza";
-            this.checkLeerPeso.UseVisualStyleBackColor = true;
+            this.checkLeerPeso.UseVisualStyleBackColor = false;
             this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
             // 
             // btnQuitar
@@ -886,5 +906,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         private System.Windows.Forms.Button btnCalcularForm;
+        protected System.Windows.Forms.Label lblErrorBalanza;
     }
 }

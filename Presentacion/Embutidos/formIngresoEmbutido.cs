@@ -501,6 +501,8 @@ namespace Presentacion
         {
             try
             {
+                checkLeerPeso.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkLeerPeso.Checked);
+
                 if (checkLeerPeso.Checked)
                 {
                     dejarDeLeerPeso = false;
@@ -515,6 +517,7 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     txtCantKgs.Focus();
+                    lblErrorBalanza.Visible = false;
                     timer1.Enabled = false;
                 }
             }
@@ -544,22 +547,26 @@ namespace Presentacion
                         else
                         {
                             txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                            lblErrorBalanza.Visible = false;
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                timer1.Enabled = false;
-                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                {
-                    dejarDeLeerPeso = true;
-                    checkLeerPeso.Checked = false;
-                }
-                else
-                {
-                    timer1.Enabled = true;
-                }
+                txtCantKgs.Text = "Error balanza";
+                //timer1.Enabled = false;
+                //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                //{
+                //    dejarDeLeerPeso = true;
+                //    checkLeerPeso.Checked = false;
+                //}
+                //else
+                //{
+                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Visible = true;
+                //timer1.Enabled = true;
+                //}
             }
         }
 
