@@ -546,6 +546,14 @@ namespace Presentacion.Caja
 
         private bool validarLinea()
         {
+            //Se valida que no sea media res
+            if (oCorteE != null && oCorteE.codigo == 0)
+            {
+                MessageBox.Show("No se puede vender Media Res"+"\n\nIngrese otro codigo");
+                txtCodigo.Focus();
+                return false;
+            }
+
             //si es consumidor final no se permite precios mayorista excepto que esté logueado como admin
             int inicioCodigoMayorista = (ConfigurationManager.AppSettings["codigoPrecioMayorista"]) != null ?
                 Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioMayorista"].ToString()) : 0;
@@ -808,7 +816,7 @@ namespace Presentacion.Caja
 
         private void cargarCorte()
         {
-            if (txtCodigo.Text.Trim() != "")
+            if (txtCodigo.Text != "")
             {
                 try
                 {
@@ -819,7 +827,7 @@ namespace Presentacion.Caja
                     oCorteE = new Entidades.Corte();
 
                     DataTable dtCortes = new DataTable();
-                        dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
+                    dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
 
                     if (dtCortes.Rows.Count > 0)
                     {

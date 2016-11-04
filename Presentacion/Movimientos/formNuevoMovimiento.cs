@@ -580,6 +580,11 @@ namespace Presentacion
 
         private void btnBuscar_Click(object sender, EventArgs e)
         {
+            buscarCorte();
+        }
+
+        private void buscarCorte()
+        {
             try
             {
                 dtCorte = oCorteN.obtenerCortes();
@@ -819,7 +824,7 @@ namespace Presentacion
         {
             cargarListaEnGrilla();
             Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
-            formVerAcum.verAcumulados(listaEnGrilla);// (listaCortesPorMovimiento);
+            formVerAcum.verAcumulados(listaEnGrilla, null, Presentacion.Movimientos.formVerAcumulados.tipoAcum.movimiento);// (listaCortesPorMovimiento);
             formVerAcum.ShowDialog();
         }
 
@@ -898,6 +903,37 @@ namespace Presentacion
             {
                 MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n" + ex.Message + "\n" + ex.StackTrace);
             }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

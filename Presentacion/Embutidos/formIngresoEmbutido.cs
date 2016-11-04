@@ -293,6 +293,11 @@ namespace Presentacion
 
         private void btnBuscarEmbutido_Click(object sender, EventArgs e)
         {
+            buscarEmbutido();
+        }
+
+        private void buscarEmbutido()
+        {
             formBuscarEmbutido frmBuscarEmbutido = new formBuscarEmbutido();
             if (frmEmbutidos.EsVentaClientes)
             {
@@ -306,7 +311,7 @@ namespace Presentacion
             oCorteEmbutidoE = corte;
             txtCodigoEmbutido.Text = Convert.ToString(oCorteEmbutidoE.codigo);
             txtEmbutido.Text = oCorteEmbutidoE.corte;
-            calcularFormula();
+            //calcularFormula();
             txtCodCorteEnEmbutido.Focus();
         }
 
@@ -314,13 +319,22 @@ namespace Presentacion
         {
             if (!oCorteEmbutidoE.tipo.Equals(Entidades.Corte.tipoCorte.Embutido.ToString()))
             {
-                //panelFormula.Visible = false;
-                btnCalcularForm.Visible = false;
+                panelFormula.Visible = false;
+                //btnCalcularForm.Visible = false;
                 return;
             }
 
-            //panelFormula.Visible = true;
-            btnCalcularForm.Visible = true;
+            panelFormula.Visible = true;
+            //btnCalcularForm.Visible = true;
+            
+            //calcula total sin condimentos
+            float totalKgSinCond = 0;
+            foreach (Entidades.CortePorEmbutido oCortePorEmb in listaCortePorEmbutido)
+            {
+                totalKgSinCond += !(oCortePorEmb.corte.codigo >= 2000 && oCortePorEmb.corte.codigo < 3000) ?
+                    oCortePorEmb.kgUtilizado : 0;
+            }
+
             string sal, pimienta, nuez, bracolor, pimenton, producto;
             sal = pimienta = nuez = bracolor = pimenton = producto = "-";
             int cantDecimales = 3;
@@ -328,22 +342,22 @@ namespace Presentacion
             switch (oCorteEmbutidoE.codigo)
             {
                 case 4:
-                    sal = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    sal = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
+                    bracolor = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
                     break;
                 case 11:
-                    sal = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.025", false))), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
-                    producto = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0018", false))), cantDecimales)).ToString("F3"));
+                    sal = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.025", false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
+                    producto = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0018", false))), cantDecimales)).ToString("F3"));
                     break;
                 case 33:
-                    sal = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
-                    pimenton = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.001", false))), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKg * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    sal = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
+                    pimenton = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.001", false))), cantDecimales)).ToString("F3"));
+                    bracolor = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
                     break;
                 default:
                     break;
@@ -358,6 +372,11 @@ namespace Presentacion
         }
 
         private void btnBuscarCorte_Click(object sender, EventArgs e)
+        {
+            buscarCorte();
+        }
+
+        private void buscarCorte()
         {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
@@ -375,7 +394,7 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
-            //calcularFormula();
+            calcularFormula();
             capturarPantalla();
         }        
 
@@ -392,7 +411,7 @@ namespace Presentacion
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCortePorEmbutido();
-            //calcularFormula();
+            calcularFormula();
             capturarPantalla();
         }
 
@@ -555,6 +574,8 @@ namespace Presentacion
             catch (Exception ex)
             {
                 txtCantKgs.Text = "Error balanza";
+                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Visible = true;
                 //timer1.Enabled = false;
                 //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 //{
@@ -563,8 +584,6 @@ namespace Presentacion
                 //}
                 //else
                 //{
-                lblErrorBalanza.Text = ex.Message;
-                lblErrorBalanza.Visible = true;
                 //timer1.Enabled = true;
                 //}
             }
@@ -601,15 +620,6 @@ namespace Presentacion
             }
             saveChanges = false;//setea en false(si esta TRUE porque se presionó btnGuardar)
             return ret;
-        }
-
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (keyData == Keys.Escape)
-            {
-                this.Close();
-            }
-            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         private void control_Enter(object sender, EventArgs e)
@@ -718,6 +728,43 @@ namespace Presentacion
 
             panelFormula.Visible = true;
             calcularFormula();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodCorteEnEmbutido.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodCorteEnEmbutido.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F9:
+                    buscarEmbutido();
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+                case Keys.Escape:
+                    this.Close();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

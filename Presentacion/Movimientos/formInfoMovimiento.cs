@@ -252,7 +252,7 @@ namespace Presentacion.Movimientos
         {
             cargarListaEnGrilla();
             Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
-            formVerAcum.verAcumulados(listaEnGrilla);// (listaCortesPorMovimiento);
+            formVerAcum.verAcumulados(listaEnGrilla, null, formVerAcumulados.tipoAcum.movimiento);// (listaCortesPorMovimiento);
             formVerAcum.ShowDialog();
         }         
     }

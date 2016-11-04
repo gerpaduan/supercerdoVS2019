@@ -89,6 +89,7 @@
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
             this.idMovimientoLabel = new System.Windows.Forms.Label();
+            this.label18 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -208,6 +209,7 @@
             // 
             this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox2.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox2.Controls.Add(this.label18);
             this.groupBox2.Controls.Add(this.checkSinBalanza);
             this.groupBox2.Controls.Add(this.checkTicket);
             this.groupBox2.Controls.Add(this.txtCantUnidad);
@@ -791,6 +793,18 @@
             this.idMovimientoLabel.Text = "idMovimientoLabel";
             this.idMovimientoLabel.Visible = false;
             // 
+            // label18
+            // 
+            this.label18.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.label18.AutoSize = true;
+            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label18.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label18.Location = new System.Drawing.Point(174, 26);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(34, 15);
+            this.label18.TabIndex = 25;
+            this.label18.Text = "[F10]";
+            // 
             // formNuevoMovimiento
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -890,5 +904,6 @@
         private System.Windows.Forms.Button btnVerAcum;
         private System.Windows.Forms.CheckBox checkSinBalanza;
         private System.Windows.Forms.CheckBox checkPermitirIngreso;
+        protected System.Windows.Forms.Label label18;
     }
 }
