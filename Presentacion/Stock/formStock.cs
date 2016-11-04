@@ -240,5 +240,15 @@ namespace Presentacion
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
+
+        private void btnPesaje_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+        }
+
+        private void btnAjusteStock_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.AjusteStock);
+        }
     }
 }

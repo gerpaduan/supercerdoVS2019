@@ -93,6 +93,11 @@ namespace Presentacion
 
         private void btnBuscarProv_Click(object sender, EventArgs e)
         {
+            buscarPersona();
+        }
+
+        private void buscarPersona()
+        {
             Personas.formBuscarPersona frmBuscarPersona = new Personas.formBuscarPersona();
             frmBuscarPersona.ShowDialog(this);
 
@@ -120,6 +125,11 @@ namespace Presentacion
         }
 
         private void btnBuscaCorte_Click(object sender, EventArgs e)
+        {
+            buscarCorte();
+        }
+
+        private void buscarCorte()
         {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
@@ -1070,5 +1080,41 @@ namespace Presentacion
         {            
             checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
+
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F9:
+                    buscarPersona();
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
     }
 }

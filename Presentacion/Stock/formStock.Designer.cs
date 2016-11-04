@@ -29,9 +29,10 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblActualizar = new System.Windows.Forms.Label();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -49,12 +50,8 @@
             this.btnIngreso = new System.Windows.Forms.ToolStripButton();
             this.btnEgreso = new System.Windows.Forms.ToolStripButton();
             this.btnCierre = new System.Windows.Forms.ToolStripButton();
+            this.btnPesaje = new System.Windows.Forms.ToolStripButton();
             this.grillaCompras = new System.Windows.Forms.DataGridView();
-            this.btnSeleccionar = new System.Windows.Forms.Button();
-            this.btnCancelar = new System.Windows.Forms.Button();
-            this.txtTotalKgs = new System.Windows.Forms.TextBox();
-            this.label12 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -67,7 +64,12 @@
             this.creadoPor = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizadoPor = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.lblActualizar = new System.Windows.Forms.Label();
+            this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.btnCancelar = new System.Windows.Forms.Button();
+            this.txtTotalKgs = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.btnAjusteStock = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -96,6 +98,18 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(786, 89);
             this.pnlBuscar.TabIndex = 6;
+            // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(339, 62);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 53;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
             // 
             // comboSucursal
             // 
@@ -172,10 +186,11 @@
             this.comboTipoCompra.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipoCompra.FormattingEnabled = true;
             this.comboTipoCompra.Items.AddRange(new object[] {
-            "Ingreso, Egreso y Cierre",
+            "Ingreso, Egreso, Cierre y Pesaje",
             "Ingreso Stock",
             "Egreso Stock",
-            "Cierre Stock"});
+            "Cierre Stock",
+            "Pesaje Cortes"});
             this.comboTipoCompra.Location = new System.Drawing.Point(97, 32);
             this.comboTipoCompra.Name = "comboTipoCompra";
             this.comboTipoCompra.Size = new System.Drawing.Size(161, 21);
@@ -252,7 +267,9 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btnIngreso,
             this.btnEgreso,
-            this.btnCierre});
+            this.btnCierre,
+            this.btnPesaje,
+            this.btnAjusteStock});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -291,6 +308,16 @@
             this.btnCierre.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnCierre.Click += new System.EventHandler(this.btnCierre_Click);
             // 
+            // btnPesaje
+            // 
+            this.btnPesaje.Image = ((System.Drawing.Image)(resources.GetObject("btnPesaje.Image")));
+            this.btnPesaje.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnPesaje.Name = "btnPesaje";
+            this.btnPesaje.Size = new System.Drawing.Size(44, 35);
+            this.btnPesaje.Text = "&Pesaje";
+            this.btnPesaje.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnPesaje.Click += new System.EventHandler(this.btnPesaje_Click);
+            // 
             // grillaCompras
             // 
             this.grillaCompras.AllowDrop = true;
@@ -324,6 +351,117 @@
             this.grillaCompras.Size = new System.Drawing.Size(761, 343);
             this.grillaCompras.TabIndex = 8;
             this.grillaCompras.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCompras_CellDoubleClick);
+            // 
+            // idCompra
+            // 
+            this.idCompra.DataPropertyName = "idCompra";
+            this.idCompra.HeaderText = "ID Compra";
+            this.idCompra.Name = "idCompra";
+            this.idCompra.ReadOnly = true;
+            this.idCompra.Visible = false;
+            // 
+            // fechaCompra
+            // 
+            this.fechaCompra.DataPropertyName = "fechaCompra";
+            dataGridViewCellStyle3.Format = "g";
+            dataGridViewCellStyle3.NullValue = null;
+            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle3;
+            this.fechaCompra.FillWeight = 60F;
+            this.fechaCompra.HeaderText = "Fecha";
+            this.fechaCompra.Name = "fechaCompra";
+            this.fechaCompra.ReadOnly = true;
+            this.fechaCompra.Width = 84;
+            // 
+            // idPersona
+            // 
+            this.idPersona.DataPropertyName = "idProveedor";
+            this.idPersona.HeaderText = "ID Proveedor";
+            this.idPersona.Name = "idPersona";
+            this.idPersona.ReadOnly = true;
+            this.idPersona.Visible = false;
+            // 
+            // razonSocial
+            // 
+            this.razonSocial.DataPropertyName = "razonSocial";
+            this.razonSocial.FillWeight = 42.98663F;
+            this.razonSocial.HeaderText = "Proveedor";
+            this.razonSocial.Name = "razonSocial";
+            this.razonSocial.ReadOnly = true;
+            this.razonSocial.Visible = false;
+            // 
+            // sucursal
+            // 
+            this.sucursal.DataPropertyName = "sucursal";
+            this.sucursal.FillWeight = 42.98663F;
+            this.sucursal.HeaderText = "Sucursal";
+            this.sucursal.Name = "sucursal";
+            this.sucursal.ReadOnly = true;
+            this.sucursal.Width = 60;
+            // 
+            // tipoCompra
+            // 
+            this.tipoCompra.DataPropertyName = "tipoCompra";
+            this.tipoCompra.FillWeight = 42.98663F;
+            this.tipoCompra.HeaderText = "Acción";
+            this.tipoCompra.Name = "tipoCompra";
+            this.tipoCompra.ReadOnly = true;
+            this.tipoCompra.Width = 60;
+            // 
+            // cantKg
+            // 
+            this.cantKg.DataPropertyName = "cantKg";
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle4.Format = "N2";
+            dataGridViewCellStyle4.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle4;
+            this.cantKg.FillWeight = 42.98663F;
+            this.cantKg.HeaderText = "Cant. Kgs";
+            this.cantKg.Name = "cantKg";
+            this.cantKg.ReadOnly = true;
+            this.cantKg.Width = 61;
+            // 
+            // observaciones
+            // 
+            this.observaciones.DataPropertyName = "observaciones";
+            this.observaciones.FillWeight = 42.98663F;
+            this.observaciones.HeaderText = "Observaciones";
+            this.observaciones.Name = "observaciones";
+            this.observaciones.ReadOnly = true;
+            this.observaciones.Width = 60;
+            // 
+            // creado
+            // 
+            this.creado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.creado.DataPropertyName = "creado";
+            this.creado.HeaderText = "Creado";
+            this.creado.Name = "creado";
+            this.creado.ReadOnly = true;
+            this.creado.Width = 66;
+            // 
+            // creadoPor
+            // 
+            this.creadoPor.DataPropertyName = "creadoPor";
+            this.creadoPor.HeaderText = "Creado Por";
+            this.creadoPor.Name = "creadoPor";
+            this.creadoPor.ReadOnly = true;
+            this.creadoPor.Width = 140;
+            // 
+            // actualizado
+            // 
+            this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.actualizado.DataPropertyName = "actualizado";
+            this.actualizado.HeaderText = "Actualizado";
+            this.actualizado.Name = "actualizado";
+            this.actualizado.ReadOnly = true;
+            this.actualizado.Width = 87;
+            // 
+            // actualizadoPor
+            // 
+            this.actualizadoPor.DataPropertyName = "actualizadoPor";
+            this.actualizadoPor.HeaderText = "ActualizadoPor";
+            this.actualizadoPor.Name = "actualizadoPor";
+            this.actualizadoPor.ReadOnly = true;
+            this.actualizadoPor.Width = 140;
             // 
             // btnSeleccionar
             // 
@@ -382,128 +520,15 @@
             this.panel1.Size = new System.Drawing.Size(759, 1);
             this.panel1.TabIndex = 23;
             // 
-            // idCompra
+            // btnAjusteStock
             // 
-            this.idCompra.DataPropertyName = "idCompra";
-            this.idCompra.HeaderText = "ID Compra";
-            this.idCompra.Name = "idCompra";
-            this.idCompra.ReadOnly = true;
-            this.idCompra.Visible = false;
-            // 
-            // fechaCompra
-            // 
-            this.fechaCompra.DataPropertyName = "fechaCompra";
-            dataGridViewCellStyle1.Format = "g";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle1;
-            this.fechaCompra.FillWeight = 60F;
-            this.fechaCompra.HeaderText = "Fecha";
-            this.fechaCompra.Name = "fechaCompra";
-            this.fechaCompra.ReadOnly = true;
-            this.fechaCompra.Width = 84;
-            // 
-            // idPersona
-            // 
-            this.idPersona.DataPropertyName = "idProveedor";
-            this.idPersona.HeaderText = "ID Proveedor";
-            this.idPersona.Name = "idPersona";
-            this.idPersona.ReadOnly = true;
-            this.idPersona.Visible = false;
-            // 
-            // razonSocial
-            // 
-            this.razonSocial.DataPropertyName = "razonSocial";
-            this.razonSocial.FillWeight = 42.98663F;
-            this.razonSocial.HeaderText = "Proveedor";
-            this.razonSocial.Name = "razonSocial";
-            this.razonSocial.ReadOnly = true;
-            this.razonSocial.Visible = false;
-            // 
-            // sucursal
-            // 
-            this.sucursal.DataPropertyName = "sucursal";
-            this.sucursal.FillWeight = 42.98663F;
-            this.sucursal.HeaderText = "Sucursal";
-            this.sucursal.Name = "sucursal";
-            this.sucursal.ReadOnly = true;
-            this.sucursal.Width = 60;
-            // 
-            // tipoCompra
-            // 
-            this.tipoCompra.DataPropertyName = "tipoCompra";
-            this.tipoCompra.FillWeight = 42.98663F;
-            this.tipoCompra.HeaderText = "Acción";
-            this.tipoCompra.Name = "tipoCompra";
-            this.tipoCompra.ReadOnly = true;
-            this.tipoCompra.Width = 60;
-            // 
-            // cantKg
-            // 
-            this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle2.Format = "N2";
-            dataGridViewCellStyle2.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle2;
-            this.cantKg.FillWeight = 42.98663F;
-            this.cantKg.HeaderText = "Cant. Kgs";
-            this.cantKg.Name = "cantKg";
-            this.cantKg.ReadOnly = true;
-            this.cantKg.Width = 61;
-            // 
-            // observaciones
-            // 
-            this.observaciones.DataPropertyName = "observaciones";
-            this.observaciones.FillWeight = 42.98663F;
-            this.observaciones.HeaderText = "Observaciones";
-            this.observaciones.Name = "observaciones";
-            this.observaciones.ReadOnly = true;
-            this.observaciones.Width = 60;
-            // 
-            // creado
-            // 
-            this.creado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.creado.DataPropertyName = "creado";
-            this.creado.HeaderText = "Creado";
-            this.creado.Name = "creado";
-            this.creado.ReadOnly = true;
-            this.creado.Width = 66;
-            // 
-            // creadoPor
-            // 
-            this.creadoPor.DataPropertyName = "creadoPor";
-            this.creadoPor.HeaderText = "Creado Por";
-            this.creadoPor.Name = "creadoPor";
-            this.creadoPor.ReadOnly = true;
-            this.creadoPor.Width = 140;
-            // 
-            // actualizado
-            // 
-            this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.actualizado.DataPropertyName = "actualizado";
-            this.actualizado.HeaderText = "Actualizado";
-            this.actualizado.Name = "actualizado";
-            this.actualizado.ReadOnly = true;
-            this.actualizado.Width = 87;
-            // 
-            // actualizadoPor
-            // 
-            this.actualizadoPor.DataPropertyName = "actualizadoPor";
-            this.actualizadoPor.HeaderText = "ActualizadoPor";
-            this.actualizadoPor.Name = "actualizadoPor";
-            this.actualizadoPor.ReadOnly = true;
-            this.actualizadoPor.Width = 140;
-            // 
-            // lblActualizar
-            // 
-            this.lblActualizar.AutoSize = true;
-            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(339, 62);
-            this.lblActualizar.Name = "lblActualizar";
-            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
-            this.lblActualizar.TabIndex = 53;
-            this.lblActualizar.Text = "Actualizar...";
-            this.lblActualizar.Visible = false;
+            this.btnAjusteStock.Image = ((System.Drawing.Image)(resources.GetObject("btnAjusteStock.Image")));
+            this.btnAjusteStock.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnAjusteStock.Name = "btnAjusteStock";
+            this.btnAjusteStock.Size = new System.Drawing.Size(44, 35);
+            this.btnAjusteStock.Text = "&Ajuste";
+            this.btnAjusteStock.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnAjusteStock.Click += new System.EventHandler(this.btnAjusteStock_Click);
             // 
             // formStock
             // 
@@ -577,6 +602,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizadoPor;
         protected System.Windows.Forms.Label lblActualizar;
+        private System.Windows.Forms.ToolStripButton btnPesaje;
+        private System.Windows.Forms.ToolStripButton btnAjusteStock;
 
     }
 }

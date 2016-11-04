@@ -208,7 +208,7 @@
             this.radioCorte.Name = "radioCorte";
             this.radioCorte.Size = new System.Drawing.Size(60, 19);
             this.radioCorte.TabIndex = 100;
-            this.radioCorte.Text = "Cortes";
+            this.radioCorte.Text = "Cort&es";
             this.radioCorte.UseVisualStyleBackColor = true;
             this.radioCorte.CheckedChanged += new System.EventHandler(this.radioCorte_CheckedChanged);
             // 
@@ -223,7 +223,7 @@
             this.radioMediaRes.Size = new System.Drawing.Size(85, 19);
             this.radioMediaRes.TabIndex = 12;
             this.radioMediaRes.TabStop = true;
-            this.radioMediaRes.Text = "Media Res";
+            this.radioMediaRes.Text = "Media &Res";
             this.radioMediaRes.UseVisualStyleBackColor = true;
             this.radioMediaRes.CheckedChanged += new System.EventHandler(this.radioMediaRes_CheckedChanged);
             // 

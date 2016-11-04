@@ -19,6 +19,8 @@ namespace Entidades
             IngresoStock = 1,
             EgresoStock = 2,
             CierreStock = 3,
+            PesajeCortes = 4,
+            AjusteStock = 5,
         }
 
         public static string tipoCompraToString(tipoCompraEnum tipoCompraToConvert)
@@ -40,6 +42,12 @@ namespace Entidades
                     break;
                 case Compra.tipoCompraEnum.CierreStock:
                     tipoCompraToString = "Cierre Stock";
+                    break;
+                case Compra.tipoCompraEnum.PesajeCortes:
+                    tipoCompraToString = "Pesaje Cortes";
+                    break;
+                case Compra.tipoCompraEnum.AjusteStock:
+                    tipoCompraToString = "Ajuste Stock";
                     break;
             }
             return tipoCompraToString;
@@ -64,6 +72,12 @@ namespace Entidades
                     break;
                 case "Cierre Stock":
                     tipoCompraToEnum = tipoCompraEnum.CierreStock;
+                    break;
+                case "Pesaje Cortes":
+                    tipoCompraToEnum = Compra.tipoCompraEnum.PesajeCortes;
+                    break;
+                case "Ajuste Stock":
+                    tipoCompraToEnum = Compra.tipoCompraEnum.AjusteStock;
                     break;
             }
             return tipoCompraToEnum;

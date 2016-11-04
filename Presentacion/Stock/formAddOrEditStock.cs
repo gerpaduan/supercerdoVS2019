@@ -53,7 +53,7 @@ namespace Presentacion
        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
        Color ultimoColor = Color.Green;
 
-       Entidades.Compra.tipoCompraEnum[] arrayTipo = {Entidades.Compra.tipoCompraEnum.IngresoStock, Entidades.Compra.tipoCompraEnum.EgresoStock, Entidades.Compra.tipoCompraEnum.CierreStock};
+       Entidades.Compra.tipoCompraEnum[] arrayTipo = {Entidades.Compra.tipoCompraEnum.IngresoStock, Entidades.Compra.tipoCompraEnum.EgresoStock, Entidades.Compra.tipoCompraEnum.CierreStock, Entidades.Compra.tipoCompraEnum.PesajeCortes, Entidades.Compra.tipoCompraEnum.AjusteStock};
 
         public formAddOrEditStock()
         {
@@ -79,6 +79,9 @@ namespace Presentacion
                     this.Close();
                     return;
                 }
+
+                if (!validarAjusteStock())
+                    this.Close();
 
                 oProvNuevaCompra = new Entidades.Persona();
                 oProvNuevaCompra.idPersona = Convert.ToInt32(tipoCompraEnum);
@@ -125,6 +128,18 @@ namespace Presentacion
             setTituloForm();
         }
 
+        private bool validarAjusteStock()
+        {
+            bool resp = true;
+            if (tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.AjusteStock))
+            {
+                resp = oUsuario != null && oUsuario.Admin;
+                if (!resp)
+                    MessageBox.Show("No tienes permiso para realizar Ajuste de Stock.", "Sin Permiso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            return resp;
+        }
+
         private void setTituloForm()
         {
             this.Text = (btnAceptar.Text.Contains("Guardar") ? accion.ToString() : "Info") + " " + tipoCompra;
@@ -156,6 +171,11 @@ namespace Presentacion
 
         private void btnBuscaCorte_Click(object sender, EventArgs e)
         {
+            buscarCorte();
+        }
+
+        private void buscarCorte()
+        {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
         }
@@ -185,6 +205,10 @@ namespace Presentacion
                 {
                     return;
                 }
+
+                if (!validarAjusteStock())
+                    return;
+                
                 if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
                 Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
@@ -216,7 +240,7 @@ namespace Presentacion
             {
                 if (listaCortePorCompra.Count > 0 || accion.Equals(Entidades.Compra.accion.Modificar))
                 {
-                    if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
+                    if (validarAjusteStock() && Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
                         Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
                         && Util_Form.validarFecha(txtFechaCompra.Value, "Fecha") && validaciónFinal())
                     {
@@ -469,7 +493,7 @@ namespace Presentacion
                 else
                 {
                     float cantKgs = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, true);
-                    if (cantKgs <= 0)
+                    if (!tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.AjusteStock) && cantKgs <= 0)
                     {
                         MessageBox.Show("Ingrese una cantidad de Kgs mayor a 0 (cero).", "Ingrese una cantidad", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         txtCantKgs.Focus();
@@ -491,7 +515,8 @@ namespace Presentacion
                 return false;
             }
             DialogResult respuesta;
-            respuesta = MessageBox.Show("¿Guardar la modificación en el stock de los cortes ingresados?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            string pregunta = oCompraE != null && oCompraE.IdCompra > 1 ? " las modificaciones realizadas en" : " el nuevo ";
+            respuesta = MessageBox.Show("¿Guardar "+pregunta+" "+ Entidades.Compra.tipoCompraToString(tipoCompraEnum)+" ?", "Guardar datos", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
             if (respuesta == DialogResult.Yes)
             {
@@ -645,22 +670,26 @@ namespace Presentacion
                         else
                         {
                             txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                            lblErrorBalanza.Visible = false;
                         }
                     }
                 }
             }
             catch (Exception ex)
-            {                
-                timer1.Enabled = false;
-                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                {
-                    dejarDeLeerPeso = true;
-                    checkLeerPeso.Checked = false;
-                }
-                else
-                {
-                    timer1.Enabled = true;
-                }
+            {
+                txtCantKgs.Text = "Error balanza";
+                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Visible = true;          
+                //timer1.Enabled = false;
+                //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                //{
+                //    dejarDeLeerPeso = true;
+                //    checkLeerPeso.Checked = false;
+                //}
+                //else
+                //{
+                //    timer1.Enabled = true;
+                //}
             }
         }
 
@@ -683,6 +712,7 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     txtCantKgs.Focus();
+                    lblErrorBalanza.Visible = false;
                     timer1.Enabled = false;
                 }
             }
@@ -1044,6 +1074,45 @@ namespace Presentacion
         {
             panelGrillaFaltantes.Visible = false;
             btnVerNoCargados.Visible = !panelGrillaFaltantes.Visible;
+        }
+
+        private void btnVerAcum_Click(object sender, EventArgs e)
+        {
+            //cargarListaEnGrilla();
+            Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
+            formVerAcum.verAcumulados(null, listaCortesEnGrilla, Presentacion.Movimientos.formVerAcumulados.tipoAcum.stock);// (listaCortesPorMovimiento);
+            formVerAcum.ShowDialog();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }
