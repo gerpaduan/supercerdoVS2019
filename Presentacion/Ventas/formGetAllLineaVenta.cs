@@ -8,6 +8,9 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Ventas;
 using System.Configuration;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
+using System.IO;
 
 namespace Presentacion
 {
@@ -209,6 +212,97 @@ namespace Presentacion
         {
             formGetAllLineaVenta frmVentaDuplicar = new formGetAllLineaVenta();
             frmVentaDuplicar.Show();
+        }
+
+        private void exportPDF_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                //Creating iTextSharp Table from the DataTable data
+                PdfPTable pdfTable = new PdfPTable(6);//grillaVentas.ColumnCount);
+                pdfTable.DefaultCell.Padding = 3;
+                pdfTable.WidthPercentage = 100;
+                pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
+                iTextSharp.text.Font fontsubtit = FontFactory.GetFont("Arial", 9);
+
+                string encabezado = "";
+
+                //Adding Header row
+                foreach (DataGridViewColumn column in grillaVentas.Columns)
+                {
+                    if (column.Index == 1 || column.Index == 3 || column.Index == 6 ||
+                            column.Index == 7 || column.Index == 8 || column.Index == 9)
+                    {
+                        PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
+                        cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
+
+                        encabezado = "Cliente: " + txtDescripcion.Text;
+
+                        encabezado += " \n\n Desde: " + fechaDesde.Text +
+                                " | Hasta: " + fechaHasta.Text + "\n\n";
+
+                        pdfTable.AddCell(cell);
+                    }
+                }
+
+                //Adding DataRow
+                foreach (DataGridViewRow row in grillaVentas.Rows)
+                {
+                    foreach (DataGridViewCell cell in row.Cells)
+                    {
+                        if (cell.ColumnIndex == 1 || cell.ColumnIndex == 3 || cell.ColumnIndex == 6 ||
+                            cell.ColumnIndex == 7 || cell.ColumnIndex == 8 || cell.ColumnIndex == 9)
+                        {
+
+                            string valueCell = "";
+                            if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
+                            {
+                                valueCell = String.Format("{0:0.00}", cell.Value);
+                            }
+                            else
+                            {
+                                valueCell = cell.Value.ToString();
+                                valueCell = (valueCell.Length > 16) ? valueCell.Substring(0, 16) : valueCell;
+                            }
+                            pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
+                        }
+                    }
+                }
+
+                //agregando encabezado
+                Paragraph parrafo = new Paragraph();
+                parrafo.Alignment = Element.ALIGN_CENTER;
+                parrafo.Font = FontFactory.GetFont("Arial", 9);
+                parrafo.Add(encabezado);
+
+                //linea Totales
+
+                Paragraph lineaTotales = new Paragraph();
+                lineaTotales.Alignment = Element.ALIGN_RIGHT;
+                lineaTotales.Font = FontFactory.GetFont("Arial", 12);
+                lineaTotales.Add("TOTAL   $"+txtTotalS.Text);
+
+                string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".pdf";
+                using (FileStream stream = new FileStream(fileName, FileMode.Create))
+                {
+                    Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
+                    PdfWriter.GetInstance(pdfDoc, stream);
+                    pdfDoc.Open();
+                    pdfDoc.Add(parrafo);
+                    pdfDoc.Add(pdfTable);
+                    pdfDoc.Add(lineaTotales);
+                    pdfDoc.Close();
+                    stream.Close();
+
+                    System.Diagnostics.Process prc = new System.Diagnostics.Process();
+                    prc.StartInfo.FileName = fileName;
+                    prc.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }           
         }
     }
 }

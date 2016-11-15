@@ -8,6 +8,9 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Ventas;
 using Presentacion.Caja;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
+using System.IO;
 
 namespace Presentacion.CuentaCorriente
 {
@@ -232,8 +235,87 @@ namespace Presentacion.CuentaCorriente
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
-            Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
-            tipoTicket.ctaCtePersona(oPersonaE, dtMov);
+            //Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+            //tipoTicket.ctaCtePersona(oPersonaE, dtMov);
+            try
+            {
+                //Creating iTextSharp Table from the DataTable data
+                PdfPTable pdfTable = new PdfPTable(6);//grillaMovCtaCte.ColumnCount);
+                pdfTable.DefaultCell.Padding = 3;
+                pdfTable.WidthPercentage = 100;
+                pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
+                iTextSharp.text.Font fontsubtit = FontFactory.GetFont("Arial", 9);
+
+
+                string encabezado = "Cuenta Corriente\n";
+                encabezado += "Razon Social: " + txtPersona.Text + " || Desde: " + fechaDesdePick.Value.ToShortDateString() +"\n\n";
+
+                int indexDetalle = 6;
+
+                //Adding Header row
+                foreach (DataGridViewColumn column in grillaMovCtaCte.Columns)
+                {
+                    if (column.Index == 3 || column.Index == 4 || column.Index == 5 ||
+                            column.Index == 6 || column.Index == 8 || column.Index == 9)
+                    {
+                        PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
+                        cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
+                        pdfTable.AddCell(cell);
+                    }
+                }
+
+                //Adding DataRow
+                foreach (DataGridViewRow row in grillaMovCtaCte.Rows)
+                {
+                    foreach (DataGridViewCell cell in row.Cells)
+                    {
+                        if (cell.ColumnIndex == 3 || cell.ColumnIndex == 4 || cell.ColumnIndex == 5 ||
+                            cell.ColumnIndex == 6 || cell.ColumnIndex == 8 || cell.ColumnIndex == 9)
+                        {
+
+                            string valueCell = "";
+                            if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
+                            {
+                                valueCell = String.Format("{0:0.00}", cell.Value);
+                            }
+                            else
+                            {
+                                valueCell = cell.Value.ToString();
+                                valueCell = (valueCell.Length > 10) ?
+                                    (cell.ColumnIndex == indexDetalle ? (valueCell.Length > 40 ? valueCell.Substring(0, 40) : valueCell) : valueCell.Substring(0, 10)) 
+                                    : valueCell;
+                            }
+                            pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
+                        }
+                    }
+                }
+
+                //agregando encabezado
+                Paragraph parrafo = new Paragraph();
+                parrafo.Alignment = Element.ALIGN_CENTER;
+                parrafo.Font = FontFactory.GetFont("Arial", 11); 
+                parrafo.Add(encabezado);
+
+                string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".pdf";
+                using (FileStream stream = new FileStream(fileName, FileMode.Create))
+                {
+                    Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
+                    PdfWriter.GetInstance(pdfDoc, stream);
+                    pdfDoc.Open();
+                    pdfDoc.Add(parrafo);
+                    pdfDoc.Add(pdfTable);
+                    pdfDoc.Close();
+                    stream.Close();
+
+                    System.Diagnostics.Process prc = new System.Diagnostics.Process();
+                    prc.StartInfo.FileName = fileName;
+                    prc.Start();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }           
         }
     }
 }
