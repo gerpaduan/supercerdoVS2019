@@ -14,41 +14,26 @@ namespace Datos
        
         public DataTable obtenerSucursales()
         {
-            try
-            {
-                DataTable dtSucursal = new DataTable();
-                daSucursal = new SqlDataAdapter("Select * from sucursal", conn.conectar());
-                daSucursal.Fill(dtSucursal);
+            DataTable dtSucursal = new DataTable();
+            daSucursal = new SqlDataAdapter("Select * from sucursal", conn.conectar());
+            daSucursal.Fill(dtSucursal);
 
-                return dtSucursal;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
+            return dtSucursal;
         }
 
         public Entidades.Sucursal findById(int id)
         {
-            try
-            {
-                DataTable dtSucursal = new DataTable();
-                daSucursal = new SqlDataAdapter("Select * from sucursal where idSucursal = " + id, conn.conectar());
-                daSucursal.Fill(dtSucursal);
+            DataTable dtSucursal = new DataTable();
+            daSucursal = new SqlDataAdapter("Select * from sucursal where idSucursal = " + id, conn.conectar());
+            daSucursal.Fill(dtSucursal);
 
-                Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-                if (dtSucursal.Rows.Count > 0)
-                {
-                    oSucursalE.idSucursal = Convert.ToInt32(dtSucursal.Rows[0]["idSucursal"].ToString());
-                    oSucursalE.sucursal = dtSucursal.Rows[0]["sucursal"].ToString();
-                }
-                return oSucursalE;
-            }
-            catch (Exception ex)
+            Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+            if (dtSucursal.Rows.Count > 0)
             {
-                throw new Exception("Error al obtener sucursales.", ex);
+                oSucursalE.idSucursal = Convert.ToInt32(dtSucursal.Rows[0]["idSucursal"].ToString());
+                oSucursalE.sucursal = dtSucursal.Rows[0]["sucursal"].ToString();
             }
+            return oSucursalE;
         }
 
         public DataTable obtenerSucursalSanMartin()

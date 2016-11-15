@@ -73,6 +73,7 @@ namespace Presentacion
             }
             if (accion.Equals(Entidades.Compra.accion.Agregar))
             {
+                timer1.Stop();
                 logueoUsuario();
                 if (oUsuario == null)
                 {
@@ -81,13 +82,18 @@ namespace Presentacion
                 }
 
                 if (!validarAjusteStock())
+                {
                     this.Close();
+                    return;
+                }
 
                 oProvNuevaCompra = new Entidades.Persona();
                 oProvNuevaCompra.idPersona = Convert.ToInt32(tipoCompraEnum);
                 oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
 
                 btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
+
+                timer1.Start();
             }
             if (accion.Equals(Entidades.Compra.accion.Modificar))
             {

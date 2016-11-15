@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
@@ -51,6 +51,7 @@
             this.btnEgreso = new System.Windows.Forms.ToolStripButton();
             this.btnCierre = new System.Windows.Forms.ToolStripButton();
             this.btnPesaje = new System.Windows.Forms.ToolStripButton();
+            this.btnAjusteStock = new System.Windows.Forms.ToolStripButton();
             this.grillaCompras = new System.Windows.Forms.DataGridView();
             this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -69,7 +70,6 @@
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.btnAjusteStock = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -186,11 +186,12 @@
             this.comboTipoCompra.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipoCompra.FormattingEnabled = true;
             this.comboTipoCompra.Items.AddRange(new object[] {
-            "Ingreso, Egreso, Cierre y Pesaje",
+            "Ver Todos",
             "Ingreso Stock",
             "Egreso Stock",
             "Cierre Stock",
-            "Pesaje Cortes"});
+            "Pesaje Cortes",
+            "Ajuste Stock"});
             this.comboTipoCompra.Location = new System.Drawing.Point(97, 32);
             this.comboTipoCompra.Name = "comboTipoCompra";
             this.comboTipoCompra.Size = new System.Drawing.Size(161, 21);
@@ -318,6 +319,16 @@
             this.btnPesaje.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnPesaje.Click += new System.EventHandler(this.btnPesaje_Click);
             // 
+            // btnAjusteStock
+            // 
+            this.btnAjusteStock.Image = ((System.Drawing.Image)(resources.GetObject("btnAjusteStock.Image")));
+            this.btnAjusteStock.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnAjusteStock.Name = "btnAjusteStock";
+            this.btnAjusteStock.Size = new System.Drawing.Size(44, 35);
+            this.btnAjusteStock.Text = "&Ajuste";
+            this.btnAjusteStock.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnAjusteStock.Click += new System.EventHandler(this.btnAjusteStock_Click);
+            // 
             // grillaCompras
             // 
             this.grillaCompras.AllowDrop = true;
@@ -363,9 +374,9 @@
             // fechaCompra
             // 
             this.fechaCompra.DataPropertyName = "fechaCompra";
-            dataGridViewCellStyle3.Format = "g";
-            dataGridViewCellStyle3.NullValue = null;
-            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Format = "g";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaCompra.FillWeight = 60F;
             this.fechaCompra.HeaderText = "Fecha";
             this.fechaCompra.Name = "fechaCompra";
@@ -410,10 +421,10 @@
             // cantKg
             // 
             this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle4.Format = "N2";
-            dataGridViewCellStyle4.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.cantKg.DefaultCellStyle = dataGridViewCellStyle2;
             this.cantKg.FillWeight = 42.98663F;
             this.cantKg.HeaderText = "Cant. Kgs";
             this.cantKg.Name = "cantKg";
@@ -519,16 +530,6 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(759, 1);
             this.panel1.TabIndex = 23;
-            // 
-            // btnAjusteStock
-            // 
-            this.btnAjusteStock.Image = ((System.Drawing.Image)(resources.GetObject("btnAjusteStock.Image")));
-            this.btnAjusteStock.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnAjusteStock.Name = "btnAjusteStock";
-            this.btnAjusteStock.Size = new System.Drawing.Size(44, 35);
-            this.btnAjusteStock.Text = "&Ajuste";
-            this.btnAjusteStock.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.btnAjusteStock.Click += new System.EventHandler(this.btnAjusteStock_Click);
             // 
             // formStock
             // 
