@@ -1215,18 +1215,22 @@ namespace Presentacion.Caja
             catch (Exception ex)
             {
                 txtCantKgs.Text = "Error balanza";
-                timer1.Enabled = false;
-                if (FormPrincipal.logueado && Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                {
-                    dejarDeLeerPeso = true;
-                    checkLeerPeso.Checked = false;
-                }
-                else
-                {
-                    lblErrorBalanza.Text = ex.Message;
-                    lblErrorBalanza.Visible = true;
-                    timer1.Enabled = true;
-                }
+                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Visible = true;
+
+                //txtCantKgs.Text = "Error balanza";
+                //timer1.Enabled = false;
+                //if (FormPrincipal.logueado && Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                //{
+                //    dejarDeLeerPeso = true;
+                //    checkLeerPeso.Checked = false;
+                //}
+                //else
+                //{
+                //    lblErrorBalanza.Text = ex.Message;
+                //    lblErrorBalanza.Visible = true;
+                //    timer1.Enabled = true;
+                //}
             }
         }
 
@@ -1253,6 +1257,7 @@ namespace Presentacion.Caja
                     txtCantKgs.TabStop = true;
                     txtCantKgs.Focus();
                     timer1.Enabled = false;
+                    lblErrorBalanza.Visible = false;
                 }
             }
             catch (Exception ex)
