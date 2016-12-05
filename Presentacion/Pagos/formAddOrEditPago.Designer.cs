@@ -121,6 +121,7 @@
             this.comboSucursal.Size = new System.Drawing.Size(158, 24);
             this.comboSucursal.TabIndex = 52;
             this.comboSucursal.TabStop = false;
+            this.comboSucursal.SelectedValueChanged += new System.EventHandler(this.comboSucursal_SelectedValueChanged);
             // 
             // label13
             // 

@@ -29,6 +29,9 @@ namespace Presentacion.CuentaCorriente
             {
                 grillaCtasCtes.DataSource = oCtaCteN.obtenerCtasCtes(txtDescripcion.Text);
                 grillaCtasCtes.AutoGenerateColumns = false;
+
+                //formato
+                grillaCtasCtes.Columns["Saldo"].DefaultCellStyle.Format = "F2";
             }
             catch (Exception ex)
             {

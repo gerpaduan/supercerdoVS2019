@@ -24,6 +24,7 @@ namespace Presentacion.Pagos
         public Entidades.Usuario oUsuario;
         
         public int idPago = 0;
+        bool comboSucursalCargada = false;
         bool huboModif = true;
         bool modificar = false;
         bool readOnly = false;
@@ -106,6 +107,7 @@ namespace Presentacion.Pagos
             comboSucursal.SelectedIndex = idSucursal - 1;
 
             txtSucursal.Text = comboSucursal.Text;
+            comboSucursalCargada = true;
         }
 
         private void btnBuscarProv_Click(object sender, EventArgs e)
@@ -239,6 +241,7 @@ namespace Presentacion.Pagos
             {
                 ultimaValidacion = true;
 
+                oPagoE.Sucursal = oSucursalE;
                 oPagoE.NroRecibo = txtNroRecibo.Text.Trim();
                 oPagoE.Persona = oPersonaE;
                 oPagoE.FormaPago = comboTipoPago.Text.Trim();
@@ -363,6 +366,21 @@ namespace Presentacion.Pagos
                 {
                     panelCheque.Visible = true;
                 }
+            }
+        }
+
+        private void comboSucursal_SelectedValueChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (comboSucursalCargada)
+                {
+                    oSucursalE = oSucursalN.findById(Convert.ToInt32(comboSucursal.SelectedValue));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al obtener la sucursal");
             }
         }
 

@@ -100,6 +100,10 @@ namespace Presentacion.CuentaCorriente
                 grillaMovCtaCte.Columns["razonSocial"].Visible = false;
                 grillaMovCtaCte.Columns["id"].Visible = true;// false;
 
+                //formato
+                grillaMovCtaCte.Columns["importe"].DefaultCellStyle.Format = "F2";
+                grillaMovCtaCte.Columns["Saldo"].DefaultCellStyle.Format = "F2";
+
                 grillaMovCtaCte.Rows[0].Selected =false;
 
                 lblActualizar.Visible = false;
