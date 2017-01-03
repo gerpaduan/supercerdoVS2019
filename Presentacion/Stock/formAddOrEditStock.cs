@@ -1084,9 +1084,27 @@ namespace Presentacion
 
         private void btnVerAcum_Click(object sender, EventArgs e)
         {
-            //cargarListaEnGrilla();
+            ///Se crea nueva lista porque usando la lista que carga la grilla acumula los kgs
+            ///de los cortes que se repiten.
+            List<CortesPorCompra> listEnGrilla = new List<CortesPorCompra>();
+            foreach (Entidades.CortePorCompra corte in listaCortePorCompra)
+            {
+                cortesPorCompra = new CortesPorCompra();
+
+                cortesPorCompra.Index = corte.IdCortePorCompra;
+                cortesPorCompra.codigo = corte.corte.codigo;
+                cortesPorCompra.corte = corte.corte.corte;
+                cortesPorCompra.cantKgs = corte.cantKgs;
+                cortesPorCompra.precioKg = corte.precioKg;
+                cortesPorCompra.totalS = corte.precioKg * corte.cantKgs;
+                cortesPorCompra.sucursal = corte.sucursal.SucursalNombre;
+                cortesPorCompra.Creado = corte.Creado;
+
+                listEnGrilla.Add(cortesPorCompra);
+            }
+
             Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
-            formVerAcum.verAcumulados(null, listaCortesEnGrilla, Presentacion.Movimientos.formVerAcumulados.tipoAcum.stock);// (listaCortesPorMovimiento);
+            formVerAcum.verAcumulados(null, listEnGrilla, Presentacion.Movimientos.formVerAcumulados.tipoAcum.stock);// (listaCortesPorMovimiento);
             formVerAcum.ShowDialog();
         }
 
