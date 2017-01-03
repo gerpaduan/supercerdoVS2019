@@ -12,6 +12,7 @@ using Presentacion.Caja;
 using System.Configuration;
 using System.Collections;
 using System.Reflection;
+using Utilidades;
 
 namespace Presentacion.Caja
 {
@@ -1217,6 +1218,7 @@ namespace Presentacion.Caja
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
+                //timer1.Enabled = false;
 
                 //txtCantKgs.Text = "Error balanza";
                 //timer1.Enabled = false;
