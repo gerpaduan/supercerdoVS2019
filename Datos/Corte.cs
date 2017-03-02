@@ -731,6 +731,30 @@ namespace Datos
             return listaCortesPorMovimiento;
         }
 
+
+        public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        {
+            DataTable dtLineasMov = new DataTable();
+
+            daCorte = new SqlDataAdapter();
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "obtenerLineasMov";
+            cmCorte.Parameters.AddWithValue("@sucOrigen", sucOrigen);
+            cmCorte.Parameters.AddWithValue("@sucDestino", sucDestino);
+            cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtLineasMov);
+
+            return dtLineasMov;
+        }
+
         public int agregarActualizacionStock(DateTime fechaActualizacion, string observaciones)
          {
              cmCorte = new SqlCommand();

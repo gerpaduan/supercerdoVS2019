@@ -148,6 +148,12 @@ namespace Negocio
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 
+         public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
+         {
+             oCorteD = new Datos.Corte();
+             return oCorteD.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
+         }
+
          public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
          {
              oCorteD = new Datos.Corte();

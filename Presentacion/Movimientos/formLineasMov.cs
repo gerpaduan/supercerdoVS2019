@@ -13,7 +13,7 @@ using System.Configuration;
 
 namespace Presentacion
 {
-    public partial class formMovimientos : formBaseColor
+    public partial class formLineasMov : formBaseColor
     {
         Negocio.Corte oCorteN = new Negocio.Corte();
 
@@ -22,7 +22,7 @@ namespace Presentacion
         Entidades.Sucursal oSucursalDestino = new Entidades.Sucursal();
         Entidades.Movimiento oMovimientoE = new Entidades.Movimiento();
 
-        DataTable dtMovimientos = new DataTable();
+        DataTable dtLineasMov = new DataTable();
         DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
  
@@ -30,12 +30,12 @@ namespace Presentacion
 
         bool cargar = false;
 
-        public formMovimientos()
+        public formLineasMov()
         {
             InitializeComponent();
         }
         
-        private void formMovimientos_Load(object sender, EventArgs e)
+        private void formLineasMov_Load(object sender, EventArgs e)
         {
             try
             {
@@ -48,11 +48,12 @@ namespace Presentacion
             catch (Exception ex)
             {
                 if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
-                    formMovimientos_Load(null, null);
+                    formLineasMov_Load(null, null);
 
                 this.Close();
             }
-        }
+        
+        }  
 
         private void cargarSucursales()
         {
@@ -77,6 +78,10 @@ namespace Presentacion
             {
                 if (cargar)
                 {
+
+                    lblCargando.Visible = true;
+                    lblActualizar.Visible = false;
+
                     grillaMovimientos.DataSource = null;
 
                     string sucOrigen, SucDestino;
@@ -84,9 +89,11 @@ namespace Presentacion
                     sucOrigen = (Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()) > 0) ? comboSucOrigen.Text : "";
                     SucDestino = (Convert.ToInt32(comboSucDestino.SelectedValue.ToString()) > 0) ? comboSucDestino.Text : "";
 
-                    dtMovimientos = oCorteN.obtenerMovimientos(sucOrigen, SucDestino, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, txtDescripcion.Text.Trim());
-                    grillaMovimientos.DataSource = dtMovimientos;
+                    dtLineasMov = oCorteN.obtenerLineasMov(sucOrigen, SucDestino, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, txtDescripcion.Text.Trim());
+                    grillaMovimientos.DataSource = dtLineasMov;
                     formatearGrilla();
+
+                    lblCargando.Visible = false;
                 }
             }
             catch (Exception ex)
@@ -132,42 +139,8 @@ namespace Presentacion
                 {
                     formInfoMovimiento frmInfoMovimiento = new formInfoMovimiento();
                     frmInfoMovimiento.idMovimiento = idMovimiento;
-                    frmInfoMovimiento.frmMovimiento = this;
+                    //frmInfoMovimiento.frmMovimiento = this;
                     frmInfoMovimiento.Show();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
-
-        private void nuevo_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                int idMovimiento = 0;
-                bool formAbierto = false;
-                foreach (Form frm in Application.OpenForms)
-                {
-                    if (frm.GetType() == typeof(formNuevoMovimiento))
-                    {
-                        foreach (Control ctrl in frm.Controls)
-                        {
-                            if (ctrl.Name.Equals("idMovimientoLabel") && ctrl.Text.Equals(idMovimiento.ToString()))
-                            {
-                                frm.BringToFront();
-                                formAbierto = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!formAbierto)
-                {
-                    formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
-                    frmNuevoMovimiento.obtenerForm(this);
-                    frmNuevoMovimiento.Show();
                 }
             }
             catch (Exception ex)
@@ -206,20 +179,6 @@ namespace Presentacion
             cargarGrilla();
         }
 
-        private void actualizar_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string ruta = ConfigurationManager.AppSettings["rutaActualizarMovimientos"].ToString();
-                System.Diagnostics.Process.Start(ruta);
-                cargarGrilla();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ocurrió un error al actualizar los movimientos.\n\n" + ex.Message);
-            }
-        }
-
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
@@ -229,24 +188,19 @@ namespace Presentacion
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private void LineasMov_Click(object sender, EventArgs e)
+        private void txtDescripcion_KeyDown(object sender, KeyEventArgs e)
         {
-            if (Application.OpenForms["formLineasMov"] != null)
+            lblActualizar.Visible = true;
+            if (e.KeyValue.Equals(13))
             {
-                Application.OpenForms["formLineasMov"].Activate();
-                Application.OpenForms["formLineasMov"].WindowState = FormWindowState.Normal;
-            }
-            else
-            {
-                formLineasMov frmLineasMov = new formLineasMov();
-                frmLineasMov.Show();
+                cargarGrilla();
             }
         }
 
-        private void menuDuplicar_Click(object sender, EventArgs e)
+        private void txtFechaDesde_ValueChanged(object sender, EventArgs e)
         {
-            formMovimientos frmMovimientosDuplicar = new formMovimientos();
-            frmMovimientosDuplicar.Show();
-        }     
+            lblActualizar.Visible = true;
+        }
+   
     }
 }
