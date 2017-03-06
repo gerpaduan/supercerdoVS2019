@@ -87,10 +87,16 @@ namespace Negocio
         }
 
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
-         {
-             oCorteD = new Datos.Corte();
-             return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
-         }
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
+        }
+
+        public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
+        }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {

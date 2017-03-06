@@ -1,6 +1,6 @@
 ﻿namespace Presentacion
 {
-    partial class formEmbutidos
+    partial class formLineasEmb
     {
         /// <summary>
         /// Required designer variable.
@@ -28,15 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formEmbutidos));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formLineasEmb));
             this.btnSalir = new System.Windows.Forms.Button();
             this.grillaEmbutidos = new System.Windows.Forms.DataGridView();
-            this.barraControl = new System.Windows.Forms.ToolStrip();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.btnBuscaProd = new System.Windows.Forms.Button();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
@@ -48,11 +48,7 @@
             this.label8 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSeleccionar = new System.Windows.Forms.Button();
-            this.btnBuscaProd = new System.Windows.Forms.Button();
-            this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.LineasEmb = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).BeginInit();
-            this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -76,30 +72,16 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaEmbutidos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaEmbutidos.Location = new System.Drawing.Point(10, 124);
+            this.grillaEmbutidos.Location = new System.Drawing.Point(10, 79);
             this.grillaEmbutidos.MultiSelect = false;
             this.grillaEmbutidos.Name = "grillaEmbutidos";
             this.grillaEmbutidos.ReadOnly = true;
             this.grillaEmbutidos.RowHeadersVisible = false;
             this.grillaEmbutidos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaEmbutidos.Size = new System.Drawing.Size(861, 368);
+            this.grillaEmbutidos.Size = new System.Drawing.Size(861, 413);
             this.grillaEmbutidos.TabIndex = 11;
             this.grillaEmbutidos.Sorted += new System.EventHandler(this.grillaEmbutidos_Sorted);
             this.grillaEmbutidos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaEmbutidos_CellDoubleClick);
-            // 
-            // barraControl
-            // 
-            this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.nuevo,
-            this.LineasEmb});
-            this.barraControl.Location = new System.Drawing.Point(0, 0);
-            this.barraControl.Name = "barraControl";
-            this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(883, 45);
-            this.barraControl.TabIndex = 13;
-            this.barraControl.TabStop = true;
-            this.barraControl.Text = "toolStrip1";
             // 
             // pnlBuscar
             // 
@@ -118,7 +100,7 @@
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Controls.Add(this.fechaHasta);
             this.pnlBuscar.Controls.Add(this.label4);
-            this.pnlBuscar.Location = new System.Drawing.Point(-1, 45);
+            this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(884, 73);
             this.pnlBuscar.TabIndex = 14;
@@ -169,6 +151,18 @@
             this.label7.Size = new System.Drawing.Size(55, 15);
             this.label7.TabIndex = 40;
             this.label7.Text = "Sucursal";
+            // 
+            // btnBuscaProd
+            // 
+            this.btnBuscaProd.AccessibleDescription = "";
+            this.btnBuscaProd.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscaProd.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscaProd.Image")));
+            this.btnBuscaProd.Location = new System.Drawing.Point(251, 35);
+            this.btnBuscaProd.Name = "btnBuscaProd";
+            this.btnBuscaProd.Size = new System.Drawing.Size(28, 24);
+            this.btnBuscaProd.TabIndex = 15;
+            this.btnBuscaProd.UseVisualStyleBackColor = true;
+            this.btnBuscaProd.Click += new System.EventHandler(this.btnBuscaProd_Click);
             // 
             // txtDescripcion
             // 
@@ -300,41 +294,7 @@
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
-            // btnBuscaProd
-            // 
-            this.btnBuscaProd.AccessibleDescription = "";
-            this.btnBuscaProd.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscaProd.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscaProd.Image")));
-            this.btnBuscaProd.Location = new System.Drawing.Point(251, 35);
-            this.btnBuscaProd.Name = "btnBuscaProd";
-            this.btnBuscaProd.Size = new System.Drawing.Size(28, 24);
-            this.btnBuscaProd.TabIndex = 15;
-            this.btnBuscaProd.UseVisualStyleBackColor = true;
-            this.btnBuscaProd.Click += new System.EventHandler(this.btnBuscaProd_Click);
-            // 
-            // nuevo
-            // 
-            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
-            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.nuevo.Name = "nuevo";
-            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "&Nuevo";
-            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
-            // 
-            // LineasEmb
-            // 
-            this.LineasEmb.Image = ((System.Drawing.Image)(resources.GetObject("LineasEmb.Image")));
-            this.LineasEmb.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.LineasEmb.Name = "LineasEmb";
-            this.LineasEmb.Size = new System.Drawing.Size(74, 42);
-            this.LineasEmb.Text = "Lineas Emb.";
-            this.LineasEmb.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.LineasEmb.Click += new System.EventHandler(this.LineasEmb_Click);
-            // 
-            // formEmbutidos
+            // formLineasEmb
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -345,16 +305,13 @@
             this.Controls.Add(this.txtTotalKg);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.pnlBuscar);
-            this.Controls.Add(this.barraControl);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.grillaEmbutidos);
-            this.Name = "formEmbutidos";
+            this.Name = "formLineasEmb";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Embutidos / Otros";
-            this.Load += new System.EventHandler(this.formEmbutidos_Load);
+            this.Text = "Lineas Embutido";
+            this.Load += new System.EventHandler(this.formLineasEmb_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).EndInit();
-            this.barraControl.ResumeLayout(false);
-            this.barraControl.PerformLayout();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.ResumeLayout(false);
@@ -366,8 +323,6 @@
 
         protected System.Windows.Forms.Button btnSalir;
         private System.Windows.Forms.DataGridView grillaEmbutidos;
-        protected System.Windows.Forms.ToolStrip barraControl;
-        protected System.Windows.Forms.ToolStripButton nuevo;
         protected System.Windows.Forms.Panel pnlBuscar;
         protected internal System.Windows.Forms.Button btnBuscaProd;
         private System.Windows.Forms.TextBox txtDescripcion;
@@ -386,6 +341,5 @@
         private System.Windows.Forms.GroupBox groupBox1;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Label lblActualizar;
-        private System.Windows.Forms.ToolStripButton LineasEmb;
     }
 }

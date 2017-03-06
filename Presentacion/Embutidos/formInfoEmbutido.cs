@@ -130,7 +130,7 @@ namespace Presentacion.Embutidos
 
         private void cargarGrillaFormEmbutidos()
         {
-            frmEmbutidos.cargarGrilla();
+            //frmEmbutidos.cargarGrilla();
             this.Close();
         }
 

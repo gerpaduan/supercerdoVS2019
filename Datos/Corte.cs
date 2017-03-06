@@ -240,6 +240,28 @@ namespace Datos
             return dtCortes;
         }
 
+        public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtCortes = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "obtenerLineasEmb";
+            cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+            cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            cmCorte.Connection.Open();
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtCortes);
+            cmCorte.Connection.Close();
+
+            return dtCortes;
+        }
+
         public DataTable obtenerInfoCorte(int idCorte)
         {
             DataTable dtCorte = new DataTable();

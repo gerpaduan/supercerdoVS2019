@@ -12,7 +12,7 @@ using System.Configuration;
 
 namespace Presentacion
 {
-    public partial class formEmbutidos : Form, InterfaceUsuario
+    public partial class formLineasEmb : Form, InterfaceUsuario
     {
         bool esVentaClientes=false;
 
@@ -32,9 +32,37 @@ namespace Presentacion
         int cantDiasLimitFechaDesde = Convert.ToInt32(ConfigurationManager.AppSettings["cantDiasLimitFechaDesde"].ToString());
         DateTime limitFechaDesde;
         bool cargar = false;
-        public formEmbutidos()
+
+        public formLineasEmb()
         {
             InitializeComponent();        
+        }
+
+        private void formLineasEmb_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                if (EsVentaClientes)
+                {
+                    this.Text = "Embutidos/Ventas Clientes/Otros";
+                }
+                DateTime today = DateTime.Today;
+                fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
+                limitFechaDesde = today.AddDays(-cantDiasLimitFechaDesde);
+                fechaDesde.Value = limitFechaDesde;
+                cargarSucursal();
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formLineasEmb_Load(null, null);
+
+                this.Close();
+            }
+
         }
 
         public void cargarGrilla()
@@ -46,7 +74,7 @@ namespace Presentacion
                     dtEmbutidos = null;
                     grillaEmbutidos.DataSource = null;
                     grillaEmbutidos.AutoGenerateColumns = true;
-                    dtEmbutidos = oCorteN.buscarEmbutido(Convert.ToInt32(comboSucursal.SelectedValue), txtDescripcion.Text.Trim(), fechaDesde.Value, fechaHasta.Value);
+                    dtEmbutidos = oCorteN.obtenerLineasEmb(Convert.ToInt32(comboSucursal.SelectedValue), txtDescripcion.Text.Trim(), fechaDesde.Value, fechaHasta.Value);
                     grillaEmbutidos.DataSource = dtEmbutidos;
 
                     formatearGrilla();
@@ -101,31 +129,10 @@ namespace Presentacion
             else
             {
                 formInfoEmbutido frmInfoEmbutido = new formInfoEmbutido();
-                frmInfoEmbutido.frmEmbutidos = this;
+                //frmInfoEmbutido.frmEmbutidos = this;
                 frmInfoEmbutido.idEmbutido_ = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["Id"].Value.ToString());
                 frmInfoEmbutido.Show();
             }            
-        }
-
-        private void nuevo_Click(object sender, EventArgs e)
-        {
-            
-            if (Application.OpenForms["formIngresoEmbutido"] != null)
-            {
-
-                Application.OpenForms["formIngresoEmbutido"].Activate();
-                Application.OpenForms["formIngresoEmbutido"].WindowState = FormWindowState.Normal;
-            }
-            else
-            {
-                FormLoginVendedor frmLogin = new FormLoginVendedor();
-                frmLogin.ShowDialog(this);
-                formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();
-                frmIngresoEmbutido.oUsuario = oUsuario;
-                frmIngresoEmbutido.frmEmbutidos = this;
-                frmIngresoEmbutido.Show();
-            }
-            oUsuario = null;
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -161,33 +168,6 @@ namespace Presentacion
         private void modificar_Click(object sender, EventArgs e)
         {
             informacionEmbutido();
-        }
-
-        private void formEmbutidos_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                this.Text += Utilidades.Conexion.getSucursalConexion();
-                if (EsVentaClientes)
-                {
-                    this.Text = "Embutidos/Ventas Clientes/Otros";
-                }
-                DateTime today = DateTime.Today;
-                fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
-                limitFechaDesde = today.AddDays(-cantDiasLimitFechaDesde);
-                fechaDesde.Value = limitFechaDesde;
-                cargarSucursal();
-                cargar = true;
-                cargarGrilla();  
-            }
-            catch (Exception ex)
-            {
-                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
-                    formEmbutidos_Load(null, null);
-
-                this.Close();
-            }
-             
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -230,20 +210,6 @@ namespace Presentacion
                 fechaDesde.Value = limitFechaDesde;
             }
             lblActualizar.Visible = true;
-        }
-
-        private void LineasEmb_Click(object sender, EventArgs e)
-        {
-            if (Application.OpenForms["formLineasEmb"] != null)
-            {
-                Application.OpenForms["formLineasEmb"].Activate();
-                Application.OpenForms["formLineasEmb"].WindowState = FormWindowState.Normal;
-            }
-            else
-            {
-                formLineasEmb frmLineasEmb = new formLineasEmb();
-                frmLineasEmb.Show();
-            }
         }
     }
 }
