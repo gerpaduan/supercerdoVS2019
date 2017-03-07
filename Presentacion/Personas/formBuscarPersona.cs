@@ -17,17 +17,21 @@ namespace Presentacion.Personas
         {
             InitializeComponent();
             cargarGrilla();
-            txtBuscar.Focus();
+            txtBuscar.Focus(); 
+            
         }
 
         public void cargarGrilla()
         {
+            grillaPersonas.ClearSelection();
             oPersonaN = new Negocio.Persona();
             grillaPersonas.AutoGenerateColumns = false;
 
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBuscar.Text.Trim());
 
             oPersonaN = null;
+
+            grillaPersonas.ClearSelection();
         }
 
         public void buscarPersona()
@@ -38,6 +42,7 @@ namespace Presentacion.Personas
             grillaPersonas.AutoGenerateColumns = false;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
             oPersonaN = null;
+
         }
 
         public void enviarPersona()
@@ -45,6 +50,9 @@ namespace Presentacion.Personas
             Entidades.Persona oPersonaE = new Entidades.Persona();
             try
             {
+                if (!grillaPersonas.CurrentRow.Selected)
+                    throw new Exception();
+
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
                 oPersonaN = new Negocio.Persona();
                 oPersonaE = oPersonaN.findById(idPersona);
@@ -54,12 +62,12 @@ namespace Presentacion.Personas
                 {
                     formInterface.EnviarPersona(oPersonaE);
                 }
+                this.Close();
             }
             catch (Exception)
             {
-                MessageBox.Show("No se seleccionó ningún cliente");
+                MessageBox.Show("No se seleccionó ningún cliente.\n\nSeleccione un Cliente o presione Cerrar para no seleccionar.");
             }
-            this.Close();
         }
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
@@ -127,6 +135,12 @@ namespace Presentacion.Personas
             formNuevaPersona frmNuevaPersona = new formNuevaPersona();
             frmNuevaPersona.ShowDialog();
             cargarGrilla();
+        }
+
+        private void formBuscarPersona_Activated(object sender, EventArgs e)
+        {
+            grillaPersonas.ClearSelection();
+
         }
     }
 }
