@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Caja;
+using System.Configuration;
 
 namespace Presentacion
 {
@@ -28,6 +29,8 @@ namespace Presentacion
 
         Entidades.Usuario oUsuario;
 
+        int cantDiasLimitFechaDesde = Convert.ToInt32(ConfigurationManager.AppSettings["cantDiasLimitFechaDesde"].ToString());
+        DateTime limitFechaDesde;
         bool cargar = false;
         public formEmbutidos()
         {
@@ -47,8 +50,8 @@ namespace Presentacion
                     grillaEmbutidos.DataSource = dtEmbutidos;
 
                     formatearGrilla();
-
                     cargarCampoTotal();
+                    lblActualizar.Visible = false;
                 }
                 catch (Exception ex)
                 {
@@ -65,11 +68,10 @@ namespace Presentacion
                 {
                     grillaEmbutidos.Rows[index].DefaultCellStyle.BackColor = Color.SandyBrown;
                 }
-                string d = grillaEmbutidos.Rows[index].Cells["Estado"].ToString();
-                string e = grillaEmbutidos["Estado", index].Value.ToString();
             }
             grillaEmbutidos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
+            grillaEmbutidos.Columns["Kgs"].DefaultCellStyle.Format = "F3";
             //formato para columna de fechas
             grillaEmbutidos.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEmbutidos.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
@@ -91,29 +93,6 @@ namespace Presentacion
 
         private void informacionEmbutido()
         {
-            //Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
-
-            //oEmbutidoE.idEmbutido = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idEmbutido"].Value.ToString());
-            //oEmbutidoE.fechaEmbutido = Convert.ToDateTime(grillaEmbutidos.CurrentRow.Cells["fechaEmbutido"].Value.ToString());
-            
-            ////creo Corte correspondiente al embutido y lo asigno
-            //Entidades.Corte oCorteE = new Entidades.Corte();
-            //oCorteE.idCorte = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorte"].Value.ToString());
-            //oCorteE.codigo = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["codigo"].Value.ToString());
-            //oCorteE.corte = grillaEmbutidos.CurrentRow.Cells["corte"].Value.ToString();
-
-            //oEmbutidoE.corte = oCorteE;
-            
-            //oEmbutidoE.estado = grillaEmbutidos.CurrentRow.Cells["estado"].Value.ToString();
-            //oEmbutidoE.observaciones = grillaEmbutidos.CurrentRow.Cells["observaciones"].Value.ToString();
-
-            ////creo sucursal y lo asigno al embutido
-            //Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-            //oSucursalE.idSucursal = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idSucursal"].Value.ToString());
-            //oSucursalE.sucursal = grillaEmbutidos.CurrentRow.Cells["sucursal"].Value.ToString();
-
-            //oEmbutidoE.sucursal = oSucursalE;
-
             if (Application.OpenForms["formInfoEmbutido"] != null)
             {
                 Application.OpenForms["formInfoEmbutido"].Activate();
@@ -122,7 +101,6 @@ namespace Presentacion
             else
             {
                 formInfoEmbutido frmInfoEmbutido = new formInfoEmbutido();
-                //frmInfoEmbutido.obtenerParametros(oEmbutidoE, this);
                 frmInfoEmbutido.frmEmbutidos = this;
                 frmInfoEmbutido.idEmbutido_ = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["Id"].Value.ToString());
                 frmInfoEmbutido.Show();
@@ -187,16 +165,29 @@ namespace Presentacion
 
         private void formEmbutidos_Load(object sender, EventArgs e)
         {
-            if (EsVentaClientes)
+            try
             {
-                this.Text = "Embutidos/Ventas Clientes/Otros";
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                if (EsVentaClientes)
+                {
+                    this.Text = "Embutidos/Ventas Clientes/Otros";
+                }
+                DateTime today = DateTime.Today;
+                fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
+                limitFechaDesde = today.AddDays(-cantDiasLimitFechaDesde);
+                fechaDesde.Value = limitFechaDesde;
+                cargarSucursal();
+                cargar = true;
+                cargarGrilla();  
             }
-            DateTime today = DateTime.Today;
-            fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
-            fechaDesde.Value = today.AddDays(-8);            
-            cargarSucursal();
-            cargar = true;
-            cargarGrilla();   
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formEmbutidos_Load(null, null);
+
+                this.Close();
+            }
+             
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -224,6 +215,35 @@ namespace Presentacion
         private void grillaEmbutidos_Sorted(object sender, EventArgs e)
         {
             formatearGrilla();
+        }
+
+        private void btnSeleccionar_Click(object sender, EventArgs e)
+        {
+            informacionEmbutido();
+        }
+
+        private void txtDescripcion_TextChanged(object sender, EventArgs e)
+        {
+            if (!FormPrincipal.logueado && fechaDesde.Value < limitFechaDesde)
+            {
+                MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                fechaDesde.Value = limitFechaDesde;
+            }
+            lblActualizar.Visible = true;
+        }
+
+        private void LineasEmb_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formLineasEmb"] != null)
+            {
+                Application.OpenForms["formLineasEmb"].Activate();
+                Application.OpenForms["formLineasEmb"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formLineasEmb frmLineasEmb = new formLineasEmb();
+                frmLineasEmb.Show();
+            }
         }
     }
 }

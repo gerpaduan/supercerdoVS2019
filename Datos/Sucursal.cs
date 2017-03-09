@@ -19,7 +19,6 @@ namespace Datos
             daSucursal.Fill(dtSucursal);
 
             return dtSucursal;
-
         }
 
         public Entidades.Sucursal findById(int id)
@@ -55,5 +54,40 @@ namespace Datos
 
             return dtSucursal;
         }
+
+        public DataTable obtenerConexiones(bool? mostrarEnPrincipal, bool? mostrarEnStockActual)
+        {
+            DataTable dtConexiones = new DataTable();
+            string consulta = "Select * from Conexiones WHERE 1=1 ";
+            consulta += mostrarEnPrincipal == null ? " AND 1=1" : " AND mostrarEnPrincipal = " +
+                (Convert.ToBoolean(mostrarEnPrincipal) ? 1 : 0);
+            consulta += mostrarEnStockActual == null ? " AND 1=1" : " AND mostrarEnStockActual = " + 
+                (Convert.ToBoolean(mostrarEnStockActual) ? 1 : 0);
+            daSucursal = new SqlDataAdapter(consulta, conn.conectar());
+            daSucursal.Fill(dtConexiones);
+
+            return dtConexiones;
+        }
+
+        public int getIdSucursalByConexion(string nameConnString)
+        {
+            SqlCommand cmSucursal = new SqlCommand();
+
+            cmSucursal.Connection = conn.conectar();
+
+            cmSucursal.CommandText = "select top 1 idSucursal from Conexiones where name = \'" + nameConnString + "\'";
+            cmSucursal.Connection.Open();
+            SqlDataReader drSucursal = cmSucursal.ExecuteReader();
+
+            int idSucursal = 0;
+            while (drSucursal.Read())
+            {
+                idSucursal = Convert.ToInt32(drSucursal["idSucursal"].ToString());
+            }
+
+            conn.cerraConexion();
+            return idSucursal;
+        }
+
     }
 }

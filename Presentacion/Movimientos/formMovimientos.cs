@@ -33,45 +33,42 @@ namespace Presentacion
         public formMovimientos()
         {
             InitializeComponent();
-            cargarSucursales();
-            txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
-            cargar = true;
-            cargarGrilla();
+        }
+        
+        private void formMovimientos_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursales();
+                txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formMovimientos_Load(null, null);
+
+                this.Close();
+            }
         }
 
         private void cargarSucursales()
         {
             //Suc. Origen
-            dtSucursalOrigen = oSucursalN.obtenerSucursales();
-
-            DataRow nuevaFilaOrigen = dtSucursalOrigen.NewRow();
-
-            nuevaFilaOrigen[0] = 3;
-            nuevaFilaOrigen[1] = "Todas";
-
-            dtSucursalOrigen.Rows.Add(nuevaFilaOrigen);
-
+            dtSucursalOrigen = oSucursalN.obtenerSucursalesConTodas();
             comboSucOrigen.DataSource = dtSucursalOrigen;
             comboSucOrigen.DisplayMember = "sucursal";
             comboSucOrigen.ValueMember = "idSucursal";
-            comboSucOrigen.SelectedIndex = 2;//todas
-            
+            comboSucOrigen.SelectedIndex = 0;//todas            
 
             //Suc. destino
-            dtSucursalDestino = oSucursalN.obtenerSucursales();
-
-            DataRow nuevaFilaDestino = dtSucursalDestino.NewRow();
-
-            nuevaFilaDestino[0] = 3;
-            nuevaFilaDestino[1] = "Todas";
-
-            dtSucursalDestino.Rows.Add(nuevaFilaDestino);
-
+            dtSucursalDestino = oSucursalN.obtenerSucursalesConTodas();
             comboSucDestino.DataSource = dtSucursalDestino;
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
-            comboSucDestino.SelectedIndex = 2;//Todas
-
+            comboSucDestino.SelectedIndex = 0;//Todas
         }
 
         public void cargarGrilla()
@@ -80,21 +77,16 @@ namespace Presentacion
             {
                 if (cargar)
                 {
-
                     grillaMovimientos.DataSource = null;
 
-                    string sucOrigen = comboSucOrigen.Text, SucDestino = comboSucDestino.Text;
+                    string sucOrigen, SucDestino;
 
-                    if (sucOrigen == "Todas")
-                    {
-                        sucOrigen = "";
-                    }
-                    if (SucDestino == "Todas")
-                    {
-                        SucDestino = "";
-                    }
+                    sucOrigen = (Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()) > 0) ? comboSucOrigen.Text : "";
+                    SucDestino = (Convert.ToInt32(comboSucDestino.SelectedValue.ToString()) > 0) ? comboSucDestino.Text : "";
+
                     dtMovimientos = oCorteN.obtenerMovimientos(sucOrigen, SucDestino, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, txtDescripcion.Text.Trim());
                     grillaMovimientos.DataSource = dtMovimientos;
+                    formatearGrilla();
                 }
             }
             catch (Exception ex)
@@ -103,53 +95,84 @@ namespace Presentacion
             }
         }
 
-        private void infoMovimiento()
+        private void formatearGrilla()
         {
-            cargarMovimiento();
-            
-            if (Application.OpenForms["formInfoMovimiento"] != null)
-            {
+            grillaMovimientos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            grillaMovimientos.Columns["observaciones"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
 
-                Application.OpenForms["formInfoMovimiento"].Activate();
-                Application.OpenForms["formInfoMovimiento"].WindowState = FormWindowState.Normal;
-
-            }
-            else
-            {
-
-                formInfoMovimiento frmInfoMovimiento = new formInfoMovimiento();
-                frmInfoMovimiento.obtenerParametros(this,oMovimientoE);
-                frmInfoMovimiento.Show();
-
-            }
+            //formato para columna de fechas
+            grillaMovimientos.Columns["Fecha Movimiento"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            //grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "ddd dd MMM HH:mm:ss";
+            grillaMovimientos.Columns["creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            grillaMovimientos.Columns["actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
         }
 
-        private void cargarMovimiento()
+        private void infoMovimiento()
         {
-            int idMovimiento = Convert.ToInt32(grillaMovimientos.CurrentRow.Cells["Id Movimiento"].Value.ToString());
-
-            oMovimientoE = oCorteN.cargarMovimiento(idMovimiento);
-
+            try
+            {
+                int idMovimiento = Convert.ToInt32(grillaMovimientos.CurrentRow.Cells["Id Movimiento"].Value.ToString());
+                bool formAbierto = false;
+                foreach (Form frm in Application.OpenForms)
+                {
+                    if (frm.GetType() == typeof(formInfoMovimiento))
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if (ctrl.Name.Equals("idMovimientoLabel") && ctrl.Text.Equals(idMovimiento.ToString()))
+                            {
+                                frm.BringToFront();
+                                formAbierto = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!formAbierto)
+                {
+                    formInfoMovimiento frmInfoMovimiento = new formInfoMovimiento();
+                    frmInfoMovimiento.idMovimiento = idMovimiento;
+                    frmInfoMovimiento.frmMovimiento = this;
+                    frmInfoMovimiento.Show();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void nuevo_Click(object sender, EventArgs e)
         {
-            
-            if (Application.OpenForms["formNuevoMovimiento"] != null)
+            try
             {
-
-                Application.OpenForms["formNuevoMovimiento"].Activate();
-                Application.OpenForms["formNuevoMovimiento"].WindowState = FormWindowState.Normal;
-
-
+                int idMovimiento = 0;
+                bool formAbierto = false;
+                foreach (Form frm in Application.OpenForms)
+                {
+                    if (frm.GetType() == typeof(formNuevoMovimiento))
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if (ctrl.Name.Equals("idMovimientoLabel") && ctrl.Text.Equals(idMovimiento.ToString()))
+                            {
+                                frm.BringToFront();
+                                formAbierto = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!formAbierto)
+                {
+                    formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
+                    frmNuevoMovimiento.obtenerForm(this);
+                    frmNuevoMovimiento.Show();
+                }
             }
-            else
+            catch (Exception ex)
             {
-
-                formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
-                frmNuevoMovimiento.obtenerForm(this);
-                frmNuevoMovimiento.Show();
-
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -162,7 +185,6 @@ namespace Presentacion
         {
             infoMovimiento();
         }
-
         
         private void btnCancelar_Click(object sender, EventArgs e)
         {
@@ -174,26 +196,6 @@ namespace Presentacion
             infoMovimiento();
         }
 
-        private void pnlBuscar_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void comboSucDestino_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label5_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label6_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void comboSucOrigen_TextChanged(object sender, EventArgs e)
         {
             cargarGrilla();
@@ -202,24 +204,6 @@ namespace Presentacion
         private void comboSucDestino_TextChanged(object sender, EventArgs e)
         {
             cargarGrilla();
-        }
-
-        private void formMovimientos_Load(object sender, EventArgs e)
-        {
-        }
-
-        private void Reporte_Click(object sender, EventArgs e)
-        {
-            cargarReporte();
-        }
-
-        private void cargarReporte()
-        {
-            cargarMovimiento();
-            int tipoReporte = 5;//nro perteneciente al reporte de los movimientos
-            formReporteStock frmReporte = new formReporteStock();
-            frmReporte.obtenerParametros(oMovimientoE.SucursalDestino.idSucursal, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento, tipoReporte, oMovimientoE.IdMovimiento.ToString());
-            frmReporte.Show();
         }
 
         private void actualizar_Click(object sender, EventArgs e)
@@ -234,6 +218,35 @@ namespace Presentacion
             {
                 MessageBox.Show("Ocurrió un error al actualizar los movimientos.\n\n" + ex.Message);
             }
-        }       
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void LineasMov_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formLineasMov"] != null)
+            {
+                Application.OpenForms["formLineasMov"].Activate();
+                Application.OpenForms["formLineasMov"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formLineasMov frmLineasMov = new formLineasMov();
+                frmLineasMov.Show();
+            }
+        }
+
+        private void menuDuplicar_Click(object sender, EventArgs e)
+        {
+            formMovimientos frmMovimientosDuplicar = new formMovimientos();
+            frmMovimientosDuplicar.Show();
+        }     
     }
 }

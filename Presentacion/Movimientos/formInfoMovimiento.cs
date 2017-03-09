@@ -8,14 +8,17 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Cortes;
 using Presentacion.Reportes;
+using Utilidades;
 
 namespace Presentacion.Movimientos
 {
-    public partial class formInfoMovimiento : Form
+    public partial class formInfoMovimiento : Form, InterfaceUsuario
     {
-        formMovimientos frmMovimiento;
+        public int idMovimiento;
+        public formMovimientos frmMovimiento;
 
         Entidades.Movimiento oMovimientoE = new Entidades.Movimiento();
+        public Entidades.Usuario oUsuario;
 
         List<Entidades.CortePorMovimiento> listaCortesPorMovimiento = new List<Entidades.CortePorMovimiento>();
 
@@ -30,16 +33,24 @@ namespace Presentacion.Movimientos
 
         }
 
-        public void obtenerParametros(formMovimientos frmMovimientosParam, Entidades.Movimiento movimientoParam)
+        private void formInfoMovimiento_Load(object sender, EventArgs e)
         {
-            frmMovimiento = frmMovimientosParam;
-            oMovimientoE = movimientoParam;
-
-            cargarCampos();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                oMovimientoE = oCorteN.cargarMovimiento(idMovimiento, false);
+                cargarCampos();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar el movimiento.\n\n" + ex.Message + "\n" + ex.StackTrace);
+            }
         }
 
         private void cargarCampos()
         {
+            idMovimientoLabel.Text = oMovimientoE.IdMovimiento.ToString();
+
             lblIdOrigen.Text = oMovimientoE.IdMovOrigen != null && oMovimientoE.IdMovOrigen > 0 ? 
                 oMovimientoE.IdMovOrigen.ToString() : oMovimientoE.IdMovimiento.ToString();
             lblIdDestino.Text = oMovimientoE.IdMovOrigen != null && oMovimientoE.IdMovOrigen > 0 ?
@@ -47,19 +58,20 @@ namespace Presentacion.Movimientos
 
             txtSucOrigen.Text = oMovimientoE.SucursalOrigen.sucursal;
             txtSucDestino.Text = oMovimientoE.SucursalDestino.sucursal;
-            txtFechaMovimiento.Value = oMovimientoE.FechaMovimiento;
-            txtHoraMovimiento.Text = oMovimientoE.FechaMovimiento.TimeOfDay.ToString();
+            txtFechaMovimiento.Text = Utilidades.Util_Form.fechaFormato24Horas(oMovimientoE.FechaMovimiento);
             txtObservaciones.Text = oMovimientoE.Observaciones;
-            string datosCreado = "Creado: " + oMovimientoE.Creado.ToString() + "\tModificado: " +
-                (oMovimientoE.Actualizado > DateTime.Today.AddYears(-20) ? oMovimientoE.Actualizado.ToString() : "-");
-            txtCreado.Text = datosCreado;
+
+            txtCreado.Text = Util_Form.fechaFormato24Horas(oMovimientoE.Creado);
+            txtCreadoPor.Text = oMovimientoE.CreadoPor != null ? oMovimientoE.CreadoPor.Nombre : "-";
+            txtActualizado.Text = oMovimientoE.Actualizado != null ? Util_Form.fechaFormato24Horas(oMovimientoE.Actualizado) : "-";
+            txtActualizadoPor.Text = oMovimientoE.ActualizadoPor != null ? oMovimientoE.ActualizadoPor.Nombre : "-";
 
             cargarListaCortesPorMovimiento();
         }
 
         private void cargarListaCortesPorMovimiento()
         {
-            listaCortesPorMovimiento= oCorteN.cargarCortesPorMovimiento(oMovimientoE.IdMovimiento);
+            listaCortesPorMovimiento= oCorteN.cargarCortesPorMovimiento(oMovimientoE.IdMovimiento, false);
             cargarGrilla();        
         }
 
@@ -78,10 +90,10 @@ namespace Presentacion.Movimientos
                 cortePorMovimiento.CantUnidad = lineaCorte.CantUnidad;
                 cortePorMovimiento.CantKg = lineaCorte.CantKg;
                 cortePorMovimiento.PesoBalanza = lineaCorte.PesoBalanza;
+                cortePorMovimiento.PermitirIngreso = lineaCorte.PermitirIngreso;
 
                 listaEnGrilla.Add(cortePorMovimiento);
             }
-
         }
 
         public void cargarGrilla()
@@ -105,7 +117,7 @@ namespace Presentacion.Movimientos
             }
 
             txtCantItems.Text = Convert.ToString(grillaCortesPorMovimiento.Rows.Count);
-            txtTotalKg.Text = Convert.ToString(totalKg);
+            txtTotalKg.Text = totalKg.ToString("F3");
 
         }
 
@@ -118,21 +130,42 @@ namespace Presentacion.Movimientos
 
         private void modificar_Click(object sender, EventArgs e)
         {
-            if (Application.OpenForms["formNuevoMovimiento"] != null)
+            try
             {
-                Application.OpenForms["formNuevoMovimiento"].Activate();
-            }
-            else
-            {
-
-                if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
-                    Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
+                int idMovimiento = oMovimientoE.IdMovimiento;
+                bool formAbierto = false;
+                foreach (Form frm in Application.OpenForms)
                 {
-                    formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
-                    frmNuevoMovimiento.obtenerParametros(frmMovimiento, oMovimientoE, listaCortesPorMovimiento);
-                    this.Close();
-                    frmNuevoMovimiento.Show();
+                    if (frm.GetType() == typeof(formNuevoMovimiento))
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if (ctrl.Name.Equals("idMovimientoLabel") && ctrl.Text.Equals(idMovimiento.ToString()))
+                            {
+                                frm.BringToFront();
+                                formAbierto = true;
+                                this.Close();
+                                break;
+                            }
+                        }
+                    }
+                    if (formAbierto) break;
                 }
+                if (!formAbierto)
+                {
+                    if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
+                    Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
+                    {
+                        formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
+                        frmNuevoMovimiento.obtenerParametros(frmMovimiento, oMovimientoE, listaCortesPorMovimiento);
+                        this.Close();
+                        frmNuevoMovimiento.Show();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -149,62 +182,78 @@ namespace Presentacion.Movimientos
             cargarReporte();
         }
 
-        private void formInfoMovimiento_Load(object sender, EventArgs e)
-        {
-
-        }
-
         private void Imprimir_Click(object sender, EventArgs e)
         {
-            try
-            {
-                string titulo = "Movimiento";
-                FormReportes frmReportes;
+            Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+            tipoTicket.movimientoAcumulado(oMovimientoE.IdMovimiento);
 
-                DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
+            #region imprimir desde reportes
+            //string titulo = "Movimiento";
+            //FormReportes frmReportes;
 
-                if (resp != DialogResult.Cancel)
-                {
-                    if (resp == DialogResult.Yes)
-                    {
-                        titulo = "Movimiento Acum";
-                        Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
-                        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+            //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
 
-                    }
-                    else
-                    {
-                        Reportes.ReporteMovimiento reporte = new Reportes.ReporteMovimiento();
-                        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+            //if (resp != DialogResult.Cancel)
+            //{
+            //    if (resp == DialogResult.Yes)
+            //    {
+            //        titulo = "Movimiento Acum";
+            //        Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
+            //        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
 
-                    }
-                    frmReportes.ListaCortesPorMov = listaEnGrilla;
-                    frmReportes.Objetos = true;
-                    frmReportes.ReporteMovimiento = true;
-                    frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
-                    frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
+            //    }
+            //    else
+            //    {
+            //        Reportes.ReporteMovimiento reporte = new Reportes.ReporteMovimiento();
+            //        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
 
-                    frmReportes.Show();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            //    }
+            //    frmReportes.ListaCortesPorMov = listaEnGrilla;
+            //    frmReportes.Objetos = true;
+            //    frmReportes.ReporteMovimiento = true;
+            //    frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
+            //    frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
+
+            //    frmReportes.Show();
+            //}
+            #endregion
         }
 
         private void eliminar_Click(object sender, EventArgs e)
         {
             if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
                     Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento) &&
-                    MessageBox.Show("¿Está seguro que desea eliminar el movimiento?", "Eliminar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2).Equals(DialogResult.Yes))
+                    MessageBox.Show("¿Está seguro que desea eliminar el movimiento?\n\nNota: Para eliminar deberá ingresar su usuario y contraseña", 
+                    "Eliminar Movimiento", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button2).Equals(DialogResult.Yes) && logueoUsuario())
             {
-                oCorteN.eliminarMovimiento(oMovimientoE.IdMovimiento);
+                oCorteN.eliminarMovimiento(oMovimientoE.IdMovimiento, oUsuario);
                 pnlEliminado.Visible = true;
                 pnlEliminado.BringToFront();
                 frmMovimiento.cargarGrilla();
                 MessageBox.Show("El Movimiento se eliminó correctamente!");
             }
-        }        
+            oUsuario = null;
+        }
+
+        private bool logueoUsuario()
+        {
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+            return (oUsuario != null);
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        }
+
+        private void verAcum_Click(object sender, EventArgs e)
+        {
+            cargarListaEnGrilla();
+            Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
+            formVerAcum.verAcumulados(listaEnGrilla, null, formVerAcumulados.tipoAcum.movimiento);// (listaCortesPorMovimiento);
+            formVerAcum.ShowDialog();
+        }         
     }
 }

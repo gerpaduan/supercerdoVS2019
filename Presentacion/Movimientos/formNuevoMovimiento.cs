@@ -10,10 +10,11 @@ using Presentacion.Cortes;
 using Presentacion.Reportes;
 using Utilidades;
 using System.Configuration;
+using System.IO;
 
 namespace Presentacion
 {
-    public partial class formNuevoMovimiento : formBaseColor, InterfaceCorte
+    public partial class formNuevoMovimiento : formBaseColor, InterfaceCorte, InterfaceUsuario
     {
         Utilidades.SingletonLeerPeso Leer_Peso;
         Util_Form Util_Form = new Util_Form();
@@ -24,6 +25,7 @@ namespace Presentacion
         DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
 
+        public Entidades.Usuario oUsuario;
         Entidades.Corte oCorteE = new Entidades.Corte();
         Entidades.Movimiento oMovimiento = new Entidades.Movimiento();
         Entidades.Sucursal oSucursalOrigen = new Entidades.Sucursal();
@@ -39,17 +41,56 @@ namespace Presentacion
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
-        bool modificacion = false, huboModificaciones = false, eliminacion = false;
+        bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+
+        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+        Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+        Color ultimoColor = Color.Green;
 
         public formNuevoMovimiento()
         {
             InitializeComponent();
+            idMovimientoLabel.Text = "0";
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
+            checkTicket.Checked = Convert.ToBoolean(ConfigurationManager.AppSettings["ticketForms"].ToString());
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
             cargarSucursales();
             dtCorte = oCorteN.obtenerCortes();
         }
+
+        private void formNuevoMovimiento_Load(object sender, EventArgs e)
+        {
+            logueoUsuario();
+            if (oUsuario == null)
+            {
+                this.Close();
+                return;
+            }
+            txtUsuario.Text = oUsuario.Nombre;
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+            if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
+            {
+                this.Close();
+            }
+
+            if (dtCorte.Rows.Count == 0)
+            {
+                MessageBox.Show("No se pudieron cargar los cortes.");
+            }
+        }
+
+        private void logueoUsuario()
+        {
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        } 
 
         public void obtenerParametros(formMovimientos frmMovimientoParam, Entidades.Movimiento movimientoParam, List<Entidades.CortePorMovimiento> listaCortesPorMovimientoParam)
         {            
@@ -70,6 +111,8 @@ namespace Presentacion
         {
             this.Text = "Modificar Movimiento";
 
+            idMovimientoLabel.Text = oMovimiento.IdMovimiento.ToString();
+
             lblIdDestino.Visible = true;
             lblIdOrigen.Visible = true;
 
@@ -79,22 +122,26 @@ namespace Presentacion
                 oMovimiento.IdMovimiento.ToString() : "-";
 
             comboSucOrigen.SelectedValue = Convert.ToInt32(oMovimiento.SucursalOrigen.idSucursal);
-
             txtFechaMovimiento.Value = oMovimiento.FechaMovimiento;
-            txtHora.Text = oMovimiento.FechaMovimiento.TimeOfDay.ToString();
             txtObservaciones.Text = oMovimiento.Observaciones;
 
-            string datosCreado = "Creado: " + oMovimiento.Creado.ToString() + "\n\nModificado: " +
-                (oMovimiento.Actualizado > DateTime.Today.AddYears(-20) ? oMovimiento.Actualizado.ToString() : "-");
-            txtCreado.Text = datosCreado;
-            txtCreado.Visible = true;
+            txtCreado.Text = Util_Form.fechaFormato24Horas(oMovimiento.Creado);
+            txtCreadoPor.Text = oMovimiento.CreadoPor != null ? oMovimiento.CreadoPor.Nombre : "-";
+            txtActualizado.Text = oMovimiento.Actualizado != null ? Util_Form.fechaFormato24Horas(oMovimiento.Actualizado) : "-";
+            txtActualizadoPor.Text = oMovimiento.ActualizadoPor != null ? oMovimiento.ActualizadoPor.Nombre : "-";
 
             cargarGrilla();
-
         }
 
         public void agregarMovimiento()
         {
+            if (oCorteE != null && oCorteE.idCorte > 0)
+            {
+                MessageBox.Show("No se puede guardar el movimiento porque hay un corte seleccionado");
+                txtCodigo.Focus();
+                return;
+            }
+
             if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaMovimiento.Value, "Fecha") && 
                 Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()))
                  && Util_Form.validarFecha(txtFechaMovimiento.Value, "Fecha") && validacionFinal())
@@ -102,21 +149,13 @@ namespace Presentacion
                 cargarMovimiento();
                 try
                 {
-                    if (modificacion)
+                    if (eliminacion)
                     {
-                        if (eliminacion)
-                        {
-                            oCorteN.eliminarMovimiento(oMovimiento.IdMovimiento);
-                        }
-                        else
-                        {
-                            oCorteN.quitarCortesPorMovimiento(oMovimiento);
-                            oCorteN.modificarMovimiento(oMovimiento);
-                        }
+                        oCorteN.eliminarMovimiento(oMovimiento.IdMovimiento, oUsuario);
                     }
                     else
                     {
-                        oMovimiento.IdMovimiento = oCorteN.agregarMovimiento(oMovimiento);
+                        oMovimiento.IdMovimiento = oCorteN.addOrEditMovimiento(oMovimiento);
                     }
 
                     foreach (Entidades.CortePorMovimiento corteEnLista in listaCortesPorMovimiento)
@@ -125,11 +164,11 @@ namespace Presentacion
                         oCorteN.agregarCortePorMovimiento(corteEnLista);
                     }
 
-                    //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                    //if (resp == DialogResult.Yes)
-                    //{
-                    //    imprimir();
-                    //}
+                    if (checkTicket.Checked)
+                    {
+                        Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+                        tipoTicket.movimientoAcumulado(oMovimiento.IdMovimiento);
+                    }
 
                     frmMovimiento.cargarGrilla();
                     huboModificaciones = false;
@@ -146,7 +185,7 @@ namespace Presentacion
         {
             try
             {
-                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(oMovimiento.IdMovimiento);
+                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(oMovimiento.IdMovimiento, true);
                 FormReportes frmReportes;
 
                 string titulo = "Movimiento Acum.";
@@ -187,7 +226,7 @@ namespace Presentacion
             }
             else
             {
-                if (huboModificaciones)
+                if (true || huboModificaciones)
                 {
                     DialogResult resp = MessageBox.Show("Verifique si la Sucursal Origen - Destino y la fecha ingresada son correctas.\n¿Están correctas?", "Verificar Datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (resp == DialogResult.Yes)
@@ -212,7 +251,6 @@ namespace Presentacion
             oMovimiento.FechaMovimiento = txtFechaMovimiento.Value;
 
             //Se cargan sucursales y se asignan al movimiento
-
             oSucursalOrigen.idSucursal = Convert.ToInt32(comboSucOrigen.SelectedValue.ToString());
             oSucursalDestino.idSucursal = Convert.ToInt32(comboSucDestino.SelectedValue.ToString());
 
@@ -220,7 +258,15 @@ namespace Presentacion
             oMovimiento.SucursalDestino = oSucursalDestino;
 
             oMovimiento.Observaciones = txtObservaciones.Text.Trim();
-
+            switch (oMovimiento.IdMovimiento)
+            {
+                case 0:
+                    oMovimiento.CreadoPor = oUsuario;
+                    break;
+                default:
+                    oMovimiento.ActualizadoPor = oUsuario;
+                    break;
+            }
         }
 
         private bool validar()
@@ -276,7 +322,8 @@ namespace Presentacion
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
-
+                                oCorteE.tipo = fila["tipo"].ToString();
+                                oCorteE.Promedio = Utilidades.Util_Form.convertFloat(fila["promedio"].ToString(), false);
                                 break;
                             }
                         }
@@ -297,7 +344,7 @@ namespace Presentacion
 
             try
             {
-                decimal peso = Convert.ToDecimal(txtCantKgs.Text);
+                float peso = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, false);
                 if (peso > 0)
                 {
                     resp = true;
@@ -308,14 +355,35 @@ namespace Presentacion
                     resp = false;
                     txtCantKgs.Select();
                 }
+
+                ///se valida que la Cant. Unidad ingresada se corresponda con la Cant.Kgs del corte
+                ///Nota: Si es Cant.Unidad = 0 ('Cero') no se valida
+                ///
+                int cantUni = Convert.ToInt32(txtCantUnidad.Text);
+                if (resp && cantUni > 0 && !checkPermitirIngreso.Checked)
+                {
+                    float limitInferior = oCorteE.Promedio * (cantUni - 1);
+                    float limitSuperior = oCorteE.Promedio * (cantUni + 1);
+                    if (!(limitInferior < peso && peso < limitSuperior))
+                    {
+                        checkPermitirIngreso.Visible = true;
+                        MessageBox.Show("La Cant.Unidad ingresada no se corresponde con la Cant.Kgs del Corte\n\n"+
+                            "Corrobore la Cant.Unidades ingresada y tilde 'Permitir ingreso' si está correcto.","No hay consistencia",
+                             MessageBoxButtons.OK,MessageBoxIcon.Error);
+                        resp = false;
+                        txtCantUnidad.Select();
+                    }
+                }
             }
             catch (Exception)
             {
                 resp = false;
                 MessageBox.Show("Cant. Kgs debe ser un número represente un peso en Kg.");
             }
+
             return resp;
         }
+
         private void cargarCortePorMovimiento()
         {
             if (validar() && validarCantKgs())
@@ -325,8 +393,9 @@ namespace Presentacion
                     oCortePorMovimientoE = new Entidades.CortePorMovimiento();
                     oCortePorMovimientoE.Corte = oCorteE;
                     oCortePorMovimientoE.CantUnidad = Convert.ToInt32(txtCantUnidad.Text);
-                    oCortePorMovimientoE.CantKg = Util_Form.convertFloat(txtCantKgs.Text);
+                    oCortePorMovimientoE.CantKg = Util_Form.convertFloat(txtCantKgs.Text, true);
                     oCortePorMovimientoE.PesoBalanza = checkLeerPeso.Checked;
+                    oCortePorMovimientoE.PermitirIngreso = checkPermitirIngreso.Checked;
 
                     listaCortesPorMovimiento.Add(oCortePorMovimientoE);
                     cargarGrilla();
@@ -346,7 +415,7 @@ namespace Presentacion
                     txtCodigo.Focus();
                 }
             }
-        }
+        }      
 
         private void limpiarCampos()
         {
@@ -404,7 +473,7 @@ namespace Presentacion
             }
 
             txtCantItems.Text = Convert.ToString(grillaCortesPorMovimiento.Rows.Count);
-            txtTotalKg.Text = Convert.ToString(totalKg);
+            txtTotalKg.Text = totalKg.ToString("F3");
             txtCantTotUni.Text = Convert.ToString(totalCantUn);
 
         }
@@ -422,7 +491,7 @@ namespace Presentacion
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
 
-            comboSucOrigen.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());//-1;//No muestra ninguna sucursal
+            comboSucOrigen.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());//-1;//No muestra ninguna sucursal
             cambiarSucursalDestino();
         }
 
@@ -511,8 +580,24 @@ namespace Presentacion
 
         private void btnBuscar_Click(object sender, EventArgs e)
         {
-            formBuscarCorte frmBuscarCorte = new formBuscarCorte();
-            frmBuscarCorte.ShowDialog(this);
+            buscarCorte();
+        }
+
+        private void buscarCorte()
+        {
+            try
+            {
+                dtCorte = oCorteN.obtenerCortes();
+
+                formBuscarCorte frmBuscarCorte = new formBuscarCorte();
+                frmBuscarCorte.ShowDialog(this);
+                txtCantUnidad.Focus();
+                txtCantUnidad.Select();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Hubo un error al cargar los cortes.");
+            }
         }
 
         public void EnviarCorte(Entidades.Corte corte)
@@ -536,16 +621,27 @@ namespace Presentacion
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
+            checkPermitirIngreso.Visible = false;
+            checkPermitirIngreso.Checked = false;
         }
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnMovimiento();
+            capturarPantalla();
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
         {
             quitarCorteEnMovimiento();
+            capturarPantalla();
+        }
+
+        private void capturarPantalla()
+        {
+            //se refresca para que se muestren los datos
+            this.Refresh();
+            Util_Form.capturarPantalla("Movimiento", txtFechaMovimiento.Value);
         }
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
@@ -583,25 +679,14 @@ namespace Presentacion
             cambiarMantenerCodigo();
         }
 
-        private void formNuevoMovimiento_Load(object sender, EventArgs e)
-        {
-            if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
-            {
-                this.Close();
-            }
-
-            if (dtCorte.Rows.Count == 0)
-            {
-                MessageBox.Show("No se pudieron cargar los cortes.");
-            }
-        }
-
         private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)
         {
             try
             {
                 if (checkLeerPeso.Checked)
                 {
+                    dejarDeLeerPeso = false;
+                    txtCodigo.Focus();
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
                     timer1.Enabled = true;
@@ -611,6 +696,7 @@ namespace Presentacion
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Select();
                     timer1.Enabled = false;
                 }
             }
@@ -632,8 +718,15 @@ namespace Presentacion
                     }
                     else
                     {
-                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                        {
+                            Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                            txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        }
+                        else
+                        {
+                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                        }
                     }
                 }
             }
@@ -642,6 +735,7 @@ namespace Presentacion
                 timer1.Enabled = false;
                 if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
                 {
+                    dejarDeLeerPeso = true;
                     checkLeerPeso.Checked = false;
                 }
                 else
@@ -653,7 +747,8 @@ namespace Presentacion
 
         private void txtCantUnidad_TextChanged(object sender, EventArgs e)
         {
-            Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un");
+            if (!Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un"))
+                txtCantUnidad.Text = "";
         }
 
         private void btnGuardar_Enter(object sender, EventArgs e)
@@ -674,7 +769,7 @@ namespace Presentacion
                 {
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
-                }
+                    }
                 else
                 {
                     txtCantUnidad.Text = "";
@@ -722,7 +817,123 @@ namespace Presentacion
 
         private void txtFechaMovimiento_ValueChanged(object sender, EventArgs e)
         {
-            huboModificaciones = true;
+            huboModificaciones = oMovimiento != null && oMovimiento.IdMovimiento > 0 && !oMovimiento.FechaMovimiento.Equals(txtFechaMovimiento.Value);
+        }
+
+        private void btnVerAcum_Click(object sender, EventArgs e)
+        {
+            cargarListaEnGrilla();
+            Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
+            formVerAcum.verAcumulados(listaEnGrilla, null, Presentacion.Movimientos.formVerAcumulados.tipoAcum.movimiento);// (listaCortesPorMovimiento);
+            formVerAcum.ShowDialog();
+        }
+
+        private void control_Enter(object sender, EventArgs e)
+        {
+            if (sender is TextBox)
+            {
+                TextBox objectToChangeColor = (TextBox)sender;
+                if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+
+            if (sender is MaskedTextBox)
+            {
+                MaskedTextBox objectToChangeColor = (MaskedTextBox)sender;
+                if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+
+            if (sender is Button)
+            {
+                Button objectToChangeColor = (Button)sender;
+                objectToChangeColor.UseVisualStyleBackColor = false;
+                objectToChangeColor.BackColor = focusColor;
+                return;
+            }
+        }
+
+        private void control_Leave(object sender, EventArgs e)
+        {
+            if (sender is TextBox)
+            {
+                TextBox objectToChangeColor = (TextBox)sender;
+                objectToChangeColor.BackColor = ultimoColor;
+                if (objectToChangeColor.Name.Equals("txtCantUnidad")) tipoDeCorte();
+                return;
+            }
+
+            if (sender is MaskedTextBox)
+            {
+                MaskedTextBox objectToChangeColor = (MaskedTextBox)sender;
+                objectToChangeColor.BackColor = ultimoColor;
+                return;
+            }
+
+            if (sender is Button)
+            {
+                Button objectToChangeColor = (Button)sender;
+                objectToChangeColor.UseVisualStyleBackColor = true;
+                return;
+            }
+        }
+
+        private void tipoDeCorte()
+        {
+            try
+            {
+                if (checkSinBalanza.Checked || (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked))
+                {
+                    checkLeerPeso.Checked = false;
+                    txtCantKgs.Focus();
+                }
+                else
+                {
+                    if (!dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                    {
+                        checkLeerPeso.Checked = true;
+                        txtCantKgs.BackColor = readOnlyColor;
+                        btnAgregar.Focus();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n" + ex.Message + "\n" + ex.StackTrace);
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

@@ -26,13 +26,13 @@ namespace Datos
             cmCompra = null;
         }
 
-        public DataTable obtenerCompras(int idSucursal,string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
             DataTable dtCompras = new DataTable();
             daCompra = new SqlDataAdapter();
 
             cmCompra = new SqlCommand();
-            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
             cmCompra.Connection.Open();
             cmCompra.CommandType = CommandType.StoredProcedure;
             cmCompra.CommandText = "obtenerCompras";
@@ -83,7 +83,10 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
+            cmCompra.Parameters.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
 
             SqlDataReader drCompra = cmCompra.ExecuteReader();
 
@@ -118,12 +121,47 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
+            cmCompra.Parameters.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor.Id);
 
             cmCompra.ExecuteNonQuery();
             cmCompra.Connection.Close();
 
             cmCompra = null;
+        }
+        
+        public float getTotalCompra(int idCompra, string tipoCompra)
+        {
+            DataTable dtTotalCompra = new DataTable();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            string consulta = "";
+
+            switch (Entidades.Compra.tipoCompraToEnum(tipoCompra))
+            {
+                case Entidades.Compra.tipoCompraEnum.Cortes:
+                    consulta = "SELECT SUM(cantKg * precioKg) AS total " +
+                                "FROM dbo.CortePorCompra " +
+                                "WHERE     idCompra = " + idCompra + " " +
+                                "GROUP BY idCompra";
+                    break;
+                case Entidades.Compra.tipoCompraEnum.MediaRes:
+                    consulta = "SELECT SUM(kgMedia * precioMedia) AS total " +
+                                "FROM dbo.MediaRes " +
+                                "WHERE     idCompra = " + idCompra + " " +
+                                "GROUP BY idCompra";
+                    break;
+            }
+
+            cmCompra.CommandText = consulta;
+            cmCompra.CommandType = CommandType.Text;
+            cmCompra.Connection.Open();
+            double totalCompraD = cmCompra.ExecuteScalar().Equals(DBNull.Value) ? 0 : (double)cmCompra.ExecuteScalar();
+            float totalCompra = (float)totalCompraD;
+            cmCompra.Connection.Close();
+            return totalCompra;
         }
 
         public void modificarPrecioMedia(int idCompra, float precioKg)
@@ -158,6 +196,8 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@idSucursal", oCorteE.sucursal.IdSucursal);
             cmCompra.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
             cmCompra.Parameters.AddWithValue("@cantKg", oCorteE.cantKgs);
+            cmCompra.Parameters.AddWithValue("@creado", oCorteE.Creado);
+            cmCompra.Parameters.AddWithValue("@creadoPor", oCorteE.CreadoPor != null ? oCorteE.CreadoPor.Id : 0);
 
             cmCompra.ExecuteNonQuery();
             cmCompra.Connection.Close();
@@ -184,8 +224,6 @@ namespace Datos
             cmCompra.Connection.Close();
 
             cmCompra = null;
-
-
         }
 
         //actualiza stock del los cortes salidos de la media res
@@ -393,136 +431,6 @@ namespace Datos
             return dtPorcentajeCortesCompra;
         }
 
-
-        #region Pagos
-
-        public void agregarPago(Entidades.Pagos oPagoE)
-        {
-            cmCompra = new SqlCommand();
-
-            cmCompra.Connection = conn.conectar();
-            cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
-            cmCompra.CommandText = "agregarPago";
-
-            cmCompra.Parameters.AddWithValue("@nroRecibo", oPagoE.NroRecibo);
-            cmCompra.Parameters.AddWithValue("@fechaPago", oPagoE.FechaPago);
-            cmCompra.Parameters.AddWithValue("@idProveedor", oPagoE.Persona.idPersona);
-            cmCompra.Parameters.AddWithValue("@tipoPago", oPagoE.TipoPago);            
-            cmCompra.Parameters.AddWithValue("@importe", oPagoE.Importe);
-            cmCompra.Parameters.AddWithValue("@observaciones", oPagoE.Observaciones);
-
-
-            cmCompra.ExecuteNonQuery();
-            cmCompra.Connection.Close();
-
-            cmCompra = null;
-
-        }
-
-        public void modificarPago(Entidades.Pagos oPagoE)
-        {
-            cmCompra = new SqlCommand();
-
-            cmCompra.Connection = conn.conectar();
-            cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
-            cmCompra.CommandText = "modificarPago";
-
-            cmCompra.Parameters.AddWithValue("@idPago", oPagoE.IdPago);
-            cmCompra.Parameters.AddWithValue("@nroRecibo", oPagoE.NroRecibo);
-            cmCompra.Parameters.AddWithValue("@fechaPago", oPagoE.FechaPago);
-            cmCompra.Parameters.AddWithValue("@idProveedor", oPagoE.Persona.idPersona);
-            cmCompra.Parameters.AddWithValue("@tipoPago", oPagoE.TipoPago);
-            cmCompra.Parameters.AddWithValue("@importe", oPagoE.Importe);
-            cmCompra.Parameters.AddWithValue("@observaciones", oPagoE.Observaciones);
-
-
-            cmCompra.ExecuteNonQuery();
-            cmCompra.Connection.Close();
-
-            cmCompra = null;
-        }
-
-        public void eliminarPago(Entidades.Pagos oPagoE)
-        {
-            cmCompra = new SqlCommand();
-
-            cmCompra.Connection = conn.conectar();
-            cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
-            cmCompra.CommandText = "eliminarPago";
-
-            cmCompra.Parameters.AddWithValue("@idPago", oPagoE.IdPago);
-            
-            cmCompra.ExecuteNonQuery();
-            cmCompra.Connection.Close();
-
-            cmCompra = null;
-        }
-
-        public DataTable obtenerPagos(string tipoTramite, string texto, DateTime fechaDesde, DateTime fechaHasta)
-        {
-            DataTable dtPagos = new DataTable();
-            daCompra = new SqlDataAdapter();
-
-            cmCompra = new SqlCommand();
-            cmCompra.Connection = conn.conectar();
-            cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
-            //cmCompra.CommandText = "obtenerPagos";
-            cmCompra.CommandText = "obtenerPagos_1";
-            cmCompra.Parameters.AddWithValue("@texto", texto);
-            cmCompra.Parameters.AddWithValue("@fechaDesde", fechaDesde);
-            cmCompra.Parameters.AddWithValue("@fechaHasta", fechaHasta);
-            cmCompra.Parameters.AddWithValue("@tipoTramite", tipoTramite);
-
-            daCompra.SelectCommand = cmCompra;
-            daCompra.Fill(dtPagos);
-
-            cmCompra.Connection.Close();
-
-            return dtPagos;
-        }
-
-        public Entidades.Pagos buscarPago(Entidades.Pagos oPagoE)
-        {
-            cmCompra = new SqlCommand();
-
-            cmCompra.Connection = conn.conectar();
-            cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
-            cmCompra.CommandText = "buscarPago";
-
-            cmCompra.Parameters.AddWithValue("@idPago", oPagoE.IdPago);
-      
-
-            SqlDataReader drPago = cmCompra.ExecuteReader();
-
-            while (drPago.Read())
-            {
-                oPagoE.NroRecibo = drPago["nroRecibo"].ToString();
-                oPagoE.FechaPago = Convert.ToDateTime(drPago["fechaPago"].ToString());
-
-                Entidades.Persona oProveedor=new Entidades.Persona();
-                oProveedor.idPersona = Convert.ToInt32(drPago["idProveedor"].ToString());
-                oProveedor.razonSocial = drPago["razonSocial"].ToString();
-
-                oPagoE.Persona = oProveedor;
-                oPagoE.TipoPago = drPago["tipoPago"].ToString();
-                oPagoE.Importe = Convert.ToDecimal(drPago["importe"].ToString());
-                oPagoE.Observaciones = drPago["observaciones"].ToString();
-
-            }
-
-            cmCompra.Connection.Close();
-
-            cmCompra = null;
-
-            return oPagoE;
-
-        }
-
         public void backup(string destino)
         {
 
@@ -571,7 +479,5 @@ namespace Datos
             connMaster.ConnectionString = null;
             connMaster = null;
         }
-
-        #endregion
     }
 }

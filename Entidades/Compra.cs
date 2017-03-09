@@ -19,6 +19,8 @@ namespace Entidades
             IngresoStock = 1,
             EgresoStock = 2,
             CierreStock = 3,
+            PesajeCortes = 4,
+            AjusteStock = 5,
         }
 
         public static string tipoCompraToString(tipoCompraEnum tipoCompraToConvert)
@@ -40,6 +42,12 @@ namespace Entidades
                     break;
                 case Compra.tipoCompraEnum.CierreStock:
                     tipoCompraToString = "Cierre Stock";
+                    break;
+                case Compra.tipoCompraEnum.PesajeCortes:
+                    tipoCompraToString = "Pesaje Cortes";
+                    break;
+                case Compra.tipoCompraEnum.AjusteStock:
+                    tipoCompraToString = "Ajuste Stock";
                     break;
             }
             return tipoCompraToString;
@@ -65,6 +73,12 @@ namespace Entidades
                 case "Cierre Stock":
                     tipoCompraToEnum = tipoCompraEnum.CierreStock;
                     break;
+                case "Pesaje Cortes":
+                    tipoCompraToEnum = Compra.tipoCompraEnum.PesajeCortes;
+                    break;
+                case "Ajuste Stock":
+                    tipoCompraToEnum = Compra.tipoCompraEnum.AjusteStock;
+                    break;
             }
             return tipoCompraToEnum;
         }
@@ -76,24 +90,44 @@ namespace Entidades
         private string estado;
         private Persona proveedor;
         private string tipoCompra;
+        private int? cantMedias;
         private Sucursal sucursal;
         private DateTime? creado;
         private DateTime? actualizado;
+        private Usuario creadoPor;
+        private Usuario actualizadoPor;
+        private List<Entidades.CortePorCompra> lineasCortes;
+        bool enCtaCte;
 
-        //private Usuario creadoPor;
-        //private Usuario actualizadoPor;
-        
-        //public Usuario CreadoPor
-        //{
-        //    get { return creadoPor; }
-        //    set { creadoPor = value; }
-        //}
+        public bool EnCtaCte
+        {
+            get { return enCtaCte; }
+            set { enCtaCte = value; }
+        }
 
-        //public Usuario ActualizadoPor
-        //{
-        //    get { return actualizadoPor; }
-        //    set { actualizadoPor = value; }
-        //}
+        public List<Entidades.CortePorCompra> LineasCortes
+        {
+            get { return lineasCortes; }
+            set { lineasCortes = value; }
+        }
+
+        public int? CantMedias
+        {
+            get { return cantMedias; }
+            set { cantMedias = value; }
+        }
+
+        public Usuario CreadoPor
+        {
+            get { return creadoPor; }
+            set { creadoPor = value; }
+        }
+
+        public Usuario ActualizadoPor
+        {
+            get { return actualizadoPor; }
+            set { actualizadoPor = value; }
+        }
 
         public DateTime? Actualizado
         {

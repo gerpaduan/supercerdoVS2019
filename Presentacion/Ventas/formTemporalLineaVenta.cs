@@ -85,7 +85,7 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            comboSucursal.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
         private void infoVenta()
@@ -169,6 +169,7 @@ namespace Presentacion
 
         private void formTemporalLineaVenta_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today.Date.AddHours(24);
             fechaHasta.Value = today.AddMilliseconds(-1);
             fechaDesde.Value = today.AddDays(-1);

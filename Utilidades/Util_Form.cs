@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Configuration;
+using System.IO;
+using IWshRuntimeLibrary;
 
 namespace Utilidades
 {
@@ -15,6 +17,11 @@ namespace Utilidades
         public Util_Form()
         {
             InitializeComponent();
+        }
+
+        private void Util_Form_Load(object sender, EventArgs e)
+        {
+
         }
 
         public static bool validarCampoVacio(string texto, string nombreTextBox)
@@ -116,27 +123,28 @@ namespace Utilidades
 
         }
 
-        public static float convertFloat(string toFloat)
+        public static float convertFloat(string toFloat, bool messageBox)
         {
             float? value = null;
             try 
 	        {
+                toFloat = !toFloat.Contains("..") && toFloat.Contains('.') && toFloat.Contains(',') ? toFloat.Replace(".", "") : toFloat;
                 toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
         		value =  float.Parse( toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 	        }
 	        catch (Exception ex)
 	        {
-        		MessageBox.Show("Error al convertir a tipo Float\n"+ex.Message, "Convertir a float");
+                if(messageBox) MessageBox.Show("Error al convertir a tipo Float\n"+ex.Message, "Convertir a float");
 	        }
             return (float)value;
-        }
+        }        
 
         public static bool validarNumeroMayorACero(string valor, string nombreTextBox)
         {
             bool resp = validarCampoNumerico(valor, nombreTextBox);
             if (resp)
             {
-                float? value = valor.Contains("-") ? 0 : convertFloat(valor);
+                float? value = valor.Contains("-") ? 0 : convertFloat(valor, true);
                 if (value.Equals(null) || value <= 0)
                 {
                     resp = false;
@@ -173,7 +181,7 @@ namespace Utilidades
 
         public static DialogResult errorBalanza(string error)
         {
-            DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + error + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            DialogResult resp = MessageBox.Show("Error al leer peso de Balanza: " + error + ".\nVerifique la conexion.\n\n¿Dejar de leer el peso de la Balanza?", "Error balanza", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             return resp;
         }
 
@@ -192,7 +200,7 @@ namespace Utilidades
         public static bool validarSucursal(bool esAdmin, int idSucursal)
         {
             bool resp = true;
-            int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int sucActual = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             if (!esAdmin && idSucursal != sucActual)
             {
                 resp = false;
@@ -217,7 +225,135 @@ namespace Utilidades
                 
         public static int idSucursalAppConfig()
         {           
-            return Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            return Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
+        }
+
+        public static string errorConexionBD(string exception)
+        {
+            string lineaDivisoria = "\n------------------\n";
+            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n"+
+                "--Si no se conecta posiblemente no haya INTERNET.--\n";
+            mensaje = exception.Contains("Error relacionado con la red") ||
+                exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
+            return mensaje;
+        }
+
+        public static bool errorConexionBD_Return(string exception)
+        {
+            string lineaDivisoria = "\n------------------\n";
+            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n" +
+                "--Si no se conecta posiblemente no haya INTERNET.--\n";
+            mensaje = exception.Contains("Error relacionado con la red") ||
+                exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
+
+            DialogResult resp = MessageBox.Show(mensaje, "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            return resp.Equals(DialogResult.Yes) ? true : false;
+        }
+
+        public static string leerPesoBalanza()
+        {
+            string peso="";
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                int d = Application.OpenForms.Count;
+                if (frm.GetType() == typeof(FormPesoBalanza))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (ctrl.Name.Equals("pesoBalanzaLabel"))
+                        {                            
+                            peso = ctrl.Text;
+                            if (peso.Contains("error"))
+                            {
+                                frm.Close();
+                                throw new Exception(peso);
+                            }
+                            if (string.IsNullOrEmpty(peso))
+                            {
+                                peso = "Peso nulo";
+                                //throw new Exception("Peso nulo\n\n.Verifique que la balanza esté conectada correctamente");
+                            }
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!formAbierto)
+            {
+                FormPesoBalanza frmBalanza = new FormPesoBalanza();
+                frmBalanza.MinimizeBox = true;
+                frmBalanza.Show();
+                frmBalanza.Visible = false;
+            }
+            return peso;
+        }
+
+        public static void capturarPantalla(string nameCaptura, DateTime fechaRegistro)
+        {
+            try
+            {
+                string nombreCarpeta = "Capturas";
+                string fullNameCaptura = DateTime.Now.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura + ".jpg";
+                string folderCaptura = fechaRegistro.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura;
+                string escritorio = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                string capturasPath = Path.GetFullPath(escritorio + "\\" + nombreCarpeta);// (@"\" + nombreCarpeta);
+                if (!Directory.Exists(capturasPath))
+                {
+                    Directory.CreateDirectory(capturasPath);
+                }
+
+                string fullPath = Path.GetFullPath(capturasPath + "\\" + folderCaptura);// (@"\" + nombreCarpeta);
+
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
+
+                Bitmap BmpScreen = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
+                                          Screen.PrimaryScreen.Bounds.Height,
+                                  System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+
+                Graphics ScreenShot = Graphics.FromImage(BmpScreen);
+
+                ScreenShot.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
+                                     Screen.PrimaryScreen.Bounds.Y, 0, 0,
+                    Screen.PrimaryScreen.Bounds.Size, CopyPixelOperation.SourceCopy);
+
+                BmpScreen.Save(fullPath + "\\" + fullNameCaptura, System.Drawing.Imaging.ImageFormat.Png);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        public static Color getBackColorTextBox(bool readOnly)
+        {
+            try
+            {
+                Color color = readOnly ? ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString()) :
+                    ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString());
+
+                return color;
+            }
+            catch (Exception)
+            {
+                return Color.White;
+            }
+        }
+        public static Color getBackColorCheckBox(bool isChecked)
+        {
+            try
+            {
+                Color color = isChecked ? Color.LimeGreen :ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
+
+                return color;
+            }
+            catch (Exception)
+            {
+                return Color.White;
+            }
         }
     }
 }

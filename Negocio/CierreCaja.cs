@@ -56,7 +56,7 @@ namespace Negocio
                     oCierreE.FechaHoraCierre = string.IsNullOrEmpty(drCierreCaja["fechaHoraCierre"].ToString()) ? (DateTime?)null : Convert.ToDateTime(drCierreCaja["fechaHoraCierre"].ToString());
                     oCierreE.CajaInicio = string.IsNullOrEmpty(drCierreCaja["cajaInicio"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaInicio"].ToString());
                     oCierreE.Ventas = string.IsNullOrEmpty(drCierreCaja["ventas"].ToString()) ? (float?)null : float.Parse(drCierreCaja["ventas"].ToString());
-                    oCierreE.Gastos = string.IsNullOrEmpty(drCierreCaja["gastos"].ToString()) ? (float?)null : float.Parse(drCierreCaja["gastos"].ToString());
+                    oCierreE.EgresosCaja = string.IsNullOrEmpty(drCierreCaja["gastos"].ToString()) ? (float?)null : float.Parse(drCierreCaja["gastos"].ToString());
                     oCierreE.CajaCierre = string.IsNullOrEmpty(drCierreCaja["cajaCierre"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaCierre"].ToString());
                     oCierreE.Diferencia = string.IsNullOrEmpty(drCierreCaja["diferencia"].ToString()) ? (float?)null : float.Parse(drCierreCaja["diferencia"].ToString());
                     oCierreE.CajaInicioSiguiente = string.IsNullOrEmpty(drCierreCaja["cajaInicioSiguiente"].ToString()) ? (float?)null : float.Parse(drCierreCaja["cajaInicioSiguiente"].ToString());
@@ -78,48 +78,92 @@ namespace Negocio
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
 
+        public DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja)
+        {
+            return oCierreD.findCierreCajaMultiples(listaCierreCaja);
+        }
+
         public float obtenerTotalVentas(int idVendedor, int idSucursal, DateTime? fechaInicioCaja, DateTime? fechaCierreCaja)
         {
             return oVentaN.obtenerTotalVentas(idVendedor, idSucursal, fechaInicioCaja, fechaCierreCaja);
         }
-        #region TipoGasto
-        public DataTable obtenerTipoGasto()
+
+        #region TipoEgresoCaja
+        public DataTable obtenerTiposEgresoCaja()
         {
-            return oCierreD.obtenerTipoGasto();
+            return oCierreD.obtenerTiposEgresoCaja();
         }
 
-        public DataTable obtenerGastos(int idSucursal, int idTipoGasto, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public int getIdEgresoCajaPorCompra()
         {
-            return oCierreD.obtenerGastos(idSucursal, idTipoGasto, texto, fechaDesde, fechaHasta);
+            DataTable tiposEgresos = obtenerTiposEgresoCaja();
+            int idTipoEgreso = 0;
+            foreach (DataRow row in tiposEgresos.Rows)
+            {
+                if (!string.IsNullOrEmpty(row["esCompra"].ToString()) && !row["esCompra"].ToString().Equals("0"))
+                    idTipoEgreso = Convert.ToInt32(row["id"].ToString());
+            }
+            return idTipoEgreso;
         }
 
-        public void addOrEditGasto(Entidades.Gasto oGasto)
+        public DataTable obtenerEgresosCaja(int idSucursal, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCierreD.addOrEditGasto(oGasto);
+            return oCierreD.obtenerEgresosCaja(idSucursal, idTipoEgresoCaja, texto, fechaDesde, fechaHasta);
         }
-        public Entidades.Gasto getGastoById(int idGasto)
-        {
-            Entidades.Gasto oGasto = oCierreD.getGastoById(idGasto);
 
-            if (oGasto != null)
+        public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
+        {
+            return oCierreD.addOrEditEgresoCaja(oEgresoCaja);
+        }
+
+        public Entidades.EgresoCaja getEgresoCajaById(int idEgresoCaja)
+        {
+            Entidades.EgresoCaja oEgresoCaja = oCierreD.getEgresoCajaById(idEgresoCaja);
+
+            if (oEgresoCaja != null)
             {
                 Negocio.Usuario oUserN = new Usuario();
 
-                oGasto.CreadoPorUser = oUserN.getUserById(oGasto.CreadoPor);
-                oGasto.ActualizadoPorUser = oUserN.getUserById(oGasto.ActualizadoPor);
+                oEgresoCaja.CreadoPorUser = oUserN.getUserById(oEgresoCaja.CreadoPor);
+                oEgresoCaja.ActualizadoPorUser = oUserN.getUserById(oEgresoCaja.ActualizadoPor);
             }
 
-            return oGasto;
+            return oEgresoCaja;
         }
 
-        public float getMontoGastosVendedor(Entidades.CierreCaja oCierreE)
+        public Entidades.EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID)
         {
-            return  oCierreD.getMontoGastosVendedor(oCierreE);
+            return oCierreD.findEgresoCajaByTablaYId(tabla, tablaID);
         }
 
-        public DataTable getGastosVendedor(Entidades.CierreCaja oCierreE)
+        public float getMontoEgresosCajaVendedor(Entidades.CierreCaja oCierreE)
         {
-            return oCierreD.getGastosVendedor(oCierreE);
+            return  oCierreD.getMontoEgresosCajaVendedor(oCierreE);
+        }
+
+        public DataTable getEgresosCajaVendedor(Entidades.CierreCaja oCierreE)
+        {
+            return oCierreD.getEgresosCajaVendedor(oCierreE);
+        }
+
+        public bool validarCajaAbiertaVendedor(DateTime fechaHoraRegistro, Entidades.Sucursal oSucursalE, Entidades.Usuario oUsuario)
+        {
+            bool resp = true;
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+            oCierreE.Sucursal = oSucursalE;
+            oCierreE.UsuarioInicio = oUsuario;
+            oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0) || oCierreE.FechaHoraInicio > fechaHoraRegistro || fechaHoraRegistro > DateTime.Now)
+            {
+                resp = false;
+                //MessageBox.Show("La fecha y hora del egreso de caja (" + Utilidades.Util_Form.fechaFormato24Horas(txtFechaEgresoCaja.Value) + ") debe ser mayor a la fecha de apertura de caja (" +
+                //Utilidades.Util_Form.fechaFormato24Horas(oCierreE.FechaHoraInicio) + ")",
+                //    "Mensaje de Error", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+
+            }
+
+            return resp;
         }
         #endregion
     }

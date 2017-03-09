@@ -10,21 +10,22 @@ using Presentacion.Personas;
 using Presentacion.Cortes;
 using Presentacion.Caja;
 using System.Configuration;
+using System.Collections;
+using System.Reflection;
+using Utilidades;
 
-namespace Presentacion.Ventas
+namespace Presentacion.Caja
 {
     public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
-        string cambiar = "";
-        bool formAbierto = false;
         bool pesoBalanza = false;
-        bool checkAnterior = false;
+        bool capturarPantallaFinal = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         #region variables
         public string vendedor = "-";
+        public string precioBonificado = "";
         formVentas frmVentas;
-        DataTable dtSucursales;
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
@@ -44,13 +45,13 @@ namespace Presentacion.Ventas
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
-        Color enableColor = SystemColors.Window;
-        Color readOnlyColor = SystemColors.ScrollBar;
-        Color focusColor = Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+        Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
 
         Color ultimoColor = Color.Green;
 
-
+        bool dejarDeLeerPeso = false;
         int sucAnterior;
         int tiempoInactivo = 0;
         int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
@@ -58,6 +59,7 @@ namespace Presentacion.Ventas
         int titilarHasta = 2000;
         int tiempoRegistrarTemporal = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoRegistrarTemporal"].ToString());
         string ultimoTextoEnTxtCodigo = "";
+        Random randomClass = new Random();
 
         public int SucAnterior
         {
@@ -83,7 +85,7 @@ namespace Presentacion.Ventas
             this.KeyPreview = true;
 
             //asigo sucursal a la venta  
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
@@ -96,9 +98,10 @@ namespace Presentacion.Ventas
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
             }
-
+            checkCtaCte_CheckedChanged(null,null);
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
             checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
+
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -146,7 +149,7 @@ namespace Presentacion.Ventas
                 try
                 {
 
-                    oVentaN.modificarVenta(oVentaE, SucAnterior);
+                    oVentaN.modificarVenta(oVentaE, SucAnterior, true);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
                     {
@@ -189,7 +192,6 @@ namespace Presentacion.Ventas
                     txtCodigo.Focus();
                 }
             }
-
         }
 
         public void cargarGrilla()
@@ -207,21 +209,19 @@ namespace Presentacion.Ventas
                     grillaLineasVenta.FirstDisplayedScrollingRowIndex = listaLineaGrilla.Count - 1;
 
                     for (int nroFila = 0; nroFila < grillaLineasVenta.Rows.Count; nroFila++)
-                    {
-                        
+                    {                        
                         foreach (Entidades.LineaVenta linea in listaLineaVenta)
                         {
+                            if (grillaLineasVenta.Rows[nroFila].Cells["Corte"].Value.ToString().Length > 22)
+                            {
+                                grillaLineasVenta.Rows[nroFila].Cells["Corte"].Style.Font = new Font(grillaLineasVenta.Font.ToString(), 13);
+                            }
                             if (Convert.ToInt32(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo &&
-                                linea.IndexAnulado == nroFila)
+                                linea.IndexAnulado == nroFila && Entidades.LineaVenta.esAnulado(linea.Estado))
                             {
                                 grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
                             }
-                        }
-                        //if (grillaLineasVenta.Rows[nroFila].Cells["ind == nroFila)
-                        //{
-                        //    grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
-                        //}
-                        
+                        }                        
                     }
                 }
 
@@ -231,7 +231,6 @@ namespace Presentacion.Ventas
             {
                 MessageBox.Show(ex.Message);
             }
-
         }
 
         private void agregarVenta()
@@ -248,6 +247,8 @@ namespace Presentacion.Ventas
                     ticket.TextoCentro("x");
                     ticket.NoValidoComoFactura();
                     ticket.LineasEnBlanco(1);
+                    if (oVentaE.EnCtaCte)
+                        ticket.TextoCentro("A Cta. Cte.");
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
                     ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
@@ -255,18 +256,32 @@ namespace Presentacion.Ventas
                     //ticket.LineasEnBlanco(0);
                     ticket.LineasGuion();
 
-                    foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                    for (int index = 0; index < listaLineaVenta.Count; index++)
                     {
-                        oVentaN.agregarLineaVenta(linea);
+                        Entidades.LineaVenta linea = listaLineaVenta[index];
+                        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta : 
+                            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                        listaLineaVenta[index] = oVentaN.agregarLineaVenta(linea);
                         ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                            linea.PrecioKg, linea.CantKg, linea.PrecioKg * linea.CantKg);
+                            linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
+                    //foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                    //{
+                    //    oVentaN.agregarLineaVenta(linea);
+                    //    ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                    //        linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+                    //}
                     //ticket.LineasEnBlanco(1);
                     ticket.TextoDerecha("-------");
                     ticket.AgregaTotales("Total", totalVenta);
-                    abona = abona > 0 ? abona : totalVenta;
-                    ticket.AgregaTotales("Pago", abona);
-                    ticket.AgregaTotales("Vuelto", cambio);
+                    //si se ingresa la cantidad del pago se imprime
+                    if (abona > 0)
+                    {
+                        ticket.AgregaTotales("Pago", abona);
+                        ticket.AgregaTotales("Vuelto", cambio);
+                    }
                     ticket.LineasEnBlanco(1);
                     ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
                     //ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
@@ -274,7 +289,20 @@ namespace Presentacion.Ventas
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
 
-                    //lblHoraUltimaVenta.Text = DateTime.Now.ToShortTimeString() + "\n$ " +txtTotalS.Text;
+                    //Agregar en Cta Cte
+                    try
+                    {
+                        oVentaN.crearMovCtaCteVenta(oVentaE);
+
+                        //se genera el egreso de caja por Cta. Cte
+                        if(oVentaE.EnCtaCte) 
+                            egresoCajaPorCtaCte(oVentaE);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
+                    }
+                    
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                     ultimaVentaVendedor();
@@ -284,8 +312,69 @@ namespace Presentacion.Ventas
                     MessageBox.Show(ex.Message);
                 }
             }
-
         }
+
+        public  void egresoCajaPorCtaCte(Entidades.Venta oVentaConEgresoCaja)
+        {
+            try
+            {
+                Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
+
+                oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
+                oEgresoCajaE.IdTipoEgresoCaja = 100;
+                oEgresoCajaE.Descripcion = "Venta a " + oVentaConEgresoCaja.Persona.razonSocial + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                oEgresoCajaE.Monto = oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                oEgresoCajaE.Detalle = oVentaConEgresoCaja.Observaciones;
+                oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
+                oEgresoCajaE.IdCompra = 0;
+                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
+                oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
+                oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                imprimirTicket(oEgresoCajaE);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al guardar el Egreso.\n\nLa Venta y el movimiento en la Cta. Cte se registró correctamente." + "\n\n" + ex.Source);
+            }
+        }
+
+        private void imprimirTicket(Entidades.EgresoCaja oEgresoCajaE)
+        {
+            try
+            {
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                oEgresoCajaE = oCierreN.getEgresoCajaById(oEgresoCajaE.Id);
+                //imprimir ticket
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = checkTicket.Checked;
+                ticket.TextoCentro("Egreso Caja");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                ticket.TextoIzquierda("Sucursal: " + oEgresoCajaE.Sucursal.sucursal);
+                ticket.TextoIzquierda("Vendedor: " + oEgresoCajaE.CreadoPorUser.Nombre);
+                ticket.TextoIzquierda("Id: " + oEgresoCajaE.Id.ToString());
+                ticket.TextoIzquierda("Fecha: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Fecha));
+                ticket.LineasGuion();
+                ticket.TextoIzquierda("Tipo: " + oEgresoCajaE.TipoEgresoCaja);
+                ticket.TextoMuchasLineas("Descripción: " + oEgresoCajaE.Descripcion);
+                ticket.TextoIzquierda("Monto: " + oEgresoCajaE.Monto);
+                ticket.TextoMuchasLineas("Detalle: " + oEgresoCajaE.Detalle);
+                DateTime? creado = oEgresoCajaE.Id.Equals(0) ? DateTime.Now : oEgresoCajaE.Creado;
+                ticket.TextoIzquierda("Creado: " + Utilidades.Util_Form.fechaFormato24Horas(creado));
+                if (oEgresoCajaE.Actualizado != null) ticket.TextoIzquierda("Modif.: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Actualizado));
+                ticket.LineasEnBlanco(5);
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error al imprimir el Ticket");
+                return;
+            }
+        }
+
         private void limpiarListas()
         {
             Negocio.Persona oPersonaN = new Negocio.Persona();
@@ -296,11 +385,15 @@ namespace Presentacion.Ventas
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
+            txtTotalKgs.Text = "0,000";
             txtTotalS.Text = "000,00";
             txtAbona.Text = "";
             txtCambio.Text = "";
             panelPago.Visible = false;
             panelAbonar.Visible = true;
+            checkCtaCte.Visible = false;
+            checkCtaCte.Checked = false;
+            lblClienteConBonif.Visible = false;
 
             totalVenta = 0;
             abona = 0;
@@ -322,6 +415,7 @@ namespace Presentacion.Ventas
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
+            oVentaE.EnCtaCte = checkCtaCte.Checked;
         }
 
         private void cargarTotales()
@@ -336,6 +430,7 @@ namespace Presentacion.Ventas
             }
 
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
+            txtTotalKgs.Text = totalKgs.ToString("N3");
             txtTotalS.Text = totalPesos.ToString("N2");
             totalVenta = float.Parse(txtTotalS.Text.Trim());
             abonar();
@@ -376,8 +471,6 @@ namespace Presentacion.Ventas
             cargarListaGrilla(oLineaVenta);
         }
 
-
-
         private void sumarCorte(int nroLinea)
         {
             listaLineaVenta[nroLinea].CantKg = listaLineaVenta[nroLinea].CantKg + oLineaVenta.CantKg;
@@ -388,7 +481,6 @@ namespace Presentacion.Ventas
 
         private void limpiarCamposCorte()
         {
-
             txtCodigo.Text = "";
             txtCorte.Text = "";
             txtCantKgs.Text = "";
@@ -405,13 +497,20 @@ namespace Presentacion.Ventas
             lineaVentaP.idCorte = lineaE.Corte.idCorte;
             lineaVentaP.codigo = lineaE.Corte.codigo;
             lineaVentaP.corte = lineaE.Corte.corte;
+            lineaVentaP.corte = lineaE.Bonificacion == 0 ? lineaE.Corte.CorteDesc :
+                    (lineaE.Corte.CorteDesc.Length < 9 ? lineaE.Corte.CorteDesc :
+                    lineaE.Corte.CorteDesc.Substring(0, 9)) + 
+                    " (Bonif. " + lineaE.Bonificacion.ToString("F2") + "%)";
             lineaVentaP.cantKgs = lineaE.CantKg;
-            lineaVentaP.precioKg = lineaE.PrecioKg;
+            //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.Mayorista);
+            lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.Mayorista);
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
+            lineaVentaP.Random = lineaE.Random;
 
             if (lineaE.Estado == 1)
             {
                 lineaVentaP.estado = "Anulado";
+                lineaVentaP.corte += " (Anulado)";
             }
             else
             {
@@ -420,7 +519,6 @@ namespace Presentacion.Ventas
 
             listaLineaGrilla.Add(lineaVentaP);
             lineaVentaP = null;
-
         }
 
         private void cargarLinea()
@@ -433,6 +531,9 @@ namespace Presentacion.Ventas
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
+            oLineaVenta.Bonificacion = (1 - (precioKg / oCorteE.precioKg)) * 100;
+            oLineaVenta.PrecioReal = oCorteE.precioKg;
+            oLineaVenta.Random = randomClass.Next(0, 1000000);
 
             if (oLineaVenta.CantKg < 0)
             {
@@ -444,9 +545,28 @@ namespace Presentacion.Ventas
             }
         }
 
-
         private bool validarLinea()
         {
+            //Se valida que no sea media res
+            if (oCorteE != null && oCorteE.codigo == 0)
+            {
+                MessageBox.Show("No se puede vender Media Res"+"\n\nIngrese otro codigo");
+                txtCodigo.Focus();
+                return false;
+            }
+
+            //si es consumidor final no se permite precios mayorista excepto que esté logueado como admin
+            int inicioCodigoMayorista = (ConfigurationManager.AppSettings["codigoPrecioMayorista"]) != null ?
+                Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioMayorista"].ToString()) : 0;
+            if (oCorteE != null && oCorteE.Mayorista && !FormPrincipal.logueado && !oUsuario.Admin && 
+                oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+            {
+                MessageBox.Show("No tienes permiso para realizar ventas con precio mayorista a un consumidor final.\n\n"+
+                    "Busque el cliente o agréguelo para poder realizar la venta con precios mayoristas", "Precio mayorista");
+                txtCodigo.Focus();
+                return false;
+            }
+
             string mensaje = "Complete los siguientes campos: ";
             if (txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")
             {
@@ -486,8 +606,14 @@ namespace Presentacion.Ventas
             }
             if (!Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs."))
             {
-                txtCantKgs.Focus();
-                if (checkLeerPeso.Checked)  btnAgregar.Focus();
+                if (checkLeerPeso.Checked)
+                {
+                    btnAgregar.Focus();
+                }
+                else
+                {
+                    txtCantKgs.Focus();
+                }
                 return false;
             } 
             else
@@ -521,7 +647,45 @@ namespace Presentacion.Ventas
             }
             else
             {
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                if (!oCierreN.validarCajaAbiertaVendedor(Convert.ToDateTime(txtFecVenta.Text), oVentaE.Sucursal, oUsuario))
+                {
+                    MessageBox.Show(oUsuario.Nombre + " debes abrir caja para poder registrar la venta.\n\n"+
+                    "Si abrió caja inténtelo nuevamente.", "No abrió caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    txtFecVenta.Text = DateTime.Now.ToString();//se actualiza la hora
+
+                    return false;
+                }
+
                 string mensaje = "Complete los siguientes campos: ";
+                
+                //se valida que no finalice venta con bonificacion para consumidor final
+                for (int index = 0; index < listaLineaVenta.Count; index++)
+                {
+                    if ((listaLineaVenta[index].Bonificacion != 0 || listaLineaVenta[index].Corte.Mayorista) && !FormPrincipal.logueado && !oUsuario.Admin && 
+                        oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                    {
+                        bool esAnulado = false;
+                        //se valida que el corte no hay sido anulado
+                        for (int nroFila = 0; nroFila < listaLineaVenta.Count; nroFila++)
+                        {
+                            if (listaLineaVenta[index].IndexAnulado >= 0 || (listaLineaVenta[index].Corte.codigo == listaLineaVenta[nroFila].Corte.codigo &&
+                                listaLineaVenta[nroFila].IndexAnulado == index))
+                            {                                
+                                esAnulado = true;
+                                break;
+                            }
+                        }
+
+                        if (!esAnulado)
+                        {
+                            mensaje = "No tienes permiso para poder bonificar y/o vender productos mayoristas a un cliente Consumidor Final";
+                            MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return false;
+                        }  
+                    }                  
+                }
 
                 //valido que no haya ningún corte seleccionado al finalizar venta
                 if (txtCodigo.Text.Length > 0)
@@ -615,13 +779,12 @@ namespace Presentacion.Ventas
                 {
                     string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " +
                         oLineaVentaSelect.Corte.corte +
-                        "    |   Cantidad:  " + oLineaVentaSelect.CantKg + "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.Corte.precioKg;
+                        "    |   Cantidad:  " + oLineaVentaSelect.CantKg + 
+                        "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.PrecioKg;
                     string mensaje = "¿Está seguro de anular el corte seleccionado?" + datosLinea;
                     DialogResult respuesta = MessageBox.Show(mensaje, "Anular Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (respuesta == System.Windows.Forms.DialogResult.Yes)
                     {
-                        oLineaVenta = new Entidades.LineaVenta();
-
                         oLineaVenta = new Entidades.LineaVenta();
                         oLineaVenta.Corte = oLineaVentaSelect.Corte;
                         oLineaVenta.Venta = oLineaVentaSelect.Venta;
@@ -629,6 +792,11 @@ namespace Presentacion.Ventas
                         oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.IndexAnulado = nroFila;
+
+                        //se agrega el index del anulado al corte seleccionado para anular
+                        //--el index equivale a la cantidad en listaLineaVenta antes de cargarLista--
+                        listaLineaVenta[nroFila].IndexAnulado = listaLineaVenta.Count;
+
                         cargarListas();
                         cargarGrilla();
 
@@ -649,7 +817,7 @@ namespace Presentacion.Ventas
 
         private void cargarCorte()
         {
-            if (txtCodigo.Text.Trim() != "")
+            if (txtCodigo.Text != "")
             {
                 try
                 {
@@ -660,7 +828,7 @@ namespace Presentacion.Ventas
                     oCorteE = new Entidades.Corte();
 
                     DataTable dtCortes = new DataTable();
-                        dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
+                    dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
 
                     if (dtCortes.Rows.Count > 0)
                     {
@@ -671,11 +839,13 @@ namespace Presentacion.Ventas
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.tipo = fila["tipo"].ToString();
+                                oCorteE.Mayorista = Convert.ToBoolean(fila["mayorista"]);
+                                oCorteE.EnCierreStock = Convert.ToBoolean(fila["enCierreStock"]);
                         }
                         //cargo los campos
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
-                        this.txtPrecioKg.Text = oCorteE.precioKg.ToString("N");
+                        this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
                         cargarTotalCorte();
                     }
                     else
@@ -684,6 +854,7 @@ namespace Presentacion.Ventas
                         this.txtTotalCorte.Text = "";
                         this.txtPrecioKg.Text = "";
                         this.txtCorte.Text = "";
+                        totalesParciales(0, 0);
                     }
                 }
                 catch (Exception ex)
@@ -699,20 +870,43 @@ namespace Presentacion.Ventas
                 txtCorte.Text = null;
                 txtTotalCorte.Text = null;
                 txtPrecioKg.Text = null;
+                totalesParciales(0,0);
             }
         }
 
         private void cargarTotalCorte()
         {
+            //calcular total corte para peso inestable
+            if (txtCantKgs.Text.Contains("i"))
+            {
+                try 
+	            {
+                    float kgPesoInestable = Utilidades.Util_Form.convertFloat(txtCantKgs.Text.Substring(0, 7), false);
+                    float precioKgCorte = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
+
+                    float totalCorteInestable = kgPesoInestable * precioKgCorte;
+                    //cargo el txt total corte
+                    txtTotalCorte.Text = totalCorteInestable.ToString("F2");
+
+                    totalesParciales(kgPesoInestable, totalCorteInestable);
+
+	            }
+	            catch (Exception)
+	            {
+            		txtTotalCorte.Text = "";
+	            }
+                return;
+            }
+
+
             if (!txtCantKgs.Text.Equals("") && (checkLeerPeso.Checked  || 
                 ( !checkLeerPeso.Checked && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))))
             {
                 try
                 {
-                    //bool d = Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs");
                     try
                     {
-                        cantKg = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                        cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, false);
                     }
                     catch (Exception)
                     {
@@ -724,21 +918,14 @@ namespace Presentacion.Ventas
                     {
                         try
                         {
-                            precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                            precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
                         }
                         catch (Exception)
                         {
-                            try
-                            {
-                                precioKg = float.Parse(txtPrecioKg.Text.Trim());
-                            }
-                            catch (Exception)
-                            {
 
-                                if (checkLeerPeso.Checked)
-                                {
-                                    precioKg = 0;
-                                }
+                            if (checkLeerPeso.Checked)
+                            {
+                                precioKg = 0;
                             }
                         }
 
@@ -761,6 +948,8 @@ namespace Presentacion.Ventas
                     //cargo el txt total corte
                     txtTotalCorte.Text = totalCorte.ToString("N");
 
+                    totalesParciales(cantKg, totalCorte);
+
                 }
                 catch (Exception ex)
                 {
@@ -770,7 +959,24 @@ namespace Presentacion.Ventas
                     }
                 }
             }
+        }
 
+        private void totalesParciales(float kgsCorte, float totalCorte)
+        {
+            cargarTotales();
+
+            if (totalCorte > 0)
+            {
+                try
+                {
+                    txtTotalKgs.Text = (Utilidades.Util_Form.convertFloat(txtTotalKgs.Text, false) + kgsCorte).ToString("N3");
+                    txtTotalS.Text = (Utilidades.Util_Form.convertFloat(txtTotalS.Text, false) + totalCorte).ToString("N2");
+                }
+                catch (Exception)
+                {
+                    cargarTotales();
+                }
+            }      
         }
 
         private void establecerPrecioKg()
@@ -781,7 +987,7 @@ namespace Presentacion.Ventas
                 {
                     try
                     {
-                        totalCorte = float.Parse(txtTotalCorte.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                        totalCorte = Utilidades.Util_Form.convertFloat(txtTotalCorte.Text, false);
                     }
                     catch (Exception)
                     {
@@ -797,7 +1003,6 @@ namespace Presentacion.Ventas
                 }
                 catch (Exception ex)
                 {
-
                     MessageBox.Show(ex.Message);
                 }
             }
@@ -811,11 +1016,10 @@ namespace Presentacion.Ventas
                 {
                     try
                     {
-                        precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                        precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
                     }
                     catch (Exception)
                     {
-
                         precioKg = float.Parse(txtPrecioKg.Text.Trim());
                     }
                     totalCorte = precioKg * cantKg;
@@ -866,7 +1070,19 @@ namespace Presentacion.Ventas
             }
             else
             {
-                return false;
+                if (oUsuario == null) return false;
+
+                DialogResult respuesta;
+                respuesta = MessageBox.Show("¿Cerrar la ventana de Venta de "+oUsuario.Nombre+"?.", "Cerrar ventana", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (respuesta == DialogResult.Yes)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
 
@@ -898,6 +1114,8 @@ namespace Presentacion.Ventas
         {
             tiempoInactivo = 0;
             esModificacion();
+            if (capturarPantallaFinal) capturarPantalla();
+            capturarPantallaFinal = false;
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -920,8 +1138,13 @@ namespace Presentacion.Ventas
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
+            checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
-
+            lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
+            lblClienteConBonif.Text = lblClienteConBonif.Visible ? 
+                "Cliente con Bonificación ("+oCliente.Bonificacion.ToString("N2")+" %)" : "";
+            this.txtCodigo.Focus();
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -977,22 +1200,39 @@ namespace Presentacion.Ventas
                     }
                     else
                     {
-                        Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
-                        txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
+                        {
+                            Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
+                            txtCantKgs.Text = Leer_Peso.ObtenerPeso();
+                        }
+                        else
+                        {
+                            txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                            lblErrorBalanza.Visible = false;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                timer1.Enabled = false;
-                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                {
-                    checkLeerPeso.Checked = false;
-                }
-                else
-                {
-                    timer1.Enabled = true;
-                }
+                txtCantKgs.Text = "Error balanza";
+                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Visible = true;
+                //timer1.Enabled = false;
+
+                //txtCantKgs.Text = "Error balanza";
+                //timer1.Enabled = false;
+                //if (FormPrincipal.logueado && Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                //{
+                //    dejarDeLeerPeso = true;
+                //    checkLeerPeso.Checked = false;
+                //}
+                //else
+                //{
+                //    lblErrorBalanza.Text = ex.Message;
+                //    lblErrorBalanza.Visible = true;
+                //    timer1.Enabled = true;
+                //}
             }
         }
 
@@ -1000,20 +1240,26 @@ namespace Presentacion.Ventas
         {
             try
             {
+                checkLeerPeso.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkLeerPeso.Checked);
+
                 if (checkLeerPeso.Checked)
                 {
+                    dejarDeLeerPeso = false;
                     txtCantKgs.BackColor = SystemColors.ScrollBar;
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
+                    btnAgregar.Focus();
                     timer1.Enabled = true;
                 }
                 else
-                {
+                {                    
                     txtCantKgs.BackColor = SystemColors.Window;
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Focus();
                     timer1.Enabled = false;
+                    lblErrorBalanza.Visible = false;
                 }
             }
             catch (Exception ex)
@@ -1024,9 +1270,16 @@ namespace Presentacion.Ventas
 
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   "+
+                "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F9 = Buscar Cliente  |  " +
+                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |";
             if (oUsuario != null)
             {
                 validarAperturaCaja();
+                //se vuelve a validar que el usuario no sea nulo(sucede cuando no quiere abrir caja)
+                if (oUsuario == null) return;
+
                 oVentaE.Vendedor = oUsuario;
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
@@ -1035,6 +1288,7 @@ namespace Presentacion.Ventas
                 Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
+                comboColors.Text = colorUser.ToString();
                 grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
                 timerBloquearCaja.Start();
                 ultimaVentaVendedor();
@@ -1054,11 +1308,28 @@ namespace Presentacion.Ventas
             oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
             if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
             {
-                MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
+                DialogResult resp = MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.\n\n¿Desea abrir caja ahora?",
+                    "Abrir Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);//, MessageBoxButtons.YesNo, MessageBoxDefaultButton.Button2);
+                if (resp.Equals(DialogResult.Yes))
+                {
+                    formAbrirCaja frmAbrirCaja = new formAbrirCaja();
+                    frmAbrirCaja.oUserIncio = oUsuario;
+                    frmAbrirCaja.ShowDialog();
+                    validarAperturaCaja();
+                }
+                else
+                {
+                    //si estable nulo el Usuario porque decidió no abrir caja
+                    oUsuario = null;
+                    formVentaCaja_Load(null, null);
+                }                
             }
         }
 
+        private bool estaBloqueado()
+        {
+            return panelBloquear.Visible;
+        }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             switch (keyData)
@@ -1070,13 +1341,11 @@ namespace Presentacion.Ventas
                     txtCodigo.Focus();
                     break;
                 case Keys.End:
+                    if (!estaBloqueado())
                     mostrarPago();
                     break;
                 case Keys.PageDown:
                     cambiarPuntoDeVenta();
-                    break;
-                case Keys.F9:
-                    buscarCliente();
                     break;
                 case Keys.F2:
                     foreach (Form frm in Application.OpenForms)
@@ -1088,7 +1357,31 @@ namespace Presentacion.Ventas
                         }
                     }
                     break;
+                case Keys.F3:
+                        sumarUltimasDosVentas();
+                        break;
+                case Keys.F4:
+                        if (!estaBloqueado())
+                            bonificarCorte();
+                        break;
+                case Keys.F5:
+                    if (!estaBloqueado())
+                        agregarCompra();
+                    break;
+                case Keys.F6:
+                    if (!estaBloqueado())
+                    misEgresoCaja();
+                    break;
+                case Keys.F7:
+                    if (!estaBloqueado())
+                    agregarEgresoCaja();
+                    break;
+                case Keys.F9:
+                    if (!estaBloqueado())
+                    buscarCliente();
+                    break;
                 case Keys.F10:
+                    if (!estaBloqueado())
                     buscarCorte();
                     break;
                 case Keys.F11:
@@ -1100,6 +1393,116 @@ namespace Presentacion.Ventas
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void agregarCompra()
+        {
+            formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+            frmNuevaCompra.oUsuario  = oUsuario;
+            frmNuevaCompra.esEgresoCaja = true;
+            frmNuevaCompra.ShowDialog();
+        }
+
+        private void sumarUltimasDosVentas()
+        {
+            //try
+            //{
+            //    oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oUsuario.Id);
+            //    double totalUltimaVenta = 0;
+            //    foreach (Entidades.LineaVenta linea in oUltimaVentaVendedor.LineasVenta)
+            //    {
+            //        totalUltimaVenta += linea.PrecioKg * linea.CantKg;
+            //    }
+            //    MessageBox.Show(totalUltimaVenta.ToString());
+            //}
+            //catch (Exception)
+            //{
+                
+            //}
+        }
+
+        private void bonificarCorte()
+        {
+            if (grillaLineasVenta.SelectedRows.Count > 0)
+            {
+                int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
+
+                Entidades.LineaVenta oLineaVentaSelect = new Entidades.LineaVenta();
+                oLineaVentaSelect = listaLineaVenta[nroFila];
+
+                //se valida que el corte no haya sido anulado para poder bonificar
+                foreach (Entidades.LineaVenta linea in listaLineaVenta)
+                {
+                    if (oLineaVentaSelect.IndexAnulado >= 0 || (oLineaVentaSelect.Corte.codigo == linea.Corte.codigo &&
+                        linea.IndexAnulado == nroFila))
+                    {
+                        MessageBox.Show("No se pueden bonificar cortes anulados");
+                        return;
+                    }
+                }
+
+                //si es consumidor final no se permite bonificacion excepto que esté logueado como admin
+                if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                {
+                    MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
+                    return;
+                }
+
+                precioBonificado = oLineaVentaSelect.PrecioKg.ToString("F2");
+                //se busca si el producto seleccionado ya tiene bonificacion
+                foreach (Entidades.LineaVenta lineaCargada in listaLineaVenta)
+                {
+                    if (!Entidades.LineaVenta.esAnulado(lineaCargada.Estado) && lineaCargada.Bonificacion != 0 && 
+                        lineaCargada.Corte.codigo.Equals(oLineaVentaSelect.Corte.codigo) &&
+                        lineaCargada.Random.Equals(oLineaVentaSelect.Random))
+                    {
+                        oLineaVentaSelect.PrecioKg = lineaCargada.PrecioKg;
+                        break;
+                    }
+                }
+
+                formBonificar frmBonificar = new formBonificar();
+                frmBonificar.oLineaVenta = oLineaVentaSelect;
+                frmBonificar.frmVentaCaja = this;
+                frmBonificar.ShowDialog();
+
+                listaLineaVenta[nroFila].PrecioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
+                listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].PrecioReal)) * 100;
+                listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? oLineaVentaSelect.Corte.CorteDesc :
+                    (oLineaVentaSelect.Corte.CorteDesc.Length < 9 ? oLineaVentaSelect.Corte.CorteDesc : oLineaVentaSelect.Corte.CorteDesc.Substring(0,9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
+                listaLineaGrilla[nroFila].precioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
+                listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].cantKgs;
+
+                cargarGrilla();
+
+                txtCodigo.Focus();
+            }
+            else
+            {
+                MessageBox.Show("No hay ninguna fila seleccionada.", "Seleccione un fila", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            oLineaVenta = null;
+        }
+
+        private void misEgresoCaja()
+        {
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+            oCierreE.UsuarioInicio = oUsuario;
+            oCierreE.Sucursal = oSucursalE;
+
+            formEgresosCajaVendedor frmEgresosCajaVendedor = new formEgresosCajaVendedor();
+            frmEgresosCajaVendedor.oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, null);
+            frmEgresosCajaVendedor.ShowDialog();
+        }
+
+        private void agregarEgresoCaja()
+        {
+            if (panelBloquear.Visible) return;
+            formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
+            frmAddOrEditEgresoCaja.oUsuario = oUsuario;
+            frmAddOrEditEgresoCaja.egresoDesdeCajaVenta = true;
+            frmAddOrEditEgresoCaja.ShowDialog();
         }
 
         private void cambiarPuntoDeVenta()
@@ -1167,6 +1570,8 @@ namespace Presentacion.Ventas
             grupoCortes.Enabled = false;
             pnlBuscar.Enabled = false;
             panelPago.Enabled = false;
+            grillaLineasVenta.Enabled = false;
+
             txtClave.Focus();
         }
 
@@ -1189,6 +1594,7 @@ namespace Presentacion.Ventas
                 grupoCortes.Enabled = true;
                 pnlBuscar.Enabled = true;
                 panelPago.Enabled = true;
+                grillaLineasVenta.Enabled = true;
 
                 timerBloquearCaja.Start();
                 tiempoInactivo = 0;
@@ -1255,8 +1661,11 @@ namespace Presentacion.Ventas
                 }
                 else
                 {
-                    if (oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                    if (!dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                     {
+                        //checkLeerPeso.Checked = FormPrincipal.logueado ? 
+                        //    checkLeerPeso.Checked : true;
+                        //if (checkLeerPeso.Checked) btnAgregar.Focus();
                         checkLeerPeso.Checked = true;
                         btnAgregar.Focus();
                     }
@@ -1320,6 +1729,7 @@ namespace Presentacion.Ventas
 
         private void checkTicket_CheckedChanged(object sender, EventArgs e)
         {
+            checkTicket.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkTicket.Checked);
             txtCodigo.Focus();
         }
 
@@ -1355,9 +1765,18 @@ namespace Presentacion.Ventas
 
         private void lblUltimaVenta_Click(object sender, EventArgs e)
         {
+
             if (ultimaVenta)
             {
                 ultimaVentaVendedor();
+                //se valida que no hay pasado el limite de tiempo para editar la venta
+                if (!FormPrincipal.logueado && oUltimaVentaVendedor.Creado.AddMinutes(10) < DateTime.Now)
+                {
+                    MessageBox.Show("Caducó el tiempo para modificar la venta.\n\n(Inicie sesión como admin para poder modificar)",
+                        "Tiempo Caducado");
+                    return;
+                }
+
                 if (oUltimaVentaVendedor != null)
                 {
                     formUltimaVenta frmUltimaVenta = new formUltimaVenta();
@@ -1408,6 +1827,89 @@ namespace Presentacion.Ventas
             catch (Exception)
             {
                 oTemporalLineaVenta = null;
+            }
+        }
+
+        private void checkLeerPeso_Enter(object sender, EventArgs e)
+        {
+            capturarPantalla();
+            capturarPantallaFinal = true;
+        }
+
+        private void capturarPantalla()
+        {
+            Utilidades.Util_Form.capturarPantalla(txtVendedor.Text, DateTime.Now);
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
+        }
+
+        private void comboColors_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            try
+            {
+                if (comboColors.Items.Count < 13)
+                {
+                    comboColors.Items.Add(Color.SteelBlue);
+                    comboColors.Items.Add(Color.DarkCyan);
+                    comboColors.Items.Add(Color.DarkOrchid);
+                    comboColors.Items.Add(Color.SeaGreen);
+                    comboColors.Items.Add(Color.DarkCyan);
+                    comboColors.Items.Add(Color.Black);
+                    comboColors.Items.Add(Color.Red);
+                    comboColors.Items.Add(Color.Green);
+                    comboColors.Items.Add(Color.Firebrick);
+                    comboColors.Items.Add(Color.Teal);
+                    comboColors.Items.Add(Color.DarkSlateBlue);
+                    comboColors.Items.Add(Color.DimGray);
+                }
+
+                ComboBox cmb = sender as ComboBox;
+                if (cmb == null) return;
+                if (e.Index < 0) return;
+                if (!(cmb.Items[e.Index] is Color)) return;
+                Color color = (Color)cmb.Items[e.Index];
+                // Dibujamos el fondo
+                e.DrawBackground();
+                // Creamos los objetos GDI+
+                Brush brush = new SolidBrush(color);
+                Pen forePen = new Pen(e.ForeColor);
+                Brush foreBrush = new SolidBrush(e.ForeColor);
+                // Dibujamos el borde del rectángulo
+                e.Graphics.DrawRectangle(
+                    forePen,
+                    new Rectangle(e.Bounds.Left + 2, e.Bounds.Top + 2, 19,
+                        e.Bounds.Size.Height - 4));
+                // Rellenamos el rectángulo con el Color seleccionado
+                // en la combo
+                e.Graphics.FillRectangle(brush,
+                    new Rectangle(e.Bounds.Left + 3, e.Bounds.Top + 3, 18,
+                        e.Bounds.Size.Height - 5));
+                // Dibujamos el nombre del color
+                e.Graphics.DrawString(color.Name, cmb.Font,
+                    foreBrush, e.Bounds.Left + 25, e.Bounds.Top + 2);
+                // Eliminamos objetos GDI+
+                brush.Dispose();
+                forePen.Dispose();
+                foreBrush.Dispose();
+            }
+            catch (Exception)
+            {
+                
+            }
+        }
+
+        private void comboColors_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                this.pnlBuscar.BackColor = (Color)comboColors.SelectedItem;
+                this.grupoCortes.BackColor = (Color)comboColors.SelectedItem;
+            }
+            catch (Exception)
+            {
             }
         }
     }

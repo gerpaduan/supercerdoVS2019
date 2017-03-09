@@ -32,6 +32,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formPersonas));
             this.panel1 = new System.Windows.Forms.Panel();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtBuscar = new System.Windows.Forms.TextBox();
             this.Proveedor = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
@@ -44,7 +45,6 @@
             this.otrosDatos = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPersonas)).BeginInit();
             this.barraControl.SuspendLayout();
@@ -61,8 +61,19 @@
             this.panel1.Controls.Add(this.btnBuscar);
             this.panel1.Location = new System.Drawing.Point(-5, 42);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(498, 62);
+            this.panel1.Size = new System.Drawing.Size(670, 62);
             this.panel1.TabIndex = 6;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.groupBox2.Location = new System.Drawing.Point(17, 44);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(639, 10);
+            this.groupBox2.TabIndex = 47;
+            this.groupBox2.TabStop = false;
             // 
             // txtBuscar
             // 
@@ -97,9 +108,10 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(303, 409);
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(434, 408);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(84, 28);
+            this.btnSeleccionar.Size = new System.Drawing.Size(107, 28);
             this.btnSeleccionar.TabIndex = 7;
             this.btnSeleccionar.Text = "Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
@@ -108,9 +120,10 @@
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(399, 409);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(547, 409);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(84, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(108, 27);
             this.btnCancelar.TabIndex = 8;
             this.btnCancelar.Text = "Cancelar";
             this.btnCancelar.UseVisualStyleBackColor = true;
@@ -144,7 +157,7 @@
             this.grillaPersonas.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
             this.grillaPersonas.RowHeadersVisible = false;
             this.grillaPersonas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaPersonas.Size = new System.Drawing.Size(475, 295);
+            this.grillaPersonas.Size = new System.Drawing.Size(647, 295);
             this.grillaPersonas.StandardTab = true;
             this.grillaPersonas.TabIndex = 5;
             this.grillaPersonas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaPersonas_CellDoubleClick);
@@ -192,7 +205,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(488, 45);
+            this.barraControl.Size = new System.Drawing.Size(660, 45);
             this.barraControl.TabIndex = 9;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
@@ -209,33 +222,22 @@
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
-            // groupBox2
-            // 
-            this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(17, 47);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(464, 7);
-            this.groupBox2.TabIndex = 47;
-            this.groupBox2.TabStop = false;
-            // 
             // formPersonas
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(488, 442);
+            this.ClientSize = new System.Drawing.Size(660, 442);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.grillaPersonas);
             this.Controls.Add(this.barraControl);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "formPersonas";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Personas";
+            this.Load += new System.EventHandler(this.formPersonas_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPersonas)).EndInit();

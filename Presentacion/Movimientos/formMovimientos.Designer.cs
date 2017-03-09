@@ -29,13 +29,13 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formMovimientos));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.actualizar = new System.Windows.Forms.ToolStripButton();
-            this.Reporte = new System.Windows.Forms.ToolStripButton();
+            this.LineasMov = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -65,6 +65,7 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaMovimientos = new System.Windows.Forms.DataGridView();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovimientos)).BeginInit();
@@ -76,11 +77,12 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.nuevo,
             this.actualizar,
-            this.Reporte});
+            this.menuDuplicar,
+            this.LineasMov});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(734, 45);
+            this.barraControl.Size = new System.Drawing.Size(815, 45);
             this.barraControl.TabIndex = 6;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -92,7 +94,7 @@
             this.nuevo.Name = "nuevo";
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "Nuevo";
+            this.nuevo.Text = "&Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
@@ -104,19 +106,19 @@
             this.actualizar.Name = "actualizar";
             this.actualizar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.actualizar.Size = new System.Drawing.Size(65, 42);
-            this.actualizar.Text = "Actualizar";
+            this.actualizar.Text = "&Actualizar";
             this.actualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.actualizar.Click += new System.EventHandler(this.actualizar_Click);
             // 
-            // Reporte
+            // LineasMov
             // 
-            this.Reporte.Image = ((System.Drawing.Image)(resources.GetObject("Reporte.Image")));
-            this.Reporte.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.Reporte.Name = "Reporte";
-            this.Reporte.Size = new System.Drawing.Size(52, 42);
-            this.Reporte.Text = "Reporte";
-            this.Reporte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.Reporte.Click += new System.EventHandler(this.Reporte_Click);
+            this.LineasMov.Image = ((System.Drawing.Image)(resources.GetObject("LineasMov.Image")));
+            this.LineasMov.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.LineasMov.Name = "LineasMov";
+            this.LineasMov.Size = new System.Drawing.Size(74, 42);
+            this.LineasMov.Text = "Lineas Mov.";
+            this.LineasMov.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.LineasMov.Click += new System.EventHandler(this.LineasMov_Click);
             // 
             // pnlBuscar
             // 
@@ -141,29 +143,31 @@
             this.pnlBuscar.Controls.Add(this.label4);
             this.pnlBuscar.Location = new System.Drawing.Point(-4, 45);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(742, 108);
+            this.pnlBuscar.Size = new System.Drawing.Size(823, 108);
             this.pnlBuscar.TabIndex = 8;
-            this.pnlBuscar.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlBuscar_Paint);
             // 
             // groupBox3
             // 
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox3.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox3.Location = new System.Drawing.Point(16, 67);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(710, 7);
+            this.groupBox3.Size = new System.Drawing.Size(791, 7);
             this.groupBox3.TabIndex = 47;
             this.groupBox3.TabStop = false;
             // 
             // groupBox2
             // 
+            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(546, 12);
+            this.groupBox2.Location = new System.Drawing.Point(518, 34);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(180, 7);
+            this.groupBox2.Size = new System.Drawing.Size(289, 7);
             this.groupBox2.TabIndex = 46;
             this.groupBox2.TabStop = false;
             // 
@@ -188,7 +192,6 @@
             this.label6.Size = new System.Drawing.Size(55, 15);
             this.label6.TabIndex = 44;
             this.label6.Text = "Sucursal";
-            this.label6.Click += new System.EventHandler(this.label6_Click);
             // 
             // comboSucDestino
             // 
@@ -199,7 +202,6 @@
             this.comboSucDestino.Size = new System.Drawing.Size(133, 21);
             this.comboSucDestino.TabIndex = 43;
             this.comboSucDestino.TabStop = false;
-            this.comboSucDestino.SelectedIndexChanged += new System.EventHandler(this.comboSucDestino_SelectedIndexChanged);
             this.comboSucDestino.TextChanged += new System.EventHandler(this.comboSucDestino_TextChanged);
             // 
             // label7
@@ -234,7 +236,6 @@
             this.label5.Size = new System.Drawing.Size(49, 15);
             this.label5.TabIndex = 41;
             this.label5.Text = "Destino";
-            this.label5.Click += new System.EventHandler(this.label5_Click);
             // 
             // btnBuscarCorte
             // 
@@ -269,10 +270,11 @@
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(499, 6);
+            this.label1.Location = new System.Drawing.Point(471, 28);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(41, 15);
             this.label1.TabIndex = 9;
@@ -280,9 +282,10 @@
             // 
             // txtFechaDesde
             // 
+            this.txtFechaDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFechaDesde.CustomFormat = "dd/MM/yyyy";
             this.txtFechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaDesde.Location = new System.Drawing.Point(602, 24);
+            this.txtFechaDesde.Location = new System.Drawing.Point(565, 47);
             this.txtFechaDesde.Name = "txtFechaDesde";
             this.txtFechaDesde.Size = new System.Drawing.Size(95, 20);
             this.txtFechaDesde.TabIndex = 5;
@@ -291,10 +294,11 @@
             // 
             // label3
             // 
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(552, 26);
+            this.label3.Location = new System.Drawing.Point(515, 49);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 4;
@@ -302,9 +306,10 @@
             // 
             // txtFechaHasta
             // 
+            this.txtFechaHasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFechaHasta.CustomFormat = "dd/MM/yyyy";
             this.txtFechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaHasta.Location = new System.Drawing.Point(602, 47);
+            this.txtFechaHasta.Location = new System.Drawing.Point(711, 48);
             this.txtFechaHasta.Name = "txtFechaHasta";
             this.txtFechaHasta.Size = new System.Drawing.Size(96, 20);
             this.txtFechaHasta.TabIndex = 7;
@@ -312,10 +317,11 @@
             // 
             // label4
             // 
+            this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(557, 49);
+            this.label4.Location = new System.Drawing.Point(666, 50);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
@@ -332,9 +338,9 @@
             // fechaMovimiento
             // 
             this.fechaMovimiento.DataPropertyName = "fechaMovimiento";
-            dataGridViewCellStyle1.Format = "d";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle4.Format = "d";
+            dataGridViewCellStyle4.NullValue = null;
+            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle4;
             this.fechaMovimiento.HeaderText = "Fecha Movimiento";
             this.fechaMovimiento.Name = "fechaMovimiento";
             this.fechaMovimiento.ReadOnly = true;
@@ -391,8 +397,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -400,22 +406,24 @@
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(551, 473);
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(577, 473);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(83, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(114, 27);
             this.btnSeleccionar.TabIndex = 15;
-            this.btnSeleccionar.Text = "Seleccionar";
+            this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
             // btnCancelar
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Location = new System.Drawing.Point(640, 473);
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(697, 473);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(82, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(106, 27);
             this.btnCancelar.TabIndex = 14;
-            this.btnCancelar.Text = "Cancelar";
+            this.btnCancelar.Text = "&Cerrar";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -424,37 +432,52 @@
             this.grillaMovimientos.AllowUserToAddRows = false;
             this.grillaMovimientos.AllowUserToOrderColumns = true;
             this.grillaMovimientos.AllowUserToResizeRows = false;
+            this.grillaMovimientos.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaMovimientos.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.grillaMovimientos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle3.NullValue = null;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.NullValue = null;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle6;
             this.grillaMovimientos.Location = new System.Drawing.Point(12, 157);
             this.grillaMovimientos.Name = "grillaMovimientos";
             this.grillaMovimientos.ReadOnly = true;
             this.grillaMovimientos.RowHeadersVisible = false;
             this.grillaMovimientos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaMovimientos.Size = new System.Drawing.Size(710, 310);
+            this.grillaMovimientos.Size = new System.Drawing.Size(791, 310);
             this.grillaMovimientos.TabIndex = 16;
             this.grillaMovimientos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaMovimientos_CellDoubleClick);
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
+            this.menuDuplicar.Text = "&Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // formMovimientos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(734, 504);
+            this.ClientSize = new System.Drawing.Size(815, 504);
             this.Controls.Add(this.grillaMovimientos);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
-            this.MaximizeBox = false;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.MinimizeBox = true;
             this.Name = "formMovimientos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -500,10 +523,11 @@
         private System.Windows.Forms.ComboBox comboSucOrigen;
         protected System.Windows.Forms.Label label5;
         protected System.Windows.Forms.Label label6;
-        private System.Windows.Forms.ToolStripButton Reporte;
+        private System.Windows.Forms.ToolStripButton LineasMov;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox2;
         protected System.Windows.Forms.ToolStripButton actualizar;
+        protected System.Windows.Forms.ToolStripButton menuDuplicar;
     }
 }

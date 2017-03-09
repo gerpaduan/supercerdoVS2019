@@ -11,23 +11,22 @@ namespace Presentacion
 {
     public partial class formInfoCorte : formBaseColor
     {
+        public int idCorte = 0;
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE = new Entidades.Corte();
-        formCortes oFrmCortes=new formCortes();
+        public formCortes oFrmCortes;
         DataTable dtCorte;
-
-        int idCorte;
 
         public formInfoCorte()
         {
-            InitializeComponent();
-           
+            InitializeComponent();           
         }
 
         private void modificar_Click(object sender, EventArgs e)
         {
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-            frmNuevoCorte.obtenerCorteFormInfoCorte(oCorteE, this);
+            frmNuevoCorte.idCorte = oCorteE.idCorte;
+            frmNuevoCorte.oFrmInfoCorte = this;
             frmNuevoCorte.ShowDialog();
         }
 
@@ -36,20 +35,11 @@ namespace Presentacion
             formIngresoEmbutido frmStockCorte = new formIngresoEmbutido();
             frmStockCorte.ShowDialog();
         }
-
-
-        public void obtenerParametros(Entidades.Corte corteParam, formCortes frmCortesParam)
-        {
-            oFrmCortes = frmCortesParam;
-            oCorteE = corteParam;
-            idCorte = oCorteE.idCorte;
-            cargarCorte();
-        }
-
+        
         private void cargarCorte()
         { 
             dtCorte=new DataTable();
-            dtCorte = oCorteN.obtenerInfoCorte(idCorte);
+            dtCorte = oCorteN.obtenerInfoCorte(oCorteE.idCorte);
 
             cargarCampos();
         }
@@ -65,42 +55,26 @@ namespace Presentacion
                     txtDescCorte.Text = fila["corte"].ToString();
                     txtPrecioKg.Text = fila["precioKg"].ToString();
                     txtTipo.Text = fila["tipo"].ToString();
-                    if (oCorteE.independiente == 1)
-                    {
-                        txtIndependiente.Checked = true;
-                    }
+                    txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
+                    checkMayorista.Checked = Convert.ToBoolean(fila["mayorista"]);
+                    checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
 
                     txtCorteMaestro.Text = fila["corteMaestro"].ToString();
                     txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
                     txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
                     txtDesvioEstandar.Text = fila["desvioEstandar"].ToString();
-                    txtStockSanLorenzo.Text = fila["stockSL"].ToString();
-                    txtStockSanMartin.Text = fila["stockSM"].ToString();
-
-                    float stockSL, stockSM, total;
-                    stockSL = float.Parse(fila["stockSL"].ToString());
-                    stockSM = float.Parse(fila["stockSM"].ToString());
-                    total = stockSL + stockSM;
-
-                    txtTotalStock.Text = Convert.ToString(total);
+                    txtPromedio.Text = fila["promedio"].ToString();
                 }
-
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
-           
         }
 
         public void recibirCorteModificado(Entidades.Corte oCorteMod)
         {
-            oCorteE = oCorteMod;
-
-            cargarCamposCorteMod();
-
-            oFrmCortes.cargarGrilla();
+            formInfoCorte_Load(null, null);
         }
 
         private void cargarCamposCorteMod()
@@ -108,9 +82,13 @@ namespace Presentacion
             txtCodigo.Text =Convert.ToString( oCorteE.codigo);
             txtDescCorte.Text = oCorteE.corte;
             txtTipo.Text = oCorteE.tipo;
-            txtCorteMaestro.Text = oCorteE.corteMaestro.corte;
+            txtIndependiente.Checked = oCorteE.independiente.Equals(1);
+            checkMayorista.Checked = oCorteE.Mayorista.Equals(1);
+            //checkEnCierreStock.Checked = oCorteE.
+            txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null) ? oCorteE.corteMaestro.corte : "-";
             txtPorcentajeCorte.Text =Convert.ToString( oCorteE.porcentaje);
             txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+            txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
         }
 
         private void eliminarCorte()
@@ -132,15 +110,25 @@ namespace Presentacion
 
         private void eliminar_Click(object sender, EventArgs e)
         {
-            if (Presentacion.FormPrincipal.logueado == false)
-            {
-                MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
-            }
-            else
-            {
-                eliminarCorte();
-            }
+            if (!Usuarios.FormValidarPermiso.validarPermiso())
+                return;
+
+            eliminarCorte();
         }
 
+        private void formInfoCorte_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+
+                oCorteE = oCorteN.getCorteById(idCorte, true);
+                cargarCorte();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
     }
 }

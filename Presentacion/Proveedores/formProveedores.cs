@@ -109,14 +109,10 @@ namespace Presentacion
 
 #endregion
 
-        
-        
+        private void formProveedores_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
 
-        
-       
-
-        
-
-       
+        }       
     }
 }

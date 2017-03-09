@@ -14,22 +14,18 @@ using Presentacion.Caja;
 using Presentacion.Balanza;
 using Presentacion.Usuario;
 using Presentacion.Pruebas;
+using Presentacion.CuentaCorriente;
 using System.Configuration;
+using Utilidades;
 
 
 namespace Presentacion
 {
     public partial class FormPrincipal : Form, InterfaceUsuario
-    {
-        
+    {        
         public static bool logueado = false;
-        //public enum tipoConexion { local, remota }
-        //public static tipoConexion tipoConn  = tipoConexion.local;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
-
-        Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         string ultimaConnSelect;
 
@@ -85,7 +81,7 @@ namespace Presentacion
         {
             formAbierto = false;
 
-            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
             foreach (Form frm in Application.OpenForms)
             {
@@ -183,12 +179,6 @@ namespace Presentacion
 
         private static void stockCortes()
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formStockCortes"] != null)
@@ -212,8 +202,19 @@ namespace Presentacion
             }
         }
 
-        private static void reportes()
-        {
+        private void reportes()
+        {            
+            if (!logueado)
+            {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.ShowDialog(this);
+                if (oUsuario == null) return;
+                if (!oUsuario.Admin)
+                {
+                    MessageBox.Show("No tienes permiso para ver reportes");
+                    return;
+                }                
+            }
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
         }
@@ -251,12 +252,6 @@ namespace Presentacion
 
         private static void baseDeDatos()
         {
-            //if (!logueado)
-            //{
-            //    Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //    frmLogin.ShowDialog();
-            //    logueado = frmLogin.Logueado();
-            //}
             if (logueado)
             {
                 if (Application.OpenForms["formBackUp"] != null)
@@ -312,11 +307,7 @@ namespace Presentacion
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             ultimaConnSelect = comboConexion.Text;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
-
-            //asigo sucursal al título  
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            oSucursalE = oSucursalN.findById(idSucursal);
-            this.Text = this.Text + " | Suc. " + oSucursalE.sucursal;
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
 
         private static void embutidos()
@@ -395,6 +386,8 @@ namespace Presentacion
 
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (e.CloseReason == CloseReason.WindowsShutDown) return;
+
             bool permitirCerrar = true;
             e.Cancel = true;
             foreach (Form frm in Application.OpenForms)
@@ -420,14 +413,16 @@ namespace Presentacion
 
         private void cerrarCaja()
         {
-            formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
-            frmCajasAbiertas.Show();
-            //FormLoginVendedor frmLogin = new FormLoginVendedor();
-            //frmLogin.ShowDialog(this);
-
-            //formCerrarCaja frmCerrarCaja = new formCerrarCaja();
-            //frmCerrarCaja.oUserCierre = oUsuario;
-            //frmCerrarCaja.ShowDialog();
+            if (Application.OpenForms["formCajasAbiertas"] != null)
+            {
+                Application.OpenForms["formCajasAbiertas"].Activate();
+                Application.OpenForms["formCajasAbiertas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formCajasAbiertas frmCajasAbiertas = new formCajasAbiertas();
+                frmCajasAbiertas.Show();
+            }
         }
 
         private void linkAbrirCaja_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
@@ -437,7 +432,7 @@ namespace Presentacion
 
         private void abrirCaja()
         {
-            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
             if (oUsuario != null)
             {                
@@ -480,7 +475,7 @@ namespace Presentacion
 
         private static void cierresCaja()
         {
-            if (logueado)
+            if (Usuarios.FormValidarPermiso.validarPermiso())
             {
                 if (Application.OpenForms["formCierresDeCaja"] != null)
                 {
@@ -493,10 +488,6 @@ namespace Presentacion
                     frmCierresDeCaja.Show();
                 }
             }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }
         }
 
         private void linkStock_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -506,8 +497,18 @@ namespace Presentacion
 
         private static void stock()
         {
-            formStock frm = new formStock();
-            frm.Show();
+            if (Application.OpenForms["formStock"] != null)
+            {
+
+                Application.OpenForms["formStock"].Activate();
+                Application.OpenForms["formStock"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formStock frm = new formStock();
+                frm.Show();
+            }
         }
 
         private void balanzaToolStripMenuItem_Click(object sender, EventArgs e)
@@ -552,8 +553,23 @@ namespace Presentacion
 
         private void verBalanzaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Utilidades.FormLeer_Peso frm = Utilidades.FormLeer_Peso.CrearLeerPeso();
-            frm.Show();
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                int d = Application.OpenForms.Count;
+                if (frm.GetType() == typeof(FormPesoBalanza))
+                {
+                    frm.BringToFront();
+                    formAbierto = true;
+                    break;                    
+                }
+            }
+            if (!formAbierto)
+            {
+                Utilidades.FormPesoBalanza frmBalanza = new Utilidades.FormPesoBalanza();
+                frmBalanza.Show();
+            }
+           
         }
 
         private void leerPesoToolStripMenuItem_Click(object sender, EventArgs e)
@@ -635,17 +651,18 @@ namespace Presentacion
 
         private static void gastos()
         {
-            if (Application.OpenForms["formGastos"] != null)
+            if (Application.OpenForms["formEgresosCaja"] != null)
             {
 
-                Application.OpenForms["formGastos"].Activate();
-                Application.OpenForms["formGastos"].WindowState = FormWindowState.Normal;
+                Application.OpenForms["formEgresosCaja"].Activate();
+                Application.OpenForms["formEgresosCaja"].WindowState = FormWindowState.Normal;
 
             }
             else
             {
-                formGastos frmGastos = new formGastos();
-                frmGastos.Show();
+                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+                formEgresosCaja frmEgresosCaja = new formEgresosCaja();
+                frmEgresosCaja.Show();
             }
         }
 
@@ -654,7 +671,7 @@ namespace Presentacion
             cierresCaja();
         }
 
-        private void btnGastos_Click(object sender, EventArgs e)
+        private void btnEgresosCaja_Click(object sender, EventArgs e)
         {
             gastos();
         }
@@ -679,12 +696,16 @@ namespace Presentacion
         {
             if (logueado)
             {
-                if (Application.OpenForms.Count == 1)
+                //si verifica si está abierto el formulario desde donde se obtiene el peso de la balanza
+                Form existe = Application.OpenForms.OfType<Form>().Where(pre => pre.Name == "FormPesoBalanza").SingleOrDefault<Form>();
+                
+                if (Application.OpenForms.Count == 1 || (Application.OpenForms.Count.Equals(2) && existe!=null))
                 {
                     ultimaConnSelect = comboConexion.Text;
                     Utilidades.Conexion.connStringActual = comboConexion.Text;
                     Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
-                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);       
+                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);
+                    this.Text = Utilidades.Conexion.getSucursalConexion();
                 }
                 else
                 {
@@ -724,6 +745,100 @@ namespace Presentacion
             if (logueado && checkAutoDesconectar.Checked)
             {
                 cerrarSesion();
+            }
+        }
+
+        private void configuraciónToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                Utilidades.FormAppConfig formAppConfig = new Utilidades.FormAppConfig();
+                formAppConfig.Show();
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void lineasVentaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formGetAllLineaVenta"] != null)
+                {
+                    Application.OpenForms["formGetAllLineaVenta"].Activate();
+                    Application.OpenForms["formGetAllLineaVenta"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
+                    frmTemporalLineaVenta.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void ctasCtesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formCtasCtes"] != null)
+                {
+                    Application.OpenForms["formCtasCtes"].Activate();
+                    Application.OpenForms["formCtasCtes"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formCtasCtes frmCtasCtes = new formCtasCtes();
+                    frmCtasCtes.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void pagosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formPagos"] != null)
+                {
+                    Application.OpenForms["formPagos"].Activate();
+                    Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    Pagos.formPagos frmPagos = new formPagos();
+                    frmPagos.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void stockActualToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formStockActual"] != null)
+            {
+                Application.OpenForms["formStockActual"].Activate();
+                Application.OpenForms["formStockActual"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formStockActual frmStockActual = new formStockActual();
+                frmStockActual.Show();
             }
         }
     }

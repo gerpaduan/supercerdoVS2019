@@ -154,6 +154,33 @@ namespace Presentacion.Ticket
             
             RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
+
+        public void TextoMuchasLineas(string par1)                          // agrega texto a la izquierda
+        {
+            max = par1.Length;
+            int nroVueltas = 1;
+            parte1 = "";
+            string tabulacion = "   ";
+            for (int index = 0; index < max; index++)
+            {
+                //si se están imprimiendo mas de 5 lineas se corta
+                if (nroVueltas > 5)
+                {
+                    parte1 += "...";
+                    break;
+                }
+                if (index == (cantMaxChar * nroVueltas))
+                {
+                    nroVueltas++;
+                    parte1 += "\n";
+                    parte1 += tabulacion;
+                }
+                parte1 += par1[index].ToString();
+            }
+            ticket = parte1 + "\n";
+            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+        }
+
         public void AgregaTotales(string par1, double total)
         {
             ticket = par1;

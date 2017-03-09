@@ -33,17 +33,18 @@ namespace Negocio
                 Negocio.Persona oPersonaN = new Persona();
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
+                oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
+                oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();
                 oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));
                 oCompra.Estado = row["estado"].ToString();
                 oCompra.Observaciones = row["observaciones"].ToString();
                 oCompra.Creado = row["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(row["creado"].ToString());
-                DateTime fechaNull = Convert.ToDateTime("01/01/1990");
-                oCompra.Actualizado = !String.IsNullOrEmpty(row["actualizado"].ToString()) ? (Convert.ToDateTime(row["actualizado"].ToString())) : fechaNull;
-                //Usuario oUsuarioN = new Usuario();
-                //oCompra.CreadoPor = oUsuarioN.findById();
-                //oCompra.ActualizadoPor = oUsuarioN.findById();
+                oCompra.Actualizado = row["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(row["actualizado"]);
+                Usuario oUsuarioN = new Usuario();
+                oCompra.CreadoPor = row["creadoPor"].Equals(DBNull.Value) ? null : oUsuarioN.getUserById(Convert.ToInt32(row["creadoPor"].ToString()));
+                oCompra.ActualizadoPor = row["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioN.getUserById(Convert.ToInt32(row["actualizadoPor"].ToString()));
             }
             return oCompra;
         }
@@ -51,6 +52,15 @@ namespace Negocio
         public void modificarCompra(Entidades.Compra oCompraE)
         {
             oCompraD.ModificarCompra(oCompraE);
+        }
+        
+        public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
+        {
+            oCompraE = findById_convertToCompra(oCompraE.IdCompra);
+            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra,
+                "\'"+oCompraE.TipoCompra+"\'", Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
+                oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte);
         }
 
         public void modificarPrecioMedia(int idCompra, float precioKg)
@@ -75,9 +85,9 @@ namespace Negocio
             return oCompraD.obtenerIdUltimaCompra();
         }
 
-        public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
-            return oCompraD.obtenerCompras(idSucursal,tipoCompra, texto,fechaDesde,fechaHasta);
+            return oCompraD.obtenerCompras(idSucursal,tipoCompra, texto,fechaDesde,fechaHasta, conexionSucursal);
         }
 
         public DataTable obtenerCortesPorCompra(int idCompra)
@@ -92,6 +102,9 @@ namespace Negocio
             DataTable dtCortesPorCompra = obtenerCortesPorCompra(idCompra);
             if (dtCortesPorCompra.Rows.Count > 0)
             {
+                Negocio.Usuario oUsuarioN = new Usuario();
+                List<Entidades.Usuario> listaUsuario = oUsuarioN.listaUsuario();
+
                 Negocio.Corte oCorteN = new Corte();
                 DataTable dtCortes = oCorteN.obtenerCortes();
                 Entidades.Corte oCorte;
@@ -103,9 +116,23 @@ namespace Negocio
                     corte = new Entidades.CortePorCompra();
 
                     corte.Compra = oCompra;
+
+                    corte.IdCortePorCompra = row["idCortePorCompra"] != null ? Convert.ToInt32(row["idCortePorCompra"].ToString()) : 0;
                     corte.precioKgs = float.Parse(row["precioKg"].ToString());
                     corte.CantKgs = float.Parse(row["cantKg"].ToString());
+                    corte.Creado = row["creado"] != DBNull.Value ? (DateTime?)(row["creado"]) : oCompra.Creado;
+                    int idUser = row["creadoPor"] != null ? Convert.ToInt32(row["creadoPor"].ToString()) : 0;
+                    foreach (Entidades.Usuario  user in listaUsuario)
+                    {
+                        if (user.Id.Equals(idUser))
+                        {
+                            corte.CreadoPor = user;
+                            break;
+                        }
+                    }
+
                     oCorte = new Entidades.Corte();
+
                     foreach (DataRow rowCorte in dtCortes.Rows)
                     {
                         if (row["idCorte"].Equals(rowCorte["idCorte"]))
@@ -172,33 +199,6 @@ namespace Negocio
 
         }
 
-        #region Pagos
-
-        public void agregarPago(Entidades.Pagos oPagoE)
-        {
-            oCompraD.agregarPago(oPagoE);
-        }
-
-        public void modificarPago(Entidades.Pagos oPagoE)
-        {
-            oCompraD.modificarPago(oPagoE);
-        }
-
-        public void eliminarPago(Entidades.Pagos oPagoE)
-        {
-            oCompraD.eliminarPago(oPagoE);
-        }
-
-        public DataTable obtenerPagos(string tipoTramite, string texto, DateTime fechaDesde, DateTime fechaHasta)
-        {
-            return oCompraD.obtenerPagos(tipoTramite, texto, fechaDesde, fechaHasta);
-        }
-
-        public Entidades.Pagos buscarPago(Entidades.Pagos oPagoE)
-        {
-            return oCompraD.buscarPago(oPagoE);
-        }
-
         public void backup(string destino)
         {
             oCompraD.backup(destino);
@@ -208,9 +208,5 @@ namespace Negocio
         {
             oCompraD.restaurarBD(dataSource,bdAuxiliar, rutaOrigen);
         }
-
-        #endregion
-
-
     }
 }

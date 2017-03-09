@@ -18,6 +18,9 @@ namespace Presentacion
         Entidades.Corte oCorteMaestroE;
 
         DataTable dtCortes;
+        DataTable dtCortesFiltrado;
+
+        int codigoDesde, codigoHasta;
        
         public formCortes()
         {
@@ -29,7 +32,7 @@ namespace Presentacion
         private void nuevo_Click(object sender, EventArgs e)
         {
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-            frmNuevoCorte.obtenerFormCorte(this);
+            frmNuevoCorte.frmCorte = this;
             frmNuevoCorte.ShowDialog();
         }
 
@@ -70,6 +73,7 @@ namespace Presentacion
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
             grillaCortes.DataSource = dtCortes;
+            filtarGrilla();
         }
         
         public void buscarCorte()
@@ -81,16 +85,18 @@ namespace Presentacion
             grillaCortes.AutoGenerateColumns = false;
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
-            grillaCortes.DataSource = dtCortes;            
+            grillaCortes.DataSource = dtCortes;
+            filtarGrilla();
         }
 
         private void modificarCorte()
         {
             try
             {
+                int idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorte"].Value.ToString());
                 formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-                cargarCorte();
-                frmNuevoCorte.obtenerCorteFormCortes(oCorteE, this);
+                frmNuevoCorte.idCorte = idCorte;
+                frmNuevoCorte.frmCorte = this;
                 frmNuevoCorte.ShowDialog();
             }
             catch (Exception ex)
@@ -103,9 +109,9 @@ namespace Presentacion
         {
             try
             {
-                if (Presentacion.FormPrincipal.logueado == false)
+                if (!Usuarios.FormValidarPermiso.validarPermiso())
                 {
-                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+                    this.Close();
                 }
                 else
                 {
@@ -129,37 +135,23 @@ namespace Presentacion
             catch (Exception ex)
             {                
                 MessageBox.Show(ex.Message);
-            }
-            
+            }            
         }
 
         private void infoCorte()
         {
-            cargarCorte();            
-
-            formInfoCorte frmInfoCorte=new formInfoCorte();
-            frmInfoCorte.obtenerParametros(oCorteE, this);
-            frmInfoCorte.ShowDialog();
-
-        }
-
-        private void cargarCorte()
-        {
-            oCorteE = new Entidades.Corte();
-            oCorteMaestroE=new Entidades.Corte();
-
-            oCorteE.idCorte =Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorte"].Value.ToString());
-            oCorteE.codigo =Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
-            oCorteE.corte = grillaCortes.CurrentRow.Cells["corte"].Value.ToString();
-            oCorteE.precioKg = float.Parse(grillaCortes.CurrentRow.Cells["precioKg"].Value.ToString());
-            oCorteE.independiente = Convert.ToInt32(grillaCortes.CurrentRow.Cells["independiente"].Value.ToString());
-            oCorteE.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
-            oCorteE.corteMaestro=oCorteMaestroE;
-            oCorteE.corteMaestro.idCorte=Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorteMaestro"].Value.ToString());
-            oCorteE.corteMaestro.corte = grillaCortes.CurrentRow.Cells["corteMaestro"].Value.ToString();
-            oCorteE.porcentaje = float.Parse(grillaCortes.CurrentRow.Cells["porcentaje"].Value.ToString());
-            oCorteE.desvioEstandar = float.Parse(grillaCortes.CurrentRow.Cells["desvioEstandar"].Value.ToString());
-            oCorteE.porcentajeHueso = float.Parse(grillaCortes.CurrentRow.Cells["porcentajeHueso"].Value.ToString());
+            try
+            {
+                int idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells["idCorte"].Value.ToString());
+                formInfoCorte frmInfoCorte = new formInfoCorte();
+                frmInfoCorte.idCorte = idCorte;
+                frmInfoCorte.oFrmCortes = this;
+                frmInfoCorte.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void cargarCorte(int fila)
@@ -231,12 +223,61 @@ namespace Presentacion
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
-            imprimirReporte();
+            Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+            tipoTicket.cortesConPrecios(dtCortesFiltrado);
+            //imprimirReporte();
         }
 
         private void formCortes_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
-        }      
+            this.txtBuscarCorte.Select();
+        }
+
+        private void txtCodigoDesde_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(txtCodigoDesde.Text) && Utilidades.Util_Form.validarCampoNumeroEntero(txtCodigoDesde.Text, "Desde"))
+            {
+                codigoDesde = Convert.ToInt32(txtCodigoDesde.Text);
+            }
+            filtarGrilla();
+        }
+
+        private void txtCodigohasta_TextChanged(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(txtCodigohasta.Text) && Utilidades.Util_Form.validarCampoNumeroEntero(txtCodigohasta.Text, "Hasta"))
+            {
+                codigoHasta = Convert.ToInt32(txtCodigohasta.Text);
+            }
+            filtarGrilla();
+        }
+
+        public void filtarGrilla()
+        {
+            dtCortesFiltrado = dtCortes.Clone();
+            // Presuming the DataTable has a column named Date.
+            string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";
+            expresion+= " and ";
+            expresion += !string.IsNullOrEmpty(txtCodigohasta.Text) ? "codigo <= " + codigoHasta :  "true";
+
+            DataRow[] foundRows;
+            // Use the Select method to find all rows matching the filter.
+            foundRows = dtCortes.Select(expresion, "codigo");
+
+            foreach (DataRow row in foundRows)
+            {
+                dtCortesFiltrado.ImportRow(row);
+            }
+            grillaCortes.DataSource = dtCortesFiltrado;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }   
     }
 }

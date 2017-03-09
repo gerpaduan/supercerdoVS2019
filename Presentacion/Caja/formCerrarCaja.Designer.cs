@@ -30,6 +30,8 @@
         {
             this.components = new System.ComponentModel.Container();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.pickerFechaHoraInicio = new System.Windows.Forms.DateTimePicker();
+            this.pickerFechaHoraCierre = new System.Windows.Forms.DateTimePicker();
             this.checkTicket = new System.Windows.Forms.CheckBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lblUsuarioCierre = new System.Windows.Forms.Label();
@@ -43,12 +45,13 @@
             this.label2 = new System.Windows.Forms.Label();
             this.txtFechaHoraInicio = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnIngresoBilletes = new System.Windows.Forms.Button();
             this.lblCortesAnulados = new System.Windows.Forms.Label();
             this.lblDiferenciaEntreCaja = new System.Windows.Forms.Label();
             this.btnCajaAnterior = new System.Windows.Forms.Button();
             this.btnVentas = new System.Windows.Forms.Button();
             this.controlEleccionImporte = new System.Windows.Forms.TrackBar();
-            this.btnVerGastos = new System.Windows.Forms.Button();
+            this.btnVerEgresosCaja = new System.Windows.Forms.Button();
             this.txtImporteRetirado = new System.Windows.Forms.TextBox();
             this.lblImporteRetirado = new System.Windows.Forms.Label();
             this.txtCajaInicioSiguiente = new System.Windows.Forms.TextBox();
@@ -58,8 +61,8 @@
             this.label9 = new System.Windows.Forms.Label();
             this.txtCajaCierre = new System.Windows.Forms.TextBox();
             this.lblCajaCierre = new System.Windows.Forms.Label();
-            this.txtGastos = new System.Windows.Forms.TextBox();
-            this.lblGastos = new System.Windows.Forms.Label();
+            this.txtEgresosCaja = new System.Windows.Forms.TextBox();
+            this.lblEgresosCaja = new System.Windows.Forms.Label();
             this.txtVentas = new System.Windows.Forms.TextBox();
             this.lblVentas = new System.Windows.Forms.Label();
             this.txtCajaInicial = new System.Windows.Forms.TextBox();
@@ -67,6 +70,7 @@
             this.panelTaparCamposCierre = new System.Windows.Forms.Panel();
             this.btnCerrarCaja = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.btnImprimir = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -79,6 +83,9 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.btnImprimir);
+            this.pnlBuscar.Controls.Add(this.pickerFechaHoraInicio);
+            this.pnlBuscar.Controls.Add(this.pickerFechaHoraCierre);
             this.pnlBuscar.Controls.Add(this.checkTicket);
             this.pnlBuscar.Controls.Add(this.panel2);
             this.pnlBuscar.Controls.Add(this.label3);
@@ -91,6 +98,32 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(390, 461);
             this.pnlBuscar.TabIndex = 24;
+            // 
+            // pickerFechaHoraInicio
+            // 
+            this.pickerFechaHoraInicio.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraInicio.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.pickerFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraInicio.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.pickerFechaHoraInicio.Location = new System.Drawing.Point(15, 146);
+            this.pickerFechaHoraInicio.Name = "pickerFechaHoraInicio";
+            this.pickerFechaHoraInicio.Size = new System.Drawing.Size(180, 22);
+            this.pickerFechaHoraInicio.TabIndex = 49;
+            this.pickerFechaHoraInicio.Visible = false;
+            this.pickerFechaHoraInicio.ValueChanged += new System.EventHandler(this.pickerDate_ValueChanged);
+            // 
+            // pickerFechaHoraCierre
+            // 
+            this.pickerFechaHoraCierre.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraCierre.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.pickerFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.pickerFechaHoraCierre.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.pickerFechaHoraCierre.Location = new System.Drawing.Point(201, 146);
+            this.pickerFechaHoraCierre.Name = "pickerFechaHoraCierre";
+            this.pickerFechaHoraCierre.Size = new System.Drawing.Size(177, 22);
+            this.pickerFechaHoraCierre.TabIndex = 38;
+            this.pickerFechaHoraCierre.Visible = false;
+            this.pickerFechaHoraCierre.ValueChanged += new System.EventHandler(this.pickerDate_ValueChanged);
             // 
             // checkTicket
             // 
@@ -234,12 +267,13 @@
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.btnIngresoBilletes);
             this.panel1.Controls.Add(this.lblCortesAnulados);
             this.panel1.Controls.Add(this.lblDiferenciaEntreCaja);
             this.panel1.Controls.Add(this.btnCajaAnterior);
             this.panel1.Controls.Add(this.btnVentas);
             this.panel1.Controls.Add(this.controlEleccionImporte);
-            this.panel1.Controls.Add(this.btnVerGastos);
+            this.panel1.Controls.Add(this.btnVerEgresosCaja);
             this.panel1.Controls.Add(this.txtImporteRetirado);
             this.panel1.Controls.Add(this.lblImporteRetirado);
             this.panel1.Controls.Add(this.txtCajaInicioSiguiente);
@@ -247,8 +281,8 @@
             this.panel1.Controls.Add(this.panel3);
             this.panel1.Controls.Add(this.txtCajaCierre);
             this.panel1.Controls.Add(this.lblCajaCierre);
-            this.panel1.Controls.Add(this.txtGastos);
-            this.panel1.Controls.Add(this.lblGastos);
+            this.panel1.Controls.Add(this.txtEgresosCaja);
+            this.panel1.Controls.Add(this.lblEgresosCaja);
             this.panel1.Controls.Add(this.txtVentas);
             this.panel1.Controls.Add(this.lblVentas);
             this.panel1.Controls.Add(this.txtCajaInicial);
@@ -257,6 +291,18 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(366, 283);
             this.panel1.TabIndex = 13;
+            // 
+            // btnIngresoBilletes
+            // 
+            this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(315, 131);
+            this.btnIngresoBilletes.Name = "btnIngresoBilletes";
+            this.btnIngresoBilletes.Size = new System.Drawing.Size(36, 24);
+            this.btnIngresoBilletes.TabIndex = 37;
+            this.btnIngresoBilletes.Text = "...";
+            this.toolTip1.SetToolTip(this.btnIngresoBilletes, "Presione este botón para ingresar las cantidades de billetes");
+            this.btnIngresoBilletes.UseVisualStyleBackColor = true;
+            this.btnIngresoBilletes.Click += new System.EventHandler(this.btnIngresoBilletes_Click);
             // 
             // lblCortesAnulados
             // 
@@ -315,15 +361,15 @@
             this.controlEleccionImporte.TickStyle = System.Windows.Forms.TickStyle.None;
             this.controlEleccionImporte.ValueChanged += new System.EventHandler(this.controlEleccionImporte_ValueChanged);
             // 
-            // btnVerGastos
+            // btnVerEgresosCaja
             // 
-            this.btnVerGastos.Location = new System.Drawing.Point(315, 92);
-            this.btnVerGastos.Name = "btnVerGastos";
-            this.btnVerGastos.Size = new System.Drawing.Size(36, 24);
-            this.btnVerGastos.TabIndex = 32;
-            this.btnVerGastos.Text = "Ver";
-            this.btnVerGastos.UseVisualStyleBackColor = true;
-            this.btnVerGastos.Click += new System.EventHandler(this.btnVerGastos_Click);
+            this.btnVerEgresosCaja.Location = new System.Drawing.Point(315, 92);
+            this.btnVerEgresosCaja.Name = "btnVerEgresosCaja";
+            this.btnVerEgresosCaja.Size = new System.Drawing.Size(36, 24);
+            this.btnVerEgresosCaja.TabIndex = 32;
+            this.btnVerEgresosCaja.Text = "Ver";
+            this.btnVerEgresosCaja.UseVisualStyleBackColor = true;
+            this.btnVerEgresosCaja.Click += new System.EventHandler(this.btnVerEgresosCaja_Click);
             // 
             // txtImporteRetirado
             // 
@@ -435,30 +481,30 @@
             this.lblCajaCierre.Text = "Caja Cierre";
             this.toolTip1.SetToolTip(this.lblCajaCierre, "Aquí ingrese el total de \r\ndinero que hay en la caja.\r\n");
             // 
-            // txtGastos
+            // txtEgresosCaja
             // 
-            this.txtGastos.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtGastos.Location = new System.Drawing.Point(147, 91);
-            this.txtGastos.Name = "txtGastos";
-            this.txtGastos.ReadOnly = true;
-            this.txtGastos.Size = new System.Drawing.Size(162, 24);
-            this.txtGastos.TabIndex = 22;
-            this.txtGastos.TabStop = false;
-            this.txtGastos.Text = "0";
-            this.txtGastos.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtGastos.TextChanged += new System.EventHandler(this.txtGastos_TextChanged);
+            this.txtEgresosCaja.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtEgresosCaja.Location = new System.Drawing.Point(147, 91);
+            this.txtEgresosCaja.Name = "txtEgresosCaja";
+            this.txtEgresosCaja.ReadOnly = true;
+            this.txtEgresosCaja.Size = new System.Drawing.Size(162, 24);
+            this.txtEgresosCaja.TabIndex = 22;
+            this.txtEgresosCaja.TabStop = false;
+            this.txtEgresosCaja.Text = "0";
+            this.txtEgresosCaja.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtEgresosCaja.TextChanged += new System.EventHandler(this.txtEgresosCaja_TextChanged);
             // 
-            // lblGastos
+            // lblEgresosCaja
             // 
-            this.lblGastos.AutoSize = true;
-            this.lblGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblGastos.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblGastos.Location = new System.Drawing.Point(84, 96);
-            this.lblGastos.Name = "lblGastos";
-            this.lblGastos.Size = new System.Drawing.Size(57, 16);
-            this.lblGastos.TabIndex = 21;
-            this.lblGastos.Text = "Gastos";
+            this.lblEgresosCaja.AutoSize = true;
+            this.lblEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblEgresosCaja.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblEgresosCaja.Location = new System.Drawing.Point(39, 96);
+            this.lblEgresosCaja.Name = "lblEgresosCaja";
+            this.lblEgresosCaja.Size = new System.Drawing.Size(102, 16);
+            this.lblEgresosCaja.TabIndex = 21;
+            this.lblEgresosCaja.Text = "Egresos Caja";
             // 
             // txtVentas
             // 
@@ -525,6 +571,17 @@
             this.btnCerrarCaja.UseVisualStyleBackColor = true;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
+            // btnImprimir
+            // 
+            this.btnImprimir.Location = new System.Drawing.Point(312, 22);
+            this.btnImprimir.Name = "btnImprimir";
+            this.btnImprimir.Size = new System.Drawing.Size(66, 24);
+            this.btnImprimir.TabIndex = 38;
+            this.btnImprimir.Text = "&Imprimir";
+            this.btnImprimir.UseVisualStyleBackColor = true;
+            this.btnImprimir.Visible = false;
+            this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
+            // 
             // formCerrarCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -566,8 +623,8 @@
         protected System.Windows.Forms.Label lblCajaInicial;
         protected System.Windows.Forms.TextBox txtCajaCierre;
         protected System.Windows.Forms.Label lblCajaCierre;
-        protected System.Windows.Forms.TextBox txtGastos;
-        protected System.Windows.Forms.Label lblGastos;
+        protected System.Windows.Forms.TextBox txtEgresosCaja;
+        protected System.Windows.Forms.Label lblEgresosCaja;
         protected System.Windows.Forms.TextBox txtVentas;
         protected System.Windows.Forms.Label lblVentas;
         protected System.Windows.Forms.TextBox txtDiferencia;
@@ -583,7 +640,7 @@
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Panel pnlBuscar;
-        private System.Windows.Forms.Button btnVerGastos;
+        private System.Windows.Forms.Button btnVerEgresosCaja;
         private System.Windows.Forms.CheckBox checkTicket;
         private System.Windows.Forms.Panel panelTaparCamposCierre;
         private System.Windows.Forms.TrackBar controlEleccionImporte;
@@ -592,5 +649,9 @@
         private System.Windows.Forms.Button btnCajaAnterior;
         protected System.Windows.Forms.Label lblDiferenciaEntreCaja;
         protected System.Windows.Forms.Label lblCortesAnulados;
+        private System.Windows.Forms.Button btnIngresoBilletes;
+        private System.Windows.Forms.DateTimePicker pickerFechaHoraCierre;
+        private System.Windows.Forms.DateTimePicker pickerFechaHoraInicio;
+        private System.Windows.Forms.Button btnImprimir;
     }
 }

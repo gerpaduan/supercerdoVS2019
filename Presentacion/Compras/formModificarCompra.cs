@@ -16,8 +16,8 @@ namespace Presentacion.Compras
         Negocio.Corte oCorteN = new Negocio.Corte();
         string estadoModificar;
         bool modificado = false;
-        DateTime fechaModificar;//borrar
         formCompras frmCompras;
+        Entidades.Usuario oUsuario;
         Entidades.Compra oCompraModificada = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra=new Entidades.Persona();
         Entidades.Corte oCorteNuevaCompra;
@@ -45,10 +45,13 @@ namespace Presentacion.Compras
         {
             InitializeComponent();
             cargarComboSucursal();
+            oUsuario = new Entidades.Usuario();
+            oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)
         }
 
         private void formModificarCompra_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             //cargarLista();
             //cargarGrilla();
         }
@@ -119,6 +122,7 @@ namespace Presentacion.Compras
             oCortePorCompraE.corte.idCorte = cortePorCompra.idCorte;            
             oCortePorCompraE.cantKgs = cortePorCompra.cantKgs;
             oCortePorCompraE.precioKg = cortePorCompra.precioKg;
+            oCortePorCompraE.Creado = DateTime.Now;
 
             Entidades.Sucursal sucursalCorte = new Entidades.Sucursal();
             oCortePorCompraE.sucursal = sucursalCorte;
@@ -259,14 +263,19 @@ namespace Presentacion.Compras
             oSucursal = oCompraModificada.Sucursal;
             oProvNuevaCompra = oCompraModificada.Proveedor;
 
+            txtUsuario.Text = oUsuario.Nombre;
             comboSucursal.SelectedValue = oSucursal.idSucursal;
             txtNroRemito.Text = oCompraModificada.NroRemito;
             txtProveedor.Text = oCompraModificada.Proveedor.razonSocial;
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
+            txtCantMedias.Text = oCompraModificada.CantMedias.ToString();
+            checkCtaCte.Checked = oCompraModificada.EnCtaCte;
             txtObservaciones.Text = oCompraModificada.Observaciones;
-            string datosCreado = "Creado: " + oCompraModificada.Creado.ToString() + "\nModificado: " +
-                (oCompraModificada.Actualizado > DateTime.Today.AddYears(-20) ? oCompraModificada.Actualizado.ToString() : "-");
-            txtCreado.Text = datosCreado;
+
+            txtCreado.Text = oCompraModificada.Creado.ToString();
+            txtCreadoPor.Text = oCompraModificada.CreadoPor != null ? oCompraModificada.CreadoPor.Nombre : "-";
+            txtActualizado.Text = oCompraModificada.Actualizado != null ? oCompraModificada.Actualizado.ToString() : "-";
+            txtActualizadoPor.Text = oCompraModificada.ActualizadoPor != null ? oCompraModificada.ActualizadoPor.Nombre : "-";
             establecerTipo(oCompraModificada.TipoCompra);
 
             validarEstado();
@@ -315,6 +324,7 @@ namespace Presentacion.Compras
             btnAceptar.Visible = true;
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtObservaciones.ReadOnly = false;
+            txtCantMedias.ReadOnly = false;
 
             if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
             {
@@ -330,6 +340,7 @@ namespace Presentacion.Compras
 
         private void establecerTipo(string tipoCompra)
         {
+            groupCantMedias.Visible = (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)));
             if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))//(tipoCompra=="Media Res")
             {
                 radioMediaRes.Checked = true;
@@ -451,7 +462,6 @@ namespace Presentacion.Compras
             try
             {
                 //creo y Cargar la Entidad CortePorCompra
-
                 cortePorCompra = new CortesPorCompra();
 
                 cortePorCompra.idCorte = oCorteNuevaCompra.idCorte;
@@ -522,7 +532,6 @@ namespace Presentacion.Compras
                     cargarCortePorCompra(nroFila, cortePorCompra);
                     cortePorCompra = null;
                 }
-
             }
             catch (Exception ex)
             {
@@ -636,10 +645,11 @@ namespace Presentacion.Compras
         {
             oCompraModificada.NroRemito = txtNroRemito.Text.Trim();
             oCompraModificada.FechaCompra = txtFechaCompra.Value;
-            
+
             oCompraModificada.Sucursal = oSucursal;
             oCompraModificada.Proveedor = oProvNuevaCompra;
             oCompraModificada.Estado = "";//Vuelvo a cargar el stock- Estado=" "
+            oCompraModificada.EnCtaCte = checkCtaCte.Checked;
             oCompraModificada.Observaciones = txtObservaciones.Text.Trim();
 
             if (radioIngresoStock.Checked==true)
@@ -651,11 +661,24 @@ namespace Presentacion.Compras
                 oCompraModificada.TipoCompra = Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes);//"Cortes";
             }
             oCompraModificada.TipoCompra = oCompraModificada.TipoCompra;
+
+            oCompraModificada.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || 
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
+            
+            switch (oCompraModificada.IdCompra)
+            {
+                case 0:
+                    oCompraModificada.CreadoPor = oUsuario;
+                    break;
+                default:
+                    oCompraModificada.ActualizadoPor = oUsuario;
+                    break;
+            }
         }
 
         private void modificarCompra()
         {        
-            if (modificado == true && Utilidades.Util_Form.validarFecha(txtFechaCompra.Value, "Fecha"))
+            if (modificado && Utilidades.Util_Form.validarFecha(txtFechaCompra.Value, "Fecha"))
             {
                  DialogResult respuesta = MessageBox.Show("¿Está seguro que desea guardar los cambios realizados?. ", "Modificar Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                  if (respuesta == DialogResult.Yes)
@@ -700,10 +723,21 @@ namespace Presentacion.Compras
                             oCompraN.agregarCortePorCompra(cortePorCompra);
                         }
                     }
+
+                    //Cuenta Corriente
+                    try
+                    {
+                        oCompraN.crearMovCtaCteCompra(oCompraModificada);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Hubo un error al guardar Mov en Cta Cte"+"\n\n"+ex.Source);
+                    }
+
                      //se establece el estado a vacío
                     estadoModificar = "";
                     validarEstado();
-                    frmCompras.cargarGrilla();
+                    if(frmCompras != null) frmCompras.cargarGrilla();
                     modificado = false;
                     this.Close();
                  }
@@ -712,7 +746,7 @@ namespace Presentacion.Compras
             {
                 if (!modificado)
                 {
-                    this.Close();                    
+                    MessageBox.Show("No realizó ninguna modificacion. Presione el boton Salir para cerrar la ventana sin realizar cambios", "No realizó cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);                   
                 }
             }        
         }
@@ -949,11 +983,11 @@ namespace Presentacion.Compras
 
         private void cargarReporte()
         {
-            int tipoReporte=4, idSucursal=2;
+            //int tipoReporte=4, idSucursal=2;
 
-            formReporteStock frmReporte = new formReporteStock();
-            frmReporte.obtenerParametros(idSucursal, oCompraModificada.FechaCompra, fechaModificar, tipoReporte, oCompraModificada.NroRemito);
-            frmReporte.Show();
+            //formReporteStock frmReporte = new formReporteStock();
+            //frmReporte.obtenerParametros(idSucursal, oCompraModificada.FechaCompra, fechaModificar, tipoReporte, oCompraModificada.NroRemito);
+            //frmReporte.Show();
         }
 
         private void PorcentajesCorte_Click(object sender, EventArgs e)
@@ -1060,6 +1094,22 @@ namespace Presentacion.Compras
             {
                 return false;
             }
+        }
+
+        private void txtCantMedias_TextChanged(object sender, EventArgs e)
+        {
+            if (!modificado)
+            {
+                modificado = !oCompraModificada.CantMedias.ToString().Equals(txtCantMedias.Text);
+            }
+
+            if (!Utilidades.Util_Form.validarCampoNumeroEntero(txtCantKgs.Text, "Cant. Medias"))
+                txtCantMedias.Text = "";
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
     }
 }

@@ -15,6 +15,20 @@ namespace Presentacion
         public int codigo;
         public int idSucursal;
         public int idCorte;
+        private int index;
+        private DateTime? creado;
+
+        public DateTime? Creado
+        {
+            get { return creado; }
+            set { creado = value; }
+        }
+
+        public int Index
+        {
+            get { return index; }
+            set { index = value; }
+        }
 
         public int IdCorte
         {

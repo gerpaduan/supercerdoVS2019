@@ -7,13 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Compras;
+using Presentacion.Caja;
 
 namespace Presentacion
 {
     public partial class formStock : formBaseColor
-
     {
-        Negocio.Compra oCompraN;
+        Negocio.Compra oCompraN = new Negocio.Compra();
         DataTable dtCompras = new DataTable();
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
@@ -22,14 +22,28 @@ namespace Presentacion
         public formStock()
         {
             InitializeComponent();
-            cargarSucursal();
-            this.comboSucursal.SelectedIndex = 2;
-            this.comboTipoCompra.SelectedIndex = 0 ;
+        }
 
-            fechaDesde.Value = DateTime.Now.AddMonths(-2);
-            cargar = true;
-            cargarGrilla();
-        }      
+        private void formStock_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursal();
+                this.comboTipoCompra.SelectedIndex = 0;
+
+                fechaDesde.Value = DateTime.Now.AddMonths(-2);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formStock_Load(null, null);
+
+                this.Close();
+            }
+        }       
 
         #region metodos
 
@@ -37,22 +51,27 @@ namespace Presentacion
         {
             if (cargar)
             {
-                int idSucCombo = 0;
-                if (comboSucursal.SelectedValue != null)
-                {
-                    idSucCombo = Convert.ToInt32(comboSucursal.SelectedValue);
-                }
-                oCompraN = new Negocio.Compra();
-
+                lblActualizar.Visible = false;
                 grillaCompras.AutoGenerateColumns = false;
 
                 dtCompras = null;
-                dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtCompras = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaCompras.DataSource = dtCompras;
+                formatearGrilla();
                 cargarTotales();
-
-                oCompraN = null;
             }
+        }
+
+        private void formatearGrilla()
+        {
+            grillaCompras.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            grillaCompras.Columns["observaciones"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+
+            //formato para columna de fechas
+            grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            //grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "ddd dd MMM HH:mm:ss";
+            grillaCompras.Columns["creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+            grillaCompras.Columns["actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
         }
 
         private void cargarTotales()
@@ -66,11 +85,6 @@ namespace Presentacion
 
             txtTotalKgs.Text = Convert.ToString( totalKg);
         }
-
-        private void cargarCompra()
-        { 
-            
-        }           
 
         private void modificarCompra()
         {
@@ -98,7 +112,7 @@ namespace Presentacion
                     formAddOrEditStock frmAddOrEditStock = new formAddOrEditStock();
                     frmAddOrEditStock.accion = Entidades.Compra.accion.Modificar;
                     frmAddOrEditStock.idCompra = idCompra;
-                    frmAddOrEditStock.asignarFormCompra(this);
+                    frmAddOrEditStock.frmStock = this;
                     frmAddOrEditStock.Show();
                 }
             }
@@ -113,45 +127,40 @@ namespace Presentacion
         
         #region eventos
 
+        private void actualizarLabel()
+        {
+            lblActualizar.Visible = true;
+        }
+
         private void btnCancelar_Click(object sender, EventArgs e)
         {
             this.Close();
         }
-      
-
-        private void btnSeleccionar_Click(object sender, EventArgs e)
-        {
-
-        }
-        
-        private void modificar_Click(object sender, EventArgs e)
-        {
-
-        }
         
         private void fechaDesde_ValueChanged(object sender, EventArgs e)
         {
-            cargarGrilla();
+            actualizarLabel();
         }
 
         private void fechaHasta_ValueChanged(object sender, EventArgs e)
         {
-            cargarGrilla();
+            actualizarLabel();
         }
         private void txtDescripcion_TextChanged(object sender, EventArgs e)
         {
-            cargarGrilla();
+            actualizarLabel();
         }
-
         
         private void btnSeleccionar_Click_1(object sender, EventArgs e)
         {
             modificarCompra();
         }
+
         private void grillaCompras_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             modificarCompra();
         }
+
         #endregion
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -162,20 +171,6 @@ namespace Presentacion
         private void comboTipoCompra_SelectedValueChanged(object sender, EventArgs e)
         {
             cargarGrilla();
-        }
-
-        private void formCompras_KeyDown(object sender, KeyEventArgs e)
-        {
-        }
-
-        private void nuevo_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void pnlBuscar_Paint(object sender, PaintEventArgs e)
-        {
-
         }
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
@@ -190,19 +185,11 @@ namespace Presentacion
         {
             dtSucursales = new DataTable();
             oSucursalN = new Negocio.Sucursal();
-            dtSucursales = oSucursalN.obtenerSucursales();
-
-            DataRow nuevaFila = dtSucursales.NewRow();
-
-            nuevaFila[0] = 0;
-            nuevaFila[1] = "Todas";
-
-            dtSucursales.Rows.Add(nuevaFila);
-
+            dtSucursales = oSucursalN.obtenerSucursalesConTodas();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = 2;
+            comboSucursal.SelectedValue = Utilidades.Util_Form.idSucursalAppConfig();
         }
 
         private void btnIngreso_Click(object sender, EventArgs e)
@@ -232,9 +219,36 @@ namespace Presentacion
             {
                 formAddOrEditStock frmAddOrEditStock = new formAddOrEditStock();
                 frmAddOrEditStock.tipoCompraEnum = tipoCompra;
-                frmAddOrEditStock.asignarFormCompra(this);
+                frmAddOrEditStock.frmStock = this;
                 frmAddOrEditStock.Show();
             }
-        }       
+        }
+
+        private void fechaDesde_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                this.Close();
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnPesaje_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+        }
+
+        private void btnAjusteStock_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.AjusteStock);
+        }
     }
 }

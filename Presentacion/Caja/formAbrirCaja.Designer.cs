@@ -35,10 +35,10 @@
             this.txtCajaCierre.ReadOnly = true;
             this.txtCajaCierre.Text = "";
             // 
-            // txtGastos
+            // txtEgresosCaja
             // 
-            this.txtGastos.ReadOnly = true;
-            this.txtGastos.Text = "";
+            this.txtEgresosCaja.ReadOnly = true;
+            this.txtEgresosCaja.Text = "";
             // 
             // txtVentas
             // 

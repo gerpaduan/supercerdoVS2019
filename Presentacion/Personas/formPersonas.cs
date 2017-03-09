@@ -29,7 +29,7 @@ namespace Presentacion.Personas
             oPersonaN = new Negocio.Persona();
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.DataSource = null;
-            grillaPersonas.AutoGenerateColumns = false;
+            //grillaPersonas.AutoGenerateColumns = false;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
             oPersonaN = null;
         }
@@ -48,12 +48,17 @@ namespace Presentacion.Personas
 
             try
             {
-                Entidades.Persona oPersonaE = new Entidades.Persona();
-                cargarDatos(oPersonaE);
+                //Entidades.Persona oPersonaE = new Entidades.Persona();
+                //cargarDatos(oPersonaE);
 
-                formInfoPersona frmInfoPersona = new formInfoPersona();
-                frmInfoPersona.cargarCampos(oPersonaE);
-                frmInfoPersona.ShowDialog();
+                //formInfoPersona frmInfoPersona = new formInfoPersona();
+                //frmInfoPersona.cargarCampos(oPersonaE);
+                //frmInfoPersona.ShowDialog();
+                int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells["idPersona"].Value.ToString());
+                formNuevaPersona frmNuevaPersona = new formNuevaPersona();
+                frmNuevaPersona.idPersona = idPersona;
+                frmNuevaPersona.frmPersonas = this;
+                frmNuevaPersona.ShowDialog();
                 cargarGrilla();
             }
             catch (Exception)
@@ -115,6 +120,12 @@ namespace Presentacion.Personas
         private void btnCancelar_Click_1(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void formPersonas_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+
         }
     }
 }

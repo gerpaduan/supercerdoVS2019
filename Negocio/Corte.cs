@@ -10,9 +10,19 @@ namespace Negocio
     {
         Datos.Corte oCorteD=new Datos.Corte();
 
-        public void agregarCorte(Entidades.Corte oCorteE)
+        public Entidades.Corte getCorteById(int id, bool cargarMaestro)
         {
-            oCorteD.agregarCorte(oCorteE);
+            return oCorteD.getCorteById(id, cargarMaestro);
+        }
+
+        public void editPrecioCorte(Entidades.Corte oCorteE)
+        {
+            oCorteD.editPrecioCorte(oCorteE);
+        }
+
+        public void addOrEditCorte(Entidades.Corte oCorteE)
+        {
+            oCorteD.addOrEditCorte(oCorteE);
         }
 
         public DataTable buscarCorte(string txtBusqueda)
@@ -37,12 +47,6 @@ namespace Negocio
         {
             oCorteD = new Datos.Corte();
             oCorteD.eliminarCorte(oCorteE);
-        }
-
-        public void modificarCorte(Entidades.Corte oCorteE)
-        {
-            oCorteD = new Datos.Corte();
-            oCorteD.modificarCorte(oCorteE);
         }
 
         public DataTable obtenerCortes()
@@ -83,10 +87,16 @@ namespace Negocio
         }
 
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
-         {
-             oCorteD = new Datos.Corte();
-             return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
-         }
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
+        }
+
+        public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
+        }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
@@ -118,9 +128,9 @@ namespace Negocio
 
          #region Movimiento
 
-         public int agregarMovimiento(Entidades.Movimiento oMovimientoE)
+         public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
          {
-             return oCorteD.agregarMovimiento(oMovimientoE);
+             return oCorteD.addOrEditMovimiento(oMovimientoE);
          }
 
          public void agregarCortePorMovimiento(Entidades.CortePorMovimiento cortePorMovimiento)
@@ -128,14 +138,14 @@ namespace Negocio
              oCorteD.agregarCortePorMovimiento(cortePorMovimiento);
          }
 
-         public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
-         {
-             oCorteD.modificarMovimiento(oMovimientoE);
-         }
+         //public void modificarMovimiento(Entidades.Movimiento oMovimientoE)
+         //{
+         //    oCorteD.modificarMovimiento(oMovimientoE);
+         //}
 
-         public void eliminarMovimiento(int idMovimiento)
+         public void eliminarMovimiento(int idMovimiento, Entidades.Usuario oUsuario)
          {
-             oCorteD.eliminarMovimiento(idMovimiento);
+             oCorteD.eliminarMovimiento(idMovimiento, oUsuario);
          }
 
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
@@ -144,21 +154,28 @@ namespace Negocio
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 
-         public Entidades.Movimiento cargarMovimiento(int idMovimiento)
+         public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.cargarMovimiento(idMovimiento);
+             return oCorteD.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
          }
 
-         public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
+         public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
          {
              oCorteD = new Datos.Corte();
-             oCorteD.quitarCortesPorMovimiento(oMovimientoE);
+             return oCorteD.cargarMovimiento(idMovimiento, acumulado);
          }
-         public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento)
+
+         //public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
+         //{
+         //    oCorteD = new Datos.Corte();
+         //    oCorteD.quitarCortesPorMovimiento(oMovimientoE);
+         //}
+
+         public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.cargarCortesPorMovimiento(idMovimiento);
+             return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
          }
 
          public int agregarActualizacionStock(DateTime fechaActualizacion, string observaciones)
@@ -205,10 +222,16 @@ namespace Negocio
 
          }
 
-         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal);
+         }
+
+         public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         {
+             oCorteD = new Datos.Corte();
+             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta);
          }
 
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)

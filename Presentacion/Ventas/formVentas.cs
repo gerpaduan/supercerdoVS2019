@@ -87,7 +87,8 @@ namespace Presentacion
                 totalKgs += float.Parse(venta["totalKg"].ToString());
                 totalS += float.Parse(venta["totalS"].ToString());
             }
-            txtTotalKgs.Text = String.Format("{0:0.00}", totalKgs);
+            txtCantItems.Text = dtVentas.Rows.Count.ToString();
+            txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
             if (Presentacion.FormPrincipal.logueado)
             {
                 txtTotalS.Text = String.Format("{0:0.00}", totalS );
@@ -188,13 +189,24 @@ namespace Presentacion
 
         private void formVentas_Load(object sender, EventArgs e)
         {
-            DateTime today = DateTime.Today.Date.AddHours(24);
-            fechaHasta.Value = today.AddMilliseconds(-1);
-            fechaDesde.Value = today.AddDays(-1);
-            cargarSucursal();
-            cargarComboVendedor();
-            cargar = true;
-            cargarGrilla();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                DateTime today = DateTime.Today.Date.AddHours(24);
+                fechaHasta.Value = today.AddMilliseconds(-1);
+                fechaDesde.Value = today.AddDays(-1);
+                cargarSucursal();
+                cargarComboVendedor();
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message)) 
+                    formVentas_Load(null, null);
+
+                this.Close();
+            }
         }
 
         private void cargarComboVendedor()

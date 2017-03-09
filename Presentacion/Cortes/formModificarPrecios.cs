@@ -85,7 +85,7 @@ namespace Presentacion
         {
             if (cargarDatosCorte(oCorteE))	
             {   
-                oCorteN.modificarCorte(oCorteE);
+                oCorteN.editPrecioCorte(oCorteE);
                 if (frmCorte != null)
                 {
                     frmCorte.cargarGrilla();
@@ -95,6 +95,7 @@ namespace Presentacion
             else
             {
                 MessageBox.Show("Los siguiente campos tienen ingresado datos erroneos:\n" + mensaje);
+                txtPrecioKg.Focus();
             }            
         }
 
@@ -105,16 +106,7 @@ namespace Presentacion
 
             try
             {
-                try
-                {
-                    oCorteE.PrecioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                }
-                catch (Exception)
-                {
-
-                    oCorteE.PrecioKg = float.Parse(txtPrecioKg.Text.Trim());
-
-                }
+                oCorteE.precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
             }
             catch (Exception)
             {
@@ -139,6 +131,11 @@ namespace Presentacion
         }
 
         private void formModificarPrecios_Load(object sender, EventArgs e)
+        {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+        }
+
+        private void formModificarPrecios_Load_1(object sender, EventArgs e)
         {
 
         }

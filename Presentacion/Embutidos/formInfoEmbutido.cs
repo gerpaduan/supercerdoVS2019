@@ -32,10 +32,11 @@ namespace Presentacion.Embutidos
 
         private void formInfoEmbutido_Load(object sender, EventArgs e)
         {
+            this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
                 oEmbutidoE = oCorteN.findEmbutidoById(idEmbutido_);
-                int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+                int sucActual = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
                 cargarCampos();
                 cargarGrilla(); 
                 if (!FormPrincipal.logueado && Convert.ToDateTime(txtFechaEmbutido.Text) < DateTime.Today ||
@@ -129,7 +130,7 @@ namespace Presentacion.Embutidos
 
         private void cargarGrillaFormEmbutidos()
         {
-            frmEmbutidos.cargarGrilla();
+            //frmEmbutidos.cargarGrilla();
             this.Close();
         }
 
