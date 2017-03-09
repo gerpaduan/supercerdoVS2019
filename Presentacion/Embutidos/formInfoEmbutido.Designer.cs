@@ -28,20 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoEmbutido));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.txtTotalKg = new System.Windows.Forms.TextBox();
             this.btnAceptar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaCortesPorEmbutido = new System.Windows.Forms.DataGridView();
-            this.idEmbutido = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.txtFechaEmbutido = new System.Windows.Forms.TextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -59,7 +54,12 @@
             this.panelAnulado = new System.Windows.Forms.Panel();
             this.label10 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.txtFechaEmbutido = new System.Windows.Forms.TextBox();
+            this.idEmbutido = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -138,57 +138,6 @@
             this.grillaCortesPorEmbutido.Size = new System.Drawing.Size(478, 254);
             this.grillaCortesPorEmbutido.TabIndex = 23;
             // 
-            // idEmbutido
-            // 
-            this.idEmbutido.DataPropertyName = "idEmbutido";
-            this.idEmbutido.HeaderText = "Id Embutido";
-            this.idEmbutido.Name = "idEmbutido";
-            this.idEmbutido.ReadOnly = true;
-            this.idEmbutido.Visible = false;
-            // 
-            // idCorte
-            // 
-            this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
-            this.idCorte.Name = "idCorte";
-            this.idCorte.ReadOnly = true;
-            this.idCorte.Visible = false;
-            // 
-            // codigo
-            // 
-            this.codigo.DataPropertyName = "codigo";
-            this.codigo.FillWeight = 56.338F;
-            this.codigo.HeaderText = "Codigo";
-            this.codigo.Name = "codigo";
-            this.codigo.ReadOnly = true;
-            // 
-            // corte
-            // 
-            this.corte.DataPropertyName = "corte";
-            this.corte.FillWeight = 82.81686F;
-            this.corte.HeaderText = "Corte";
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            // 
-            // kgUtilizados
-            // 
-            this.kgUtilizados.DataPropertyName = "kgUtilizados";
-            dataGridViewCellStyle5.Format = "N2";
-            dataGridViewCellStyle5.NullValue = null;
-            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle5;
-            this.kgUtilizados.FillWeight = 82.81686F;
-            this.kgUtilizados.HeaderText = "Kgs. Utilizados";
-            this.kgUtilizados.Name = "kgUtilizados";
-            this.kgUtilizados.ReadOnly = true;
-            // 
-            // Balanza
-            // 
-            this.Balanza.DataPropertyName = "pesoBalanza";
-            this.Balanza.FillWeight = 30F;
-            this.Balanza.HeaderText = "Balanza";
-            this.Balanza.Name = "Balanza";
-            this.Balanza.ReadOnly = true;
-            // 
             // pnlBuscar
             // 
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
@@ -204,6 +153,18 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(489, 138);
             this.pnlBuscar.TabIndex = 22;
+            // 
+            // txtFechaEmbutido
+            // 
+            this.txtFechaEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtFechaEmbutido.Location = new System.Drawing.Point(332, 9);
+            this.txtFechaEmbutido.Name = "txtFechaEmbutido";
+            this.txtFechaEmbutido.ReadOnly = true;
+            this.txtFechaEmbutido.Size = new System.Drawing.Size(144, 21);
+            this.txtFechaEmbutido.TabIndex = 49;
+            this.txtFechaEmbutido.TabStop = false;
+            this.txtFechaEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // groupBox2
             // 
@@ -397,17 +358,56 @@
             this.panel1.Size = new System.Drawing.Size(478, 1);
             this.panel1.TabIndex = 33;
             // 
-            // txtFechaEmbutido
+            // idEmbutido
             // 
-            this.txtFechaEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtFechaEmbutido.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFechaEmbutido.Location = new System.Drawing.Point(332, 9);
-            this.txtFechaEmbutido.Name = "txtFechaEmbutido";
-            this.txtFechaEmbutido.ReadOnly = true;
-            this.txtFechaEmbutido.Size = new System.Drawing.Size(144, 21);
-            this.txtFechaEmbutido.TabIndex = 49;
-            this.txtFechaEmbutido.TabStop = false;
-            this.txtFechaEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.idEmbutido.DataPropertyName = "idEmbutido";
+            this.idEmbutido.HeaderText = "Id Embutido";
+            this.idEmbutido.Name = "idEmbutido";
+            this.idEmbutido.ReadOnly = true;
+            this.idEmbutido.Visible = false;
+            // 
+            // idCorte
+            // 
+            this.idCorte.DataPropertyName = "idCorte";
+            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.Name = "idCorte";
+            this.idCorte.ReadOnly = true;
+            this.idCorte.Visible = false;
+            // 
+            // codigo
+            // 
+            this.codigo.DataPropertyName = "codigo";
+            this.codigo.FillWeight = 56.338F;
+            this.codigo.HeaderText = "Codigo";
+            this.codigo.Name = "codigo";
+            this.codigo.ReadOnly = true;
+            // 
+            // corte
+            // 
+            this.corte.DataPropertyName = "corte";
+            this.corte.FillWeight = 82.81686F;
+            this.corte.HeaderText = "Corte";
+            this.corte.Name = "corte";
+            this.corte.ReadOnly = true;
+            // 
+            // kgUtilizados
+            // 
+            this.kgUtilizados.DataPropertyName = "kgUtilizados";
+            dataGridViewCellStyle1.Format = "N3";
+            dataGridViewCellStyle1.NullValue = null;
+            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle1;
+            this.kgUtilizados.FillWeight = 82.81686F;
+            this.kgUtilizados.HeaderText = "Kgs. Utilizados";
+            this.kgUtilizados.Name = "kgUtilizados";
+            this.kgUtilizados.ReadOnly = true;
+            // 
+            // Balanza
+            // 
+            this.Balanza.DataPropertyName = "pesoBalanza";
+            this.Balanza.FillWeight = 30F;
+            this.Balanza.HeaderText = "Balanza";
+            this.Balanza.Name = "Balanza";
+            this.Balanza.ReadOnly = true;
             // 
             // formInfoEmbutido
             // 
@@ -468,15 +468,15 @@
         protected System.Windows.Forms.TextBox txtSucursal;
         private System.Windows.Forms.Panel panelAnulado;
         protected System.Windows.Forms.Label label10;
+        protected System.Windows.Forms.ToolStripButton Imprimir;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.TextBox txtFechaEmbutido;
         private System.Windows.Forms.DataGridViewTextBoxColumn idEmbutido;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
         private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
-        protected System.Windows.Forms.ToolStripButton Imprimir;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.TextBox txtFechaEmbutido;
     }
 }

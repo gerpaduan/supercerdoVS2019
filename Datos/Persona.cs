@@ -45,7 +45,25 @@ namespace Datos
 
             cmPersona.ExecuteNonQuery();
             cmPersona.Connection.Close();
+        }
 
+        public void addOrEditPersona(Entidades.Persona oPersonaE)
+        {
+            cmPersona = new SqlCommand();
+
+            cmPersona.Connection = conn.conectar();
+            cmPersona.Connection.Open();
+            cmPersona.CommandType = CommandType.StoredProcedure;
+            cmPersona.CommandText = "addOrEditPersona";
+            cmPersona.Parameters.AddWithValue("@idPersona", oPersonaE.idPersona);
+            cmPersona.Parameters.AddWithValue("@otrosDatos", oPersonaE.otrosDatos);
+            cmPersona.Parameters.AddWithValue("@razonSocial", oPersonaE.razonSocial);
+            cmPersona.Parameters.AddWithValue("@tipo", oPersonaE.tipo);
+            cmPersona.Parameters.AddWithValue("@ctaCte", oPersonaE.CtaCte);
+            cmPersona.Parameters.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
+
+            cmPersona.ExecuteNonQuery();
+            cmPersona.Connection.Close();
 
         }
 
@@ -74,9 +92,15 @@ namespace Datos
             daPersona.Fill(dtPersona);
 
             Entidades.Persona oPersona = new Entidades.Persona();
-            oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
-            oPersona.razonSocial = dtPersona.Rows[0]["razonSocial"].ToString();
-
+            if (dtPersona.Rows.Count > 0)
+            {                
+                oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
+                oPersona.tipo = dtPersona.Rows[0]["tipo"].ToString();
+                oPersona.razonSocial = dtPersona.Rows[0]["razonSocial"].ToString();
+                oPersona.CtaCte = !dtPersona.Rows[0].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["ctaCte"]) : false;
+                oPersona.Bonificacion = !dtPersona.Rows[0]["bonificacion"].ToString().Equals(DBNull.Value) ? float.Parse(dtPersona.Rows[0]["bonificacion"].ToString()) : 0;
+                oPersona.OtrosDatos = dtPersona.Rows[0]["otrosDatos"].ToString();
+            }
             conn.cerraConexion();
 
             return oPersona;

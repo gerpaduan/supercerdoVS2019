@@ -25,7 +25,9 @@ namespace Presentacion.Cortes
         DataTable dtGrillaReporte = new DataTable();
         bool stockActual = false;
         bool stockProgresivo = false;
+        bool acumVentas = false;
         bool combosCierresCargados = false;
+        DateTime fechaUltimoCierreStock;
 
         public formReporteStock()
         {
@@ -61,6 +63,15 @@ namespace Presentacion.Cortes
                 {
                     Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
                     tipoTicket.stockActual(comboInicioStock.Text, comboCierreStock.Text, grillaReportes);
+                    return;
+                }
+
+                //Reporte Acum
+                if (comboTipoReporte.Text == "Acum. Ventas")
+                {
+                    Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
+                    tipoTicket.acumVentas(fechaDesdeProgresivo.Value.ToString(), txtFechaHastaProgresivo.Value.ToString(), grillaReportes);
+                    return;
                 }
 
                 //Reporte Cierre Stock
@@ -94,136 +105,140 @@ namespace Presentacion.Cortes
                     #endregion
                 }
 
-                if (comboTipoReporte.SelectedIndex == 6)
-                {
-                    ReportesDataSet.dtReporteTeoricoRealDataTable dtTeoricoReal = new ReportesDataSet.dtReporteTeoricoRealDataTable();
+                #region Codigo comentado
 
-                    string titulo = "Reporte Kg. Corte Teórico - Real";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTeoricoReal.NewRow();
+                //if (comboTipoReporte.SelectedIndex == 6)
+                //{
+                //    ReportesDataSet.dtReporteTeoricoRealDataTable dtTeoricoReal = new ReportesDataSet.dtReporteTeoricoRealDataTable();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTeoricoReal.Rows.Add(dsFila);
-                    }
-                    Reportes.Reportes reporte = new Reportes.Reportes();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTeoricoReal, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    string titulo = "Reporte Kg. Corte Teórico - Real";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTeoricoReal.NewRow();
 
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTeoricoReal.Rows.Add(dsFila);
+                //    }
+                //    Reportes.Reportes reporte = new Reportes.Reportes();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTeoricoReal, fechaDesde.Value.Date, fechaHasta.Value.Date);
+
+                //    frmReportes.Show();
+                //}
 
 
-                if (comboTipoReporte.Text == "Cierre Stock 2")
-                {
-                    ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
+                //if (comboTipoReporte.Text == "Cierre Stock 2")
+                //{
+                //    ReportesDataSet.dtCierreStockDataTable dtCierreStock = new ReportesDataSet.dtCierreStockDataTable();
 
-                    string titulo = "Reporte Cierre Stock 2";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtCierreStock.NewRow();
-                        dsFila["Codigo"] = fila["Codigo"];
-                        dsFila["Corte"] = fila["Corte"];
-                        dsFila["Sucursal"] = fila["Sucursal"];
-                        dsFila["TotalIngresado"] = fila["Total Ingresado"];
-                        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
-                        dsFila["TotalVendido"] = fila["Total Vendido"];
-                        dsFila["StockTeorico"] = fila["Stock Teorico"];
-                        dsFila["StockReal"] = fila["Stock Real"];
-                        dsFila["Faltante"] = fila["Faltante"];
+                //    string titulo = "Reporte Cierre Stock 2";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtCierreStock.NewRow();
+                //        dsFila["Codigo"] = fila["Codigo"];
+                //        dsFila["Corte"] = fila["Corte"];
+                //        dsFila["Sucursal"] = fila["Sucursal"];
+                //        dsFila["TotalIngresado"] = fila["Total Ingresado"];
+                //        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
+                //        dsFila["TotalVendido"] = fila["Total Vendido"];
+                //        dsFila["StockTeorico"] = fila["Stock Teorico"];
+                //        dsFila["StockReal"] = fila["Stock Real"];
+                //        dsFila["Faltante"] = fila["Faltante"];
 
-                        dtCierreStock.Rows.Add(dsFila);
-                    }
-                    ReporteCierreStock reporte = new ReporteCierreStock();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        dtCierreStock.Rows.Add(dsFila);
+                //    }
+                //    ReporteCierreStock reporte = new ReporteCierreStock();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                //Reporte Ingreso-Egreso
-                if (comboTipoReporte.SelectedIndex == 2)
-                {
-                    ReportesDataSet.dtIngresoEgresoDataTable dtIngresoEgreso = new ReportesDataSet.dtIngresoEgresoDataTable();
+                ////Reporte Ingreso-Egreso
+                //if (comboTipoReporte.SelectedIndex == 2)
+                //{
+                //    ReportesDataSet.dtIngresoEgresoDataTable dtIngresoEgreso = new ReportesDataSet.dtIngresoEgresoDataTable();
 
-                    string titulo = "Reporte Ingreso - Egreso";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtIngresoEgreso.NewRow();
-                        dsFila["Codigo"] = fila["Codigo"];
-                        dsFila["Corte"] = fila["Corte"];
-                        dsFila["Sucursal"] = fila["Sucursal"];
-                        dsFila["TotalIngresado"] = fila["Total Ingresado"];
-                        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
-                        dsFila["TotalVendido"] = fila["Total Vendido"];
-                        dsFila["DiferenciaStock"] = fila["Diferencia Stock"];
+                //    string titulo = "Reporte Ingreso - Egreso";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtIngresoEgreso.NewRow();
+                //        dsFila["Codigo"] = fila["Codigo"];
+                //        dsFila["Corte"] = fila["Corte"];
+                //        dsFila["Sucursal"] = fila["Sucursal"];
+                //        dsFila["TotalIngresado"] = fila["Total Ingresado"];
+                //        dsFila["KgsEnEmbutidos"] = fila["Kgs En Embutidos"];
+                //        dsFila["TotalVendido"] = fila["Total Vendido"];
+                //        dsFila["DiferenciaStock"] = fila["Diferencia Stock"];
                     
-                        dtIngresoEgreso.Rows.Add(dsFila);
-                    }
-                    ReporteIngresoEgreso reporte = new ReporteIngresoEgreso();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtIngresoEgreso, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        dtIngresoEgreso.Rows.Add(dsFila);
+                //    }
+                //    ReporteIngresoEgreso reporte = new ReporteIngresoEgreso();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtIngresoEgreso, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                if (comboTipoReporte.SelectedIndex == 3)
-                {
-                    ReportesDataSet.dtTotalPorCortesDataTable dtTotalPorCortes = new ReportesDataSet.dtTotalPorCortesDataTable();
+                //if (comboTipoReporte.SelectedIndex == 3)
+                //{
+                //    ReportesDataSet.dtTotalPorCortesDataTable dtTotalPorCortes = new ReportesDataSet.dtTotalPorCortesDataTable();
 
-                    string titulo = "Reporte Total Cortes Vendidos";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTotalPorCortes.NewRow();
+                //    string titulo = "Reporte Total Cortes Vendidos";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTotalPorCortes.NewRow();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTotalPorCortes.Rows.Add(dsFila);
-                    }
-                    ReporteTotalPorCortes reporte = new ReporteTotalPorCortes();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalPorCortes, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTotalPorCortes.Rows.Add(dsFila);
+                //    }
+                //    ReporteTotalPorCortes reporte = new ReporteTotalPorCortes();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalPorCortes, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                if (comboTipoReporte.SelectedIndex == 4)
-                {
-                    ReportesDataSet.dtTotalCortePorCompraDataTable dtTotalCortePorCompra = new ReportesDataSet.dtTotalCortePorCompraDataTable();
+                //if (comboTipoReporte.SelectedIndex == 4)
+                //{
+                //    ReportesDataSet.dtTotalCortePorCompraDataTable dtTotalCortePorCompra = new ReportesDataSet.dtTotalCortePorCompraDataTable();
 
-                    string titulo = "Reporte Total Kgs Corte Por Compra";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTotalCortePorCompra.NewRow();
+                //    string titulo = "Reporte Total Kgs Corte Por Compra";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTotalCortePorCompra.NewRow();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTotalCortePorCompra.Rows.Add(dsFila);                        
-                    }
-                    ReporteKgsCortePorCompra reporte = new ReporteKgsCortePorCompra();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalCortePorCompra, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTotalCortePorCompra.Rows.Add(dsFila);                        
+                //    }
+                //    ReporteKgsCortePorCompra reporte = new ReporteKgsCortePorCompra();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalCortePorCompra, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
 
-                if (comboTipoReporte.SelectedIndex == 5)
-                {
-                    ReportesDataSet.dtTotalMovimientosDataTable dtTotalMovimientos = new ReportesDataSet.dtTotalMovimientosDataTable();
+                //if (comboTipoReporte.SelectedIndex == 5)
+                //{
+                //    ReportesDataSet.dtTotalMovimientosDataTable dtTotalMovimientos = new ReportesDataSet.dtTotalMovimientosDataTable();
 
-                    string titulo = "Total Movimiento Por Corte";
-                    foreach (DataRow fila in dtGrillaReporte.Rows)
-                    {
-                        DataRow dsFila = dtTotalMovimientos.NewRow();
+                //    string titulo = "Total Movimiento Por Corte";
+                //    foreach (DataRow fila in dtGrillaReporte.Rows)
+                //    {
+                //        DataRow dsFila = dtTotalMovimientos.NewRow();
 
-                        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
-                        {
-                            dsFila[col] = fila[col];
-                        }
-                        dtTotalMovimientos.Rows.Add(dsFila);
-                    }
-                    ReporteMovimientosPorCorte reporte = new ReporteMovimientosPorCorte();
-                    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalMovimientos, fechaDesde.Value.Date, fechaHasta.Value.Date);
-                    frmReportes.Show();
-                }
+                //        for (int col = 0; col < dtGrillaReporte.Columns.Count; col++)
+                //        {
+                //            dsFila[col] = fila[col];
+                //        }
+                //        dtTotalMovimientos.Rows.Add(dsFila);
+                //    }
+                //    ReporteMovimientosPorCorte reporte = new ReporteMovimientosPorCorte();
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalMovimientos, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    frmReportes.Show();
+                //}
+
+                #endregion
             }
             catch (Exception ex)
             {
@@ -282,7 +297,7 @@ namespace Presentacion.Cortes
 
                         string fechaHastaString = stockProgresivo ? txtFechaHastaProgresivo.Text : comboCierreStock.Text;
                         dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                            Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString));
+                            Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null);
                         foreach (DataRow fila in dtGrillaReporte.Rows)
                         {
                             decimal TotINGR = 0, TotEGR =0;
@@ -378,6 +393,11 @@ namespace Presentacion.Cortes
 
                             fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
 
+                            float stockKg = Utilidades.Util_Form.convertFloat(fila["Faltante"].ToString(), false);
+                            //string stockUn = Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";
+                            string stock = Convert.ToDecimal(fila["promedio"]) == 0 ? stockKg.ToString("F2") :
+                                Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";//stockUn;// stockUn.ToString("F1") + " u";
+                            fila["Stock.Un"] = stock;
                         }
                         grillaReportes.DataSource = dtGrillaReporte;
 
@@ -393,6 +413,10 @@ namespace Presentacion.Cortes
                         grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Faltante"].DefaultCellStyle.Font = fuente;
 
+                        grillaReportes.Columns["Stock.Un"].DefaultCellStyle.BackColor = Color.LightBlue;
+                        grillaReportes.Columns["Stock.Un"].DefaultCellStyle.Font = fuente;
+                        
+                        grillaReportes.Columns["promedio"].Visible = false;
                         //si es consulta Stock Actual
                         if (stockActual)
                         {
@@ -418,7 +442,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
                     if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
@@ -487,6 +511,135 @@ namespace Presentacion.Cortes
                     totalVendido = Convert.ToString(fila["Total Vendido"]);
 
                     fila["Diferencia Stock"] = Convert.ToDecimal(totalIngresado) - Convert.ToDecimal(kgsEnEmbutido) - Convert.ToDecimal(totalVendido);
+                }
+                grillaReportes.DataSource = dtGrillaReporte;
+            }
+
+            //Acumulado de ventas
+            if (comboTipoReporte.Text.Equals("Acum. Ventas"))
+            {
+                grillaReportes.DataSource = null;
+                dtGrillaReporte = null;
+
+                dtGrillaReporte = oCorteN.acum_Ventas(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
+                    fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value);
+                
+                DataTable dtStockActual = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
+                            fechaUltimoCierreStock, DateTime.Now, null);
+
+                foreach (DataRow fila in dtStockActual.Rows)
+                {
+                    decimal TotINGR = 0, TotEGR = 0;
+                    if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
+                    {
+                        fila["Stock.Ini"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
+                    }
+
+                    if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
+                    {
+                        fila["Compras"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Compras"]);
+                    }
+
+                    if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
+                    {
+                        fila["Ingr.Emb"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
+                    }
+
+                    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
+                    {
+                        fila["Ingr.Stock"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
+                    }
+
+                    if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
+                    {
+                        fila["Ingr. Mov"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
+                    }
+
+                    if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
+                    {
+                        fila["Egr.Stock"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
+                    }
+
+                    if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
+                    {
+                        fila["Egr.Mov"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
+                    }
+
+                    if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
+                    {
+                        fila["Egr.Emb"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
+                    }
+
+                    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
+                    {
+                        fila["Ventas"] = 0;
+                    }
+                    else
+                    {
+                        TotEGR += Convert.ToDecimal(fila["Ventas"]);
+                    }
+
+                    if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
+                    {
+                        fila["Stock.Cierre"] = 0;
+                    }
+
+                    fila["Tot.INGR"] = TotINGR;
+                    fila["Tot.EGR"] = TotEGR;
+                    fila["DIF"] = TotINGR - TotEGR;
+
+                    fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
+                }
+
+                foreach (DataRow fila in dtGrillaReporte.Rows)
+                {
+                    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == ""
+                        || fila["Ventas"] == DBNull.Value)
+                    {
+                        fila["Ventas"] = 0;
+                    }
+
+                    foreach (DataRow filaStock in dtStockActual.Rows)
+                    {
+                        if (filaStock["Codigo"].ToString().Equals(fila["Codigo"].ToString()))
+                        {
+                            fila["StockActual"] = Convert.ToDecimal(filaStock["Faltante"]);
+                            fila["DIF"] = Convert.ToDecimal(fila["StockActual"]) - Convert.ToDecimal(fila["Ventas"]);
+                            break;
+                        }
+                    }
                 }
                 grillaReportes.DataSource = dtGrillaReporte;
             }
@@ -568,11 +721,13 @@ namespace Presentacion.Cortes
         
         private void cargarSucursales()
         {
+            int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
             dtSucursales = oSucursalN.obtenerSucursales();
 
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idsucursal";
+            comboSucursal.SelectedIndex = idSucursal - 1;
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -599,28 +754,34 @@ namespace Presentacion.Cortes
         private void cargarComboCierreStock()
         {
             if (comboSucursal.ValueMember != "" && (comboTipoReporte.Text.Equals("Cierre Stock") ||
-                comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Progresivo")))
+                comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Progresivo") ||
+                comboTipoReporte.Text.Equals("Acum. Ventas")))
             {
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
 
-                DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
+                DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta, null);
                 comboInicioStock.DataSource = dtInicioStock;
                 comboInicioStock.DisplayMember = "fechaCompra";
                 comboInicioStock.ValueMember = "idCompra";
-                comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
+                comboInicioStock.SelectedIndex = dtInicioStock.Rows.Count > 1 && !stockActual && !stockProgresivo && !acumVentas ? 1 : comboInicioStock.SelectedIndex;// dtInicioStock.Rows.Count > 1 ? 1 : -1;
 
-                txtFechaHastaProgresivo.Visible = stockProgresivo;
+                //setea ultima fecha de cierre para obtener stock actual para comparar en AcumVentas
+                fechaUltimoCierreStock = dtInicioStock.Rows.Count > 0 ? Convert.ToDateTime(dtInicioStock.Rows[0]["fechaCompra"]) : fechaUltimoCierreStock;
+
+                fechaDesdeProgresivo.Visible = acumVentas;
+                txtFechaHastaProgresivo.Visible = stockProgresivo || acumVentas;
                 DataTable dtCierreStock;
-                if (stockProgresivo)
+                if (stockProgresivo || acumVentas)
                 {
-                    txtFechaHastaProgresivo.Value = DateTime.Now; 
+                    fechaDesdeProgresivo.Value = DateTime.Now;
+                    txtFechaHastaProgresivo.Value = DateTime.Now;
                 }
                 else
                 {
                     if (stockActual)
                     {
-                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), DateTime.Now, DateTime.Now);
+                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), DateTime.Now, DateTime.Now, null);
                         DataRow fechaActual = dtCierreStock.NewRow();
                         fechaActual["idCompra"] = 0;
                         fechaActual["fechaCompra"] = DateTime.Now;
@@ -628,13 +789,14 @@ namespace Presentacion.Cortes
                     }
                     else
                     {
-                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta);
+                        dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), desde, hasta, null);
                     }
                     combosCierresCargados = true;
                     comboCierreStock.DataSource = dtCierreStock;
                     comboCierreStock.DisplayMember = "fechaCompra";
                     comboCierreStock.ValueMember = "idCompra";
                 }
+
             }
         }
 
@@ -739,12 +901,14 @@ namespace Presentacion.Cortes
             combosCierresCargados = false;
             if (comboTipoReporte.Text.Equals("Cierre Stock") ||
                 comboTipoReporte.Text.Equals("Stock Actual") ||
-                comboTipoReporte.Text.Equals("Stock Progresivo"))
+                comboTipoReporte.Text.Equals("Stock Progresivo") ||
+                comboTipoReporte.Text.Equals("Acum. Ventas"))
             {
                 stockActual = comboTipoReporte.Text.Equals("Stock Actual");
+                acumVentas = comboTipoReporte.Text.Equals("Acum. Ventas");
                 stockProgresivo = comboTipoReporte.Text.Equals("Stock Progresivo");
-                comboInicioStock.Visible = true;
-                comboCierreStock.Visible = !stockProgresivo;
+                comboInicioStock.Visible = !acumVentas;
+                comboCierreStock.Visible = !stockProgresivo && !acumVentas;
                 cargarComboCierreStock();
             }
             else
@@ -765,6 +929,14 @@ namespace Presentacion.Cortes
         private void txtFechaHastaProgresivo_ValueChanged(object sender, EventArgs e)
         {
             lblActualizar.Visible = true;
+        }
+
+        private void fechaDesdeProgresivo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
         }
     }
 }

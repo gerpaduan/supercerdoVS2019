@@ -32,10 +32,13 @@ namespace Datos
                         oCorteE.Codigo = Convert.ToInt32(drCorte["codigo"]);
                         oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
                         oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
+                        oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
                         if (cargarMaestro) 
                             oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
                         oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
+                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
                         oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
                         oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
                         oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
@@ -52,6 +55,23 @@ namespace Datos
             }
         }
 
+        public void editPrecioCorte(Entidades.Corte oCorteE)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            cmCorte.CommandType = CommandType.Text;            
+            cmCorte.CommandText = "UPDATE Corte SET precioKg = @precioKg WHERE idCorte = "+oCorteE.idCorte;
+            cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
+
+            cmCorte.ExecuteNonQuery();
+            cmCorte.Connection.Close();
+
+            cmCorte = null;
+        }
+
         public void addOrEditCorte(Entidades.Corte oCorteE)
         {
             cmCorte = new SqlCommand();
@@ -66,9 +86,12 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@codigo", oCorteE.codigo);
             cmCorte.Parameters.AddWithValue("@corte", oCorteE.corte);
             cmCorte.Parameters.AddWithValue("@tipo", oCorteE.tipo);
+            cmCorte.Parameters.AddWithValue("@promedio", oCorteE.Promedio);
             cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
             cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
-            cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro.idCorte);
+            cmCorte.Parameters.AddWithValue("@mayorista", oCorteE.Mayorista);
+            cmCorte.Parameters.AddWithValue("@enCierreStock", oCorteE.EnCierreStock);
+            cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro != null ? oCorteE.corteMaestro.idCorte : 0);
             cmCorte.Parameters.AddWithValue("@porcentaje", oCorteE.porcentaje);
             cmCorte.Parameters.AddWithValue("@porcentajeHueso", oCorteE.porcentajeHueso);
             cmCorte.Parameters.AddWithValue("@desvioEstandar", oCorteE.desvioEstandar);
@@ -217,6 +240,28 @@ namespace Datos
             return dtCortes;
         }
 
+        public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtCortes = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "obtenerLineasEmb";
+            cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+            cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            cmCorte.Connection.Open();
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtCortes);
+            cmCorte.Connection.Close();
+
+            return dtCortes;
+        }
+
         public DataTable obtenerInfoCorte(int idCorte)
         {
             DataTable dtCorte = new DataTable();
@@ -259,8 +304,11 @@ namespace Datos
                         oCorteE.codigo = Convert.ToInt32(drCorte["codigo"].ToString());
                         oCorteE.corte = drCorte["corte"].ToString();
                         oCorteE.tipo = drCorte["tipo"].ToString();
-                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;                     
+                        oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
                         oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
+                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
                         oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
                         oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
@@ -556,6 +604,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@cantKg", cortePorMovimiento.CantKg);
             cmCorte.Parameters.AddWithValue("@cantUnidad", cortePorMovimiento.CantUnidad);
             cmCorte.Parameters.AddWithValue("@pesoBalanza", cortePorMovimiento.PesoBalanza);
+            cmCorte.Parameters.AddWithValue("@permitirIngreso", cortePorMovimiento.PermitirIngreso);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
@@ -682,19 +731,50 @@ namespace Datos
 
                 oCortePorMovimiento.CantKg = float.Parse(drMovimiento["cantKg"].ToString());
                 oCortePorMovimiento.CantUnidad = Convert.ToInt32(drMovimiento["cantUnidad"].ToString());
-                try
+                //try
+                //{
+                //    oCortePorMovimiento.PesoBalanza = Convert.ToBoolean(drMovimiento["pesoBalanza"]);
+                //}
+                //catch (Exception)
+                //{
+                //    oCortePorMovimiento.PesoBalanza = false;
+                //}
+                ///si no es acumulado directamente se establece falso el Permitir ingreso
+                ///porque no interesa agruparlo por cada valor de permitirIngreso
+                if (!acumulado)
                 {
-                    oCortePorMovimiento.PesoBalanza = Convert.ToBoolean(drMovimiento["pesoBalanza"]);
-                }
-                catch (Exception)
-                {
-                    oCortePorMovimiento.PesoBalanza = false;
+                    oCortePorMovimiento.PesoBalanza = drMovimiento["pesoBalanza"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drMovimiento["pesoBalanza"]);
+                    oCortePorMovimiento.PermitirIngreso = drMovimiento["permitirIngreso"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drMovimiento["permitirIngreso"]);
                 }
                 listaCortesPorMovimiento.Add(oCortePorMovimiento);
                 oCortePorMovimiento = null;               
             }
             cmCorte.Connection.Close();
             return listaCortesPorMovimiento;
+        }
+
+
+        public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
+        {
+            DataTable dtLineasMov = new DataTable();
+
+            daCorte = new SqlDataAdapter();
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "obtenerLineasMov";
+            cmCorte.Parameters.AddWithValue("@sucOrigen", sucOrigen);
+            cmCorte.Parameters.AddWithValue("@sucDestino", sucDestino);
+            cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtLineasMov);
+
+            return dtLineasMov;
         }
 
         public int agregarActualizacionStock(DateTime fechaActualizacion, string observaciones)
@@ -845,13 +925,14 @@ namespace Datos
             return dtReporteTeoricoReal;
         }
 
-        public DataTable CierreStock(int nroCierre,string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable CierreStock(int nroCierre,string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
             DataTable dtCierreStock = new DataTable();
             daCorte = new SqlDataAdapter();
             cmCorte = new SqlCommand();
 
-            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
+
             cmCorte.Connection.Open();
             cmCorte.CommandType = CommandType.StoredProcedure;
             if (nroCierre==1)
@@ -876,6 +957,31 @@ namespace Datos
             daCorte = null;
 
             return dtCierreStock;
+        }
+
+        public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtStockIngresoEgreso = new DataTable();
+            daCorte = new SqlDataAdapter();
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "Acum_Ventas";
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+            cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
+            cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtStockIngresoEgreso);
+            cmCorte.Connection.Close();
+
+            cmCorte = null;
+            daCorte = null;
+
+            return dtStockIngresoEgreso;
         }
 
         public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)

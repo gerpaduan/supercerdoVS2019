@@ -91,6 +91,7 @@ namespace Presentacion.Caja
                         Ticket.CreaTicket ticket = new Ticket.CreaTicket();
                         ticket.imprimir = checkTicket.Checked;
                         ticket.TextoCentro("Cierre Caja");
+                        ticket.TextoCentro("--Copia Cajero--");
                         ticket.LineasEnBlanco(1);
                         //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                         ticket.TextoIzquierda("Vendedor: " + oCierreCajero.UsuarioInicio.Nombre);
@@ -98,13 +99,31 @@ namespace Presentacion.Caja
                         ticket.TextoIzquierda("Hasta: " + oCierreCajero.FechaHoraCierre.Value.ToString());
                         ticket.LineasGuion();
                         ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreCajero.CajaInicio));
-                        ticket.AgregaTotales("Ventas", Convert.ToDouble(oCierreCajero.Ventas));
-                        ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreCajero.EgresosCaja));
-                        ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreCajero.CajaCierre));
+                        ticket.LineasEnBlanco(1);
                         ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreCajero.Diferencia));
-                        ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreCajero.CajaInicioSiguiente));
-                        ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreCajero.ImporteRetirado));
+                        ticket.AgregaTotales("Queda en Caja:", Convert.ToDouble(oCierreCajero.CajaInicioSiguiente));
                         ticket.LineasEnBlanco(3);
+
+                        if (MessageBox.Show("¿Imprimir copia para administrador?", "",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
+                        {
+                            ticket.TextoCentro("Cierre Caja");
+                            ticket.TextoCentro("--Copia Admin--");
+                            ticket.LineasEnBlanco(1);
+                            //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                            ticket.TextoIzquierda("Vendedor: " + oCierreCajero.UsuarioInicio.Nombre);
+                            ticket.TextoIzquierda("Desde: " + oCierreCajero.FechaHoraInicio.Value.ToString());
+                            ticket.TextoIzquierda("Hasta: " + oCierreCajero.FechaHoraCierre.Value.ToString());
+                            ticket.LineasGuion();
+                            ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreCajero.CajaInicio));
+                            ticket.AgregaTotales("Ventas", Convert.ToDouble(oCierreCajero.Ventas));
+                            ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreCajero.EgresosCaja));
+                            ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreCajero.CajaCierre));
+                            ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreCajero.Diferencia));
+                            ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreCajero.CajaInicioSiguiente));
+                            ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreCajero.ImporteRetirado));
+                            ticket.LineasEnBlanco(3);
+                        }
 
                         this.Close();
                     }

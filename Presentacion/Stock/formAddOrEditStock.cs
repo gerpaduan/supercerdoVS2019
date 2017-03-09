@@ -53,6 +53,8 @@ namespace Presentacion
        Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
        Color ultimoColor = Color.Green;
 
+       Entidades.Compra.tipoCompraEnum[] arrayTipo = {Entidades.Compra.tipoCompraEnum.IngresoStock, Entidades.Compra.tipoCompraEnum.EgresoStock, Entidades.Compra.tipoCompraEnum.CierreStock, Entidades.Compra.tipoCompraEnum.PesajeCortes, Entidades.Compra.tipoCompraEnum.AjusteStock};
+
         public formAddOrEditStock()
         {
             InitializeComponent();
@@ -63,6 +65,7 @@ namespace Presentacion
             cargarComboSucursal();
             dtCorte = oCorteN.obtenerCortes();
             checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
+            huboModificaciones = false;
 
             if (dtCorte.Rows.Count == 0)
             {
@@ -70,8 +73,15 @@ namespace Presentacion
             }
             if (accion.Equals(Entidades.Compra.accion.Agregar))
             {
+                timer1.Stop();
                 logueoUsuario();
                 if (oUsuario == null)
+                {
+                    this.Close();
+                    return;
+                }
+
+                if (!validarAjusteStock())
                 {
                     this.Close();
                     return;
@@ -80,6 +90,10 @@ namespace Presentacion
                 oProvNuevaCompra = new Entidades.Persona();
                 oProvNuevaCompra.idPersona = Convert.ToInt32(tipoCompraEnum);
                 oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
+
+                btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
+
+                timer1.Start();
             }
             if (accion.Equals(Entidades.Compra.accion.Modificar))
             {
@@ -104,7 +118,9 @@ namespace Presentacion
                     cargarCorteEnGrilla(corte);
                 }
                 cargarGrilla();
+                Sort("creado", SortOrder.Ascending);
                 btnAceptar.Text = "&Modificar";
+                btnCambiarAccion.Visible = false;
                 txtFechaCompra.Enabled = false;
                 comboSucursal.Enabled = false;
                 groupBox1.Enabled = false;
@@ -116,6 +132,18 @@ namespace Presentacion
             huboModificaciones = false;
             idCompraLabel.Text = idCompra.ToString();
             setTituloForm();
+        }
+
+        private bool validarAjusteStock()
+        {
+            bool resp = true;
+            if (tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.AjusteStock))
+            {
+                resp = oUsuario != null && oUsuario.Admin;
+                if (!resp)
+                    MessageBox.Show("No tienes permiso para realizar Ajuste de Stock.", "Sin Permiso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            return resp;
         }
 
         private void setTituloForm()
@@ -149,14 +177,18 @@ namespace Presentacion
 
         private void btnBuscaCorte_Click(object sender, EventArgs e)
         {
+            buscarCorte();
+        }
+
+        private void buscarCorte()
+        {
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
         }
 
         private void btnQuitar_Click(object sender, EventArgs e)
-        {
+        {            
             quitarLinea();
-            capturarPantalla();
         }
 
         private void btnAgregar_Click(object sender, EventArgs e)
@@ -179,11 +211,17 @@ namespace Presentacion
                 {
                     return;
                 }
-                if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") &&
-                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
+
+                if (!validarAjusteStock())
+                    return;
+                
+                if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
+                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     txtUsuario.Text = oUsuario.Nombre;
                     btnAceptar.Text = "&Guardar";
+                    btnCambiarAccion.Visible = true;
+                    btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
                     setTituloForm();//se setea el titulo luego de cambiar el text a BtnAceptar 
                     txtFechaCompra.Enabled = true;
                     comboSucursal.Enabled = true;
@@ -208,8 +246,8 @@ namespace Presentacion
             {
                 if (listaCortePorCompra.Count > 0 || accion.Equals(Entidades.Compra.accion.Modificar))
                 {
-                    if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaCompra.Value, "Fecha") && 
-                        Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
+                    if (validarAjusteStock() && Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
+                        Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
                         && Util_Form.validarFecha(txtFechaCompra.Value, "Fecha") && validaciónFinal())
                     {
                         cargarCompra();//se cargan datos de la compra
@@ -250,6 +288,7 @@ namespace Presentacion
         {
             //limpio campos
             txtCantItems.Text = "0";
+            txtTotalKgs.Text = "0";
             txtObservaciones.Text = "";            
             listaCortesEnGrilla = new List<CortesPorCompra>();//Lista que se carga en la grilla
             listaCortePorCompra = new List<Entidades.CortePorCompra>();
@@ -278,8 +317,14 @@ namespace Presentacion
 
         private void quitarLinea()
         {
-            quitarCorte();
-            cargarGrilla();
+            DialogResult resp = MessageBox.Show("¿Quitar el ítem seleccionado?", "Quitar", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+            if (resp == DialogResult.Yes)
+            {
+                quitarCorte();
+                cargarGrilla();
+                capturarPantalla();
+            }
         }
 
         private void quitarCorte()
@@ -310,7 +355,8 @@ namespace Presentacion
                 huboModificaciones = true;
                 agregarCorte();
                 txtCodigo.Focus();
-                limpiarCampos();                
+                limpiarCampos();
+                Sort("creado", SortOrder.Ascending);
             }
         }
 
@@ -337,7 +383,8 @@ namespace Presentacion
                 totalKgs = totalKgs + fila.cantKgs;
             }
             //cargo Totales
-            txtCantItems.Text = grillaCortePorCompra.Rows.Count.ToString();     
+            txtCantItems.Text = grillaCortePorCompra.Rows.Count.ToString();
+            txtTotalKgs.Text = totalKgs.ToString("F3");
         }
 
         private int validarCorteEnGrilla()
@@ -379,6 +426,8 @@ namespace Presentacion
                 oCortePorCompra.compra = oCompraE;
                 oCortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text, true); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                 oCortePorCompra.precioKg = float.Parse("0.00");
+                oCortePorCompra.Creado = DateTime.Now;
+                oCortePorCompra.CreadoPor = oUsuario;
 
                 if (ultimaValidacion)
                 {
@@ -400,31 +449,11 @@ namespace Presentacion
                     }
 
                     oCortePorCompra.sucursal = oSucursalE;
-                    
-                    int nroFila = validarCorteEnGrilla();
-                    if (nroFila == -1)
-                    {
-                        listaCortePorCompra.Add(oCortePorCompra);
 
-                        //creo CortesPorCompra y cargo la lista de la grilla
-                        cargarCorteEnGrilla(oCortePorCompra);
-                    }
+                    listaCortePorCompra.Add(oCortePorCompra);
 
-                    if (nroFila == -2)
-                    {
-                        oCortePorCompra = null;
-                        cortesPorCompra = null;
-                    }
-                    if (nroFila > -1)
-                    {
-                        listaCortePorCompra[nroFila].cantKgs = listaCortePorCompra[nroFila].cantKgs + oCortePorCompra.cantKgs;
-
-                        listaCortesEnGrilla[nroFila].cantKgs = listaCortePorCompra[nroFila].cantKgs;
-                        listaCortesEnGrilla[nroFila].totalS = listaCortesEnGrilla[nroFila].totalS + (oCortePorCompra.cantKgs * oCortePorCompra.precioKg);
-
-                        oCortePorCompra = null;
-                        cortesPorCompra = null;
-                    }
+                    //creo CortesPorCompra y cargo la lista de la grilla
+                    cargarCorteEnGrilla(oCortePorCompra);
                 }
 	        }
 	        catch (Exception ex)
@@ -437,12 +466,14 @@ namespace Presentacion
         {
             cortesPorCompra = new CortesPorCompra();
 
+            cortesPorCompra.Index = oCortePorCompra.IdCortePorCompra;
             cortesPorCompra.codigo = oCortePorCompra.corte.codigo;
             cortesPorCompra.corte = oCortePorCompra.corte.corte;
             cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
             cortesPorCompra.precioKg = oCortePorCompra.precioKg;
             cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
             cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
+            cortesPorCompra.Creado = oCortePorCompra.Creado;
 
             listaCortesEnGrilla.Add(cortesPorCompra);
 
@@ -468,7 +499,7 @@ namespace Presentacion
                 else
                 {
                     float cantKgs = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, true);
-                    if (cantKgs <= 0)
+                    if (!tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.AjusteStock) && cantKgs <= 0)
                     {
                         MessageBox.Show("Ingrese una cantidad de Kgs mayor a 0 (cero).", "Ingrese una cantidad", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         txtCantKgs.Focus();
@@ -484,8 +515,14 @@ namespace Presentacion
 
         private bool validaciónFinal()
         {
+            if (!huboModificaciones)
+            {
+                MessageBox.Show("No se realizaron modificaciones.\n\nPresione el boton Cancelar para salir sin realizar modificaciones");
+                return false;
+            }
             DialogResult respuesta;
-            respuesta = MessageBox.Show("¿Guardar la modificación en el stock de los cortes ingresados?.", "Verificar datos ingresados", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            string pregunta = oCompraE != null && oCompraE.IdCompra > 1 ? " las modificaciones realizadas en" : " el nuevo ";
+            respuesta = MessageBox.Show("¿Guardar "+pregunta+" "+ Entidades.Compra.tipoCompraToString(tipoCompraEnum)+" ?", "Guardar datos", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
             if (respuesta == DialogResult.Yes)
             {
@@ -517,7 +554,8 @@ namespace Presentacion
                 {
                     grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
                     grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
-                }                
+                }
+
                 cargarTotales();
             }
             catch (Exception ex)
@@ -571,7 +609,7 @@ namespace Presentacion
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
 
-            comboSucursal.SelectedIndex = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString()) - 1;
+            comboSucursal.SelectedIndex = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion()) - 1;
         }
 
         #endregion
@@ -638,22 +676,26 @@ namespace Presentacion
                         else
                         {
                             txtCantKgs.Text = Utilidades.Util_Form.leerPesoBalanza();
+                            lblErrorBalanza.Visible = false;
                         }
                     }
                 }
             }
             catch (Exception ex)
-            {                
-                timer1.Enabled = false;
-                if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                {
-                    dejarDeLeerPeso = true;
-                    checkLeerPeso.Checked = false;
-                }
-                else
-                {
-                    timer1.Enabled = true;
-                }
+            {
+                txtCantKgs.Text = "Error balanza";
+                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Visible = true;          
+                //timer1.Enabled = false;
+                //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
+                //{
+                //    dejarDeLeerPeso = true;
+                //    checkLeerPeso.Checked = false;
+                //}
+                //else
+                //{
+                //    timer1.Enabled = true;
+                //}
             }
         }
 
@@ -676,6 +718,7 @@ namespace Presentacion
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
                     txtCantKgs.Focus();
+                    lblErrorBalanza.Visible = false;
                     timer1.Enabled = false;
                 }
             }
@@ -823,13 +866,13 @@ namespace Presentacion
             }
             //set SortGlyphDirection after databinding otherwise will always be none 
             Sort(grid.Columns[e.ColumnIndex].Name, so);
-            listaCortesEnGrilla.Clear();
-            foreach (Entidades.CortePorCompra corteOrdenado in listaCortePorCompra)
-            {
-                cargarCorteEnGrilla(corteOrdenado);
-            }
-            cargarGrilla();
-            grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection = so;
+            //listaCortesEnGrilla.Clear();
+            //foreach (Entidades.CortePorCompra corteOrdenado in listaCortePorCompra)
+            //{
+            //    cargarCorteEnGrilla(corteOrdenado);
+            //}
+            //cargarGrilla();
+            //grid.Columns[e.ColumnIndex].HeaderCell.SortGlyphDirection = so;
         }
         /// <summary>
         /// Sort the DataGridView
@@ -878,7 +921,222 @@ namespace Presentacion
                     }
                     break;
                 }
+                case "creado":
+                {
+                    if (sortOrder == SortOrder.Ascending)
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderBy(x => x.Creado).ToList();
+                    }
+                    else
+                    {
+                        listaCortePorCompra = listaCortePorCompra.OrderByDescending(x => x.Creado).ToList();
+                    }
+                    break;
+                }
             }
+            listaCortesEnGrilla.Clear();
+            foreach (Entidades.CortePorCompra corteOrdenado in listaCortePorCompra)
+            {
+                cargarCorteEnGrilla(corteOrdenado);
+            }
+            cargarGrilla();
+            grillaCortePorCompra.Columns[column].HeaderCell.SortGlyphDirection = sortOrder;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            comboTipo.DataSource = arrayTipo;
+            for (int index = 0; index < arrayTipo.Length; index++)
+            {
+                if (arrayTipo[index] == tipoCompraEnum)
+                {
+                    comboTipo.SelectedIndex = index;
+                    break;
+                }
+            }
+            //comboTipo.SelectedIndex = arrayTipo.Select(element => element.Equals(tipoCompraEnum));
+            //comboTipo.Text = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
+            comboTipo.Visible = !comboTipo.Visible;
+        }
+
+        private void comboTipo_TextChanged(object sender, EventArgs e)
+        {
+            if (!comboTipo.Visible) return;
+            if (arrayTipo[comboTipo.SelectedIndex] != tipoCompraEnum)
+            {
+                DialogResult resp = MessageBox.Show("¿Desea cambiar de /" + 
+                    Entidades.Compra.tipoCompraToString(tipoCompraEnum) + "/ a /" +
+                    Entidades.Compra.tipoCompraToString(arrayTipo[comboTipo.SelectedIndex]) + "/?", "Cambiar acción", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (resp == DialogResult.Yes)
+                {
+                    tipoCompraEnum = arrayTipo[comboTipo.SelectedIndex];
+                    tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
+                    txtTipoAccion.Text = tipoCompra;
+                    btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
+                    //si no hubo modificaciones si comprueba si hubo cambio en la accion
+                    if (!huboModificaciones) huboModificaciones = oCompraE != null && oCompraE.IdCompra > 0 && !oCompraE.TipoCompra.Equals(tipoCompra);
+                    setTituloForm();
+
+                    for (int index = 0; index < listaCortePorCompra.Count; index++)
+                    {
+                        switch (tipoCompraEnum)
+                        {
+                            case Entidades.Compra.tipoCompraEnum.EgresoStock:
+                                if(listaCortePorCompra[index].cantKgs > 0)
+                                    listaCortePorCompra[index].cantKgs = listaCortePorCompra[index].cantKgs * -1;
+                                if (listaCortesEnGrilla[index].cantKgs > 0)
+                                    listaCortesEnGrilla[index].cantKgs = listaCortesEnGrilla[index].cantKgs * -1;
+                                break;
+                            default:
+                                if (listaCortePorCompra[index].cantKgs < 0)
+                                    listaCortePorCompra[index].cantKgs = listaCortePorCompra[index].cantKgs * -1;
+                                if (listaCortesEnGrilla[index].cantKgs < 0)
+                                    listaCortesEnGrilla[index].cantKgs = listaCortesEnGrilla[index].cantKgs * -1;
+                                break;
+                        }
+                    }
+                    cargarGrilla();
+                }
+            }
+            comboTipo.Visible = false;
+        }
+
+        private void btnComprobar_Click(object sender, EventArgs e)
+        {
+            panelGrillaFaltantes.Visible = !panelGrillaFaltantes.Visible;
+            this.panelGrillaFaltantes.BringToFront();
+            btnVerNoCargados.Visible = !panelGrillaFaltantes.Visible;
+            comprobarStock();
+        }
+
+        //se muestran aquellos cortes que no han sido cargados aún en el cierre stock
+        private void comprobarStock()
+        {
+            if (grillaSinStock.Visible)
+            {
+                grillaSinStock.AutoGenerateColumns = false;
+                DataTable dtCortesSinStock = dtCorte.Clone();
+                foreach (DataRow corte in dtCorte.Rows)
+                {
+                    int codigoSelect = Convert.ToInt32(corte["codigo"].ToString());
+                    //TODO: agregar campo 'cierre stock' a corte para setear los cortes que se deben mostrar
+                    if ((codigoSelect > 0 && codigoSelect < 200) && Convert.ToBoolean(corte["enCierreStock"]))
+                    {
+                        var selected = listaCortePorCompra.Where(c => c.corte.codigo.Equals(codigoSelect));
+
+                        List<Entidades.CortePorCompra> selectedCollection = selected.ToList();
+                        if (selectedCollection.Count == 0)
+                        {
+                            dtCortesSinStock.ImportRow(corte);
+                        }
+                    }
+                }
+                grillaSinStock.DataSource = dtCortesSinStock;
+            }
+        }
+
+        private void grillaSinStock_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ignore clicks that are not on button cells.  
+            if (e.RowIndex < 0 || e.ColumnIndex !=
+                grillaSinStock.Columns["btnSinStock"].Index) return;
+
+            // Retrieve the Employee object from the "Assigned To" cell.
+            string codigoCorteSelect = grillaSinStock.Rows[e.RowIndex].Cells[0].Value.ToString();
+
+            cargarCorteSinStock(codigoCorteSelect);
+
+            //se establece la seleccion de la fila
+            int selectRow = e.RowIndex;
+
+            switch (grillaSinStock.Rows.Count)
+	        {
+                case 0:
+                    break;
+                case 1:
+                    grillaSinStock.Rows[0].Selected = true;
+                    grillaSinStock.FirstDisplayedScrollingRowIndex = 0;
+                    break;
+		        default:
+                    selectRow = e.RowIndex == grillaSinStock.Rows.Count ? e.RowIndex - 1 : e.RowIndex;
+                    grillaSinStock.Rows[selectRow].Selected = true;
+                    grillaSinStock.FirstDisplayedScrollingRowIndex = selectRow == 0 ? 0 : (selectRow-1); 
+                    break;
+	        }
+        }
+
+        private void cargarCorteSinStock(string codigo)
+        {
+            txtCodigo.Text = codigo;
+            txtCantKgs.Text = "-0.0051";//se pone este resultado por se el menor para q se pueda ver en reporte            
+            agregarCorte();
+            comprobarStock();
+            txtCodigo.Text = "";
+            huboModificaciones = true;
+        }
+
+        private void btnCerrarPanel_Click(object sender, EventArgs e)
+        {
+            panelGrillaFaltantes.Visible = false;
+            btnVerNoCargados.Visible = !panelGrillaFaltantes.Visible;
+        }
+
+        private void btnVerAcum_Click(object sender, EventArgs e)
+        {
+            ///Se crea nueva lista porque usando la lista que carga la grilla acumula los kgs
+            ///de los cortes que se repiten.
+            List<CortesPorCompra> listEnGrilla = new List<CortesPorCompra>();
+            foreach (Entidades.CortePorCompra corte in listaCortePorCompra)
+            {
+                cortesPorCompra = new CortesPorCompra();
+
+                cortesPorCompra.Index = corte.IdCortePorCompra;
+                cortesPorCompra.codigo = corte.corte.codigo;
+                cortesPorCompra.corte = corte.corte.corte;
+                cortesPorCompra.cantKgs = corte.cantKgs;
+                cortesPorCompra.precioKg = corte.precioKg;
+                cortesPorCompra.totalS = corte.precioKg * corte.cantKgs;
+                cortesPorCompra.sucursal = corte.sucursal.SucursalNombre;
+                cortesPorCompra.Creado = corte.Creado;
+
+                listEnGrilla.Add(cortesPorCompra);
+            }
+
+            Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
+            formVerAcum.verAcumulados(null, listEnGrilla, Presentacion.Movimientos.formVerAcumulados.tipoAcum.stock);// (listaCortesPorMovimiento);
+            formVerAcum.ShowDialog();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

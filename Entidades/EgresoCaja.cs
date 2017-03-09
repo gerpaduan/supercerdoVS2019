@@ -7,6 +7,41 @@ namespace Entidades
 {
     public class EgresoCaja
     {
+        public bool esEgresoCtaCte(int idTipoEgreso)
+        {
+            //100 es el IdTipoEgresoCaja para CtaCte
+            return idTipoEgreso.Equals(100);
+        }
+
+        public enum tablas
+        {
+            Compras,
+            Ventas,
+            Pagos,
+            MovCtaCte,
+        }
+
+        public tablas getTablaEnum(string tabla)
+        {
+            tablas tablaEnum = tablas.Compras;
+            switch (tabla)
+            {
+                case "Compras":
+                    tablaEnum = tablas.Compras;
+                    break;
+                case "Ventas":
+                    tablaEnum = tablas.Ventas;
+                    break;
+                case "Pagos":
+                    tablaEnum = tablas.Pagos;
+                    break;
+                case "MovCtaCte":
+                    tablaEnum = tablas.MovCtaCte;
+                    break;
+            }
+            return tablaEnum;
+        }
+
         int id;
 
         public int Id
@@ -58,6 +93,32 @@ namespace Entidades
             get { return monto; }
             set { monto = value; }
         }
+
+        private int? idCompra;
+
+        public int? IdCompra
+        {
+            get { return idCompra; }
+            set { idCompra = value; }
+        }
+
+        private string tabla;
+
+        public string Tabla
+        {
+            get { return tabla; }
+            set { tabla = value; }
+        }
+
+        private int? idTabla;
+
+        public int? IdTabla
+        {
+            get { return idTabla; }
+            set { idTabla = value; }
+        }
+
+
         Sucursal sucursal;
 
         public Sucursal Sucursal

@@ -33,15 +33,25 @@ namespace Presentacion
         public formMovimientos()
         {
             InitializeComponent();
-            cargarSucursales();
-            txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
-            cargar = true;
-            cargarGrilla();
         }
         
         private void formMovimientos_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursales();
+                txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formMovimientos_Load(null, null);
+
+                this.Close();
+            }
         }
 
         private void cargarSucursales()
@@ -196,11 +206,6 @@ namespace Presentacion
             cargarGrilla();
         }
 
-        private void Reporte_Click(object sender, EventArgs e)
-        {
-            
-        }
-
         private void actualizar_Click(object sender, EventArgs e)
         {
             try
@@ -222,6 +227,26 @@ namespace Presentacion
                 this.Close();
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void LineasMov_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formLineasMov"] != null)
+            {
+                Application.OpenForms["formLineasMov"].Activate();
+                Application.OpenForms["formLineasMov"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formLineasMov frmLineasMov = new formLineasMov();
+                frmLineasMov.Show();
+            }
+        }
+
+        private void menuDuplicar_Click(object sender, EventArgs e)
+        {
+            formMovimientos frmMovimientosDuplicar = new formMovimientos();
+            frmMovimientosDuplicar.Show();
         }     
     }
 }

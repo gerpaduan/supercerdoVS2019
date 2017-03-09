@@ -10,8 +10,7 @@ using System.Windows.Forms;
 namespace Presentacion.Cortes
 {
     public partial class formBuscarCorte : formBaseColor
-    {
-        
+    {        
         Negocio.Corte oCorteN;
         bool tabStop = false;
         public bool corteSinMaestro = true;
@@ -66,13 +65,12 @@ namespace Presentacion.Cortes
         private void cargarDatos(Entidades.Corte oCorte)
         {
             oCorte.idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
-            oCorte.codigo =  Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
-            
+            oCorte.codigo =  Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());            
             oCorte.corte = grillaCortes.CurrentRow.Cells[2].Value.ToString();
-          //  oCorte.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
-            int nroFila = grillaCortes.Rows.GetFirstRow(DataGridViewElementStates.Selected);
-        
+
+            int nroFila = grillaCortes.Rows.GetFirstRow(DataGridViewElementStates.Selected);        
         }
+
         private void btnBuscarCorte_Click(object sender, EventArgs e)
         {
             buscarCorte();
@@ -90,7 +88,6 @@ namespace Presentacion.Cortes
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 e.Handled = true;
@@ -108,11 +105,13 @@ namespace Presentacion.Cortes
         private void formBuscarCorte_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+
             cargarGrilla();
-            txtBuscarCorte.Focus();
+
+            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando cortes", "Cargando...");
+            barraProgreso.ShowDialog();
+
             txtBuscarCorte.Select();
         }
-    }
-
-    
+    }    
 }

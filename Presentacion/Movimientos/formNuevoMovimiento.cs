@@ -135,6 +135,13 @@ namespace Presentacion
 
         public void agregarMovimiento()
         {
+            if (oCorteE != null && oCorteE.idCorte > 0)
+            {
+                MessageBox.Show("No se puede guardar el movimiento porque hay un corte seleccionado");
+                txtCodigo.Focus();
+                return;
+            }
+
             if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaMovimiento.Value, "Fecha") && 
                 Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()))
                  && Util_Form.validarFecha(txtFechaMovimiento.Value, "Fecha") && validacionFinal())
@@ -316,6 +323,7 @@ namespace Presentacion
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.tipo = fila["tipo"].ToString();
+                                oCorteE.Promedio = Utilidades.Util_Form.convertFloat(fila["promedio"].ToString(), false);
                                 break;
                             }
                         }
@@ -336,7 +344,7 @@ namespace Presentacion
 
             try
             {
-                decimal peso = Convert.ToDecimal(txtCantKgs.Text);
+                float peso = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, false);
                 if (peso > 0)
                 {
                     resp = true;
@@ -347,12 +355,32 @@ namespace Presentacion
                     resp = false;
                     txtCantKgs.Select();
                 }
+
+                ///se valida que la Cant. Unidad ingresada se corresponda con la Cant.Kgs del corte
+                ///Nota: Si es Cant.Unidad = 0 ('Cero') no se valida
+                ///
+                int cantUni = Convert.ToInt32(txtCantUnidad.Text);
+                if (resp && cantUni > 0 && !checkPermitirIngreso.Checked)
+                {
+                    float limitInferior = oCorteE.Promedio * (cantUni - 1);
+                    float limitSuperior = oCorteE.Promedio * (cantUni + 1);
+                    if (!(limitInferior < peso && peso < limitSuperior))
+                    {
+                        checkPermitirIngreso.Visible = true;
+                        MessageBox.Show("La Cant.Unidad ingresada no se corresponde con la Cant.Kgs del Corte\n\n"+
+                            "Corrobore la Cant.Unidades ingresada y tilde 'Permitir ingreso' si está correcto.","No hay consistencia",
+                             MessageBoxButtons.OK,MessageBoxIcon.Error);
+                        resp = false;
+                        txtCantUnidad.Select();
+                    }
+                }
             }
             catch (Exception)
             {
                 resp = false;
                 MessageBox.Show("Cant. Kgs debe ser un número represente un peso en Kg.");
             }
+
             return resp;
         }
 
@@ -367,6 +395,7 @@ namespace Presentacion
                     oCortePorMovimientoE.CantUnidad = Convert.ToInt32(txtCantUnidad.Text);
                     oCortePorMovimientoE.CantKg = Util_Form.convertFloat(txtCantKgs.Text, true);
                     oCortePorMovimientoE.PesoBalanza = checkLeerPeso.Checked;
+                    oCortePorMovimientoE.PermitirIngreso = checkPermitirIngreso.Checked;
 
                     listaCortesPorMovimiento.Add(oCortePorMovimientoE);
                     cargarGrilla();
@@ -462,7 +491,7 @@ namespace Presentacion
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
 
-            comboSucOrigen.SelectedValue = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());//-1;//No muestra ninguna sucursal
+            comboSucOrigen.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());//-1;//No muestra ninguna sucursal
             cambiarSucursalDestino();
         }
 
@@ -551,8 +580,24 @@ namespace Presentacion
 
         private void btnBuscar_Click(object sender, EventArgs e)
         {
-            formBuscarCorte frmBuscarCorte = new formBuscarCorte();
-            frmBuscarCorte.ShowDialog(this);
+            buscarCorte();
+        }
+
+        private void buscarCorte()
+        {
+            try
+            {
+                dtCorte = oCorteN.obtenerCortes();
+
+                formBuscarCorte frmBuscarCorte = new formBuscarCorte();
+                frmBuscarCorte.ShowDialog(this);
+                txtCantUnidad.Focus();
+                txtCantUnidad.Select();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Hubo un error al cargar los cortes.");
+            }
         }
 
         public void EnviarCorte(Entidades.Corte corte)
@@ -576,6 +621,8 @@ namespace Presentacion
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             cargarCorte();
+            checkPermitirIngreso.Visible = false;
+            checkPermitirIngreso.Checked = false;
         }
 
         private void btnAgregar_Click(object sender, EventArgs e)
@@ -700,7 +747,8 @@ namespace Presentacion
 
         private void txtCantUnidad_TextChanged(object sender, EventArgs e)
         {
-            Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un");
+            if (!Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un"))
+                txtCantUnidad.Text = "";
         }
 
         private void btnGuardar_Enter(object sender, EventArgs e)
@@ -776,7 +824,7 @@ namespace Presentacion
         {
             cargarListaEnGrilla();
             Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
-            formVerAcum.verAcumulados(listaEnGrilla);// (listaCortesPorMovimiento);
+            formVerAcum.verAcumulados(listaEnGrilla, null, Presentacion.Movimientos.formVerAcumulados.tipoAcum.movimiento);// (listaCortesPorMovimiento);
             formVerAcum.ShowDialog();
         }
 
@@ -855,6 +903,37 @@ namespace Presentacion
             {
                 MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n" + ex.Message + "\n" + ex.StackTrace);
             }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Home:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.PageUp:
+                    txtCodigo.Focus();
+                    break;
+                case Keys.F2:
+                    foreach (Form frm in Application.OpenForms)
+                    {
+                        if (frm.GetType() == typeof(FormPrincipal))
+                        {
+                            frm.BringToFront();
+                            break;
+                        }
+                    }
+                    break;
+                case Keys.F10:
+                    buscarCorte();
+                    break;
+                case Keys.F11:
+                    txtObservaciones.Focus();
+                    break;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

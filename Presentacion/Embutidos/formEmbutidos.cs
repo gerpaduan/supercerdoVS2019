@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Caja;
+using System.Configuration;
 
 namespace Presentacion
 {
@@ -28,6 +29,8 @@ namespace Presentacion
 
         Entidades.Usuario oUsuario;
 
+        int cantDiasLimitFechaDesde = Convert.ToInt32(ConfigurationManager.AppSettings["cantDiasLimitFechaDesde"].ToString());
+        DateTime limitFechaDesde;
         bool cargar = false;
         public formEmbutidos()
         {
@@ -162,17 +165,29 @@ namespace Presentacion
 
         private void formEmbutidos_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (EsVentaClientes)
+            try
             {
-                this.Text = "Embutidos/Ventas Clientes/Otros";
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                if (EsVentaClientes)
+                {
+                    this.Text = "Embutidos/Ventas Clientes/Otros";
+                }
+                DateTime today = DateTime.Today;
+                fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
+                limitFechaDesde = today.AddDays(-cantDiasLimitFechaDesde);
+                fechaDesde.Value = limitFechaDesde;
+                cargarSucursal();
+                cargar = true;
+                cargarGrilla();  
             }
-            DateTime today = DateTime.Today;
-            fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
-            fechaDesde.Value = today.AddDays(-8);            
-            cargarSucursal();
-            cargar = true;
-            cargarGrilla();   
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formEmbutidos_Load(null, null);
+
+                this.Close();
+            }
+             
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -209,7 +224,26 @@ namespace Presentacion
 
         private void txtDescripcion_TextChanged(object sender, EventArgs e)
         {
+            if (!FormPrincipal.logueado && fechaDesde.Value < limitFechaDesde)
+            {
+                MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                fechaDesde.Value = limitFechaDesde;
+            }
             lblActualizar.Visible = true;
+        }
+
+        private void LineasEmb_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formLineasEmb"] != null)
+            {
+                Application.OpenForms["formLineasEmb"].Activate();
+                Application.OpenForms["formLineasEmb"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formLineasEmb frmLineasEmb = new formLineasEmb();
+                frmLineasEmb.Show();
+            }
         }
     }
 }

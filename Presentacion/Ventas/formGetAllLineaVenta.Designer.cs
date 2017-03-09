@@ -29,11 +29,15 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formGetAllLineaVenta));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.label5 = new System.Windows.Forms.Label();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.barraControl = new System.Windows.Forms.ToolStrip();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
@@ -53,7 +57,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
+            this.exportPDF = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
@@ -110,7 +114,8 @@
             // 
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.menuDuplicar});
+            this.menuDuplicar,
+            this.exportPDF});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -118,6 +123,18 @@
             this.barraControl.TabIndex = 26;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
+            this.menuDuplicar.Text = "Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // pnlBuscar
             // 
@@ -313,11 +330,35 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaVentas.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaVentas.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
             this.grillaVentas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaVentas.DefaultCellStyle = dataGridViewCellStyle5;
             this.grillaVentas.Location = new System.Drawing.Point(11, 134);
             this.grillaVentas.MultiSelect = false;
             this.grillaVentas.Name = "grillaVentas";
             this.grillaVentas.ReadOnly = true;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaVentas.RowHeadersDefaultCellStyle = dataGridViewCellStyle6;
             this.grillaVentas.RowHeadersVisible = false;
             this.grillaVentas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaVentas.Size = new System.Drawing.Size(790, 321);
@@ -358,17 +399,15 @@
             this.panel1.Size = new System.Drawing.Size(792, 1);
             this.panel1.TabIndex = 37;
             // 
-            // menuDuplicar
+            // exportPDF
             // 
-            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
-            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.menuDuplicar.Name = "menuDuplicar";
-            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
-            this.menuDuplicar.Text = "Duplicar";
-            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
+            this.exportPDF.Image = ((System.Drawing.Image)(resources.GetObject("exportPDF.Image")));
+            this.exportPDF.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.exportPDF.Name = "exportPDF";
+            this.exportPDF.Size = new System.Drawing.Size(32, 42);
+            this.exportPDF.Text = "PDF";
+            this.exportPDF.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.exportPDF.Click += new System.EventHandler(this.exportPDF_Click);
             // 
             // formGetAllLineaVenta
             // 
@@ -429,5 +468,6 @@
         private System.Windows.Forms.ComboBox comboUsuario;
         protected System.Windows.Forms.Label lblActualizar;
         protected System.Windows.Forms.ToolStripButton menuDuplicar;
+        private System.Windows.Forms.ToolStripButton exportPDF;
     }
 }

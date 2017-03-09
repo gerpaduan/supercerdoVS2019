@@ -128,6 +128,7 @@ namespace Utilidades
             float? value = null;
             try 
 	        {
+                toFloat = !toFloat.Contains("..") && toFloat.Contains('.') && toFloat.Contains(',') ? toFloat.Replace(".", "") : toFloat;
                 toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
         		value =  float.Parse( toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 	        }
@@ -199,7 +200,7 @@ namespace Utilidades
         public static bool validarSucursal(bool esAdmin, int idSucursal)
         {
             bool resp = true;
-            int sucActual = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int sucActual = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             if (!esAdmin && idSucursal != sucActual)
             {
                 resp = false;
@@ -224,7 +225,7 @@ namespace Utilidades
                 
         public static int idSucursalAppConfig()
         {           
-            return Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            return Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
         public static string errorConexionBD(string exception)
@@ -237,6 +238,17 @@ namespace Utilidades
             return mensaje;
         }
 
+        public static bool errorConexionBD_Return(string exception)
+        {
+            string lineaDivisoria = "\n------------------\n";
+            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n" +
+                "--Si no se conecta posiblemente no haya INTERNET.--\n";
+            mensaje = exception.Contains("Error relacionado con la red") ||
+                exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
+
+            DialogResult resp = MessageBox.Show(mensaje, "Mensaje", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            return resp.Equals(DialogResult.Yes) ? true : false;
+        }
 
         public static string leerPesoBalanza()
         {
@@ -283,9 +295,16 @@ namespace Utilidades
             try
             {
                 string nombreCarpeta = "Capturas";
-                string fullNameCaptura = fechaRegistro.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura + ".jpg";
+                string fullNameCaptura = DateTime.Now.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura + ".jpg";
+                string folderCaptura = fechaRegistro.ToString("dd-MM-yyyy HHmmss") + " - " + nameCaptura;
                 string escritorio = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                string fullPath = Path.GetFullPath(escritorio + "\\" + nombreCarpeta);// (@"\" + nombreCarpeta);
+                string capturasPath = Path.GetFullPath(escritorio + "\\" + nombreCarpeta);// (@"\" + nombreCarpeta);
+                if (!Directory.Exists(capturasPath))
+                {
+                    Directory.CreateDirectory(capturasPath);
+                }
+
+                string fullPath = Path.GetFullPath(capturasPath + "\\" + folderCaptura);// (@"\" + nombreCarpeta);
 
                 if (!Directory.Exists(fullPath))
                 {
@@ -315,6 +334,19 @@ namespace Utilidades
             {
                 Color color = readOnly ? ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString()) :
                     ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString());
+
+                return color;
+            }
+            catch (Exception)
+            {
+                return Color.White;
+            }
+        }
+        public static Color getBackColorCheckBox(bool isChecked)
+        {
+            try
+            {
+                Color color = isChecked ? Color.LimeGreen :ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
 
                 return color;
             }

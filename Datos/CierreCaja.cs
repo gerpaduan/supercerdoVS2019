@@ -150,6 +150,9 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@descripcion", oEgresoCaja.Descripcion);
             cmCierreCaja.Parameters.AddWithValue("@detalle", oEgresoCaja.Detalle);
             cmCierreCaja.Parameters.AddWithValue("@monto", oEgresoCaja.Monto);
+            cmCierreCaja.Parameters.AddWithValue("@idCompra", oEgresoCaja.IdCompra);
+            cmCierreCaja.Parameters.AddWithValue("@tabla", oEgresoCaja.Tabla);
+            cmCierreCaja.Parameters.AddWithValue("@idTabla", oEgresoCaja.IdTabla);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", oEgresoCaja.Sucursal.idSucursal);
             cmCierreCaja.Parameters.AddWithValue("@creadoPor", oEgresoCaja.CreadoPor);
             cmCierreCaja.Parameters.AddWithValue("@actualizadoPor", oEgresoCaja.ActualizadoPor);
@@ -185,7 +188,10 @@ namespace Datos
                 oEgresoCaja.TipoEgresoCaja = drEgresoCaja["tipoEgresoCaja"].ToString();
                 oEgresoCaja.Descripcion = drEgresoCaja["descripcion"].ToString();
                 oEgresoCaja.Detalle = drEgresoCaja["detalle"].ToString();
-                oEgresoCaja.Monto =  float.Parse(drEgresoCaja["monto"].ToString());
+                oEgresoCaja.Monto = float.Parse(drEgresoCaja["monto"].ToString());
+                oEgresoCaja.IdCompra = drEgresoCaja["idCompra"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idCompra"].ToString()) : oEgresoCaja.IdCompra;
+                //oEgresoCaja.Tabla = drEgresoCaja["tabla"].ToString();
+                //oEgresoCaja.IdTabla = drEgresoCaja["idTabla"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idTabla"].ToString()) : oEgresoCaja.IdCompra;
                 oEgresoCaja.Sucursal = oSucD.findById(Convert.ToInt32(drEgresoCaja["idSucursal"].ToString()));
                 oEgresoCaja.Creado = drEgresoCaja["creado"].Equals(null) ? (DateTime?)null : Convert.ToDateTime(drEgresoCaja["creado"].ToString());
                 oEgresoCaja.CreadoPor = Convert.ToInt32(drEgresoCaja["creadoPor"].ToString());
@@ -194,6 +200,55 @@ namespace Datos
                 oEgresoCaja.ActualizadoPor = drEgresoCaja["actualizadoPor"].ToString().Length > 0 ? Convert.ToInt32(drEgresoCaja["actualizadoPor"]) : -1;
             }
 
+            cmCierreCaja.Connection.Close();
+            return oEgresoCaja;
+        }
+
+        private Entidades.EgresoCaja cargarEgresoCajaDataReader(SqlDataReader drEgresoCaja)
+        {
+            Entidades.EgresoCaja oEgresoCaja = new Entidades.EgresoCaja();
+            Datos.Sucursal oSucD = new Datos.Sucursal();
+            Datos.Usuario oUserD = new Datos.Usuario();
+
+            oEgresoCaja.Id = Convert.ToInt32(drEgresoCaja["id"].ToString());
+            oEgresoCaja.Fecha = Convert.ToDateTime(drEgresoCaja["fechaHora"].ToString());
+            oEgresoCaja.IdTipoEgresoCaja = Convert.ToInt32(drEgresoCaja["idTipoEgresoCaja"].ToString());
+            //oEgresoCaja.TipoEgresoCaja = drEgresoCaja["tipoEgresoCaja"].ToString();
+            oEgresoCaja.Descripcion = drEgresoCaja["descripcion"].ToString();
+            oEgresoCaja.Detalle = drEgresoCaja["detalle"].ToString();
+            oEgresoCaja.Monto = float.Parse(drEgresoCaja["monto"].ToString());
+            oEgresoCaja.IdCompra = drEgresoCaja["idCompra"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idCompra"].ToString()) : oEgresoCaja.IdCompra;
+            //oEgresoCaja.Tabla = drEgresoCaja["tabla"].ToString();
+            //oEgresoCaja.IdTabla = drEgresoCaja["idTabla"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idTabla"].ToString()) : oEgresoCaja.IdCompra;
+            oEgresoCaja.Sucursal = oSucD.findById(Convert.ToInt32(drEgresoCaja["idSucursal"].ToString()));
+            oEgresoCaja.Creado = drEgresoCaja["creado"].Equals(null) ? (DateTime?)null : Convert.ToDateTime(drEgresoCaja["creado"].ToString());
+            oEgresoCaja.CreadoPor = Convert.ToInt32(drEgresoCaja["creadoPor"].ToString());
+            DateTime? fechaNull = null;
+            oEgresoCaja.Actualizado = !String.IsNullOrEmpty(drEgresoCaja["actualizado"].ToString()) ? (Convert.ToDateTime(drEgresoCaja["actualizado"].ToString())) : fechaNull;
+            oEgresoCaja.ActualizadoPor = drEgresoCaja["actualizadoPor"].ToString().Length > 0 ? Convert.ToInt32(drEgresoCaja["actualizadoPor"]) : -1;
+
+            return oEgresoCaja;
+        }
+
+        public Entidades.EgresoCaja findEgresoCajaByTablaYId(string tabla, int tablaID)
+        {
+            cmCierreCaja = new SqlCommand();
+
+            cmCierreCaja.Connection = conn.conectar();
+            cmCierreCaja.CommandType = CommandType.Text;
+            cmCierreCaja.CommandText = "SELECT  top 1 EgresosCaja.* "+
+			                            "FROM EgresosCaja "+
+			                            "WHERE     (tabla = '"+tabla+"') AND (idTabla = "+tablaID+") "+
+			                            "ORDER BY EgresosCaja.id desc";
+
+            Entidades.EgresoCaja oEgresoCaja = new Entidades.EgresoCaja();
+            cmCierreCaja.Connection.Open();
+
+            SqlDataReader drEgresoCaja = cmCierreCaja.ExecuteReader();
+            while (drEgresoCaja.Read())
+            {
+                oEgresoCaja = cargarEgresoCajaDataReader(drEgresoCaja);
+            }
             cmCierreCaja.Connection.Close();
             return oEgresoCaja;
         }

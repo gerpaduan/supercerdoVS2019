@@ -7,11 +7,21 @@ namespace Entidades
 {
     public class CortePorCompra
     {
+        private int idCortePorCompra;
         public Compra compra;
         public Corte corte;
         public float cantKgs;
         public float precioKg;
         public Sucursal sucursal;
+        private DateTime? creado;
+        private Usuario creadoPor;
+
+
+        public int IdCortePorCompra
+        {
+            get { return idCortePorCompra; }
+            set { idCortePorCompra = value; }
+        }
 
         public Compra Compra
         {
@@ -71,6 +81,18 @@ namespace Entidades
             {
                 sucursal = value;
             }
+        }
+
+        public DateTime? Creado
+        {
+            get { return creado; }
+            set { creado = value; }
+        }
+
+        public Usuario CreadoPor
+        {
+            get { return creadoPor; }
+            set { creadoPor = value; }
         }
     }
 }

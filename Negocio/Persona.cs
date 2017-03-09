@@ -13,13 +13,19 @@ namespace Negocio
         public void agregarPersona(Entidades.Persona oPersonaE)
         {
             oPersonaD = new Datos.Persona();
-            oPersonaD.agregarPersona(oPersonaE);
+            oPersonaD.addOrEditPersona(oPersonaE);
         }
 
         public void modificarProveedor(Entidades.Persona oPersonaE)
         {
             oPersonaD = new Datos.Persona();
-            oPersonaD.modificarProveedor(oPersonaE);
+            oPersonaD.addOrEditPersona(oPersonaE);
+        }
+
+        public void addOrEditPersona(Entidades.Persona oPersonaE)
+        {
+            oPersonaD = new Datos.Persona();
+            oPersonaD.addOrEditPersona(oPersonaE);
         }
 
         public void eliminarPersona(Entidades.Persona oPersonaE)

@@ -28,13 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
+            this.comboOrdenStock = new System.Windows.Forms.ComboBox();
             this.lblActualizar = new System.Windows.Forms.Label();
-            this.btnExportar = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.fechaDesdeProgresivo = new System.Windows.Forms.DateTimePicker();
             this.txtFechaHastaProgresivo = new System.Windows.Forms.DateTimePicker();
             this.comboCierreStock = new System.Windows.Forms.ComboBox();
             this.comboInicioStock = new System.Windows.Forms.ComboBox();
@@ -42,7 +46,6 @@
             this.fechaHasta = new System.Windows.Forms.DateTimePicker();
             this.fechaDesde = new System.Windows.Forms.DateTimePicker();
             this.label3 = new System.Windows.Forms.Label();
-            this.btnBuscar = new System.Windows.Forms.Button();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.comboTipoReporte = new System.Windows.Forms.ComboBox();
@@ -51,10 +54,10 @@
             this.label9 = new System.Windows.Forms.Label();
             this.btnSalir = new System.Windows.Forms.Button();
             this.barraControl = new System.Windows.Forms.ToolStrip();
-            this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.grillaReportes = new System.Windows.Forms.DataGridView();
-            this.comboOrdenStock = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.btnExportar = new System.Windows.Forms.Button();
+            this.btnBuscar = new System.Windows.Forms.Button();
+            this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -83,8 +86,37 @@
             this.panel1.Size = new System.Drawing.Size(1007, 91);
             this.panel1.TabIndex = 12;
             // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(888, 41);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(74, 15);
+            this.label1.TabIndex = 55;
+            this.label1.Text = "Orden Stock";
+            // 
+            // comboOrdenStock
+            // 
+            this.comboOrdenStock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.comboOrdenStock.DisplayMember = "Sin Orden";
+            this.comboOrdenStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboOrdenStock.FormattingEnabled = true;
+            this.comboOrdenStock.Items.AddRange(new object[] {
+            "Sin Orden",
+            "Ascendente",
+            "Descendente"});
+            this.comboOrdenStock.Location = new System.Drawing.Point(891, 59);
+            this.comboOrdenStock.Name = "comboOrdenStock";
+            this.comboOrdenStock.Size = new System.Drawing.Size(99, 21);
+            this.comboOrdenStock.TabIndex = 54;
+            this.comboOrdenStock.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
+            // 
             // lblActualizar
             // 
+            this.lblActualizar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
@@ -95,21 +127,10 @@
             this.lblActualizar.Text = "Actualizar...";
             this.lblActualizar.Visible = false;
             // 
-            // btnExportar
-            // 
-            this.btnExportar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnExportar.Image = ((System.Drawing.Image)(resources.GetObject("btnExportar.Image")));
-            this.btnExportar.Location = new System.Drawing.Point(789, 53);
-            this.btnExportar.Name = "btnExportar";
-            this.btnExportar.Size = new System.Drawing.Size(82, 31);
-            this.btnExportar.TabIndex = 25;
-            this.btnExportar.Text = "Exportar";
-            this.btnExportar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
-            this.btnExportar.UseVisualStyleBackColor = true;
-            this.btnExportar.Click += new System.EventHandler(this.btnExportar_Click);
-            // 
             // groupBox1
             // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.fechaDesdeProgresivo);
             this.groupBox1.Controls.Add(this.txtFechaHastaProgresivo);
             this.groupBox1.Controls.Add(this.comboCierreStock);
             this.groupBox1.Controls.Add(this.comboInicioStock);
@@ -124,6 +145,18 @@
             this.groupBox1.TabIndex = 24;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Fechas";
+            // 
+            // fechaDesdeProgresivo
+            // 
+            this.fechaDesdeProgresivo.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
+            this.fechaDesdeProgresivo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.fechaDesdeProgresivo.Location = new System.Drawing.Point(77, 19);
+            this.fechaDesdeProgresivo.Name = "fechaDesdeProgresivo";
+            this.fechaDesdeProgresivo.Size = new System.Drawing.Size(151, 20);
+            this.fechaDesdeProgresivo.TabIndex = 25;
+            this.fechaDesdeProgresivo.Visible = false;
+            this.fechaDesdeProgresivo.ValueChanged += new System.EventHandler(this.txtFechaHastaProgresivo_ValueChanged);
+            this.fechaDesdeProgresivo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesdeProgresivo_KeyDown);
             // 
             // txtFechaHastaProgresivo
             // 
@@ -202,26 +235,13 @@
             this.label3.TabIndex = 12;
             this.label3.Text = "Desde";
             // 
-            // btnBuscar
-            // 
-            this.btnBuscar.AccessibleDescription = "";
-            this.btnBuscar.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
-            this.btnBuscar.Location = new System.Drawing.Point(238, 52);
-            this.btnBuscar.Name = "btnBuscar";
-            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
-            this.btnBuscar.TabIndex = 21;
-            this.btnBuscar.TabStop = false;
-            this.btnBuscar.UseVisualStyleBackColor = true;
-            this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
-            // 
             // comboSucursal
             // 
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
             this.comboSucursal.Location = new System.Drawing.Point(95, 12);
             this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(113, 21);
+            this.comboSucursal.Size = new System.Drawing.Size(137, 21);
             this.comboSucursal.TabIndex = 19;
             this.comboSucursal.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
             // 
@@ -238,6 +258,7 @@
             // 
             // comboTipoReporte
             // 
+            this.comboTipoReporte.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.comboTipoReporte.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipoReporte.FormattingEnabled = true;
             this.comboTipoReporte.Items.AddRange(new object[] {
@@ -246,6 +267,7 @@
             "Stock Progresivo",
             "Cierre Stock 2",
             "Ingreso - Egreso",
+            "Acum. Ventas",
             "Total Cortes Vendidos",
             "Total Kgs Corte/Compra",
             "Movimiento/Corte",
@@ -258,6 +280,7 @@
             // 
             // label2
             // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
@@ -310,6 +333,78 @@
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
             // 
+            // grillaReportes
+            // 
+            this.grillaReportes.AllowUserToAddRows = false;
+            this.grillaReportes.AllowUserToResizeRows = false;
+            this.grillaReportes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle2;
+            this.grillaReportes.Location = new System.Drawing.Point(12, 142);
+            this.grillaReportes.Name = "grillaReportes";
+            this.grillaReportes.ReadOnly = true;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            this.grillaReportes.RowHeadersVisible = false;
+            this.grillaReportes.RowHeadersWidth = 300;
+            dataGridViewCellStyle4.Format = "N2";
+            dataGridViewCellStyle4.NullValue = null;
+            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle4;
+            this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaReportes.Size = new System.Drawing.Size(973, 468);
+            this.grillaReportes.TabIndex = 13;
+            this.grillaReportes.TabStop = false;
+            // 
+            // btnExportar
+            // 
+            this.btnExportar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnExportar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExportar.Image = ((System.Drawing.Image)(resources.GetObject("btnExportar.Image")));
+            this.btnExportar.Location = new System.Drawing.Point(789, 53);
+            this.btnExportar.Name = "btnExportar";
+            this.btnExportar.Size = new System.Drawing.Size(82, 31);
+            this.btnExportar.TabIndex = 25;
+            this.btnExportar.Text = "Exportar";
+            this.btnExportar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
+            this.btnExportar.UseVisualStyleBackColor = true;
+            this.btnExportar.Click += new System.EventHandler(this.btnExportar_Click);
+            // 
+            // btnBuscar
+            // 
+            this.btnBuscar.AccessibleDescription = "";
+            this.btnBuscar.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
+            this.btnBuscar.Location = new System.Drawing.Point(238, 52);
+            this.btnBuscar.Name = "btnBuscar";
+            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscar.TabIndex = 21;
+            this.btnBuscar.TabStop = false;
+            this.btnBuscar.UseVisualStyleBackColor = true;
+            this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
+            // 
             // Imprimir
             // 
             this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
@@ -321,61 +416,6 @@
             this.Imprimir.Text = "Imprimir";
             this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Imprimir.Click += new System.EventHandler(this.nuevo_Click);
-            // 
-            // grillaReportes
-            // 
-            this.grillaReportes.AllowUserToAddRows = false;
-            this.grillaReportes.AllowUserToResizeRows = false;
-            this.grillaReportes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle9.BackColor = System.Drawing.Color.WhiteSmoke;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle9;
-            this.grillaReportes.Location = new System.Drawing.Point(12, 142);
-            this.grillaReportes.Name = "grillaReportes";
-            this.grillaReportes.ReadOnly = true;
-            this.grillaReportes.RowHeadersVisible = false;
-            this.grillaReportes.RowHeadersWidth = 300;
-            dataGridViewCellStyle10.Format = "N2";
-            dataGridViewCellStyle10.NullValue = null;
-            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle10;
-            this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaReportes.Size = new System.Drawing.Size(973, 468);
-            this.grillaReportes.TabIndex = 13;
-            this.grillaReportes.TabStop = false;
-            // 
-            // comboOrdenStock
-            // 
-            this.comboOrdenStock.DisplayMember = "Sin Orden";
-            this.comboOrdenStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboOrdenStock.FormattingEnabled = true;
-            this.comboOrdenStock.Items.AddRange(new object[] {
-            "Sin Orden",
-            "Ascendente",
-            "Descendente"});
-            this.comboOrdenStock.Location = new System.Drawing.Point(891, 59);
-            this.comboOrdenStock.Name = "comboOrdenStock";
-            this.comboOrdenStock.Size = new System.Drawing.Size(99, 21);
-            this.comboOrdenStock.TabIndex = 54;
-            this.comboOrdenStock.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(888, 41);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(74, 15);
-            this.label1.TabIndex = 55;
-            this.label1.Text = "Orden Stock";
             // 
             // formReporteStock
             // 
@@ -429,5 +469,6 @@
         protected System.Windows.Forms.Label lblActualizar;
         protected System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboOrdenStock;
+        private System.Windows.Forms.DateTimePicker fechaDesdeProgresivo;
     }
 }

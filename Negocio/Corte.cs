@@ -15,6 +15,11 @@ namespace Negocio
             return oCorteD.getCorteById(id, cargarMaestro);
         }
 
+        public void editPrecioCorte(Entidades.Corte oCorteE)
+        {
+            oCorteD.editPrecioCorte(oCorteE);
+        }
+
         public void addOrEditCorte(Entidades.Corte oCorteE)
         {
             oCorteD.addOrEditCorte(oCorteE);
@@ -82,10 +87,16 @@ namespace Negocio
         }
 
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
-         {
-             oCorteD = new Datos.Corte();
-             return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
-         }
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
+        }
+
+        public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
+        }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
@@ -141,6 +152,12 @@ namespace Negocio
          {
              oCorteD = new Datos.Corte();
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
+         }
+
+         public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
+         {
+             oCorteD = new Datos.Corte();
+             return oCorteD.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
          }
 
          public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
@@ -205,10 +222,16 @@ namespace Negocio
 
          }
 
-         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal);
+         }
+
+         public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         {
+             oCorteD = new Datos.Corte();
+             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta);
          }
 
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)

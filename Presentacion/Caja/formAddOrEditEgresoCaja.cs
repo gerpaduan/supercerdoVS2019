@@ -26,6 +26,7 @@ namespace Presentacion.Caja
         public int idEgresoCaja = 0;
         bool readOnly = false;
         bool huboModificacion = false;
+        public bool egresoDesdeCajaVenta = false;
 
         public formAddOrEditEgresoCaja()
         {
@@ -56,6 +57,7 @@ namespace Presentacion.Caja
                     }
                     //se valida que sea Admin para cambiar de sucursal
                     comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
+                    txtSucursal.Visible = !comboSucursal.Visible;
                 }
                 else
                 {
@@ -131,7 +133,7 @@ namespace Presentacion.Caja
 
         private void cargarSucursal()
         {
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oEgresoCajaE.Sucursal = oSucursalE;
 
@@ -139,6 +141,8 @@ namespace Presentacion.Caja
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
             comboSucursal.SelectedIndex = idSucursal - 1;
+
+            txtSucursal.Text = comboSucursal.Text;
         }
 
         private void cargarTiposEgresoCaja()
@@ -172,6 +176,11 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
+            addOrEdit();         
+        }
+
+        private void addOrEdit()
+        {
             try
             {
                 bool tienePermiso = true;
@@ -189,13 +198,42 @@ namespace Presentacion.Caja
                     }
                 }
 
-                bool cajaAbierta = (Presentacion.FormPrincipal.logueado || oUsuario.Admin) ? true : validarCajaAbiertaVendedeor();
+                bool cajaAbierta = (!egresoDesdeCajaVenta && (Presentacion.FormPrincipal.logueado || oUsuario.Admin)) ? true : validarCajaAbiertaVendedeor();
 
-                if (tienePermiso && cajaAbierta && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, 
+                if (tienePermiso && cajaAbierta && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado,
                         Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
                 {
                     if (oEgresoCajaE.Id > 0 && readOnly)
                     {
+                        //se valida que no sea egreso por Cta Cte
+                        if (oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja))
+                        {
+                            MessageBox.Show("No puede modificar los egresos de caja que son por Cuenta Corriente.\n\n",
+                            "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            return;
+                        }
+
+                        //se valida que no sea un egreso por compra
+                        if (oEgresoCajaE.IdCompra != null && oEgresoCajaE.IdCompra > 0)
+                        {
+                            DialogResult resp = MessageBox.Show("No puede modificar el egreso de caja porque está asociado por una compra.\n\n"+
+                            "Modifique la compra con ID: "+oEgresoCajaE.IdCompra+" y se actualizará automáticamente el egreso de caja asociado a la misma."+
+                            "\n\n¿Desea modificar ahora la compra?", 
+                            "Egreso caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                            if (resp == DialogResult.Yes)
+                            {
+                                formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+                                frmNuevaCompra.esEgresoCaja = true;
+                                frmNuevaCompra.oEgresoCajaE = oEgresoCajaE;
+                                frmNuevaCompra.oUsuario = oUsuario;
+                                frmNuevaCompra.idCompra = Convert.ToInt32(oEgresoCajaE.IdCompra);
+                                frmNuevaCompra.ShowDialog();
+                                formAddOrEditEgresoCaja_Load(null, null);
+                            }
+                            return;
+                        }
                         readOnly = false;
                         setearPropiedadesForm();
                     }
@@ -226,25 +264,42 @@ namespace Presentacion.Caja
                                 MessageBox.Show("No se han realizado modificaciones.\n\nPresione Cancelar para salir sin realizar modificaciones", "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 return;
                             }
+                            //si es modificacion cerrar form
+                            bool cerrarForm = oEgresoCajaE.Id > 0;
+
                             oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
 
                             imprimirTicket();
-
+                            MessageBox.Show("El egreso de caja se guardó correctamente.");
+                            
+                            //si nuevoEgresoCaja es llamado desde FrmEgresos no se cierra
                             if (frmEgresosCaja != null)
                             {
                                 frmEgresosCaja.cargarGrilla();
+                                txtFechaEgresoCaja.Focus();
+
+                                //se limpian los campos y objeto
+                                oEgresoCajaE = new Entidades.EgresoCaja();
+                                comboTipoEgresoCaja.SelectedIndex = 0;
+                                txtDescripcion.Text = "";
+                                txtMonto.Text = "";
+                                txtDetalle.Text = "";
+
+                                if (cerrarForm) this.Close();
                             }
-                            MessageBox.Show("El egreso de caja se guardó correctamente.");
-                            this.Close();
+                            else
+                            {
+                                this.Close();
+                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar egreso de caja.\n\n"+ex.Message, 
+                MessageBox.Show("Error al guardar egreso de caja.\n\n" + ex.Message,
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }          
+            }
         }
 
         private void imprimirTicket()

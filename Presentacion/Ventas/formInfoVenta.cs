@@ -69,6 +69,7 @@ namespace Presentacion.Ventas
                 lineaVentaP.corte = lineaE.Corte.corte;
                 lineaVentaP.cantKgs = lineaE.CantKg;
                 lineaVentaP.precioKg = lineaE.PrecioKg;
+                lineaVentaP.bonificacion = lineaE.Bonificacion;
                 lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
                 lineaVentaP.PesoBalanza = lineaE.PesoBalanza;
 
@@ -146,25 +147,62 @@ namespace Presentacion.Ventas
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
+            imprimirTicket();
+            //try
+            //{
+            //    string titulo = oVentaE.Persona.razonSocial;
+            //    FormReportes frmReportes;
+
+            //    Reportes.ReporteVenta reporte = new Reportes.ReporteVenta();
+            //    frmReportes = new FormReportes(reporte, titulo, null, oVentaE.FechaVenta, oVentaE.FechaVenta);
+
+            //    frmReportes.ListaLineasVenta = listaLineaGrilla;
+            //    frmReportes.Objetos = true;
+            //    frmReportes.ReporteVenta = true;
+            //    frmReportes.Origen = oVentaE.Sucursal.SucursalNombre;
+            //    frmReportes.Destino = oVentaE.Sucursal.SucursalNombre;
+
+            //    frmReportes.Show();                
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show(ex.Message);
+            //}
+        }
+
+        private void imprimirTicket()
+        {
             try
             {
-                string titulo = oVentaE.Persona.razonSocial;
-                FormReportes frmReportes;
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = true;
+                ticket.TextoCentro("x");
+                ticket.NoValidoComoFactura();
+                ticket.LineasEnBlanco(1);
+                if (oVentaE.EnCtaCte)
+                    ticket.TextoCentro("A Cta. Cte.");
+                ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
+                ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
+                ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
+                ticket.LineasGuion();
 
-                Reportes.ReporteVenta reporte = new Reportes.ReporteVenta();
-                frmReportes = new FormReportes(reporte, titulo, null, oVentaE.FechaVenta, oVentaE.FechaVenta);
-
-                frmReportes.ListaLineasVenta = listaLineaGrilla;
-                frmReportes.Objetos = true;
-                frmReportes.ReporteVenta = true;
-                frmReportes.Origen = oVentaE.Sucursal.SucursalNombre;
-                frmReportes.Destino = oVentaE.Sucursal.SucursalNombre;
-
-                frmReportes.Show();                
+                foreach (Entidades.LineaVenta linea in oVentaE.LineasVenta)
+                {
+                    ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                        linea.PrecioKg, linea.CantKg, linea.PrecioKg * linea.CantKg);
+                }
+                ticket.TextoDerecha("-------");
+                ticket.AgregaTotales("Total", Convert.ToDouble(txtTotalS.Text));
+                ticket.LineasEnBlanco(1);
+                ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
+                //ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
+                ticket.TextoIzquierda("Cajero: " + oVentaE.Vendedor.Id);
+                ticket.GraciasPorSuCompra();
+                ticket.LineasEnBlanco(2);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show("Hubo un error a imprimir el ticket.\n\n" + ex.Message, "Error ticket");
             }
         }
     }

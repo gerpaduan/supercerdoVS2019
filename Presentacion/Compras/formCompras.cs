@@ -26,13 +26,22 @@ namespace Presentacion
         
         private void formCompras_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            cargarSucursal();
-            this.comboSucursal.SelectedIndex = 2;
-            this.comboTipoCompra.SelectedIndex = 0;
-            fechaDesde.Value = DateTime.Today.AddMonths(-2);
-            cargar = true;
-            cargarGrilla();
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursal();
+                this.comboTipoCompra.SelectedIndex = 0;
+                fechaDesde.Value = DateTime.Today.AddMonths(-2);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formCompras_Load(null, null);
+
+                this.Close();
+            }
         }
       
         #region metodos
@@ -51,7 +60,7 @@ namespace Presentacion
                 grillaCompras.AutoGenerateColumns = false;
 
                 dtCompras = null;
-                dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaCompras.DataSource = dtCompras;
 
                 cargarTotales();
@@ -61,15 +70,17 @@ namespace Presentacion
 
         private void cargarTotales()
         {
-            float totalKg=0, totalS=0;
+            float totalKg = 0, totalS = 0;
+            int cantMedias = 0;
             foreach (DataRow fila in dtCompras.Rows)
             {
-                totalKg = totalKg + float.Parse( fila[6].ToString());
+                cantMedias += string.IsNullOrEmpty(fila["cantMedias"].ToString()) ? 0 : Convert.ToInt32(fila["cantMedias"]);
+                totalKg = totalKg + float.Parse(fila["cantKg"].ToString());
                 totalS = totalS + float.Parse(fila["totalS"].ToString());
             }
-
-            txtTotalKgs.Text = Convert.ToString( totalKg);
-            txtTotalS.Text = Convert.ToString( totalS);
+            txtCantMedias.Text = cantMedias.ToString();
+            txtTotalKgs.Text = totalKg.ToString("F3");
+            txtTotalS.Text = totalS.ToString("F2");
         }
 
         private void modificarCompra()
@@ -180,19 +191,12 @@ namespace Presentacion
         {
             dtSucursales = new DataTable();
             oSucursalN = new Negocio.Sucursal();
-            dtSucursales = oSucursalN.obtenerSucursales();
-
-            DataRow nuevaFila = dtSucursales.NewRow();
-
-            nuevaFila[0] = 0;
-            nuevaFila[1] = "Todas";
-
-            dtSucursales.Rows.Add(nuevaFila);
+            dtSucursales = oSucursalN.obtenerSucursalesConTodas();
 
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = 2;
+            comboSucursal.SelectedValue = -1;
         }
     }
 }

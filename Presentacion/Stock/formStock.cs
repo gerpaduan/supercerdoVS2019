@@ -26,13 +26,23 @@ namespace Presentacion
 
         private void formStock_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            cargarSucursal();
-            this.comboTipoCompra.SelectedIndex = 0;
+            try
+            {
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                cargarSucursal();
+                this.comboTipoCompra.SelectedIndex = 0;
 
-            fechaDesde.Value = DateTime.Now.AddMonths(-2);
-            cargar = true;
-            cargarGrilla();
+                fechaDesde.Value = DateTime.Now.AddMonths(-2);
+                cargar = true;
+                cargarGrilla();
+            }
+            catch (Exception ex)
+            {
+                if (Utilidades.Util_Form.errorConexionBD_Return(ex.Message))
+                    formStock_Load(null, null);
+
+                this.Close();
+            }
         }       
 
         #region metodos
@@ -45,7 +55,7 @@ namespace Presentacion
                 grillaCompras.AutoGenerateColumns = false;
 
                 dtCompras = null;
-                dtCompras = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtCompras = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaCompras.DataSource = dtCompras;
                 formatearGrilla();
                 cargarTotales();
@@ -229,6 +239,16 @@ namespace Presentacion
                 this.Close();
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnPesaje_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+        }
+
+        private void btnAjusteStock_Click(object sender, EventArgs e)
+        {
+            nuevoStock(Entidades.Compra.tipoCompraEnum.AjusteStock);
         }
     }
 }
