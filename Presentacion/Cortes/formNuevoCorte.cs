@@ -78,21 +78,21 @@ namespace Presentacion
             txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
             oCorteMaestroE = oCorteE.corteMaestro;
             comboTipo.Text = oCorteE.tipo;
+            txtPromedio.Text = oCorteE.Promedio.ToString("F3");
             txtIndependiente.Checked = oCorteE.independiente == 1;
-
-            if (oCorteE.idCorte != oCorteE.corteMaestro.idCorte)
-            {
-                checkAsignarMaestro.Checked = true;
-            }
+            checkMayorista.Checked = oCorteE.Mayorista;
+            checkEnCierreStock.Checked = oCorteE.EnCierreStock;
+            checkAsignarMaestro.Checked = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0);
+            
             cargarCampoCorteMaestro();
         }
 
         private void cargarCampoCorteMaestro()
         {
-            txtCorteMaestro.Text = oCorteE.corteMaestro.corte;
-            txtPorcentajeCorteM.Text = Convert.ToString(oCorteE.porcentaje);
-            txtPorcHueso.Text = Convert.ToString(oCorteE.porcentajeHueso);
-            txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+            txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.corteMaestro.corte : "-";
+            txtPorcentajeCorteM.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? Convert.ToString(oCorteE.porcentaje) : "";
+            txtPorcHueso.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? Convert.ToString(oCorteE.porcentajeHueso) : "";
+            txtDesvioEstandar.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.desvioEstandar.ToString() : "";
         }
 
         #endregion
@@ -169,17 +169,20 @@ namespace Presentacion
                 mensaje += "\n" + "-Precio Kg";
             }
 
-            oCorteE.Tipo = comboTipo.Text;
+            try
+            {
+                oCorteE.Promedio = Utilidades.Util_Form.convertFloat(txtPromedio.Text, false);
+            }
+            catch (Exception)
+            {
+                resp = false;
+                mensaje += "\n" + "-Promedio";
+            }
 
-            if (txtIndependiente.Checked.Equals(true))
-            {
-                oCorteE.independiente = 1;
-                
-            }
-            else
-            {
-                oCorteE.independiente = 0;
-            }
+            oCorteE.Tipo = comboTipo.Text;
+            oCorteE.Mayorista = checkMayorista.Checked;
+            oCorteE.EnCierreStock = checkEnCierreStock.Checked;
+            oCorteE.independiente = txtIndependiente.Checked ? 1 : 0;
 
             oCorteE.CorteMaestro = oCorteMaestroE;
 
@@ -234,9 +237,16 @@ namespace Presentacion
 
         private bool validar()
         {
+            //validar Corte Maestro
+            if (checkAsignarMaestro.Checked && (oCorteMaestroE == null || oCorteMaestroE.idCorte == 0))
+            {
+                MessageBox.Show("Debe ingresar el corte maestro", "Ingrese Corte Maestro",
+                      MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return false;
+            }
+
             if (this.txtCodigo.Text.Equals("") || this.txtDescCorte.Text.Equals("") 
-                || this.comboTipo.Text.Equals("")|| (checkAsignarMaestro.Checked && 
-                ( this.txtCorteMaestro.Text.Equals("") || this.txtPorcentajeCorteM.Text.Equals(""))))
+                || this.comboTipo.Text.Equals(""))
             {
                 MessageBox.Show("Debe Completar todos los campos.", "Complete los campos", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -280,9 +290,8 @@ namespace Presentacion
                     cargarCampos();
                 }
 
-                if (Presentacion.FormPrincipal.logueado == false)
+                if (!Usuarios.FormValidarPermiso.validarPermiso())
                 {
-                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
                     this.Close();
                 }
                 groupBox1.Select();
@@ -303,7 +312,9 @@ namespace Presentacion
                     , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 if (resp.Equals(DialogResult.Yes))
                 {
-                    oCorteMaestroE = oCorteE;
+                    //oCorteMaestroE = oCorteE;
+                    //oCorteE.CorteMaestro = oCorteMaestroE;
+                    oCorteMaestroE = null;
                     oCorteE.CorteMaestro = oCorteMaestroE;
                     cargarCampoCorteMaestro();
                 }
@@ -324,6 +335,33 @@ namespace Presentacion
         private void txtIndependiente_CheckedChanged(object sender, EventArgs e)
         {
             huboModificacion = true;
+        }
+
+        private void comboTipo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Corte
+            //Embutido
+            //Unidad
+            //Otro
+            switch (comboTipo.Text)
+            {
+                case "Corte":
+                    txtPromedio.ReadOnly = false;
+                    txtPromedio.Text = oCorteE.Promedio.ToString("F3");
+                    break;
+                case "Unidad":
+                    txtPromedio.ReadOnly = true;
+                    txtPromedio.Text = "1";
+                    break;
+                case "Embutido":
+                    txtPromedio.ReadOnly = false;
+                    txtPromedio.Text = "0";
+                    break;
+                default:
+                    txtPromedio.ReadOnly = false;
+                    txtPromedio.Text = "0";
+                    break;
+            }
         }
     }
 }

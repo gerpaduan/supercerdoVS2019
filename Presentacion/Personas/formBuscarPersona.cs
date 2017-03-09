@@ -17,17 +17,21 @@ namespace Presentacion.Personas
         {
             InitializeComponent();
             cargarGrilla();
-            txtBuscar.Focus();
+            txtBuscar.Focus(); 
+            
         }
 
         public void cargarGrilla()
         {
+            grillaPersonas.ClearSelection();
             oPersonaN = new Negocio.Persona();
             grillaPersonas.AutoGenerateColumns = false;
 
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBuscar.Text.Trim());
 
             oPersonaN = null;
+
+            grillaPersonas.ClearSelection();
         }
 
         public void buscarPersona()
@@ -38,35 +42,34 @@ namespace Presentacion.Personas
             grillaPersonas.AutoGenerateColumns = false;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
             oPersonaN = null;
+
         }
 
         public void enviarPersona()
         {
             Entidades.Persona oPersonaE = new Entidades.Persona();
-
-            cargarDatos(oPersonaE);
-
-            InterfacePersona formInterface = this.Owner as InterfacePersona;
-            if (formInterface != null)
-            {
-                formInterface.EnviarPersona(oPersonaE);
-            }
-            this.Close();
-        }
-
-        private void cargarDatos(Entidades.Persona oPersonaE)
-        {
             try
-            {                
-                oPersonaE.idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
-                oPersonaE.razonSocial = grillaPersonas.CurrentRow.Cells[1].Value.ToString();
-                oPersonaE.otrosDatos = grillaPersonas.CurrentRow.Cells[2].Value.ToString();
+            {
+                if (!grillaPersonas.CurrentRow.Selected)
+                    throw new Exception();
+
+                int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
+                oPersonaN = new Negocio.Persona();
+                oPersonaE = oPersonaN.findById(idPersona);
+
+                InterfacePersona formInterface = this.Owner as InterfacePersona;
+                if (formInterface != null)
+                {
+                    formInterface.EnviarPersona(oPersonaE);
+                }
+                this.Close();
             }
             catch (Exception)
             {
-                MessageBox.Show("No se seleccionó ningún cliente");
+                MessageBox.Show("No se seleccionó ningún cliente.\n\nSeleccione un Cliente o presione Cerrar para no seleccionar.");
             }
         }
+
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!tabStop)
@@ -132,6 +135,12 @@ namespace Presentacion.Personas
             formNuevaPersona frmNuevaPersona = new formNuevaPersona();
             frmNuevaPersona.ShowDialog();
             cargarGrilla();
+        }
+
+        private void formBuscarPersona_Activated(object sender, EventArgs e)
+        {
+            grillaPersonas.ClearSelection();
+
         }
     }
 }

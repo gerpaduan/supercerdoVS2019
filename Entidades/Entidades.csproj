@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CierreCaja.cs" />
+    <Compile Include="MovCtaCte.cs" />
     <Compile Include="TemporalLineaVenta.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="CortePorCompra.cs" />
@@ -58,7 +59,7 @@
     <Compile Include="MediaRes.cs" />
     <Compile Include="CorteMaestro.cs" />
     <Compile Include="Movimientos.cs" />
-    <Compile Include="Pagos.cs" />
+    <Compile Include="Pago.cs" />
     <Compile Include="PrecioCorte.cs" />
     <Compile Include="Persona.cs" />
     <Compile Include="Compra.cs" />

@@ -11,6 +11,20 @@ namespace Entidades
         public string razonSocial;
         public string otrosDatos;
         public string tipo;
+        private bool ctaCte;
+
+        public bool CtaCte
+        {
+            get { return ctaCte; }
+            set { ctaCte = value; }
+        }
+        private float bonificacion;
+
+        public float Bonificacion
+        {
+          get { return bonificacion; }
+          set { bonificacion = value; }
+        }
     
         public int IdPersona
         {

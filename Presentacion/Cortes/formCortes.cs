@@ -73,6 +73,7 @@ namespace Presentacion
 
             dtCortes = oCorteN.buscarCorte(txtBusqueda);
             grillaCortes.DataSource = dtCortes;
+            filtarGrilla();
         }
         
         public void buscarCorte()
@@ -108,9 +109,9 @@ namespace Presentacion
         {
             try
             {
-                if (Presentacion.FormPrincipal.logueado == false)
+                if (!Usuarios.FormValidarPermiso.validarPermiso())
                 {
-                    MessageBox.Show("No está logueado!.\nInicie sesión y vuelva a intentar.");
+                    this.Close();
                 }
                 else
                 {

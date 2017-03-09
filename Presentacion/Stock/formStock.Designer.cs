@@ -32,6 +32,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblActualizar = new System.Windows.Forms.Label();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -49,12 +50,9 @@
             this.btnIngreso = new System.Windows.Forms.ToolStripButton();
             this.btnEgreso = new System.Windows.Forms.ToolStripButton();
             this.btnCierre = new System.Windows.Forms.ToolStripButton();
+            this.btnPesaje = new System.Windows.Forms.ToolStripButton();
+            this.btnAjusteStock = new System.Windows.Forms.ToolStripButton();
             this.grillaCompras = new System.Windows.Forms.DataGridView();
-            this.btnSeleccionar = new System.Windows.Forms.Button();
-            this.btnCancelar = new System.Windows.Forms.Button();
-            this.txtTotalKgs = new System.Windows.Forms.TextBox();
-            this.label12 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -67,7 +65,11 @@
             this.creadoPor = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizadoPor = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.lblActualizar = new System.Windows.Forms.Label();
+            this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.btnCancelar = new System.Windows.Forms.Button();
+            this.txtTotalKgs = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -96,6 +98,18 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(786, 89);
             this.pnlBuscar.TabIndex = 6;
+            // 
+            // lblActualizar
+            // 
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(339, 62);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 53;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
             // 
             // comboSucursal
             // 
@@ -172,10 +186,12 @@
             this.comboTipoCompra.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipoCompra.FormattingEnabled = true;
             this.comboTipoCompra.Items.AddRange(new object[] {
-            "Ingreso, Egreso y Cierre",
+            "Ver Todos",
             "Ingreso Stock",
             "Egreso Stock",
-            "Cierre Stock"});
+            "Cierre Stock",
+            "Pesaje Cortes",
+            "Ajuste Stock"});
             this.comboTipoCompra.Location = new System.Drawing.Point(97, 32);
             this.comboTipoCompra.Name = "comboTipoCompra";
             this.comboTipoCompra.Size = new System.Drawing.Size(161, 21);
@@ -252,7 +268,9 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btnIngreso,
             this.btnEgreso,
-            this.btnCierre});
+            this.btnCierre,
+            this.btnPesaje,
+            this.btnAjusteStock});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -291,6 +309,26 @@
             this.btnCierre.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnCierre.Click += new System.EventHandler(this.btnCierre_Click);
             // 
+            // btnPesaje
+            // 
+            this.btnPesaje.Image = ((System.Drawing.Image)(resources.GetObject("btnPesaje.Image")));
+            this.btnPesaje.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnPesaje.Name = "btnPesaje";
+            this.btnPesaje.Size = new System.Drawing.Size(44, 35);
+            this.btnPesaje.Text = "&Pesaje";
+            this.btnPesaje.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnPesaje.Click += new System.EventHandler(this.btnPesaje_Click);
+            // 
+            // btnAjusteStock
+            // 
+            this.btnAjusteStock.Image = ((System.Drawing.Image)(resources.GetObject("btnAjusteStock.Image")));
+            this.btnAjusteStock.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnAjusteStock.Name = "btnAjusteStock";
+            this.btnAjusteStock.Size = new System.Drawing.Size(44, 35);
+            this.btnAjusteStock.Text = "&Ajuste";
+            this.btnAjusteStock.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnAjusteStock.Click += new System.EventHandler(this.btnAjusteStock_Click);
+            // 
             // grillaCompras
             // 
             this.grillaCompras.AllowDrop = true;
@@ -324,63 +362,6 @@
             this.grillaCompras.Size = new System.Drawing.Size(761, 343);
             this.grillaCompras.TabIndex = 8;
             this.grillaCompras.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCompras_CellDoubleClick);
-            // 
-            // btnSeleccionar
-            // 
-            this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(521, 518);
-            this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(123, 27);
-            this.btnSeleccionar.TabIndex = 17;
-            this.btnSeleccionar.Text = "&Seleccionar";
-            this.btnSeleccionar.UseVisualStyleBackColor = true;
-            this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click_1);
-            // 
-            // btnCancelar
-            // 
-            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(650, 518);
-            this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(123, 27);
-            this.btnCancelar.TabIndex = 16;
-            this.btnCancelar.Text = "&Cerrar";
-            this.btnCancelar.UseVisualStyleBackColor = true;
-            this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
-            // 
-            // txtTotalKgs
-            // 
-            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKgs.Location = new System.Drawing.Point(669, 483);
-            this.txtTotalKgs.Name = "txtTotalKgs";
-            this.txtTotalKgs.ReadOnly = true;
-            this.txtTotalKgs.Size = new System.Drawing.Size(102, 21);
-            this.txtTotalKgs.TabIndex = 22;
-            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label12
-            // 
-            this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label12.AutoSize = true;
-            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(593, 488);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(71, 15);
-            this.label12.TabIndex = 21;
-            this.label12.Text = "Total Kgs.";
-            // 
-            // panel1
-            // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.panel1.Location = new System.Drawing.Point(12, 511);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(759, 1);
-            this.panel1.TabIndex = 23;
             // 
             // idCompra
             // 
@@ -493,17 +474,62 @@
             this.actualizadoPor.ReadOnly = true;
             this.actualizadoPor.Width = 140;
             // 
-            // lblActualizar
+            // btnSeleccionar
             // 
-            this.lblActualizar.AutoSize = true;
-            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(339, 62);
-            this.lblActualizar.Name = "lblActualizar";
-            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
-            this.lblActualizar.TabIndex = 53;
-            this.lblActualizar.Text = "Actualizar...";
-            this.lblActualizar.Visible = false;
+            this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSeleccionar.Location = new System.Drawing.Point(521, 518);
+            this.btnSeleccionar.Name = "btnSeleccionar";
+            this.btnSeleccionar.Size = new System.Drawing.Size(123, 27);
+            this.btnSeleccionar.TabIndex = 17;
+            this.btnSeleccionar.Text = "&Seleccionar";
+            this.btnSeleccionar.UseVisualStyleBackColor = true;
+            this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click_1);
+            // 
+            // btnCancelar
+            // 
+            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(650, 518);
+            this.btnCancelar.Name = "btnCancelar";
+            this.btnCancelar.Size = new System.Drawing.Size(123, 27);
+            this.btnCancelar.TabIndex = 16;
+            this.btnCancelar.Text = "&Cerrar";
+            this.btnCancelar.UseVisualStyleBackColor = true;
+            this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
+            // 
+            // txtTotalKgs
+            // 
+            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalKgs.Location = new System.Drawing.Point(669, 483);
+            this.txtTotalKgs.Name = "txtTotalKgs";
+            this.txtTotalKgs.ReadOnly = true;
+            this.txtTotalKgs.Size = new System.Drawing.Size(102, 21);
+            this.txtTotalKgs.TabIndex = 22;
+            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label12
+            // 
+            this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Location = new System.Drawing.Point(593, 488);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(71, 15);
+            this.label12.TabIndex = 21;
+            this.label12.Text = "Total Kgs.";
+            // 
+            // panel1
+            // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(12, 511);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(759, 1);
+            this.panel1.TabIndex = 23;
             // 
             // formStock
             // 
@@ -577,6 +603,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizadoPor;
         protected System.Windows.Forms.Label lblActualizar;
+        private System.Windows.Forms.ToolStripButton btnPesaje;
+        private System.Windows.Forms.ToolStripButton btnAjusteStock;
 
     }
 }

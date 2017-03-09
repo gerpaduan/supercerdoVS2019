@@ -11,6 +11,13 @@ namespace Entidades
         private Movimiento movimiento;
         private Corte corte;
         private float cantKg;
+        private bool permitirIngreso;
+
+        public bool PermitirIngreso
+        {
+            get { return permitirIngreso; }
+            set { permitirIngreso = value; }
+        }
 
         private int cantUnidad;
 

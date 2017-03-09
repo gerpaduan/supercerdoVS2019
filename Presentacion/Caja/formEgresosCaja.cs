@@ -69,7 +69,7 @@ namespace Presentacion.Caja
 
         private void cargarSucursal()
         {
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oEgresoCajaE.Sucursal = oSucursalE;
 

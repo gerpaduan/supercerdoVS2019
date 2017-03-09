@@ -28,36 +28,29 @@ namespace Presentacion.Embutidos
 
         public void enviarCorte()
         {
-            Entidades.Corte oCorte = new Entidades.Corte();
-
-            InterfaceEmbutido formInterface = this.Owner as InterfaceEmbutido;
-            cargarDatos(oCorte);
-
-            if (oCorte == null || oCorte.idCorte == 0)
-            {
-                MessageBox.Show("No se seleccionó ningún corte");
-                return;
-            }
-            if (formInterface != null)
-            {
-                formInterface.EnviarEmbutido(oCorte);
-            }
-            this.Close();
-        }
-
-        private void cargarDatos(Entidades.Corte oCorte)
-        {
             try
             {
-                oCorte.idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
-                oCorte.codigo = Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());
+                Entidades.Corte oCorte = new Entidades.Corte();
 
-                oCorte.corte = grillaCortes.CurrentRow.Cells[2].Value.ToString();
-                oCorte.tipo = grillaCortes.CurrentRow.Cells["tipo"].Value.ToString();
+                InterfaceEmbutido formInterface = this.Owner as InterfaceEmbutido;
+
+                int idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
+                oCorte = oCorteN.findCorteById(idCorte, false);
+
+                if (oCorte == null || oCorte.idCorte == 0)
+                {
+                    MessageBox.Show("No se seleccionó ningún corte");
+                    return;
+                }
+                if (formInterface != null)
+                {
+                    formInterface.EnviarEmbutido(oCorte);
+                }
+                this.Close();
             }
             catch (Exception)
             {
-                oCorte = null;
+                this.Close();
             }
         }
 

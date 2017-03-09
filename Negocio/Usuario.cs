@@ -57,6 +57,11 @@ namespace Negocio
             return listUsuarios;
         }
 
+        public List<Entidades.Usuario> listaUsuario()
+        {
+            return convertDatatableToList();
+        }
+
         public Entidades.Usuario validarUsuario(string usuario, string clave)
         {
             Entidades.Usuario userEncontrado = null;

@@ -14,6 +14,7 @@ using Presentacion.Caja;
 using Presentacion.Balanza;
 using Presentacion.Usuario;
 using Presentacion.Pruebas;
+using Presentacion.CuentaCorriente;
 using System.Configuration;
 using Utilidades;
 
@@ -302,11 +303,11 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             ultimaConnSelect = comboConexion.Text;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
+            this.Text += Utilidades.Conexion.getSucursalConexion();
         }
 
         private static void embutidos()
@@ -496,8 +497,18 @@ namespace Presentacion
 
         private static void stock()
         {
-            formStock frm = new formStock();
-            frm.Show();
+            if (Application.OpenForms["formStock"] != null)
+            {
+
+                Application.OpenForms["formStock"].Activate();
+                Application.OpenForms["formStock"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formStock frm = new formStock();
+                frm.Show();
+            }
         }
 
         private void balanzaToolStripMenuItem_Click(object sender, EventArgs e)
@@ -649,6 +660,7 @@ namespace Presentacion
             }
             else
             {
+                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
                 formEgresosCaja frmEgresosCaja = new formEgresosCaja();
                 frmEgresosCaja.Show();
             }
@@ -768,6 +780,65 @@ namespace Presentacion
             else
             {
                 MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void ctasCtesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formCtasCtes"] != null)
+                {
+                    Application.OpenForms["formCtasCtes"].Activate();
+                    Application.OpenForms["formCtasCtes"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formCtasCtes frmCtasCtes = new formCtasCtes();
+                    frmCtasCtes.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void pagosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formPagos"] != null)
+                {
+                    Application.OpenForms["formPagos"].Activate();
+                    Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    Pagos.formPagos frmPagos = new formPagos();
+                    frmPagos.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
+
+        private void stockActualToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formStockActual"] != null)
+            {
+                Application.OpenForms["formStockActual"].Activate();
+                Application.OpenForms["formStockActual"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formStockActual frmStockActual = new formStockActual();
+                frmStockActual.Show();
             }
         }
     }

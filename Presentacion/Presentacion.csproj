@@ -75,6 +75,12 @@
     <Compile Include="Balanza\formBalanza.Designer.cs">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formBonificar.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formBonificar.Designer.cs">
+      <DependentUpon>formBonificar.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formCerrarCajaMultiple.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -193,11 +199,41 @@
     <Compile Include="Cortes\formReporteStock.Designer.cs">
       <DependentUpon>formReporteStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="Embutidos\formLineasEmb.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Embutidos\formLineasEmb.Designer.cs">
+      <DependentUpon>formLineasEmb.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Movimientos\formLineasMov.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Movimientos\formLineasMov.Designer.cs">
+      <DependentUpon>formLineasMov.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Stock\formStockActual.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Stock\formStockActual.Designer.cs">
+      <DependentUpon>formStockActual.cs</DependentUpon>
+    </Compile>
     <Compile Include="Cortes\formStockCortes.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Cortes\formStockCortes.Designer.cs">
       <DependentUpon>formStockCortes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CuentaCorriente\formCtaCtePersona.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CuentaCorriente\formCtaCtePersona.Designer.cs">
+      <DependentUpon>formCtaCtePersona.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CuentaCorriente\formCtasCtes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CuentaCorriente\formCtasCtes.Designer.cs">
+      <DependentUpon>formCtasCtes.cs</DependentUpon>
     </Compile>
     <Compile Include="Embutidos\formBuscarEmbutido.cs">
       <SubType>Form</SubType>
@@ -248,11 +284,11 @@
     <Compile Include="Movimientos\formVerAcumulados.Designer.cs">
       <DependentUpon>formVerAcumulados.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pagos\formNuevoPago.cs">
+    <Compile Include="Pagos\formAddOrEditPago.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Pagos\formNuevoPago.Designer.cs">
-      <DependentUpon>formNuevoPago.cs</DependentUpon>
+    <Compile Include="Pagos\formAddOrEditPago.Designer.cs">
+      <DependentUpon>formAddOrEditPago.cs</DependentUpon>
     </Compile>
     <Compile Include="Pagos\formPagos.cs">
       <SubType>Form</SubType>
@@ -546,6 +582,9 @@
     <EmbeddedResource Include="Balanza\formBalanza.resx">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formBonificar.resx">
+      <DependentUpon>formBonificar.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formCerrarCajaMultiple.resx">
       <DependentUpon>formCerrarCajaMultiple.cs</DependentUpon>
     </EmbeddedResource>
@@ -606,6 +645,15 @@
     <EmbeddedResource Include="Cortes\formStockCortes.resx">
       <DependentUpon>formStockCortes.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="CuentaCorriente\formCtaCtePersona.resx">
+      <DependentUpon>formCtaCtePersona.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CuentaCorriente\formCtasCtes.resx">
+      <DependentUpon>formCtasCtes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Embutidos\formLineasEmb.resx">
+      <DependentUpon>formLineasEmb.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Embutidos\formBuscarEmbutido.resx">
       <DependentUpon>formBuscarEmbutido.cs</DependentUpon>
     </EmbeddedResource>
@@ -621,14 +669,17 @@
     <EmbeddedResource Include="FormPrincipal.resx">
       <DependentUpon>FormPrincipal.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Movimientos\formLineasMov.resx">
+      <DependentUpon>formLineasMov.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Movimientos\formInfoMovimiento.resx">
       <DependentUpon>formInfoMovimiento.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Movimientos\formVerAcumulados.resx">
       <DependentUpon>formVerAcumulados.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Pagos\formNuevoPago.resx">
-      <DependentUpon>formNuevoPago.cs</DependentUpon>
+    <EmbeddedResource Include="Pagos\formAddOrEditPago.resx">
+      <DependentUpon>formAddOrEditPago.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pagos\formPagos.resx">
       <DependentUpon>formPagos.cs</DependentUpon>
@@ -754,6 +805,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Stock\formStock.resx">
       <DependentUpon>formStock.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Stock\formStockActual.resx">
+      <DependentUpon>formStockActual.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ticket\formTipoTicket.resx">
       <DependentUpon>formTipoTicket.cs</DependentUpon>

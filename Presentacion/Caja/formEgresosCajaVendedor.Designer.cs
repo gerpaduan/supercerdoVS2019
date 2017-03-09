@@ -90,7 +90,7 @@
             this.grillaEgresosCaja.RowHeadersVisible = false;
             this.grillaEgresosCaja.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaEgresosCaja.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaEgresosCaja.Size = new System.Drawing.Size(541, 178);
+            this.grillaEgresosCaja.Size = new System.Drawing.Size(639, 245);
             this.grillaEgresosCaja.TabIndex = 44;
             this.grillaEgresosCaja.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaEgresosCaja_CellClick);
             this.grillaEgresosCaja.SelectionChanged += new System.EventHandler(this.grillaEgresosCaja_SelectionChanged);
@@ -99,7 +99,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(430, 394);
+            this.btnCancelar.Location = new System.Drawing.Point(528, 461);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(102, 26);
             this.btnCancelar.TabIndex = 45;
@@ -109,14 +109,13 @@
             // 
             // txtDetalle
             // 
-            this.txtDetalle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.txtDetalle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDetalle.Location = new System.Drawing.Point(103, 106);
             this.txtDetalle.Multiline = true;
             this.txtDetalle.Name = "txtDetalle";
             this.txtDetalle.ReadOnly = true;
             this.txtDetalle.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtDetalle.Size = new System.Drawing.Size(348, 58);
+            this.txtDetalle.Size = new System.Drawing.Size(426, 58);
             this.txtDetalle.TabIndex = 46;
             this.txtDetalle.TabStop = false;
             // 
@@ -221,12 +220,14 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(12, 381);
+            this.groupBox1.Location = new System.Drawing.Point(12, 448);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(517, 7);
+            this.groupBox1.Size = new System.Drawing.Size(615, 7);
             this.groupBox1.TabIndex = 56;
             this.groupBox1.TabStop = false;
             // 
@@ -234,7 +235,7 @@
             // 
             this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalS.Location = new System.Drawing.Point(430, 360);
+            this.txtTotalS.Location = new System.Drawing.Point(528, 427);
             this.txtTotalS.Name = "txtTotalS";
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(102, 21);
@@ -243,10 +244,11 @@
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(385, 362);
+            this.label1.Location = new System.Drawing.Point(483, 429);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(39, 16);
             this.label1.TabIndex = 58;
@@ -254,11 +256,11 @@
             // 
             // btnNuevoGasto
             // 
-            this.btnNuevoGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnNuevoGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnNuevoGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnNuevoGasto.Location = new System.Drawing.Point(457, 138);
+            this.btnNuevoGasto.Location = new System.Drawing.Point(533, 138);
             this.btnNuevoGasto.Name = "btnNuevoGasto";
-            this.btnNuevoGasto.Size = new System.Drawing.Size(75, 26);
+            this.btnNuevoGasto.Size = new System.Drawing.Size(94, 26);
             this.btnNuevoGasto.TabIndex = 59;
             this.btnNuevoGasto.Text = "&Nuevo";
             this.btnNuevoGasto.UseVisualStyleBackColor = true;
@@ -266,11 +268,11 @@
             // 
             // btnVerGasto
             // 
-            this.btnVerGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnVerGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnVerGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnVerGasto.Location = new System.Drawing.Point(457, 106);
+            this.btnVerGasto.Location = new System.Drawing.Point(533, 106);
             this.btnVerGasto.Name = "btnVerGasto";
-            this.btnVerGasto.Size = new System.Drawing.Size(75, 26);
+            this.btnVerGasto.Size = new System.Drawing.Size(94, 26);
             this.btnVerGasto.TabIndex = 60;
             this.btnVerGasto.Text = "&Ver";
             this.btnVerGasto.UseVisualStyleBackColor = true;
@@ -281,7 +283,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.SteelBlue;
-            this.ClientSize = new System.Drawing.Size(541, 424);
+            this.ClientSize = new System.Drawing.Size(639, 491);
             this.Controls.Add(this.btnVerGasto);
             this.Controls.Add(this.btnNuevoGasto);
             this.Controls.Add(this.label1);
@@ -299,7 +301,6 @@
             this.Controls.Add(this.txtDetalle);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.grillaEgresosCaja);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.MinimizeBox = false;
             this.Name = "formEgresosCajaVendedor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

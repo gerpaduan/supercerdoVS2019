@@ -90,6 +90,7 @@ namespace Presentacion.Movimientos
                 cortePorMovimiento.CantUnidad = lineaCorte.CantUnidad;
                 cortePorMovimiento.CantKg = lineaCorte.CantKg;
                 cortePorMovimiento.PesoBalanza = lineaCorte.PesoBalanza;
+                cortePorMovimiento.PermitirIngreso = lineaCorte.PermitirIngreso;
 
                 listaEnGrilla.Add(cortePorMovimiento);
             }
@@ -251,7 +252,7 @@ namespace Presentacion.Movimientos
         {
             cargarListaEnGrilla();
             Movimientos.formVerAcumulados formVerAcum = new Presentacion.Movimientos.formVerAcumulados();
-            formVerAcum.verAcumulados(listaEnGrilla);// (listaCortesPorMovimiento);
+            formVerAcum.verAcumulados(listaEnGrilla, null, formVerAcumulados.tipoAcum.movimiento);// (listaCortesPorMovimiento);
             formVerAcum.ShowDialog();
         }         
     }

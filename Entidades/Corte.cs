@@ -7,18 +7,35 @@ namespace Entidades
 {
     public class Corte
     {
+        public enum tipoCorte
+        {
+            Embutido,
+            Corte,
+            Unidad,
+            Otro
+        }
+
         public int idCorte;
         public string corte;
         public int codigo;
         public float porcentaje;
         public string tipo;
         public int independiente;
+        private bool mayorista;
+        private bool enCierreStock;
         public Corte corteMaestro;
         public float precioKg;
         public float porcentajeHueso;
         public float desvioEstandar;
         DateTime creado;
         DateTime? actualizado;
+        private float promedio;
+
+        public float Promedio
+        {
+            get { return promedio; }
+            set { promedio = value; }
+        }
 
         public DateTime Creado
         {
@@ -92,6 +109,19 @@ namespace Entidades
             {
                 tipo = value;
             }
+        }
+
+
+        public bool Mayorista
+        {
+            get { return mayorista; }
+            set { mayorista = value; }
+        }
+
+        public bool EnCierreStock
+        {
+            get { return enCierreStock; }
+            set { enCierreStock = value; }
         }
 
         public int Independiente

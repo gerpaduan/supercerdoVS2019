@@ -35,17 +35,24 @@ namespace Presentacion.Caja
 
         private void formCerrarCaja_Load(object sender, EventArgs e)
         {
-            this.Text += Utilidades.Conexion.getSucursalConexion();
-            int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            btnImprimir.Visible = tipoCierreActual.Equals(tipoCierre.ModificarCaja);
-            if (oCierreE == null || oCierreE.Id == 0)
+            try
             {
-                oSucursalE = oSucursalN.findById(idSucursal);
-                oCierreE.Sucursal = oSucursalE;
-                oCierreE.UsuarioInicio = oUserIncio;
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+                int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
+                btnImprimir.Visible = tipoCierreActual.Equals(tipoCierre.ModificarCaja);
+                if (oCierreE == null || oCierreE.Id == 0)
+                {
+                    oSucursalE = oSucursalN.findById(idSucursal);
+                    oCierreE.Sucursal = oSucursalE;
+                    oCierreE.UsuarioInicio = oUserIncio;
+                }
+                validarAperturaForm();
+                txtSucursal.Text = oCierreE.Sucursal.sucursal;
             }
-            validarAperturaForm();
-            txtSucursal.Text = oCierreE.Sucursal.sucursal;
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void btnCerrarCaja_Click(object sender, EventArgs e)
@@ -158,8 +165,6 @@ namespace Presentacion.Caja
             ticket.LineasGuion();
             ticket.AgregaTotales("Caja Inicial", Convert.ToDouble(oCierreE.CajaInicio));
             ticket.LineasEnBlanco(1);
-            ticket.AgregaTotales("EgresosCaja", Convert.ToDouble(oCierreE.EgresosCaja));
-            //ticket.AgregaTotales("Caja Cierre", Convert.ToDouble(oCierreE.CajaCierre));
             ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
             ticket.AgregaTotales("Queda en Caja:", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
             ticket.LineasEnBlanco(3);
