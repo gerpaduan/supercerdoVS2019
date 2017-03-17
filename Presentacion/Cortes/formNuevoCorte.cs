@@ -81,6 +81,7 @@ namespace Presentacion
             txtPromedio.Text = oCorteE.Promedio.ToString("F3");
             txtIndependiente.Checked = oCorteE.independiente == 1;
             checkMayorista.Checked = oCorteE.Mayorista;
+            checkHabilitado.Checked = oCorteE.Habilitado;
             checkEnCierreStock.Checked = oCorteE.EnCierreStock;
             checkAsignarMaestro.Checked = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0);
             
@@ -182,6 +183,7 @@ namespace Presentacion
             oCorteE.Tipo = comboTipo.Text;
             oCorteE.Mayorista = checkMayorista.Checked;
             oCorteE.EnCierreStock = checkEnCierreStock.Checked;
+            oCorteE.Habilitado = checkHabilitado.Checked;
             oCorteE.independiente = txtIndependiente.Checked ? 1 : 0;
 
             oCorteE.CorteMaestro = oCorteMaestroE;

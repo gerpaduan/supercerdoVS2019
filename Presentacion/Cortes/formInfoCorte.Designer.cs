@@ -33,6 +33,8 @@
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtPromedio = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
             this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
@@ -66,8 +68,7 @@
             this.label10 = new System.Windows.Forms.Label();
             this.txtStockSanMartin = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.txtPromedio = new System.Windows.Forms.TextBox();
-            this.label16 = new System.Windows.Forms.Label();
+            this.checkHabilitado = new System.Windows.Forms.CheckBox();
             this.barraControl.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -115,6 +116,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.checkHabilitado);
             this.groupBox1.Controls.Add(this.txtPromedio);
             this.groupBox1.Controls.Add(this.label16);
             this.groupBox1.Controls.Add(this.label15);
@@ -150,12 +152,31 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
             // 
+            // txtPromedio
+            // 
+            this.txtPromedio.Location = new System.Drawing.Point(351, 180);
+            this.txtPromedio.Name = "txtPromedio";
+            this.txtPromedio.ReadOnly = true;
+            this.txtPromedio.Size = new System.Drawing.Size(75, 21);
+            this.txtPromedio.TabIndex = 39;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label16.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label16.Location = new System.Drawing.Point(284, 183);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(61, 15);
+            this.label16.TabIndex = 40;
+            this.label16.Text = "Promedio";
+            // 
             // label15
             // 
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(3, 175);
+            this.label15.Location = new System.Drawing.Point(253, 25);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(91, 15);
             this.label15.TabIndex = 38;
@@ -177,7 +198,7 @@
             this.checkEnCierreStock.AutoSize = true;
             this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkEnCierreStock.Enabled = false;
-            this.checkEnCierreStock.Location = new System.Drawing.Point(100, 176);
+            this.checkEnCierreStock.Location = new System.Drawing.Point(350, 26);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(15, 14);
             this.checkEnCierreStock.TabIndex = 36;
@@ -489,24 +510,16 @@
             this.label12.TabIndex = 2;
             this.label12.Text = "San Martín";
             // 
-            // txtPromedio
+            // checkHabilitado
             // 
-            this.txtPromedio.Location = new System.Drawing.Point(351, 180);
-            this.txtPromedio.Name = "txtPromedio";
-            this.txtPromedio.ReadOnly = true;
-            this.txtPromedio.Size = new System.Drawing.Size(75, 21);
-            this.txtPromedio.TabIndex = 39;
-            // 
-            // label16
-            // 
-            this.label16.AutoSize = true;
-            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label16.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label16.Location = new System.Drawing.Point(284, 183);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(61, 15);
-            this.label16.TabIndex = 40;
-            this.label16.Text = "Promedio";
+            this.checkHabilitado.AutoSize = true;
+            this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkHabilitado.Location = new System.Drawing.Point(33, 176);
+            this.checkHabilitado.Name = "checkHabilitado";
+            this.checkHabilitado.Size = new System.Drawing.Size(82, 19);
+            this.checkHabilitado.TabIndex = 41;
+            this.checkHabilitado.Text = "Habilitado";
+            this.checkHabilitado.UseVisualStyleBackColor = true;
             // 
             // formInfoCorte
             // 
@@ -574,5 +587,6 @@
         protected System.Windows.Forms.Label label14;
         protected System.Windows.Forms.TextBox txtPromedio;
         protected System.Windows.Forms.Label label16;
+        private System.Windows.Forms.CheckBox checkHabilitado;
     }
 }

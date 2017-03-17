@@ -57,6 +57,7 @@ namespace Presentacion
                     txtTipo.Text = fila["tipo"].ToString();
                     txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
                     checkMayorista.Checked = Convert.ToBoolean(fila["mayorista"]);
+                    checkHabilitado.Checked = Convert.ToBoolean(fila["habilitado"]);
                     checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
 
                     txtCorteMaestro.Text = fila["corteMaestro"].ToString();
