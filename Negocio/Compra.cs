@@ -90,6 +90,11 @@ namespace Negocio
             return oCompraD.obtenerCompras(idSucursal,tipoCompra, texto,fechaDesde,fechaHasta, conexionSucursal);
         }
 
+        public DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
+        {
+            return oCompraD.getLineasCompras(idSucursal, tipoCompra, texto, codigo, corte, fechaDesde, fechaHasta, conexionSucursal);
+        }
+
         public DataTable obtenerCortesPorCompra(int idCompra)
         {
             return oCompraD.obtenerCortesPorCompra(idCompra);

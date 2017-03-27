@@ -50,6 +50,32 @@ namespace Datos
             return dtCompras;
         }
 
+        public DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
+        {
+            DataTable dtCompras = new DataTable();
+            daCompra = new SqlDataAdapter();
+
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "getLineasCompras";
+            cmCompra.Parameters.AddWithValue("@texto", texto);
+            cmCompra.Parameters.AddWithValue("@codigo", codigo);
+            cmCompra.Parameters.AddWithValue("@corte", corte);
+            cmCompra.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCompra.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCompra.Parameters.AddWithValue("@tipoCompra", tipoCompra);
+            cmCompra.Parameters.AddWithValue("@idSucursal", idSucursal);
+
+            daCompra.SelectCommand = cmCompra;
+            daCompra.Fill(dtCompras);
+
+            cmCompra.Connection.Close();
+
+            return dtCompras;
+        }
+
         public DataTable findById(int idCompra)
         {
             DataTable dtCompras = new DataTable();

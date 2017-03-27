@@ -160,6 +160,12 @@
       <DependentUpon>formVentasVendedor.cs</DependentUpon>
     </Compile>
     <Compile Include="CodeFile1.cs" />
+    <Compile Include="Compras\formLineasCompras.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Compras\formLineasCompras.Designer.cs">
+      <DependentUpon>formLineasCompras.cs</DependentUpon>
+    </Compile>
     <Compile Include="Compras\formCambiarPrecioKg.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -623,6 +629,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formVentasVendedor.resx">
       <DependentUpon>formVentasVendedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compras\formLineasCompras.resx">
+      <DependentUpon>formLineasCompras.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Compras\formCambiarPrecioKg.resx">
       <DependentUpon>formCambiarPrecioKg.cs</DependentUpon>
