@@ -110,6 +110,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
             cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@kgsMedias", oCompraE.KgsMedias);
             cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
             cmCompra.Parameters.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
@@ -148,6 +149,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
             cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
             cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@kgsMedias", oCompraE.KgsMedias);
             cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
             cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
             cmCompra.Parameters.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor.Id);
@@ -455,6 +457,45 @@ namespace Datos
             daCompra.Fill(dtPorcentajeCortesCompra);
 
             return dtPorcentajeCortesCompra;
+        }
+
+        public DataTable getPromMedias(int idCompra)
+        {
+            DataTable dt = new DataTable();
+            daCompra = new SqlDataAdapter();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "getPromMedias";
+            cmCompra.Parameters.AddWithValue("@id", idCompra);
+
+            daCompra.SelectCommand = cmCompra;
+            cmCompra.Connection.Close();
+
+            daCompra.Fill(dt);
+
+            return dt;
+
+        }
+
+        public DataTable getPorcCortesEnMedias(int idCompra)
+        {
+            DataTable dt = new DataTable();
+            daCompra = new SqlDataAdapter();
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "getPorcCortesEnMedias";
+            cmCompra.Parameters.AddWithValue("@id", idCompra);
+
+            daCompra.SelectCommand = cmCompra;
+            cmCompra.Connection.Close();
+
+            daCompra.Fill(dt);
+
+            return dt;
         }
 
         public void backup(string destino)

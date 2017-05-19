@@ -34,6 +34,7 @@ namespace Negocio
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
+                oCompra.KgsMedias = row["kgsMedias"].Equals(DBNull.Value) ? null : (int?)(row["kgsMedias"]);
                 oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();
@@ -201,6 +202,18 @@ namespace Negocio
         public DataTable porcentajeCortesPorCompra(int idCompra)
         {
             return oCompraD.porcentajeCortesPorCompra(idCompra);
+
+        }
+
+        public DataTable getPromMedias(int idCompra)
+        {
+            return oCompraD.getPromMedias(idCompra);
+
+        }
+
+        public DataTable getPorcCortesEnMedias(int idCompra)
+        {
+            return oCompraD.getPorcCortesEnMedias(idCompra);
 
         }
 

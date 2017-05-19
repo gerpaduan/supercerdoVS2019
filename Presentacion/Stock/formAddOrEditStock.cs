@@ -107,6 +107,8 @@ namespace Presentacion
                 oSucursalE = oCompraE.Sucursal;
                 comboSucursal.SelectedValue = oSucursalE.idSucursal;
                 txtFechaCompra.Value = oCompraE.FechaCompra;
+                txtKgsMedias.Text = oCompraE.KgsMedias.ToString();
+                txtCantMedias.Text = oCompraE.CantMedias.ToString();
                 txtObservaciones.Text = oCompraE.Observaciones;
                 txtCreado.Text = Util_Form.fechaFormato24Horas(oCompraE.Creado);
                 txtCreadoPor.Text = oCompraE.CreadoPor != null ? oCompraE.CreadoPor.Nombre : "-";
@@ -124,9 +126,12 @@ namespace Presentacion
                 txtFechaCompra.Enabled = false;
                 comboSucursal.Enabled = false;
                 groupBox1.Enabled = false;
+                panelPesaje.Enabled = false;
                 txtObservaciones.ReadOnly = true;
             }
             tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
+            panelPesaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+            btnVerPorcentaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtTipoAccion.Text = tipoCompra;
             huboModificaciones = false;
@@ -226,6 +231,7 @@ namespace Presentacion
                     txtFechaCompra.Enabled = true;
                     comboSucursal.Enabled = true;
                     groupBox1.Enabled = true;
+                    panelPesaje.Enabled = true;
                     txtObservaciones.ReadOnly = false;
                     timer1.Start();               
                 }
@@ -303,6 +309,8 @@ namespace Presentacion
             oCompraE.Estado = "";
             oCompraE.Observaciones = txtObservaciones.Text;
             oCompraE.TipoCompra = tipoCompra;
+            oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
+            oCompraE.KgsMedias = string.IsNullOrEmpty(txtKgsMedias.Text) ? null : (int?)Convert.ToInt32(txtKgsMedias.Text);
             oCompraE.Sucursal = oSucursalE;
             switch (oCompraE.IdCompra)
             {
@@ -978,6 +986,11 @@ namespace Presentacion
                     if (!huboModificaciones) huboModificaciones = oCompraE != null && oCompraE.IdCompra > 0 && !oCompraE.TipoCompra.Equals(tipoCompra);
                     setTituloForm();
 
+                    //panel de pesaje para ingresar Kg y Cant Medias
+                    panelPesaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+                    panelPesaje.Enabled = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+                    btnVerPorcentaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+
                     for (int index = 0; index < listaCortePorCompra.Count; index++)
                     {
                         switch (tipoCompraEnum)
@@ -1137,6 +1150,13 @@ namespace Presentacion
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnVerPorcentaje_Click(object sender, EventArgs e)
+        {
+            Stock.FormVerPorcCortes frmVerPorcCorte = new Presentacion.Stock.FormVerPorcCortes();
+            frmVerPorcCorte.idCompra = idCompra;
+            frmVerPorcCorte.Show();
         }
     }
 }

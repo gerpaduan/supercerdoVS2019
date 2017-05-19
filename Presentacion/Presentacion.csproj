@@ -527,6 +527,12 @@
     <Compile Include="Stock\formStock.Designer.cs">
       <DependentUpon>formStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="Stock\FormVerPorcCortes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Stock\FormVerPorcCortes.Designer.cs">
+      <DependentUpon>FormVerPorcCortes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ticket\CrearTicket.cs" />
     <Compile Include="Ticket\formTipoTicket.cs">
       <SubType>Form</SubType>
@@ -817,6 +823,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Stock\formStockActual.resx">
       <DependentUpon>formStockActual.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Stock\FormVerPorcCortes.resx">
+      <DependentUpon>FormVerPorcCortes.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Ticket\formTipoTicket.resx">
       <DependentUpon>formTipoTicket.cs</DependentUpon>
