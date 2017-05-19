@@ -318,6 +318,7 @@ namespace Presentacion
             txtEmbutido.Text = oCorteEmbutidoE.corte;
             //calcularFormula();
             txtCodCorteEnEmbutido.Focus();
+            calcularFormula();
         }
 
         private void calcularFormula()
@@ -346,23 +347,38 @@ namespace Presentacion
 
             switch (oCorteEmbutidoE.codigo)
             {
+                    //chorizo
                 case 4:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    sal = Convert.ToString((Math.Round((totalKgSinCond * 
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["salChorizo"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["pimientaChorizo"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["nuezChorizo"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["bracolorChorizo"].ToString(), false))), cantDecimales)).ToString("F3"));
                     break;
+                    //salame
                 case 11:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.025", false))), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0007", false))), cantDecimales)).ToString("F3"));
-                    producto = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0018", false))), cantDecimales)).ToString("F3"));
+                    sal = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["salSalame"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["pimientaSalame"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["nuezSalame"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    producto = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["productoSalame"].ToString(), false))), cantDecimales)).ToString("F3"));
                     break;
+                    //salchicha
                 case 33:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.022", false))), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.0017", false))), cantDecimales)).ToString("F3"));
-                    pimenton = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.001", false))), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond * (Util_Form.convertFloat("0.002", false))), cantDecimales)).ToString("F3"));
+                    sal = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["salSalchicha"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["pimientaSalchicha"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    pimenton = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["pimentonSalchicha"].ToString(), false))), cantDecimales)).ToString("F3"));
+                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Util_Form.convertFloat(ConfigurationManager.AppSettings["bracolorSalchicha"].ToString(), false))), cantDecimales)).ToString("F3"));
                     break;
                 default:
                     break;
