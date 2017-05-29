@@ -13,7 +13,7 @@ using System.Configuration;
 
 namespace Presentacion
 {
-    public partial class formAddOrEditStock : Form, InterfaceCorte, InterfaceUsuario     
+    public partial class formAddOrEditStock : Form, InterfaceCorte, InterfaceUsuario, InterfacePersona     
     {
         public formStock frmStock;
         Utilidades.SingletonLeerPeso Leer_Peso;
@@ -107,6 +107,7 @@ namespace Presentacion
                 oSucursalE = oCompraE.Sucursal;
                 comboSucursal.SelectedValue = oSucursalE.idSucursal;
                 txtFechaCompra.Value = oCompraE.FechaCompra;
+                txtProveedor.Text = oCompraE.Proveedor.razonSocial;
                 txtKgsMedias.Text = oCompraE.KgsMedias.ToString();
                 txtCantMedias.Text = oCompraE.CantMedias.ToString();
                 txtObservaciones.Text = oCompraE.Observaciones;
@@ -127,10 +128,12 @@ namespace Presentacion
                 comboSucursal.Enabled = false;
                 groupBox1.Enabled = false;
                 panelPesaje.Enabled = false;
+                panelProveedor.Enabled = false;
                 txtObservaciones.ReadOnly = true;
             }
             tipoCompra = Entidades.Compra.tipoCompraToString(tipoCompraEnum);
             panelPesaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+            panelProveedor.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
             btnVerPorcentaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtTipoAccion.Text = tipoCompra;
@@ -232,6 +235,7 @@ namespace Presentacion
                     comboSucursal.Enabled = true;
                     groupBox1.Enabled = true;
                     panelPesaje.Enabled = true;
+                    panelProveedor.Enabled = true;
                     txtObservaciones.ReadOnly = false;
                     timer1.Start();               
                 }
@@ -991,6 +995,9 @@ namespace Presentacion
                     panelPesaje.Enabled = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
                     btnVerPorcentaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
 
+                    panelProveedor.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+                    panelProveedor.Enabled = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
+
                     for (int index = 0; index < listaCortePorCompra.Count; index++)
                     {
                         switch (tipoCompraEnum)
@@ -1157,6 +1164,24 @@ namespace Presentacion
             Stock.FormVerPorcCortes frmVerPorcCorte = new Presentacion.Stock.FormVerPorcCortes();
             frmVerPorcCorte.idCompra = idCompra;
             frmVerPorcCorte.Show();
+        }
+
+        private void btnBuscarProv_Click(object sender, EventArgs e)
+        {
+            buscarPersona();
+        }
+
+        private void buscarPersona()
+        {
+            Personas.formBuscarPersona frmBuscarPersona = new Personas.formBuscarPersona();
+            frmBuscarPersona.ShowDialog(this);
+        }
+
+        //comunicación con interface
+        public void EnviarPersona(Entidades.Persona proveedor)
+        {
+            oProvNuevaCompra = proveedor;
+            this.txtProveedor.Text = oProvNuevaCompra.razonSocial;
         }
     }
 }

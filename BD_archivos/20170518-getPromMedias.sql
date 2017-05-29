@@ -36,3 +36,4 @@ FROM         dbo.Corte INNER JOIN
 
 END
 GO
+

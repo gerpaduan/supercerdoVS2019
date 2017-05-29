@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditStock));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle21 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle22 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -44,6 +43,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle28 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditStock));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.btnVerPorcentaje = new System.Windows.Forms.Button();
             this.btnVerNoCargados = new System.Windows.Forms.Button();
@@ -103,12 +103,17 @@
             this.panelGrillaFaltantes = new System.Windows.Forms.Panel();
             this.btnCerrarPanel = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
+            this.btnBuscarProv = new System.Windows.Forms.Button();
+            this.txtProveedor = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.panelProveedor = new System.Windows.Forms.Panel();
             this.pnlBuscar.SuspendLayout();
             this.panelPesaje.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.grillaSinStock)).BeginInit();
             this.panelGrillaFaltantes.SuspendLayout();
+            this.panelProveedor.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlBuscar
@@ -116,6 +121,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.panelProveedor);
             this.pnlBuscar.Controls.Add(this.btnVerPorcentaje);
             this.pnlBuscar.Controls.Add(this.btnVerNoCargados);
             this.pnlBuscar.Controls.Add(this.panelPesaje);
@@ -906,6 +912,50 @@
             this.label6.TabIndex = 54;
             this.label6.Text = "Cortes no cargados";
             // 
+            // btnBuscarProv
+            // 
+            this.btnBuscarProv.AccessibleDescription = "";
+            this.btnBuscarProv.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarProv.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProv.Image")));
+            this.btnBuscarProv.Location = new System.Drawing.Point(238, 1);
+            this.btnBuscarProv.Name = "btnBuscarProv";
+            this.btnBuscarProv.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscarProv.TabIndex = 60;
+            this.btnBuscarProv.TabStop = false;
+            this.btnBuscarProv.UseVisualStyleBackColor = true;
+            this.btnBuscarProv.Click += new System.EventHandler(this.btnBuscarProv_Click);
+            // 
+            // txtProveedor
+            // 
+            this.txtProveedor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.txtProveedor.Location = new System.Drawing.Point(74, 2);
+            this.txtProveedor.Name = "txtProveedor";
+            this.txtProveedor.ReadOnly = true;
+            this.txtProveedor.Size = new System.Drawing.Size(158, 22);
+            this.txtProveedor.TabIndex = 62;
+            this.txtProveedor.TabStop = false;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label8.Location = new System.Drawing.Point(1, 4);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(72, 16);
+            this.label8.TabIndex = 61;
+            this.label8.Text = "Proveedor";
+            // 
+            // panelProveedor
+            // 
+            this.panelProveedor.Controls.Add(this.txtProveedor);
+            this.panelProveedor.Controls.Add(this.btnBuscarProv);
+            this.panelProveedor.Controls.Add(this.label8);
+            this.panelProveedor.Location = new System.Drawing.Point(17, 60);
+            this.panelProveedor.Name = "panelProveedor";
+            this.panelProveedor.Size = new System.Drawing.Size(277, 25);
+            this.panelProveedor.TabIndex = 63;
+            // 
             // formAddOrEditStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -947,6 +997,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.grillaSinStock)).EndInit();
             this.panelGrillaFaltantes.ResumeLayout(false);
             this.panelGrillaFaltantes.PerformLayout();
+            this.panelProveedor.ResumeLayout(false);
+            this.panelProveedor.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1013,5 +1065,9 @@
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.Panel panelPesaje;
         private System.Windows.Forms.Button btnVerPorcentaje;
+        private System.Windows.Forms.Panel panelProveedor;
+        private System.Windows.Forms.TextBox txtProveedor;
+        private System.Windows.Forms.Button btnBuscarProv;
+        protected System.Windows.Forms.Label label8;
     }
 }
