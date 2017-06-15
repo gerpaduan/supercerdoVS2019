@@ -25,7 +25,7 @@ namespace Negocio
         {
             oVentaE = oVentaD.getVentaById(oVentaE.IdVenta);
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-            oCtaCteN.crearMovCtaCte(oVentaE.Persona, oVentaE.FechaVenta, Entidades.MovCtaCte.tablas.Ventas, oVentaE.IdVenta,
+            oCtaCteN.crearMovCtaCte(oVentaE.Persona, oVentaE.FechaVenta, Entidades.MovCtaCte.tablas.Ventas, oVentaE.IdVenta, oVentaE.NroRemito,
                 "", Entidades.MovCtaCte.tipoMov.Debito, oVentaE.LineasVenta.Count == 0 ? 0 : oVentaD.getTotalVenta(oVentaE.IdVenta), oVentaE.Sucursal,
                 oVentaE.Creado, oVentaE.Vendedor, oVentaE.Actualizado, null, oVentaE.EnCtaCte);      
         }

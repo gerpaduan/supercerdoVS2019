@@ -75,7 +75,7 @@ namespace Presentacion
 
         private void splitDescription()
         {
-            string[] words = txtDescripcion.Text.ToString().Split('/');
+            string[] words = txtDescripcion.Text.ToString().Split('+');
 
             descripcion = words[0] != null ? words[0] : "";
             codigo = words.Count() > 1 &&  words[1] != null ? words[1] : "";
@@ -184,7 +184,7 @@ namespace Presentacion
             if (comboTipoCompra.Text == "Cortes")
             {
                 checkBusquedaMultiple.Visible = true;
-                txtDescripcion.Text = "NroRem_RazonSoc/Codigo/Corte";
+                txtDescripcion.Text = "NroRem_RazonSoc+Codigo+Corte";
             }
             else
             {

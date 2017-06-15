@@ -60,14 +60,14 @@
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(12, 462);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(784, 1);
+            this.panel1.Size = new System.Drawing.Size(846, 1);
             this.panel1.TabIndex = 26;
             // 
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(547, 469);
+            this.btnSeleccionar.Location = new System.Drawing.Point(609, 469);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(123, 27);
             this.btnSeleccionar.TabIndex = 25;
@@ -79,7 +79,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(676, 469);
+            this.btnCancelar.Location = new System.Drawing.Point(738, 469);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(123, 27);
             this.btnCancelar.TabIndex = 24;
@@ -128,7 +128,7 @@
             this.grillaMovCtaCte.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.grillaMovCtaCte.RowHeadersVisible = false;
             this.grillaMovCtaCte.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaMovCtaCte.Size = new System.Drawing.Size(787, 329);
+            this.grillaMovCtaCte.Size = new System.Drawing.Size(849, 329);
             this.grillaMovCtaCte.TabIndex = 28;
             // 
             // pnlBuscar
@@ -145,7 +145,7 @@
             this.pnlBuscar.Controls.Add(this.label2);
             this.pnlBuscar.Location = new System.Drawing.Point(1, 47);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(807, 74);
+            this.pnlBuscar.Size = new System.Drawing.Size(869, 74);
             this.pnlBuscar.TabIndex = 29;
             // 
             // checkSinRegRepetidos
@@ -156,7 +156,7 @@
             this.checkSinRegRepetidos.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkSinRegRepetidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkSinRegRepetidos.ForeColor = System.Drawing.SystemColors.Window;
-            this.checkSinRegRepetidos.Location = new System.Drawing.Point(651, 3);
+            this.checkSinRegRepetidos.Location = new System.Drawing.Point(713, 3);
             this.checkSinRegRepetidos.Name = "checkSinRegRepetidos";
             this.checkSinRegRepetidos.Size = new System.Drawing.Size(144, 19);
             this.checkSinRegRepetidos.TabIndex = 55;
@@ -170,7 +170,7 @@
             this.fechaDesdePick.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.fechaDesdePick.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.fechaDesdePick.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaDesdePick.Location = new System.Drawing.Point(512, 38);
+            this.fechaDesdePick.Location = new System.Drawing.Point(574, 38);
             this.fechaDesdePick.Name = "fechaDesdePick";
             this.fechaDesdePick.Size = new System.Drawing.Size(128, 20);
             this.fechaDesdePick.TabIndex = 53;
@@ -184,7 +184,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(463, 40);
+            this.label3.Location = new System.Drawing.Point(525, 40);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 54;
@@ -195,7 +195,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(326, 39);
+            this.lblActualizar.Location = new System.Drawing.Point(256, 39);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(69, 15);
             this.lblActualizar.TabIndex = 52;
@@ -205,12 +205,12 @@
             // btnBuscar
             // 
             this.btnBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnBuscar.Location = new System.Drawing.Point(646, 36);
+            this.btnBuscar.Location = new System.Drawing.Point(708, 36);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(74, 24);
             this.btnBuscar.TabIndex = 8;
             this.btnBuscar.TabStop = false;
-            this.btnBuscar.Text = "Actualizar";
+            this.btnBuscar.Text = "&Actualizar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
             // 
@@ -244,7 +244,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(808, 45);
+            this.barraControl.Size = new System.Drawing.Size(870, 45);
             this.barraControl.TabIndex = 30;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -276,7 +276,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(808, 501);
+            this.ClientSize = new System.Drawing.Size(870, 501);
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.grillaMovCtaCte);

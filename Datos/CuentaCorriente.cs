@@ -77,6 +77,7 @@ namespace Datos
                         oMovCtaCteE.Fecha = Convert.ToDateTime(drMovCtaCte["fecha"]);
                         oMovCtaCteE.Tabla = Convert.ToString(drMovCtaCte["tabla"]);
                         oMovCtaCteE.IdTabla = Convert.ToInt32(drMovCtaCte["idTabla"]);
+                        oMovCtaCteE.NroDoc = Convert.ToString(drMovCtaCte["nroDoc"]);
                         oMovCtaCteE.Detalle = Convert.ToString(drMovCtaCte["detalle"]);
                         oMovCtaCteE.Tipo = Convert.ToString(drMovCtaCte["tipo"]);
                         oMovCtaCteE.Importe = float.Parse(drMovCtaCte["importe"].ToString());
@@ -116,6 +117,7 @@ namespace Datos
             cmCtaCte.Parameters.AddWithValue("@fecha", oMovCtaCteE.Fecha);
             cmCtaCte.Parameters.AddWithValue("@tabla", oMovCtaCteE.Tabla);
             cmCtaCte.Parameters.AddWithValue("@idTabla", oMovCtaCteE.IdTabla);
+            cmCtaCte.Parameters.AddWithValue("@nroDoc", oMovCtaCteE.NroDoc);
             cmCtaCte.Parameters.AddWithValue("@detalle", oMovCtaCteE.Detalle);
             cmCtaCte.Parameters.AddWithValue("@tipo", oMovCtaCteE.Tipo);
             cmCtaCte.Parameters.AddWithValue("@importe", oMovCtaCteE.Importe);

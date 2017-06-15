@@ -90,8 +90,8 @@ namespace Presentacion.Pagos
             txtNroRecibo.ReadOnly = readOnly;
             txtImporte.ReadOnly = readOnly;
             txtBanco.ReadOnly = readOnly;
-            txtNroCheque.ReadOnly = !readOnly;
-            txtTitular.ReadOnly = !readOnly;
+            txtNroCheque.ReadOnly = readOnly;
+            txtTitular.ReadOnly = readOnly;
             txtObservaciones.ReadOnly = readOnly;
         }
 

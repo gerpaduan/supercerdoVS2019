@@ -277,11 +277,11 @@ namespace Presentacion
         {
             if (logueado)
             {
-                linkCerrarSesion.Visible = true;
+                btnCerrarSesion.Visible = true;
             }
             else
             {
-                linkCerrarSesion.Visible = false;
+                btnCerrarSesion.Visible = false;
             }
         }
 
@@ -293,8 +293,8 @@ namespace Presentacion
         private void cerrarSesion()
         {
             logueado = false;
-            linkLogin.Visible = true;
-            linkCerrarSesion.Visible = false;
+            btnLogin.Visible = true;
+            btnCerrarSesion.Visible = false;
             checkAutoDesconectar.Visible = false;
             comboConexion.Enabled = false;
             timerInactividadAdmin.Stop();
@@ -338,16 +338,16 @@ namespace Presentacion
             checkAutoDesconectar.Visible = logueado;
             if (logueado)
             {
-                linkLogin.Visible = false;
-                linkCerrarSesion.Visible = true;
+                btnLogin.Visible = false;
+                btnCerrarSesion.Visible = true;
                 //btnTipoConexioin.Visible = true;
                 comboConexion.Enabled = true;
                 timerInactividadAdmin.Start();
             }
             else
             {
-                linkLogin.Visible = true;
-                linkCerrarSesion.Visible = false;
+                btnLogin.Visible = true;
+                btnCerrarSesion.Visible = false;
                 //btnTipoConexioin.Visible = false;
                 comboConexion.Enabled = false;
                 timerInactividadAdmin.Stop();
@@ -840,6 +840,16 @@ namespace Presentacion
                 formStockActual frmStockActual = new formStockActual();
                 frmStockActual.Show();
             }
+        }
+
+        private void btnLogin_Click(object sender, EventArgs e)
+        {
+            login();
+        }
+
+        private void btnCerrarSesion_Click(object sender, EventArgs e)
+        {
+            cerrarSesion();
         }
     }
 }

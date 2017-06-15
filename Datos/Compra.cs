@@ -18,7 +18,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText="anularCompra";
             cmCompra.Parameters.AddWithValue("idCompra", idCompra);
             cmCompra.ExecuteNonQuery();
@@ -34,7 +34,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "obtenerCompras";
             cmCompra.Parameters.AddWithValue("@texto", texto);
             cmCompra.Parameters.AddWithValue("@fechaDesde", fechaDesde);
@@ -58,7 +58,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "getLineasCompras";
             cmCompra.Parameters.AddWithValue("@texto", texto);
             cmCompra.Parameters.AddWithValue("@codigo", codigo);
@@ -100,7 +100,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "agregarCompra";
 
             cmCompra.Parameters.AddWithValue("@nroRemito", oCompraE.NroRemito);
@@ -138,7 +138,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "modificarCompra";
 
             cmCompra.Parameters.AddWithValue("@idCompra", oCompraE.IdCompra);
@@ -198,7 +198,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "modificarPrecioMedia";
 
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
@@ -216,7 +216,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "agregarCortePorCompra";//se agrega el corte y se actualizan stock del corte y sus sub-cortes
 
             cmCompra.Parameters.AddWithValue("@idCompra", oCorteE.compra.IdCompra);
@@ -239,7 +239,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "agregarMediaRes";//se actualizan los stock de todos los cortes
 
             cmCompra.Parameters.AddWithValue("@idCompra", oMediaResE.compra.IdCompra);
@@ -261,7 +261,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "actualizarStockCortesPrimarios";
                        
             cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);            
@@ -307,7 +307,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "obtenerCortesPorCompra";
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
 
@@ -326,7 +326,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "obtenerMediasPorCompra";
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
 
@@ -344,7 +344,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "modificarMediaPorCompra";//se agrega el corte y se actualizan stock del corte y sus sub-cortes
             
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
@@ -366,7 +366,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "modificarCortePorCompra";//se agrega el corte y se actualizan stock del corte y sus sub-cortes
 
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
@@ -387,7 +387,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "quitarStockMedia";
 
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
@@ -407,7 +407,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "quitarStockTeoricoMedia";
 
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
@@ -427,7 +427,7 @@ namespace Datos
 
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "quitarStockCorte";
 
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
@@ -447,7 +447,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "porcentajeCortesPorCompra";
             cmCompra.Parameters.AddWithValue("@idCompra", idCompra);
 
@@ -466,7 +466,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "getPromMedias";
             cmCompra.Parameters.AddWithValue("@id", idCompra);
 
@@ -486,7 +486,7 @@ namespace Datos
             cmCompra = new SqlCommand();
             cmCompra.Connection = conn.conectar();
             cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
             cmCompra.CommandText = "getPorcCortesEnMedias";
             cmCompra.Parameters.AddWithValue("@id", idCompra);
 
