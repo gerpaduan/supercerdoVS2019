@@ -21,6 +21,8 @@ namespace Presentacion.CuentaCorriente
         private void formCtasCtes_Load(object sender, EventArgs e)
         {
             cargarGrilla();
+            txtDescripcion.Focus();
+            txtDescripcion.Select();
         }
 
         private void cargarGrilla()

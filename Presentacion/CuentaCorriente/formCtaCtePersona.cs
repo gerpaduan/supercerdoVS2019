@@ -244,7 +244,7 @@ namespace Presentacion.CuentaCorriente
             try
             {
                 //Creating iTextSharp Table from the DataTable data
-                PdfPTable pdfTable = new PdfPTable(6);//grillaMovCtaCte.ColumnCount);
+                PdfPTable pdfTable = new PdfPTable(7);//grillaMovCtaCte.ColumnCount);
                 pdfTable.DefaultCell.Padding = 3;
                 pdfTable.WidthPercentage = 100;
                 pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
@@ -254,13 +254,13 @@ namespace Presentacion.CuentaCorriente
                 string encabezado = "Cuenta Corriente\n";
                 encabezado += "Razon Social: " + txtPersona.Text + " || Desde: " + fechaDesdePick.Value.ToShortDateString() +"\n\n";
 
-                int indexDetalle = 6;
+                int indexDetalle = 7;
 
                 //Adding Header row
                 foreach (DataGridViewColumn column in grillaMovCtaCte.Columns)
                 {
                     if (column.Index == 3 || column.Index == 4 || column.Index == 5 ||
-                            column.Index == 6 || column.Index == 8 || column.Index == 9)
+                            column.Index == 6 || column.Index == 7 || column.Index == 9 || column.Index == 10)
                     {
                         PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
                         cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
@@ -274,7 +274,7 @@ namespace Presentacion.CuentaCorriente
                     foreach (DataGridViewCell cell in row.Cells)
                     {
                         if (cell.ColumnIndex == 3 || cell.ColumnIndex == 4 || cell.ColumnIndex == 5 ||
-                            cell.ColumnIndex == 6 || cell.ColumnIndex == 8 || cell.ColumnIndex == 9)
+                            cell.ColumnIndex == 6 || cell.ColumnIndex == 7 || cell.ColumnIndex == 9 || cell.ColumnIndex == 10)
                         {
 
                             string valueCell = "";

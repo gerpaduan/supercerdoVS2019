@@ -91,6 +91,7 @@ namespace Entidades
         private Persona proveedor;
         private string tipoCompra;
         private int? cantMedias;
+        private int? kgsMedias;
         private Sucursal sucursal;
         private DateTime? creado;
         private DateTime? actualizado;
@@ -115,6 +116,12 @@ namespace Entidades
         {
             get { return cantMedias; }
             set { cantMedias = value; }
+        }
+
+        public int? KgsMedias
+        {
+            get { return kgsMedias; }
+            set { kgsMedias = value; }
         }
 
         public Usuario CreadoPor

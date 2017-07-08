@@ -1,6 +1,6 @@
 ﻿namespace Presentacion
 {
-    partial class formCompras
+    partial class formLineasCompras
     {
         /// <summary>
         /// Required designer variable.
@@ -28,11 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formLineasCompras));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCompras));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
@@ -48,6 +47,7 @@
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.barraControl = new System.Windows.Forms.ToolStrip();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.txtTotalS = new System.Windows.Forms.TextBox();
@@ -55,30 +55,14 @@
             this.label12 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.grillaCompras = new System.Windows.Forms.DataGridView();
-            this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nroRemito = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.tipoCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cantKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cantMedias = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idSucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.sucursal = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.observaciones = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.txtCantMedias = new System.Windows.Forms.TextBox();
+            this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
-            this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
-            this.LineasCompras = new System.Windows.Forms.ToolStripButton();
+            this.grillaLineasCompras = new System.Windows.Forms.DataGridView();
+            this.lblActualizar = new System.Windows.Forms.Label();
+            this.checkBusquedaMultiple = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaLineasCompras)).BeginInit();
             this.SuspendLayout();
             // 
             // pnlBuscar
@@ -86,6 +70,8 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.Controls.Add(this.checkBusquedaMultiple);
+            this.pnlBuscar.Controls.Add(this.lblActualizar);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
             this.pnlBuscar.Controls.Add(this.label7);
@@ -184,7 +170,7 @@
             this.fechaDesde.Size = new System.Drawing.Size(98, 20);
             this.fechaDesde.TabIndex = 5;
             this.fechaDesde.Value = new System.DateTime(2011, 9, 1, 0, 0, 0, 0);
-            this.fechaDesde.ValueChanged += new System.EventHandler(this.fechaDesde_ValueChanged);
+            this.fechaDesde.ValueChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             // 
             // label3
             // 
@@ -206,7 +192,7 @@
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(98, 20);
             this.fechaHasta.TabIndex = 7;
-            this.fechaHasta.ValueChanged += new System.EventHandler(this.fechaHasta_ValueChanged);
+            this.fechaHasta.ValueChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             // 
             // btnBuscar
             // 
@@ -237,6 +223,7 @@
             this.txtDescripcion.Size = new System.Drawing.Size(161, 20);
             this.txtDescripcion.TabIndex = 0;
             this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
+            this.txtDescripcion.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
             // 
             // label2
             // 
@@ -253,9 +240,7 @@
             // 
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.nuevo,
-            this.menuDuplicar,
-            this.LineasCompras});
+            this.menuDuplicar});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -263,6 +248,18 @@
             this.barraControl.TabIndex = 7;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
+            this.menuDuplicar.Text = "Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // btnSeleccionar
             // 
@@ -343,254 +340,106 @@
             this.panel1.Size = new System.Drawing.Size(821, 1);
             this.panel1.TabIndex = 25;
             // 
-            // grillaCompras
+            // txtCantItems
             // 
-            this.grillaCompras.AllowDrop = true;
-            this.grillaCompras.AllowUserToAddRows = false;
-            this.grillaCompras.AllowUserToDeleteRows = false;
-            this.grillaCompras.AllowUserToResizeRows = false;
-            this.grillaCompras.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.grillaCompras.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
-            this.grillaCompras.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            this.grillaCompras.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaCompras.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.idCompra,
-            this.fechaCompra,
-            this.nroRemito,
-            this.idPersona,
-            this.razonSocial,
-            this.tipoCompra,
-            this.cantKg,
-            this.totalS,
-            this.cantMedias,
-            this.idSucursal,
-            this.sucursal,
-            this.observaciones,
-            this.estado,
-            this.creado,
-            this.actualizado});
-            this.grillaCompras.Location = new System.Drawing.Point(12, 135);
-            this.grillaCompras.MultiSelect = false;
-            this.grillaCompras.Name = "grillaCompras";
-            this.grillaCompras.ReadOnly = true;
-            this.grillaCompras.RowHeadersVisible = false;
-            this.grillaCompras.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCompras.Size = new System.Drawing.Size(817, 321);
-            this.grillaCompras.TabIndex = 8;
-            this.grillaCompras.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCompras_CellDoubleClick);
-            // 
-            // idCompra
-            // 
-            this.idCompra.DataPropertyName = "idCompra";
-            this.idCompra.HeaderText = "ID Compra";
-            this.idCompra.Name = "idCompra";
-            this.idCompra.ReadOnly = true;
-            this.idCompra.Visible = false;
-            this.idCompra.Width = 63;
-            // 
-            // fechaCompra
-            // 
-            this.fechaCompra.DataPropertyName = "fechaCompra";
-            dataGridViewCellStyle1.Format = "g";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaCompra.DefaultCellStyle = dataGridViewCellStyle1;
-            this.fechaCompra.FillWeight = 60F;
-            this.fechaCompra.HeaderText = "Fecha Compra";
-            this.fechaCompra.Name = "fechaCompra";
-            this.fechaCompra.ReadOnly = true;
-            this.fechaCompra.Width = 101;
-            // 
-            // nroRemito
-            // 
-            this.nroRemito.DataPropertyName = "nroRemito";
-            this.nroRemito.FillWeight = 42.98663F;
-            this.nroRemito.HeaderText = "Nro. Remito";
-            this.nroRemito.Name = "nroRemito";
-            this.nroRemito.ReadOnly = true;
-            this.nroRemito.Width = 88;
-            // 
-            // idPersona
-            // 
-            this.idPersona.DataPropertyName = "idProveedor";
-            this.idPersona.HeaderText = "ID Proveedor";
-            this.idPersona.Name = "idPersona";
-            this.idPersona.ReadOnly = true;
-            this.idPersona.Visible = false;
-            this.idPersona.Width = 95;
-            // 
-            // razonSocial
-            // 
-            this.razonSocial.DataPropertyName = "razonSocial";
-            this.razonSocial.FillWeight = 42.98663F;
-            this.razonSocial.HeaderText = "Proveedor";
-            this.razonSocial.Name = "razonSocial";
-            this.razonSocial.ReadOnly = true;
-            this.razonSocial.Width = 81;
-            // 
-            // tipoCompra
-            // 
-            this.tipoCompra.DataPropertyName = "tipoCompra";
-            this.tipoCompra.FillWeight = 42.98663F;
-            this.tipoCompra.HeaderText = "Tipo Compra";
-            this.tipoCompra.Name = "tipoCompra";
-            this.tipoCompra.ReadOnly = true;
-            this.tipoCompra.Width = 92;
-            // 
-            // cantKg
-            // 
-            this.cantKg.DataPropertyName = "cantKg";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle2.Format = "N2";
-            dataGridViewCellStyle2.NullValue = null;
-            this.cantKg.DefaultCellStyle = dataGridViewCellStyle2;
-            this.cantKg.FillWeight = 42.98663F;
-            this.cantKg.HeaderText = "Cant. Kgs";
-            this.cantKg.Name = "cantKg";
-            this.cantKg.ReadOnly = true;
-            this.cantKg.Width = 78;
-            // 
-            // totalS
-            // 
-            this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle3.Format = "N2";
-            dataGridViewCellStyle3.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
-            this.totalS.FillWeight = 42.98663F;
-            this.totalS.HeaderText = "Total $";
-            this.totalS.Name = "totalS";
-            this.totalS.ReadOnly = true;
-            this.totalS.Width = 65;
-            // 
-            // cantMedias
-            // 
-            this.cantMedias.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.cantMedias.DataPropertyName = "cantMedias";
-            this.cantMedias.HeaderText = "Cant. Medias";
-            this.cantMedias.Name = "cantMedias";
-            this.cantMedias.ReadOnly = true;
-            this.cantMedias.Width = 94;
-            // 
-            // idSucursal
-            // 
-            this.idSucursal.DataPropertyName = "idSucursal";
-            this.idSucursal.HeaderText = "ID Sucursal";
-            this.idSucursal.Name = "idSucursal";
-            this.idSucursal.ReadOnly = true;
-            this.idSucursal.Visible = false;
-            this.idSucursal.Width = 87;
-            // 
-            // sucursal
-            // 
-            this.sucursal.DataPropertyName = "sucursal";
-            this.sucursal.FillWeight = 42.98663F;
-            this.sucursal.HeaderText = "Sucursal";
-            this.sucursal.Name = "sucursal";
-            this.sucursal.ReadOnly = true;
-            this.sucursal.Width = 73;
-            // 
-            // observaciones
-            // 
-            this.observaciones.DataPropertyName = "observaciones";
-            this.observaciones.FillWeight = 42.98663F;
-            this.observaciones.HeaderText = "Observaciones";
-            this.observaciones.Name = "observaciones";
-            this.observaciones.ReadOnly = true;
-            this.observaciones.Width = 103;
-            // 
-            // estado
-            // 
-            this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Red;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.White;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle4;
-            this.estado.FillWeight = 42.98663F;
-            this.estado.HeaderText = "Estado";
-            this.estado.Name = "estado";
-            this.estado.ReadOnly = true;
-            this.estado.Visible = false;
-            this.estado.Width = 65;
-            // 
-            // creado
-            // 
-            this.creado.DataPropertyName = "creado";
-            this.creado.HeaderText = "Creado";
-            this.creado.Name = "creado";
-            this.creado.ReadOnly = true;
-            this.creado.Width = 66;
-            // 
-            // actualizado
-            // 
-            this.actualizado.DataPropertyName = "actualizado";
-            this.actualizado.HeaderText = "Actualizado";
-            this.actualizado.Name = "actualizado";
-            this.actualizado.ReadOnly = true;
-            this.actualizado.Width = 87;
-            // 
-            // txtCantMedias
-            // 
-            this.txtCantMedias.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCantMedias.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantMedias.Location = new System.Drawing.Point(708, 462);
-            this.txtCantMedias.Name = "txtCantMedias";
-            this.txtCantMedias.ReadOnly = true;
-            this.txtCantMedias.Size = new System.Drawing.Size(123, 21);
-            this.txtCantMedias.TabIndex = 27;
-            this.txtCantMedias.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantItems.Location = new System.Drawing.Point(708, 462);
+            this.txtCantItems.Name = "txtCantItems";
+            this.txtCantItems.ReadOnly = true;
+            this.txtCantItems.Size = new System.Drawing.Size(123, 21);
+            this.txtCantItems.TabIndex = 27;
+            this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label8
             // 
             this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(611, 465);
+            this.label8.Location = new System.Drawing.Point(623, 465);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(91, 15);
+            this.label8.Size = new System.Drawing.Size(79, 15);
             this.label8.TabIndex = 26;
-            this.label8.Text = "Cant. Medias";
+            this.label8.Text = "Cant. Ítems";
             // 
-            // nuevo
+            // grillaLineasCompras
             // 
-            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
-            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.nuevo.Name = "nuevo";
-            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "&Nuevo";
-            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            this.grillaLineasCompras.AllowDrop = true;
+            this.grillaLineasCompras.AllowUserToAddRows = false;
+            this.grillaLineasCompras.AllowUserToDeleteRows = false;
+            this.grillaLineasCompras.AllowUserToResizeRows = false;
+            this.grillaLineasCompras.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaLineasCompras.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaLineasCompras.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle4;
+            this.grillaLineasCompras.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaLineasCompras.DefaultCellStyle = dataGridViewCellStyle5;
+            this.grillaLineasCompras.Location = new System.Drawing.Point(12, 135);
+            this.grillaLineasCompras.MultiSelect = false;
+            this.grillaLineasCompras.Name = "grillaLineasCompras";
+            this.grillaLineasCompras.ReadOnly = true;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaLineasCompras.RowHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            this.grillaLineasCompras.RowHeadersVisible = false;
+            this.grillaLineasCompras.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grillaLineasCompras.Size = new System.Drawing.Size(819, 321);
+            this.grillaLineasCompras.TabIndex = 28;
             // 
-            // menuDuplicar
+            // lblActualizar
             // 
-            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
-            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.menuDuplicar.Name = "menuDuplicar";
-            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
-            this.menuDuplicar.Text = "Duplicar";
-            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(365, 61);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.TabIndex = 55;
+            this.lblActualizar.Text = "Actualizar...";
+            this.lblActualizar.Visible = false;
             // 
-            // LineasCompras
+            // checkBusquedaMultiple
             // 
-            this.LineasCompras.Image = ((System.Drawing.Image)(resources.GetObject("LineasCompras.Image")));
-            this.LineasCompras.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.LineasCompras.Name = "LineasCompras";
-            this.LineasCompras.Size = new System.Drawing.Size(74, 42);
-            this.LineasCompras.Text = "Lineas Cprs.";
-            this.LineasCompras.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.LineasCompras.Click += new System.EventHandler(this.LineasCompras_Click);
+            this.checkBusquedaMultiple.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.checkBusquedaMultiple.AutoSize = true;
+            this.checkBusquedaMultiple.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBusquedaMultiple.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBusquedaMultiple.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkBusquedaMultiple.Location = new System.Drawing.Point(264, 34);
+            this.checkBusquedaMultiple.Name = "checkBusquedaMultiple";
+            this.checkBusquedaMultiple.Size = new System.Drawing.Size(101, 19);
+            this.checkBusquedaMultiple.TabIndex = 56;
+            this.checkBusquedaMultiple.TabStop = false;
+            this.checkBusquedaMultiple.Text = "&Busq.Multiple";
+            this.checkBusquedaMultiple.UseVisualStyleBackColor = true;
+            this.checkBusquedaMultiple.Visible = false;
             // 
-            // formCompras
+            // formLineasCompras
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.ClientSize = new System.Drawing.Size(843, 575);
-            this.Controls.Add(this.txtCantMedias);
+            this.Controls.Add(this.grillaLineasCompras);
+            this.Controls.Add(this.txtCantItems);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label5);
@@ -599,22 +448,20 @@
             this.Controls.Add(this.label12);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
-            this.Controls.Add(this.grillaCompras);
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.KeyPreview = true;
             this.MinimizeBox = true;
-            this.Name = "formCompras";
+            this.Name = "formLineasCompras";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Compras";
-            this.Load += new System.EventHandler(this.formCompras_Load);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formCompras_KeyDown);
+            this.Text = "Lineas Compras";
+            this.Load += new System.EventHandler(this.formLineasCompras_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grillaLineasCompras)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -636,9 +483,8 @@
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.TextBox txtDescripcion;
         protected System.Windows.Forms.Label label2;
-        
+
         protected internal System.Windows.Forms.ToolStrip barraControl;
-        protected System.Windows.Forms.ToolStripButton nuevo;
         protected System.Windows.Forms.Button btnSeleccionar;
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.TextBox txtTotalS;
@@ -651,26 +497,12 @@
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.DataGridView grillaCompras;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn fechaCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn nroRemito;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
-        private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
-        private System.Windows.Forms.DataGridViewTextBoxColumn tipoCompra;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cantKg;
-        private System.Windows.Forms.DataGridViewTextBoxColumn totalS;
-        private System.Windows.Forms.DataGridViewTextBoxColumn cantMedias;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idSucursal;
-        private System.Windows.Forms.DataGridViewTextBoxColumn sucursal;
-        private System.Windows.Forms.DataGridViewTextBoxColumn observaciones;
-        private System.Windows.Forms.DataGridViewTextBoxColumn estado;
-        private System.Windows.Forms.DataGridViewTextBoxColumn creado;
-        private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
-        private System.Windows.Forms.TextBox txtCantMedias;
+        private System.Windows.Forms.TextBox txtCantItems;
         private System.Windows.Forms.Label label8;
         protected System.Windows.Forms.ToolStripButton menuDuplicar;
-        private System.Windows.Forms.ToolStripButton LineasCompras;
+        private System.Windows.Forms.DataGridView grillaLineasCompras;
+        protected System.Windows.Forms.Label lblActualizar;
+        private System.Windows.Forms.CheckBox checkBusquedaMultiple;
 
     }
 }

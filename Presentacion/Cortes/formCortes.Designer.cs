@@ -71,8 +71,9 @@
             this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.porcentajeHueso = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.desvioEstandar = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.mayorista = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.enCierreStock = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.mayorista = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.idSucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.sucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.stockSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -95,7 +96,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(989, 45);
+            this.barraControl.Size = new System.Drawing.Size(1035, 45);
             this.barraControl.TabIndex = 5;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
@@ -171,8 +172,9 @@
             this.porcentaje,
             this.porcentajeHueso,
             this.desvioEstandar,
-            this.mayorista,
+            this.habilitado,
             this.enCierreStock,
+            this.mayorista,
             this.idSucursalSL,
             this.sucursalSL,
             this.stockSL,
@@ -185,7 +187,7 @@
             this.grillaCortes.ReadOnly = true;
             this.grillaCortes.RowHeadersVisible = false;
             this.grillaCortes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortes.Size = new System.Drawing.Size(966, 445);
+            this.grillaCortes.Size = new System.Drawing.Size(1012, 445);
             this.grillaCortes.StandardTab = true;
             this.grillaCortes.TabIndex = 2;
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
@@ -194,7 +196,7 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(725, 567);
+            this.btnSeleccionar.Location = new System.Drawing.Point(771, 567);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(123, 28);
             this.btnSeleccionar.TabIndex = 3;
@@ -206,7 +208,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(854, 567);
+            this.btnCancelar.Location = new System.Drawing.Point(900, 567);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(123, 28);
             this.btnCancelar.TabIndex = 4;
@@ -230,7 +232,7 @@
             this.panel1.Controls.Add(this.btnBuscar);
             this.panel1.Location = new System.Drawing.Point(0, 45);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(989, 62);
+            this.panel1.Size = new System.Drawing.Size(1035, 62);
             this.panel1.TabIndex = 7;
             // 
             // label3
@@ -239,7 +241,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(786, 33);
+            this.label3.Location = new System.Drawing.Point(832, 33);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(39, 15);
             this.label3.TabIndex = 31;
@@ -251,7 +253,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(643, 34);
+            this.label2.Location = new System.Drawing.Point(689, 34);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(43, 15);
             this.label2.TabIndex = 30;
@@ -260,7 +262,7 @@
             // txtCodigohasta
             // 
             this.txtCodigohasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCodigohasta.Location = new System.Drawing.Point(831, 32);
+            this.txtCodigohasta.Location = new System.Drawing.Point(877, 32);
             this.txtCodigohasta.Name = "txtCodigohasta";
             this.txtCodigohasta.Size = new System.Drawing.Size(89, 20);
             this.txtCodigohasta.TabIndex = 29;
@@ -271,7 +273,7 @@
             // txtCodigoDesde
             // 
             this.txtCodigoDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCodigoDesde.Location = new System.Drawing.Point(692, 32);
+            this.txtCodigoDesde.Location = new System.Drawing.Point(738, 32);
             this.txtCodigoDesde.Name = "txtCodigoDesde";
             this.txtCodigoDesde.Size = new System.Drawing.Size(88, 20);
             this.txtCodigoDesde.TabIndex = 28;
@@ -285,7 +287,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(528, 10);
+            this.label1.Location = new System.Drawing.Point(574, 10);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(99, 15);
             this.label1.TabIndex = 27;
@@ -297,7 +299,7 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(626, 18);
+            this.groupBox1.Location = new System.Drawing.Point(672, 18);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(295, 7);
             this.groupBox1.TabIndex = 26;
@@ -466,12 +468,12 @@
             this.desvioEstandar.ReadOnly = true;
             this.desvioEstandar.Width = 60;
             // 
-            // mayorista
+            // habilitado
             // 
-            this.mayorista.DataPropertyName = "mayorista";
-            this.mayorista.HeaderText = "Mayorista";
-            this.mayorista.Name = "mayorista";
-            this.mayorista.ReadOnly = true;
+            this.habilitado.DataPropertyName = "habilitado";
+            this.habilitado.HeaderText = "Habilitado";
+            this.habilitado.Name = "habilitado";
+            this.habilitado.ReadOnly = true;
             // 
             // enCierreStock
             // 
@@ -479,6 +481,13 @@
             this.enCierreStock.HeaderText = "En Cierre Stock";
             this.enCierreStock.Name = "enCierreStock";
             this.enCierreStock.ReadOnly = true;
+            // 
+            // mayorista
+            // 
+            this.mayorista.DataPropertyName = "mayorista";
+            this.mayorista.HeaderText = "Mayorista";
+            this.mayorista.Name = "mayorista";
+            this.mayorista.ReadOnly = true;
             // 
             // idSucursalSL
             // 
@@ -548,7 +557,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(989, 602);
+            this.ClientSize = new System.Drawing.Size(1035, 602);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
@@ -605,8 +614,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn porcentaje;
         private System.Windows.Forms.DataGridViewTextBoxColumn porcentajeHueso;
         private System.Windows.Forms.DataGridViewTextBoxColumn desvioEstandar;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn mayorista;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn habilitado;
         private System.Windows.Forms.DataGridViewCheckBoxColumn enCierreStock;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn mayorista;
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalSL;
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalSL;
         private System.Windows.Forms.DataGridViewTextBoxColumn stockSL;

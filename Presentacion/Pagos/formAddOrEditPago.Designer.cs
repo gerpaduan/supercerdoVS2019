@@ -87,7 +87,7 @@
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(-2, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(470, 422);
+            this.pnlBuscar.Size = new System.Drawing.Size(479, 422);
             this.pnlBuscar.TabIndex = 24;
             // 
             // txtSucursal
@@ -104,7 +104,7 @@
             // txtUsuario
             // 
             this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUsuario.Location = new System.Drawing.Point(298, 9);
+            this.txtUsuario.Location = new System.Drawing.Point(304, 9);
             this.txtUsuario.Name = "txtUsuario";
             this.txtUsuario.ReadOnly = true;
             this.txtUsuario.Size = new System.Drawing.Size(158, 22);
@@ -139,7 +139,7 @@
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label16.Location = new System.Drawing.Point(242, 10);
+            this.label16.Location = new System.Drawing.Point(248, 10);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(55, 16);
             this.label16.TabIndex = 55;
@@ -176,7 +176,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(11, 38);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(442, 374);
+            this.groupBox1.Size = new System.Drawing.Size(458, 374);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Recibo";
@@ -214,7 +214,7 @@
             this.panelCheque.Controls.Add(this.label7);
             this.panelCheque.Location = new System.Drawing.Point(6, 170);
             this.panelCheque.Name = "panelCheque";
-            this.panelCheque.Size = new System.Drawing.Size(430, 61);
+            this.panelCheque.Size = new System.Drawing.Size(445, 61);
             this.panelCheque.TabIndex = 60;
             this.panelCheque.Visible = false;
             // 
@@ -241,7 +241,7 @@
             // txtNroCheque
             // 
             this.txtNroCheque.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtNroCheque.Location = new System.Drawing.Point(293, 3);
+            this.txtNroCheque.Location = new System.Drawing.Point(314, 3);
             this.txtNroCheque.Name = "txtNroCheque";
             this.txtNroCheque.Size = new System.Drawing.Size(125, 22);
             this.txtNroCheque.TabIndex = 31;
@@ -252,7 +252,7 @@
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(222, 6);
+            this.label8.Location = new System.Drawing.Point(243, 6);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(69, 16);
             this.label8.TabIndex = 32;
@@ -283,7 +283,7 @@
             this.txtModifPor.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtModifPor.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtModifPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtModifPor.Location = new System.Drawing.Point(282, 348);
+            this.txtModifPor.Location = new System.Drawing.Point(303, 348);
             this.txtModifPor.Name = "txtModifPor";
             this.txtModifPor.ReadOnly = true;
             this.txtModifPor.Size = new System.Drawing.Size(142, 21);
@@ -295,7 +295,7 @@
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(279, 243);
+            this.label5.Location = new System.Drawing.Point(300, 243);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(47, 15);
             this.label5.TabIndex = 54;
@@ -306,7 +306,7 @@
             this.txtModificado.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtModificado.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtModificado.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtModificado.Location = new System.Drawing.Point(282, 327);
+            this.txtModificado.Location = new System.Drawing.Point(303, 327);
             this.txtModificado.Name = "txtModificado";
             this.txtModificado.ReadOnly = true;
             this.txtModificado.Size = new System.Drawing.Size(142, 21);
@@ -318,7 +318,7 @@
             this.txtCreado.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtCreado.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtCreado.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCreado.Location = new System.Drawing.Point(282, 259);
+            this.txtCreado.Location = new System.Drawing.Point(303, 259);
             this.txtCreado.Name = "txtCreado";
             this.txtCreado.ReadOnly = true;
             this.txtCreado.Size = new System.Drawing.Size(142, 21);
@@ -330,7 +330,7 @@
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(279, 311);
+            this.label6.Location = new System.Drawing.Point(300, 311);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(68, 15);
             this.label6.TabIndex = 56;
@@ -341,7 +341,7 @@
             this.txtCreadoPor.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtCreadoPor.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtCreadoPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCreadoPor.Location = new System.Drawing.Point(282, 280);
+            this.txtCreadoPor.Location = new System.Drawing.Point(303, 280);
             this.txtCreadoPor.Name = "txtCreadoPor";
             this.txtCreadoPor.ReadOnly = true;
             this.txtCreadoPor.Size = new System.Drawing.Size(142, 21);
@@ -374,7 +374,7 @@
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox2.Location = new System.Drawing.Point(16, 230);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(408, 7);
+            this.groupBox2.Size = new System.Drawing.Size(429, 7);
             this.groupBox2.TabIndex = 47;
             this.groupBox2.TabStop = false;
             // 
@@ -391,7 +391,7 @@
             // txtImporte
             // 
             this.txtImporte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtImporte.Location = new System.Drawing.Point(299, 140);
+            this.txtImporte.Location = new System.Drawing.Point(320, 140);
             this.txtImporte.Name = "txtImporte";
             this.txtImporte.Size = new System.Drawing.Size(125, 22);
             this.txtImporte.TabIndex = 3;
@@ -404,7 +404,7 @@
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(257, 110);
+            this.txtObservaciones.Size = new System.Drawing.Size(270, 110);
             this.txtObservaciones.TabIndex = 25;
             this.txtObservaciones.TabStop = false;
             // 
@@ -413,7 +413,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(244, 143);
+            this.label4.Location = new System.Drawing.Point(265, 143);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(53, 16);
             this.label4.TabIndex = 32;
@@ -477,11 +477,12 @@
             // txtFechaPago
             // 
             this.txtFechaPago.Checked = false;
+            this.txtFechaPago.CustomFormat = "dd/MM/yy  hh:mm";
             this.txtFechaPago.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaPago.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaPago.Location = new System.Drawing.Point(321, 85);
             this.txtFechaPago.Name = "txtFechaPago";
-            this.txtFechaPago.Size = new System.Drawing.Size(99, 22);
+            this.txtFechaPago.Size = new System.Drawing.Size(124, 22);
             this.txtFechaPago.TabIndex = 25;
             this.txtFechaPago.TabStop = false;
             // 
@@ -527,7 +528,7 @@
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(213, 426);
+            this.btnGuardar.Location = new System.Drawing.Point(222, 426);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(115, 27);
             this.btnGuardar.TabIndex = 4;
@@ -540,7 +541,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(340, 426);
+            this.btnCancelar.Location = new System.Drawing.Point(349, 426);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(111, 27);
             this.btnCancelar.TabIndex = 5;
@@ -564,7 +565,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(466, 456);
+            this.ClientSize = new System.Drawing.Size(475, 456);
             this.Controls.Add(this.idPagoLabel);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.btnGuardar);

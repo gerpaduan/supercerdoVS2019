@@ -251,5 +251,27 @@ namespace Presentacion
             formVentas frmVentaDuplicar = new formVentas();
             frmVentaDuplicar.Show();
         }
+
+        private void LineasVtas_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formGetAllLineaVenta"] != null)
+                {
+                    Application.OpenForms["formGetAllLineaVenta"].Activate();
+                    Application.OpenForms["formGetAllLineaVenta"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
+                    frmTemporalLineaVenta.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
+        }
     }
 }

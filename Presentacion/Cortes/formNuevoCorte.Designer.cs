@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtPromedio = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
             this.checkMayorista = new System.Windows.Forms.CheckBox();
             this.checkAsignarMaestro = new System.Windows.Forms.CheckBox();
@@ -55,8 +57,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.btnGuardar = new System.Windows.Forms.Button();
-            this.txtPromedio = new System.Windows.Forms.TextBox();
-            this.label8 = new System.Windows.Forms.Label();
+            this.checkHabilitado = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
@@ -70,12 +71,13 @@
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(545, 278);
+            this.pnlBuscar.Size = new System.Drawing.Size(545, 310);
             this.pnlBuscar.TabIndex = 10;
             // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.checkHabilitado);
             this.groupBox1.Controls.Add(this.txtPromedio);
             this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.checkEnCierreStock);
@@ -95,16 +97,34 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(11, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(521, 272);
+            this.groupBox1.Size = new System.Drawing.Size(521, 304);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // txtPromedio
+            // 
+            this.txtPromedio.Location = new System.Drawing.Point(93, 139);
+            this.txtPromedio.Name = "txtPromedio";
+            this.txtPromedio.Size = new System.Drawing.Size(71, 21);
+            this.txtPromedio.TabIndex = 33;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label8.Location = new System.Drawing.Point(26, 142);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(61, 15);
+            this.label8.TabIndex = 34;
+            this.label8.Text = "Promedio";
             // 
             // checkEnCierreStock
             // 
             this.checkEnCierreStock.AutoSize = true;
             this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkEnCierreStock.Location = new System.Drawing.Point(267, 58);
+            this.checkEnCierreStock.Location = new System.Drawing.Point(267, 86);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(110, 19);
             this.checkEnCierreStock.TabIndex = 32;
@@ -115,7 +135,7 @@
             // 
             this.checkMayorista.AutoSize = true;
             this.checkMayorista.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkMayorista.Location = new System.Drawing.Point(298, 31);
+            this.checkMayorista.Location = new System.Drawing.Point(298, 59);
             this.checkMayorista.Name = "checkMayorista";
             this.checkMayorista.Size = new System.Drawing.Size(79, 19);
             this.checkMayorista.TabIndex = 31;
@@ -126,7 +146,7 @@
             // 
             this.checkAsignarMaestro.AutoSize = true;
             this.checkAsignarMaestro.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkAsignarMaestro.Location = new System.Drawing.Point(262, 114);
+            this.checkAsignarMaestro.Location = new System.Drawing.Point(262, 142);
             this.checkAsignarMaestro.Name = "checkAsignarMaestro";
             this.checkAsignarMaestro.Size = new System.Drawing.Size(115, 19);
             this.checkAsignarMaestro.TabIndex = 30;
@@ -147,7 +167,7 @@
             this.groupMaestro.Controls.Add(this.label3);
             this.groupMaestro.Enabled = false;
             this.groupMaestro.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupMaestro.Location = new System.Drawing.Point(250, 139);
+            this.groupMaestro.Location = new System.Drawing.Point(250, 170);
             this.groupMaestro.Name = "groupMaestro";
             this.groupMaestro.Size = new System.Drawing.Size(265, 128);
             this.groupMaestro.TabIndex = 29;
@@ -255,7 +275,7 @@
             this.txtIndependiente.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.txtIndependiente.Checked = true;
             this.txtIndependiente.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.txtIndependiente.Location = new System.Drawing.Point(240, 86);
+            this.txtIndependiente.Location = new System.Drawing.Point(240, 114);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(137, 19);
             this.txtIndependiente.TabIndex = 25;
@@ -355,7 +375,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(441, 283);
+            this.btnCancelar.Location = new System.Drawing.Point(441, 316);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(91, 27);
             this.btnCancelar.TabIndex = 9;
@@ -367,7 +387,7 @@
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(344, 283);
+            this.btnGuardar.Location = new System.Drawing.Point(344, 316);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(91, 27);
             this.btnGuardar.TabIndex = 8;
@@ -375,29 +395,22 @@
             this.btnGuardar.UseVisualStyleBackColor = true;
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
-            // txtPromedio
+            // checkHabilitado
             // 
-            this.txtPromedio.Location = new System.Drawing.Point(93, 139);
-            this.txtPromedio.Name = "txtPromedio";
-            this.txtPromedio.Size = new System.Drawing.Size(71, 21);
-            this.txtPromedio.TabIndex = 33;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(26, 142);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(61, 15);
-            this.label8.TabIndex = 34;
-            this.label8.Text = "Promedio";
+            this.checkHabilitado.AutoSize = true;
+            this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkHabilitado.Location = new System.Drawing.Point(295, 31);
+            this.checkHabilitado.Name = "checkHabilitado";
+            this.checkHabilitado.Size = new System.Drawing.Size(82, 19);
+            this.checkHabilitado.TabIndex = 35;
+            this.checkHabilitado.Text = "Habilitado";
+            this.checkHabilitado.UseVisualStyleBackColor = true;
             // 
             // formNuevoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(544, 313);
+            this.ClientSize = new System.Drawing.Size(544, 346);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.pnlBuscar);
@@ -445,5 +458,6 @@
         private System.Windows.Forms.CheckBox checkMayorista;
         protected System.Windows.Forms.TextBox txtPromedio;
         protected System.Windows.Forms.Label label8;
+        private System.Windows.Forms.CheckBox checkHabilitado;
     }
 }

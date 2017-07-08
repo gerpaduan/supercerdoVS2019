@@ -548,9 +548,9 @@ namespace Presentacion.Caja
         private bool validarLinea()
         {
             //Se valida que no sea media res
-            if (oCorteE != null && oCorteE.codigo == 0)
+            if (oCorteE != null && !oCorteE.Habilitado)
             {
-                MessageBox.Show("No se puede vender Media Res"+"\n\nIngrese otro codigo");
+                MessageBox.Show("- \'" + oCorteE.CorteDesc +"\' no está habilitado para la venta", "Corte No Habilitado",MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 txtCodigo.Focus();
                 return false;
             }
@@ -821,6 +821,7 @@ namespace Presentacion.Caja
             {
                 try
                 {
+                    lblNoHabilitado.Visible = false;
                     oStockCorteSucursal = null;
                     oStockCorteSucursal = new Entidades.StockCorteSucursal();
 
@@ -841,10 +842,20 @@ namespace Presentacion.Caja
                                 oCorteE.tipo = fila["tipo"].ToString();
                                 oCorteE.Mayorista = Convert.ToBoolean(fila["mayorista"]);
                                 oCorteE.EnCierreStock = Convert.ToBoolean(fila["enCierreStock"]);
+                                oCorteE.Habilitado = Convert.ToBoolean(fila["habilitado"]);
                         }
                         //cargo los campos
+                        
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
+
+                        //si no está habilitado no muestra el importe
+                        if (!oCorteE.Habilitado)
+                        {
+                            lblNoHabilitado.Visible = true;
+                            return;
+                        }
+
                         this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
                         cargarTotalCorte();
                     }

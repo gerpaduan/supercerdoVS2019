@@ -51,9 +51,9 @@ namespace Presentacion.Personas
             this.Text = readOnly ? "Info Persona" : "Modificar Persona";
             this.btnGuardar.Text = readOnly ? "&Modificar" : "&Guardar";
 
-            comboTipoPersona.Enabled = !readOnly;
-            txtRazonSocial.ReadOnly = readOnly;
-            txtBonificacion.ReadOnly = readOnly;
+            comboTipoPersona.Enabled = !readOnly && FormPrincipal.logueado;
+            txtRazonSocial.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
+            txtBonificacion.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
             checkCtaCte.Enabled = !readOnly;
             txtOtrosDatos.ReadOnly = readOnly;
         }

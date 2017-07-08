@@ -30,12 +30,12 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formVentas));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.label5 = new System.Windows.Forms.Label();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.btnSeleccionar = new System.Windows.Forms.Button();
@@ -83,6 +83,7 @@
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.label9 = new System.Windows.Forms.Label();
             this.txtCantItems = new System.Windows.Forms.TextBox();
+            this.LineasVtas = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
@@ -140,7 +141,8 @@
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.nuevo,
-            this.menuDuplicar});
+            this.menuDuplicar,
+            this.LineasVtas});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -425,9 +427,9 @@
             // 
             this.fechaVenta.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.fechaVenta.DataPropertyName = "fechaVenta";
-            dataGridViewCellStyle7.Format = "dd/MM/yyyy HH:mm:ss";
-            dataGridViewCellStyle7.NullValue = null;
-            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle1.Format = "dd/MM/yyyy HH:mm:ss";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaVenta.HeaderText = "Fecha Venta";
             this.fechaVenta.Name = "fechaVenta";
             this.fechaVenta.ReadOnly = true;
@@ -495,9 +497,9 @@
             // totalKg
             // 
             this.totalKg.DataPropertyName = "totalKg";
-            dataGridViewCellStyle8.Format = "N3";
-            dataGridViewCellStyle8.NullValue = null;
-            this.totalKg.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle2.Format = "N3";
+            dataGridViewCellStyle2.NullValue = null;
+            this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
             this.totalKg.HeaderText = "Total Kg";
             this.totalKg.Name = "totalKg";
             this.totalKg.ReadOnly = true;
@@ -506,9 +508,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle9.Format = "N2";
-            dataGridViewCellStyle9.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle3.Format = "N2";
+            dataGridViewCellStyle3.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -525,8 +527,8 @@
             // 
             this.creado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.creado.DataPropertyName = "creado";
-            dataGridViewCellStyle10.Format = "dd/MM/yyyy HH:mm:ss";
-            this.creado.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle4.Format = "dd/MM/yyyy HH:mm:ss";
+            this.creado.DefaultCellStyle = dataGridViewCellStyle4;
             this.creado.HeaderText = "Creado";
             this.creado.Name = "creado";
             this.creado.ReadOnly = true;
@@ -536,8 +538,8 @@
             // 
             this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.actualizado.DataPropertyName = "actualizado";
-            dataGridViewCellStyle11.Format = "dd/MM/yyyy HH:mm:ss";
-            this.actualizado.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle5.Format = "dd/MM/yyyy HH:mm:ss";
+            this.actualizado.DefaultCellStyle = dataGridViewCellStyle5;
             this.actualizado.HeaderText = "Actualizado";
             this.actualizado.Name = "actualizado";
             this.actualizado.ReadOnly = true;
@@ -553,8 +555,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle12.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle6.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle6;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -615,6 +617,16 @@
             this.txtCantItems.TabIndex = 38;
             this.txtCantItems.TabStop = false;
             this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // LineasVtas
+            // 
+            this.LineasVtas.Image = ((System.Drawing.Image)(resources.GetObject("LineasVtas.Image")));
+            this.LineasVtas.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.LineasVtas.Name = "LineasVtas";
+            this.LineasVtas.Size = new System.Drawing.Size(72, 42);
+            this.LineasVtas.Text = "Lineas Vtas.";
+            this.LineasVtas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.LineasVtas.Click += new System.EventHandler(this.LineasVtas_Click);
             // 
             // formVentas
             // 
@@ -699,5 +711,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.TextBox txtCantItems;
+        private System.Windows.Forms.ToolStripButton LineasVtas;
     }
 }

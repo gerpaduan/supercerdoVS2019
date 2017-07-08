@@ -17,7 +17,8 @@ namespace Datos
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; 
+            cmVenta.CommandTimeout = 90;            
             cmVenta.CommandText = "agregarVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@fechaVenta",oVentaE.FechaVenta);
@@ -47,7 +48,7 @@ namespace Datos
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             /// Se eliminan todas las LineaVenta, y se actualiza datos de Venta
             cmVenta.CommandText = "modificarVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
@@ -101,7 +102,7 @@ namespace Datos
             daVenta = new SqlDataAdapter();
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "ventasVendedorCierreCaja";
             cmVenta.Parameters.AddWithValue("@idVendedor", oCierreE.UsuarioInicio.Id);
             cmVenta.Parameters.AddWithValue("@fechaDesde", oCierreE.FechaHoraInicio);
@@ -143,7 +144,7 @@ namespace Datos
             daVenta = new SqlDataAdapter();
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "obtenerTotalVentas";
             cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
             cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
@@ -164,7 +165,7 @@ namespace Datos
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "agregarLineaVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
@@ -186,7 +187,7 @@ namespace Datos
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "modificarLineaVenta";
 
             cmVenta.Parameters.AddWithValue("@idVenta", oLineaE.Venta.IdVenta);
@@ -283,7 +284,7 @@ namespace Datos
             cmVenta = new SqlCommand();
 
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "obtenerLineasVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", idVenta);
 
@@ -357,7 +358,7 @@ namespace Datos
         {
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "agregarStockVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
@@ -400,7 +401,7 @@ namespace Datos
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
             cmVenta.Connection.Open();
-            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "obtenerTemporalLineaVenta";
             cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
@@ -425,6 +426,7 @@ namespace Datos
             cmVenta.Connection = conn.conectar();
             cmVenta.Connection.Open();
             cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandTimeout = 90;
             cmVenta.CommandText = "getAllLineasVenta";
             cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);

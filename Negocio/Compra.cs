@@ -34,6 +34,7 @@ namespace Negocio
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
+                oCompra.KgsMedias = row["kgsMedias"].Equals(DBNull.Value) ? null : (int?)(row["kgsMedias"]);
                 oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();
@@ -58,7 +59,7 @@ namespace Negocio
         {
             oCompraE = findById_convertToCompra(oCompraE.IdCompra);
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-            oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra,
+            oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra, oCompraE.NroRemito,
                 "\'"+oCompraE.TipoCompra+"\'", Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
                 oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte);
         }
@@ -88,6 +89,11 @@ namespace Negocio
         public DataTable obtenerCompras(int idSucursal, string tipoCompra, string texto, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
         {
             return oCompraD.obtenerCompras(idSucursal,tipoCompra, texto,fechaDesde,fechaHasta, conexionSucursal);
+        }
+
+        public DataTable getLineasCompras(int idSucursal, string tipoCompra, string texto, string codigo, string corte, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
+        {
+            return oCompraD.getLineasCompras(idSucursal, tipoCompra, texto, codigo, corte, fechaDesde, fechaHasta, conexionSucursal);
         }
 
         public DataTable obtenerCortesPorCompra(int idCompra)
@@ -196,6 +202,18 @@ namespace Negocio
         public DataTable porcentajeCortesPorCompra(int idCompra)
         {
             return oCompraD.porcentajeCortesPorCompra(idCompra);
+
+        }
+
+        public DataTable getPromMedias(int idCompra)
+        {
+            return oCompraD.getPromMedias(idCompra);
+
+        }
+
+        public DataTable getPorcCortesEnMedias(int idCompra)
+        {
+            return oCompraD.getPorcCortesEnMedias(idCompra);
 
         }
 

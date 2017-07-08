@@ -123,6 +123,14 @@ namespace Entidades
             set { idTabla = value; }
         }
 
+        private string nroDoc;
+
+        public string NroDoc
+        {
+            get { return nroDoc; }
+            set { nroDoc = value; }
+        }
+
         private string detalle;
 
         public string Detalle

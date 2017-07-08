@@ -27,8 +27,8 @@ namespace Negocio
             return dtMovCtaCte;
         }
 
-        public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha, 
-            Entidades.MovCtaCte.tablas tabla, int idTabla, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
+        public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha,
+            Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
             Entidades.Usuario actualizadoPor, bool crearMovCtaCte)
         {
@@ -101,6 +101,7 @@ namespace Negocio
             oMovCtaCte.Fecha = fecha;
             oMovCtaCte.Tabla = tabla.ToString();
             oMovCtaCte.IdTabla = idTabla;
+            oMovCtaCte.NroDoc = nroDoc;
             oMovCtaCte.Detalle = detalle;
             oMovCtaCte.Tipo = tipoMov.ToString();
             oMovCtaCte.Importe = oMovCtaCte.getImporte(importe, tipoMov);
@@ -139,8 +140,8 @@ namespace Negocio
         {
             oPagoE = oCtaCteD.getPagoById(oPagoE.Id);
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id,
-                 "Recibo: " + oPagoE.NroRecibo + " - " + oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
+            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, "Recibo: " + oPagoE.NroRecibo,
+                 oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
                 oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true);
         }
 

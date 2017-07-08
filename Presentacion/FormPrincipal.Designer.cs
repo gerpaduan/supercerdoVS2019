@@ -46,10 +46,8 @@
             this.btnCerrarCaja = new System.Windows.Forms.Button();
             this.btnCajaVentas = new System.Windows.Forms.Button();
             this.btnCompras = new System.Windows.Forms.Button();
-            this.linkLogin = new System.Windows.Forms.LinkLabel();
             this.label3 = new System.Windows.Forms.Label();
             this.btnVentas = new System.Windows.Forms.Button();
-            this.linkCerrarSesion = new System.Windows.Forms.LinkLabel();
             this.label1 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -76,11 +74,13 @@
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ctasCtesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pagosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.stockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.stockActualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.stockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.stockActualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.btnLogin = new System.Windows.Forms.Button();
+            this.btnCerrarSesion = new System.Windows.Forms.Button();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
@@ -97,6 +97,8 @@
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.SandyBrown;
             this.splitContainer1.Panel1.Controls.Add(this.checkAutoDesconectar);
+            this.splitContainer1.Panel1.Controls.Add(this.btnLogin);
+            this.splitContainer1.Panel1.Controls.Add(this.btnCerrarSesion);
             this.splitContainer1.Panel1.Controls.Add(this.btnEgresosCaja);
             this.splitContainer1.Panel1.Controls.Add(this.btnUsuarios);
             this.splitContainer1.Panel1.Controls.Add(this.btnReportes);
@@ -111,10 +113,8 @@
             this.splitContainer1.Panel1.Controls.Add(this.btnCerrarCaja);
             this.splitContainer1.Panel1.Controls.Add(this.btnCajaVentas);
             this.splitContainer1.Panel1.Controls.Add(this.btnCompras);
-            this.splitContainer1.Panel1.Controls.Add(this.linkLogin);
             this.splitContainer1.Panel1.Controls.Add(this.label3);
             this.splitContainer1.Panel1.Controls.Add(this.btnVentas);
-            this.splitContainer1.Panel1.Controls.Add(this.linkCerrarSesion);
             this.splitContainer1.Panel1.Controls.Add(this.label1);
             this.splitContainer1.Panel1.Controls.Add(this.label4);
             this.splitContainer1.Panel1.Controls.Add(this.label2);
@@ -138,7 +138,7 @@
             this.checkAutoDesconectar.Checked = true;
             this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkAutoDesconectar.Location = new System.Drawing.Point(88, 557);
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(92, 557);
             this.checkAutoDesconectar.Name = "checkAutoDesconectar";
             this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
             this.checkAutoDesconectar.TabIndex = 31;
@@ -385,19 +385,6 @@
             this.btnCompras.UseVisualStyleBackColor = false;
             this.btnCompras.Click += new System.EventHandler(this.btnCompras_Click);
             // 
-            // linkLogin
-            // 
-            this.linkLogin.AutoSize = true;
-            this.linkLogin.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkLogin.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkLogin.Location = new System.Drawing.Point(12, 559);
-            this.linkLogin.Name = "linkLogin";
-            this.linkLogin.Size = new System.Drawing.Size(70, 13);
-            this.linkLogin.TabIndex = 13;
-            this.linkLogin.TabStop = true;
-            this.linkLogin.Text = "&Iniciar Sesión";
-            this.linkLogin.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLogin_LinkClicked);
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -426,20 +413,6 @@
             this.btnVentas.Text = "Ve&ntas";
             this.btnVentas.UseVisualStyleBackColor = false;
             this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
-            // 
-            // linkCerrarSesion
-            // 
-            this.linkCerrarSesion.AutoSize = true;
-            this.linkCerrarSesion.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.linkCerrarSesion.LinkBehavior = System.Windows.Forms.LinkBehavior.NeverUnderline;
-            this.linkCerrarSesion.Location = new System.Drawing.Point(12, 559);
-            this.linkCerrarSesion.Name = "linkCerrarSesion";
-            this.linkCerrarSesion.Size = new System.Drawing.Size(70, 13);
-            this.linkCerrarSesion.TabIndex = 12;
-            this.linkCerrarSesion.TabStop = true;
-            this.linkCerrarSesion.Text = "Cerrar Ses&ión";
-            this.linkCerrarSesion.Visible = false;
-            this.linkCerrarSesion.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkCerrarSesion_LinkClicked);
             // 
             // label1
             // 
@@ -681,6 +654,21 @@
             this.pagosToolStripMenuItem.Text = "Pagos";
             this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click);
             // 
+            // stockToolStripMenuItem
+            // 
+            this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.stockActualToolStripMenuItem});
+            this.stockToolStripMenuItem.Name = "stockToolStripMenuItem";
+            this.stockToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.stockToolStripMenuItem.Text = "Stock";
+            // 
+            // stockActualToolStripMenuItem
+            // 
+            this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+            this.stockActualToolStripMenuItem.Text = "Stock Actual";
+            this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
+            // 
             // probarToolStripMenuItem
             // 
             this.probarToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -701,20 +689,33 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // stockToolStripMenuItem
+            // btnLogin
             // 
-            this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.stockActualToolStripMenuItem});
-            this.stockToolStripMenuItem.Name = "stockToolStripMenuItem";
-            this.stockToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
-            this.stockToolStripMenuItem.Text = "Stock";
+            this.btnLogin.FlatAppearance.BorderSize = 0;
+            this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnLogin.ForeColor = System.Drawing.Color.Blue;
+            this.btnLogin.Location = new System.Drawing.Point(11, 554);
+            this.btnLogin.Name = "btnLogin";
+            this.btnLogin.Size = new System.Drawing.Size(79, 23);
+            this.btnLogin.TabIndex = 32;
+            this.btnLogin.TabStop = false;
+            this.btnLogin.Text = "&Iniciar Sesión";
+            this.btnLogin.UseVisualStyleBackColor = true;
+            this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             // 
-            // stockActualToolStripMenuItem
+            // btnCerrarSesion
             // 
-            this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.stockActualToolStripMenuItem.Text = "Stock Actual";
-            this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
+            this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
+            this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCerrarSesion.ForeColor = System.Drawing.Color.Blue;
+            this.btnCerrarSesion.Location = new System.Drawing.Point(11, 554);
+            this.btnCerrarSesion.Name = "btnCerrarSesion";
+            this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
+            this.btnCerrarSesion.TabIndex = 33;
+            this.btnCerrarSesion.TabStop = false;
+            this.btnCerrarSesion.Text = "&Cerrar Ses&ión";
+            this.btnCerrarSesion.UseVisualStyleBackColor = true;
+            this.btnCerrarSesion.Click += new System.EventHandler(this.btnCerrarSesion_Click);
             // 
             // FormPrincipal
             // 
@@ -749,8 +750,6 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.LinkLabel linkCerrarSesion;
-        private System.Windows.Forms.LinkLabel linkLogin;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem comprasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem verComprasToolStripMenuItem;
@@ -796,6 +795,8 @@
         private System.Windows.Forms.ToolStripMenuItem pagosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockActualToolStripMenuItem;
+        private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.Button btnCerrarSesion;
     }
 }
 

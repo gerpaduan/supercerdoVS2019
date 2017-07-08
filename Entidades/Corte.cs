@@ -30,6 +30,13 @@ namespace Entidades
         DateTime creado;
         DateTime? actualizado;
         private float promedio;
+        private bool habilitado;
+
+        public bool Habilitado
+        {
+            get { return habilitado; }
+            set { habilitado = value; }
+        }
 
         public float Promedio
         {
