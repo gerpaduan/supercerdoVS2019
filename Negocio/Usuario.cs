@@ -19,6 +19,14 @@ namespace Negocio
             return dtUsuarios;
         }
 
+        public DataTable getUsuarioActivos()
+        {
+            DataTable dtUserActivos;
+            oUsuarioD = new Datos.Usuario();
+            dtUserActivos = oUsuarioD.getUsuarioActivos();
+            return dtUserActivos;
+        }
+
         public DataTable obtenerUsuariosConTodos()
         {
             dtUsuarios = obtenerUsuarios();
