@@ -83,8 +83,10 @@ namespace Presentacion
 
         private void logueoUsuario()
         {
-            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-            frmLogin.ShowDialog(this);
+            //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+            Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
+            frmSelectUser.ShowDialog(this);
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
