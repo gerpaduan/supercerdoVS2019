@@ -220,6 +220,28 @@ namespace Datos
 
         }
 
+
+        public DataTable getListaElegirEmbutido()
+        {
+            DataTable dtCortes = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.StoredProcedure; 
+            cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "getListaElegirEmbutido";
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtCortes);
+
+            cmCorte.Connection.Close();
+
+            return dtCortes;
+
+        }
+
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtCortes = new DataTable();
