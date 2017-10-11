@@ -22,6 +22,24 @@ namespace Datos
             return dtUsuario;
         }
 
+        public DataTable getUsuarioActivos()
+        {
+            DataTable dtUsuarios = new DataTable();
+            daUsuario = new SqlDataAdapter();
+            cmUsuario = new SqlCommand();
+            cmUsuario.Connection = conn.conectar();
+            cmUsuario.Connection.Open();
+            cmUsuario.CommandType = CommandType.StoredProcedure;
+            cmUsuario.CommandText = "getUsuariosActivos";
+
+            cmUsuario.ExecuteNonQuery();
+            daUsuario.SelectCommand = cmUsuario;
+            daUsuario.Fill(dtUsuarios);
+            cmUsuario.Connection.Close();
+
+            return dtUsuarios;
+        }
+
         public Entidades.Usuario getUsuarioById(int idUsuario)
         {
             cmUsuario = new SqlCommand();

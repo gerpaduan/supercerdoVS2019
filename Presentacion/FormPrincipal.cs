@@ -851,5 +851,25 @@ namespace Presentacion
         {
             cerrarSesion();
         }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formElegirEmbutido"] != null)
+            {
+
+                Application.OpenForms["formElegirEmbutido"].Activate();
+                Application.OpenForms["formElegirEmbutido"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
+                frmSelectUser.ShowDialog(this);
+                Presentacion.Embutidos.formElegirEmbutido frmElegirEmbutido = new Presentacion.Embutidos.formElegirEmbutido();
+                frmElegirEmbutido.oUsuario = oUsuario;
+                //frmElegirEmbutido.frmEmbutidos = this;
+                frmElegirEmbutido.Show();
+            }
+            oUsuario = null;
+        }
     }
 }

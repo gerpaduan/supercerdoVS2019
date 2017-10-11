@@ -86,6 +86,15 @@ namespace Negocio
             return dtCorte;
         }
 
+        public DataTable getListaElegirEmbutido()
+        {
+            DataTable dtCorte = new DataTable();
+            oCorteD = new Datos.Corte();
+            dtCorte = oCorteD.getListaElegirEmbutido();
+
+            return dtCorte;
+        }
+
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             oCorteD = new Datos.Corte();

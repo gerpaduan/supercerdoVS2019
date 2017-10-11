@@ -13,7 +13,7 @@ namespace Negocio
 
         public Entidades.CierreCaja findByIdOrLast(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)
         {
-            DataTable dtCierreCaja = findCierreCaja(oCierre, tipoBusqueda, texto);
+            DataTable dtCierreCaja = findCierreCaja(oCierre, tipoBusqueda, texto, null);
             List<Entidades.CierreCaja> listCierreCaja = convertDatatableToList(dtCierreCaja);
             Entidades.CierreCaja cierreCaja = listCierreCaja.Count > 0 ? listCierreCaja[0] : null;
             return cierreCaja;
@@ -68,9 +68,9 @@ namespace Negocio
             return listCierreCaja;
         }
 
-        public DataTable findCierreCaja(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)
+        public DataTable findCierreCaja(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto, DateTime? fechaDesde)
         {
-            return oCierreD.findCierreCaja(oCierre, tipoBusqueda, texto);
+            return oCierreD.findCierreCaja(oCierre, tipoBusqueda, texto, fechaDesde);
         }
 
         public void addOrEditCierreCaja(Entidades.CierreCaja oCierreE)

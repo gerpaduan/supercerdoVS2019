@@ -13,11 +13,12 @@ namespace Datos
         SqlDataAdapter daCierreCaja;
         SqlCommand cmCierreCaja;
 
-        public DataTable findCierreCaja(Entidades.CierreCaja oCierreParam, Entidades.CierreCaja.tipoBusqueda tipoBusquedaParam, string texto)
+        public DataTable findCierreCaja(Entidades.CierreCaja oCierreParam, Entidades.CierreCaja.tipoBusqueda tipoBusquedaParam, string texto, DateTime? fechaDesde)
         {
             
             //cmCierreCaja = new SqlCommand();
             string selectText = "";
+            string fechaDesdeConver = "convert(varchar,'"+fechaDesde.ToString()+"',103)";
 
             //cmCierreCaja.Connection = conn.conectar();
             switch (tipoBusquedaParam)
@@ -28,7 +29,8 @@ namespace Datos
                         "round(cajaInicioSiguiente, 2) as Caja_Ini_Sig, round(importeRetirado, 2) as Retirado, " +
                         "UsuarioCierre.nombre as Cerrada_Por from CierreCaja, Usuarios, Usuarios as UsuarioCierre " +
                         "where CierreCaja.usuarioInicio = Usuarios.id and CierreCaja.usuarioCierre = UsuarioCierre.id and idSucursal = "
-                        + oCierreParam.Sucursal.idSucursal + " and Usuarios.nombre like '%" + texto + "%' order by CierreCaja.id desc ";
+                        + oCierreParam.Sucursal.idSucursal + " and fechaHoraInicio > " + fechaDesdeConver + 
+                        " and Usuarios.nombre like '%" + texto + "%' order by CierreCaja.id desc ";
                     break;
                 case Entidades.CierreCaja.tipoBusqueda.FindOpen:
                     selectText = "select CierreCaja.id, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, fechaHoraInicio, " +

@@ -140,7 +140,7 @@ namespace Negocio
         {
             oPagoE = oCtaCteD.getPagoById(oPagoE.Id);
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, "Recibo: " + oPagoE.NroRecibo,
+            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
                 oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true);
         }

@@ -244,7 +244,7 @@ namespace Presentacion.CuentaCorriente
             try
             {
                 //Creating iTextSharp Table from the DataTable data
-                PdfPTable pdfTable = new PdfPTable(7);//grillaMovCtaCte.ColumnCount);
+                PdfPTable pdfTable = new PdfPTable(6);//grillaMovCtaCte.ColumnCount);
                 pdfTable.DefaultCell.Padding = 3;
                 pdfTable.WidthPercentage = 100;
                 pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
@@ -259,7 +259,7 @@ namespace Presentacion.CuentaCorriente
                 //Adding Header row
                 foreach (DataGridViewColumn column in grillaMovCtaCte.Columns)
                 {
-                    if (column.Index == 3 || column.Index == 4 || column.Index == 5 ||
+                    if (column.Index == 3 || column.Index == 4 || //column.Index == 5 ||
                             column.Index == 6 || column.Index == 7 || column.Index == 9 || column.Index == 10)
                     {
                         PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
@@ -273,7 +273,7 @@ namespace Presentacion.CuentaCorriente
                 {
                     foreach (DataGridViewCell cell in row.Cells)
                     {
-                        if (cell.ColumnIndex == 3 || cell.ColumnIndex == 4 || cell.ColumnIndex == 5 ||
+                        if (cell.ColumnIndex == 3 || cell.ColumnIndex == 4 || //cell.ColumnIndex == 5 ||
                             cell.ColumnIndex == 6 || cell.ColumnIndex == 7 || cell.ColumnIndex == 9 || cell.ColumnIndex == 10)
                         {
 
@@ -285,9 +285,9 @@ namespace Presentacion.CuentaCorriente
                             else
                             {
                                 valueCell = cell.Value.ToString();
-                                valueCell = (valueCell.Length > 10) ?
-                                    (cell.ColumnIndex == indexDetalle ? (valueCell.Length > 40 ? valueCell.Substring(0, 40) : valueCell) : valueCell.Substring(0, 10)) 
-                                    : valueCell;
+                                //valueCell = (valueCell.Length > 10) ?
+                                //    (cell.ColumnIndex == indexDetalle ? (valueCell.Length > 40 ? valueCell.Substring(0, 40) : valueCell) : valueCell.Substring(0, 10)) 
+                                //    : valueCell;
                             }
                             pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
                         }

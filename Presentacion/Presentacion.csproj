@@ -205,6 +205,18 @@
     <Compile Include="Cortes\formReporteStock.Designer.cs">
       <DependentUpon>formReporteStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="Embutidos\formIngresoEmbutidoRapido.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Embutidos\formIngresoEmbutidoRapido.Designer.cs">
+      <DependentUpon>formIngresoEmbutidoRapido.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Embutidos\formElegirEmbutido.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Embutidos\formElegirEmbutido.Designer.cs">
+      <DependentUpon>formElegirEmbutido.cs</DependentUpon>
+    </Compile>
     <Compile Include="Embutidos\formLineasEmb.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -541,6 +553,12 @@
       <DependentUpon>formTipoTicket.cs</DependentUpon>
     </Compile>
     <Compile Include="Ticket\RawPrinterHelper.cs" />
+    <Compile Include="Usuarios\formSelectUser.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Usuarios\formSelectUser.Designer.cs">
+      <DependentUpon>formSelectUser.cs</DependentUpon>
+    </Compile>
     <Compile Include="Usuarios\FormUsuarios.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -665,6 +683,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="CuentaCorriente\formCtasCtes.resx">
       <DependentUpon>formCtasCtes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Embutidos\formIngresoEmbutidoRapido.resx">
+      <DependentUpon>formIngresoEmbutidoRapido.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Embutidos\formElegirEmbutido.resx">
+      <DependentUpon>formElegirEmbutido.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Embutidos\formLineasEmb.resx">
       <DependentUpon>formLineasEmb.cs</DependentUpon>
@@ -829,6 +853,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Ticket\formTipoTicket.resx">
       <DependentUpon>formTipoTicket.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Usuarios\formSelectUser.resx">
+      <DependentUpon>formSelectUser.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Usuarios\FormUsuarios.resx">
       <DependentUpon>FormUsuarios.cs</DependentUpon>

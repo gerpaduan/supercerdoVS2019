@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Presentacion.Embutidos;
 using Presentacion.Caja;
 using System.Configuration;
+using Presentacion.Usuario;
 
 namespace Presentacion
 {
@@ -108,8 +109,7 @@ namespace Presentacion
         }
 
         private void nuevo_Click(object sender, EventArgs e)
-        {
-            
+        {            
             if (Application.OpenForms["formIngresoEmbutido"] != null)
             {
 
@@ -118,8 +118,12 @@ namespace Presentacion
             }
             else
             {
-                FormLoginVendedor frmLogin = new FormLoginVendedor();
-                frmLogin.ShowDialog(this);
+                //FormLoginVendedor frmLogin = new FormLoginVendedor();
+                //frmLogin.ShowDialog(this);
+
+                Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
+                frmSelectUser.ShowDialog(this);
+
                 formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();
                 frmIngresoEmbutido.oUsuario = oUsuario;
                 frmIngresoEmbutido.frmEmbutidos = this;
@@ -244,6 +248,26 @@ namespace Presentacion
                 formLineasEmb frmLineasEmb = new formLineasEmb();
                 frmLineasEmb.Show();
             }
+        }
+
+        private void btnIngrRapido_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formElegirEmbutido"] != null)
+            {
+
+                Application.OpenForms["formElegirEmbutido"].Activate();
+                Application.OpenForms["formElegirEmbutido"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
+                frmSelectUser.ShowDialog(this);
+                Presentacion.Embutidos.formElegirEmbutido frmElegirEmbutido = new Presentacion.Embutidos.formElegirEmbutido();
+                frmElegirEmbutido.oUsuario = oUsuario;
+                frmElegirEmbutido.frmEmbutidos = this;
+                frmElegirEmbutido.Show();
+            }
+            oUsuario = null;
         }
     }
 }

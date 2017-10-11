@@ -37,6 +37,8 @@
             this.btnBuscar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.fechaDesde = new System.Windows.Forms.DateTimePicker();
+            this.label3 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCierresDeCaja)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -55,7 +57,7 @@
             this.grillaCierresDeCaja.ReadOnly = true;
             this.grillaCierresDeCaja.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaCierresDeCaja.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCierresDeCaja.Size = new System.Drawing.Size(873, 305);
+            this.grillaCierresDeCaja.Size = new System.Drawing.Size(964, 305);
             this.grillaCierresDeCaja.TabIndex = 22;
             // 
             // panel1
@@ -63,6 +65,8 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.SteelBlue;
+            this.panel1.Controls.Add(this.fechaDesde);
+            this.panel1.Controls.Add(this.label3);
             this.panel1.Controls.Add(this.comboSucursal);
             this.panel1.Controls.Add(this.label7);
             this.panel1.Controls.Add(this.txtBuscar);
@@ -70,7 +74,7 @@
             this.panel1.Controls.Add(this.btnBuscar);
             this.panel1.Location = new System.Drawing.Point(-1, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(898, 67);
+            this.panel1.Size = new System.Drawing.Size(989, 67);
             this.panel1.TabIndex = 23;
             // 
             // comboSucursal
@@ -129,7 +133,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(767, 384);
+            this.btnCancelar.Location = new System.Drawing.Point(858, 384);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(118, 28);
             this.btnCancelar.TabIndex = 24;
@@ -141,7 +145,7 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(643, 384);
+            this.btnSeleccionar.Location = new System.Drawing.Point(734, 384);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(118, 28);
             this.btnSeleccionar.TabIndex = 25;
@@ -149,12 +153,36 @@
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
+            // fechaDesde
+            // 
+            this.fechaDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.fechaDesde.CustomFormat = "dd/MM/yyyy  HH:mm";
+            this.fechaDesde.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.fechaDesde.Location = new System.Drawing.Point(849, 38);
+            this.fechaDesde.Name = "fechaDesde";
+            this.fechaDesde.Size = new System.Drawing.Size(128, 20);
+            this.fechaDesde.TabIndex = 41;
+            this.fechaDesde.Value = new System.DateTime(2011, 7, 1, 0, 0, 0, 0);
+            // 
+            // label3
+            // 
+            this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label3.Location = new System.Drawing.Point(800, 40);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(43, 15);
+            this.label3.TabIndex = 42;
+            this.label3.Text = "Desde";
+            // 
             // formCierresDeCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(897, 417);
+            this.ClientSize = new System.Drawing.Size(988, 417);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.panel1);
@@ -181,5 +209,7 @@
         private System.Windows.Forms.ComboBox comboSucursal;
         protected System.Windows.Forms.Label label7;
         protected System.Windows.Forms.Button btnSeleccionar;
+        protected System.Windows.Forms.DateTimePicker fechaDesde;
+        protected System.Windows.Forms.Label label3;
     }
 }

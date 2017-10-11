@@ -1408,10 +1408,36 @@ namespace Presentacion.Caja
 
         private void agregarCompra()
         {
-            formNuevaCompra frmNuevaCompra = new formNuevaCompra();
-            frmNuevaCompra.oUsuario  = oUsuario;
-            frmNuevaCompra.esEgresoCaja = true;
-            frmNuevaCompra.ShowDialog();
+            bool formAbierto = false;
+
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formNuevaCompra))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (ctrl.Name.Equals("pnlBuscar"))
+                         {
+                             foreach (Control child in ctrl.Controls)
+                             {
+                                 if (oUsuario != null && child.Name.Equals("txtUsuario") && child.Text.Equals(oUsuario.Nombre))
+                                 {
+                                     frm.BringToFront();
+                                     formAbierto = true;
+                                     break;
+                                 }
+                             }
+                         }
+                    }
+                }
+            }
+            if (!formAbierto)
+            {
+                formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+                frmNuevaCompra.oUsuario = oUsuario;
+                frmNuevaCompra.esEgresoCaja = true;
+                frmNuevaCompra.Show();
+            }
         }
 
         private void sumarUltimasDosVentas()

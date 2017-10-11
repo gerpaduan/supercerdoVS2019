@@ -329,6 +329,7 @@ namespace Presentacion
             oCompraE.FechaCompra = txtFechaCompra.Value;
             oCompraE.Estado = "";
             oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || tipoCompra=="Cortes" ? null :  (int?)Convert.ToInt32(txtCantMedias.Text);
+            oCompraE.KgsMedias = string.IsNullOrEmpty(txtTotalKg.Text) || tipoCompra == "Cortes" ? null : (int?)Convert.ToInt32(txtTotalKg.Text);
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;
             oCompraE.Sucursal = oSucursalE; 
