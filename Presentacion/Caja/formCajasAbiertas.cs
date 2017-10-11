@@ -45,7 +45,7 @@ namespace Presentacion.Caja
 
         private void cargarGrilla()
         {
-            dtCajasAbiertas = oCierreN.findCierreCaja(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindOpen, txtBuscar.Text);
+            dtCajasAbiertas = oCierreN.findCierreCaja(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindOpen, txtBuscar.Text, null);
             grillaCajasAbiertas.AutoGenerateColumns = false;
             grillaCajasAbiertas.DataSource = dtCajasAbiertas;
         }

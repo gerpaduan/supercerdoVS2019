@@ -32,6 +32,7 @@ namespace Presentacion.Caja
 
         private void formCierresDeCaja_Load(object sender, EventArgs e)
         {
+            fechaDesde.Value = DateTime.Today.AddDays(-7);
             this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarSucursal();
             cargarGrilla();
@@ -39,7 +40,7 @@ namespace Presentacion.Caja
 
         private void cargarGrilla()
         {
-            dtCierresDeCaja = oCierreN.findCierreCaja(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindAll, txtBuscar.Text);
+            dtCierresDeCaja = oCierreN.findCierreCaja(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindAll, txtBuscar.Text, fechaDesde.Value);
             grillaCierresDeCaja.DataSource = dtCierresDeCaja;
         }
 
