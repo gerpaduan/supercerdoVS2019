@@ -21,6 +21,9 @@ namespace Presentacion.Personas
         bool modificar = false;
         bool readOnly = false;
 
+        DataTable dtIva;
+        public bool modifPersonaCajaVenta = false;//se setea en TRUE para poder modificar la persona desde Caja Venta
+
         public formNuevaPersona()
         {
             InitializeComponent();
@@ -30,13 +33,17 @@ namespace Presentacion.Personas
         {
             try
             {
+
+                cargarIva();
+                txtRazonSocial.Focus();
+                txtRazonSocial.Select();
                 if (idPersona > 0)
                 {
                     oPersonaE = oPersonaN.findById(idPersona);
                     oPersonaSinMod = oPersonaN.findById(idPersona);
 
                     cargarCampos();
-                    readOnly = true;
+                    readOnly = !modifPersonaCajaVenta; //ver descripcion en la declaracion de la var.
                     setearPropiedadesForm();
                 }
             }
@@ -46,22 +53,43 @@ namespace Presentacion.Personas
             }
         }
 
+        private void cargarIva()
+        {
+            dtIva = new DataTable();
+            oPersonaN = new Negocio.Persona();
+            dtIva = oPersonaN.getIva();
+            comboIva.DataSource = dtIva;
+            comboIva.DisplayMember = "iva";
+            comboIva.ValueMember = "id";
+            //comboIva.SelectedValue = 1;
+        }
+
         private void setearPropiedadesForm()
         {
             this.Text = readOnly ? "Info Persona" : "Modificar Persona";
             this.btnGuardar.Text = readOnly ? "&Modificar" : "&Guardar";
 
-            comboTipoPersona.Enabled = !readOnly && FormPrincipal.logueado;
+            //comboTipoPersona.Enabled = !readOnly && FormPrincipal.logueado;
             txtRazonSocial.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
             txtBonificacion.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
             checkCtaCte.Enabled = !readOnly;
+            comboIva.Enabled = !readOnly;
+            txtCuit.ReadOnly = readOnly;
+            txtTelefono.ReadOnly = readOnly;
+            txtDomicilio.ReadOnly = readOnly;
+            txtCiudad.ReadOnly = readOnly;
             txtOtrosDatos.ReadOnly = readOnly;
         }
 
         private void cargarCampos()
         {
-            comboTipoPersona.Text = oPersonaE.tipo;
+            //comboTipoPersona.Text = oPersonaE.tipo;
             txtRazonSocial.Text = oPersonaE.razonSocial;
+            comboIva.SelectedValue = oPersonaE.IdIva;
+            txtCuit.Text = oPersonaE.Cuit;
+            txtTelefono.Text = oPersonaE.Telefono;
+            txtDomicilio.Text = oPersonaE.Domicilio;
+            txtCiudad.Text = oPersonaE.Ciudad;
             txtBonificacion.Text = oPersonaE.Bonificacion.ToString("F2");
             checkCtaCte.Checked = oPersonaE.CtaCte;
             txtOtrosDatos.Text = oPersonaE.otrosDatos;
@@ -115,20 +143,30 @@ namespace Presentacion.Personas
         private void cargarPersona()
         {
             oPersonaE.razonSocial = txtRazonSocial.Text.Trim();
+            oPersonaE.IdIva = comboIva.SelectedValue == null ? 0 : Convert.ToInt32(comboIva.SelectedValue.ToString());
+            oPersonaE.Cuit = txtCuit.Text;// Convert.ToInt64(txtCuit.Text.Replace("-", ""));
+            oPersonaE.Telefono = txtTelefono.Text;
+            oPersonaE.Domicilio = txtDomicilio.Text;
+            oPersonaE.Ciudad = txtCiudad.Text;
             oPersonaE.CtaCte = checkCtaCte.Checked;
             oPersonaE.Bonificacion = Utilidades.Util_Form.convertFloat(txtBonificacion.Text, false);
             oPersonaE.otrosDatos = txtOtrosDatos.Text.Trim();
-            oPersonaE.tipo = comboTipoPersona.Text;
+            //oPersonaE.tipo = "";// comboTipoPersona.Text;
         }
 
         private bool huboModificaciones()
         { 
             bool huboModif = true;
-            if ((oPersonaE.tipo.Equals(oPersonaSinMod.tipo)) &&
-                            (oPersonaE.razonSocial.Equals(oPersonaSinMod.razonSocial)) &&
-                            (oPersonaE.CtaCte.Equals(oPersonaSinMod.CtaCte)) &&
-                            (oPersonaE.Bonificacion.Equals(oPersonaSinMod.Bonificacion)) &&
-                            (oPersonaE.otrosDatos.Equals(oPersonaSinMod.otrosDatos)))
+            if ((oPersonaE.razonSocial.Equals(oPersonaSinMod.razonSocial)) &&
+                (oPersonaE.IdIva.Equals(oPersonaSinMod.IdIva)) &&
+                (oPersonaE.Cuit.Equals(oPersonaSinMod.Cuit) ||
+                oPersonaSinMod.Cuit.Equals(oPersonaE.Cuit.Replace("-", " ").Replace(" ",""))) &&
+                (oPersonaE.Telefono.Equals(oPersonaSinMod.Telefono)) &&
+                (oPersonaE.Domicilio.Equals(oPersonaSinMod.Domicilio)) &&
+                (oPersonaE.Ciudad.Equals(oPersonaSinMod.Ciudad)) &&
+                (oPersonaE.CtaCte.Equals(oPersonaSinMod.CtaCte)) &&
+                (oPersonaE.Bonificacion.Equals(oPersonaSinMod.Bonificacion)) &&
+                (oPersonaE.otrosDatos.Equals(oPersonaSinMod.otrosDatos)))
                 huboModif = false;
 
             return huboModif;
@@ -142,9 +180,9 @@ namespace Presentacion.Personas
             int nombreTextBox = 1;
             int valorTextBox = 0;
             //string[valor_campo][nombre_textBox]
-            string[,] textBoxes = new string[3, 2];
-            textBoxes[nroFilas, valorTextBox] = comboTipoPersona.Text == "" ? "" : "tiene_valor";
-            textBoxes[nroFilas++, nombreTextBox] = lblTipo.Text;
+            string[,] textBoxes = new string[2, 2];
+            //textBoxes[nroFilas, valorTextBox] = comboTipoPersona.Text == "" ? "" : "tiene_valor";
+            //textBoxes[nroFilas++, nombreTextBox] = lblTipo.Text;
 
             textBoxes[nroFilas, valorTextBox] = txtRazonSocial.Text;
             textBoxes[nroFilas++, nombreTextBox] = lblRazonSocial.Text;
