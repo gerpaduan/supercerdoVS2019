@@ -24,6 +24,10 @@ namespace Presentacion
             set { logueado = value; }
         }
 
+        public bool verUltimasVentasClientes = false;
+        public int idPersona; //cliente
+        public int idSucursal;
+
         public DataTable dtSucursales;
 
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
@@ -46,7 +50,8 @@ namespace Presentacion
                 {
                     lblActualizar.Visible = false;
                     dtVentas = new DataTable();
-                    dtVentas = oVentaN.getAllLineasVenta(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), 
+                    dtVentas = verUltimasVentasClientes ? oVentaN.ultimasVentasCliente(idSucursal, idPersona) : 
+                        oVentaN.getAllLineasVenta(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), 
                         Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 
                         txtDescripcion.Text.Trim());
                     grillaVentas.DataSource = dtVentas;
@@ -57,6 +62,30 @@ namespace Presentacion
                     grillaVentas.Columns["bonificacion"].DefaultCellStyle.Format = "F2";
                     grillaVentas.Columns["totalCorte"].DefaultCellStyle.Format = "F2";
 
+                    //pintar filas para igual idVenta
+                    if (verUltimasVentasClientes)
+                    {
+                        int ultimoIdVenta = grillaVentas.Rows.Count > 0 ? Convert.ToInt32(grillaVentas.Rows[0].Cells["idVenta"].Value) : 0;
+                        int cantMismoId = 0;
+                        Color ultimoColorFila = Color.LightGray;
+                        for (int i = 0; i < grillaVentas.Rows.Count; i++)
+                        {
+                            if (ultimoIdVenta == Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value))
+                            {
+                                grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
+                                cantMismoId++;
+                            }
+                            else
+                            {
+                                ultimoColorFila = Color.LightGray == ultimoColorFila ? Color.LightGreen : Color.LightGray;
+                                grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
+                                cantMismoId = 0;
+                            }
+    
+                            //Se setea el ultimo IdVenta
+                            ultimoIdVenta = Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value);
+                        }
+                    }
 
                     cargarTotales();
                 } 
@@ -176,12 +205,22 @@ namespace Presentacion
 
         private void formGetAllLineaVenta_Load(object sender, EventArgs e)
         {
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today.Date.AddHours(24);
             fechaHasta.Value = today.AddMilliseconds(-1);
             fechaDesde.Value = today.AddDays(-1);
             cargarSucursal();
             cargarComboVendedor();
+            //si se llama form desde formVentaCaja
+            if (verUltimasVentasClientes)
+            {
+                fechaDesde.Value = DateTime.Today.AddYears((2000 - DateTime.Today.Year));
+                pnlBuscar.Enabled = false;
+                pnlBuscar.BringToFront();
+                barraControl.Enabled = false;
+            }
+
             cargar = true;
             cargarGrilla();
         }

@@ -94,5 +94,10 @@ namespace Negocio
         {
             return oVentaD.getAllLineasVenta(idSucursal, idVendedor, fechaDesde, fechaHasta, texto);
         }
+
+        public DataTable ultimasVentasCliente(int idSucursal, int idPersona)
+        {
+            return oVentaD.ultimasVentasCliente(idSucursal, idPersona);
+        }
     }
 }

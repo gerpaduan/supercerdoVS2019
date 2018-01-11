@@ -393,7 +393,8 @@ namespace Presentacion.Caja
             panelAbonar.Visible = true;
             checkCtaCte.Visible = false;
             checkCtaCte.Checked = false;
-            lblClienteConBonif.Visible = false;
+            lblClienteConBonif.Visible = false;            
+            linkUltimasVentasCliente.Visible = false;
 
             totalVenta = 0;
             abona = 0;
@@ -1151,6 +1152,11 @@ namespace Presentacion.Caja
             oCliente = persona;
             checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
             checkCtaCte.Checked = oCliente.CtaCte;
+            linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            //Ocultar Ultimas Ventas Para Cocinas y Furlana
+            if (!oUsuario.Admin && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+                linkUltimasVentasCliente.Visible = false;
+
             this.txtCliente.Text = oCliente.razonSocial;
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
             lblClienteConBonif.Text = lblClienteConBonif.Visible ? 
@@ -1948,6 +1954,15 @@ namespace Presentacion.Caja
             catch (Exception)
             {
             }
+        }
+
+        private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formGetAllLineaVenta frmGetAllLV = new formGetAllLineaVenta();
+            frmGetAllLV.verUltimasVentasClientes = true;
+            frmGetAllLV.idPersona = oCliente.idPersona;
+            frmGetAllLV.idSucursal = oSucursalE.idSucursal;
+            frmGetAllLV.ShowDialog();
         }
     }
 }
