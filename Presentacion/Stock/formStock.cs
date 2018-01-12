@@ -65,7 +65,8 @@ namespace Presentacion
         private void formatearGrilla()
         {
             grillaCompras.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-            grillaCompras.Columns["observaciones"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaCompras.Columns["observaciones"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            grillaCompras.Columns["observaciones"].Width = 150;
 
             //formato para columna de fechas
             grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
