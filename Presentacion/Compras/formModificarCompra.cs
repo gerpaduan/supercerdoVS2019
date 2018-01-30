@@ -270,6 +270,7 @@ namespace Presentacion.Compras
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtCantMedias.Text = oCompraModificada.CantMedias.ToString();
             checkCtaCte.Checked = oCompraModificada.EnCtaCte;
+            checkCtaCte.Enabled = false;
             txtObservaciones.Text = oCompraModificada.Observaciones;
 
             txtCreado.Text = oCompraModificada.Creado.ToString();
@@ -321,6 +322,7 @@ namespace Presentacion.Compras
             cambiarPrecio.Enabled = false;
             txtFechaCompra.Enabled = true;
             comboSucursal.Enabled = true;
+            checkCtaCte.Enabled = true;
             btnAceptar.Visible = true;
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtObservaciones.ReadOnly = false;

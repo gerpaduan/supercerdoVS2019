@@ -1209,6 +1209,8 @@ namespace Presentacion.Caja
         {
             try
             {
+                if (!FormPrincipal.leerBalanza) return;
+
                 if (checkLeerPeso.Checked)
                 {
                     if (fijarPeso)
@@ -1259,7 +1261,7 @@ namespace Presentacion.Caja
             {
                 checkLeerPeso.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkLeerPeso.Checked);
 
-                if (checkLeerPeso.Checked)
+                if (checkLeerPeso.Checked && FormPrincipal.leerBalanza)
                 {
                     dejarDeLeerPeso = false;
                     txtCantKgs.BackColor = SystemColors.ScrollBar;
@@ -1697,7 +1699,8 @@ namespace Presentacion.Caja
             try
             {
                 this.txtCodigo.BackColor = enableColor;
-                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+                if ((oCorteE != null && oCorteE.idCorte > 0 && 
+                    oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked) || !FormPrincipal.leerBalanza)
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
