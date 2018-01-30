@@ -34,6 +34,9 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grillaPorcCortes = new System.Windows.Forms.DataGridView();
             this.grillaPromMedias = new System.Windows.Forms.DataGridView();
+            this.btnGenerarAj = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.lblEstadoAjuste = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPorcCortes)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPromMedias)).BeginInit();
             this.SuspendLayout();
@@ -59,12 +62,12 @@
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaPorcCortes.DefaultCellStyle = dataGridViewCellStyle2;
-            this.grillaPorcCortes.Location = new System.Drawing.Point(2, 85);
+            this.grillaPorcCortes.Location = new System.Drawing.Point(2, 108);
             this.grillaPorcCortes.Name = "grillaPorcCortes";
             this.grillaPorcCortes.ReadOnly = true;
             this.grillaPorcCortes.RowHeadersVisible = false;
             this.grillaPorcCortes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaPorcCortes.Size = new System.Drawing.Size(673, 261);
+            this.grillaPorcCortes.Size = new System.Drawing.Size(807, 238);
             this.grillaPorcCortes.TabIndex = 18;
             // 
             // grillaPromMedias
@@ -86,19 +89,55 @@
             dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaPromMedias.DefaultCellStyle = dataGridViewCellStyle4;
-            this.grillaPromMedias.Location = new System.Drawing.Point(2, 1);
+            this.grillaPromMedias.Location = new System.Drawing.Point(2, 38);
             this.grillaPromMedias.Name = "grillaPromMedias";
             this.grillaPromMedias.ReadOnly = true;
             this.grillaPromMedias.RowHeadersVisible = false;
             this.grillaPromMedias.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaPromMedias.Size = new System.Drawing.Size(537, 78);
+            this.grillaPromMedias.Size = new System.Drawing.Size(537, 64);
             this.grillaPromMedias.TabIndex = 19;
+            // 
+            // btnGenerarAj
+            // 
+            this.btnGenerarAj.BackColor = System.Drawing.Color.LimeGreen;
+            this.btnGenerarAj.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGenerarAj.Location = new System.Drawing.Point(562, 38);
+            this.btnGenerarAj.Name = "btnGenerarAj";
+            this.btnGenerarAj.Size = new System.Drawing.Size(100, 64);
+            this.btnGenerarAj.TabIndex = 20;
+            this.btnGenerarAj.Text = "&Generar Ajuste";
+            this.btnGenerarAj.UseVisualStyleBackColor = false;
+            this.btnGenerarAj.Click += new System.EventHandler(this.btnGenerarAj_Click);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Underline))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(12, 9);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(71, 20);
+            this.label1.TabIndex = 21;
+            this.label1.Text = "Estado:";
+            // 
+            // lblEstadoAjuste
+            // 
+            this.lblEstadoAjuste.AutoSize = true;
+            this.lblEstadoAjuste.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblEstadoAjuste.ForeColor = System.Drawing.Color.Red;
+            this.lblEstadoAjuste.Location = new System.Drawing.Point(89, 9);
+            this.lblEstadoAjuste.Name = "lblEstadoAjuste";
+            this.lblEstadoAjuste.Size = new System.Drawing.Size(149, 20);
+            this.lblEstadoAjuste.TabIndex = 22;
+            this.lblEstadoAjuste.Text = "estado del Ajuste";
             // 
             // FormVerPorcCortes
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(674, 345);
+            this.ClientSize = new System.Drawing.Size(808, 345);
+            this.Controls.Add(this.lblEstadoAjuste);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.btnGenerarAj);
             this.Controls.Add(this.grillaPromMedias);
             this.Controls.Add(this.grillaPorcCortes);
             this.Name = "FormVerPorcCortes";
@@ -108,6 +147,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.grillaPorcCortes)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPromMedias)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -115,5 +155,8 @@
 
         private System.Windows.Forms.DataGridView grillaPorcCortes;
         private System.Windows.Forms.DataGridView grillaPromMedias;
+        private System.Windows.Forms.Button btnGenerarAj;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblEstadoAjuste;
     }
 }

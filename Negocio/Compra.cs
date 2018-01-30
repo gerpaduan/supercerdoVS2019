@@ -219,6 +219,48 @@ namespace Negocio
 
         }
 
+        //Se comprueba que el Pesaje tenga el ajuste realizado. Retorna ID <> 0 si tiene
+        public int getIdAjusteDelPesaje(int idPesaje)
+        {
+            return oCompraD.getIdAjusteDelPesaje(idPesaje);
+        }
+
+        //retorna el Estado actual del AjusteStock
+        public Entidades.Compra.estadoAjusteStock estadoAjusteStock(int idPesaje, int idAjuste)
+        {
+            Entidades.Compra.estadoAjusteStock estadoAjuste;
+
+            Entidades.Compra oPesajeE;
+            Entidades.Compra oAjusteE;
+
+            oPesajeE = findById_convertToCompra(idPesaje);
+            idAjuste = getIdAjusteDelPesaje(idPesaje);
+            oAjusteE = idAjuste > 0 ? findById_convertToCompra(idAjuste) : null;
+
+            if (oAjusteE == null)
+                estadoAjuste = Entidades.Compra.estadoAjusteStock.NoRealizado;
+            else
+            {
+                if (oPesajeE.Actualizado == null)
+                {
+                    estadoAjuste = Entidades.Compra.estadoAjusteStock.Actualizado;
+                }
+                else
+                {
+                    estadoAjuste = (oAjusteE.Actualizado == null) ? Entidades.Compra.estadoAjusteStock.NoActualizado :
+                        ((oPesajeE.Actualizado > oAjusteE.Actualizado) ? Entidades.Compra.estadoAjusteStock.NoActualizado :
+                        Entidades.Compra.estadoAjusteStock.Actualizado);
+                }
+            }
+
+            return estadoAjuste;    
+        }
+
+        public void actualizarEstadoPesaje(int idPesaje, Entidades.Compra.estadoAjusteStock estadoAjStock)
+        {
+            oCompraD.actualizarEstadoPesaje(idPesaje, estadoAjStock);
+        }
+
         public void backup(string destino)
         {
             oCompraD.backup(destino);
