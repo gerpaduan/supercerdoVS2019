@@ -506,6 +506,7 @@
             "Efectivo",
             "Cheque",
             "Eftvo+Cheque",
+            "Trasferencia",
             "Otro"});
             this.comboTipoPago.Location = new System.Drawing.Point(98, 140);
             this.comboTipoPago.Name = "comboTipoPago";

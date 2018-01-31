@@ -247,8 +247,8 @@ namespace Negocio
                 }
                 else
                 {
-                    estadoAjuste = (oAjusteE.Actualizado == null) ? Entidades.Compra.estadoAjusteStock.NoActualizado :
-                        ((oPesajeE.Actualizado > oAjusteE.Actualizado) ? Entidades.Compra.estadoAjusteStock.NoActualizado :
+                    estadoAjuste = (oAjusteE.Actualizado == null && oAjusteE.Creado > oPesajeE.Actualizado) ? Entidades.Compra.estadoAjusteStock.Actualizado :
+                        (((oAjusteE.Actualizado == null && oAjusteE.Creado < oPesajeE.Actualizado) || (oAjusteE.Actualizado != null && oPesajeE.Actualizado > oAjusteE.Actualizado)) ? Entidades.Compra.estadoAjusteStock.NoActualizado :
                         Entidades.Compra.estadoAjusteStock.Actualizado);
                 }
             }

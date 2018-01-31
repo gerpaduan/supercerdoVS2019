@@ -12,6 +12,7 @@ namespace Entidades
             Efectivo,
             Cheque,
             EftvoCheque,
+            Transferencia,
             Otro,
         }
 

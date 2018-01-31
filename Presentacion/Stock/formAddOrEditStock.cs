@@ -135,7 +135,7 @@ namespace Presentacion
             panelPesaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
             panelProveedor.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
             btnVerPorcentaje.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes);
-            panelEstadoAjusteStock.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes) && oCompraE.IdCompra > 0;
+            panelEstadoAjusteStock.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.PesajeCortes) && oCompraE.IdCompra > 0 && oCompraE.KgsMedias != null && oCompraE.CantMedias != null;
             cargarEstadoAjuste(oCompraE.Estado);
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             txtTipoAccion.Text = tipoCompra;
@@ -301,9 +301,9 @@ namespace Presentacion
                             if ( (!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) && 
                                 (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
                             {
-                                oCompraN.actualizarEstadoPesaje(oCompraE.IdCompra, 
-                                    (accion.Equals(Entidades.Compra.accion.Agregar) ? 
-                                    Entidades.Compra.estadoAjusteStock.NoRealizado : Entidades.Compra.estadoAjusteStock.NoActualizado));
+                                oCompraN.actualizarEstadoPesaje(oCompraE.IdCompra, oCompraN.estadoAjusteStock(oCompraE.IdCompra, 0));
+                                    //(accion.Equals(Entidades.Compra.accion.Agregar) ? 
+                                    //Entidades.Compra.estadoAjusteStock.NoRealizado : Entidades.Compra.estadoAjusteStock.NoActualizado));
                             }
                         }
 
@@ -561,6 +561,10 @@ namespace Presentacion
 
         private bool validaciónFinal()
         {
+            //valida si se modifico CantKgs y CantMedias
+            huboModificaciones = (txtKgsMedias.Text.Equals(oCompraE.KgsMedias.ToString()) && 
+                txtCantMedias.Text.Equals(oCompraE.CantMedias.ToString()) && txtObservaciones.Text.Equals(oCompraE.Observaciones)) ? false : true;
+
             if (!huboModificaciones)
             {
                 MessageBox.Show("No se realizaron modificaciones.\n\nPresione el boton Cancelar para salir sin realizar modificaciones");
@@ -1197,6 +1201,12 @@ namespace Presentacion
 
         private void btnVerPorcentaje_Click(object sender, EventArgs e)
         {
+            if (oCompraE.CantMedias == null || oCompraE.KgsMedias == null)
+            {
+                MessageBox.Show("El pesaje no tiene registrado KgsMedias y CantMedias.\n\nIngrese KgsMedias y CantMedias presione Guardar y vuelva a intentarlo.",
+                    "Datos faltantes", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             Stock.FormVerPorcCortes frmVerPorcCorte = new Presentacion.Stock.FormVerPorcCortes();
             frmVerPorcCorte.idPesaje = idCompra;
             frmVerPorcCorte.frmPesaje = this;
