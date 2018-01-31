@@ -1063,6 +1063,11 @@ namespace Presentacion
 
         private bool salir()
         {
+            //Si no se ingresaron datos en los sig. campos no se muestra cartel de cierre
+            if (txtProveedor.Text.Equals("") && txtNroRemito.Text.Equals("") && txtObservaciones.Text.Equals("")
+                && ((radioCorte.Checked && grillaCortePorCompra.Rows.Count == 0) ||
+                (radioMediaRes.Checked && grillaMediaRes.Rows.Count == 0))) mostrarCartelCierre = false;
+
             if (!mostrarCartelCierre) return false;
 
             DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);

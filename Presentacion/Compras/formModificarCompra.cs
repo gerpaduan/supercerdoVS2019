@@ -52,6 +52,9 @@ namespace Presentacion.Compras
         private void formModificarCompra_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+
+            txtPrecioKg.TabStop = radioCorte.Checked;
+            grupoMediaRes.Enabled = false;
             //cargarLista();
             //cargarGrilla();
         }
@@ -312,6 +315,8 @@ namespace Presentacion.Compras
         private void habilitarModificacion()
         {
             this.Text = "Modificar Compra";
+
+            grupoMediaRes.Enabled = true;
             btnAgregar.Visible = true;
             btnQuitar.Visible = true;
             btnBuscarProv.Visible = true;
