@@ -24,6 +24,7 @@ namespace Presentacion
     public partial class FormPrincipal : Form, InterfaceUsuario
     {        
         public static bool logueado = false;
+        public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
 

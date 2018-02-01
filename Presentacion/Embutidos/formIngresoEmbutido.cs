@@ -571,6 +571,8 @@ namespace Presentacion
         {
             try
             {
+                if (!FormPrincipal.leerBalanza) checkLeerPeso.Checked = false;
+
                 if (checkLeerPeso.Checked)
                 {
                     if (fijarPeso)

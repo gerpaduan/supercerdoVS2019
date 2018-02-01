@@ -498,6 +498,49 @@ namespace Datos
             return dt;
         }
 
+        //Se comprueba que el Pesaje tenga el ajuste realizado. Retorna ID <> 0 si tiene
+        public int getIdAjusteDelPesaje(int idPesaje)
+        {
+            SqlCommand cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+
+            //el Id del PesajeStock se lo registra en nroRemito en AjusteStock (esto se hace para no agregar otro campo a la tabla)
+            cmCompra.CommandText = "SELECT idCompra FROM dbo.Compras " +
+                                    "WHERE tipoCompra = '"+ Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.AjusteStock) +
+                                    "' AND nroRemito = '"+ idPesaje.ToString() +"'";
+            cmCompra.Connection.Open();
+            SqlDataReader drCompra = cmCompra.ExecuteReader();
+
+            int idAjuste = 0;
+            while (drCompra.Read())
+            {
+                idAjuste = Convert.ToInt32(drCompra["idCompra"].ToString());
+            }
+
+            conn.cerraConexion();
+            return idAjuste;
+        }
+
+        public void actualizarEstadoPesaje(int idPesaje, Entidades.Compra.estadoAjusteStock estadoAjStock)
+        {
+
+            cmCompra = new SqlCommand();
+
+            cmCompra.Connection = conn.conectar();
+            cmCompra.Connection.Open();
+
+            cmCompra.CommandType = CommandType.Text; cmCompra.CommandTimeout = 90;
+            cmCompra.CommandText = "UPDATE Compras SET estado = @estado WHERE idCompra = " + idPesaje;
+            cmCompra.Parameters.AddWithValue("@estado", Entidades.Compra.estadoAjStockToString(estadoAjStock));
+
+            cmCompra.ExecuteNonQuery();
+            cmCompra.Connection.Close();
+
+            cmCompra = null;
+        
+        }
+
         public void backup(string destino)
         {
 

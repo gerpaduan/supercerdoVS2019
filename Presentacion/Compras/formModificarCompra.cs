@@ -52,6 +52,9 @@ namespace Presentacion.Compras
         private void formModificarCompra_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+
+            txtPrecioKg.TabStop = radioCorte.Checked;
+            grupoMediaRes.Enabled = false;
             //cargarLista();
             //cargarGrilla();
         }
@@ -270,6 +273,7 @@ namespace Presentacion.Compras
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtCantMedias.Text = oCompraModificada.CantMedias.ToString();
             checkCtaCte.Checked = oCompraModificada.EnCtaCte;
+            checkCtaCte.Enabled = false;
             txtObservaciones.Text = oCompraModificada.Observaciones;
 
             txtCreado.Text = oCompraModificada.Creado.ToString();
@@ -311,6 +315,8 @@ namespace Presentacion.Compras
         private void habilitarModificacion()
         {
             this.Text = "Modificar Compra";
+
+            grupoMediaRes.Enabled = true;
             btnAgregar.Visible = true;
             btnQuitar.Visible = true;
             btnBuscarProv.Visible = true;
@@ -321,6 +327,7 @@ namespace Presentacion.Compras
             cambiarPrecio.Enabled = false;
             txtFechaCompra.Enabled = true;
             comboSucursal.Enabled = true;
+            checkCtaCte.Enabled = true;
             btnAceptar.Visible = true;
             txtFechaCompra.Value = oCompraModificada.FechaCompra;
             txtObservaciones.ReadOnly = false;
