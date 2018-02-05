@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace Presentacion.Stock
 {
-    public partial class FormVerPorcCortes : Form
+    public partial class FormVerPorcCortes : Form, InterfaceUsuario
     {
         public int idPesaje = 0;
         int idAjuste = 0;
@@ -17,6 +17,7 @@ namespace Presentacion.Stock
         Negocio.Compra oCompraN = new Negocio.Compra();
         Entidades.Compra oPesajeE;
         Entidades.Compra oAjusteE;
+        public Entidades.Usuario oUsuario;
 
         Entidades.Compra.estadoAjusteStock estadoAjuste;
         public formAddOrEditStock frmPesaje;
@@ -90,7 +91,13 @@ namespace Presentacion.Stock
         private void cargarCompra()
         {
             try
-            {                
+            {
+                logueoUsuario();
+                if (oUsuario == null)
+                {
+                    return;
+                }
+
                 //se estable el IdPesaje al NroRemito del Ajuste para su identificacion
                 oAjusteE.NroRemito = oPesajeE.IdCompra.ToString();
                 oAjusteE.Proveedor = oPesajeE.Proveedor;
@@ -105,11 +112,11 @@ namespace Presentacion.Stock
                 switch (oAjusteE.IdCompra)
                 {
                     case 0:
-                        oAjusteE.CreadoPor = oPesajeE.CreadoPor;
+                        oAjusteE.CreadoPor = oUsuario;
                         oAjusteE.IdCompra = oCompraN.agregarCompra(oAjusteE);
                         break;
                     default:
-                        oAjusteE.ActualizadoPor = oPesajeE.ActualizadoPor;
+                        oAjusteE.ActualizadoPor = oUsuario;
                         oCompraN.modificarCompra(oAjusteE);
                         break;
                 }
@@ -124,6 +131,17 @@ namespace Presentacion.Stock
                 MessageBox.Show(ex.Message);
             }
         }
+
+        private void logueoUsuario()
+        {
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        } 
 
         private void cargarCortes()
         {
