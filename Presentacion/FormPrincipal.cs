@@ -17,6 +17,7 @@ using Presentacion.Pruebas;
 using Presentacion.CuentaCorriente;
 using System.Configuration;
 using Utilidades;
+using System.IO;
 
 
 namespace Presentacion
@@ -830,16 +831,35 @@ namespace Presentacion
 
         private void stockActualToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Application.OpenForms["formStockActual"] != null)
+            try
             {
-                Application.OpenForms["formStockActual"].Activate();
-                Application.OpenForms["formStockActual"].WindowState = FormWindowState.Normal;
+                string abrirStockActualExterno = ConfigurationManager.AppSettings["abrirStockActualExterno"].ToString();
+                switch (abrirStockActualExterno)
+                {
+                    //se llama la aplicacion para que inicie formStockActual independiente a la aplicacion
+                    case "1":
+                        string ruta = Directory.GetCurrentDirectory();
+                        ruta = ruta + "\\StockActual\\SuperCerdo.exe";
+                        System.Diagnostics.Process.Start(ruta);
+                        break;
+                    default:
+                        if (Application.OpenForms["formStockActual"] != null)
+                        {
+                            Application.OpenForms["formStockActual"].Activate();
+                            Application.OpenForms["formStockActual"].WindowState = FormWindowState.Normal;
 
+                        }
+                        else
+                        {
+                            formStockActual frmStockActual = new formStockActual();
+                            frmStockActual.Show();
+                        }
+                        break;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                formStockActual frmStockActual = new formStockActual();
-                frmStockActual.Show();
+                MessageBox.Show("Error en abrir Stock Actual.\n\n" + ex.Message);
             }
         }
 

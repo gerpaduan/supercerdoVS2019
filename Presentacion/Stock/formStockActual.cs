@@ -169,6 +169,15 @@ namespace Presentacion.Cortes
                         TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
                     }
 
+                    if (fila["Ajus.Stock"].ToString() == null || fila["Ajus.Stock"].ToString() == "")
+                    {
+                        fila["Ajus.Stock"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ajus.Stock"]);
+                    }
+
                     if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
                     {
                         fila["Egr.Stock"] = 0;
