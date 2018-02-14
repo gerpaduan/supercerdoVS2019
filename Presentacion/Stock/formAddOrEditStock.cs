@@ -562,7 +562,7 @@ namespace Presentacion
         private bool validaciónFinal()
         {
             //valida si se modifico CantKgs y CantMedias
-            huboModificaciones = (txtKgsMedias.Text.Equals(oCompraE.KgsMedias.ToString()) && 
+            huboModificaciones = (!huboModificaciones && txtKgsMedias.Text.Equals(oCompraE.KgsMedias.ToString()) && 
                 txtCantMedias.Text.Equals(oCompraE.CantMedias.ToString()) && txtObservaciones.Text.Equals(oCompraE.Observaciones)) ? false : true;
 
             if (!huboModificaciones)
