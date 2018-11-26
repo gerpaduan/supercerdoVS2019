@@ -57,7 +57,8 @@ namespace Presentacion
         }
         private void txtBuscarCorte_TextChanged(object sender, EventArgs e)
         {
-            buscarCorte();
+            //buscarCorte();
+            lblActualizar.Visible = true;
         }
         #endregion
 
@@ -65,6 +66,7 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
+            lblActualizar.Visible = false;
             oCorteN = new Negocio.Corte();
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
@@ -78,6 +80,7 @@ namespace Presentacion
         
         public void buscarCorte()
         {
+            lblActualizar.Visible = false;
             oCorteN = new Negocio.Corte();
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
@@ -278,6 +281,14 @@ namespace Presentacion
                 this.Close();
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void txtBuscarCorte_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
         }   
     }
 }

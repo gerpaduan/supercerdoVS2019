@@ -658,6 +658,13 @@ namespace Presentacion
             
             else
             {
+                if (oCorteNuevaCompra == null || oCorteNuevaCompra.idCorte == 0)
+                {
+                    MessageBox.Show("No existe el corte", "No existe el corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    txtCodigo.Focus();
+                    return false;
+                }
+
                 if (txtPrecioKg.Text.Equals("") || ((txtKgMedia.Text.Equals("") || txtKgMedia.Text.Equals("")) &&
                  (txtCorteNuevaCompra.Text.Equals("") || txtCantKgs.Text.Equals(""))))
                 {
@@ -826,10 +833,12 @@ namespace Presentacion
         {
             try
             {
+                txtCorteNuevaCompra.Text = "";
+                oCorteNuevaCompra = null;
+                oCorteNuevaCompra = new Entidades.Corte();
+
                 if (txtCodigo.Text.Trim() != "")
                 {
-                    oCorteNuevaCompra = null;
-                    oCorteNuevaCompra = new Entidades.Corte();
 
                     DataTable dtCorte = new DataTable();
 
@@ -849,8 +858,7 @@ namespace Presentacion
                     }
                     else
                     {
-                        txtCorteNuevaCompra.Text = "";
-                        MessageBox.Show("El código no existe");
+                        //MessageBox.Show("El código no existe");
                         txtCodigo.Focus();
                     }
                 }
