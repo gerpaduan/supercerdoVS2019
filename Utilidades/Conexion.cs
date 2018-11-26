@@ -26,7 +26,7 @@ namespace Utilidades
         SqlConnection conn;
         public SqlConnection conectar()
         {
-            conString = getConnString();
+            //conString = getConnString();
             conn = new SqlConnection(conString);
             return conn;
         }
@@ -70,7 +70,7 @@ namespace Utilidades
 
         public static tipoConexion getTipoConexion()
         {
-            tipoConexion tipoConn = Conexion.tipoConexion.local;
+            tipoConn = Conexion.tipoConexion.local;
             switch (connStringActual)
             {
                 case "local":
