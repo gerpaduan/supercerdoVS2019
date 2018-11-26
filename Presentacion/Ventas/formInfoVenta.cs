@@ -91,6 +91,9 @@ namespace Presentacion.Ventas
         {
             txtIdVenta.Text = oVentaE.IdVenta.ToString();
             txtVendedor.Text = oVentaE.Vendedor.Nombre;
+            checkCtaCte.Checked = oVentaE.EnCtaCte;
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
+            checkCtaCte.Enabled = false;//para evitar que se cambiar el estado
             txtSucursal.Text = oVentaE.Sucursal.sucursal;
             txtCliente.Text = oVentaE.Persona.razonSocial;
             txtDiaFestivo.Text = oVentaE.DiaFestivo;
@@ -204,6 +207,11 @@ namespace Presentacion.Ventas
             {
                 MessageBox.Show("Hubo un error a imprimir el ticket.\n\n" + ex.Message, "Error ticket");
             }
+        }
+
+        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
+        {
+            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
     }
 }

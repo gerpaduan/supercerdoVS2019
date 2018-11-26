@@ -29,8 +29,14 @@ namespace Presentacion.Personas
             oPersonaN = new Negocio.Persona();
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.DataSource = null;
-            //grillaPersonas.AutoGenerateColumns = false;
+            grillaPersonas.AutoGenerateColumns = true;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
+            grillaPersonas.Columns["idPersona"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["razonSocial"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            grillaPersonas.Columns["iva"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            grillaPersonas.Columns["ctaCte"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["bonificacion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["otrosDatos"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
             oPersonaN = null;
         }
 
@@ -45,15 +51,8 @@ namespace Presentacion.Personas
 
         public void infoPersona()
         {
-
             try
             {
-                //Entidades.Persona oPersonaE = new Entidades.Persona();
-                //cargarDatos(oPersonaE);
-
-                //formInfoPersona frmInfoPersona = new formInfoPersona();
-                //frmInfoPersona.cargarCampos(oPersonaE);
-                //frmInfoPersona.ShowDialog();
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells["idPersona"].Value.ToString());
                 formNuevaPersona frmNuevaPersona = new formNuevaPersona();
                 frmNuevaPersona.idPersona = idPersona;

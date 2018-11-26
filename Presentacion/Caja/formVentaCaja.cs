@@ -393,7 +393,8 @@ namespace Presentacion.Caja
             panelAbonar.Visible = true;
             checkCtaCte.Visible = false;
             checkCtaCte.Checked = false;
-            lblClienteConBonif.Visible = false;
+            lblClienteConBonif.Visible = false;            
+            linkUltimasVentasCliente.Visible = false;
 
             totalVenta = 0;
             abona = 0;
@@ -1151,6 +1152,11 @@ namespace Presentacion.Caja
             oCliente = persona;
             checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
             checkCtaCte.Checked = oCliente.CtaCte;
+            linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            //Ocultar Ultimas Ventas Para Cocinas y Furlana
+            if (!oUsuario.Admin && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+                linkUltimasVentasCliente.Visible = false;
+
             this.txtCliente.Text = oCliente.razonSocial;
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
             lblClienteConBonif.Text = lblClienteConBonif.Visible ? 
@@ -1203,6 +1209,8 @@ namespace Presentacion.Caja
         {
             try
             {
+                if (!FormPrincipal.leerBalanza) return;
+
                 if (checkLeerPeso.Checked)
                 {
                     if (fijarPeso)
@@ -1253,7 +1261,7 @@ namespace Presentacion.Caja
             {
                 checkLeerPeso.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkLeerPeso.Checked);
 
-                if (checkLeerPeso.Checked)
+                if (checkLeerPeso.Checked && FormPrincipal.leerBalanza)
                 {
                     dejarDeLeerPeso = false;
                     txtCantKgs.BackColor = SystemColors.ScrollBar;
@@ -1691,7 +1699,8 @@ namespace Presentacion.Caja
             try
             {
                 this.txtCodigo.BackColor = enableColor;
-                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked)
+                if ((oCorteE != null && oCorteE.idCorte > 0 && 
+                    oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked) || !FormPrincipal.leerBalanza)
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
@@ -1948,6 +1957,15 @@ namespace Presentacion.Caja
             catch (Exception)
             {
             }
+        }
+
+        private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formGetAllLineaVenta frmGetAllLV = new formGetAllLineaVenta();
+            frmGetAllLV.verUltimasVentasClientes = true;
+            frmGetAllLV.idPersona = oCliente.idPersona;
+            frmGetAllLV.idSucursal = oSucursalE.idSucursal;
+            frmGetAllLV.ShowDialog();
         }
     }
 }

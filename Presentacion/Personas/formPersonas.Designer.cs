@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formPersonas));
             this.panel1 = new System.Windows.Forms.Panel();
@@ -39,10 +38,6 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaPersonas = new System.Windows.Forms.DataGridView();
-            this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.otrosDatos = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.panel1.SuspendLayout();
@@ -61,17 +56,19 @@
             this.panel1.Controls.Add(this.btnBuscar);
             this.panel1.Location = new System.Drawing.Point(-5, 42);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(670, 62);
+            this.panel1.Size = new System.Drawing.Size(976, 62);
             this.panel1.TabIndex = 6;
             // 
             // groupBox2
             // 
+            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox2.Location = new System.Drawing.Point(17, 44);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(639, 10);
+            this.groupBox2.Size = new System.Drawing.Size(942, 9);
             this.groupBox2.TabIndex = 47;
             this.groupBox2.TabStop = false;
             // 
@@ -109,7 +106,7 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(434, 408);
+            this.btnSeleccionar.Location = new System.Drawing.Point(740, 408);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(107, 28);
             this.btnSeleccionar.TabIndex = 7;
@@ -121,7 +118,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(547, 409);
+            this.btnCancelar.Location = new System.Drawing.Point(853, 409);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(108, 27);
             this.btnCancelar.TabIndex = 8;
@@ -138,64 +135,24 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaPersonas.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.Raised;
             this.grillaPersonas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grillaPersonas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.idPersona,
-            this.razonSocial,
-            this.tipo,
-            this.otrosDatos});
             this.grillaPersonas.Location = new System.Drawing.Point(8, 109);
             this.grillaPersonas.MultiSelect = false;
             this.grillaPersonas.Name = "grillaPersonas";
             this.grillaPersonas.ReadOnly = true;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaPersonas.RowHeadersDefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaPersonas.RowHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaPersonas.RowHeadersVisible = false;
             this.grillaPersonas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaPersonas.Size = new System.Drawing.Size(647, 295);
+            this.grillaPersonas.Size = new System.Drawing.Size(953, 295);
             this.grillaPersonas.StandardTab = true;
             this.grillaPersonas.TabIndex = 5;
             this.grillaPersonas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaPersonas_CellDoubleClick);
-            // 
-            // idPersona
-            // 
-            this.idPersona.DataPropertyName = "idPersona";
-            this.idPersona.HeaderText = "ID Persona";
-            this.idPersona.Name = "idPersona";
-            this.idPersona.ReadOnly = true;
-            this.idPersona.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.idPersona.Visible = false;
-            this.idPersona.Width = 90;
-            // 
-            // razonSocial
-            // 
-            this.razonSocial.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.razonSocial.DefaultCellStyle = dataGridViewCellStyle1;
-            this.razonSocial.HeaderText = "Razon Social";
-            this.razonSocial.Name = "razonSocial";
-            this.razonSocial.ReadOnly = true;
-            this.razonSocial.Width = 150;
-            // 
-            // tipo
-            // 
-            this.tipo.DataPropertyName = "tipo";
-            this.tipo.HeaderText = "Tipo";
-            this.tipo.Name = "tipo";
-            this.tipo.ReadOnly = true;
-            // 
-            // otrosDatos
-            // 
-            this.otrosDatos.DataPropertyName = "otrosDatos";
-            this.otrosDatos.HeaderText = "Otros Datos";
-            this.otrosDatos.Name = "otrosDatos";
-            this.otrosDatos.ReadOnly = true;
-            this.otrosDatos.Width = 240;
             // 
             // barraControl
             // 
@@ -205,7 +162,7 @@
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(660, 45);
+            this.barraControl.Size = new System.Drawing.Size(966, 45);
             this.barraControl.TabIndex = 9;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
@@ -227,13 +184,12 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Bisque;
-            this.ClientSize = new System.Drawing.Size(660, 442);
+            this.ClientSize = new System.Drawing.Size(966, 442);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.grillaPersonas);
             this.Controls.Add(this.barraControl);
-            this.MaximizeBox = false;
             this.Name = "formPersonas";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Personas";
@@ -259,10 +215,6 @@
         protected System.Windows.Forms.DataGridView grillaPersonas;
         protected System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton nuevo;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
-        private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
-        private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
-        private System.Windows.Forms.DataGridViewTextBoxColumn otrosDatos;
         private System.Windows.Forms.GroupBox groupBox2;
     }
 }

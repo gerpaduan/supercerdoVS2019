@@ -32,8 +32,6 @@ namespace Presentacion.Cortes
             comboConexion.Text = Utilidades.Conexion.connStringActual;
             comboOrdenStock.SelectedIndex = 0;
             cargarComboFechaDesde();
-
-            lblActualizar.Visible = false;
             lblError.Visible = false;
             cargarSucursal();
             cargarGrilla();
@@ -42,13 +40,25 @@ namespace Presentacion.Cortes
 
         private void cargarSucursal()
         {
-            dtConexiones = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
-            dtConexiones = oSucursalN.obtenerConexiones(null, true);
-            comboConexion.DataSource = dtConexiones;
-            comboConexion.ValueMember = "name";
-            comboConexion.DisplayMember = "nombre";
-            comboConexion.SelectedIndex = 0;
+            try
+            {
+                dtConexiones = new DataTable();
+                oSucursalN = new Negocio.Sucursal();
+                dtConexiones = oSucursalN.obtenerConexiones(null, true);
+                comboConexion.DataSource = dtConexiones;
+                comboConexion.ValueMember = "name";
+                comboConexion.DisplayMember = "nombre";
+                comboConexion.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar sucursales\n\n"+
+                    "Mensaje: "+ex.Message+
+                    "\n\nSource : "+ex.Source+
+                    "\n\nStackTrace : "+ex.StackTrace+
+                    "\n\nData: "+ex.Data+
+                    "\n\nTargetSite : "+ex.TargetSite);                    
+            }
         }
 
         private void cargarComboFechaDesde()
@@ -167,6 +177,15 @@ namespace Presentacion.Cortes
                     else
                     {
                         TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
+                    }
+
+                    if (fila["Ajus.Stock"].ToString() == null || fila["Ajus.Stock"].ToString() == "")
+                    {
+                        fila["Ajus.Stock"] = 0;
+                    }
+                    else
+                    {
+                        TotINGR += Convert.ToDecimal(fila["Ajus.Stock"]);
                     }
 
                     if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")

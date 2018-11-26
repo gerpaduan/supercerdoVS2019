@@ -65,13 +65,22 @@ namespace Presentacion
         private void formatearGrilla()
         {
             grillaCompras.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-            grillaCompras.Columns["observaciones"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaCompras.Columns["observaciones"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+            grillaCompras.Columns["observaciones"].Width = 150;
 
             //formato para columna de fechas
             grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             //grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "ddd dd MMM HH:mm:ss";
             grillaCompras.Columns["creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaCompras.Columns["actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+
+            for (int fila = 0; fila < grillaCompras.Rows.Count; fila++)
+            {
+                if (grillaCompras["tipoCompra", fila].Value.ToString().Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
+                {
+                    grillaCompras["estado", fila].Style.ForeColor = grillaCompras["estado", fila].Value.ToString().Equals(Entidades.Compra.estadoAjStockToString(Entidades.Compra.estadoAjusteStock.Actualizado)) ? Color.Green : Color.Red;
+                }
+            }
         }
 
         private void cargarTotales()

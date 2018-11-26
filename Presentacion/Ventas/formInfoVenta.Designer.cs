@@ -28,13 +28,22 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle31 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle32 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle33 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle34 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle35 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoVenta));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grillaLineasVenta = new System.Windows.Forms.DataGridView();
+            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cantKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.precioKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.bonificacion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.PesoBalanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnSalir = new System.Windows.Forms.Button();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
@@ -68,15 +77,7 @@
             this.txtCreado = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.idVentaLabel = new System.Windows.Forms.Label();
-            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cantKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.precioKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.bonificacion = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.PesoBalanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.checkCtaCte = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -109,6 +110,92 @@
             this.grillaLineasVenta.Size = new System.Drawing.Size(719, 304);
             this.grillaLineasVenta.TabIndex = 48;
             this.grillaLineasVenta.TabStop = false;
+            // 
+            // idCorte
+            // 
+            this.idCorte.DataPropertyName = "idCorte";
+            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.Name = "idCorte";
+            this.idCorte.ReadOnly = true;
+            this.idCorte.Visible = false;
+            // 
+            // codigo
+            // 
+            this.codigo.DataPropertyName = "codigo";
+            this.codigo.HeaderText = "Código";
+            this.codigo.Name = "codigo";
+            this.codigo.ReadOnly = true;
+            this.codigo.Width = 80;
+            // 
+            // corte
+            // 
+            this.corte.DataPropertyName = "corte";
+            this.corte.HeaderText = "Corte";
+            this.corte.Name = "corte";
+            this.corte.ReadOnly = true;
+            this.corte.Width = 150;
+            // 
+            // cantKgs
+            // 
+            this.cantKgs.DataPropertyName = "cantKgs";
+            dataGridViewCellStyle31.Format = "N3";
+            dataGridViewCellStyle31.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle31;
+            this.cantKgs.HeaderText = "Cant. Kgs";
+            this.cantKgs.Name = "cantKgs";
+            this.cantKgs.ReadOnly = true;
+            this.cantKgs.Width = 110;
+            // 
+            // precioKgs
+            // 
+            this.precioKgs.DataPropertyName = "precioKg";
+            dataGridViewCellStyle32.Format = "N2";
+            dataGridViewCellStyle32.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle32;
+            this.precioKgs.HeaderText = "Precio Kg.";
+            this.precioKgs.Name = "precioKgs";
+            this.precioKgs.ReadOnly = true;
+            this.precioKgs.Width = 80;
+            // 
+            // totalS
+            // 
+            this.totalS.DataPropertyName = "totalS";
+            dataGridViewCellStyle33.Format = "N2";
+            dataGridViewCellStyle33.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle33;
+            this.totalS.HeaderText = "Total $";
+            this.totalS.Name = "totalS";
+            this.totalS.ReadOnly = true;
+            this.totalS.Width = 110;
+            // 
+            // bonificacion
+            // 
+            this.bonificacion.DataPropertyName = "bonificacion";
+            dataGridViewCellStyle34.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle34.Format = "N2";
+            this.bonificacion.DefaultCellStyle = dataGridViewCellStyle34;
+            this.bonificacion.HeaderText = "Bonif.";
+            this.bonificacion.Name = "bonificacion";
+            this.bonificacion.ReadOnly = true;
+            this.bonificacion.Width = 60;
+            // 
+            // PesoBalanza
+            // 
+            this.PesoBalanza.DataPropertyName = "pesoBalanza";
+            this.PesoBalanza.HeaderText = "Balanza";
+            this.PesoBalanza.Name = "PesoBalanza";
+            this.PesoBalanza.ReadOnly = true;
+            this.PesoBalanza.Width = 50;
+            // 
+            // estado
+            // 
+            this.estado.DataPropertyName = "estado";
+            dataGridViewCellStyle35.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle35;
+            this.estado.HeaderText = "Estado";
+            this.estado.Name = "estado";
+            this.estado.ReadOnly = true;
+            this.estado.Width = 70;
             // 
             // btnSalir
             // 
@@ -198,6 +285,7 @@
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.checkCtaCte);
             this.groupBox1.Controls.Add(this.txtFechaVenta);
             this.groupBox1.Controls.Add(this.txtVendedor);
             this.groupBox1.Controls.Add(this.label6);
@@ -486,91 +574,22 @@
             this.idVentaLabel.Text = "idVentaLabel";
             this.idVentaLabel.Visible = false;
             // 
-            // idCorte
+            // checkCtaCte
             // 
-            this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
-            this.idCorte.Name = "idCorte";
-            this.idCorte.ReadOnly = true;
-            this.idCorte.Visible = false;
-            // 
-            // codigo
-            // 
-            this.codigo.DataPropertyName = "codigo";
-            this.codigo.HeaderText = "Código";
-            this.codigo.Name = "codigo";
-            this.codigo.ReadOnly = true;
-            this.codigo.Width = 80;
-            // 
-            // corte
-            // 
-            this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "Corte";
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            this.corte.Width = 150;
-            // 
-            // cantKgs
-            // 
-            this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle1.Format = "N3";
-            dataGridViewCellStyle1.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle1;
-            this.cantKgs.HeaderText = "Cant. Kgs";
-            this.cantKgs.Name = "cantKgs";
-            this.cantKgs.ReadOnly = true;
-            this.cantKgs.Width = 110;
-            // 
-            // precioKgs
-            // 
-            this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle2.Format = "N2";
-            dataGridViewCellStyle2.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle2;
-            this.precioKgs.HeaderText = "Precio Kg.";
-            this.precioKgs.Name = "precioKgs";
-            this.precioKgs.ReadOnly = true;
-            this.precioKgs.Width = 80;
-            // 
-            // totalS
-            // 
-            this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle3.Format = "N2";
-            dataGridViewCellStyle3.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
-            this.totalS.HeaderText = "Total $";
-            this.totalS.Name = "totalS";
-            this.totalS.ReadOnly = true;
-            this.totalS.Width = 110;
-            // 
-            // bonificacion
-            // 
-            this.bonificacion.DataPropertyName = "bonificacion";
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle4.Format = "N2";
-            this.bonificacion.DefaultCellStyle = dataGridViewCellStyle4;
-            this.bonificacion.HeaderText = "Bonif.";
-            this.bonificacion.Name = "bonificacion";
-            this.bonificacion.ReadOnly = true;
-            this.bonificacion.Width = 60;
-            // 
-            // PesoBalanza
-            // 
-            this.PesoBalanza.DataPropertyName = "pesoBalanza";
-            this.PesoBalanza.HeaderText = "Balanza";
-            this.PesoBalanza.Name = "PesoBalanza";
-            this.PesoBalanza.ReadOnly = true;
-            this.PesoBalanza.Width = 50;
-            // 
-            // estado
-            // 
-            this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
-            this.estado.HeaderText = "Estado";
-            this.estado.Name = "estado";
-            this.estado.ReadOnly = true;
-            this.estado.Width = 70;
+            this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkCtaCte.AutoSize = true;
+            this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkCtaCte.Location = new System.Drawing.Point(303, 18);
+            this.checkCtaCte.Name = "checkCtaCte";
+            this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
+            this.checkCtaCte.TabIndex = 57;
+            this.checkCtaCte.TabStop = false;
+            this.checkCtaCte.Text = "A &Cta. Cte.";
+            this.checkCtaCte.UseVisualStyleBackColor = false;
+            this.checkCtaCte.CheckedChanged += new System.EventHandler(this.checkCtaCte_CheckedChanged);
             // 
             // formInfoVenta
             // 
@@ -658,5 +677,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn bonificacion;
         private System.Windows.Forms.DataGridViewCheckBoxColumn PesoBalanza;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
+        private System.Windows.Forms.CheckBox checkCtaCte;
     }
 }

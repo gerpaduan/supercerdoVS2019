@@ -44,7 +44,12 @@ namespace Negocio
         {
             oPersonaD = new Datos.Persona();
             return oPersonaD.buscarPersona(texto);
-            
+        }
+
+        public DataTable getIva()
+        {
+            oPersonaD = new Datos.Persona();
+            return oPersonaD.getIva();
         }
 
         public DataTable buscarProveedor(string buscarTexto)

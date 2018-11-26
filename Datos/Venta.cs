@@ -441,5 +441,26 @@ namespace Datos
 
             return dtVentas;
         }
+
+        public DataTable ultimasVentasCliente(int idSucursal, int idPersona)
+        {
+            DataTable dtVentas = new DataTable();
+            daVenta = new SqlDataAdapter();
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandTimeout = 90;
+            cmVenta.CommandText = "ultimasVentasCliente";
+            cmVenta.Parameters.AddWithValue("@idPersona", idPersona);
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+
+            cmVenta.ExecuteNonQuery();
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtVentas);
+            cmVenta.Connection.Close();
+
+            return dtVentas;
+        }
     }
 }

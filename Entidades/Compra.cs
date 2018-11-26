@@ -23,6 +23,49 @@ namespace Entidades
             AjusteStock = 5,
         }
 
+        public enum estadoAjusteStock
+        { 
+            NoRealizado,
+            Actualizado,
+            NoActualizado,
+        }
+
+        public static string estadoAjStockToString(estadoAjusteStock estadoAjStockToConvert)
+        {
+            string estadoAjStockToString = "";
+            switch (estadoAjStockToConvert)
+            {
+                case Entidades.Compra.estadoAjusteStock.Actualizado:
+                    estadoAjStockToString = "Actualizado";
+                    break;
+                case Entidades.Compra.estadoAjusteStock.NoActualizado:
+                    estadoAjStockToString = "No Actualizado";
+                    break;
+                case Entidades.Compra.estadoAjusteStock.NoRealizado:
+                    estadoAjStockToString = "No Realizado";
+                    break;
+            }
+            return estadoAjStockToString;
+        }
+
+        public static Compra.estadoAjusteStock estadoAjStockToEnum(string estadoAjStockToConvert)
+        {
+            Compra.estadoAjusteStock estadoAjStockToEnum = estadoAjusteStock.NoRealizado;
+            switch (estadoAjStockToConvert)
+            {
+                case "Actualizado":
+                    estadoAjStockToEnum = estadoAjusteStock.Actualizado;
+                    break;
+                case "No Actualizado":
+                    estadoAjStockToEnum = estadoAjusteStock.NoActualizado;
+                    break;
+                case "No Realizado":
+                    estadoAjStockToEnum = estadoAjusteStock.NoRealizado;
+                    break;
+            }
+            return estadoAjStockToEnum;
+        }
+
         public static string tipoCompraToString(tipoCompraEnum tipoCompraToConvert)
         {
             string tipoCompraToString = "";

@@ -13,6 +13,50 @@ namespace Entidades
         public string tipo;
         private bool ctaCte;
 
+        private int idIva;
+
+        public int IdIva
+        {
+            get { return idIva; }
+            set { idIva = value; }
+        }
+
+        private string iva;
+
+        public string Iva
+        {
+            get { return iva; }
+            set { iva = value; }
+        }
+        private string cuit;
+
+        public string Cuit
+        {
+            get { return cuit; }
+            set { cuit = value; }
+        }
+        private string telefono;
+
+        public string Telefono
+        {
+            get { return telefono; }
+            set { telefono = value; }
+        }
+        private string domicilio;
+
+        public string Domicilio
+        {
+            get { return domicilio; }
+            set { domicilio = value; }
+        }
+        private string ciudad;
+
+        public string Ciudad
+        {
+            get { return ciudad; }
+            set { ciudad = value; }
+        }
+
         public bool CtaCte
         {
             get { return ctaCte; }

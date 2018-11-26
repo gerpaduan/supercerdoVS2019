@@ -142,5 +142,22 @@ namespace Presentacion.Personas
             grillaPersonas.ClearSelection();
 
         }
+
+        private void btnModificar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells["idPersona"].Value.ToString());
+                formNuevaPersona frmNuevaPersona = new formNuevaPersona();
+                frmNuevaPersona.idPersona = idPersona;
+                frmNuevaPersona.modifPersonaCajaVenta = true;
+                frmNuevaPersona.ShowDialog();
+                cargarGrilla();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Hubo un error al seleccionar la fila");
+            }
+        }
     }
 }
