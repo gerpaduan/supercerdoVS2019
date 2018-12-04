@@ -658,7 +658,8 @@ namespace Presentacion
             
             else
             {
-                if (oCorteNuevaCompra == null || oCorteNuevaCompra.idCorte == 0)
+                //validacion para que sólo salte el cartel al presionar el boton
+                if (radioCorte.Checked && (oCorteNuevaCompra == null || oCorteNuevaCompra.idCorte == 0))
                 {
                     MessageBox.Show("No existe el corte", "No existe el corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
