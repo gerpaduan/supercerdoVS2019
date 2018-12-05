@@ -1,1 +1,0 @@
-alter table Movimiento add actualizacionCompleta tinyint
