@@ -477,7 +477,7 @@
             // txtFechaPago
             // 
             this.txtFechaPago.Checked = false;
-            this.txtFechaPago.CustomFormat = "dd/MM/yy  hh:mm";
+            this.txtFechaPago.CustomFormat = "dd/MM/yy  HH:mm";
             this.txtFechaPago.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaPago.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaPago.Location = new System.Drawing.Point(321, 85);
