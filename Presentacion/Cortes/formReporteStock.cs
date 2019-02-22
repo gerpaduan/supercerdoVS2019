@@ -41,8 +41,8 @@ namespace Presentacion.Cortes
             try
             {
                 comboSucursal.SelectedIndex = sucursalParam-1;
-                fechaDesde.Value = fechaDesdeParam;
-                fechaHasta.Value = fechaHastaParam;
+                fechaDesdeProgresivo.Value = fechaDesdeParam;
+                txtFechaHastaProgresivo.Value = fechaHastaParam;
                 comboTipoReporte.SelectedIndex = tipoReporteParam;
                 txtDescripcion.Text = textoParam;
 
@@ -100,7 +100,7 @@ namespace Presentacion.Cortes
                     //    dtCierreStock.Rows.Add(dsFila);
                     //}
                     //ReporteCierreStock reporte = new ReporteCierreStock();
-                    //FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                    //FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                     //frmReportes.Show();
                     #endregion
                 }
@@ -123,7 +123,7 @@ namespace Presentacion.Cortes
                 //        dtTeoricoReal.Rows.Add(dsFila);
                 //    }
                 //    Reportes.Reportes reporte = new Reportes.Reportes();
-                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTeoricoReal, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTeoricoReal, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
 
                 //    frmReportes.Show();
                 //}
@@ -150,7 +150,7 @@ namespace Presentacion.Cortes
                 //        dtCierreStock.Rows.Add(dsFila);
                 //    }
                 //    ReporteCierreStock reporte = new ReporteCierreStock();
-                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtCierreStock, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 //    frmReportes.Show();
                 //}
 
@@ -174,7 +174,7 @@ namespace Presentacion.Cortes
                 //        dtIngresoEgreso.Rows.Add(dsFila);
                 //    }
                 //    ReporteIngresoEgreso reporte = new ReporteIngresoEgreso();
-                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtIngresoEgreso, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtIngresoEgreso, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 //    frmReportes.Show();
                 //}
 
@@ -194,7 +194,7 @@ namespace Presentacion.Cortes
                 //        dtTotalPorCortes.Rows.Add(dsFila);
                 //    }
                 //    ReporteTotalPorCortes reporte = new ReporteTotalPorCortes();
-                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalPorCortes, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalPorCortes, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 //    frmReportes.Show();
                 //}
 
@@ -214,7 +214,7 @@ namespace Presentacion.Cortes
                 //        dtTotalCortePorCompra.Rows.Add(dsFila);                        
                 //    }
                 //    ReporteKgsCortePorCompra reporte = new ReporteKgsCortePorCompra();
-                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalCortePorCompra, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalCortePorCompra, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 //    frmReportes.Show();
                 //}
 
@@ -234,7 +234,7 @@ namespace Presentacion.Cortes
                 //        dtTotalMovimientos.Rows.Add(dsFila);
                 //    }
                 //    ReporteMovimientosPorCorte reporte = new ReporteMovimientosPorCorte();
-                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalMovimientos, fechaDesde.Value.Date, fechaHasta.Value.Date);
+                //    FormReportes frmReportes = new FormReportes(reporte, titulo, dtTotalMovimientos, fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 //    frmReportes.Show();
                 //}
 
@@ -256,7 +256,8 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.reporteTeoricoReal(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtGrillaReporte = oCorteN.reporteTeoricoReal(txtDescripcion.Text.Trim(), 
+                    Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
 
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
@@ -451,7 +452,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
+                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date, null);
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
                     if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
@@ -500,7 +501,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.StockIngresoEgreso(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtGrillaReporte = oCorteN.StockIngresoEgreso(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
                     if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
@@ -667,7 +668,9 @@ namespace Presentacion.Cortes
                     //si está logueado
                     if (Presentacion.FormPrincipal.logueado)
                     {
-                        dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                        dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), 
+                            Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value,
+                            txtFechaHastaProgresivo.Value);
                     }
                     grillaReportes.DataSource = dtGrillaReporte;
                 }
@@ -681,7 +684,7 @@ namespace Presentacion.Cortes
                 dtGrillaReporte = null;
 
                 dtGrillaReporte = oCorteN.TotalKgsCortePorCompra(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                    fechaDesde.Value.Date, fechaHasta.Value.Date);
+                    fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 grillaReportes.DataSource = dtGrillaReporte;
 
             }
@@ -693,7 +696,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.TotalMovimientosPorCorte(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesde.Value.Date, fechaHasta.Value.Date);
+                dtGrillaReporte = oCorteN.TotalMovimientosPorCorte(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
 
 
                 grillaReportes.DataSource = dtGrillaReporte;
@@ -778,7 +781,7 @@ namespace Presentacion.Cortes
                 //setea ultima fecha de cierre para obtener stock actual para comparar en AcumVentas
                 fechaUltimoCierreStock = dtInicioStock.Rows.Count > 0 ? Convert.ToDateTime(dtInicioStock.Rows[0]["fechaCompra"]) : fechaUltimoCierreStock;
 
-                fechaDesdeProgresivo.Visible = acumVentas;
+                fechaDesdeProgresivo.Visible = !(stockProgresivo || comboTipoReporte.Text.Equals("Cierre Stock") || stockActual);
                 txtFechaHastaProgresivo.Visible = stockProgresivo || acumVentas;
                 DataTable dtCierreStock;
                 if (stockProgresivo || acumVentas)
@@ -852,8 +855,8 @@ namespace Presentacion.Cortes
                     }
                     else
                     {
-                        encabezado += " ||| Desde: " + fechaDesde.Text +
-                            " | Hasta: " + fechaHasta.Text + "\n\n";
+                        encabezado += " ||| Desde: " + fechaDesdeProgresivo.Text +
+                            " | Hasta: " + txtFechaHastaProgresivo.Text + "\n\n";
                     }
                     pdfTable.AddCell(cell);
                 }
@@ -924,6 +927,8 @@ namespace Presentacion.Cortes
             {
                 comboInicioStock.Visible = false;
                 comboCierreStock.Visible = false;
+                fechaDesdeProgresivo.Visible = true;
+                txtFechaHastaProgresivo.Visible = true;
             }
         }
 

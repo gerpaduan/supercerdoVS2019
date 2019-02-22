@@ -672,7 +672,8 @@ namespace Presentacion.Compras
             oCompraModificada.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || 
                 oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
             oCompraModificada.KgsMedias = string.IsNullOrEmpty(txtTotalKgs.Text) ||
-                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ? null : (int?)Convert.ToInt32(txtTotalKgs.Text);
+                oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ? null : 
+                (float?)Utilidades.Util_Form.convertFloat(txtTotalKgs.Text, false);
 
             switch (oCompraModificada.IdCompra)
             {

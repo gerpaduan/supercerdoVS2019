@@ -34,7 +34,7 @@ namespace Negocio
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
-                oCompra.KgsMedias = row["kgsMedias"].Equals(DBNull.Value) ? null : (int?)(row["kgsMedias"]);
+                oCompra.KgsMedias = row["kgsMedias"].Equals(DBNull.Value) ? null : (float?) Convert.ToSingle(row["kgsMedias"]);
                 oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
                 Negocio.Sucursal oSucN = new Negocio.Sucursal();

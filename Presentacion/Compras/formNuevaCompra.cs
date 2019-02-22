@@ -12,11 +12,11 @@ using Utilidades;
 
 namespace Presentacion
 {
-    public partial class formNuevaCompra : Form, InterfacePersona, InterfaceCorte       
+    public partial class formNuevaCompra : Form, InterfacePersona, InterfaceCorte
     {
         DataTable dtSucursales;
         DataTable dtCortes;
-        Negocio.Compra oCompraN=new Negocio.Compra();
+        Negocio.Compra oCompraN = new Negocio.Compra();
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN = new Negocio.Corte();
         public Entidades.Usuario oUsuario;
@@ -41,11 +41,11 @@ namespace Presentacion
         List<MediasPorCompra> listaMediasEnGrilla = new List<MediasPorCompra>();
 
         List<Entidades.MediaRes> listaMediaRes = new List<Entidades.MediaRes>();
-       List<Entidades.CortePorCompra> listaCortePorCompra = new List<Entidades.CortePorCompra>();
+        List<Entidades.CortePorCompra> listaCortePorCompra = new List<Entidades.CortePorCompra>();
 
-       formCompras oFrmCompra;
+        formCompras oFrmCompra;
 
-       bool ultimaValidacion = true;
+        bool ultimaValidacion = true;
         bool mostrarCartelCierre = true;
 
         public formNuevaCompra()
@@ -63,12 +63,12 @@ namespace Presentacion
 
         #region RadioButtons
         private void radioMediaRes_CheckedChanged(object sender, EventArgs e)
-        {         
+        {
             cambiarGrupo();
         }
 
         private void radioCorte_CheckedChanged(object sender, EventArgs e)
-        {           
+        {
             cambiarGrupo();
         }
 
@@ -76,7 +76,7 @@ namespace Presentacion
         {
             cambiarGrupo();
         }
-       
+
 
         private void radioMediaRes_Click(object sender, EventArgs e)
         {
@@ -142,12 +142,12 @@ namespace Presentacion
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
-            agregarLinea();            
+            agregarLinea();
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
-            this.Close(); 
+            this.Close();
         }
 
         private void btnAceptar_Click(object sender, EventArgs e)
@@ -169,13 +169,13 @@ namespace Presentacion
         {
             try
             {
-                if (listaCortePorCompra.Count>0 || listaMediaRes.Count>0)
+                if (listaCortePorCompra.Count > 0 || listaMediaRes.Count > 0)
                 {
                     if (validaciónFinal())
                     {
                         Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
                         cargarCompra();//se cargan datos de la compra
-                        
+
                         if (esEgresoCaja)
                         {
                             if (!oCierreN.validarCajaAbiertaVendedor(oCompraE.FechaCompra, oCompraE.Sucursal, oUsuario))
@@ -195,14 +195,14 @@ namespace Presentacion
                             oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
                         }
 
-                        if (tipoCompra=="Media Res")
+                        if (tipoCompra == "Media Res")
                         {
-                            foreach (Entidades.MediaRes  mediaRes in listaMediaRes)
+                            foreach (Entidades.MediaRes mediaRes in listaMediaRes)
                             {
                                 oCompraN.agregarMedias(mediaRes);
                             }
                         }
-                        if (tipoCompra=="Cortes" || tipoCompra=="Ingreso Stock")
+                        if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
                         {
                             foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                             {
@@ -217,7 +217,7 @@ namespace Presentacion
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show("Error al guardar Mov en Cta Cte"+"\n\n"+ex.Source);
+                            MessageBox.Show("Error al guardar Mov en Cta Cte" + "\n\n" + ex.Source);
                         }
 
                         if (esEgresoCaja)
@@ -229,7 +229,7 @@ namespace Presentacion
 
                                 oEgresoCajaE.Fecha = oCompraE.FechaCompra;
                                 oEgresoCajaE.IdTipoEgresoCaja = oCierreN.getIdEgresoCajaPorCompra();
-                                oEgresoCajaE.Descripcion = "Compra a "+oCompraE.Proveedor.razonSocial+ " - ID:"+oCompraE.IdCompra.ToString();
+                                oEgresoCajaE.Descripcion = "Compra a " + oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString();
                                 oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtTotal.Text, false);
                                 oEgresoCajaE.Detalle = oCompraE.Observaciones;
                                 oEgresoCajaE.Sucursal = oCompraE.Sucursal;
@@ -248,7 +248,7 @@ namespace Presentacion
                             }
                         }
 
-                        if(oFrmCompra != null) oFrmCompra.cargarGrilla();
+                        if (oFrmCompra != null) oFrmCompra.cargarGrilla();
                         //this.Close();
                         limpiarListas();
                         oCompraE.IdCompra = 0;
@@ -309,7 +309,7 @@ namespace Presentacion
             txtObservaciones.Text = "";
 
             txtFechaCompra.Select();
-            
+
             listaCortesEnGrilla = new List<CortesPorCompra>();//Lista que se carga en la grilla
             listaMediasEnGrilla = new List<MediasPorCompra>();
 
@@ -318,7 +318,7 @@ namespace Presentacion
 
             grillaMediaRes.DataSource = null;
             grillaCortePorCompra.DataSource = null;
-                        
+
         }
 
 
@@ -328,11 +328,12 @@ namespace Presentacion
             oCompraE.Proveedor = oProvNuevaCompra;
             oCompraE.FechaCompra = txtFechaCompra.Value;
             oCompraE.Estado = "";
-            oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || tipoCompra=="Cortes" ? null :  (int?)Convert.ToInt32(txtCantMedias.Text);
-            oCompraE.KgsMedias = string.IsNullOrEmpty(txtTotalKg.Text) || tipoCompra == "Cortes" ? null : (int?)Convert.ToInt32(txtTotalKg.Text);
+            oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || tipoCompra == "Cortes" ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
+            oCompraE.KgsMedias = string.IsNullOrEmpty(txtTotalKg.Text) || tipoCompra == "Cortes" ? null :
+                (float?)Utilidades.Util_Form.convertFloat(txtTotalKg.Text, false); //(int?)Convert.ToInt32(txtTotalKg.Text);
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;
-            oCompraE.Sucursal = oSucursalE; 
+            oCompraE.Sucursal = oSucursalE;
             oCompraE.EnCtaCte = checkCtaCte.Checked;
             switch (oCompraE.IdCompra)
             {
@@ -347,7 +348,7 @@ namespace Presentacion
 
         private void quitarLinea()
         {
-            if (tipoCompra=="Media Res")
+            if (tipoCompra == "Media Res")
             {
                 quitarMedia();
             }
@@ -355,7 +356,7 @@ namespace Presentacion
             {
                 quitarCorte();
             }
-           
+
             cargarGrilla();
             //si ambas listas no contienen objetos se habilitan los radioButtons
             if (listaCortePorCompra.Count() == 0 && listaMediaRes.Count() == 0)
@@ -392,7 +393,7 @@ namespace Presentacion
         {
             try
             {
-                if (grillaMediaRes.SelectedRows.Count > 0 || grillaMediaRes.CurrentRow !=null)
+                if (grillaMediaRes.SelectedRows.Count > 0 || grillaMediaRes.CurrentRow != null)
                 {
                     int nroFila = grillaMediaRes.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
                     listaMediasEnGrilla.RemoveAt(nroFila);//elimina objetos de las listas
@@ -415,7 +416,7 @@ namespace Presentacion
         {
             if (validarCampos())
             {
-                if (tipoCompra=="Media Res")
+                if (tipoCompra == "Media Res")
                 {
                     agregarMediaRes();
                     txtKgMedia.Focus();
@@ -427,14 +428,14 @@ namespace Presentacion
                 }
 
                 limpiarCampos();
-                
+
             }
         }
 
         private void agregarCorte()
         {
             cargarCortesPorCompra();
-            cargarGrilla();            
+            cargarGrilla();
         }
 
         //carga textBox de totales
@@ -459,7 +460,7 @@ namespace Presentacion
                 }
             }
 
-            if (tipoCompra=="Media Res")
+            if (tipoCompra == "Media Res")
             {
                 foreach (MediasPorCompra fila in listaMediasEnGrilla)
                 {
@@ -473,7 +474,7 @@ namespace Presentacion
 
                 }
             }
-            
+
         }
 
         private int validarCorteEnGrilla()
@@ -504,8 +505,8 @@ namespace Presentacion
         //cargar Cortes y Grilla
         private void cargarCortesPorCompra()
         {
-            try 
-	        {
+            try
+            {
                 ultimaValidacion = true;
                 //creo y Cargar la Entidad CortePorCompra
                 oCortePorCompra = new Entidades.CortePorCompra();
@@ -568,11 +569,11 @@ namespace Presentacion
                     oCortePorCompra = null;
                     cortesPorCompra = null;
                 }
-	        }
-	        catch (Exception)
-	        {        		
-		        throw;
-	        }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         private void agregarMediaRes()
@@ -629,7 +630,7 @@ namespace Presentacion
 
                 oMediaRes.sucursal = oSucursalE;
                 listaMediaRes.Add(oMediaRes);
-               
+
                 //creo MediasPorCompra y cargo la lista de la grilla
                 mediasPorCompra = new MediasPorCompra();
 
@@ -643,9 +644,9 @@ namespace Presentacion
 
                 oMediaRes = null;
                 mediasPorCompra = null;
-        
+
             }
-            
+
         }
 
         private bool validarCampos()
@@ -655,7 +656,7 @@ namespace Presentacion
                 MessageBox.Show("Ingrese la sucursal.", "Ingresar sucursal", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
-            
+
             else
             {
                 //validacion para que sólo salte el cartel al presionar el boton -
@@ -670,11 +671,11 @@ namespace Presentacion
                  (txtCorteNuevaCompra.Text.Equals("") || txtCantKgs.Text.Equals(""))))
                 {
                     MessageBox.Show("Debe Completar todos los campos.", "Complete los campos vacíos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    if(txtPrecioKg.Text.Equals("")) txtPrecioKg.Focus();
+                    if (txtPrecioKg.Text.Equals("")) txtPrecioKg.Focus();
 
                     if (txtCantKgs.Text.Equals("") && tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))) txtCantKgs.Focus();
                     if (txtKgMedia.Text.Equals("") && tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))) txtKgMedia.Focus();
-                    
+
                     return false;
                 }
                 else
@@ -711,15 +712,15 @@ namespace Presentacion
                 {
                     return false;
                 }
-               // return true;
+                // return true;
             }
         }
 
         private void limpiarCampos()
         {
             //txtNroTropa.Text="";
-            txtKgMedia.Text="";
-            oCorteNuevaCompra=null;
+            txtKgMedia.Text = "";
+            oCorteNuevaCompra = null;
             txtCodigo.Text = "";
             txtCorteNuevaCompra.Text = "";
             txtPrecioKg.Text = radioCorte.Checked ? "" : txtPrecioKg.Text;
@@ -739,7 +740,7 @@ namespace Presentacion
                     if (listaMediasEnGrilla.Count > 0)
                     {
                         grillaMediaRes.Rows[listaMediasEnGrilla.Count - 1].Selected = true;
-                        grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;                        
+                        grillaMediaRes.FirstDisplayedScrollingRowIndex = listaMediasEnGrilla.Count - 1;
                     }
                 }
 
@@ -757,17 +758,17 @@ namespace Presentacion
                 }
 
                 cargarTotales();
-                validarListas();  
+                validarListas();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-      }
+        }
 
         private void validarListas()
         {
-            if (listaCortePorCompra.Count()>0 )
+            if (listaCortePorCompra.Count() > 0)
             {
                 radioMediaRes.Enabled = false;
                 radioCorte.Enabled = true;
@@ -776,13 +777,13 @@ namespace Presentacion
 
             if (listaMediaRes.Count() > 0)
             {
-                 radioMediaRes.Enabled = true;
+                radioMediaRes.Enabled = true;
                 radioCorte.Enabled = false;
                 comboSucursal.Enabled = false;
             }
 
             //si ambas listas no contienen objetos se habilitan los radioButtons
-            if (listaCortePorCompra.Count()==0 && listaMediaRes.Count()==0)
+            if (listaCortePorCompra.Count() == 0 && listaMediaRes.Count() == 0)
             {
                 radioMediaRes.Enabled = true;
                 radioCorte.Enabled = true;
@@ -791,7 +792,7 @@ namespace Presentacion
         }
 
         private void cambiarGrupo()
-        {            
+        {
             limpiarCampos();
             if (radioMediaRes.Checked == true)
             {
@@ -811,8 +812,8 @@ namespace Presentacion
                 groupCantMedias.Visible = true;
             }
 
-            if (radioCorte.Checked == true )
-            {                
+            if (radioCorte.Checked == true)
+            {
                 panelCorte.Visible = true;
                 grupoMediaRes.Text = "Corte ";
 
@@ -873,8 +874,8 @@ namespace Presentacion
         private void cargarComboSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN=new Negocio.Sucursal();
-            dtSucursales=oSucursalN.obtenerSucursales();
+            oSucursalN = new Negocio.Sucursal();
+            dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
@@ -891,7 +892,7 @@ namespace Presentacion
             {
                 if (radioCorte.TabStop)
                 {
-            		 radioCorte.TabStop = false;
+                    radioCorte.TabStop = false;
                 }
                 //si txtBoxPrecio es vacio se mueve el foco a éste
                 if ((txtKgMedia.Focused || txtPrecioKg.Focused) && txtPrecioKg.Text.Equals(""))
@@ -906,12 +907,12 @@ namespace Presentacion
         }
 
         //Métodos autocompletar
-        public  AutoCompleteStringCollection LoadAutoComplete()
+        public AutoCompleteStringCollection LoadAutoComplete()
         {
             dtCortes = oCorteN.buscarCorteSinMaestro(txtCorteNuevaCompra.Text.Trim());
-            
+
             AutoCompleteStringCollection cortes = new AutoCompleteStringCollection();
-            
+
             foreach (DataRow fila in dtCortes.Rows)
             {
                 //cortes.Add(fila["codigo"].ToString());
@@ -927,7 +928,7 @@ namespace Presentacion
 
                     EnviarCorte(oCorteNuevoE);
                 }
-                
+
             }
             return cortes;
         }
@@ -992,7 +993,7 @@ namespace Presentacion
 
             btnBuscarProv.Select();
         }
-                
+
         private void cargarCorteEnGrilla(Entidades.CortePorCompra oCortePorCompra)
         {
             cortesPorCompra = new CortesPorCompra();
@@ -1061,7 +1062,7 @@ namespace Presentacion
 
         private void txtCantMedias_TextChanged(object sender, EventArgs e)
         {
-            if(!Utilidades.Util_Form.validarCampoNumeroEntero(txtCantKgs.Text, "Cant. Medias"))
+            if (!Utilidades.Util_Form.validarCampoNumeroEntero(txtCantKgs.Text, "Cant. Medias"))
                 txtCantMedias.Text = "";
         }
 
@@ -1092,7 +1093,7 @@ namespace Presentacion
         }
 
         private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
-        {            
+        {
             checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
 

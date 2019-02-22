@@ -28,24 +28,24 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
             this.comboOrdenStock = new System.Windows.Forms.ComboBox();
             this.lblActualizar = new System.Windows.Forms.Label();
+            this.btnExportar = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.fechaDesdeProgresivo = new System.Windows.Forms.DateTimePicker();
             this.txtFechaHastaProgresivo = new System.Windows.Forms.DateTimePicker();
             this.comboCierreStock = new System.Windows.Forms.ComboBox();
             this.comboInicioStock = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.fechaHasta = new System.Windows.Forms.DateTimePicker();
-            this.fechaDesde = new System.Windows.Forms.DateTimePicker();
             this.label3 = new System.Windows.Forms.Label();
+            this.btnBuscar = new System.Windows.Forms.Button();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.comboTipoReporte = new System.Windows.Forms.ComboBox();
@@ -54,10 +54,8 @@
             this.label9 = new System.Windows.Forms.Label();
             this.btnSalir = new System.Windows.Forms.Button();
             this.barraControl = new System.Windows.Forms.ToolStrip();
-            this.grillaReportes = new System.Windows.Forms.DataGridView();
-            this.btnExportar = new System.Windows.Forms.Button();
-            this.btnBuscar = new System.Windows.Forms.Button();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
+            this.grillaReportes = new System.Windows.Forms.DataGridView();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -127,6 +125,20 @@
             this.lblActualizar.Text = "Actualizar...";
             this.lblActualizar.Visible = false;
             // 
+            // btnExportar
+            // 
+            this.btnExportar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnExportar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExportar.Image = ((System.Drawing.Image)(resources.GetObject("btnExportar.Image")));
+            this.btnExportar.Location = new System.Drawing.Point(789, 53);
+            this.btnExportar.Name = "btnExportar";
+            this.btnExportar.Size = new System.Drawing.Size(82, 31);
+            this.btnExportar.TabIndex = 25;
+            this.btnExportar.Text = "Exportar";
+            this.btnExportar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
+            this.btnExportar.UseVisualStyleBackColor = true;
+            this.btnExportar.Click += new System.EventHandler(this.btnExportar_Click);
+            // 
             // groupBox1
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -135,8 +147,6 @@
             this.groupBox1.Controls.Add(this.comboCierreStock);
             this.groupBox1.Controls.Add(this.comboInicioStock);
             this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Controls.Add(this.fechaHasta);
-            this.groupBox1.Controls.Add(this.fechaDesde);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(333, 37);
@@ -154,7 +164,6 @@
             this.fechaDesdeProgresivo.Name = "fechaDesdeProgresivo";
             this.fechaDesdeProgresivo.Size = new System.Drawing.Size(151, 20);
             this.fechaDesdeProgresivo.TabIndex = 25;
-            this.fechaDesdeProgresivo.Visible = false;
             this.fechaDesdeProgresivo.ValueChanged += new System.EventHandler(this.txtFechaHastaProgresivo_ValueChanged);
             this.fechaDesdeProgresivo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesdeProgresivo_KeyDown);
             // 
@@ -166,7 +175,6 @@
             this.txtFechaHastaProgresivo.Name = "txtFechaHastaProgresivo";
             this.txtFechaHastaProgresivo.Size = new System.Drawing.Size(151, 20);
             this.txtFechaHastaProgresivo.TabIndex = 24;
-            this.txtFechaHastaProgresivo.Visible = false;
             this.txtFechaHastaProgresivo.ValueChanged += new System.EventHandler(this.txtFechaHastaProgresivo_ValueChanged);
             this.txtFechaHastaProgresivo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtFechaHastaProgresivo_KeyDown);
             // 
@@ -203,27 +211,6 @@
             this.label4.TabIndex = 14;
             this.label4.Text = "Hasta";
             // 
-            // fechaHasta
-            // 
-            this.fechaHasta.CustomFormat = "dd/MM/yyyy";
-            this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaHasta.Location = new System.Drawing.Point(280, 20);
-            this.fechaHasta.Name = "fechaHasta";
-            this.fechaHasta.Size = new System.Drawing.Size(101, 20);
-            this.fechaHasta.TabIndex = 15;
-            this.fechaHasta.ValueChanged += new System.EventHandler(this.btnBuscar_Click);
-            // 
-            // fechaDesde
-            // 
-            this.fechaDesde.Checked = false;
-            this.fechaDesde.CustomFormat = "dd/MM/yyyy ";
-            this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaDesde.Location = new System.Drawing.Point(77, 20);
-            this.fechaDesde.Name = "fechaDesde";
-            this.fechaDesde.Size = new System.Drawing.Size(101, 20);
-            this.fechaDesde.TabIndex = 13;
-            this.fechaDesde.ValueChanged += new System.EventHandler(this.btnBuscar_Click);
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
@@ -234,6 +221,19 @@
             this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 12;
             this.label3.Text = "Desde";
+            // 
+            // btnBuscar
+            // 
+            this.btnBuscar.AccessibleDescription = "";
+            this.btnBuscar.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
+            this.btnBuscar.Location = new System.Drawing.Point(238, 52);
+            this.btnBuscar.Name = "btnBuscar";
+            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscar.TabIndex = 21;
+            this.btnBuscar.TabStop = false;
+            this.btnBuscar.UseVisualStyleBackColor = true;
+            this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
             // 
             // comboSucursal
             // 
@@ -333,6 +333,18 @@
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
             // 
+            // Imprimir
+            // 
+            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
+            this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.Imprimir.Name = "Imprimir";
+            this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.Imprimir.Size = new System.Drawing.Size(59, 42);
+            this.Imprimir.Text = "Imprimir";
+            this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.Imprimir.Click += new System.EventHandler(this.nuevo_Click);
+            // 
             // grillaReportes
             // 
             this.grillaReportes.AllowUserToAddRows = false;
@@ -378,45 +390,6 @@
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
             // 
-            // btnExportar
-            // 
-            this.btnExportar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnExportar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnExportar.Image = ((System.Drawing.Image)(resources.GetObject("btnExportar.Image")));
-            this.btnExportar.Location = new System.Drawing.Point(789, 53);
-            this.btnExportar.Name = "btnExportar";
-            this.btnExportar.Size = new System.Drawing.Size(82, 31);
-            this.btnExportar.TabIndex = 25;
-            this.btnExportar.Text = "Exportar";
-            this.btnExportar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
-            this.btnExportar.UseVisualStyleBackColor = true;
-            this.btnExportar.Click += new System.EventHandler(this.btnExportar_Click);
-            // 
-            // btnBuscar
-            // 
-            this.btnBuscar.AccessibleDescription = "";
-            this.btnBuscar.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
-            this.btnBuscar.Location = new System.Drawing.Point(238, 52);
-            this.btnBuscar.Name = "btnBuscar";
-            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
-            this.btnBuscar.TabIndex = 21;
-            this.btnBuscar.TabStop = false;
-            this.btnBuscar.UseVisualStyleBackColor = true;
-            this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
-            // 
-            // Imprimir
-            // 
-            this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
-            this.Imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.Imprimir.Name = "Imprimir";
-            this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.Imprimir.Size = new System.Drawing.Size(59, 42);
-            this.Imprimir.Text = "Imprimir";
-            this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.Imprimir.Click += new System.EventHandler(this.nuevo_Click);
-            // 
             // formReporteStock
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -451,9 +424,7 @@
         protected System.Windows.Forms.Button btnSalir;
         protected System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton Imprimir;
-        protected System.Windows.Forms.DateTimePicker fechaDesde;
         protected System.Windows.Forms.Label label3;
-        protected System.Windows.Forms.DateTimePicker fechaHasta;
         protected System.Windows.Forms.Label label4;
         private System.Windows.Forms.ComboBox comboTipoReporte;
         protected System.Windows.Forms.Label label2;

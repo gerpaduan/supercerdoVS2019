@@ -102,7 +102,7 @@ namespace Presentacion.Ventas
             
             txtFechaVenta.Value =oVentaE.FechaVenta;
             txtNroRemito.Text = oVentaE.NroRemito;
-            txtDiaFestivo.Text = oVentaE.DiaFestivo;
+            txtCuit.Text = oVentaE.DiaFestivo;
             comboTurno.SelectedItem= oVentaE.Turno;
             txtObservaciones.Text = oVentaE.Observaciones;
             txtCreado.Text = oVentaE.Creado.ToString();
@@ -279,7 +279,7 @@ namespace Presentacion.Ventas
         private void limpiarListas()
         {
             txtNroRemito.Text = "";
-            txtDiaFestivo.Text = "";
+            txtCuit.Text = "";
             txtObservaciones.Text = "";
 
             listaLineaGrilla = new List<LineaVenta>(); 
@@ -310,7 +310,7 @@ namespace Presentacion.Ventas
 
             oVentaE.Vendedor = oUsuario;
             oVentaE.FechaVenta = txtFechaVenta.Value;
-            oVentaE.DiaFestivo = txtDiaFestivo.Text.Trim();
+            oVentaE.DiaFestivo = txtCuit.Text.Trim();
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta ;
@@ -858,6 +858,7 @@ namespace Presentacion.Ventas
             checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
             checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
+            this.txtCuit.Text = oCliente.Cuit;
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
