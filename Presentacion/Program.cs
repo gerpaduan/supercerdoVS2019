@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.Configuration;
+using System.Threading;
 
 namespace Presentacion
 {
@@ -18,6 +19,8 @@ namespace Presentacion
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            Application.ThreadException += new ThreadExceptionEventHandler(Application_ThreadException);
+
             string formInicioForm = ConfigurationManager.AppSettings["formInicioApp"].ToString();
             switch (formInicioForm)
             {
@@ -30,6 +33,12 @@ namespace Presentacion
                 default:
                     break;
             }
+        }
+
+        //Atrapar la excepcion *Blog Leandro Tuttini* 
+        static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
+        {
+            MessageBox.Show(e.Exception.Message);
         }
     }
 }
