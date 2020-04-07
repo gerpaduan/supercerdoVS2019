@@ -50,6 +50,8 @@
             this.label17 = new System.Windows.Forms.Label();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.grupoCortes = new System.Windows.Forms.GroupBox();
+            this.checkBoxRedondeo = new System.Windows.Forms.CheckBox();
+            this.txtPrimerRedonde = new System.Windows.Forms.MaskedTextBox();
             this.lblNoHabilitado = new System.Windows.Forms.Label();
             this.lblVendedorNombre = new System.Windows.Forms.Label();
             this.checkTicket = new System.Windows.Forms.CheckBox();
@@ -155,7 +157,7 @@
             this.linkUltimasVentasCliente.AutoSize = true;
             this.linkUltimasVentasCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkUltimasVentasCliente.LinkColor = System.Drawing.SystemColors.Window;
-            this.linkUltimasVentasCliente.Location = new System.Drawing.Point(486, 81);
+            this.linkUltimasVentasCliente.Location = new System.Drawing.Point(466, 81);
             this.linkUltimasVentasCliente.Name = "linkUltimasVentasCliente";
             this.linkUltimasVentasCliente.Size = new System.Drawing.Size(140, 18);
             this.linkUltimasVentasCliente.TabIndex = 52;
@@ -271,6 +273,8 @@
             // grupoCortes
             // 
             this.grupoCortes.BackColor = System.Drawing.Color.Gray;
+            this.grupoCortes.Controls.Add(this.checkBoxRedondeo);
+            this.grupoCortes.Controls.Add(this.txtPrimerRedonde);
             this.grupoCortes.Controls.Add(this.lblNoHabilitado);
             this.grupoCortes.Controls.Add(this.lblVendedorNombre);
             this.grupoCortes.Controls.Add(this.checkTicket);
@@ -296,6 +300,39 @@
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
             this.grupoCortes.Text = "Corte";
+            // 
+            // checkBoxRedondeo
+            // 
+            this.checkBoxRedondeo.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkBoxRedondeo.AutoSize = true;
+            this.checkBoxRedondeo.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkBoxRedondeo.CheckAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.checkBoxRedondeo.Checked = true;
+            this.checkBoxRedondeo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBoxRedondeo.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkBoxRedondeo.Location = new System.Drawing.Point(906, 18);
+            this.checkBoxRedondeo.Name = "checkBoxRedondeo";
+            this.checkBoxRedondeo.Size = new System.Drawing.Size(37, 30);
+            this.checkBoxRedondeo.TabIndex = 53;
+            this.checkBoxRedondeo.TabStop = false;
+            this.checkBoxRedondeo.Text = "&R ";
+            this.checkBoxRedondeo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBoxRedondeo.UseVisualStyleBackColor = false;
+            this.checkBoxRedondeo.CheckedChanged += new System.EventHandler(this.checkBoxRedondeo_CheckedChanged);
+            // 
+            // txtPrimerRedonde
+            // 
+            this.txtPrimerRedonde.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtPrimerRedonde.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtPrimerRedonde.Location = new System.Drawing.Point(715, 15);
+            this.txtPrimerRedonde.Name = "txtPrimerRedonde";
+            this.txtPrimerRedonde.ReadOnly = true;
+            this.txtPrimerRedonde.Size = new System.Drawing.Size(106, 29);
+            this.txtPrimerRedonde.TabIndex = 53;
+            this.txtPrimerRedonde.TabStop = false;
+            this.txtPrimerRedonde.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPrimerRedonde.Visible = false;
             // 
             // lblNoHabilitado
             // 
@@ -332,7 +369,7 @@
             this.checkTicket.Checked = true;
             this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.Location = new System.Drawing.Point(553, 18);
+            this.checkTicket.Location = new System.Drawing.Point(553, 17);
             this.checkTicket.Name = "checkTicket";
             this.checkTicket.Size = new System.Drawing.Size(61, 30);
             this.checkTicket.TabIndex = 46;
@@ -515,6 +552,7 @@
             this.txtCantKgs.TabIndex = 1;
             this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCantKgs.MaskInputRejected += new System.Windows.Forms.MaskInputRejectedEventHandler(this.txtCantKgs_MaskInputRejected);
             this.txtCantKgs.Leave += new System.EventHandler(this.txtCantKgs_Leave);
             this.txtCantKgs.Enter += new System.EventHandler(this.txtCantKgs_Enter);
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
@@ -1270,5 +1308,7 @@
         protected System.Windows.Forms.Label lblClienteConBonif;
         protected System.Windows.Forms.Label lblNoHabilitado;
         private System.Windows.Forms.LinkLabel linkUltimasVentasCliente;
+        private System.Windows.Forms.MaskedTextBox txtPrimerRedonde;
+        private System.Windows.Forms.CheckBox checkBoxRedondeo;
     }
 }
