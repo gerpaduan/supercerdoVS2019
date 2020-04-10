@@ -990,7 +990,7 @@ namespace Presentacion.Caja
                             oTemporalLineaVenta.CantKg = cantKg;
                             oTemporalLineaVenta.TotalCorte = (cantKg * precioKg);
 
-                            txtPrimerRedonde.Text = (cantKg * precioKg).ToString();
+                            txtPrecioTarjeta.Text = (cantKg * precioKg).ToString();
 
                             //Seteo a CERO las variables
                             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;
@@ -1262,7 +1262,7 @@ namespace Presentacion.Caja
         {
             if (grillaLineasVenta.Rows.Count.Equals(0))
             {
-                titilarTextBoxVendedor();
+                //titilarTextBoxVendedor();
             }
 
             //si se borra el corte actual se llama a metodo registrarTemporalLinea

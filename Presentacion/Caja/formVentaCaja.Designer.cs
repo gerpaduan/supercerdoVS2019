@@ -51,7 +51,7 @@
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.grupoCortes = new System.Windows.Forms.GroupBox();
             this.checkBoxRedondeo = new System.Windows.Forms.CheckBox();
-            this.txtPrimerRedonde = new System.Windows.Forms.MaskedTextBox();
+            this.txtPrecioTarjeta = new System.Windows.Forms.MaskedTextBox();
             this.lblNoHabilitado = new System.Windows.Forms.Label();
             this.lblVendedorNombre = new System.Windows.Forms.Label();
             this.checkTicket = new System.Windows.Forms.CheckBox();
@@ -274,7 +274,7 @@
             // 
             this.grupoCortes.BackColor = System.Drawing.Color.Gray;
             this.grupoCortes.Controls.Add(this.checkBoxRedondeo);
-            this.grupoCortes.Controls.Add(this.txtPrimerRedonde);
+            this.grupoCortes.Controls.Add(this.txtPrecioTarjeta);
             this.grupoCortes.Controls.Add(this.lblNoHabilitado);
             this.grupoCortes.Controls.Add(this.lblVendedorNombre);
             this.grupoCortes.Controls.Add(this.checkTicket);
@@ -321,18 +321,18 @@
             this.checkBoxRedondeo.UseVisualStyleBackColor = false;
             this.checkBoxRedondeo.CheckedChanged += new System.EventHandler(this.checkBoxRedondeo_CheckedChanged);
             // 
-            // txtPrimerRedonde
+            // txtPrecioTarjeta
             // 
-            this.txtPrimerRedonde.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtPrimerRedonde.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPrimerRedonde.Location = new System.Drawing.Point(715, 15);
-            this.txtPrimerRedonde.Name = "txtPrimerRedonde";
-            this.txtPrimerRedonde.ReadOnly = true;
-            this.txtPrimerRedonde.Size = new System.Drawing.Size(106, 29);
-            this.txtPrimerRedonde.TabIndex = 53;
-            this.txtPrimerRedonde.TabStop = false;
-            this.txtPrimerRedonde.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtPrimerRedonde.Visible = false;
+            this.txtPrecioTarjeta.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtPrecioTarjeta.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtPrecioTarjeta.Location = new System.Drawing.Point(715, 15);
+            this.txtPrecioTarjeta.Name = "txtPrecioTarjeta";
+            this.txtPrecioTarjeta.ReadOnly = true;
+            this.txtPrecioTarjeta.Size = new System.Drawing.Size(106, 29);
+            this.txtPrecioTarjeta.TabIndex = 53;
+            this.txtPrecioTarjeta.TabStop = false;
+            this.txtPrecioTarjeta.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPrecioTarjeta.Visible = false;
             // 
             // lblNoHabilitado
             // 
@@ -1308,7 +1308,7 @@
         protected System.Windows.Forms.Label lblClienteConBonif;
         protected System.Windows.Forms.Label lblNoHabilitado;
         private System.Windows.Forms.LinkLabel linkUltimasVentasCliente;
-        private System.Windows.Forms.MaskedTextBox txtPrimerRedonde;
+        private System.Windows.Forms.MaskedTextBox txtPrecioTarjeta;
         private System.Windows.Forms.CheckBox checkBoxRedondeo;
     }
 }
