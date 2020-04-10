@@ -116,6 +116,7 @@
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.btnBloquear = new System.Windows.Forms.Button();
+            this.label10 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -157,7 +158,7 @@
             this.linkUltimasVentasCliente.AutoSize = true;
             this.linkUltimasVentasCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkUltimasVentasCliente.LinkColor = System.Drawing.SystemColors.Window;
-            this.linkUltimasVentasCliente.Location = new System.Drawing.Point(466, 81);
+            this.linkUltimasVentasCliente.Location = new System.Drawing.Point(320, 50);
             this.linkUltimasVentasCliente.Name = "linkUltimasVentasCliente";
             this.linkUltimasVentasCliente.Size = new System.Drawing.Size(140, 18);
             this.linkUltimasVentasCliente.TabIndex = 52;
@@ -273,6 +274,7 @@
             // grupoCortes
             // 
             this.grupoCortes.BackColor = System.Drawing.Color.Gray;
+            this.grupoCortes.Controls.Add(this.label10);
             this.grupoCortes.Controls.Add(this.checkBoxRedondeo);
             this.grupoCortes.Controls.Add(this.txtPrecioTarjeta);
             this.grupoCortes.Controls.Add(this.lblNoHabilitado);
@@ -325,7 +327,7 @@
             // 
             this.txtPrecioTarjeta.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtPrecioTarjeta.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPrecioTarjeta.Location = new System.Drawing.Point(715, 15);
+            this.txtPrecioTarjeta.Location = new System.Drawing.Point(715, 18);
             this.txtPrecioTarjeta.Name = "txtPrecioTarjeta";
             this.txtPrecioTarjeta.ReadOnly = true;
             this.txtPrecioTarjeta.Size = new System.Drawing.Size(106, 29);
@@ -369,7 +371,7 @@
             this.checkTicket.Checked = true;
             this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.Location = new System.Drawing.Point(553, 17);
+            this.checkTicket.Location = new System.Drawing.Point(553, 18);
             this.checkTicket.Name = "checkTicket";
             this.checkTicket.Size = new System.Drawing.Size(61, 30);
             this.checkTicket.TabIndex = 46;
@@ -1181,6 +1183,18 @@
             this.btnBloquear.UseVisualStyleBackColor = true;
             this.btnBloquear.Click += new System.EventHandler(this.btnBloquear_Click);
             // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(671, 22);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(39, 20);
+            this.label10.TabIndex = 54;
+            this.label10.Text = "Tarj.";
+            this.label10.Visible = false;
+            // 
             // formVentaCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1310,5 +1324,6 @@
         private System.Windows.Forms.LinkLabel linkUltimasVentasCliente;
         private System.Windows.Forms.MaskedTextBox txtPrecioTarjeta;
         private System.Windows.Forms.CheckBox checkBoxRedondeo;
+        protected System.Windows.Forms.Label label10;
     }
 }
