@@ -50,11 +50,12 @@
             this.label17 = new System.Windows.Forms.Label();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.grupoCortes = new System.Windows.Forms.GroupBox();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.checkBoxRedondeo = new System.Windows.Forms.CheckBox();
             this.txtPrecioTarjeta = new System.Windows.Forms.MaskedTextBox();
             this.lblNoHabilitado = new System.Windows.Forms.Label();
             this.lblVendedorNombre = new System.Windows.Forms.Label();
-            this.checkTicket = new System.Windows.Forms.CheckBox();
             this.btnQuitar = new System.Windows.Forms.Button();
             this.txtCorte = new System.Windows.Forms.TextBox();
             this.btnAgregar = new System.Windows.Forms.Button();
@@ -116,7 +117,6 @@
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.btnBloquear = new System.Windows.Forms.Button();
-            this.label10 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -192,6 +192,7 @@
             this.comboColors.Size = new System.Drawing.Size(121, 22);
             this.comboColors.TabIndex = 50;
             this.comboColors.TabStop = false;
+            this.comboColors.Visible = false;
             this.comboColors.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.comboColors_DrawItem);
             this.comboColors.SelectedIndexChanged += new System.EventHandler(this.comboColors_SelectedIndexChanged);
             // 
@@ -274,12 +275,12 @@
             // grupoCortes
             // 
             this.grupoCortes.BackColor = System.Drawing.Color.Gray;
+            this.grupoCortes.Controls.Add(this.checkTicket);
             this.grupoCortes.Controls.Add(this.label10);
             this.grupoCortes.Controls.Add(this.checkBoxRedondeo);
             this.grupoCortes.Controls.Add(this.txtPrecioTarjeta);
             this.grupoCortes.Controls.Add(this.lblNoHabilitado);
             this.grupoCortes.Controls.Add(this.lblVendedorNombre);
-            this.grupoCortes.Controls.Add(this.checkTicket);
             this.grupoCortes.Controls.Add(this.btnQuitar);
             this.grupoCortes.Controls.Add(this.txtCorte);
             this.grupoCortes.Controls.Add(this.btnAgregar);
@@ -302,6 +303,35 @@
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
             this.grupoCortes.Text = "Corte";
+            // 
+            // checkTicket
+            // 
+            this.checkTicket.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Checked = true;
+            this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.Location = new System.Drawing.Point(843, 18);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(61, 30);
+            this.checkTicket.TabIndex = 46;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = false;
+            this.checkTicket.CheckedChanged += new System.EventHandler(this.checkTicket_CheckedChanged);
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(509, 23);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(39, 20);
+            this.label10.TabIndex = 54;
+            this.label10.Text = "Tarj.";
             // 
             // checkBoxRedondeo
             // 
@@ -327,14 +357,13 @@
             // 
             this.txtPrecioTarjeta.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtPrecioTarjeta.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPrecioTarjeta.Location = new System.Drawing.Point(715, 18);
+            this.txtPrecioTarjeta.Location = new System.Drawing.Point(553, 19);
             this.txtPrecioTarjeta.Name = "txtPrecioTarjeta";
             this.txtPrecioTarjeta.ReadOnly = true;
             this.txtPrecioTarjeta.Size = new System.Drawing.Size(106, 29);
             this.txtPrecioTarjeta.TabIndex = 53;
             this.txtPrecioTarjeta.TabStop = false;
             this.txtPrecioTarjeta.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtPrecioTarjeta.Visible = false;
             // 
             // lblNoHabilitado
             // 
@@ -361,24 +390,6 @@
             this.lblVendedorNombre.TabIndex = 47;
             this.lblVendedorNombre.Text = "Nombre";
             this.lblVendedorNombre.Visible = false;
-            // 
-            // checkTicket
-            // 
-            this.checkTicket.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkTicket.AutoSize = true;
-            this.checkTicket.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkTicket.Checked = true;
-            this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.Location = new System.Drawing.Point(553, 18);
-            this.checkTicket.Name = "checkTicket";
-            this.checkTicket.Size = new System.Drawing.Size(61, 30);
-            this.checkTicket.TabIndex = 46;
-            this.checkTicket.TabStop = false;
-            this.checkTicket.Text = "&Ticket";
-            this.checkTicket.UseVisualStyleBackColor = false;
-            this.checkTicket.CheckedChanged += new System.EventHandler(this.checkTicket_CheckedChanged);
             // 
             // btnQuitar
             // 
@@ -588,7 +599,7 @@
             this.txtFechaVenta.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.txtFechaVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaVenta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaVenta.Location = new System.Drawing.Point(796, 75);
+            this.txtFechaVenta.Location = new System.Drawing.Point(796, 47);
             this.txtFechaVenta.Name = "txtFechaVenta";
             this.txtFechaVenta.Size = new System.Drawing.Size(167, 26);
             this.txtFechaVenta.TabIndex = 20;
@@ -1182,18 +1193,6 @@
             this.btnBloquear.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnBloquear.UseVisualStyleBackColor = true;
             this.btnBloquear.Click += new System.EventHandler(this.btnBloquear_Click);
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(671, 22);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(39, 20);
-            this.label10.TabIndex = 54;
-            this.label10.Text = "Tarj.";
-            this.label10.Visible = false;
             // 
             // formVentaCaja
             // 

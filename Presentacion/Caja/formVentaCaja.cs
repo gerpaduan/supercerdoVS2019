@@ -883,6 +883,9 @@ namespace Presentacion.Caja
                         }
 
                         this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
+                        float comisionTarjeta = float.Parse("1,05");
+                        float precioTarjeta = oCorteE.precioKg * comisionTarjeta;
+                        this.txtPrecioTarjeta.Text = precioTarjeta.ToString("N2");
                         cargarTotalCorte();
                     }
                     else
