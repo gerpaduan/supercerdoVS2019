@@ -31,7 +31,13 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idPersona",oVentaE.Persona.idPersona);
             cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito);
             cmVenta.Parameters.AddWithValue("@enCtaCte", oVentaE.EnCtaCte);
-            
+            cmVenta.Parameters.AddWithValue("@formaPago", oVentaE.FormaPago);
+            cmVenta.Parameters.AddWithValue("@cuit", oVentaE.Cuit);
+            cmVenta.Parameters.AddWithValue("@email", oVentaE.Email);
+            cmVenta.Parameters.AddWithValue("@tipoComprobante", oVentaE.TipoComprobante);
+            cmVenta.Parameters.AddWithValue("@acumRedondeoKgs", oVentaE.AcumRedondeoKgs);
+            cmVenta.Parameters.AddWithValue("@acumRedondeoImporte", oVentaE.AcumRedondeoImporte);
+
             cmVenta.Connection.Open();
             SqlDataReader drVenta = cmVenta.ExecuteReader();
             int idVenta = 0;
@@ -65,6 +71,12 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
             cmVenta.Parameters.AddWithValue("@eliminarLineas", eliminarLineas);
             cmVenta.Parameters.AddWithValue("@enCtaCte", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@formaPago", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@cuit", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@email", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@tipoComprobante", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@acumRedondeoKgs", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@acumRedondeoImporte", oVentaE.EnCtaCte);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();

@@ -205,6 +205,15 @@ namespace Presentacion.Caja
                 {
                     if (oEgresoCajaE.Id > 0 && readOnly)
                     {
+                        //se valida que no sea egreso por venta por Tarjeta
+                        if (oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.EgresoCaja.idPagoTarjeta))
+                        {
+                            MessageBox.Show("No puede modificar los egresos de caja que son por ventas con tarjeta.\n\n",
+                            "Egreso caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            return;
+                        }
+
                         //se valida que no sea egreso por Cta Cte
                         if (oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja))
                         {

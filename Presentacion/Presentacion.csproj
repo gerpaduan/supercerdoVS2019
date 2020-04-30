@@ -44,7 +44,7 @@
     <Reference Include="CrystalDecisions.Windows.Forms, Version=10.5.3700.0, Culture=neutral, PublicKeyToken=692fbea5521e1304" />
     <Reference Include="itextsharp, Version=5.5.8.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Dropbox\BackUp\SuperCerdo\20181204\itextsharp.dll</HintPath>
+      <HintPath>bin\Debug\SuperCerdo\itextsharp.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Microsoft.VisualBasic.PowerPacks.Vs, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
@@ -131,6 +131,12 @@
     </Compile>
     <Compile Include="Caja\formEgresosCajaVendedor.Designer.cs">
       <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formFormaPago.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formFormaPago.Designer.cs">
+      <DependentUpon>formFormaPago.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formLineasVendedor.cs">
       <SubType>Form</SubType>
@@ -642,6 +648,9 @@
     <EmbeddedResource Include="Caja\formEgresosCajaVendedor.resx">
       <DependentUpon>formEgresosCajaVendedor.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formFormaPago.resx">
+      <DependentUpon>formFormaPago.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formLineasVendedor.resx">
       <DependentUpon>formLineasVendedor.cs</DependentUpon>
     </EmbeddedResource>
@@ -946,6 +955,9 @@
     <None Include="Resources\16 %28Lock on%29.ico" />
     <None Include="Resources\16 %28Lock off%29.ico" />
     <Content Include="Tareas.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

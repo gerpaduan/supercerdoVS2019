@@ -13,6 +13,21 @@ namespace Entidades
             return oCliente.Bonificacion != 0 && !esPrecioMayorista ? (precio * (1 - (oCliente.Bonificacion / 100))) : precio;
         }
 
+        public enum tipoComprobanteEnum
+        {
+            X,
+            A,
+            B
+        }
+
+        public enum formaPagoEnum
+        {
+            Efectivo,
+            Debito,
+            Credito,
+            Nulo
+        }
+
          int idVenta;
          DateTime fechaVenta;
          DateTime creado;
@@ -27,6 +42,50 @@ namespace Entidades
          Usuario vendedor;
          private string tipoVenta;
          bool enCtaCte;
+         private string formaPago;
+         private string cuit;
+         private string email;
+         private char tipoComprobante;
+         private float acumRedondeoKgs;
+         private float acumRedondeoImporte;
+
+         public float AcumRedondeoImporte
+         {
+             get { return acumRedondeoImporte; }
+             set { acumRedondeoImporte = value; }
+         }
+
+         public float AcumRedondeoKgs
+         {
+             get { return acumRedondeoKgs; }
+             set { acumRedondeoKgs = value; }
+         }
+
+
+         public char TipoComprobante
+         {
+             get { return tipoComprobante; }
+             set { tipoComprobante = value; }
+         }
+
+
+         public string Email
+         {
+             get { return email; }
+             set { email = value; }
+         }
+
+         public string Cuit
+         {
+             get { return cuit; }
+             set { cuit = value; }
+         }
+
+         public string FormaPago
+         {
+             get { return formaPago; }
+             set { formaPago = value; }
+         }
 
          public bool EnCtaCte
          {

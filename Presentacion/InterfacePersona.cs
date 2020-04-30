@@ -9,4 +9,9 @@ namespace Presentacion
     {
         void EnviarPersona(Entidades.Persona persona);
     }
+
+    public interface InterfaceFormaPago
+    {
+        void EnviarFormaPago(Entidades.Venta.formaPagoEnum formaPago);
+    }
 }

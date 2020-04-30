@@ -7,6 +7,8 @@ namespace Entidades
 {
     public class EgresoCaja
     {
+        public static int idPagoTarjeta = 200;
+        
         public bool esEgresoCtaCte(int idTipoEgreso)
         {
             //100 es el IdTipoEgresoCaja para CtaCte

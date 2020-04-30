@@ -16,7 +16,7 @@ using Utilidades;
 
 namespace Presentacion.Caja
 {
-    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
+    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago
     {
         bool pesoBalanza = false;
         bool capturarPantallaFinal = false;
@@ -244,11 +244,19 @@ namespace Presentacion.Caja
                 {
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
                     Ticket.CreaTicket ticket = new Ticket.CreaTicket();
-                    ticket.imprimir = checkTicket.Checked;
+
+                    bool esEfectivo = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());
+                   
+                    //se genera el egreso de caja si paga con tarjeta
+                    if (!esEfectivo)
+                        egresoCajaPagoTarjeta(oVentaE);
+
+                    //imprimir si está checked o no es efectivo
+                    ticket.imprimir = checkTicket.Checked || !esEfectivo;
                     ticket.TextoCentro("x");
                     ticket.NoValidoComoFactura();
                     ticket.LineasEnBlanco(1);
-                    if (oVentaE.EnCtaCte)
+                    if (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
                         ticket.TextoCentro("A Cta. Cte.");
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
@@ -303,7 +311,7 @@ namespace Presentacion.Caja
                     {
                         MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
                     }
-                    
+
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                     ultimaVentaVendedor();
@@ -335,11 +343,44 @@ namespace Presentacion.Caja
 
                 Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
-                imprimirTicket(oEgresoCajaE);
+
+                //Solo imprimo Egreso Caja si venta es en Efectivo
+                if (oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+                    imprimirTicket(oEgresoCajaE);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error al guardar el Egreso.\n\nLa Venta y el movimiento en la Cta. Cte se registró correctamente." + "\n\n" + ex.Source);
+            }
+        }
+
+
+        public void egresoCajaPagoTarjeta(Entidades.Venta oVentaConEgresoCaja)
+        {
+            try
+            {
+                Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
+
+                oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
+                oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                oEgresoCajaE.Monto = float.Parse(txtTotalS.Text);// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                oEgresoCajaE.Detalle = " | Kgs: " + txtTotalKgs.Text + 
+                    " | Precio: " + (float.Parse(txtTotalS.Text) / float.Parse(txtTotalKgs.Text)).ToString("N3") + 
+                    " | TOT: " + txtTotalS.Text;
+                oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
+                oEgresoCajaE.IdCompra = 0;
+                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
+                oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
+                oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al guardar el Egreso por pago de Tarjeta.\n\nLa Venta se registró correctamente." + "\n\n" + ex.Source);
             }
         }
 
@@ -382,6 +423,8 @@ namespace Presentacion.Caja
             int idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
+            txtCuit.Text = "";
+            txtEmail.Text = "";
             txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
@@ -396,6 +439,8 @@ namespace Presentacion.Caja
             checkCtaCte.Checked = false;
             lblClienteConBonif.Visible = false;            
             linkUltimasVentasCliente.Visible = false;
+            restablecerFormaDePago();
+            comboTipoComprobante.SelectedIndex = 0; //Remito
 
             totalVenta = 0;
             abona = 0;
@@ -434,7 +479,15 @@ namespace Presentacion.Caja
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim() + totalRedondeo;
             oVentaE.Estado = estadoVenta;
-            oVentaE.EnCtaCte = checkCtaCte.Checked;
+            oVentaE.EnCtaCte = checkCtaCte.Checked; 
+            //Si FormaPago <> 'Efectivo y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'
+            oVentaE.TipoComprobante = (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))&& 
+                comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
+                Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
+            oVentaE.Cuit = txtCuit.Text;
+            oVentaE.Email = txtEmail.Text;
+            oVentaE.AcumRedondeoImporte = ganPesosTotRedondeo;
+            oVentaE.AcumRedondeoKgs = ganKgsTotRedondeo;
         }
 
         private void cargarTotales()
@@ -573,6 +626,19 @@ namespace Presentacion.Caja
 
         private bool validarLinea()
         {
+            //Solicita que ingrese Forma de Pago
+            if (string.IsNullOrEmpty(oVentaE.FormaPago))
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = false;//Asegura q se inicien todos false
+
+                formFormaPago frmFormaPago = new formFormaPago();
+                frmFormaPago.ShowDialog(this);
+                
+                //si ninguna forma de pago está seleccionada no se valida
+                if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false)
+                    return false;
+            }
+
             //Se valida que no sea media res
             if (oCorteE != null && !oCorteE.Habilitado)
             {
@@ -656,6 +722,16 @@ namespace Presentacion.Caja
 
         private bool validacionFinal()
         {
+            //valida que un venta en CTA CTE sea solo en Efectivo
+            if (checkCtaCte.Checked && !oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+            {
+                MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) sólo pueden ser en EFECTIVO."+
+                    "\n\nSi la venta es en CTA.CTE. seleccione la forma de pago en Efectivo."+
+                    "(La forma de pago que tiene seleccionada es: "+oVentaE.FormaPago.ToString()+")", 
+                    "Verifique la forma de pago", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             //si es una modificacion y no hay datos en la grilla no valida porque se eliminar la venta
             if (modificar && grillaLineasVenta.Rows.Count == 0)
             {
@@ -993,8 +1069,6 @@ namespace Presentacion.Caja
                             oTemporalLineaVenta.CantKg = cantKg;
                             oTemporalLineaVenta.TotalCorte = (cantKg * precioKg);
 
-                            txtPrecioTarjeta.Text = (cantKg * precioKg).ToString();
-
                             //Seteo a CERO las variables
                             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;
 
@@ -1261,6 +1335,22 @@ namespace Presentacion.Caja
             this.txtCodigo.Focus();
         }
 
+        public void EnviarFormaPago(Entidades.Venta.formaPagoEnum formaPago)
+        {
+            switch (formaPago)
+            {
+                case Entidades.Venta.formaPagoEnum.Efectivo:
+                    checkEfectivo.Checked = true;
+                    break;
+                case Entidades.Venta.formaPagoEnum.Debito:
+                    checkDebito.Checked = true;
+                    break;
+                case Entidades.Venta.formaPagoEnum.Credito:
+                    checkCredito.Checked = true;
+                    break;
+            }                    
+        }
+
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
             if (grillaLineasVenta.Rows.Count.Equals(0))
@@ -1408,6 +1498,9 @@ namespace Presentacion.Caja
                 grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
                 timerBloquearCaja.Start();
                 ultimaVentaVendedor();
+                restablecerFormaDePago();
+                comboTipoComprobante.SelectedIndex = 0;
+                
             }
             else
             {
@@ -2074,5 +2167,77 @@ namespace Presentacion.Caja
         {
             checkBoxRedondeo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkBoxRedondeo.Checked);
         }
+
+        private void restablecerFormaDePago()
+        {
+            oVentaE.FormaPago = null;
+
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+        }
+
+        private void setFormaDePago()
+        {
+            restablecerFormaDePago();
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkEfectivo.Checked);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkDebito.Checked);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCredito.Checked);
+        }
+
+        private void checkEfectivo_CheckedChanged(object sender, EventArgs e)
+        {            
+            setFormaDePago();
+            if (checkEfectivo.Checked)
+            {
+                checkDebito.Checked = checkCredito.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
+            }
+        }
+
+        private void checkDebito_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkDebito.Checked)
+            {
+                checkEfectivo.Checked = checkCredito.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Debito.ToString();
+            }
+
+            //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            //checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+            //checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+        }
+
+        private void checkCredito_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkCredito.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Credito.ToString();
+            }
+
+            //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            //checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            //checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+        }
+
+        private void comboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString()))
+            {
+                txtCuit.ReadOnly = txtEmail.ReadOnly = true;
+                txtCodigo.Focus();
+            }
+            else
+            {
+                txtCuit.ReadOnly = txtEmail.ReadOnly = false;
+                txtCuit.Focus();
+            }
+        }
+
     }
 }

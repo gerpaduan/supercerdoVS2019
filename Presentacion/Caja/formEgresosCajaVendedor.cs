@@ -26,8 +26,14 @@ namespace Presentacion.Caja
 
         private void formEgresosCajaVendedor_Load(object sender, EventArgs e)
         {
+            form_Load();
+            comboFiltro.SelectedIndex = 0;
+        }
+
+        private void form_Load()
+        {
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            this.Text = "Egresos Caja "+oCierreE.UsuarioInicio.Nombre;
+            this.Text = "Egresos Caja " + oCierreE.UsuarioInicio.Nombre;
             grillaEgresosCaja.DataSource = oCierreN.getEgresosCajaVendedor(oCierreE);
             grillaEgresosCaja.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
@@ -35,6 +41,11 @@ namespace Presentacion.Caja
             grillaEgresosCaja.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
 
+            CargarTotal();
+        }
+
+        private void CargarTotal()
+        {
             decimal total = 0;
             foreach (DataGridViewRow row in grillaEgresosCaja.Rows)
             {
@@ -62,7 +73,7 @@ namespace Presentacion.Caja
                 if (fila != null)
                 {
                     txtFechaTexto.Text = fila.Cells["Fecha"].Value.ToString();
-                    txtTipoEgresoCaja.Text = fila.Cells["Tipo EgresoCaja"].Value.ToString();
+                    txtTipoEgresoCaja.Text = fila.Cells["TipoEgresoCaja"].Value.ToString();
                     txtDescripcion.Text = fila.Cells["Descripción"].Value.ToString();
                     txtMonto.Text = fila.Cells["Monto"].Value.ToString();
                     txtDetalle.Text = fila.Cells["Detalle"].Value.ToString();
@@ -95,7 +106,8 @@ namespace Presentacion.Caja
             frmAddOrEditEgresoCaja.egresoDesdeCajaVenta = true;
             frmAddOrEditEgresoCaja.ShowDialog();
 
-            formEgresosCajaVendedor_Load(null, null);
+            //formEgresosCajaVendedor_Load(null, null);
+            form_Load();
         }
 
         private void btnVerGasto_Click(object sender, EventArgs e)
@@ -115,6 +127,28 @@ namespace Presentacion.Caja
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void comboFiltro_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            string nombreCol = grillaEgresosCaja.Columns["TipoEgresoCaja"].Name;
+
+            switch (comboFiltro.Text)
+            {
+                case "Todos":
+                        form_Load();
+                        break;
+                case "Tarjeta":
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'Tarjeta Pago'");// comboFiltro.SelectedItem.ToString());
+                        break;
+                case "Egresos":
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "<> 'Tarjeta Pago'");// comboFiltro.SelectedItem.ToString());
+                        break;
+                default:
+                    break;
+            }
+            CargarTotal();
         }
     }
 }
