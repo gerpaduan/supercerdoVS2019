@@ -19,6 +19,28 @@ namespace Presentacion
         private bool pesoBalanza;
         int indexAnulado = -1;
         int random;
+        //Variables de redondeo y ajuste por tarjeta   
+        public float kgsAjusteTarj;
+        public float kgsRedondeo;
+        public float kgsTotalCalculado;
+
+        public float KgsTotalCalculado
+        {
+            get { return kgsTotalCalculado; }
+            set { kgsTotalCalculado = value; }
+        }
+
+        public float KgsRedondeo
+        {
+            get { return kgsRedondeo; }
+            set { kgsRedondeo = value; }
+        }
+
+        public float KgsAjusteTarj
+        {
+            get { return kgsAjusteTarj; }
+            set { kgsAjusteTarj = value; }
+        }
 
         public int Random
         {

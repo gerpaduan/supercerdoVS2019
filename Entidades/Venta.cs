@@ -20,7 +20,7 @@ namespace Entidades
             B
         }
 
-        public enum formaPagoEnum
+        public enum formaPagoEnum //Al cambiar estos datos modificar los valores en formVentaCaja 
         {
             Efectivo,
             Debito,

@@ -73,5 +73,28 @@ namespace Entidades
                 corte = value;
             }
         }
+
+        //Variables de redondeo y ajuste por tarjeta   
+        float kgsAjusteTarj;
+        float kgsRedondeo;
+        float kgsTotalCalculado;
+
+        public float KgsTotalCalculado
+        {
+            get { return kgsTotalCalculado; }
+            set { kgsTotalCalculado = value; }
+        }
+
+        public float KgsRedondeo
+        {
+            get { return kgsRedondeo; }
+            set { kgsRedondeo = value; }
+        }
+
+        public float KgsAjusteTarj
+        {
+            get { return kgsAjusteTarj; }
+            set { kgsAjusteTarj = value; }
+        }
     }
 }

@@ -72,9 +72,17 @@ namespace Presentacion.Caja
         bool cartelPrimerCorteVendedor = Convert.ToBoolean(ConfigurationManager.AppSettings["cartelPrimerCorteVendedor"].ToString());
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
-        float totalCorte, precioKg, cantKg;
+        float totalCorte, precioKg, cantKg, cantKgTarjeta, kgsTotalCalculado;
         float totalVenta = 0, abona = 0, cambio = 0, ganPesosTotRedondeo = 0, ganKgsTotRedondeo = 0,
             ganPesosRedondeoLinea = 0, ganKgsRedondeoLinea = 0, acumRedondeoKgs = 0, acumRedondeImporte = 0;
+        /// TODO: agregar los campos en tablas de BD y obtener de allí los valores
+        /// porcAjEfectivo, porcAjDebito, porcAjCredito, limiteKgParaAjuste;
+        /// **Crear tabla General con los campos IdConsumidorFinal
+        /// **Obtener los pesos de condimentos en embutidos desde BD y NO desde app.config!!
+        float porcAjEfectivo, porcAjDebito, porcAjCredito, limiteKgParaAjuste;
+        bool esAjustePorcTarj = false;
+        int idConsumidorFinal;
+
         #endregion
 
 
@@ -91,7 +99,7 @@ namespace Presentacion.Caja
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
             Negocio.Persona oPersonaN = new Negocio.Persona();
-            int idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
+            idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtFecVenta.Text = DateTime.Now.ToString();
@@ -103,6 +111,11 @@ namespace Presentacion.Caja
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
             checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
 
+            //se cargar los porcentajes de ajuste por tarjeta
+            porcAjEfectivo = float.Parse("1,010");//obtener de Base de Datos
+            porcAjDebito = float.Parse("1,010");
+            porcAjCredito = float.Parse("1,010");
+            limiteKgParaAjuste = float.Parse("6");
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -268,6 +281,9 @@ namespace Presentacion.Caja
                     for (int index = 0; index < listaLineaVenta.Count; index++)
                     {
                         Entidades.LineaVenta linea = listaLineaVenta[index];
+                        //setear por cada linea cantKg <- KgsTotalCalculado
+                        linea.CantKg = linea.KgsTotalCalculado;
+
                         //si está anulada la linea se asigna el IdLineaVenta del corte anulado
                         linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta : 
                             Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
@@ -559,6 +575,10 @@ namespace Presentacion.Caja
             txtPrecioKg.Text = "";
             txtTotalCorte.Text = "";
 
+            //test redondeo
+            txtRedondeo.Text = "";
+            txtKgsRedondeo.Text = "";
+
             txtCodigo.Focus();
         }
 
@@ -576,7 +596,7 @@ namespace Presentacion.Caja
             lineaVentaP.cantKgs = lineaE.CantKg;
             //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.Mayorista);
             lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.Mayorista);
-            lineaVentaP.totalS = lineaE.PrecioKg * lineaE.CantKg;
+            lineaVentaP.totalS = lineaE.PrecioKg * lineaE.KgsTotalCalculado;
             lineaVentaP.Random = lineaE.Random;
 
             if (lineaE.Estado == 1)
@@ -601,6 +621,7 @@ namespace Presentacion.Caja
             oLineaVenta.Venta = oVentaE;
 
             oLineaVenta.CantKg = cantKg;
+            oLineaVenta.KgsTotalCalculado = kgsTotalCalculado;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
             oLineaVenta.Bonificacion = (1 - (precioKg / oCorteE.precioKg)) * 100;
@@ -624,20 +645,28 @@ namespace Presentacion.Caja
             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;//Seteo a CERO las variables
         }
 
-        private bool validarLinea()
+        private bool ingresarFormaPago()
         {
-            //Solicita que ingrese Forma de Pago
+            bool resp = true;
             if (string.IsNullOrEmpty(oVentaE.FormaPago))
             {
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = false;//Asegura q se inicien todos false
 
                 formFormaPago frmFormaPago = new formFormaPago();
                 frmFormaPago.ShowDialog(this);
-                
+
                 //si ninguna forma de pago está seleccionada no se valida
                 if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false)
                     return false;
             }
+            return resp;
+        }
+
+        private bool validarLinea()
+        {
+            //Solicita que ingrese Forma de Pago
+            if (!ingresarFormaPago())
+                return false;
 
             //Se valida que no sea media res
             if (oCorteE != null && !oCorteE.Habilitado)
@@ -891,6 +920,7 @@ namespace Presentacion.Caja
                         oLineaVenta.Corte = oLineaVentaSelect.Corte;
                         oLineaVenta.Venta = oLineaVentaSelect.Venta;
                         oLineaVenta.CantKg = oLineaVentaSelect.CantKg * -1;
+                        oLineaVenta.KgsTotalCalculado = oLineaVentaSelect.KgsTotalCalculado * -1;
                         oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.IndexAnulado = nroFila;
@@ -959,9 +989,7 @@ namespace Presentacion.Caja
                         }
 
                         this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
-                        float comisionTarjeta = float.Parse("1,05");
-                        float precioTarjeta = oCorteE.precioKg * comisionTarjeta;
-                        this.txtPrecioTarjeta.Text = precioTarjeta.ToString("N2");
+                        
                         cargarTotalCorte();
                     }
                     else
@@ -971,6 +999,9 @@ namespace Presentacion.Caja
                         this.txtPrecioKg.Text = "";
                         this.txtCorte.Text = "";
                         totalesParciales(0, 0);
+                        //test redondeo
+                        txtRedondeo.Text = "";
+                        txtKgsRedondeo.Text = "";
                     }
                 }
                 catch (Exception ex)
@@ -986,13 +1017,15 @@ namespace Presentacion.Caja
                 txtCorte.Text = null;
                 txtTotalCorte.Text = null;
                 txtPrecioKg.Text = null;
-                totalesParciales(0,0);
+                totalesParciales(0, 0);
+                //test redondeo
+                txtRedondeo.Text = "";
+                txtKgsRedondeo.Text = "";
             }
         }
 
         private void cargarTotalCorte()
-        {          
-
+        {     
             //calcular total corte para peso inestable
             if (txtCantKgs.Text.Contains("i"))
             {
@@ -1015,7 +1048,6 @@ namespace Presentacion.Caja
 	            }
                 return;
             }
-
 
             if (!txtCantKgs.Text.Equals("") && (checkLeerPeso.Checked  || 
                 ( !checkLeerPeso.Checked && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))))
@@ -1050,46 +1082,87 @@ namespace Presentacion.Caja
 
                         //"001.305"            
 
-                        //TODO: Si la centena del decimal cambia de valor, Variar peso hasta ###.#99
+                        //Si la centena del decimal cambia de valor, Variar peso hasta ###.#99
                         //camparar las centenar de Decimales y/o Unidad de peso para verificar que no hay un cambio brusco.
                         bool kgNroRedondo = txtCantKgs.Text.Length > 6 && txtCantKgs.Text.Substring(4, 3).Equals("000");
 
-                        ///Redondear importe si la cantidad de ganancia NO excede a $5 y el Kg no es un número redondo
+                        ///REDONDAR importe SI:
+                        ///*Cliente es consumidor final
+                        ///*la cantidad de ganancia NO excede a $5
+                        ///*el Kg no es un número redondo
                         ///
-                        bool redondear = ganPesosTotRedondeo < 5.1 && !kgNroRedondo ? true : false;
+                        bool redondear = oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < 5.1 && !kgNroRedondo ? true : false;
 
                         //cargo el Temporal de LineaVenta
                         try
                         {
+                            switch (oVentaE.FormaPago)
+                            {
+                                case "Efectivo":
+                                    kgsTotalCalculado = (cantKg * porcAjEfectivo);
+                                    break;
+                                case "Debito":
+                                    kgsTotalCalculado = (cantKg * porcAjDebito);
+                                    break;
+                                case "Credito":
+                                    kgsTotalCalculado = (cantKg * porcAjCredito);
+                                    break;
+                                default:
+                                    kgsTotalCalculado = (cantKg * porcAjEfectivo);
+                                    break;
+                            } 
+                            
+                            //se crea esta variable temporal para recalular kgs en caso q el kg ajusta cambie la unidad entera
+                            float tempKgsTotalCalculado = kgsTotalCalculado;
+
+                            string[] dosPartesKgsTarj = kgsTotalCalculado.ToString().Split(',');
+                            string[] dosPartesKgsBalanza = cantKg.ToString().Split(',');
+                            bool esKgsRedondo = dosPartesKgsBalanza.Count().Equals(1) || dosPartesKgsBalanza[1].Equals("000")
+                                || dosPartesKgsBalanza[1].Equals("00") || dosPartesKgsBalanza[1].Equals("0");
+
+                            ///Si cambia parte entera Kilaje al ajustar, establecer decimales en ###.995
+                            if ((!(dosPartesKgsTarj[0] == dosPartesKgsBalanza[0])))
+                                kgsTotalCalculado = Util_Form.convertFloat(dosPartesKgsBalanza[0] + ".995", false);
+                            
+                            ///NO ajustar kgs por Tarjeta cuando:
+                            ///*cantKg de balanza es mayor al limite estipulado
+                            ///*ó Cliente contiene "Empleado" en su nombre
+                            ///*ó Kg Real Balanza es un entero
+                            if (cantKg > limiteKgParaAjuste || oCliente.razonSocial.Contains("mpleado") || esKgsRedondo)
+                                //se setear el valor real balanza
+                                kgsTotalCalculado = cantKg;
+                                                                                    
+                            //Setear el temporal de la linea venta
                             oTemporalLineaVenta = new Entidades.TemporalLineaVenta();
                             oTemporalLineaVenta.FechaInicioPesada = DateTime.Now;
                             oTemporalLineaVenta.Corte = oCorteE;
                             oTemporalLineaVenta.Vendedor = oUsuario;
                             oTemporalLineaVenta.Sucursal = oSucursalE;
                             oTemporalLineaVenta.CantKg = cantKg;
-                            oTemporalLineaVenta.TotalCorte = (cantKg * precioKg);
+                            oTemporalLineaVenta.KgsTotalCalculado = kgsTotalCalculado;
+                            oTemporalLineaVenta.TotalCorte = (kgsTotalCalculado * precioKg);
 
                             //Seteo a CERO las variables
                             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;
 
                             if (redondear)
                             {
-                                //oTemporalLineaVenta.TotalCorte = redondearMultipo10(cantKg * precioKg);
-                                float importeRedondeo = redondearMultipo10(cantKg * precioKg);
+                                //float importeRedondeo = redondearMultipo10(cantKg * precioKg);
+                                float importeRedondeo = redondearMultipo10(kgsTotalCalculado * precioKg);
                                 float kgsRedondeo = (importeRedondeo / precioKg);
 
                                 //Si al redondear los Kgs cambia la parte entera del Kilaje, NO se redondea
                                 string[] parteEnteraRedondeo = kgsRedondeo.ToString().Split(',');
-                                string[] parteEnteraCantKgs = cantKg.ToString().Split(',');
+                                string[] parteEnteraCantKgs = cantKgTarjeta.ToString().Split(',');
                                 if (parteEnteraRedondeo[0] == parteEnteraCantKgs[0])
                                 {
                                     //Guardo las diferencia en el redondeo
-                                    ganKgsRedondeoLinea = kgsRedondeo - cantKg;//Guarda Dif KGS
-                                    ganPesosRedondeoLinea = importeRedondeo - (cantKg * precioKg);//Guarda Dif Dinero
+                                    ganKgsRedondeoLinea = kgsRedondeo - cantKgTarjeta;//Guarda Dif KGS
+                                    ganPesosRedondeoLinea = importeRedondeo - (cantKgTarjeta * precioKg);//Guarda Dif Dinero
 
-                                    cantKg = kgsRedondeo;
-                                    oTemporalLineaVenta.CantKg = cantKg;
-                                    oTemporalLineaVenta.TotalCorte = (cantKg * precioKg);
+                                    cantKgTarjeta = kgsRedondeo;
+                                    oTemporalLineaVenta.KgsTotalCalculado = cantKgTarjeta;
+                                    oTemporalLineaVenta.TotalCorte = (cantKgTarjeta * precioKg);
                                 }
                             }                  
                         }
@@ -1097,11 +1170,18 @@ namespace Presentacion.Caja
                         {
                         }
                     }
-                    totalCorte = (cantKg * precioKg);
+                    totalCorte = (kgsTotalCalculado * precioKg);// (cantKg * precioKg);
                     //cargo el txt total corte
-                    txtTotalCorte.Text = totalCorte.ToString("N");
+                    txtRedondeo.Text = (cantKg * precioKg).ToString("N");
+                    txtTotalCorte.Text = totalCorte.ToString("N2");
+
+                    //test redondeo
+                    //totalCorteRed = (cantKgTarjeta * precioKg);
+                    txtRedondeo.Text = (cantKg * precioKg).ToString("N2");
+                    txtKgsRedondeo.Text = kgsTotalCalculado.ToString("N3");
 
                     totalesParciales(cantKg, totalCorte);
+                    //totalesParciales(cantKg, totalCorte);
 
                 }
                 catch (Exception ex)
@@ -1115,7 +1195,7 @@ namespace Presentacion.Caja
         }
 
         /// <summary>
-        /// Metodo para Redondear a multiplo de 10. Para aplicar cuando faltan billetes de $5
+        /// Metodo para Redondear a multiplo de 10 el Monto de la Venta. Para aplicar cuando faltan billetes de $5
         /// </summary>
         /// 
         private float redondearMultipo10(float importe)
@@ -1140,7 +1220,7 @@ namespace Presentacion.Caja
                 }             
             }
 
-            return importe;
+                return importe;
         }
 
 
@@ -1205,7 +1285,8 @@ namespace Presentacion.Caja
                     {
                         precioKg = float.Parse(txtPrecioKg.Text.Trim());
                     }
-                    totalCorte = precioKg * cantKg;
+                    //totalCorte = precioKg * cantKg;
+                    totalCorte = precioKg * kgsTotalCalculado;
 
                     if (Presentacion.FormPrincipal.logueado)
                     {
@@ -1330,9 +1411,12 @@ namespace Presentacion.Caja
 
             this.txtCliente.Text = oCliente.razonSocial;
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
-            lblClienteConBonif.Text = lblClienteConBonif.Visible ? 
-                "Cliente con Bonificación ("+oCliente.Bonificacion.ToString("N2")+" %)" : "";
+            lblClienteConBonif.Text = lblClienteConBonif.Visible ?
+                "Cliente con Bonificación (" + oCliente.Bonificacion.ToString("N2") + " %)" : "";
             this.txtCodigo.Focus();
+
+            ////Actualizo el corte cargado 
+            //cargarCorte(); ----postergado---
         }
 
         public void EnviarFormaPago(Entidades.Venta.formaPagoEnum formaPago)
@@ -1386,9 +1470,18 @@ namespace Presentacion.Caja
                 }
                 else
                 {
+                    if (txtCodigo.Focused)
+                    {
+                        ///Al ingrtesar el primer corte, luego de ingresar el codigo aparecera el cartel de forma pago
+                        ///la idea es q no muestre el total del corte sin antes poner la forma pago
+                        //Solicitar forma de pago si balanza es distinta a nulo o cero                        
+                        bool resp = !ingresarFormaPago() ? true: false;
+                    }
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
                 }
+
+                
             }
         }
 
@@ -1706,7 +1799,7 @@ namespace Presentacion.Caja
                 listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? oLineaVentaSelect.Corte.CorteDesc :
                     (oLineaVentaSelect.Corte.CorteDesc.Length < 9 ? oLineaVentaSelect.Corte.CorteDesc : oLineaVentaSelect.Corte.CorteDesc.Substring(0,9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
                 listaLineaGrilla[nroFila].precioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
-                listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].cantKgs;
+                listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].KgsTotalCalculado;
 
                 cargarGrilla();
 
@@ -1902,6 +1995,7 @@ namespace Presentacion.Caja
                         //checkLeerPeso.Checked = FormPrincipal.logueado ? 
                         //    checkLeerPeso.Checked : true;
                         //if (checkLeerPeso.Checked) btnAgregar.Focus();
+
                         checkLeerPeso.Checked = true;
                         btnAgregar.Focus();
                     }
