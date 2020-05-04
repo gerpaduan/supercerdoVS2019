@@ -48,7 +48,7 @@ namespace Presentacion.Caja
                 validado = false;
                 if (txtPrecioKg.Text.Equals("")) return;
 
-                if (Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "Precio"))
+                if (!txtPrecioKg.Text.Contains("-") && Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "Precio"))
                 {
                     precio = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, false);
                     total = precio * oLineaVenta.CantKg;

@@ -594,10 +594,13 @@ namespace Presentacion.Caja
                     lineaE.Corte.CorteDesc.Substring(0, 9)) + 
                     " (Bonif. " + lineaE.Bonificacion.ToString("F2") + "%)";
             lineaVentaP.cantKgs = lineaE.CantKg;
+            lineaVentaP.kgsTotalCalculado = lineaE.KgsTotalCalculado;
             //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.Mayorista);
             lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.Mayorista);
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.KgsTotalCalculado;
             lineaVentaP.Random = lineaE.Random;
+            lineaVentaP.kgsRedondeo = lineaE.KgsRedondeo;
+            lineaVentaP.kgsAjusteTarj = lineaE.KgsAjusteTarj;
 
             if (lineaE.Estado == 1)
             {

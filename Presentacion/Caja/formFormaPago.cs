@@ -66,7 +66,10 @@ namespace Presentacion.Caja
                 case Keys.NumPad3:
                     formaPago = Entidades.Venta.formaPagoEnum.Credito;
                     enviarFormaPago();
-                    break;          
+                    break;  
+                case Keys.Escape:
+                    this.Close();
+                    break;
             }
             return base.ProcessCmdKey(ref msg, keyData);
             enviarFormaPago();
