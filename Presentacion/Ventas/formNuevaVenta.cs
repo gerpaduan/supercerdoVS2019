@@ -315,6 +315,16 @@ namespace Presentacion.Ventas
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta ;
             oVentaE.EnCtaCte = checkCtaCte.Checked;
+
+            oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
+            oVentaE.TipoComprobante = 'B';
+                //(!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString())) &&
+                //comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
+                //Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
+            oVentaE.Cuit = "";// txtCuit.Text;
+            oVentaE.Email = "";//txtEmail.Text;
+            oVentaE.AcumRedondeoImporte = 0;//ganPesosTotRedondeo;
+            oVentaE.AcumRedondeoKgs = 0;//ganKgsTotRedondeo;
         }
 
         private void cargarTotales()
