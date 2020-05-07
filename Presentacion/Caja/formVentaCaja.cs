@@ -1156,16 +1156,16 @@ namespace Presentacion.Caja
 
                                 //Si al redondear los Kgs cambia la parte entera del Kilaje, NO se redondea
                                 string[] parteEnteraRedondeo = kgsRedondeo.ToString().Split(',');
-                                string[] parteEnteraCantKgs = cantKgTarjeta.ToString().Split(',');
+                                string[] parteEnteraCantKgs = kgsTotalCalculado.ToString().Split(',');
                                 if (parteEnteraRedondeo[0] == parteEnteraCantKgs[0])
                                 {
                                     //Guardo las diferencia en el redondeo
-                                    ganKgsRedondeoLinea = kgsRedondeo - cantKgTarjeta;//Guarda Dif KGS
-                                    ganPesosRedondeoLinea = importeRedondeo - (cantKgTarjeta * precioKg);//Guarda Dif Dinero
+                                    ganKgsRedondeoLinea = kgsRedondeo - kgsTotalCalculado;//Guarda Dif KGS
+                                    ganPesosRedondeoLinea = importeRedondeo - (kgsTotalCalculado * precioKg);//Guarda Dif Dinero
 
-                                    cantKgTarjeta = kgsRedondeo;
-                                    oTemporalLineaVenta.KgsTotalCalculado = cantKgTarjeta;
-                                    oTemporalLineaVenta.TotalCorte = (cantKgTarjeta * precioKg);
+                                    kgsTotalCalculado = kgsRedondeo;
+                                    oTemporalLineaVenta.KgsTotalCalculado = kgsTotalCalculado;
+                                    oTemporalLineaVenta.TotalCorte = (kgsTotalCalculado * precioKg);
                                 }
                             }                  
                         }
