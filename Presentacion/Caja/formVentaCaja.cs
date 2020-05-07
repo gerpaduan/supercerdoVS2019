@@ -273,6 +273,7 @@ namespace Presentacion.Caja
                         ticket.TextoCentro("A Cta. Cte.");
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
+                    ticket.TextoIzquierda("Forma Pago: " + oVentaE.FormaPago.ToString());
                     ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
                     ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
                     //ticket.LineasEnBlanco(0);
