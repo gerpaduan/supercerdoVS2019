@@ -596,12 +596,11 @@ namespace Presentacion.Caja
                     " (Bonif. " + lineaE.Bonificacion.ToString("F2") + "%)";
             lineaVentaP.cantKgs = lineaE.CantKg;
             lineaVentaP.kgsTotalCalculado = lineaE.KgsTotalCalculado;
+            lineaVentaP.kgsAjusteTarj = lineaE.KgsAjusteTarj;
             //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.Mayorista);
             lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.Mayorista);
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.KgsTotalCalculado;
             lineaVentaP.Random = lineaE.Random;
-            lineaVentaP.kgsRedondeo = lineaE.KgsRedondeo;
-            lineaVentaP.kgsAjusteTarj = lineaE.KgsAjusteTarj;
 
             if (lineaE.Estado == 1)
             {
@@ -626,6 +625,7 @@ namespace Presentacion.Caja
 
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.KgsTotalCalculado = kgsTotalCalculado;
+            oLineaVenta.KgsAjusteTarj = oLineaVenta.KgsTotalCalculado - oLineaVenta.CantKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
             oLineaVenta.Bonificacion = (1 - (precioKg / oCorteE.precioKg)) * 100;
@@ -655,8 +655,9 @@ namespace Presentacion.Caja
             if (string.IsNullOrEmpty(oVentaE.FormaPago))
             {
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = false;//Asegura q se inicien todos false
-
+                                
                 formFormaPago frmFormaPago = new formFormaPago();
+                //frmFormaPago.esCorteUnidad = 
                 frmFormaPago.ShowDialog(this);
 
                 //si ninguna forma de pago está seleccionada no se valida
@@ -1477,9 +1478,10 @@ namespace Presentacion.Caja
                     if (txtCodigo.Focused)
                     {
                         ///Al ingrtesar el primer corte, luego de ingresar el codigo aparecera el cartel de forma pago
-                        ///la idea es q no muestre el total del corte sin antes poner la forma pago
+                        ///la idea es q NO muestre el total del corte sin antes poner la forma pago
                         //Solicitar forma de pago si balanza es distinta a nulo o cero                        
-                        bool resp = !ingresarFormaPago() ? true: false;
+                        
+                        //bool resp = !ingresarFormaPago() ? true: false;
                     }
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
@@ -2016,8 +2018,6 @@ namespace Presentacion.Caja
                             if (cantCajaVenta > 1)
                             {
                                 titilarTextBoxVendedor();
-                                //Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Caja de..." ,oUsuario.User.ToUpper());
-                                //barraProgreso.ShowDialog();
                                 break; 
                             }
                         }
@@ -2042,6 +2042,7 @@ namespace Presentacion.Caja
 
         private void btnAgregar_Enter(object sender, EventArgs e)
         {
+            ingresarFormaPago();
             this.btnAgregar.UseVisualStyleBackColor = false;
             this.btnAgregar.BackColor = focusColor;
         }
@@ -2302,10 +2303,6 @@ namespace Presentacion.Caja
                 checkEfectivo.Checked = checkCredito.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Debito.ToString();
             }
-
-            //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            //checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
-            //checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
         }
 
         private void checkCredito_CheckedChanged(object sender, EventArgs e)
@@ -2317,10 +2314,6 @@ namespace Presentacion.Caja
                 checkEfectivo.Checked = checkDebito.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Credito.ToString();
             }
-
-            //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            //checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            //checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
         }
 
         private void comboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
