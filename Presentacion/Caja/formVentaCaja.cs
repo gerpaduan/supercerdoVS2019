@@ -494,7 +494,7 @@ namespace Presentacion.Caja
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = acumRedondeoDetalle;
             oVentaE.DiaFestivo = "";
-            oVentaE.Observaciones = txtObservaciones.Text.Trim() + totalRedondeo;
+            oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
             oVentaE.EnCtaCte = checkCtaCte.Checked; 
             //Si FormaPago <> 'Efectivo y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'
@@ -926,6 +926,7 @@ namespace Presentacion.Caja
                         oLineaVenta.Venta = oLineaVentaSelect.Venta;
                         oLineaVenta.CantKg = oLineaVentaSelect.CantKg * -1;
                         oLineaVenta.KgsTotalCalculado = oLineaVentaSelect.KgsTotalCalculado * -1;
+                        oLineaVenta.KgsAjusteTarj = oLineaVentaSelect.KgsAjusteTarj * -1;
                         oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.IndexAnulado = nroFila;

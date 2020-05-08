@@ -183,8 +183,10 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
             cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
-            cmVenta.Parameters.AddWithValue("@cantKg", oLineaE.CantKg);
-            cmVenta.Parameters.AddWithValue("@precioKg", oLineaE.PrecioKg);
+            cmVenta.Parameters.AddWithValue("@cantKg", Math.Round(oLineaE.CantKg, 3));
+            cmVenta.Parameters.AddWithValue("@kgsAjusteTarj", Math.Round(oLineaE.KgsAjusteTarj, 3));
+            cmVenta.Parameters.AddWithValue("@porcKgsAjusteTarj", oLineaE.CantKg == 0 ? 0 : Math.Round(oLineaE.KgsAjusteTarj / oLineaE.CantKg, 3));
+            cmVenta.Parameters.AddWithValue("@precioKg", Math.Round(oLineaE.PrecioKg, 2));
             cmVenta.Parameters.AddWithValue("@bonificacion", oLineaE.Bonificacion);
             cmVenta.Parameters.AddWithValue("@idLineaVentaAnulado", oLineaE.IndexAnulado);
 
