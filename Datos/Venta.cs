@@ -25,7 +25,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
             cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
-            cmVenta.Parameters.AddWithValue("@turno",oVentaE.Turno);
+            cmVenta.Parameters.AddWithValue("@turno",oVentaE.Turno == null ? "" : oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
             cmVenta.Parameters.AddWithValue("@idPersona",oVentaE.Persona.idPersona);
@@ -63,7 +63,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idSucNueva", oVentaE.Sucursal.idSucursal);
             cmVenta.Parameters.AddWithValue("@tipoVenta", oVentaE.TipoVenta);
             cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
-            cmVenta.Parameters.AddWithValue("@turno", oVentaE.Turno);
+            cmVenta.Parameters.AddWithValue("@turno", oVentaE.Turno == null ? "" : oVentaE.Turno);
             cmVenta.Parameters.AddWithValue("@diaFestivo", oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones", oVentaE.Observaciones);
             cmVenta.Parameters.AddWithValue("@idPersona", oVentaE.Persona.idPersona);

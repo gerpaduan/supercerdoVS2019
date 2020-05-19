@@ -103,10 +103,27 @@ namespace Presentacion.Ventas
             txtFechaVenta.Value =oVentaE.FechaVenta;
             txtNroRemito.Text = oVentaE.NroRemito;
             txtCuit.Text = oVentaE.DiaFestivo;
-            comboTurno.SelectedItem= oVentaE.Turno;
             txtObservaciones.Text = oVentaE.Observaciones;
             txtCreado.Text = oVentaE.Creado.ToString();
             txtActualizado.Text = oVentaE.Actualizado >= oVentaE.Creado ? oVentaE.Actualizado.ToString() : "";
+
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            switch (oVentaE.FormaPago)
+            {
+                case "Efectivo":
+                    checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Debito":
+                    checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Credito":
+                    checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                default:
+                    break;
+            }
 
             estadoVenta = oVentaE.Estado;
         }      
@@ -127,7 +144,7 @@ namespace Presentacion.Ventas
 
                     aCtaCte = true;
                     frmVentas.cargarGrilla();
-
+                    limpiarListas();
                     this.Close();
                     
                 }
@@ -138,7 +155,6 @@ namespace Presentacion.Ventas
                     MessageBox.Show(ex.Message);
                 }
             }
-
         }
 
 #endregion
@@ -264,7 +280,6 @@ namespace Presentacion.Ventas
                     frmVentas.cargarGrilla();
 
                     limpiarListas();
-                    //this.Close();
                     txtFechaVenta.Focus();
 
                 }
@@ -278,14 +293,19 @@ namespace Presentacion.Ventas
         }
         private void limpiarListas()
         {
-            txtNroRemito.Text = "";
-            txtCuit.Text = "";
-            txtObservaciones.Text = "";
+            if (checkLimpiarCliente.Checked)
+            {
+                oCliente = new Entidades.Persona();
+                EnviarPersona(oCliente);
+            }
 
+            txtNroRemito.Text = "";
+            txtObservaciones.Text = "";
             listaLineaGrilla = new List<LineaVenta>(); 
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
             dtCortes = oCorteN.obtenerCortes();
+            restablecerFormaDePago();
         }
 
         private void cambiarSucursal()
@@ -300,7 +320,6 @@ namespace Presentacion.Ventas
         private void cargarVenta()
         {
             oVentaE.Persona = oCliente;
-            oVentaE.Turno = comboTurno.SelectedText;
 
             //asigo sucursal a la venta            
             oVentaE.Sucursal = oSucursalE;
@@ -316,13 +335,9 @@ namespace Presentacion.Ventas
             oVentaE.Estado = estadoVenta ;
             oVentaE.EnCtaCte = checkCtaCte.Checked;
 
-            oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
-            oVentaE.TipoComprobante = 'B';
-                //(!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString())) &&
-                //comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
-                //Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
-            oVentaE.Cuit = "";// txtCuit.Text;
-            oVentaE.Email = "";//txtEmail.Text;
+            oVentaE.TipoComprobante = Convert.ToChar(comboTipoComprobante.SelectedItem);
+            oVentaE.Cuit = txtCuit.Text;
+            oVentaE.Email = txtEmail.Text;
             oVentaE.AcumRedondeoImporte = 0;//ganPesosTotRedondeo;
             oVentaE.AcumRedondeoKgs = 0;//ganKgsTotRedondeo;
         }
@@ -550,6 +565,11 @@ namespace Presentacion.Ventas
 
         private bool validacionFinal()
         {
+            if (oVentaE.FormaPago == null)
+            {
+                MessageBox.Show("Seleccione una forma de pago.");
+                return false;
+            }
             //si es una modificacion y no hay datos en la grilla no valida porque se eliminar la venta
             if (modificar && grillaLineasVenta.Rows.Count==0)
             {
@@ -629,7 +649,7 @@ namespace Presentacion.Ventas
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedItem = null;
+            comboSucursal.SelectedItem = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
 
@@ -869,6 +889,8 @@ namespace Presentacion.Ventas
             checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;
+            this.txtTelefono.Text = oCliente.Telefono;
+            this.txtEmail.Text = "";
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -918,6 +940,9 @@ namespace Presentacion.Ventas
                 MessageBox.Show("No está logueado");
                 this.Close();
             }
+
+            comboTipoComprobante.SelectedIndex = 0; //Remito
+            restablecerFormaDePago();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -1022,6 +1047,56 @@ namespace Presentacion.Ventas
         private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
         {
             checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
+        }
+
+        private void checkEfectivo_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+            if (checkEfectivo.Checked)
+            {
+                checkDebito.Checked = checkCredito.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
+            }
+        }
+
+        private void checkDebito_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkDebito.Checked)
+            {
+                checkEfectivo.Checked = checkCredito.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Debito.ToString();
+            }
+        }
+
+        private void checkCredito_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkCredito.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Credito.ToString();
+            }
+        }
+
+        private void setFormaDePago()
+        {
+            restablecerFormaDePago();
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkEfectivo.Checked);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkDebito.Checked);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCredito.Checked);
+        }
+
+
+        private void restablecerFormaDePago()
+        {
+            oVentaE.FormaPago = null;
+
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
         }
     }
 }

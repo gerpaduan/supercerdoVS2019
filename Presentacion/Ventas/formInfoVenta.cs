@@ -89,6 +89,7 @@ namespace Presentacion.Ventas
 
         private void cargarCamposVenta()
         {
+            comboTipoComprobante.SelectedItem = oVentaE.TipoComprobante.ToString();
             txtIdVenta.Text = oVentaE.IdVenta.ToString();
             txtVendedor.Text = oVentaE.Vendedor.Nombre;
             checkCtaCte.Checked = oVentaE.EnCtaCte;
@@ -97,10 +98,31 @@ namespace Presentacion.Ventas
             txtSucursal.Text = oVentaE.Sucursal.sucursal;
             txtCliente.Text = oVentaE.Persona.razonSocial;
             txtCuit.Text = oVentaE.Persona.Cuit;
+            txtTelefono.Text = oVentaE.Persona.Telefono;
+            txtEmail.Text = oVentaE.Email;
             txtFechaVenta.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.FechaVenta);
             txtObservaciones.Text = oVentaE.Observaciones;
             txtCreado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Creado);
             txtActualizado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Actualizado);
+
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            switch (oVentaE.FormaPago)
+            {
+                case "Efectivo":
+                    checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Debito":
+                    checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Credito":
+                    checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                default:
+                    break;
+            }
+
             cargarListaGrilla();
         }
 

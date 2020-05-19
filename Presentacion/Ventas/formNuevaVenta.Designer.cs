@@ -57,6 +57,15 @@
             this.btnAgregar = new System.Windows.Forms.Button();
             this.label14 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkEfectivo = new System.Windows.Forms.CheckBox();
+            this.checkCredito = new System.Windows.Forms.CheckBox();
+            this.checkDebito = new System.Windows.Forms.CheckBox();
+            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
+            this.label20 = new System.Windows.Forms.Label();
+            this.txtEmail = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtTelefono = new System.Windows.Forms.TextBox();
             this.checkCtaCte = new System.Windows.Forms.CheckBox();
             this.label19 = new System.Windows.Forms.Label();
             this.comboUsuario = new System.Windows.Forms.ComboBox();
@@ -67,7 +76,6 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.txtCuit = new System.Windows.Forms.TextBox();
-            this.comboTurno = new System.Windows.Forms.ComboBox();
             this.btnBuscarCliente = new System.Windows.Forms.Button();
             this.txtCliente = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -97,9 +105,11 @@
             this.label18 = new System.Windows.Forms.Label();
             this.txtActualizado = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.checkLimpiarCliente = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.SuspendLayout();
             // 
@@ -139,9 +149,9 @@
             this.grupoCortes.Controls.Add(this.label14);
             this.grupoCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grupoCortes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.grupoCortes.Location = new System.Drawing.Point(17, 139);
+            this.grupoCortes.Location = new System.Drawing.Point(17, 156);
             this.grupoCortes.Name = "grupoCortes";
-            this.grupoCortes.Size = new System.Drawing.Size(748, 83);
+            this.grupoCortes.Size = new System.Drawing.Size(748, 66);
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
             this.grupoCortes.Text = "Corte";
@@ -152,7 +162,7 @@
             this.button1.ForeColor = System.Drawing.SystemColors.WindowText;
             this.button1.Image = ((System.Drawing.Image)(resources.GetObject("button1.Image")));
             this.button1.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button1.Location = new System.Drawing.Point(653, 46);
+            this.button1.Location = new System.Drawing.Point(653, 39);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(89, 24);
             this.button1.TabIndex = 48;
@@ -165,7 +175,7 @@
             // 
             this.checkSumarIgualCorte.AutoSize = true;
             this.checkSumarIgualCorte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkSumarIgualCorte.Location = new System.Drawing.Point(489, 18);
+            this.checkSumarIgualCorte.Location = new System.Drawing.Point(489, 11);
             this.checkSumarIgualCorte.Name = "checkSumarIgualCorte";
             this.checkSumarIgualCorte.Size = new System.Drawing.Size(125, 19);
             this.checkSumarIgualCorte.TabIndex = 47;
@@ -177,7 +187,7 @@
             // 
             this.checkFijarPrecio.AutoSize = true;
             this.checkFijarPrecio.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkFijarPrecio.Location = new System.Drawing.Point(373, 18);
+            this.checkFijarPrecio.Location = new System.Drawing.Point(373, 11);
             this.checkFijarPrecio.Name = "checkFijarPrecio";
             this.checkFijarPrecio.Size = new System.Drawing.Size(88, 19);
             this.checkFijarPrecio.TabIndex = 46;
@@ -192,7 +202,7 @@
             this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkLeerPeso.Location = new System.Drawing.Point(280, 18);
+            this.checkLeerPeso.Location = new System.Drawing.Point(280, 11);
             this.checkLeerPeso.Name = "checkLeerPeso";
             this.checkLeerPeso.Size = new System.Drawing.Size(71, 19);
             this.checkLeerPeso.TabIndex = 45;
@@ -206,7 +216,7 @@
             this.txtTotalCorte.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalCorte.Location = new System.Drawing.Point(505, 48);
+            this.txtTotalCorte.Location = new System.Drawing.Point(505, 41);
             this.txtTotalCorte.Name = "txtTotalCorte";
             this.txtTotalCorte.Size = new System.Drawing.Size(74, 21);
             this.txtTotalCorte.TabIndex = 3;
@@ -219,7 +229,7 @@
             this.txtPrecioKg.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtPrecioKg.Location = new System.Drawing.Point(395, 48);
+            this.txtPrecioKg.Location = new System.Drawing.Point(395, 41);
             this.txtPrecioKg.Name = "txtPrecioKg";
             this.txtPrecioKg.Size = new System.Drawing.Size(66, 21);
             this.txtPrecioKg.TabIndex = 2;
@@ -236,7 +246,7 @@
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(357, 51);
+            this.label15.Location = new System.Drawing.Point(357, 44);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(32, 15);
             this.label15.TabIndex = 44;
@@ -247,7 +257,7 @@
             this.txtCantKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCantKgs.Location = new System.Drawing.Point(286, 48);
+            this.txtCantKgs.Location = new System.Drawing.Point(286, 41);
             this.txtCantKgs.Name = "txtCantKgs";
             this.txtCantKgs.ReadOnly = true;
             this.txtCantKgs.Size = new System.Drawing.Size(65, 21);
@@ -265,7 +275,7 @@
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label13.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label13.Location = new System.Drawing.Point(251, 51);
+            this.label13.Location = new System.Drawing.Point(251, 44);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(31, 15);
             this.label13.TabIndex = 43;
@@ -276,7 +286,7 @@
             this.txtCodigo.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCodigo.Location = new System.Drawing.Point(89, 20);
+            this.txtCodigo.Location = new System.Drawing.Point(89, 19);
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.Size = new System.Drawing.Size(56, 21);
             this.txtCodigo.TabIndex = 0;
@@ -292,7 +302,7 @@
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(37, 23);
+            this.label5.Location = new System.Drawing.Point(37, 22);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(46, 15);
             this.label5.TabIndex = 39;
@@ -304,7 +314,7 @@
             this.btnBuscarCorte.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorte.Image")));
-            this.btnBuscarCorte.Location = new System.Drawing.Point(151, 18);
+            this.btnBuscarCorte.Location = new System.Drawing.Point(151, 17);
             this.btnBuscarCorte.Name = "btnBuscarCorte";
             this.btnBuscarCorte.Size = new System.Drawing.Size(28, 24);
             this.btnBuscarCorte.TabIndex = 29;
@@ -320,7 +330,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(465, 52);
+            this.label7.Location = new System.Drawing.Point(465, 45);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(34, 15);
             this.label7.TabIndex = 34;
@@ -331,7 +341,7 @@
             this.btnQuitar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnQuitar.ForeColor = System.Drawing.Color.Black;
             this.btnQuitar.Image = ((System.Drawing.Image)(resources.GetObject("btnQuitar.Image")));
-            this.btnQuitar.Location = new System.Drawing.Point(620, 46);
+            this.btnQuitar.Location = new System.Drawing.Point(620, 39);
             this.btnQuitar.Name = "btnQuitar";
             this.btnQuitar.Size = new System.Drawing.Size(29, 25);
             this.btnQuitar.TabIndex = 32;
@@ -344,7 +354,7 @@
             this.txtCorte.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCorte.Location = new System.Drawing.Point(89, 48);
+            this.txtCorte.Location = new System.Drawing.Point(89, 41);
             this.txtCorte.Name = "txtCorte";
             this.txtCorte.ReadOnly = true;
             this.txtCorte.Size = new System.Drawing.Size(153, 21);
@@ -357,7 +367,7 @@
             this.btnAgregar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnAgregar.ForeColor = System.Drawing.Color.Black;
             this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
-            this.btnAgregar.Location = new System.Drawing.Point(585, 46);
+            this.btnAgregar.Location = new System.Drawing.Point(585, 39);
             this.btnAgregar.Name = "btnAgregar";
             this.btnAgregar.Size = new System.Drawing.Size(29, 25);
             this.btnAgregar.TabIndex = 4;
@@ -372,7 +382,7 @@
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label14.Location = new System.Drawing.Point(50, 51);
+            this.label14.Location = new System.Drawing.Point(50, 44);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(36, 15);
             this.label14.TabIndex = 35;
@@ -382,6 +392,13 @@
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.checkLimpiarCliente);
+            this.groupBox1.Controls.Add(this.groupBox2);
+            this.groupBox1.Controls.Add(this.comboTipoComprobante);
+            this.groupBox1.Controls.Add(this.label20);
+            this.groupBox1.Controls.Add(this.txtEmail);
+            this.groupBox1.Controls.Add(this.label6);
+            this.groupBox1.Controls.Add(this.txtTelefono);
             this.groupBox1.Controls.Add(this.checkCtaCte);
             this.groupBox1.Controls.Add(this.label19);
             this.groupBox1.Controls.Add(this.comboUsuario);
@@ -392,7 +409,6 @@
             this.groupBox1.Controls.Add(this.label4);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.txtCuit);
-            this.groupBox1.Controls.Add(this.comboTurno);
             this.groupBox1.Controls.Add(this.btnBuscarCliente);
             this.groupBox1.Controls.Add(this.txtCliente);
             this.groupBox1.Controls.Add(this.label1);
@@ -401,10 +417,131 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(14, 16);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(751, 117);
+            this.groupBox1.Size = new System.Drawing.Size(751, 134);
             this.groupBox1.TabIndex = 18;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Datos Venta";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.checkEfectivo);
+            this.groupBox2.Controls.Add(this.checkCredito);
+            this.groupBox2.Controls.Add(this.checkDebito);
+            this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupBox2.Location = new System.Drawing.Point(519, 84);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(226, 48);
+            this.groupBox2.TabIndex = 66;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Forma de Pago";
+            // 
+            // checkEfectivo
+            // 
+            this.checkEfectivo.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkEfectivo.AutoSize = true;
+            this.checkEfectivo.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkEfectivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkEfectivo.Location = new System.Drawing.Point(9, 15);
+            this.checkEfectivo.Name = "checkEfectivo";
+            this.checkEfectivo.Size = new System.Drawing.Size(76, 30);
+            this.checkEfectivo.TabIndex = 55;
+            this.checkEfectivo.TabStop = false;
+            this.checkEfectivo.Text = "Efectivo";
+            this.checkEfectivo.UseVisualStyleBackColor = false;
+            this.checkEfectivo.CheckedChanged += new System.EventHandler(this.checkEfectivo_CheckedChanged);
+            // 
+            // checkCredito
+            // 
+            this.checkCredito.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkCredito.AutoSize = true;
+            this.checkCredito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCredito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkCredito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkCredito.Location = new System.Drawing.Point(153, 15);
+            this.checkCredito.Name = "checkCredito";
+            this.checkCredito.Size = new System.Drawing.Size(70, 30);
+            this.checkCredito.TabIndex = 61;
+            this.checkCredito.TabStop = false;
+            this.checkCredito.Text = "Credito";
+            this.checkCredito.UseVisualStyleBackColor = false;
+            this.checkCredito.CheckedChanged += new System.EventHandler(this.checkCredito_CheckedChanged);
+            // 
+            // checkDebito
+            // 
+            this.checkDebito.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkDebito.AutoSize = true;
+            this.checkDebito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkDebito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkDebito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkDebito.Location = new System.Drawing.Point(86, 15);
+            this.checkDebito.Name = "checkDebito";
+            this.checkDebito.Size = new System.Drawing.Size(66, 30);
+            this.checkDebito.TabIndex = 60;
+            this.checkDebito.TabStop = false;
+            this.checkDebito.Text = "Debito";
+            this.checkDebito.UseVisualStyleBackColor = false;
+            this.checkDebito.CheckedChanged += new System.EventHandler(this.checkDebito_CheckedChanged);
+            // 
+            // comboTipoComprobante
+            // 
+            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.comboTipoComprobante.DisplayMember = "R";
+            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboTipoComprobante.FormattingEnabled = true;
+            this.comboTipoComprobante.Items.AddRange(new object[] {
+            "X",
+            "A",
+            "B"});
+            this.comboTipoComprobante.Location = new System.Drawing.Point(376, 11);
+            this.comboTipoComprobante.Name = "comboTipoComprobante";
+            this.comboTipoComprobante.Size = new System.Drawing.Size(43, 28);
+            this.comboTipoComprobante.TabIndex = 65;
+            this.comboTipoComprobante.TabStop = false;
+            this.comboTipoComprobante.ValueMember = "R";
+            // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label20.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label20.Location = new System.Drawing.Point(44, 106);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(42, 15);
+            this.label20.TabIndex = 54;
+            this.label20.Text = "e-mail";
+            // 
+            // txtEmail
+            // 
+            this.txtEmail.Location = new System.Drawing.Point(92, 103);
+            this.txtEmail.Name = "txtEmail";
+            this.txtEmail.Size = new System.Drawing.Size(159, 21);
+            this.txtEmail.TabIndex = 53;
+            this.txtEmail.TabStop = false;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label6.Location = new System.Drawing.Point(31, 85);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(55, 15);
+            this.label6.TabIndex = 52;
+            this.label6.Text = "Telefono";
+            // 
+            // txtTelefono
+            // 
+            this.txtTelefono.Location = new System.Drawing.Point(92, 82);
+            this.txtTelefono.Name = "txtTelefono";
+            this.txtTelefono.ReadOnly = true;
+            this.txtTelefono.Size = new System.Drawing.Size(159, 21);
+            this.txtTelefono.TabIndex = 51;
+            this.txtTelefono.TabStop = false;
             // 
             // checkCtaCte
             // 
@@ -416,7 +553,7 @@
             this.checkCtaCte.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkCtaCte.Location = new System.Drawing.Point(576, 78);
+            this.checkCtaCte.Location = new System.Drawing.Point(417, 99);
             this.checkCtaCte.Name = "checkCtaCte";
             this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
             this.checkCtaCte.TabIndex = 50;
@@ -430,7 +567,7 @@
             this.label19.AutoSize = true;
             this.label19.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label19.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label19.Location = new System.Drawing.Point(26, 28);
+            this.label19.Location = new System.Drawing.Point(26, 19);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(60, 15);
             this.label19.TabIndex = 27;
@@ -440,7 +577,7 @@
             // 
             this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboUsuario.FormattingEnabled = true;
-            this.comboUsuario.Location = new System.Drawing.Point(92, 25);
+            this.comboUsuario.Location = new System.Drawing.Point(92, 16);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(159, 23);
             this.comboUsuario.TabIndex = 26;
@@ -449,7 +586,7 @@
             // 
             this.txtFechaVenta.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.txtFechaVenta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaVenta.Location = new System.Drawing.Point(576, 54);
+            this.txtFechaVenta.Location = new System.Drawing.Point(589, 57);
             this.txtFechaVenta.Name = "txtFechaVenta";
             this.txtFechaVenta.Size = new System.Drawing.Size(156, 21);
             this.txtFechaVenta.TabIndex = 20;
@@ -457,9 +594,9 @@
             // 
             // txtNroRemito
             // 
-            this.txtNroRemito.Location = new System.Drawing.Point(92, 81);
+            this.txtNroRemito.Location = new System.Drawing.Point(588, 35);
             this.txtNroRemito.Name = "txtNroRemito";
-            this.txtNroRemito.Size = new System.Drawing.Size(159, 21);
+            this.txtNroRemito.Size = new System.Drawing.Size(156, 21);
             this.txtNroRemito.TabIndex = 23;
             this.txtNroRemito.TabStop = false;
             // 
@@ -467,9 +604,9 @@
             // 
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(363, 53);
+            this.comboSucursal.Location = new System.Drawing.Point(588, 11);
             this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(160, 23);
+            this.comboSucursal.Size = new System.Drawing.Size(156, 23);
             this.comboSucursal.TabIndex = 15;
             this.comboSucursal.TabStop = false;
             this.comboSucursal.TextChanged += new System.EventHandler(this.comboSucursal_TextChanged);
@@ -479,7 +616,7 @@
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(16, 84);
+            this.label8.Location = new System.Drawing.Point(512, 38);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(70, 15);
             this.label8.TabIndex = 24;
@@ -490,7 +627,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(302, 57);
+            this.label4.Location = new System.Drawing.Point(527, 15);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(55, 15);
             this.label4.TabIndex = 17;
@@ -501,7 +638,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(329, 86);
+            this.label2.Location = new System.Drawing.Point(58, 64);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(28, 15);
             this.label2.TabIndex = 22;
@@ -509,34 +646,19 @@
             // 
             // txtCuit
             // 
-            this.txtCuit.Location = new System.Drawing.Point(363, 83);
+            this.txtCuit.Location = new System.Drawing.Point(92, 61);
             this.txtCuit.Name = "txtCuit";
             this.txtCuit.ReadOnly = true;
-            this.txtCuit.Size = new System.Drawing.Size(161, 21);
+            this.txtCuit.Size = new System.Drawing.Size(159, 21);
             this.txtCuit.TabIndex = 21;
             this.txtCuit.TabStop = false;
-            // 
-            // comboTurno
-            // 
-            this.comboTurno.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTurno.FormattingEnabled = true;
-            this.comboTurno.Items.AddRange(new object[] {
-            "Mañana",
-            "Tarde",
-            "Ambos"});
-            this.comboTurno.Location = new System.Drawing.Point(677, 81);
-            this.comboTurno.Name = "comboTurno";
-            this.comboTurno.Size = new System.Drawing.Size(56, 23);
-            this.comboTurno.TabIndex = 19;
-            this.comboTurno.TabStop = false;
-            this.comboTurno.Visible = false;
             // 
             // btnBuscarCliente
             // 
             this.btnBuscarCliente.AccessibleDescription = "";
             this.btnBuscarCliente.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCliente.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCliente.Image")));
-            this.btnBuscarCliente.Location = new System.Drawing.Point(257, 52);
+            this.btnBuscarCliente.Location = new System.Drawing.Point(257, 38);
             this.btnBuscarCliente.Name = "btnBuscarCliente";
             this.btnBuscarCliente.Size = new System.Drawing.Size(29, 24);
             this.btnBuscarCliente.TabIndex = 12;
@@ -546,7 +668,7 @@
             // 
             // txtCliente
             // 
-            this.txtCliente.Location = new System.Drawing.Point(92, 54);
+            this.txtCliente.Location = new System.Drawing.Point(92, 40);
             this.txtCliente.Name = "txtCliente";
             this.txtCliente.ReadOnly = true;
             this.txtCliente.Size = new System.Drawing.Size(159, 21);
@@ -558,7 +680,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(41, 57);
+            this.label1.Location = new System.Drawing.Point(41, 43);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(45, 15);
             this.label1.TabIndex = 16;
@@ -569,7 +691,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(529, 57);
+            this.label3.Location = new System.Drawing.Point(542, 60);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(41, 15);
             this.label3.TabIndex = 14;
@@ -877,6 +999,18 @@
             this.panel1.Size = new System.Drawing.Size(759, 1);
             this.panel1.TabIndex = 47;
             // 
+            // checkLimpiarCliente
+            // 
+            this.checkLimpiarCliente.AutoSize = true;
+            this.checkLimpiarCliente.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkLimpiarCliente.Location = new System.Drawing.Point(257, 64);
+            this.checkLimpiarCliente.Name = "checkLimpiarCliente";
+            this.checkLimpiarCliente.Size = new System.Drawing.Size(109, 19);
+            this.checkLimpiarCliente.TabIndex = 49;
+            this.checkLimpiarCliente.TabStop = false;
+            this.checkLimpiarCliente.Text = "Limpiar Cliente";
+            this.checkLimpiarCliente.UseVisualStyleBackColor = true;
+            // 
             // formNuevaVenta
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -912,6 +1046,8 @@
             this.grupoCortes.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -928,7 +1064,6 @@
         protected System.Windows.Forms.Label label4;
         protected System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtCuit;
-        private System.Windows.Forms.ComboBox comboTurno;
         private System.Windows.Forms.Button btnBuscarCliente;
         private System.Windows.Forms.TextBox txtCliente;
         protected System.Windows.Forms.Label label1;
@@ -980,5 +1115,15 @@
         protected System.Windows.Forms.Label label19;
         private System.Windows.Forms.ComboBox comboUsuario;
         private System.Windows.Forms.CheckBox checkCtaCte;
+        protected System.Windows.Forms.Label label20;
+        private System.Windows.Forms.TextBox txtEmail;
+        protected System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox txtTelefono;
+        private System.Windows.Forms.ComboBox comboTipoComprobante;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.CheckBox checkEfectivo;
+        private System.Windows.Forms.CheckBox checkCredito;
+        private System.Windows.Forms.CheckBox checkDebito;
+        private System.Windows.Forms.CheckBox checkLimpiarCliente;
     }
 }
