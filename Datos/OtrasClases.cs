@@ -11,6 +11,7 @@ namespace Datos
     {
         Utilidades.Conexion conn = new Utilidades.Conexion();
         SqlCommand cmOtrasClases;
+        SqlDataAdapter daOtrasClases;
 
         public bool Login(string clave)
         {
@@ -28,6 +29,15 @@ namespace Datos
 
             return resp;
 
+        }
+
+        public DataTable obtenerParametros()
+        {
+            DataTable dtParametros = new DataTable();
+            daOtrasClases = new SqlDataAdapter("Select * from Parametros", conn.conectar());
+            daOtrasClases.Fill(dtParametros);
+
+            return dtParametros;
         }
     }
 }

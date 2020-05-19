@@ -285,6 +285,10 @@ namespace Presentacion
             ultimaConnSelect = comboConexion.Text;
             Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
             this.Text += Utilidades.Conexion.getSucursalConexion();
+
+            //Se obtienen los parametros
+            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
+            oOtrasClasesN.obtenerParametros();
         }
 
         private static void embutidos()

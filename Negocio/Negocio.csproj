@@ -58,6 +58,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>DataSetCorte.xsd</DependentUpon>
     </Compile>
+    <Compile Include="OtrasClases.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Persona.cs" />
     <Compile Include="Sucursal.cs" />
@@ -86,6 +87,10 @@
     <ProjectReference Include="..\Entidades\Entidades.csproj">
       <Project>{95970443-2425-451D-BD5B-1ADCAE0E6402}</Project>
       <Name>Entidades</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utilidades\Utilidades.csproj">
+      <Project>{8C5B62F7-7986-4EEA-BA1F-F51F41E00EBF}</Project>
+      <Name>Utilidades</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -41,7 +41,7 @@ namespace Presentacion.Caja
             txtNroTicket.Text = oUltimaVenta.IdVenta.ToString();
             txtObservaciones.Text = oUltimaVenta.Observaciones;
             checkCtaCte.Checked = oUltimaVenta.EnCtaCte;
-            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             huboModificaciones = false;
             
             if (oUltimaVenta.EnCtaCte )
@@ -300,7 +300,7 @@ namespace Presentacion.Caja
         {
             huboModificaciones = true;
             oUltimaVenta.Persona = persona;
-            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             checkCtaCte.Checked = oUltimaVenta.Persona.CtaCte;
             this.txtCliente.Text = oUltimaVenta.Persona.razonSocial;
         }

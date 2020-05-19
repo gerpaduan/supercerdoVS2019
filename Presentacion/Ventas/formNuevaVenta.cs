@@ -865,7 +865,7 @@ namespace Presentacion.Ventas
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
-            checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;

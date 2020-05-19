@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="CierreCaja.cs" />
     <Compile Include="MovCtaCte.cs" />
+    <Compile Include="Parametros.cs" />
     <Compile Include="TemporalLineaVenta.cs" />
     <Compile Include="Corte.cs" />
     <Compile Include="CortePorCompra.cs" />

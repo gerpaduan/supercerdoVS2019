@@ -75,10 +75,7 @@ namespace Presentacion.Caja
         float totalCorte, precioKg, cantKg, cantKgTarjeta, kgsTotalCalculado;
         float totalVenta = 0, abona = 0, cambio = 0, ganPesosTotRedondeo = 0, ganKgsTotRedondeo = 0,
             ganPesosRedondeoLinea = 0, ganKgsRedondeoLinea = 0, acumRedondeoKgs = 0, acumRedondeImporte = 0;
-        /// TODO: agregar los campos en tablas de BD y obtener de allí los valores
-        /// porcAjEfectivo, porcAjDebito, porcAjCredito, limiteKgParaAjuste;
-        /// **Crear tabla General con los campos IdConsumidorFinal
-        /// **Obtener los pesos de condimentos en embutidos desde BD y NO desde app.config!!
+
         float porcAjEfectivo, porcAjDebito, porcAjCredito, limiteKgParaAjuste;
         bool esAjustePorcTarj = false;
         int idConsumidorFinal;
@@ -93,13 +90,17 @@ namespace Presentacion.Caja
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;
 
+            //Se obtienen los parametros
+            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
+            oOtrasClasesN.obtenerParametros();
+
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
             Negocio.Persona oPersonaN = new Negocio.Persona();
-            idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
+            idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtFecVenta.Text = DateTime.Now.ToString();
@@ -112,10 +113,10 @@ namespace Presentacion.Caja
             checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
 
             //se cargar los porcentajes de ajuste por tarjeta
-            porcAjEfectivo = float.Parse("1,010");//obtener de Base de Datos
-            porcAjDebito = float.Parse("1,010");
-            porcAjCredito = float.Parse("1,010");
-            limiteKgParaAjuste = float.Parse("6");
+            porcAjEfectivo = Entidades.Parametros.porcAjEfectivo;
+            porcAjDebito = Entidades.Parametros.porcAjDebito;
+            porcAjCredito = Entidades.Parametros.porcAjCredito;
+            limiteKgParaAjuste = Entidades.Parametros.limiteKgParaAjuste;
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -437,7 +438,7 @@ namespace Presentacion.Caja
         private void limpiarListas()
         {
             Negocio.Persona oPersonaN = new Negocio.Persona();
-            int idConsumidorFinal = Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString());
+            int idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtCuit.Text = "";
@@ -685,7 +686,7 @@ namespace Presentacion.Caja
             int inicioCodigoMayorista = (ConfigurationManager.AppSettings["codigoPrecioMayorista"]) != null ?
                 Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioMayorista"].ToString()) : 0;
             if (oCorteE != null && oCorteE.Mayorista && !FormPrincipal.logueado && !oUsuario.Admin && 
-                oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
             {
                 MessageBox.Show("No tienes permiso para realizar ventas con precio mayorista a un consumidor final.\n\n"+
                     "Busque el cliente o agréguelo para poder realizar la venta con precios mayoristas", "Precio mayorista");
@@ -800,7 +801,7 @@ namespace Presentacion.Caja
                 for (int index = 0; index < listaLineaVenta.Count; index++)
                 {
                     if ((listaLineaVenta[index].Bonificacion != 0 || listaLineaVenta[index].Corte.Mayorista) && !FormPrincipal.logueado && !oUsuario.Admin && 
-                        oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                        oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
                     {
                         bool esAnulado = false;
                         //se valida que el corte no hay sido anulado
@@ -1408,9 +1409,9 @@ namespace Presentacion.Caja
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
-            checkCtaCte.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            checkCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             checkCtaCte.Checked = oCliente.CtaCte;
-            linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString()));
+            linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             //Ocultar Ultimas Ventas Para Cocinas y Furlana
             if (!oUsuario.Admin && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
                 linkUltimasVentasCliente.Visible = false;
@@ -1777,7 +1778,7 @@ namespace Presentacion.Caja
                 }
 
                 //si es consumidor final no se permite bonificacion excepto que esté logueado como admin
-                if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Convert.ToInt32(ConfigurationManager.AppSettings["idConsumidorFinal"].ToString())))
+                if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
                 {
                     MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
                     return;
