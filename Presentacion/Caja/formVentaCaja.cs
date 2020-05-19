@@ -1085,20 +1085,7 @@ namespace Presentacion.Caja
                             {
                                 precioKg = 0;
                             }
-                        }
-
-                        //"001.305"            
-
-                        //Si la centena del decimal cambia de valor, Variar peso hasta ###.#99
-                        //camparar las centenar de Decimales y/o Unidad de peso para verificar que no hay un cambio brusco.
-                        bool kgNroRedondo = txtCantKgs.Text.Length > 6 && txtCantKgs.Text.Substring(4, 3).Equals("000");
-
-                        ///REDONDAR importe SI:
-                        ///*Cliente es consumidor final
-                        ///*la cantidad de ganancia NO excede a $5
-                        ///*el Kg no es un número redondo
-                        ///
-                        bool redondear = oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < 5.1 && !kgNroRedondo ? true : false;
+                        }                       
 
                         //cargo el Temporal de LineaVenta
                         try
@@ -1132,10 +1119,11 @@ namespace Presentacion.Caja
                                 kgsTotalCalculado = Util_Form.convertFloat(dosPartesKgsBalanza[0] + ".995", false);
                             
                             ///NO ajustar kgs por Tarjeta cuando:
+                            ///*CheckBoxRedondeo R no está checked
                             ///*cantKg de balanza es mayor al limite estipulado
                             ///*ó Cliente contiene "Empleado" en su nombre
                             ///*ó Kg Real Balanza es un entero
-                            if (cantKg > limiteKgParaAjuste || oCliente.razonSocial.Contains("mpleado") || esKgsRedondo)
+                            if (!checkBoxRedondeo.Checked || cantKg > limiteKgParaAjuste || oCliente.razonSocial.Contains("mpleado") || esKgsRedondo)
                                 //se setear el valor real balanza
                                 kgsTotalCalculado = cantKg;
                                                                                     
@@ -1151,6 +1139,18 @@ namespace Presentacion.Caja
 
                             //Seteo a CERO las variables
                             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;
+
+                            //"001.305"            
+
+                            //Si la centena del decimal cambia de valor, Variar peso hasta ###.#99
+                            //camparar las centenar de Decimales y/o Unidad de peso para verificar que no hay un cambio brusco.
+
+                            ///REDONDAR importe SI:
+                            ///*Cliente es consumidor final
+                            ///*la cantidad de ganancia NO excede a $5
+                            ///*el Kg no es un número redondo
+                            ///
+                            bool redondear = oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < 5.1 && !esKgsRedondo ? true : false;
 
                             if (redondear)
                             {
