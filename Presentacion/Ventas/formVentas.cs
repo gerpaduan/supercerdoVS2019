@@ -7,10 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Ventas;
+using Presentacion.Personas;
 
 namespace Presentacion
 {
-    public partial class formVentas : Form
+    public partial class formVentas : Form, InterfacePersona
     {
         private bool logueado = false;
 
@@ -30,6 +31,11 @@ namespace Presentacion
 
         bool cargar = false;
         bool soloAnulados = false;
+
+        int idCliente = -1;//-1 busca a todos
+        string[] arrayRowFilter = new string[] {"1 = 1", "1 = 1", "1 = 1", "1 = 1"};
+        string consultaRowFilter = "";
+
         public formVentas()
         {
             InitializeComponent();
@@ -49,7 +55,7 @@ namespace Presentacion
                 {
                     lblActualizar.Visible = false;
                     dtVentas = new DataTable();
-                    dtVentas = oVentaN.obtenerVentas(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), 
+                    dtVentas = oVentaN.obtenerVentas(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), idCliente, 
                         Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 
                         txtDescripcion.Text.Trim(), soloAnulados);
 
@@ -70,6 +76,7 @@ namespace Presentacion
                         }
                     }
                     cargarTotales();
+                    aplicarRowFilter();
                 }
             }
             catch (Exception ex)
@@ -80,14 +87,20 @@ namespace Presentacion
 
         private void cargarTotales()
         {
-            float totalKgs=0,totalS=0;
+            float totalKgs = 0, totalS = 0, totalKgsAj = 0, totalImpAj = 0;
 
-            foreach (DataRow venta in dtVentas.Rows)
+            //foreach (DataRow venta in dtVentas.Rows)
+            foreach (DataGridViewRow row in grillaVentas.Rows)
             {
-                totalKgs += float.Parse(venta["totalKg"].ToString());
-                totalS += float.Parse(venta["totalS"].ToString());
+                totalImpAj += float.Parse(row.Cells["totalImpAj"].Value.ToString());
+                totalKgsAj += float.Parse(row.Cells["totalKgAj"].Value.ToString());
+                totalKgs += float.Parse(row.Cells["totalKg"].Value.ToString());
+                totalS += float.Parse(row.Cells["totalS"].Value.ToString());
             }
             txtCantItems.Text = dtVentas.Rows.Count.ToString();
+            txtKgsAj.Text = String.Format("{0:0.000}", totalKgsAj);
+            txtTotalSAj.Text = String.Format("{0:0.000}", totalImpAj);
+            totalKgs = totalKgs - totalKgsAj;//resta los kgs del ajuste
             txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
             if (Presentacion.FormPrincipal.logueado)
             {
@@ -199,6 +212,20 @@ namespace Presentacion
                 cargarComboVendedor();
                 cargar = true;
                 cargarGrilla();
+
+                //Se establecen a checked todos los componentes
+                for (int i = 0; i < checkListFormaPago.Items.Count; i++)
+                {
+                    checkListFormaPago.SetItemChecked(i, true);
+                }
+                for (int i = 0; i < checkListTipoComprobante.Items.Count; i++)
+                {
+                    checkListTipoComprobante.SetItemChecked(i, true);
+                } 
+                for (int i = 0; i < checkListCondVenta.Items.Count; i++)
+                {
+                    checkListCondVenta.SetItemChecked(i, true);
+                }
             }
             catch (Exception ex)
             {
@@ -272,6 +299,103 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
+        }
+
+        private void btnBuscarCliente_Click(object sender, EventArgs e)
+        {
+            buscarCliente();
+        }
+
+        private void buscarCliente()
+        {
+            formBuscarPersona frmBuscarPersona = new formBuscarPersona();
+            frmBuscarPersona.Show(this);
+        }
+
+        public void EnviarPersona(Entidades.Persona persona)
+        {
+            this.txtCliente.Text = persona.razonSocial;
+            idCliente = persona.idPersona;
+            cargarGrilla();
+        }
+
+        private void btnLimpiar_Click(object sender, EventArgs e)
+        {
+            if (idCliente != -1)//validacion para evitar conexion a la BD
+            {
+                idCliente = -1;
+                cargarGrilla();
+                txtCliente.Text = "todos";
+            }
+        }
+
+        private void checkListFormaPago_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string nombreCol = "formaPago";
+            string consulta = "1 <> 1"; //checkListFormaPago.CheckedItems.Count == 0 ? "1 = 1" : "1 <> 1";
+            foreach (string item in checkListFormaPago.CheckedItems)
+            {
+                if (item == "Efectivo")
+                    consulta += " OR " + nombreCol + " = 'Efectivo'";
+                if (item == "Debito")
+                    consulta += " OR " + nombreCol + " = 'Debito'";
+                if (item == "Credito")
+                    consulta += " OR " + nombreCol + " = 'Credito'";
+                if (item == "Otras")
+                    consulta += " OR (" + nombreCol + " <> 'Efectivo'" + " AND " + nombreCol + " <> 'Debito'" + " AND " + nombreCol + " <> 'Credito')";
+            }
+            arrayRowFilter[1] = consulta;
+            aplicarRowFilter();
+
+        }
+
+        private void checkListTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string nombreCol = "tipoComprobante";
+            string consulta = "1 <> 1"; //checkListTipoComprobante.CheckedItems.Count == 0 ? "1 = 1" : "1 <> 1";
+            foreach (string item in checkListTipoComprobante.CheckedItems)
+            {
+                if (item == "Remito X")
+                    consulta += " OR " + nombreCol + " = 'X'";
+                if (item == "Factura A")
+                    consulta += " OR " + nombreCol + " = 'A'";
+                if (item == "Factura B")
+                    consulta += " OR " + nombreCol + " = 'B'";
+            }
+            arrayRowFilter[2] = consulta;
+            aplicarRowFilter();
+        }
+
+        private void checkListCondVenta_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string nombreCol = "enCtaCte";
+            string consulta = "1 <> 1";// checkListCondVenta.CheckedItems.Count == 0 ? "1 = 1" : "1 <> 1";
+            foreach (string item in checkListCondVenta.CheckedItems)
+            {
+                if (item == "Contado")
+                    consulta += " OR " + nombreCol + " = '0'";
+
+                if (item == "Cta.Cte")
+                    consulta += " OR " + nombreCol + " = '1'";
+            }
+            arrayRowFilter[3] = consulta;
+            aplicarRowFilter();
+        }
+
+        private void aplicarRowFilter()
+        {
+            consultaRowFilter = "";
+
+            for (int i = 0; i < arrayRowFilter.Length; i++)
+            {
+                string and = (i != arrayRowFilter.Length - 1) ? " AND " : "";
+                consultaRowFilter += "( " + arrayRowFilter[i] + " )" + and;
+            }
+
+            (grillaVentas.DataSource as DataTable).DefaultView.RowFilter = string.Format(consultaRowFilter);
+
+            cargarTotales();
+        
         }
     }
 }

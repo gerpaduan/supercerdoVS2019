@@ -492,7 +492,7 @@ namespace Presentacion.Caja
             oVentaE.TipoVenta = "Caja";
             oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
-            oVentaE.Turno = acumRedondeoDetalle;
+            oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;

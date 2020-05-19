@@ -129,12 +129,6 @@ namespace Negocio
              oCorteD.agregarCortePorEmbutido(oCortePorEmbutido);
          }
 
-         public void actualizarStockEmbutido(DataRow cortePorEmbutido, Entidades.Embutido oEmbutidoE)
-         {
-             oCorteD = new Datos.Corte();
-             oCorteD.actualizarStockEmbutido(cortePorEmbutido, oEmbutidoE);
-         }
-
          #region Movimiento
 
          public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
@@ -185,31 +179,6 @@ namespace Negocio
          {
              oCorteD = new Datos.Corte();
              return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
-         }
-
-         public int agregarActualizacionStock(DateTime fechaActualizacion, string observaciones)
-         {
-             oCorteD = new Datos.Corte();
-             return oCorteD.agregarActualizacionStock(fechaActualizacion, observaciones);
-         
-         }
-
-         public void actualizarStockPorCorte(int idActualizacion, Entidades.StockCorteSucursal stockCorte)
-         {
-             oCorteD = new Datos.Corte();
-             oCorteD.actualizarStockPorCorte(idActualizacion, stockCorte);
-         }
-
-         public void actualizacionStockTotal(int idActualizacion)
-         {
-             oCorteD = new Datos.Corte();
-             oCorteD.actualizacionStockTotal(idActualizacion);
-         }
-
-         public void actualizacionStockTeoricoTotal(int idActualizacion)
-         {
-             oCorteD = new Datos.Corte();
-             oCorteD.actualizacionStockTeoricoTotal(idActualizacion);
          }
 
          public void reiniciarStockReal(int idSucursal)

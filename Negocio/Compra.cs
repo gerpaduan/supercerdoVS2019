@@ -74,7 +74,6 @@ namespace Negocio
         public void agregarMedias(Entidades.MediaRes oMediaResE)
         {
             oCompraD.agregarMediaRes(oMediaResE);
-            //oCompraD.actualizarStockCortesPrimarios(oMediaResE);
 
         }
 
@@ -178,7 +177,6 @@ namespace Negocio
         public void modificarMediaPorCompra(Entidades.MediaRes oMediaResE, int idCompra)
         {
             oCompraD.modificarMediaPorCompra(oMediaResE, idCompra);
-            oCompraD.actualizarStockCortesPrimarios(oMediaResE);
         }
 
         public void modificarCortePorCompra(Entidades.CortePorCompra oCortePorCompraE, int idCompra)

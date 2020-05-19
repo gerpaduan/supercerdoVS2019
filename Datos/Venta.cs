@@ -84,7 +84,7 @@ namespace Datos
             cmVenta = null;
         }
 
-        public DataTable obtenerVentas(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
+        public DataTable obtenerVentas(int idSucursal, int idCliente, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
         {
             DataTable dtVentas = new DataTable();
             daVenta = new SqlDataAdapter();
@@ -97,6 +97,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
             cmVenta.Parameters.AddWithValue("@texto", texto);
             cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor);
+            cmVenta.Parameters.AddWithValue("@idCliente", idCliente);
             cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmVenta.Parameters.AddWithValue("@soloAnulados", soloAnulados);
 

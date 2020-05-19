@@ -35,9 +35,9 @@ namespace Negocio
             return oVentaD.getTotalVenta(idVenta);
         }
 
-        public DataTable obtenerVentas(int idSucursal, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
+        public DataTable obtenerVentas(int idSucursal, int idCliente, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
         {
-            return oVentaD.obtenerVentas(idSucursal, idVendedor, fechaDesde, fechaHasta, texto, soloAnulados);
+            return oVentaD.obtenerVentas(idSucursal, idCliente, idVendedor, fechaDesde, fechaHasta, texto, soloAnulados);
         }
 
         public Entidades.Venta getVentaById(int idVenta)

@@ -254,25 +254,6 @@ namespace Datos
             cmCompra = null;
         }
 
-        //actualiza stock del los cortes salidos de la media res
-        public void actualizarStockCortesPrimarios(Entidades.MediaRes oMediaResE)
-        {
-            cmCompra = new SqlCommand();
-
-            cmCompra.Connection = conn.conectar();
-            cmCompra.Connection.Open();
-            cmCompra.CommandType = CommandType.StoredProcedure; cmCompra.CommandTimeout = 90;
-            cmCompra.CommandText = "actualizarStockCortesPrimarios";
-                       
-            cmCompra.Parameters.AddWithValue("@idSucursal", oMediaResE.sucursal.IdSucursal);            
-            cmCompra.Parameters.AddWithValue("@kgMedia", oMediaResE.kgMedia);
-
-            cmCompra.ExecuteNonQuery();
-            cmCompra.Connection.Close();
-
-            cmCompra = null;
-        }
-
         //actualiza stock de todos los cortes existentes
         public void actualizarStockCortes()
         { 

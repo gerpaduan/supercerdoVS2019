@@ -179,31 +179,6 @@ namespace Presentacion
             }
         }
 
-        private static void stockCortes()
-        {
-            if (logueado)
-            {
-                if (Application.OpenForms["formStockCortes"] != null)
-                {
-
-                    Application.OpenForms["formStockCortes"].Activate();
-                    Application.OpenForms["formStockCortes"].WindowState = FormWindowState.Normal;
-
-                }
-                else
-                {
-
-                    formStockCortes frmStockCortes = new formStockCortes();
-                    frmStockCortes.Show();
-
-                }
-            }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }
-        }
-
         private void reportes()
         {            
             if (!logueado)
@@ -374,11 +349,6 @@ namespace Presentacion
         private void personasToolStripMenuItem_Click(object sender, EventArgs e)
         {
             personas();
-        }
-
-        private void stockCortesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            stockCortes();
         }
 
         private void baseDeDatosToolStripMenuItem_Click(object sender, EventArgs e)
