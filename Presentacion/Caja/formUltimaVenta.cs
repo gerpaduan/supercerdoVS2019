@@ -34,14 +34,36 @@ namespace Presentacion.Caja
 
             cargarGrilla();
             changeCheckTicket();
+            comboTipoComprobante.SelectedItem = oUltimaVenta.TipoComprobante.ToString();
             this.txtCliente.Text = oUltimaVenta.Persona.razonSocial;
             txtFecVenta.Text = oUltimaVenta.FechaVenta.ToString();
             txtVendedor.Text = oUltimaVenta.Vendedor.Nombre;
             txtSucursal.Text = oUltimaVenta.Sucursal.sucursal;
             txtNroTicket.Text = oUltimaVenta.IdVenta.ToString();
+            txtCuit.Text = oUltimaVenta.Cuit.ToString();
+            txtEmail.Text = oUltimaVenta.Email.ToString();
             txtObservaciones.Text = oUltimaVenta.Observaciones;
             checkCtaCte.Checked = oUltimaVenta.EnCtaCte;
             checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            switch (oUltimaVenta.FormaPago)
+            {
+                case "Efectivo":
+                    checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Debito":
+                    checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Credito":
+                    checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                default:
+                    break;
+            }
+
             huboModificaciones = false;
             
             if (oUltimaVenta.EnCtaCte )
@@ -235,6 +257,13 @@ namespace Presentacion.Caja
         {
             try
             {
+                //Validar que si es CTA CTA sea en EFECTIVO
+                if (oUltimaVenta.EnCtaCte && !oUltimaVenta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+                {
+                    MessageBox.Show("Una venta en Cta.Cte. sólo puede efectuarse en EFECTIVO.");
+                    return;
+                }
+
                 if (huboModificaciones)
                 {
                     DialogResult respuesta = MessageBox.Show("¿Está seguro que desea modificar los datos de la venta?", "Modificar venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
@@ -402,6 +431,8 @@ namespace Presentacion.Caja
                         oLineaVenta.Corte = oLineaVentaSelect.Corte;
                         oLineaVenta.Venta = oLineaVentaSelect.Venta;
                         oLineaVenta.CantKg = oLineaVentaSelect.CantKg * -1;
+                        oLineaVenta.KgsAjusteTarj = oLineaVenta.KgsAjusteTarj * -1;
+                        oLineaVenta.KgsRedondeo = oLineaVenta.KgsRedondeo * -1;
                         oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.IndexAnulado = oLineaVentaSelect.IdLineaVenta;
@@ -454,6 +485,33 @@ namespace Presentacion.Caja
             if(!huboModificaciones)
                 huboModificaciones = checkCtaCte.Checked != oUltimaVenta.EnCtaCte;
             oUltimaVenta.EnCtaCte = checkCtaCte.Checked;
+        }
+
+        private void comboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            huboModificaciones = true;
+            if (comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString()))
+            {
+                txtCuit.ReadOnly = txtEmail.ReadOnly = true;
+            }
+            else
+            {
+                txtCuit.ReadOnly = txtEmail.ReadOnly = false;
+                txtCuit.Focus();
+            }
+            oUltimaVenta.TipoComprobante = Convert.ToChar(comboTipoComprobante.SelectedItem);
+        }
+
+        private void txtCuit_TextChanged(object sender, EventArgs e)
+        {
+            huboModificaciones = true;
+            oUltimaVenta.Cuit = txtCuit.Text;
+        }
+
+        private void txtEmail_TextChanged(object sender, EventArgs e)
+        {
+            huboModificaciones = true;
+            oUltimaVenta.Email = txtEmail.Text;
         }
     }
 }

@@ -71,12 +71,12 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@estado", oVentaE.Estado);
             cmVenta.Parameters.AddWithValue("@eliminarLineas", eliminarLineas);
             cmVenta.Parameters.AddWithValue("@enCtaCte", oVentaE.EnCtaCte);
-            cmVenta.Parameters.AddWithValue("@formaPago", oVentaE.EnCtaCte);
-            cmVenta.Parameters.AddWithValue("@cuit", oVentaE.EnCtaCte);
-            cmVenta.Parameters.AddWithValue("@email", oVentaE.EnCtaCte);
-            cmVenta.Parameters.AddWithValue("@tipoComprobante", oVentaE.EnCtaCte);
-            cmVenta.Parameters.AddWithValue("@acumRedondeoKgs", oVentaE.EnCtaCte);
-            cmVenta.Parameters.AddWithValue("@acumRedondeoImporte", oVentaE.EnCtaCte);
+            cmVenta.Parameters.AddWithValue("@formaPago", oVentaE.FormaPago);
+            cmVenta.Parameters.AddWithValue("@cuit", oVentaE.Cuit);
+            cmVenta.Parameters.AddWithValue("@email", oVentaE.Email);
+            cmVenta.Parameters.AddWithValue("@tipoComprobante", oVentaE.TipoComprobante);
+            cmVenta.Parameters.AddWithValue("@acumRedondeoKgs", oVentaE.AcumRedondeoKgs);
+            cmVenta.Parameters.AddWithValue("@acumRedondeoImporte", oVentaE.AcumRedondeoImporte);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
@@ -250,6 +250,11 @@ namespace Datos
                         oVentaE.NroRemito = Convert.ToString(drVenta["nroRemito"]);
                         oVentaE.Estado = Convert.ToString(drVenta["estado"]);
                         oVentaE.EnCtaCte = Convert.ToBoolean(drVenta["enCtaCte"]);
+                        oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
+                        oVentaE.Email = Convert.ToString(drVenta["email"]);
+                        oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
+                        oVentaE.FormaPago = Convert.ToString(drVenta["formaPago"]);
+                        oVentaE.TipoComprobante = Convert.ToChar(drVenta["tipoComprobante"]);
                         oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
                         oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
 
@@ -332,6 +337,7 @@ namespace Datos
 
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
+                        oLinea.KgsAjusteTarj = float.Parse(drLinea["kgsAjusteTarj"].ToString());
                         oLinea.Bonificacion = string.IsNullOrEmpty(drLinea["bonificacion"].ToString()) ? 0 : float.Parse(drLinea["bonificacion"].ToString());
                         oLinea.IndexAnulado = DBNull.Value.Equals(drLinea["idLineaVentaAnulado"]) ? -1 : Convert.ToInt32(drLinea["idLineaVentaAnulado"].ToString());
                         

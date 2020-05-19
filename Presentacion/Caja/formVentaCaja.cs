@@ -2107,7 +2107,7 @@ namespace Presentacion.Caja
             {
                 ultimaVentaVendedor();
                 //se valida que no hay pasado el limite de tiempo para editar la venta
-                if (!FormPrincipal.logueado && oUltimaVentaVendedor.Creado.AddMinutes(10) < DateTime.Now)
+                if (!FormPrincipal.logueado && oUltimaVentaVendedor.Creado.AddMinutes(15) < DateTime.Now)
                 {
                     MessageBox.Show("Caducó el tiempo para modificar la venta.\n\n(Inicie sesión como admin para poder modificar)",
                         "Tiempo Caducado");
