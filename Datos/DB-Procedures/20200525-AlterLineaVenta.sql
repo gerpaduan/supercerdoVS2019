@@ -2,13 +2,11 @@ USE [SuperCerdo]
 
 --ALTER TABLE [dbo].[LineaVenta]
 -- ADD	
--- kgsAjusteTarj float DEFAULT 0,
--- porcKgsAjusteTarj float DEFAULT 0
+-- ajustePrecio float DEFAULT 0
  
  
  
  ---ACTUALIZA REGISTROS PARA EVITAR NULOS---
  UPDATE LineaVenta SET
- kgsAjusteTarj = 0,
- porcKgsAjusteTarj = 0
+ ajustePrecio = 0
  
