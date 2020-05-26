@@ -54,6 +54,7 @@
             this.btnEfectivo.Text = "1 - Efectivo";
             this.btnEfectivo.UseVisualStyleBackColor = true;
             this.btnEfectivo.Click += new System.EventHandler(this.btnEfectivo_Click);
+            this.btnEfectivo.Enter += new System.EventHandler(this.btnEfectivo_Enter);
             // 
             // btnDebito
             // 
@@ -65,6 +66,7 @@
             this.btnDebito.Text = "2 - Débito";
             this.btnDebito.UseVisualStyleBackColor = true;
             this.btnDebito.Click += new System.EventHandler(this.btnDebito_Click);
+            this.btnDebito.Enter += new System.EventHandler(this.btnDebito_Enter);
             // 
             // btnCredito
             // 
@@ -76,6 +78,7 @@
             this.btnCredito.Text = "3 - Crédito";
             this.btnCredito.UseVisualStyleBackColor = true;
             this.btnCredito.Click += new System.EventHandler(this.btnCredito_Click);
+            this.btnCredito.Enter += new System.EventHandler(this.btnCredito_Enter);
             // 
             // formFormaPago
             // 

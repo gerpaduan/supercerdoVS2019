@@ -38,6 +38,13 @@ namespace Entidades
          float kgsAjusteTarj;
          float kgsRedondeo;
          float kgsTotalCalculado;
+         float ajustePrecio;
+
+         public float AjustePrecio
+         {
+             get { return ajustePrecio; }
+             set { ajustePrecio = value; }
+         }
 
          public float KgsTotalCalculado
          {

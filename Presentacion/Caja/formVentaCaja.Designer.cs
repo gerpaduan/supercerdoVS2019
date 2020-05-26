@@ -673,7 +673,6 @@
             this.txtCantKgs.TabIndex = 1;
             this.txtCantKgs.TabStop = false;
             this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtCantKgs.MaskInputRejected += new System.Windows.Forms.MaskInputRejectedEventHandler(this.txtCantKgs_MaskInputRejected);
             this.txtCantKgs.Leave += new System.EventHandler(this.txtCantKgs_Leave);
             this.txtCantKgs.Enter += new System.EventHandler(this.txtCantKgs_Enter);
             this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);

@@ -259,12 +259,8 @@ namespace Presentacion.Caja
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
                     Ticket.CreaTicket ticket = new Ticket.CreaTicket();
 
-                    bool esEfectivo = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());
-                   
-                    //se genera el egreso de caja si paga con tarjeta
-                    if (!esEfectivo)
-                        egresoCajaPagoTarjeta(oVentaE);
-
+                    bool esEfectivo = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());                 
+                    
                     //imprimir si está checked o no es efectivo
                     ticket.imprimir = checkTicket.Checked || !esEfectivo;
                     ticket.TextoCentro("x");
@@ -294,13 +290,7 @@ namespace Presentacion.Caja
                         ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
                             linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
-                    //foreach (Entidades.LineaVenta linea in listaLineaVenta)
-                    //{
-                    //    oVentaN.agregarLineaVenta(linea);
-                    //    ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                    //        linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
-                    //}
-                    //ticket.LineasEnBlanco(1);
+ 
                     ticket.TextoDerecha("-------");
                     ticket.AgregaTotales("Total", totalVenta);
                     //si se ingresa la cantidad del pago se imprime
@@ -310,11 +300,14 @@ namespace Presentacion.Caja
                         ticket.AgregaTotales("Vuelto", cambio);
                     }
                     ticket.LineasEnBlanco(1);
-                    ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
-                    //ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
+                    ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);
                     ticket.TextoIzquierda("Cajero: " + oUsuario.Id);
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
+
+
+                    //se genera el egreso de caja si paga con tarjeta
+                    egresoCajaPagoTarjeta(oVentaE);
 
                     //Agregar en Cta Cte
                     try
@@ -372,29 +365,34 @@ namespace Presentacion.Caja
             }
         }
 
-
         public void egresoCajaPagoTarjeta(Entidades.Venta oVentaConEgresoCaja)
         {
             try
             {
-                Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
+                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja.IdVenta, oUsuario);
 
-                oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
-                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
-                oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
-                oEgresoCajaE.Monto = float.Parse(txtTotalS.Text);// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
-                oEgresoCajaE.Detalle = " | Kgs: " + txtTotalKgs.Text + 
-                    " | Precio: " + (float.Parse(txtTotalS.Text) / float.Parse(txtTotalKgs.Text)).ToString("N3") + 
-                    " | TOT: " + txtTotalS.Text;
-                oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
-                oEgresoCajaE.IdCompra = 0;
-                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
-                oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
-                oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
-                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+                #region Codigo anterior: SE PASO A CAPA NEGOCIO
+                ///Codigo anterior: SE PASO A CAPA NEGOCIO
+                ///
+                //Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                //oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
+                //oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
+                //oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                //oEgresoCajaE.Monto = float.Parse(txtTotalS.Text);// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                //oEgresoCajaE.Detalle = " | Kgs: " + txtTotalKgs.Text + 
+                //    " | Precio: " + (float.Parse(txtTotalS.Text) / float.Parse(txtTotalKgs.Text)).ToString("N3") + 
+                //    " | TOT: " + txtTotalS.Text;
+                //oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
+                //oEgresoCajaE.IdCompra = 0;
+                //oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
+                //oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
+                //oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
+                //oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+
+                //Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                //oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                #endregion
             }
             catch (Exception ex)
             {
@@ -474,6 +472,8 @@ namespace Presentacion.Caja
             listaLineaGrilla = new List<LineaVenta>();
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
+
+            ingresarFormaPago();
         }
 
         private void cargarVenta()
@@ -591,7 +591,9 @@ namespace Presentacion.Caja
             lineaVentaP.idCorte = lineaE.Corte.idCorte;
             lineaVentaP.codigo = lineaE.Corte.codigo;
             lineaVentaP.corte = lineaE.Corte.corte;
-            lineaVentaP.corte = lineaE.Bonificacion == 0 ? lineaE.Corte.CorteDesc :
+            //Si hay redondeo se agrega un punto
+            lineaVentaP.corte = lineaE.Bonificacion == 0 ?
+                (lineaE.KgsAjusteTarj > 0 ? lineaE.Corte.CorteDesc + " ." : lineaE.Corte.CorteDesc) :
                     (lineaE.Corte.CorteDesc.Length < 9 ? lineaE.Corte.CorteDesc :
                     lineaE.Corte.CorteDesc.Substring(0, 9)) + 
                     " (Bonif. " + lineaE.Bonificacion.ToString("F2") + "%)";
@@ -658,13 +660,15 @@ namespace Presentacion.Caja
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = false;//Asegura q se inicien todos false
                                 
                 formFormaPago frmFormaPago = new formFormaPago();
-                //frmFormaPago.esCorteUnidad = 
                 frmFormaPago.ShowDialog(this);
 
                 //si ninguna forma de pago está seleccionada no se valida
                 if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false)
                     return false;
+                txtCodigo.Focus();
             }
+            if (oCorteE != null)
+                cargarCorte();
             return resp;
         }
 
@@ -978,13 +982,13 @@ namespace Presentacion.Caja
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
+                                oCorteE.precioKgReferencia = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.tipo = fila["tipo"].ToString();
                                 oCorteE.Mayorista = Convert.ToBoolean(fila["mayorista"]);
                                 oCorteE.EnCierreStock = Convert.ToBoolean(fila["enCierreStock"]);
                                 oCorteE.Habilitado = Convert.ToBoolean(fila["habilitado"]);
                         }
-                        //cargo los campos
-                        
+                        //cargo los campos                        
                         this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
 
@@ -994,6 +998,9 @@ namespace Presentacion.Caja
                             lblNoHabilitado.Visible = true;
                             return;
                         }
+
+                        //Se establece el precio segun la forma de pago
+                        establecerPrecioCorteSegunFormaPago();
 
                         this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
                         
@@ -1029,6 +1036,33 @@ namespace Presentacion.Caja
                 txtRedondeo.Text = "";
                 txtKgsRedondeo.Text = "";
             }
+        }
+
+        /// <summary>
+        /// Se establece el precio del corte según  la forma de pago seleccionada
+        /// </summary>
+        private void establecerPrecioCorteSegunFormaPago()
+        {
+            switch (oVentaE.FormaPago)
+            {
+                case "Efectivo":
+                    //kgsTotalCalculado = (cantKg * porcAjEfectivo);
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjEfectivo);
+                    break;
+                case "Debito":
+                    //kgsTotalCalculado = (cantKg * porcAjDebito);
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjDebito);
+                    break;
+                case "Credito":
+                    //kgsTotalCalculado = (cantKg * porcAjCredito);
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjCredito);
+                    break;
+                default:
+                    //kgsTotalCalculado = (cantKg * porcAjEfectivo);
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjDebito);
+                    break;
+            }
+            oCorteE.precioKg = Util_Form.convertFloat(Math.Round(oCorteE.precioKg, 2).ToString(), false);
         }
 
         private void cargarTotalCorte()
@@ -1090,42 +1124,25 @@ namespace Presentacion.Caja
                         //cargo el Temporal de LineaVenta
                         try
                         {
-                            switch (oVentaE.FormaPago)
-                            {
-                                case "Efectivo":
-                                    kgsTotalCalculado = (cantKg * porcAjEfectivo);
-                                    break;
-                                case "Debito":
-                                    kgsTotalCalculado = (cantKg * porcAjDebito);
-                                    break;
-                                case "Credito":
-                                    kgsTotalCalculado = (cantKg * porcAjCredito);
-                                    break;
-                                default:
-                                    kgsTotalCalculado = (cantKg * porcAjEfectivo);
-                                    break;
-                            } 
-                            
-                            //se crea esta variable temporal para recalular kgs en caso q el kg ajusta cambie la unidad entera
-                            float tempKgsTotalCalculado = kgsTotalCalculado;
+                            kgsTotalCalculado = cantKg;
 
                             string[] dosPartesKgsTarj = kgsTotalCalculado.ToString().Split(',');
                             string[] dosPartesKgsBalanza = cantKg.ToString().Split(',');
                             bool esKgsRedondo = dosPartesKgsBalanza.Count().Equals(1) || dosPartesKgsBalanza[1].Equals("000")
                                 || dosPartesKgsBalanza[1].Equals("00") || dosPartesKgsBalanza[1].Equals("0");
 
-                            ///Si cambia parte entera Kilaje al ajustar, establecer decimales en ###.995
-                            if ((!(dosPartesKgsTarj[0] == dosPartesKgsBalanza[0])))
-                                kgsTotalCalculado = Util_Form.convertFloat(dosPartesKgsBalanza[0] + ".995", false);
+                            /////////Si cambia parte entera Kilaje al ajustar, establecer decimales en ###.995
+                            //////if ((!(dosPartesKgsTarj[0] == dosPartesKgsBalanza[0])))
+                            //////    kgsTotalCalculado = Util_Form.convertFloat(dosPartesKgsBalanza[0] + ".995", false);
                             
-                            ///NO ajustar kgs por Tarjeta cuando:
-                            ///*CheckBoxRedondeo R no está checked
-                            ///*cantKg de balanza es mayor al limite estipulado
-                            ///*ó Cliente contiene "Empleado" en su nombre
-                            ///*ó Kg Real Balanza es un entero
-                            if (!checkBoxRedondeo.Checked || cantKg > limiteKgParaAjuste || oCliente.razonSocial.Contains("mpleado") || esKgsRedondo)
-                                //se setear el valor real balanza
-                                kgsTotalCalculado = cantKg;
+                            /////////NO ajustar kgs por Tarjeta cuando:
+                            /////////*CheckBoxRedondeo R no está checked
+                            /////////*cantKg de balanza es mayor al limite estipulado
+                            /////////*ó Cliente contiene "Empleado" en su nombre
+                            /////////*ó Kg Real Balanza es un entero
+                            //////if (!checkBoxRedondeo.Checked || cantKg > limiteKgParaAjuste || oCliente.razonSocial.Contains("mpleado") || esKgsRedondo)
+                            //////    //se setear el valor real balanza
+                            //////    kgsTotalCalculado = cantKg;
                                                                                     
                             //Setear el temporal de la linea venta
                             oTemporalLineaVenta = new Entidades.TemporalLineaVenta();
@@ -1135,7 +1152,7 @@ namespace Presentacion.Caja
                             oTemporalLineaVenta.Sucursal = oSucursalE;
                             oTemporalLineaVenta.CantKg = cantKg;
                             oTemporalLineaVenta.KgsTotalCalculado = kgsTotalCalculado;
-                            oTemporalLineaVenta.TotalCorte = (kgsTotalCalculado * precioKg);
+                            oTemporalLineaVenta.TotalCorte = (cantKg * precioKg);
 
                             //Seteo a CERO las variables
                             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;
@@ -1177,7 +1194,7 @@ namespace Presentacion.Caja
                         {
                         }
                     }
-                    totalCorte = (kgsTotalCalculado * precioKg);// (cantKg * precioKg);
+                    totalCorte = (kgsTotalCalculado * precioKg); //(cantKg * precioKg);//
                     //cargo el txt total corte
                     txtRedondeo.Text = (cantKg * precioKg).ToString("N");
                     txtTotalCorte.Text = totalCorte.ToString("N2");
@@ -1187,7 +1204,7 @@ namespace Presentacion.Caja
                     txtRedondeo.Text = (cantKg * precioKg).ToString("N2");
                     txtKgsRedondeo.Text = kgsTotalCalculado.ToString("N3");
 
-                    totalesParciales(cantKg, totalCorte);
+                    totalesParciales(kgsTotalCalculado, totalCorte);
                     //totalesParciales(cantKg, totalCorte);
 
                 }
@@ -1226,8 +1243,7 @@ namespace Presentacion.Caja
                     importe = (precioSinDecimal + (10 - unidadPrecio)) - centavosRedondeo;
                 }             
             }
-
-                return importe;
+            return importe;
         }
 
 
@@ -1601,7 +1617,6 @@ namespace Presentacion.Caja
                 ultimaVentaVendedor();
                 restablecerFormaDePago();
                 comboTipoComprobante.SelectedIndex = 0;
-                
             }
             else
             {
@@ -1656,6 +1671,10 @@ namespace Presentacion.Caja
                     break;
                 case Keys.PageDown:
                     cambiarPuntoDeVenta();
+                    break;
+                case Keys.Insert:
+                    oVentaE.FormaPago = null;
+                    ingresarFormaPago();
                     break;
                 case Keys.F2:
                     foreach (Form frm in Application.OpenForms)
@@ -1983,6 +2002,8 @@ namespace Presentacion.Caja
         private void txtCodigo_Enter(object sender, EventArgs e)
         {
             this.txtCodigo.BackColor = focusColor;
+
+            ingresarFormaPago();
         }
 
         private void txtCodigo_Leave(object sender, EventArgs e)
@@ -2259,11 +2280,6 @@ namespace Presentacion.Caja
             frmGetAllLV.ShowDialog();
         }
 
-        private void txtCantKgs_MaskInputRejected(object sender, MaskInputRejectedEventArgs e)
-        {
-
-        }
-
         private void checkBoxRedondeo_CheckedChanged(object sender, EventArgs e)
         {
             checkBoxRedondeo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkBoxRedondeo.Checked);
@@ -2293,6 +2309,7 @@ namespace Presentacion.Caja
             {
                 checkDebito.Checked = checkCredito.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
+                actualizarPrecios();
             }
         }
 
@@ -2304,6 +2321,7 @@ namespace Presentacion.Caja
             {
                 checkEfectivo.Checked = checkCredito.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Debito.ToString();
+                actualizarPrecios();
             }
         }
 
@@ -2315,7 +2333,30 @@ namespace Presentacion.Caja
             {
                 checkEfectivo.Checked = checkDebito.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Credito.ToString();
+                actualizarPrecios();
             }
+        }
+
+        private void actualizarPrecios()
+        {
+            string codigoCorteIngresado = txtCodigo.Text;
+            txtCodigo.Text = "";
+            if (grillaLineasVenta.Rows.Count > 0)
+            {
+                for (int index = 0; index < listaLineaVenta.Count; index++)
+                {
+                    Entidades.LineaVenta linea = listaLineaVenta[index];
+                    oCorteE = linea.Corte;
+                    establecerPrecioCorteSegunFormaPago();
+                    listaLineaVenta[index].Corte = oCorteE;
+
+                    listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, linea.Corte.precioKg, linea.Corte.Mayorista);
+                    listaLineaGrilla[index].totalS = listaLineaGrilla[index].precioKg * listaLineaGrilla[index].KgsTotalCalculado;
+                }
+                cargarGrilla();
+            }
+            //se vuelve a cargar el codigo ingresado para actualizar el precio
+            txtCodigo.Text = codigoCorteIngresado;
         }
 
         private void comboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)

@@ -28,7 +28,36 @@ namespace Negocio
         public DataTable buscarCorte(string txtBusqueda)
         {
             oCorteD = new Datos.Corte();
-            return oCorteD.buscarCorte(txtBusqueda);
+            DataTable dtCortes = oCorteD.buscarCorte(txtBusqueda);
+            
+            Datos.OtrasClases oOtrasClasesD = new Datos.OtrasClases();
+            DataTable dtParametros = oOtrasClasesD.obtenerParametros();
+            float porcAjEfectivo, porcAjDebito, porcAjCredito;
+            porcAjEfectivo=porcAjDebito=porcAjCredito=0;
+            for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
+            {
+                switch (dtParametros.Rows[fila]["nombre"].ToString())
+                {
+                    case "porcAjEfectivo":
+                        porcAjEfectivo = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
+                    case "porcAjDebito":
+                        porcAjDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
+                    case "porcAjCredito":
+                        porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
+                }                            
+            }
+
+            for (int fila = 0; fila < dtCortes.Rows.Count; fila++)
+            {
+                dtCortes.Rows[fila]["efectivo"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjEfectivo).ToString("F2");
+                dtCortes.Rows[fila]["debito"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjDebito).ToString("F2");
+                dtCortes.Rows[fila]["credito"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjCredito).ToString("F2");
+            }
+
+            return dtCortes;
 
         }
         public DataTable buscarCorteSinMaestro(string txtBusqueda)

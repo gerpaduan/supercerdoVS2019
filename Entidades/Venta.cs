@@ -48,6 +48,13 @@ namespace Entidades
          private char tipoComprobante;
          private float acumRedondeoKgs;
          private float acumRedondeoImporte;
+         private float comisionTarjeta;
+
+         public float ComisionTarjeta
+         {
+             get { return comisionTarjeta; }
+             set { comisionTarjeta = value; }
+         }
 
          public float AcumRedondeoImporte
          {

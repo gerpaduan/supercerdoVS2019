@@ -12,12 +12,42 @@ namespace Negocio
 
         public int agregarVenta(Entidades.Venta oVentaE)
         {
+            switch (oVentaE.FormaPago.ToString())
+            {
+                case "Efectivo":
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+                case "Debito":
+                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+                    break;
+                case "Credito":
+                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+                    break;
+                default:
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+            }
             oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
             return oVentaE.IdVenta;
         }
 
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas)
         {
+            switch (oVentaE.FormaPago.ToString())
+            {
+                case "Efectivo":
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+                case "Debito":
+                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+                    break;
+                case "Credito":
+                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+                    break;
+                default:
+                    oVentaE.ComisionTarjeta = 0;
+                    break;
+            }
             oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
         }
 
@@ -33,6 +63,11 @@ namespace Negocio
         public float getTotalVenta(int idVenta)
         {
             return oVentaD.getTotalVenta(idVenta);
+        }
+
+        public float getTotalKgsVenta(int idVenta)
+        {
+            return oVentaD.getTotalKgsVenta(idVenta);
         }
 
         public DataTable obtenerVentas(int idSucursal, int idCliente, int idVendedor, DateTime fechaDesde, DateTime fechaHasta, string texto, bool soloAnulados)
@@ -57,12 +92,8 @@ namespace Negocio
 
         public Entidades.LineaVenta agregarLineaVenta(Entidades.LineaVenta oLineaE)
         {
+            oLineaE.AjustePrecio = oLineaE.PrecioKg - oLineaE.Corte.precioKgReferencia;
             return oVentaD.agregarLineaVenta(oLineaE);
-        }
-
-        public void modificarLineaVenta(Entidades.LineaVenta oLineaE)
-        {
-            oVentaD.modificarLineaVenta(oLineaE);
         }
 
         public  List<Entidades.LineaVenta> obtenerLineasVenta(int idVenta)
@@ -98,6 +129,42 @@ namespace Negocio
         public DataTable ultimasVentasCliente(int idSucursal, int idPersona)
         {
             return oVentaD.ultimasVentasCliente(idSucursal, idPersona);
+        }
+
+        public void egresoCajaPagoTarjeta(int idVenta, Entidades.Usuario oUsuario)
+        {
+            Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
+
+            bool esEfectivo = oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());                   
+            //se genera el egreso de caja si paga con tarjeta
+            if (!esEfectivo)
+            {
+                float totalS = 0, totalKgs = 0;// getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                foreach (Entidades.LineaVenta linea in oVentaConEgresoCaja.LineasVenta)
+                {
+                    totalKgs += linea.CantKg;
+                    totalS += (linea.CantKg * linea.PrecioKg); 
+                }
+
+                Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
+
+                oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
+                oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                oEgresoCajaE.Monto = totalS;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                oEgresoCajaE.Detalle = " | Kgs: " + totalKgs.ToString("N3") +
+                    " | Precio: " + (totalS / totalKgs).ToString("N3") +
+                    " | TOT: " + totalS.ToString("N3");
+                oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
+                oEgresoCajaE.IdCompra = 0;
+                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
+                oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
+                oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+            }
         }
     }
 }

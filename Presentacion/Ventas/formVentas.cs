@@ -87,19 +87,22 @@ namespace Presentacion
 
         private void cargarTotales()
         {
-            float totalKgs = 0, totalS = 0, totalKgsAj = 0, totalImpAj = 0;
+            float totalKgs = 0, totalS = 0, totComisionTarj = 0, totalKgsAj = 0, totalImpAj = 0;
 
             //foreach (DataRow venta in dtVentas.Rows)
             foreach (DataGridViewRow row in grillaVentas.Rows)
             {
-                totalImpAj += float.Parse(row.Cells["totalImpAj"].Value.ToString());
+                totComisionTarj += float.Parse(row.Cells["totComTarj"].Value.ToString());
+                totalImpAj += (float.Parse(row.Cells["totAjuste"].Value.ToString()) + 
+                    float.Parse(row.Cells["totalImpAj"].Value.ToString()));
                 totalKgsAj += float.Parse(row.Cells["totalKgAj"].Value.ToString());
                 totalKgs += float.Parse(row.Cells["totalKg"].Value.ToString());
                 totalS += float.Parse(row.Cells["totalS"].Value.ToString());
             }
             txtCantItems.Text = dtVentas.Rows.Count.ToString();
+            txtTotComisionTarj.Text = String.Format("{0:0.00}", totComisionTarj);
             txtKgsAj.Text = String.Format("{0:0.000}", totalKgsAj);
-            txtTotalSAj.Text = String.Format("{0:0.000}", totalImpAj);
+            txtTotalSAj.Text = String.Format("{0:0.00}", totalImpAj);
             totalKgs = totalKgs - totalKgsAj;//resta los kgs del ajuste
             txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
             if (Presentacion.FormPrincipal.logueado)

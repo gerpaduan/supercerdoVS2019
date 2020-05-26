@@ -25,6 +25,7 @@ namespace Entidades
         private bool enCierreStock;
         public Corte corteMaestro;
         public float precioKg;
+        public float precioKgReferencia;
         public float porcentajeHueso;
         public float desvioEstandar;
         DateTime creado;
@@ -93,6 +94,18 @@ namespace Entidades
             }
         }
 
+
+        public float PrecioKgReferencia
+        {
+            get
+            {
+                return precioKgReferencia;
+            }
+            set
+            {
+                precioKgReferencia = value;
+            }
+        }
 
         public float Porcentaje
         {

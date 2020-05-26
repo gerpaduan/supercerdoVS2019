@@ -14,6 +14,11 @@ namespace Utilidades
 {
     public partial class Util_Form : Form
     {
+        public static Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
+        public static Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
+        public static Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
+        public static Color checkedColor = Color.LimeGreen;
+
         public Util_Form()
         {
             InitializeComponent();

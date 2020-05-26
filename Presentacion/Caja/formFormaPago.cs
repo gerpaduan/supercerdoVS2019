@@ -52,33 +52,78 @@ namespace Presentacion.Caja
         }
         
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
+        {            
+            unfocused();
             switch (keyData)
             {
                 case Keys.NumPad1:
+                    btnEfectivo.BackColor = Utilidades.Util_Form.checkedColor;
                     formaPago = Entidades.Venta.formaPagoEnum.Efectivo;
-                    enviarFormaPago();
+                    btnEfectivo.Focus();
                     break;
                 case Keys.NumPad2:
+                    btnDebito.BackColor = Utilidades.Util_Form.checkedColor;
                     formaPago = Entidades.Venta.formaPagoEnum.Debito;
-                    enviarFormaPago();
+                    btnDebito.Focus();
                     break;
                 case Keys.NumPad3:
+                    btnCredito.BackColor = Utilidades.Util_Form.checkedColor;
                     formaPago = Entidades.Venta.formaPagoEnum.Credito;
+                    btnCredito.Focus();
+                    break;
+                case Keys.Enter:
                     enviarFormaPago();
-                    break;  
+                    break;
                 case Keys.Escape:
                     this.Close();
                     break;
+                default:
+                    //formaPago = Entidades.Venta.formaPagoEnum.Nulo;
+                    if (!(keyData.Equals(Keys.Left) || keyData.Equals(Keys.Right) || 
+                        keyData.Equals(Keys.Up) || keyData.Equals(Keys.Down)))
+                    {
+                        formaPago = Entidades.Venta.formaPagoEnum.Nulo;  
+                        label1.Focus();
+                        label1.Select();
+                    }
+                    unfocused();
+                    break;
             }
             return base.ProcessCmdKey(ref msg, keyData);
-            enviarFormaPago();
         }
 
         private void formFormaPago_Load(object sender, EventArgs e)
         {
             label1.Select();
             label1.Focus();
+        }
+
+        private void btnEfectivo_Enter(object sender, EventArgs e)
+        {
+            unfocused();
+            btnEfectivo.BackColor = Utilidades.Util_Form.checkedColor;
+        }
+
+        private void btnDebito_Enter(object sender, EventArgs e)
+        {
+            unfocused();
+            btnDebito.BackColor = Utilidades.Util_Form.checkedColor;
+        }
+
+        private void btnCredito_Enter(object sender, EventArgs e)
+        {
+            unfocused();
+            btnCredito.BackColor = Utilidades.Util_Form.checkedColor;
+        }
+
+        private void unfocused()
+        {
+            if (formaPago == Entidades.Venta.formaPagoEnum.Nulo)
+                //label1.Select();
+            formaPago = Entidades.Venta.formaPagoEnum.Nulo;            
+            btnEfectivo.BackColor = Utilidades.Util_Form.readOnlyColor;
+            btnDebito.BackColor = Utilidades.Util_Form.readOnlyColor;
+            btnCredito.BackColor = Utilidades.Util_Form.readOnlyColor;
         }
     }
 }

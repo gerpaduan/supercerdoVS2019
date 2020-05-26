@@ -33,6 +33,12 @@ namespace Negocio
                     case "idConsumidorFinal":
                         Entidades.Parametros.idConsumidorFinal = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
                         break;
+                    case "comisionDebito":
+                        Entidades.Parametros.comisionDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
+                    case "comisionCredito":
+                        Entidades.Parametros.comisionCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "salChorizo": 
                         Entidades.Parametros.salChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "pimientaChorizo": 
