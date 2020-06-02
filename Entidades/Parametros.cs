@@ -35,5 +35,11 @@ namespace Entidades
         public static float	pimientaMorcilla;//	0,0017	Cantidad de Pimienta por Kg en MORCILLA
         public static float	nuezMorcilla;//	0,0007	Cantidad de Nuez por Kg en MORCILLA
         public static float bracolorMorcilla;//	0,002	Cantidad de Bracolor por Kg en MORCILLA
+        public static float salCodeguin;//	0,022	Cantidad de Sal por Kg en CODEGUIN
+        public static float pimientaCodeguin;//	0,0017	Cantidad de Pimienta por Kg en CODEGUIN
+        public static float nuezCodeguin;//	0,0007	Cantidad de Nuez por Kg en CODEGUIN
+        public static float bracolorCodeguin;//	0,002	Cantidad de Bracolor por Kg en CODEGUIN
+        public static float salMilanesa; // 35		0,022	Cantidad de Sal por Kg en MILANESA
+        public static float pimientaMilanesa;//36	0,0017	Cantidad de Pimienta por Kg en MILANESA
     }
 }

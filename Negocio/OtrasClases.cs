@@ -40,33 +40,45 @@ namespace Negocio
                         Entidades.Parametros.comisionCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
                         break;
                     case "salChorizo": 
-                        Entidades.Parametros.salChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.salChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); 
+                        break;
                     case "pimientaChorizo": 
-                        Entidades.Parametros.pimientaChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.pimientaChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); 
+                        break;
                     case "nuezChorizo": 
-                        Entidades.Parametros.nuezChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.nuezChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); 
+                        break;
                     case "bracolorChorizo": 
-                        Entidades.Parametros.bracolorChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.bracolorChorizo = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); 
+                        break;
                     case "salSalame": 
-                        Entidades.Parametros.salSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.salSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "pimientaSalame": 
-                        Entidades.Parametros.pimientaSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.pimientaSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "nuezSalame": 
-                        Entidades.Parametros.nuezSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.nuezSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "productoSalame": 
-                        Entidades.Parametros.productoSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.productoSalame = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "salSalchicha": 
-                        Entidades.Parametros.salSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.salSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "pimientaSalchicha": 
-                        Entidades.Parametros.pimientaSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.pimientaSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "bracolorSalchicha": 
-                        Entidades.Parametros.bracolorSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.bracolorSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     case "pimentonSalchicha": 
-                        Entidades.Parametros.pimentonSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.pimentonSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); 
+                        break;
                     case "salQueso": 
                         Entidades.Parametros.salQueso = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "pimientaQueso":
-                        Entidades.Parametros.pimentonSalchicha = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                        Entidades.Parametros.pimientaQueso = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "nuezQueso":
                         Entidades.Parametros.salQueso = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "bracolorQueso": 
@@ -77,8 +89,20 @@ namespace Negocio
                         Entidades.Parametros.pimientaMorcilla = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "nuezMorcilla": 
                         Entidades.Parametros.nuezMorcilla = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
-                    case "bracolorMorcilla": 
+                    case "bracolorMorcilla":
                         Entidades.Parametros.bracolorMorcilla = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "salCodeguin":
+                        Entidades.Parametros.salCodeguin = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "pimientaCodeguin":
+                        Entidades.Parametros.pimientaCodeguin = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "nuezCodeguin":
+                        Entidades.Parametros.nuezCodeguin = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "bracolorCodeguin":
+                        Entidades.Parametros.bracolorCodeguin = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "salMilanesa":
+                        Entidades.Parametros.salMilanesa = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "pimientaMilanesa":
+                        Entidades.Parametros.pimientaMilanesa = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     default:
                         break;
                 }

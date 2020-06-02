@@ -427,7 +427,25 @@ namespace Presentacion
                     bracolor = Convert.ToString((Math.Round((totalKgSinCond *
                         (Entidades.Parametros.bracolorQueso)), cantDecimales)).ToString("F3"));
                     break;
-                default:
+
+                //codeguin
+                case 43:
+                    sal = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Entidades.Parametros.salCodeguin)), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Entidades.Parametros.pimientaCodeguin)), cantDecimales)).ToString("F3"));
+                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Entidades.Parametros.nuezCodeguin)), cantDecimales)).ToString("F3"));
+                    //bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+                    //    (Entidades.Parametros.bracolorCodeguin)), cantDecimales)).ToString("F3"));
+                    break;
+
+                //milanesa
+                case 17:
+                    sal = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Entidades.Parametros.salMilanesa)), cantDecimales)).ToString("F3"));
+                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+                        (Entidades.Parametros.pimientaMilanesa)), cantDecimales)).ToString("F3"));
                     break;
             }
 
