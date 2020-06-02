@@ -46,6 +46,7 @@ namespace Presentacion.Ventas
         }
 
         bool modificar = false;
+        bool cargandoDatos = false; //variable para evitar que se ejecuten funciones al cargar el form
         string fecha = "", estadoVenta="";
         float totalCorte, precioKg, cantKg;
         #endregion
@@ -78,6 +79,7 @@ namespace Presentacion.Ventas
         public void parametrosModificacion(formVentas frmVentasParam,Entidades.Venta oVentaParam, List<Entidades.LineaVenta> listaLineaVentaParam, List<LineaVenta> listaLineaGrillaParam)
         {
             modificar = true;
+            cargandoDatos = true;
             this.Text = "Modificar Venta";
 
             frmVentas = frmVentasParam;
@@ -113,18 +115,17 @@ namespace Presentacion.Ventas
             switch (oVentaE.FormaPago)
             {
                 case "Efectivo":
-                    checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    checkEfectivo.Checked = true;
                     break;
                 case "Debito":
-                    checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    checkDebito.Checked = true;
                     break;
                 case "Credito":
-                    checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    checkCredito.Checked = true;
                     break;
                 default:
                     break;
             }
-
             estadoVenta = oVentaE.Estado;
         }      
 
@@ -943,6 +944,7 @@ namespace Presentacion.Ventas
 
             comboTipoComprobante.SelectedIndex = 0; //Remito
             restablecerFormaDePago();
+            cargandoDatos = false;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -1092,11 +1094,14 @@ namespace Presentacion.Ventas
 
         private void restablecerFormaDePago()
         {
-            oVentaE.FormaPago = null;
+            if (!cargandoDatos)
+            {
+                oVentaE.FormaPago = null;
 
-            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+                checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+                checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+                checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            }
         }
     }
 }
