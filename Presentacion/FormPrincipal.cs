@@ -18,6 +18,7 @@ using Presentacion.CuentaCorriente;
 using System.Configuration;
 using Utilidades;
 using System.IO;
+using wsAFIPvs2008;
 
 
 namespace Presentacion
@@ -622,7 +623,7 @@ namespace Presentacion
 
         private void button1_Click(object sender, EventArgs e)
         {
-            gastos();
+
         }
 
         private static void gastos()
@@ -865,6 +866,12 @@ namespace Presentacion
                 frmElegirEmbutido.Show();
             }
             oUsuario = null;
+        }
+
+        private void button1_Click_2(object sender, EventArgs e)
+        {
+            formFacturaElectronica factElectr = new formFacturaElectronica();
+            factElectr.Show();
         }
     }
 }

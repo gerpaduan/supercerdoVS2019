@@ -12,6 +12,7 @@ namespace Negocio
 
         public int agregarVenta(Entidades.Venta oVentaE)
         {
+            //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
             switch (oVentaE.FormaPago.ToString())
             {
                 case "Efectivo":
@@ -33,6 +34,7 @@ namespace Negocio
 
         public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas)
         {
+            //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
             switch (oVentaE.FormaPago.ToString())
             {
                 case "Efectivo":
@@ -166,5 +168,41 @@ namespace Negocio
                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
             }
         }
+
+
+        #region FACTURA ELECTRONICA
+
+        /// <summary>
+        /// Retorna cero si está pendiente de facturacion (CAE es vacio)
+        /// </summary>
+        /// <param name="idVenta"></param>
+        /// <returns></returns>
+        public int esVentaSinFacturar(int idVenta)
+        {
+            return oVentaD.esVentaSinFacturar(idVenta);
+        }
+        
+        /// <summary>
+        /// Retorna ID factura electronica para el idVenta. Cero si no existe.
+        /// </summary>
+        /// <param name="idVenta"></param>
+        /// <returns></returns>
+        public int existeFactuElectParaVenta(int idVenta)
+        {
+            int idFactuElec = oVentaD.existeFacturaElect(idVenta);
+            return idFactuElec;
+        }
+
+        public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
+        {
+            oVentaD.addOrEditFactuElec(oFacturaElectronicaE);
+        }
+
+        public Entidades.FacturaElectronica getFactuElecById(int idFactuElec)
+        {
+            return oVentaD.getFactuElecById(idFactuElec);
+        }
+
+        #endregion
     }
 }

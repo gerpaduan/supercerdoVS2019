@@ -14,4 +14,14 @@ namespace Presentacion
     {
         void EnviarFormaPago(Entidades.Venta.formaPagoEnum formaPago);
     }
+
+    public interface InterfaceTipoComprobante
+    {
+        void EnviarTipoComprobante(Entidades.Venta.tipoComprobanteEnum tipoComprobante);
+    }
+
+    public interface InterfaceImprimirCbte
+    {
+        void EnviarImprimirCbte(Entidades.Venta.imprimirCbteEnum imprimirTipoCbte);
+    }
 }

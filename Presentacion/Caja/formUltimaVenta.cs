@@ -20,6 +20,7 @@ namespace Presentacion.Caja
 
         Negocio.Venta oVentaN = new Negocio.Venta();
         Entidades.LineaVenta oLineaVenta;
+        wsAFIPvs2008.formFacturaElectronica formFactElec;
 
         bool huboModificaciones = false;//se establece true cuando se modificó algo
 
@@ -459,7 +460,6 @@ namespace Presentacion.Caja
 
         private void grillaLineasVenta_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-
             // Ignore clicks that are not on button cells.  
             if (e.RowIndex < 0 || e.ColumnIndex !=
                 grillaLineasVenta.Columns["btnAnular"].Index) return;
@@ -512,6 +512,65 @@ namespace Presentacion.Caja
         {
             huboModificaciones = true;
             oUltimaVenta.Email = txtEmail.Text;
+        }
+
+        private void facturaElectronica_Click(object sender, EventArgs e)
+        {
+            facturaElectronica();
+        }
+
+        private void facturaElectronica()
+        {
+            bool formFactuElec_Abierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(wsAFIPvs2008.formFacturaElectronica))
+                {
+                    formFactElec = (wsAFIPvs2008.formFacturaElectronica)frm;
+                    if (oUltimaVenta.IdVenta > 0 && formFactElec.facturaPendiente)
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if (ctrl.Name.Equals("txtIdVenta") && ctrl.Text.Equals(oUltimaVenta.IdVenta.ToString()))
+                            {
+                                formFactuElec_Abierto = true;
+                                frm.BringToFront();
+                                frm.Visible = false;
+                                frm.ShowDialog();
+                                break;
+                            }
+                        }
+
+                        ///Si Form de Factura no está abierto para el idVenta se informa y se abre otro form
+                        if (!formFactuElec_Abierto)
+                        {
+                            MessageBox.Show("Hay una factura pendiende de registrar. Se abrirá otra ventana de facturacion");
+                        }
+                        break;
+                    }
+
+                    if (oUltimaVenta.IdVenta > 0)//Solo se pasa el idVenta si es nuevo
+                    {
+                        formFactElec.idVenta = oUltimaVenta.IdVenta;
+                        formFactElec.cargarDatosAfip = false;
+                        formFactElec.cargarVenta();
+                    }
+                    frm.BringToFront();
+                    formFactuElec_Abierto = true;
+                    formFactElec.logueado = FormPrincipal.logueado;
+                    this.Visible = false;
+                    break;
+                }
+            }
+
+            if (!formFactuElec_Abierto)
+            {
+                formFactElec = new wsAFIPvs2008.formFacturaElectronica();
+                formFactElec.idVenta = oUltimaVenta.IdVenta;
+                formFactElec.logueado = FormPrincipal.logueado;
+                formFactElec.esShowDialog = true;
+                formFactElec.ShowDialog();
+            }
         }
     }
 }

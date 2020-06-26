@@ -258,8 +258,9 @@ namespace Datos
                         oVentaE.TipoComprobante = Convert.ToChar(drVenta["tipoComprobante"]);
                         oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
                         oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
-
+                        
                         oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
+                        oVentaE.TotalImporte = getTotalVenta(idVenta);
                     }
                     return oVentaE;
                 }
@@ -484,5 +485,156 @@ namespace Datos
 
             return dtVentas;
         }
+
+        #region FACTURA ELECTRONICA        
+
+        /// <summary>
+        /// Pasando el idVenta busca en tabla Factura electronica. Si CAE is null -> Pendiente Facturacion.
+        /// Se Retorna Cero si está pendiente.
+        /// </summary>
+        /// <param name="idVenta"></param>
+        /// <returns></returns>
+        public int esVentaSinFacturar(int idVenta)
+        {
+            int maxDiasParaFacturar = 6;
+            int idFactElec = 0;
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > \'" + DateTime.Today.AddDays(-maxDiasParaFacturar) +
+                "\' and idVenta = \'" + idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drVenta = cmVenta.ExecuteReader();
+                using (drVenta)
+                {
+                    while (drVenta.Read())
+                    {
+                        idFactElec = Convert.ToInt32(drVenta["id"]);
+                    }
+                    return idFactElec;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+            }
+        }
+
+        public int existeFacturaElect(int idVenta)
+        {
+            int idFactElec = 0;
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select id from FacturaElectronica where and idVenta = " + idVenta;
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drVenta = cmVenta.ExecuteReader();
+                using (drVenta)
+                {
+                    while (drVenta.Read())
+                    {
+                        idFactElec = Convert.ToInt32(drVenta["id"]);
+                    }
+                    return idFactElec;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+            }
+        }
+
+        public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
+        {
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandText = "addOrEditFacturaElectronica";
+            cmVenta.Parameters.AddWithValue("@id", oFacturaElectronicaE.Id);
+            cmVenta.Parameters.AddWithValue("@ptoVtaAfip", oFacturaElectronicaE.PtoVtaAfip);
+            cmVenta.Parameters.AddWithValue("@fechaEmisionAfip", oFacturaElectronicaE.FechaEmisionAfip < DateTime.Today.AddYears(-100) ?
+                (DateTime?)null : oFacturaElectronicaE.FechaEmisionAfip);
+            cmVenta.Parameters.AddWithValue("@descTipoCbteAfip", oFacturaElectronicaE.DescTipoCbteAfip);
+            cmVenta.Parameters.AddWithValue("@nroCbteAfip", oFacturaElectronicaE.NroCbteAfip);
+            cmVenta.Parameters.AddWithValue("@tipoDocAfip", oFacturaElectronicaE.TipoDocAfip);
+            cmVenta.Parameters.AddWithValue("@nroDocAfip", oFacturaElectronicaE.NroDocAfip);
+            cmVenta.Parameters.AddWithValue("@razonSocialAFIP", oFacturaElectronicaE.RazonSocialAFIP);
+            cmVenta.Parameters.AddWithValue("@condicionIvaAFIP", oFacturaElectronicaE.CondicionIvaAFIP);
+            cmVenta.Parameters.AddWithValue("@domicilioAFIP", oFacturaElectronicaE.DomicilioAFIP);
+            cmVenta.Parameters.AddWithValue("@condicionVenta", oFacturaElectronicaE.CondicionVenta);
+            cmVenta.Parameters.AddWithValue("@formaPago", oFacturaElectronicaE.FormaPago);
+            cmVenta.Parameters.AddWithValue("@CAE", oFacturaElectronicaE.CAE1);
+            cmVenta.Parameters.AddWithValue("@fecVtoCAE", oFacturaElectronicaE.FecVtoCAE);
+            cmVenta.Parameters.AddWithValue("@importeNetoGravado", oFacturaElectronicaE.ImporteNetoGravado);
+            cmVenta.Parameters.AddWithValue("@iva", oFacturaElectronicaE.Iva);
+            cmVenta.Parameters.AddWithValue("@importeTotal", oFacturaElectronicaE.ImporteTotal);
+            cmVenta.Parameters.AddWithValue("@idVenta", oFacturaElectronicaE.IdVenta);
+            cmVenta.Parameters.AddWithValue("@error", oFacturaElectronicaE.Error);
+            cmVenta.Parameters.AddWithValue("@mensajeError", oFacturaElectronicaE.MensajeError);
+            cmVenta.Parameters.AddWithValue("@fechaError", oFacturaElectronicaE.FechaError.Equals(null) || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100) ? 
+                (DateTime?)null : oFacturaElectronicaE.FechaError);
+
+            cmVenta.ExecuteNonQuery();
+            cmVenta.Connection.Close();
+        }
+
+        public Entidades.FacturaElectronica getFactuElecById(int idFactuElec)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select FacturaElectronica.* from FacturaElectronica where id =" + idFactuElec;
+
+            Entidades.FacturaElectronica oFacturaElectronicaE = new Entidades.FacturaElectronica();
+
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drFactuElec = cmVenta.ExecuteReader();
+
+                using (drFactuElec)
+                {
+                    while (drFactuElec.Read())
+                    {
+                        oFacturaElectronicaE.Id = Convert.ToInt32(drFactuElec["id"]);
+                        oFacturaElectronicaE.PtoVtaAfip = Convert.ToString(drFactuElec["ptoVtaAfip"]);
+                        oFacturaElectronicaE.FechaEmisionAfip = drFactuElec["fechaEmisionAfip"].Equals(DBNull.Value) ? null : (DateTime?)(drFactuElec["fechaEmisionAfip"]);
+                        oFacturaElectronicaE.DescTipoCbteAfip = Convert.ToString(drFactuElec["descTipoCbteAfip"]);
+                        oFacturaElectronicaE.NroCbteAfip = Convert.ToString(drFactuElec["nroCbteAfip"]);
+                        oFacturaElectronicaE.TipoDocAfip = Convert.ToString(drFactuElec["tipoDocAfip"]);
+                        oFacturaElectronicaE.NroDocAfip = Convert.ToString(drFactuElec["NroDocAfip"]);
+                        oFacturaElectronicaE.RazonSocialAFIP = Convert.ToString(drFactuElec["razonSocialAFIP"]);
+                        oFacturaElectronicaE.CondicionIvaAFIP = Convert.ToString(drFactuElec["condicionIvaAFIP"]);
+                        oFacturaElectronicaE.DomicilioAFIP = Convert.ToString(drFactuElec["domicilioAFIP"]);
+                        oFacturaElectronicaE.CondicionVenta = Convert.ToString(drFactuElec["condicionVenta"]);
+                        oFacturaElectronicaE.FormaPago = Convert.ToString(drFactuElec["formaPago"]);
+                        oFacturaElectronicaE.CAE1 = Convert.ToString(drFactuElec["CAE"]);
+                        oFacturaElectronicaE.FecVtoCAE = Convert.ToString(drFactuElec["fecVtoCAE"]);
+                        oFacturaElectronicaE.ImporteNetoGravado = string.IsNullOrEmpty((drFactuElec["importeNetoGravado"]).ToString()) ? 0 : float.Parse((drFactuElec["importeNetoGravado"]).ToString());
+                        oFacturaElectronicaE.Iva = string.IsNullOrEmpty((drFactuElec["iva"]).ToString()) ? 0 : float.Parse((drFactuElec["iva"]).ToString());
+                        oFacturaElectronicaE.ImporteTotal = string.IsNullOrEmpty((drFactuElec["importeTotal"]).ToString()) ? 0 : float.Parse((drFactuElec["importeTotal"]).ToString());
+                        oFacturaElectronicaE.IdVenta = Convert.ToInt32(drFactuElec["idVenta"]);
+                        oFacturaElectronicaE.Error = Convert.ToBoolean(drFactuElec["error"]);
+                        oFacturaElectronicaE.MensajeError = Convert.ToString(drFactuElec["mensajeError"]);
+                        oFacturaElectronicaE.FechaError = drFactuElec["fechaError"].Equals(DBNull.Value) ? null : (DateTime?)(drFactuElec["actualizado"]);
+                    
+                        oFacturaElectronicaE.Venta = getVentaById(oFacturaElectronicaE.IdVenta);
+                    }
+                    return oFacturaElectronicaE;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+                oFacturaElectronicaE = null;
+            }
+        }
+        #endregion
     }
 }

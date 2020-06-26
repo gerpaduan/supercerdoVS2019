@@ -13,6 +13,39 @@ namespace Entidades
             return oCliente.Bonificacion != 0 && !esPrecioMayorista ? (precio * (1 - (oCliente.Bonificacion / 100))) : precio;
         }
 
+        public float getImporteVenta(Entidades.Venta oVentaE)
+        {
+            float importe = 0;
+
+            foreach (Entidades.LineaVenta linea in oVentaE.lineasVenta)
+            {
+                importe += linea.CantKg * linea.PrecioKg;
+            }
+
+            return importe;
+        }
+
+        public float getKgsVenta(Entidades.Venta oVentaE)
+        {
+            float totalKgs = 0;
+
+            foreach (Entidades.LineaVenta linea in oVentaE.lineasVenta)
+            {
+                totalKgs += linea.CantKg;
+            }
+
+            return totalKgs;
+        }
+
+        //0-SinTicket | 1-Ticket | 2-Factura
+        public enum imprimirCbteEnum
+        {
+            SinTicket,
+            Ticket,
+            Factura,
+            Nulo
+        }
+
         public enum tipoComprobanteEnum
         {
             X,
@@ -49,6 +82,20 @@ namespace Entidades
          private float acumRedondeoKgs;
          private float acumRedondeoImporte;
          private float comisionTarjeta;
+         private string imprimirTipoCbte;//0-SinTicket | 1-Ticket | 2-Factura
+         private float totalImporte;
+
+         public float TotalImporte
+         {
+             get { return totalImporte; }
+             set { totalImporte = value; }
+         }
+
+         public string ImprimirTipoCbte
+         {
+             get { return imprimirTipoCbte; }
+             set { imprimirTipoCbte = value; }
+         }
 
          public float ComisionTarjeta
          {

@@ -172,8 +172,7 @@ namespace Datos
         }
 
         public DataTable obtenerProveedores()
-        {
-            
+        {            
             DataTable dtProveedores = new DataTable();
             daPersona = new SqlDataAdapter();
             cmPersona = new SqlCommand();

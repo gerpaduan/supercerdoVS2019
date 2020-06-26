@@ -34,6 +34,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>true</UseVSHostingProcess>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CrystalDecisions.CrystalReports.Engine, Version=10.5.3700.0, Culture=neutral, PublicKeyToken=692fbea5521e1304" />
@@ -77,6 +78,12 @@
     </Compile>
     <Compile Include="Balanza\formBalanza.Designer.cs">
       <DependentUpon>formBalanza.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formFinalizarVenta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formFinalizarVenta.Designer.cs">
+      <DependentUpon>formFinalizarVenta.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formBonificar.cs">
       <SubType>Form</SubType>
@@ -615,6 +622,9 @@
     <EmbeddedResource Include="Balanza\formBalanza.resx">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formFinalizarVenta.resx">
+      <DependentUpon>formFinalizarVenta.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formBonificar.resx">
       <DependentUpon>formBonificar.cs</DependentUpon>
     </EmbeddedResource>
@@ -913,6 +923,10 @@
     <ProjectReference Include="..\Utilidades\Utilidades.csproj">
       <Project>{8C5B62F7-7986-4EEA-BA1F-F51F41E00EBF}</Project>
       <Name>Utilidades</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\Germán\Documents\Visual Studio 2008\Projects\wsAFIPvs2008\wsAFIPvs2008\wsAFIPvs2008.csproj">
+      <Project>{5B716A48-0166-494F-A0F5-2DC93B38AC03}</Project>
+      <Name>wsAFIPvs2008</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

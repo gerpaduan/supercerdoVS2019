@@ -46,6 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CierreCaja.cs" />
+    <Compile Include="FacturaElectronica.cs" />
+    <Compile Include="lineaVentaUnificada.cs" />
     <Compile Include="MovCtaCte.cs" />
     <Compile Include="Parametros.cs" />
     <Compile Include="TemporalLineaVenta.cs" />

@@ -16,12 +16,13 @@ using Utilidades;
 
 namespace Presentacion.Caja
 {
-    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago
+    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago, InterfaceImprimirCbte
     {
         bool pesoBalanza = false;
         bool capturarPantallaFinal = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
+        wsAFIPvs2008.formFacturaElectronica formFactElec;
         #region variables
         public string vendedor = "-";
         public string precioBonificado = "";
@@ -257,12 +258,10 @@ namespace Presentacion.Caja
                 try
                 {
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
-                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();
-
-                    bool esEfectivo = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());                 
-                    
-                    //imprimir si está checked o no es efectivo
-                    ticket.imprimir = checkTicket.Checked || !esEfectivo;
+                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();                
+                                     
+                    //imprimir si está checked
+                    ticket.imprimir = checkTicket.Checked;
                     ticket.TextoCentro("x");
                     ticket.NoValidoComoFactura();
                     ticket.LineasEnBlanco(1);
@@ -323,6 +322,18 @@ namespace Presentacion.Caja
                         MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
                     }
 
+                    try
+                    {
+                        if (oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
+                        {
+                            facturaElectronica();                        
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error al intentar generar Factura Electonica.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
+                    }
+
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                     ultimaVentaVendedor();
@@ -331,6 +342,43 @@ namespace Presentacion.Caja
                 {
                     MessageBox.Show(ex.Message);
                 }
+            }
+        }
+
+        private void facturaElectronica()
+        {
+            bool formFactuElec_Abierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(wsAFIPvs2008.formFacturaElectronica))
+                {
+                    formFactElec = (wsAFIPvs2008.formFacturaElectronica)frm;
+                    if (oVentaE.IdVenta > 0 && formFactElec.facturaPendiente)
+                    {
+                        MessageBox.Show("Hay una factura pendiende de registrar. Se abrirá otra ventana de facturacion");
+                        frm.BringToFront();
+                        break;
+                    }
+                    
+                    if (oVentaE.IdVenta > 0)//Solo se pasa el obj Venta si es nuevo
+                    {
+                        formFactElec.idVenta = oVentaE.IdVenta;
+                        formFactElec.cargarDatosAfip = false;
+                        formFactElec.cargarVenta();
+                    }
+                    frm.BringToFront();
+                    formFactuElec_Abierto = true;
+                    formFactElec.logueado = FormPrincipal.logueado;
+                    break;
+                }
+            }
+
+            if (!formFactuElec_Abierto)
+            {
+                formFactElec = new wsAFIPvs2008.formFacturaElectronica();
+                formFactElec.idVenta = oVentaE.IdVenta;
+                formFactElec.logueado = FormPrincipal.logueado;
+                formFactElec.Show();
             }
         }
 
@@ -473,7 +521,9 @@ namespace Presentacion.Caja
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
 
-            ingresarFormaPago();
+            //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
+            if (!oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
+                ingresarFormaPago();
         }
 
         private void cargarVenta()
@@ -491,7 +541,7 @@ namespace Presentacion.Caja
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
             oVentaE.TipoVenta = "Caja";
-            oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text);
+            oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text).AddDays(-1);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
@@ -504,8 +554,10 @@ namespace Presentacion.Caja
                 Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
             oVentaE.Cuit = txtCuit.Text;
             oVentaE.Email = txtEmail.Text;
+            oVentaE.TotalImporte = totalVenta;
             oVentaE.AcumRedondeoImporte = ganPesosTotRedondeo;
             oVentaE.AcumRedondeoKgs = ganKgsTotRedondeo;
+            oVentaE.LineasVenta = listaLineaVenta;
         }
 
         private void cargarTotales()
@@ -873,9 +925,11 @@ namespace Presentacion.Caja
                         }
                         else
                         {
-                            DialogResult respuesta = MessageBox.Show(txtVendedor.Text+"\n¿Finalizar la venta?. ", txtVendedor.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                            formFinalizarVenta formFinVenta = new formFinalizarVenta();
+                            formFinVenta.oVentaE = oVentaE;
+                            formFinVenta.ShowDialog(this);
 
-                            if (respuesta == System.Windows.Forms.DialogResult.Yes)
+                            if (oVentaE.ImprimirTipoCbte != null && !oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Nulo.ToString()))
                             {
                                 txtCodigo.Focus();
                                 return true;
@@ -885,6 +939,19 @@ namespace Presentacion.Caja
                                 txtCodigo.Focus();
                                 return false;
                             }
+
+                            //DialogResult respuesta = MessageBox.Show(txtVendedor.Text+"\n¿Finalizar la venta?. ", txtVendedor.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+
+                            //if (respuesta == System.Windows.Forms.DialogResult.Yes)
+                            //{
+                            //    txtCodigo.Focus();
+                            //    return true;
+                            //}
+                            //else
+                            //{
+                            //    txtCodigo.Focus();
+                            //    return false;
+                            //}
                         }
                     }
                     else
@@ -894,6 +961,24 @@ namespace Presentacion.Caja
                         return false;
                     }
                 }
+            }
+        }
+
+        ///Se obtiene el tipo de comprobante a imprimir.
+        public void EnviarImprimirCbte(Entidades.Venta.imprimirCbteEnum imprimirTipoCbte)
+        {
+            oVentaE.ImprimirTipoCbte = imprimirTipoCbte.ToString();
+            switch (imprimirTipoCbte)
+            {
+                case Entidades.Venta.imprimirCbteEnum.SinTicket:
+                    checkTicket.Checked = false;
+                    break;
+                case Entidades.Venta.imprimirCbteEnum.Ticket:
+                    checkTicket.Checked = true;
+                    break;
+                case Entidades.Venta.imprimirCbteEnum.Factura:
+                    checkTicket.Checked = false;
+                    break;
             }
         }
 
@@ -1595,7 +1680,7 @@ namespace Presentacion.Caja
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   "+
-                "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F9 = Buscar Cliente  |  " +
+                "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
                 "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |";
             if (oUsuario != null)
             {
@@ -1604,6 +1689,7 @@ namespace Presentacion.Caja
                 if (oUsuario == null) return;
 
                 oVentaE.Vendedor = oUsuario;
+                oVentaE.ImprimirTipoCbte = Entidades.Venta.imprimirCbteEnum.Nulo.ToString();
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
                 lblVendedorNombre.Text = oUsuario.Nombre;
@@ -1704,6 +1790,10 @@ namespace Presentacion.Caja
                 case Keys.F7:
                     if (!estaBloqueado())
                     agregarEgresoCaja();
+                    break;
+                case Keys.F8:
+                    if (!estaBloqueado())
+                        facturaElectronica();
                     break;
                 case Keys.F9:
                     if (!estaBloqueado())
