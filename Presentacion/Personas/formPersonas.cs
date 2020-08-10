@@ -32,6 +32,7 @@ namespace Presentacion.Personas
             grillaPersonas.AutoGenerateColumns = true;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
             grillaPersonas.Columns["idPersona"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["nombreIdentif"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
             grillaPersonas.Columns["razonSocial"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
             grillaPersonas.Columns["iva"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
             grillaPersonas.Columns["ctaCte"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;

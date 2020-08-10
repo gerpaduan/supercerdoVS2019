@@ -33,10 +33,9 @@ namespace Presentacion.Personas
         {
             try
             {
-
                 cargarIva();
-                txtRazonSocial.Focus();
-                txtRazonSocial.Select();
+                txtIdentificacion.Focus();
+                txtIdentificacion.Select();
                 if (idPersona > 0)
                 {
                     oPersonaE = oPersonaN.findById(idPersona);
@@ -70,7 +69,9 @@ namespace Presentacion.Personas
             this.btnGuardar.Text = readOnly ? "&Modificar" : "&Guardar";
 
             //comboTipoPersona.Enabled = !readOnly && FormPrincipal.logueado;
-            txtRazonSocial.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
+            txtIdentificacion.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
+            btnCopiarRS.Visible = !readOnly;
+            txtRazonSocial.ReadOnly = readOnly;
             txtBonificacion.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
             checkCtaCte.Enabled = !readOnly;
             comboIva.Enabled = !readOnly;
@@ -84,6 +85,7 @@ namespace Presentacion.Personas
         private void cargarCampos()
         {
             //comboTipoPersona.Text = oPersonaE.tipo;
+            txtIdentificacion.Text = oPersonaE.Identificacion;
             txtRazonSocial.Text = oPersonaE.razonSocial;
             comboIva.SelectedValue = oPersonaE.IdIva;
             txtCuit.Text = oPersonaE.Cuit;
@@ -142,9 +144,11 @@ namespace Presentacion.Personas
 
         private void cargarPersona()
         {
+            oPersonaE.Identificacion = txtIdentificacion.Text.Trim();
             oPersonaE.razonSocial = txtRazonSocial.Text.Trim();
             oPersonaE.IdIva = comboIva.SelectedValue == null ? 0 : Convert.ToInt32(comboIva.SelectedValue.ToString());
             oPersonaE.Cuit = txtCuit.Text;// Convert.ToInt64(txtCuit.Text.Replace("-", ""));
+            oPersonaE.Cuit = txtCuit.Text.Replace("-", "").TrimStart();
             oPersonaE.Telefono = txtTelefono.Text;
             oPersonaE.Domicilio = txtDomicilio.Text;
             oPersonaE.Ciudad = txtCiudad.Text;
@@ -157,7 +161,8 @@ namespace Presentacion.Personas
         private bool huboModificaciones()
         { 
             bool huboModif = true;
-            if ((oPersonaE.razonSocial.Equals(oPersonaSinMod.razonSocial)) &&
+            if ((oPersonaE.Identificacion.Equals(oPersonaSinMod.Identificacion)) &&
+                (oPersonaE.razonSocial.Equals(oPersonaSinMod.razonSocial)) &&
                 (oPersonaE.IdIva.Equals(oPersonaSinMod.IdIva)) &&
                 (oPersonaE.Cuit.Equals(oPersonaSinMod.Cuit) ||
                 oPersonaSinMod.Cuit.Equals(oPersonaE.Cuit.Replace("-", " ").Replace(" ",""))) &&
@@ -180,9 +185,12 @@ namespace Presentacion.Personas
             int nombreTextBox = 1;
             int valorTextBox = 0;
             //string[valor_campo][nombre_textBox]
-            string[,] textBoxes = new string[2, 2];
+            string[,] textBoxes = new string[3, 3];
             //textBoxes[nroFilas, valorTextBox] = comboTipoPersona.Text == "" ? "" : "tiene_valor";
             //textBoxes[nroFilas++, nombreTextBox] = lblTipo.Text;
+
+            textBoxes[nroFilas, valorTextBox] = txtIdentificacion.Text;
+            textBoxes[nroFilas++, nombreTextBox] = lblNombreIdentif.Text;
 
             textBoxes[nroFilas, valorTextBox] = txtRazonSocial.Text;
             textBoxes[nroFilas++, nombreTextBox] = lblRazonSocial.Text;
@@ -212,6 +220,11 @@ namespace Presentacion.Personas
         private void btnGuardar_Click(object sender, EventArgs e)
         {
             addOrEditPersona();
+        }
+
+        private void btnCopiarRS_Click(object sender, EventArgs e)
+        {
+            txtRazonSocial.Text = txtIdentificacion.Text;
         }
 
     }

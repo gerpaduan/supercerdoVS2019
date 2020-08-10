@@ -120,10 +120,10 @@
   <metadata name="idPersona.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="razonSocial.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="nombreIdentif.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="Telefono.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="razonSocial.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
   <metadata name="iva.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
@@ -132,18 +132,21 @@
   <metadata name="cuit.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
+  <metadata name="Telefono.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
   <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="btnModificar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGPSURBVDhPrZFLSwJRHMX9FtEHaBP0HUKIojZCgRgFIRH0
-        oF2W0KKFCwuiICIECQxBQowkCoQktEDMFj7GNNI0dbIhdBxltAHl5AwzmY8sqANnc+85v/u/98r+TRzH
-        oVqtfmt+3+VyQYy3iw+xLNtkhmFA0zQoihIgmbAVUbMSj6c6+I1DzTAJwJ/UCVDKnCDr1KAQPANKJOig
-        FXf7ygZEGlPyV8jrgwX5+w1waTuyV1soh2yoJq9BmOabAa3mQYW0A3liHbWyG+X4InK3S4gcqRE4nG2/
-        QquL5CXyoTXUKh6wsWlUnlVgwlqkTIr2x2wtk0T9zj5NWzluGAVLEt0BZNiOiGNFGLuSUOM9NYVCfZLY
-        wQiK1JOQEWsNSeWI24zwuRaBix1kvBNgE5PI+VcRNyrAviWEd+kKONbLgWISUcM4nNpe3NRP9WwPo/QS
-        /fyhrgDd3AA4zx447y68ukHYFvqQTxGf5R8BKnkP9DP9cG6OwWdZBkMlhfVWi7WGOoW6Waw1JI32G/NZ
-        sfZXyWQfVtRo1qUgx24AAAAASUVORK5CYII=
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
+        wwAADsMBx2+oZAAAAY9JREFUOE+tkUtLAlEcxf0W0QdoE/QdQoiiNkKBGAUhEfSgXZbQooULC6IgIgQJ
+        DEFCjCQKhCS0QMwWPsY00jR1siF0HGW0AeXkDDOZjyyoA2dz7zm/+7/3yv5NHMehWq1+a37f5XJBjLeL
+        D7Es22SGYUDTNCiKEiCZsBVRsxKPpzr4jUPNMAnAn9QJUMqcIOvUoBA8A0ok6KAVd/vKBkQaU/JXyOuD
+        Bfn7DXBpO7JXWyiHbKgmr0GY5psBreZBhbQDeWIdtbIb5fgicrdLiBypETicbb9Cq4vkJfKhNdQqHrCx
+        aVSeVWDCWqRMivbHbC2TRP3OPk1bOW4YBUsS3QFk2I6IY0UYu5JQ4z01hUJ9ktjBCIrUk5ARaw1J5Yjb
+        jPC5FoGLHWS8E2ATk8j5VxE3KsC+JYR36Qo41suBYhJRwzic2l7c1E/1bA+j9BL9/KGuAN3cADjPHjjv
+        Lry6QdgW+pBPEZ/lHwEqeQ/0M/1wbo7BZ1kGQyWF9VaLtYY6hbpZrDUkjfYb81mx9lfJZB9W1GjWpSDH
+        bgAAAABJRU5ErkJggg==
 </value>
   </data>
   <data name="btnAgregar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">

@@ -112,6 +112,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(437, 179);
+            this.ControlBox = false;
             this.Controls.Add(this.lblFormaPago);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.btnFactura);
@@ -126,6 +127,8 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Finalizar Venta";
             this.Load += new System.EventHandler(this.formFinalizarVenta_Load);
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.formFinalizarVenta_FormClosed);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formFinalizarVenta_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 

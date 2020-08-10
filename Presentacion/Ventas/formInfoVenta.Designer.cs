@@ -28,11 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle18 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle19 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle20 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoVenta));
             this.grillaLineasVenta = new System.Windows.Forms.DataGridView();
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -52,6 +52,15 @@
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkEfectivo = new System.Windows.Forms.CheckBox();
+            this.checkCredito = new System.Windows.Forms.CheckBox();
+            this.checkDebito = new System.Windows.Forms.CheckBox();
+            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
+            this.label20 = new System.Windows.Forms.Label();
+            this.txtEmail = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.txtTelefono = new System.Windows.Forms.TextBox();
             this.checkCtaCte = new System.Windows.Forms.CheckBox();
             this.txtFechaVenta = new System.Windows.Forms.TextBox();
             this.txtVendedor = new System.Windows.Forms.TextBox();
@@ -78,20 +87,12 @@
             this.txtCreado = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.idVentaLabel = new System.Windows.Forms.Label();
-            this.label20 = new System.Windows.Forms.Label();
-            this.txtEmail = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.txtTelefono = new System.Windows.Forms.TextBox();
-            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.checkEfectivo = new System.Windows.Forms.CheckBox();
-            this.checkCredito = new System.Windows.Forms.CheckBox();
-            this.checkDebito = new System.Windows.Forms.CheckBox();
+            this.facturaElec = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            this.barraControl.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            this.barraControl.SuspendLayout();
             this.SuspendLayout();
             // 
             // grillaLineasVenta
@@ -148,9 +149,9 @@
             // cantKgs
             // 
             this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle16.Format = "N3";
-            dataGridViewCellStyle16.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle16;
+            dataGridViewCellStyle1.Format = "N3";
+            dataGridViewCellStyle1.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle1;
             this.cantKgs.HeaderText = "Cant. Kgs";
             this.cantKgs.Name = "cantKgs";
             this.cantKgs.ReadOnly = true;
@@ -159,9 +160,9 @@
             // precioKgs
             // 
             this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle17.Format = "N2";
-            dataGridViewCellStyle17.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle17;
+            dataGridViewCellStyle2.Format = "N2";
+            dataGridViewCellStyle2.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle2;
             this.precioKgs.HeaderText = "Precio Kg.";
             this.precioKgs.Name = "precioKgs";
             this.precioKgs.ReadOnly = true;
@@ -170,9 +171,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle18.Format = "N2";
-            dataGridViewCellStyle18.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle18;
+            dataGridViewCellStyle3.Format = "N2";
+            dataGridViewCellStyle3.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
             this.totalS.HeaderText = "Total $";
             this.totalS.Name = "totalS";
             this.totalS.ReadOnly = true;
@@ -181,9 +182,9 @@
             // bonificacion
             // 
             this.bonificacion.DataPropertyName = "bonificacion";
-            dataGridViewCellStyle19.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle19.Format = "N2";
-            this.bonificacion.DefaultCellStyle = dataGridViewCellStyle19;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle4.Format = "N2";
+            this.bonificacion.DefaultCellStyle = dataGridViewCellStyle4;
             this.bonificacion.HeaderText = "Bonif.";
             this.bonificacion.Name = "bonificacion";
             this.bonificacion.ReadOnly = true;
@@ -200,8 +201,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle20.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle20;
+            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
             this.estado.HeaderText = "Estado";
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
@@ -322,6 +323,128 @@
             this.groupBox1.TabIndex = 19;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Datos Venta";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.checkEfectivo);
+            this.groupBox2.Controls.Add(this.checkCredito);
+            this.groupBox2.Controls.Add(this.checkDebito);
+            this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupBox2.Location = new System.Drawing.Point(484, 101);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(226, 48);
+            this.groupBox2.TabIndex = 67;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Forma de Pago";
+            // 
+            // checkEfectivo
+            // 
+            this.checkEfectivo.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkEfectivo.AutoSize = true;
+            this.checkEfectivo.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkEfectivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkEfectivo.Location = new System.Drawing.Point(9, 15);
+            this.checkEfectivo.Name = "checkEfectivo";
+            this.checkEfectivo.Size = new System.Drawing.Size(76, 30);
+            this.checkEfectivo.TabIndex = 55;
+            this.checkEfectivo.TabStop = false;
+            this.checkEfectivo.Text = "Efectivo";
+            this.checkEfectivo.UseVisualStyleBackColor = false;
+            // 
+            // checkCredito
+            // 
+            this.checkCredito.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkCredito.AutoSize = true;
+            this.checkCredito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCredito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkCredito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkCredito.Location = new System.Drawing.Point(153, 15);
+            this.checkCredito.Name = "checkCredito";
+            this.checkCredito.Size = new System.Drawing.Size(70, 30);
+            this.checkCredito.TabIndex = 61;
+            this.checkCredito.TabStop = false;
+            this.checkCredito.Text = "Credito";
+            this.checkCredito.UseVisualStyleBackColor = false;
+            // 
+            // checkDebito
+            // 
+            this.checkDebito.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkDebito.AutoSize = true;
+            this.checkDebito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkDebito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkDebito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkDebito.Location = new System.Drawing.Point(86, 15);
+            this.checkDebito.Name = "checkDebito";
+            this.checkDebito.Size = new System.Drawing.Size(66, 30);
+            this.checkDebito.TabIndex = 60;
+            this.checkDebito.TabStop = false;
+            this.checkDebito.Text = "Debito";
+            this.checkDebito.UseVisualStyleBackColor = false;
+            // 
+            // comboTipoComprobante
+            // 
+            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.comboTipoComprobante.DisplayMember = "R";
+            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipoComprobante.Enabled = false;
+            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboTipoComprobante.FormattingEnabled = true;
+            this.comboTipoComprobante.Items.AddRange(new object[] {
+            "X",
+            "A",
+            "B"});
+            this.comboTipoComprobante.Location = new System.Drawing.Point(355, 15);
+            this.comboTipoComprobante.Name = "comboTipoComprobante";
+            this.comboTipoComprobante.Size = new System.Drawing.Size(43, 28);
+            this.comboTipoComprobante.TabIndex = 66;
+            this.comboTipoComprobante.TabStop = false;
+            this.comboTipoComprobante.ValueMember = "R";
+            // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label20.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label20.Location = new System.Drawing.Point(38, 131);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(42, 15);
+            this.label20.TabIndex = 61;
+            this.label20.Text = "e-mail";
+            // 
+            // txtEmail
+            // 
+            this.txtEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
+            this.txtEmail.Location = new System.Drawing.Point(86, 128);
+            this.txtEmail.Name = "txtEmail";
+            this.txtEmail.ReadOnly = true;
+            this.txtEmail.Size = new System.Drawing.Size(206, 22);
+            this.txtEmail.TabIndex = 60;
+            this.txtEmail.TabStop = false;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(25, 109);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(55, 15);
+            this.label7.TabIndex = 59;
+            this.label7.Text = "Telefono";
+            // 
+            // txtTelefono
+            // 
+            this.txtTelefono.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
+            this.txtTelefono.Location = new System.Drawing.Point(86, 106);
+            this.txtTelefono.Name = "txtTelefono";
+            this.txtTelefono.ReadOnly = true;
+            this.txtTelefono.Size = new System.Drawing.Size(206, 22);
+            this.txtTelefono.TabIndex = 58;
+            this.txtTelefono.TabStop = false;
             // 
             // checkCtaCte
             // 
@@ -473,7 +596,8 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.modificar,
             this.toolStripSeparator1,
-            this.Imprimir});
+            this.Imprimir,
+            this.facturaElec});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
@@ -607,127 +731,16 @@
             this.idVentaLabel.Text = "idVentaLabel";
             this.idVentaLabel.Visible = false;
             // 
-            // label20
+            // facturaElec
             // 
-            this.label20.AutoSize = true;
-            this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label20.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label20.Location = new System.Drawing.Point(38, 131);
-            this.label20.Name = "label20";
-            this.label20.Size = new System.Drawing.Size(42, 15);
-            this.label20.TabIndex = 61;
-            this.label20.Text = "e-mail";
-            // 
-            // txtEmail
-            // 
-            this.txtEmail.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
-            this.txtEmail.Location = new System.Drawing.Point(86, 128);
-            this.txtEmail.Name = "txtEmail";
-            this.txtEmail.ReadOnly = true;
-            this.txtEmail.Size = new System.Drawing.Size(206, 22);
-            this.txtEmail.TabIndex = 60;
-            this.txtEmail.TabStop = false;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(25, 109);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(55, 15);
-            this.label7.TabIndex = 59;
-            this.label7.Text = "Telefono";
-            // 
-            // txtTelefono
-            // 
-            this.txtTelefono.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
-            this.txtTelefono.Location = new System.Drawing.Point(86, 106);
-            this.txtTelefono.Name = "txtTelefono";
-            this.txtTelefono.ReadOnly = true;
-            this.txtTelefono.Size = new System.Drawing.Size(206, 22);
-            this.txtTelefono.TabIndex = 58;
-            this.txtTelefono.TabStop = false;
-            // 
-            // comboTipoComprobante
-            // 
-            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.comboTipoComprobante.DisplayMember = "R";
-            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipoComprobante.Enabled = false;
-            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboTipoComprobante.FormattingEnabled = true;
-            this.comboTipoComprobante.Items.AddRange(new object[] {
-            "X",
-            "A",
-            "B"});
-            this.comboTipoComprobante.Location = new System.Drawing.Point(355, 15);
-            this.comboTipoComprobante.Name = "comboTipoComprobante";
-            this.comboTipoComprobante.Size = new System.Drawing.Size(43, 28);
-            this.comboTipoComprobante.TabIndex = 66;
-            this.comboTipoComprobante.TabStop = false;
-            this.comboTipoComprobante.ValueMember = "R";
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.checkEfectivo);
-            this.groupBox2.Controls.Add(this.checkCredito);
-            this.groupBox2.Controls.Add(this.checkDebito);
-            this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox2.Location = new System.Drawing.Point(484, 101);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(226, 48);
-            this.groupBox2.TabIndex = 67;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Forma de Pago";
-            // 
-            // checkEfectivo
-            // 
-            this.checkEfectivo.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkEfectivo.AutoSize = true;
-            this.checkEfectivo.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkEfectivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkEfectivo.Location = new System.Drawing.Point(9, 15);
-            this.checkEfectivo.Name = "checkEfectivo";
-            this.checkEfectivo.Size = new System.Drawing.Size(76, 30);
-            this.checkEfectivo.TabIndex = 55;
-            this.checkEfectivo.TabStop = false;
-            this.checkEfectivo.Text = "Efectivo";
-            this.checkEfectivo.UseVisualStyleBackColor = false;
-            // 
-            // checkCredito
-            // 
-            this.checkCredito.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkCredito.AutoSize = true;
-            this.checkCredito.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkCredito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkCredito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkCredito.Location = new System.Drawing.Point(153, 15);
-            this.checkCredito.Name = "checkCredito";
-            this.checkCredito.Size = new System.Drawing.Size(70, 30);
-            this.checkCredito.TabIndex = 61;
-            this.checkCredito.TabStop = false;
-            this.checkCredito.Text = "Credito";
-            this.checkCredito.UseVisualStyleBackColor = false;
-            // 
-            // checkDebito
-            // 
-            this.checkDebito.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkDebito.AutoSize = true;
-            this.checkDebito.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkDebito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkDebito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkDebito.Location = new System.Drawing.Point(86, 15);
-            this.checkDebito.Name = "checkDebito";
-            this.checkDebito.Size = new System.Drawing.Size(66, 30);
-            this.checkDebito.TabIndex = 60;
-            this.checkDebito.TabStop = false;
-            this.checkDebito.Text = "Debito";
-            this.checkDebito.UseVisualStyleBackColor = false;
+            this.facturaElec.Image = ((System.Drawing.Image)(resources.GetObject("facturaElec.Image")));
+            this.facturaElec.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.facturaElec.Name = "facturaElec";
+            this.facturaElec.Size = new System.Drawing.Size(50, 42);
+            this.facturaElec.Text = "Factura";
+            this.facturaElec.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
+            this.facturaElec.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.facturaElec.Click += new System.EventHandler(this.facturaElec_Click);
             // 
             // formInfoVenta
             // 
@@ -763,10 +776,10 @@
             this.pnlBuscar.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            this.barraControl.ResumeLayout(false);
-            this.barraControl.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
+            this.barraControl.ResumeLayout(false);
+            this.barraControl.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -827,5 +840,6 @@
         private System.Windows.Forms.CheckBox checkEfectivo;
         private System.Windows.Forms.CheckBox checkCredito;
         private System.Windows.Forms.CheckBox checkDebito;
+        private System.Windows.Forms.ToolStripButton facturaElec;
     }
 }

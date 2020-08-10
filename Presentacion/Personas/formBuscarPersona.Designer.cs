@@ -34,17 +34,18 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnModificar = new System.Windows.Forms.Button();
             this.btnAgregar = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.btnBuscarProv = new System.Windows.Forms.Button();
             this.txtBuscar = new System.Windows.Forms.TextBox();
             this.Proveedor = new System.Windows.Forms.Label();
-            this.btnModificar = new System.Windows.Forms.Button();
             this.idPersona = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nombreIdentif = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.razonSocial = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Telefono = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.iva = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.cuit = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Telefono = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPersonas)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -60,10 +61,11 @@
             this.grillaPersonas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaPersonas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idPersona,
+            this.nombreIdentif,
             this.razonSocial,
-            this.Telefono,
             this.iva,
-            this.cuit});
+            this.cuit,
+            this.Telefono});
             this.grillaPersonas.Location = new System.Drawing.Point(10, 68);
             this.grillaPersonas.MultiSelect = false;
             this.grillaPersonas.Name = "grillaPersonas";
@@ -126,6 +128,19 @@
             this.panel1.Size = new System.Drawing.Size(535, 62);
             this.panel1.TabIndex = 40;
             // 
+            // btnModificar
+            // 
+            this.btnModificar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnModificar.Image = ((System.Drawing.Image)(resources.GetObject("btnModificar.Image")));
+            this.btnModificar.Location = new System.Drawing.Point(439, 18);
+            this.btnModificar.Name = "btnModificar";
+            this.btnModificar.Size = new System.Drawing.Size(83, 24);
+            this.btnModificar.TabIndex = 49;
+            this.btnModificar.Text = "Modificar";
+            this.btnModificar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
+            this.btnModificar.UseVisualStyleBackColor = true;
+            this.btnModificar.Click += new System.EventHandler(this.btnModificar_Click);
+            // 
             // btnAgregar
             // 
             this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
@@ -180,19 +195,6 @@
             this.Proveedor.TabIndex = 2;
             this.Proveedor.Text = "Descripción";
             // 
-            // btnModificar
-            // 
-            this.btnModificar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnModificar.Image = ((System.Drawing.Image)(resources.GetObject("btnModificar.Image")));
-            this.btnModificar.Location = new System.Drawing.Point(439, 18);
-            this.btnModificar.Name = "btnModificar";
-            this.btnModificar.Size = new System.Drawing.Size(83, 24);
-            this.btnModificar.TabIndex = 49;
-            this.btnModificar.Text = "Modificar";
-            this.btnModificar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
-            this.btnModificar.UseVisualStyleBackColor = true;
-            this.btnModificar.Click += new System.EventHandler(this.btnModificar_Click);
-            // 
             // idPersona
             // 
             this.idPersona.DataPropertyName = "idPersona";
@@ -203,21 +205,21 @@
             this.idPersona.Visible = false;
             this.idPersona.Width = 80;
             // 
+            // nombreIdentif
+            // 
+            this.nombreIdentif.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.nombreIdentif.DataPropertyName = "nombreIdentif";
+            this.nombreIdentif.HeaderText = "Nombre Identif.";
+            this.nombreIdentif.Name = "nombreIdentif";
+            this.nombreIdentif.ReadOnly = true;
+            // 
             // razonSocial
             // 
+            this.razonSocial.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.razonSocial.DataPropertyName = "razonSocial";
             this.razonSocial.HeaderText = "Razon Social";
             this.razonSocial.Name = "razonSocial";
             this.razonSocial.ReadOnly = true;
-            this.razonSocial.Width = 260;
-            // 
-            // Telefono
-            // 
-            this.Telefono.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Telefono.DataPropertyName = "telefono";
-            this.Telefono.HeaderText = "Telefono";
-            this.Telefono.Name = "Telefono";
-            this.Telefono.ReadOnly = true;
             // 
             // iva
             // 
@@ -235,6 +237,14 @@
             this.cuit.HeaderText = "Cuit";
             this.cuit.Name = "cuit";
             this.cuit.ReadOnly = true;
+            // 
+            // Telefono
+            // 
+            this.Telefono.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.Telefono.DataPropertyName = "telefono";
+            this.Telefono.HeaderText = "Telefono";
+            this.Telefono.Name = "Telefono";
+            this.Telefono.ReadOnly = true;
             // 
             // formBuscarPersona
             // 
@@ -274,9 +284,10 @@
         private System.Windows.Forms.Button btnAgregar;
         private System.Windows.Forms.Button btnModificar;
         private System.Windows.Forms.DataGridViewTextBoxColumn idPersona;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nombreIdentif;
         private System.Windows.Forms.DataGridViewTextBoxColumn razonSocial;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Telefono;
         private System.Windows.Forms.DataGridViewTextBoxColumn iva;
         private System.Windows.Forms.DataGridViewTextBoxColumn cuit;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Telefono;
     }
 }

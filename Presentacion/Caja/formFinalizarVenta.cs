@@ -65,7 +65,8 @@ namespace Presentacion.Caja
                         enviarImprimirCbte();
                     break;
                 case Keys.Escape:
-                    this.Close();
+                    imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
+                    enviarImprimirCbte();
                     break;
                 default:
                     //imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
@@ -148,7 +149,16 @@ namespace Presentacion.Caja
         private void btnSalir_Click(object sender, EventArgs e)
         {
             imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
-            this.Close();
+            enviarImprimirCbte();
+        }
+
+        private void formFinalizarVenta_FormClosing(object sender, FormClosingEventArgs e)
+        {
+        }
+
+        private void formFinalizarVenta_FormClosed(object sender, FormClosedEventArgs e)
+        {
+
         }
     }
 }

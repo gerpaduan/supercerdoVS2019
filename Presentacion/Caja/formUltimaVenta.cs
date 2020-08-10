@@ -527,7 +527,7 @@ namespace Presentacion.Caja
                 if (frm.GetType() == typeof(wsAFIPvs2008.formFacturaElectronica))
                 {
                     formFactElec = (wsAFIPvs2008.formFacturaElectronica)frm;
-                    if (oUltimaVenta.IdVenta > 0 && formFactElec.facturaPendiente)
+                    if (formFactElec.idVenta > 0 && formFactElec.facturaPendiente)
                     {
                         foreach (Control ctrl in frm.Controls)
                         {

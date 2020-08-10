@@ -144,33 +144,6 @@
   <metadata name="estado.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
-  <metadata name="idCorte.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="codigo.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="corte.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="cantKgs.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="precioKgs.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="totalS.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="bonificacion.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="PesoBalanza.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
-  <metadata name="estado.UserAddedColumn" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-    <value>True</value>
-  </metadata>
   <metadata name="barraControl.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
@@ -197,6 +170,19 @@
         I7mwgo31bWTSm8hu7fA9nRTWdb0LoQvRLctyRAYJHB8V2VyvP8AwDN6gVDrljAOgJjVoA4E0Gk0O0CkT
         Ne2QfeHwIP8PRZnpAgRCk6rVGgdoUi63i8XFJIaHRuD3+x1RjgHyD2iKQESh0AACgQAH5KTJzve7ixq0
         Mk0UESAYDLKZQqZp8lb0LLLjnaIGfSeF3SYKup9te//6afo95PN9Aa4Z+NRVkSxVAAAAAElFTkSuQmCC
+</value>
+  </data>
+  <data name="facturaElec.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGrSURBVDhPpZFNLwNRGIX7e1iwYcuWjV8gIcSSsLJnzUJI
+        NGLhI03TpJJKSBG04ltRWi2lTYsaQ0s7086M+TjuHdNOop1W4iRvZnHvee4579hK8vijqDbu7RCc3gss
+        rR4jcJOCcb1S9LKVNDJzrl20dPTBseqvDlnZCf/c/iWNuGVFw/SSFxv7oR+Ix1cJcW0GDYsplZplDaKk
+        YmphHa2d/eUxbKYca2e6acTOomeCRdcYi/bRNFoH4+CKCj54WYeUQIbN1KLnSAdQKSogySqK5OV8QUE2
+        L4P9kJF+l3QArWHYTM2790hfDcM0wSRJMM6ijSYYSqB54AoN3T4kGNEaYHdu68uifXlBxSevIJOTwWS/
+        8MSKSLwIuEsVrQEzyxt65JFZFr00gb6DF5IgjiaSoJEkuE4UrAH0gC6r3PdNQpKREHsWEEkWcR3nEbjj
+        agMyxFzeQSkB+QtNA0F9B4fhOgAmK+GR9I2nRdw+CgiTyJexAk6jHA7CefiDudqA1KuEB2KOpgQSuYDz
+        GI+TCIf9UB6+yxy2Ap+1AfekL/3WG0sAPfjrGLb/ymb7BoaMLTp76odgAAAAAElFTkSuQmCC
 </value>
   </data>
 </root>

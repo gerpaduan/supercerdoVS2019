@@ -195,7 +195,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(256, 39);
+            this.lblActualizar.Location = new System.Drawing.Point(303, 40);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(69, 15);
             this.lblActualizar.TabIndex = 52;
@@ -217,10 +217,10 @@
             // txtPersona
             // 
             this.txtPersona.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPersona.Location = new System.Drawing.Point(16, 33);
+            this.txtPersona.Location = new System.Drawing.Point(16, 34);
             this.txtPersona.Name = "txtPersona";
             this.txtPersona.ReadOnly = true;
-            this.txtPersona.Size = new System.Drawing.Size(213, 26);
+            this.txtPersona.Size = new System.Drawing.Size(281, 26);
             this.txtPersona.TabIndex = 0;
             this.txtPersona.Text = "Nombre Persona";
             // 
@@ -229,7 +229,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(13, 15);
+            this.label2.Location = new System.Drawing.Point(13, 4);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(52, 15);
             this.label2.TabIndex = 2;

@@ -56,6 +56,7 @@ namespace Datos
             cmPersona.CommandType = CommandType.StoredProcedure;
             cmPersona.CommandText = "addOrEditPersona";
             cmPersona.Parameters.AddWithValue("@idPersona", oPersonaE.idPersona);
+            cmPersona.Parameters.AddWithValue("@identificacion", oPersonaE.Identificacion);
             cmPersona.Parameters.AddWithValue("@razonSocial", oPersonaE.razonSocial);
             cmPersona.Parameters.AddWithValue("@idIva", oPersonaE.IdIva);
             cmPersona.Parameters.AddWithValue("@cuit", oPersonaE.Cuit);
@@ -93,7 +94,7 @@ namespace Datos
             cmPersona = new SqlCommand();
 
             cmPersona.Connection = conn.conectar();
-            daPersona = new SqlDataAdapter("SELECT dbo.Personas.idPersona as idPersona, dbo.Personas.razonSocial as razonSocial, "+
+            daPersona = new SqlDataAdapter("SELECT dbo.Personas.idPersona as idPersona, dbo.Personas.identificacion as identificacion, dbo.Personas.razonSocial as razonSocial, " +
                       " dbo.Personas.tipo as tipo, dbo.Personas.otrosDatos as otrosDatos, dbo.Personas.ctaCte as ctaCte, "+
                       " dbo.Personas.bonificacion as bonificacion, dbo.Personas.cuit as cuit, dbo.Personas.telefono as telefono, "+ 
                       " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.idIva as idIva, "+
@@ -106,6 +107,7 @@ namespace Datos
             {                
                 oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
                 oPersona.tipo = dtPersona.Rows[0]["tipo"].ToString();
+                oPersona.Identificacion = dtPersona.Rows[0]["identificacion"].ToString();
                 oPersona.razonSocial = dtPersona.Rows[0]["razonSocial"].ToString();
                 oPersona.Iva = dtPersona.Rows[0]["iva"].ToString();
                 oPersona.IdIva = string.IsNullOrEmpty(dtPersona.Rows[0]["idIva"].ToString()) ? 0 : Convert.ToInt32(dtPersona.Rows[0]["idIva"].ToString());

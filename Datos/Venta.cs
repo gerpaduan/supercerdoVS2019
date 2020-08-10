@@ -501,8 +501,11 @@ namespace Datos
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
             cmVenta.CommandType = CommandType.Text;
-            cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > \'" + DateTime.Today.AddDays(-maxDiasParaFacturar) +
-                "\' and idVenta = \'" + idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
+            //cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > \'" + DateTime.Today.AddDays(-maxDiasParaFacturar) +
+            //    "\' and idVenta = \'" + idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
+            cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > @fechaEmisionAfip and idVenta = \'" + 
+                idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
+            cmVenta.Parameters.Add("@fechaEmisionAfip", SqlDbType.DateTime2).Value = DateTime.Today.AddDays(-maxDiasParaFacturar);
             try
             {
                 cmVenta.Connection.Open();
@@ -561,6 +564,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@fechaEmisionAfip", oFacturaElectronicaE.FechaEmisionAfip < DateTime.Today.AddYears(-100) ?
                 (DateTime?)null : oFacturaElectronicaE.FechaEmisionAfip);
             cmVenta.Parameters.AddWithValue("@descTipoCbteAfip", oFacturaElectronicaE.DescTipoCbteAfip);
+            cmVenta.Parameters.AddWithValue("@codTipoCbteAfip", oFacturaElectronicaE.CodTipoCbteAfip);
             cmVenta.Parameters.AddWithValue("@nroCbteAfip", oFacturaElectronicaE.NroCbteAfip);
             cmVenta.Parameters.AddWithValue("@tipoDocAfip", oFacturaElectronicaE.TipoDocAfip);
             cmVenta.Parameters.AddWithValue("@nroDocAfip", oFacturaElectronicaE.NroDocAfip);
@@ -606,6 +610,7 @@ namespace Datos
                         oFacturaElectronicaE.PtoVtaAfip = Convert.ToString(drFactuElec["ptoVtaAfip"]);
                         oFacturaElectronicaE.FechaEmisionAfip = drFactuElec["fechaEmisionAfip"].Equals(DBNull.Value) ? null : (DateTime?)(drFactuElec["fechaEmisionAfip"]);
                         oFacturaElectronicaE.DescTipoCbteAfip = Convert.ToString(drFactuElec["descTipoCbteAfip"]);
+                        oFacturaElectronicaE.CodTipoCbteAfip = Convert.ToInt32(drFactuElec["codTipoCbteAfip"]);
                         oFacturaElectronicaE.NroCbteAfip = Convert.ToString(drFactuElec["nroCbteAfip"]);
                         oFacturaElectronicaE.TipoDocAfip = Convert.ToString(drFactuElec["tipoDocAfip"]);
                         oFacturaElectronicaE.NroDocAfip = Convert.ToString(drFactuElec["NroDocAfip"]);

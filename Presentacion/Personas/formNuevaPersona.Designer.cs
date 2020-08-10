@@ -29,7 +29,10 @@
         private void InitializeComponent()
         {
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.groupCortes = new System.Windows.Forms.GroupBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblNombreIdentif = new System.Windows.Forms.Label();
+            this.txtIdentificacion = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.comboIva = new System.Windows.Forms.ComboBox();
             this.txtCuit = new System.Windows.Forms.MaskedTextBox();
@@ -49,7 +52,7 @@
             this.txtRazonSocial = new System.Windows.Forms.TextBox();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.groupCortes = new System.Windows.Forms.GroupBox();
+            this.btnCopiarRS = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -66,9 +69,24 @@
             this.pnlBuscar.Size = new System.Drawing.Size(475, 419);
             this.pnlBuscar.TabIndex = 21;
             // 
+            // groupCortes
+            // 
+            this.groupCortes.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupCortes.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupCortes.Location = new System.Drawing.Point(11, 272);
+            this.groupCortes.Name = "groupCortes";
+            this.groupCortes.Size = new System.Drawing.Size(451, 144);
+            this.groupCortes.TabIndex = 1;
+            this.groupCortes.TabStop = false;
+            this.groupCortes.Text = "Promo Cortes";
+            // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.Controls.Add(this.btnCopiarRS);
+            this.groupBox1.Controls.Add(this.lblNombreIdentif);
+            this.groupBox1.Controls.Add(this.txtIdentificacion);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.comboIva);
             this.groupBox1.Controls.Add(this.txtCuit);
@@ -90,17 +108,35 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(11, 4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(451, 242);
+            this.groupBox1.Size = new System.Drawing.Size(451, 262);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Persona";
+            // 
+            // lblNombreIdentif
+            // 
+            this.lblNombreIdentif.AutoSize = true;
+            this.lblNombreIdentif.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblNombreIdentif.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblNombreIdentif.Location = new System.Drawing.Point(15, 26);
+            this.lblNombreIdentif.Name = "lblNombreIdentif";
+            this.lblNombreIdentif.Size = new System.Drawing.Size(91, 15);
+            this.lblNombreIdentif.TabIndex = 53;
+            this.lblNombreIdentif.Text = "Nombre Identif.";
+            // 
+            // txtIdentificacion
+            // 
+            this.txtIdentificacion.Location = new System.Drawing.Point(111, 23);
+            this.txtIdentificacion.Name = "txtIdentificacion";
+            this.txtIdentificacion.Size = new System.Drawing.Size(251, 21);
+            this.txtIdentificacion.TabIndex = 0;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(81, 44);
+            this.label5.Location = new System.Drawing.Point(82, 69);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(24, 15);
             this.label5.TabIndex = 51;
@@ -110,14 +146,14 @@
             // 
             this.comboIva.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboIva.FormattingEnabled = true;
-            this.comboIva.Location = new System.Drawing.Point(111, 41);
+            this.comboIva.Location = new System.Drawing.Point(112, 66);
             this.comboIva.Name = "comboIva";
             this.comboIva.Size = new System.Drawing.Size(150, 23);
             this.comboIva.TabIndex = 2;
             // 
             // txtCuit
             // 
-            this.txtCuit.Location = new System.Drawing.Point(110, 65);
+            this.txtCuit.Location = new System.Drawing.Point(111, 90);
             this.txtCuit.Mask = "00-00000000-0";
             this.txtCuit.Name = "txtCuit";
             this.txtCuit.Size = new System.Drawing.Size(150, 21);
@@ -128,7 +164,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(48, 89);
+            this.label4.Location = new System.Drawing.Point(49, 114);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(55, 15);
             this.label4.TabIndex = 36;
@@ -136,7 +172,7 @@
             // 
             // txtCiudad
             // 
-            this.txtCiudad.Location = new System.Drawing.Point(110, 128);
+            this.txtCiudad.Location = new System.Drawing.Point(111, 153);
             this.txtCiudad.Name = "txtCiudad";
             this.txtCiudad.Size = new System.Drawing.Size(150, 21);
             this.txtCiudad.TabIndex = 6;
@@ -146,7 +182,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(58, 131);
+            this.label3.Location = new System.Drawing.Point(59, 156);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(46, 15);
             this.label3.TabIndex = 34;
@@ -154,7 +190,7 @@
             // 
             // txtDomicilio
             // 
-            this.txtDomicilio.Location = new System.Drawing.Point(110, 107);
+            this.txtDomicilio.Location = new System.Drawing.Point(111, 132);
             this.txtDomicilio.Name = "txtDomicilio";
             this.txtDomicilio.Size = new System.Drawing.Size(150, 21);
             this.txtDomicilio.TabIndex = 5;
@@ -164,7 +200,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(44, 110);
+            this.label2.Location = new System.Drawing.Point(45, 135);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(59, 15);
             this.label2.TabIndex = 32;
@@ -175,7 +211,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(70, 68);
+            this.label1.Location = new System.Drawing.Point(71, 93);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(34, 15);
             this.label1.TabIndex = 30;
@@ -183,7 +219,7 @@
             // 
             // txtTelefono
             // 
-            this.txtTelefono.Location = new System.Drawing.Point(110, 86);
+            this.txtTelefono.Location = new System.Drawing.Point(111, 111);
             this.txtTelefono.Name = "txtTelefono";
             this.txtTelefono.Size = new System.Drawing.Size(150, 21);
             this.txtTelefono.TabIndex = 4;
@@ -193,7 +229,7 @@
             this.lblBonificacion.AutoSize = true;
             this.lblBonificacion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblBonificacion.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblBonificacion.Location = new System.Drawing.Point(271, 131);
+            this.lblBonificacion.Location = new System.Drawing.Point(272, 156);
             this.lblBonificacion.Name = "lblBonificacion";
             this.lblBonificacion.Size = new System.Drawing.Size(74, 15);
             this.lblBonificacion.TabIndex = 28;
@@ -201,7 +237,7 @@
             // 
             // txtBonificacion
             // 
-            this.txtBonificacion.Location = new System.Drawing.Point(348, 128);
+            this.txtBonificacion.Location = new System.Drawing.Point(349, 153);
             this.txtBonificacion.Name = "txtBonificacion";
             this.txtBonificacion.Size = new System.Drawing.Size(76, 21);
             this.txtBonificacion.TabIndex = 27;
@@ -212,7 +248,7 @@
             // 
             this.checkCtaCte.AutoSize = true;
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkCtaCte.Location = new System.Drawing.Point(291, 109);
+            this.checkCtaCte.Location = new System.Drawing.Point(292, 134);
             this.checkCtaCte.Name = "checkCtaCte";
             this.checkCtaCte.Size = new System.Drawing.Size(71, 19);
             this.checkCtaCte.TabIndex = 26;
@@ -222,10 +258,10 @@
             // 
             // txtOtrosDatos
             // 
-            this.txtOtrosDatos.Location = new System.Drawing.Point(110, 149);
+            this.txtOtrosDatos.Location = new System.Drawing.Point(111, 174);
             this.txtOtrosDatos.Multiline = true;
             this.txtOtrosDatos.Name = "txtOtrosDatos";
-            this.txtOtrosDatos.Size = new System.Drawing.Size(314, 86);
+            this.txtOtrosDatos.Size = new System.Drawing.Size(314, 81);
             this.txtOtrosDatos.TabIndex = 7;
             // 
             // lblOtrosDatos
@@ -233,7 +269,7 @@
             this.lblOtrosDatos.AutoSize = true;
             this.lblOtrosDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblOtrosDatos.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblOtrosDatos.Location = new System.Drawing.Point(34, 149);
+            this.lblOtrosDatos.Location = new System.Drawing.Point(35, 174);
             this.lblOtrosDatos.Name = "lblOtrosDatos";
             this.lblOtrosDatos.Size = new System.Drawing.Size(71, 15);
             this.lblOtrosDatos.TabIndex = 7;
@@ -244,7 +280,7 @@
             this.lblRazonSocial.AutoSize = true;
             this.lblRazonSocial.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblRazonSocial.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblRazonSocial.Location = new System.Drawing.Point(24, 22);
+            this.lblRazonSocial.Location = new System.Drawing.Point(25, 47);
             this.lblRazonSocial.Name = "lblRazonSocial";
             this.lblRazonSocial.Size = new System.Drawing.Size(80, 15);
             this.lblRazonSocial.TabIndex = 6;
@@ -252,7 +288,7 @@
             // 
             // txtRazonSocial
             // 
-            this.txtRazonSocial.Location = new System.Drawing.Point(110, 19);
+            this.txtRazonSocial.Location = new System.Drawing.Point(111, 44);
             this.txtRazonSocial.Name = "txtRazonSocial";
             this.txtRazonSocial.Size = new System.Drawing.Size(251, 21);
             this.txtRazonSocial.TabIndex = 1;
@@ -281,17 +317,17 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
-            // groupCortes
+            // btnCopiarRS
             // 
-            this.groupCortes.BackColor = System.Drawing.Color.SteelBlue;
-            this.groupCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupCortes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupCortes.Location = new System.Drawing.Point(11, 245);
-            this.groupCortes.Name = "groupCortes";
-            this.groupCortes.Size = new System.Drawing.Size(451, 171);
-            this.groupCortes.TabIndex = 1;
-            this.groupCortes.TabStop = false;
-            this.groupCortes.Text = "Promo Cortes";
+            this.btnCopiarRS.ForeColor = System.Drawing.Color.Black;
+            this.btnCopiarRS.Location = new System.Drawing.Point(368, 23);
+            this.btnCopiarRS.Name = "btnCopiarRS";
+            this.btnCopiarRS.Size = new System.Drawing.Size(73, 23);
+            this.btnCopiarRS.TabIndex = 54;
+            this.btnCopiarRS.Text = "Copiar RS";
+            this.btnCopiarRS.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.btnCopiarRS.UseVisualStyleBackColor = true;
+            this.btnCopiarRS.Click += new System.EventHandler(this.btnCopiarRS_Click);
             // 
             // formNuevaPersona
             // 
@@ -339,6 +375,9 @@
         protected System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox comboIva;
         protected System.Windows.Forms.GroupBox groupCortes;
+        protected System.Windows.Forms.Label lblNombreIdentif;
+        protected System.Windows.Forms.TextBox txtIdentificacion;
+        private System.Windows.Forms.Button btnCopiarRS;
 
     }
 }

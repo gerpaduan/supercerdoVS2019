@@ -36,6 +36,8 @@ namespace Presentacion.CuentaCorriente
                 Negocio.Persona oPersonaN = new Negocio.Persona();
                 oPersonaE = oPersonaN.findById(idPersona);
                 txtPersona.Text = oPersonaE.razonSocial;
+                if (!oPersonaE.Identificacion.Equals(oPersonaE.razonSocial))
+                    txtPersona.Text = oPersonaE.Identificacion + " / " + oPersonaE.razonSocial;
                 fechaDesdePick.Value = fechaDesde;
                 cargarGrilla();
             }

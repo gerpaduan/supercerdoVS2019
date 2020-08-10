@@ -28,6 +28,15 @@ namespace Entidades
             get { return iva; }
             set { iva = value; }
         }
+
+        private string identificacion;
+
+        public string Identificacion
+        {
+            get { return identificacion; }
+            set { identificacion = value; }
+        }
+
         private string cuit;
 
         public string Cuit

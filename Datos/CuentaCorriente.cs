@@ -16,10 +16,10 @@ namespace Datos
         public DataTable obtenerCtasCtes(string txtBusqueda)
         {
             DataTable dtCtasCtes = new DataTable();
-            string consulta = "SELECT dbo.Personas.idPersona as IdPersona, dbo.Personas.razonSocial AS [Razon Social], SUM(dbo.MovCtaCte.importe) AS Saldo " +
+            string consulta = "SELECT dbo.Personas.idPersona as IdPersona, dbo.Personas.identificacion [Nombre Identif.], dbo.Personas.razonSocial AS [Razon Social], SUM(dbo.MovCtaCte.importe) AS Saldo " +
                                 "FROM dbo.Personas INNER JOIN dbo.MovCtaCte ON dbo.Personas.idPersona = dbo.MovCtaCte.idPersona "+
-                                "Where  dbo.Personas.razonSocial like '%"+txtBusqueda+"%' "+
-                                "GROUP BY dbo.Personas.idPersona, dbo.Personas.razonSocial";
+                                "Where  dbo.Personas.identificacion like '%" + txtBusqueda + "%' OR dbo.Personas.razonSocial like '%" + txtBusqueda + "%' " +
+                                "GROUP BY dbo.Personas.idPersona, dbo.Personas.identificacion, dbo.Personas.razonSocial";
             daCtaCte = new SqlDataAdapter(consulta, conn.conectar());
             daCtaCte.Fill(dtCtasCtes);
 

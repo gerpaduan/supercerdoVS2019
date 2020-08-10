@@ -256,7 +256,7 @@ namespace Presentacion.Caja
                 cargarVenta();
 
                 try
-                {
+                {                    
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
                     Ticket.CreaTicket ticket = new Ticket.CreaTicket();                
                                      
@@ -337,6 +337,10 @@ namespace Presentacion.Caja
                     oVentaE.IdVenta = 0;
                     limpiarListas();
                     ultimaVentaVendedor();
+
+                    //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
+                    if (!oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
+                        ingresarFormaPago();
                 }
                 catch (Exception ex)
                 {
@@ -353,7 +357,7 @@ namespace Presentacion.Caja
                 if (frm.GetType() == typeof(wsAFIPvs2008.formFacturaElectronica))
                 {
                     formFactElec = (wsAFIPvs2008.formFacturaElectronica)frm;
-                    if (oVentaE.IdVenta > 0 && formFactElec.facturaPendiente)
+                    if (formFactElec.idVenta > 0 && formFactElec.facturaPendiente)
                     {
                         MessageBox.Show("Hay una factura pendiende de registrar. Se abrirá otra ventana de facturacion");
                         frm.BringToFront();
@@ -488,7 +492,7 @@ namespace Presentacion.Caja
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtCuit.Text = "";
-            txtEmail.Text = "";
+            txtDomicilio.Text = "";
             txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
@@ -520,10 +524,6 @@ namespace Presentacion.Caja
             listaLineaGrilla = new List<LineaVenta>();
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
-
-            //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
-            if (!oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
-                ingresarFormaPago();
         }
 
         private void cargarVenta()
@@ -541,7 +541,7 @@ namespace Presentacion.Caja
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
             oVentaE.TipoVenta = "Caja";
-            oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text).AddDays(-1);
+            oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text).AddDays(0);
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
@@ -553,7 +553,7 @@ namespace Presentacion.Caja
                 comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
                 Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
             oVentaE.Cuit = txtCuit.Text;
-            oVentaE.Email = txtEmail.Text;
+            oVentaE.Email = txtDomicilio.Text;
             oVentaE.TotalImporte = totalVenta;
             oVentaE.AcumRedondeoImporte = ganPesosTotRedondeo;
             oVentaE.AcumRedondeoKgs = ganKgsTotRedondeo;
@@ -939,19 +939,6 @@ namespace Presentacion.Caja
                                 txtCodigo.Focus();
                                 return false;
                             }
-
-                            //DialogResult respuesta = MessageBox.Show(txtVendedor.Text+"\n¿Finalizar la venta?. ", txtVendedor.Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
-
-                            //if (respuesta == System.Windows.Forms.DialogResult.Yes)
-                            //{
-                            //    txtCodigo.Focus();
-                            //    return true;
-                            //}
-                            //else
-                            //{
-                            //    txtCodigo.Focus();
-                            //    return false;
-                            //}
                         }
                     }
                     else
@@ -967,23 +954,32 @@ namespace Presentacion.Caja
         ///Se obtiene el tipo de comprobante a imprimir.
         public void EnviarImprimirCbte(Entidades.Venta.imprimirCbteEnum imprimirTipoCbte)
         {
-            oVentaE.ImprimirTipoCbte = imprimirTipoCbte.ToString();
-            switch (imprimirTipoCbte)
+            try
             {
-                case Entidades.Venta.imprimirCbteEnum.SinTicket:
-                    checkTicket.Checked = false;
-                    break;
-                case Entidades.Venta.imprimirCbteEnum.Ticket:
-                    checkTicket.Checked = true;
-                    break;
-                case Entidades.Venta.imprimirCbteEnum.Factura:
-                    checkTicket.Checked = false;
-                    break;
+                oVentaE.ImprimirTipoCbte = imprimirTipoCbte.ToString();
+                switch (imprimirTipoCbte)
+                {
+                    case Entidades.Venta.imprimirCbteEnum.SinTicket:
+                        checkTicket.Checked = false;
+                        break;
+                    case Entidades.Venta.imprimirCbteEnum.Ticket:
+                        checkTicket.Checked = true;
+                        break;
+                    case Entidades.Venta.imprimirCbteEnum.Factura:
+                        checkTicket.Checked = false;
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                oVentaE.ImprimirTipoCbte = Entidades.Venta.imprimirCbteEnum.Nulo.ToString();
             }
         }
 
         private void quitarLinea()
         {
+            /// TODO: Al anular corte bonificado mantiene el precio del corte por defecto. Corregir. 
+            /// Obtener el precio de la linea y NO del corte
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
@@ -1019,6 +1015,7 @@ namespace Presentacion.Caja
                         oLineaVenta.KgsAjusteTarj = oLineaVentaSelect.KgsAjusteTarj * -1;
                         oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
                         oLineaVenta.Estado = 1;//anulado
+                        oLineaVenta.Bonificacion = oLineaVentaSelect.Bonificacion;
                         oLineaVenta.IndexAnulado = nroFila;
 
                         //se agrega el index del anulado al corte seleccionado para anular
@@ -1518,6 +1515,8 @@ namespace Presentacion.Caja
                 linkUltimasVentasCliente.Visible = false;
 
             this.txtCliente.Text = oCliente.razonSocial;
+            this.txtCuit.Text = oCliente.Cuit;
+            this.txtDomicilio.Text = oCliente.Domicilio;
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
             lblClienteConBonif.Text = lblClienteConBonif.Visible ?
                 "Cliente con Bonificación (" + oCliente.Bonificacion.ToString("N2") + " %)" : "";
@@ -1912,12 +1911,14 @@ namespace Presentacion.Caja
                 frmBonificar.ShowDialog();
 
                 listaLineaVenta[nroFila].PrecioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
-                listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].PrecioReal)) * 100;
+                //listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].PrecioReal)) * 100;
+                listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].Corte.precioKg)) * 100;
                 listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? oLineaVentaSelect.Corte.CorteDesc :
                     (oLineaVentaSelect.Corte.CorteDesc.Length < 9 ? oLineaVentaSelect.Corte.CorteDesc : oLineaVentaSelect.Corte.CorteDesc.Substring(0,9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
                 listaLineaGrilla[nroFila].precioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
                 listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].KgsTotalCalculado;
 
+                actualizarPrecios();
                 cargarGrilla();
 
                 txtCodigo.Focus();
@@ -2440,8 +2441,17 @@ namespace Presentacion.Caja
                     establecerPrecioCorteSegunFormaPago();
                     listaLineaVenta[index].Corte = oCorteE;
 
-                    listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, linea.Corte.precioKg, linea.Corte.Mayorista);
-                    listaLineaGrilla[index].totalS = listaLineaGrilla[index].precioKg * listaLineaGrilla[index].KgsTotalCalculado;
+                    if (linea.Bonificacion == 0)
+                    {
+                        //oCorteE = linea.Corte;
+                        //establecerPrecioCorteSegunFormaPago();
+
+                        //listaLineaVenta[index].Corte = oCorteE;
+                        listaLineaVenta[index].PrecioKg = oCorteE.precioKg;
+
+                        listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, linea.Corte.Mayorista);
+                        listaLineaGrilla[index].totalS = listaLineaGrilla[index].precioKg * listaLineaGrilla[index].KgsTotalCalculado;
+                    }
                 }
                 cargarGrilla();
             }
@@ -2453,12 +2463,12 @@ namespace Presentacion.Caja
         {
             if (comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString()))
             {
-                txtCuit.ReadOnly = txtEmail.ReadOnly = true;
+                txtCuit.ReadOnly = txtDomicilio.ReadOnly = true;
                 txtCodigo.Focus();
             }
             else
             {
-                txtCuit.ReadOnly = txtEmail.ReadOnly = false;
+                txtCuit.ReadOnly = txtDomicilio.ReadOnly = false;
                 txtCuit.Focus();
             }
         }

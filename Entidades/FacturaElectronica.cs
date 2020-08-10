@@ -7,6 +7,13 @@ namespace Entidades
 {
     public class FacturaElectronica
     {
+        //Tipos Comprobantes
+        public const int codFacturaA_Afip = 1;
+        public const int codFacturaB_Afip = 6;
+
+        //Concepto
+        public const int codConceptoProductos_Afip = 1;
+
         /// <summary>
         /// Pasando en (String) Codigo TipoComprobante se retorna bool si es Factura A (Codigo Afip 001)
         /// </summary>
@@ -17,7 +24,7 @@ namespace Entidades
                 return false;
 
             int codTipoCbte_int = Convert.ToInt32(codTipoCbte);
-            bool esFacturaA_ = (codTipoCbte_int == 1);
+            bool esFacturaA_ = (codTipoCbte_int == codFacturaA_Afip);
             return esFacturaA_;
         }
 
@@ -42,6 +49,14 @@ namespace Entidades
         {
             get { return descTipoCbteAfip; }
             set { descTipoCbteAfip = value; }
+        }
+
+        int codTipoCbteAfip;
+
+        public int CodTipoCbteAfip
+        {
+            get { return codTipoCbteAfip; }
+            set { codTipoCbteAfip = value; }
         }
 
         string nroCbteAfip;

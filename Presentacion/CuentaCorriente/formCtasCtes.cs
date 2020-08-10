@@ -31,6 +31,7 @@ namespace Presentacion.CuentaCorriente
             {
                 grillaCtasCtes.DataSource = oCtaCteN.obtenerCtasCtes(txtDescripcion.Text);
                 grillaCtasCtes.AutoGenerateColumns = false;
+                grillaCtasCtes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
                 //formato
                 grillaCtasCtes.Columns["Saldo"].DefaultCellStyle.Format = "F2";

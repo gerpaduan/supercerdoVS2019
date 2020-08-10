@@ -650,7 +650,7 @@ namespace Presentacion.Ventas
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedItem = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
+            comboSucursal.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
 
