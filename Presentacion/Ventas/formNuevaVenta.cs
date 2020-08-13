@@ -143,11 +143,14 @@ namespace Presentacion.Ventas
                         oVentaN.agregarLineaVenta(linea);
                     }
 
-                    aCtaCte = true;
-                    frmVentas.cargarGrilla();
-                    limpiarListas();
-                    this.Close();
-                    
+                    aCtaCte = oVentaE.EnCtaCte; //|| !(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()));
+                    //frmVentas.cargarGrilla();
+                    //limpiarListas();
+                    //this.Close();
+
+                    //frmVentas.cargarGrilla();
+                    //limpiarListas();
+                    //txtFechaVenta.Focus();
                 }
                 catch (Exception ex)
                 {
@@ -184,6 +187,8 @@ namespace Presentacion.Ventas
 
                 try
                 {
+                    oVentaN.egresoCajaPagoTarjeta(oVentaE.IdVenta, oVentaE.Vendedor);
+
                     if (aCtaCte)
                     {
                         oVentaN.crearMovCtaCteVenta(oVentaE);
@@ -203,10 +208,16 @@ namespace Presentacion.Ventas
                         }
                         catch (Exception ex)
                         {
-
                             MessageBox.Show("Hubo un error y no se actualizó el Egreso de Caja.\n\nMas Info:" + ex.StackTrace);
                         }
                     }
+
+                    if (modificar)
+                        this.Close();
+
+                    frmVentas.cargarGrilla();
+                    limpiarListas();
+                    txtFechaVenta.Focus();
                 }
                 catch (Exception ex)
                 {
@@ -276,12 +287,11 @@ namespace Presentacion.Ventas
                     {
                         oVentaN.agregarLineaVenta(linea);
                     }
-                    aCtaCte = true;
+                    aCtaCte = oVentaE.EnCtaCte; // true;
 
-                    frmVentas.cargarGrilla();
-
-                    limpiarListas();
-                    txtFechaVenta.Focus();
+                    //frmVentas.cargarGrilla();
+                    //limpiarListas();
+                    //txtFechaVenta.Focus();
 
                 }
                 catch (Exception ex)
@@ -945,6 +955,7 @@ namespace Presentacion.Ventas
             comboTipoComprobante.SelectedIndex = 0; //Remito
             restablecerFormaDePago();
             cargandoDatos = false;
+            checkCtaCte.Visible = oCliente != null && !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
         }
 
         private void timer1_Tick(object sender, EventArgs e)

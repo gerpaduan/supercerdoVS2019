@@ -28,6 +28,24 @@ namespace Entidades
             return esFacturaA_;
         }
 
+        /// <summary>
+        /// Pasando el codigo de tipo de comprobante se pasa letra de identificacion del mismo (A, B, X)
+        /// </summary>
+        public char getLetraId_TipoCbte(int codTipoCbteAFIP)
+        { 
+            char letraId_TipoCbte = 'X';//inicia en Remito
+            switch (codTipoCbteAFIP)
+	        {
+                case codFacturaA_Afip:
+                    letraId_TipoCbte = 'A';
+                    break;
+                case codFacturaB_Afip:
+                    letraId_TipoCbte = 'B';
+                    break;
+	        }
+            return letraId_TipoCbte;
+        }
+
         int id;
 
         public int Id

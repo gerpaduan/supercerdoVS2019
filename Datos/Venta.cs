@@ -486,6 +486,29 @@ namespace Datos
             return dtVentas;
         }
 
+        /// <summary>
+        /// Actualiza el campo tipo comprobante en la tabla Venta. 
+        /// Sino se factura debe guardarse X (remito). Para llevar control de lo facturado
+        /// </summary>
+        /// <param name="letraId_tipoCbte"></param>
+        public void actualizarLetraId_TipoCbte(int idVenta, char letraId_tipoCbte)
+        {
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+
+            cmVenta.CommandType = CommandType.Text; 
+            cmVenta.CommandTimeout = 90;
+            cmVenta.CommandText = "UPDATE Ventas SET tipoComprobante = @tipoComprobante WHERE idVenta = " + idVenta;
+            cmVenta.Parameters.AddWithValue("@tipoComprobante", letraId_tipoCbte);
+
+            cmVenta.ExecuteNonQuery();
+            cmVenta.Connection.Close();
+
+            cmVenta = null;
+        }
+
         #region FACTURA ELECTRONICA        
 
         /// <summary>

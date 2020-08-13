@@ -407,9 +407,9 @@ namespace Presentacion.Caja
                 Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
 
-                //Solo imprimo Egreso Caja si venta es en Efectivo
-                if (oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
-                    imprimirTicket(oEgresoCajaE);
+                ////Solo imprimo Egreso Caja si venta es en Efectivo
+                //if (oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+                //    imprimirTicket(oEgresoCajaE);
             }
             catch (Exception ex)
             {

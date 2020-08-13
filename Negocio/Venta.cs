@@ -196,6 +196,14 @@ namespace Negocio
         public void addOrEditFactuElec(Entidades.FacturaElectronica oFacturaElectronicaE)
         {
             oVentaD.addOrEditFactuElec(oFacturaElectronicaE);
+
+            char letraId_TipoCbte = oFacturaElectronicaE.getLetraId_TipoCbte(oFacturaElectronicaE.CodTipoCbteAfip);
+            //actualizar el tipo cbte de la tabla Ventas
+            if (!(oFacturaElectronicaE.Venta != null &&
+                oFacturaElectronicaE.Venta.TipoComprobante.Equals(letraId_TipoCbte)))
+            {
+                oVentaD.actualizarLetraId_TipoCbte(oFacturaElectronicaE.IdVenta, letraId_TipoCbte);
+            }
         }
 
         public Entidades.FacturaElectronica getFactuElecById(int idFactuElec)

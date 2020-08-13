@@ -18,6 +18,7 @@ namespace Presentacion.Caja
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
 
         public Entidades.CierreCaja oCierreE;
+        int idVentaSelected = 0;//Obtiene el IdVenta correspondiente al EgresoCaja ( 0 si no es egreso por Venta)
 
         public formEgresosCajaVendedor()
         {
@@ -115,12 +116,28 @@ namespace Presentacion.Caja
             try
             {
                 int idEgresoCaja = Convert.ToInt32(grillaEgresosCaja.CurrentRow.Cells["id"].Value.ToString());
-                
+                oEgresoCajaE = oCierreN.getEgresoCajaById(idEgresoCaja);
+
+                ///si es Venta con tarjeta o Cta Cte se muestra la venta infoVenta
+                if (oEgresoCajaE.Monto > 0 && (oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.EgresoCaja.idPagoTarjeta) ||
+                    oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja)))
+                {
+                    //Obtiene los Numeros del String
+                    string resultString = System.Text.RegularExpressions.Regex.Match(oEgresoCajaE.Descripcion, @"\d+").Value;
+
+                    idVentaSelected = Convert.ToInt32(resultString);
+                    Ventas.formInfoVenta frmInfoVenta = new Ventas.formInfoVenta();
+                    frmInfoVenta.idVenta = idVentaSelected;
+                    frmInfoVenta.ShowDialog();
+                    return;
+                }
+
                 formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
                 frmAddOrEditEgresoCaja.oUsuario = oCierreE.UsuarioInicio;
                 frmAddOrEditEgresoCaja.idEgresoCaja = idEgresoCaja;
                 frmAddOrEditEgresoCaja.ShowDialog();
 
+                idVentaSelected = 0;
                 formEgresosCajaVendedor_Load(null, null);
             }
             catch (Exception ex)
@@ -149,6 +166,15 @@ namespace Presentacion.Caja
                     break;
             }
             CargarTotal();
+        }
+
+        private void formEgresosCajaVendedor_Activated(object sender, EventArgs e)
+        {
+            //se cargar el form si se selecciona un egreso correspondiente a venta
+            if (idVentaSelected > 0)
+            {
+                formEgresosCajaVendedor_Load(null, null);
+            }
         }
     }
 }
