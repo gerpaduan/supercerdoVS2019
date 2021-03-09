@@ -62,6 +62,10 @@ namespace Presentacion.Caja
         string ultimoTextoEnTxtCodigo = "";
         Random randomClass = new Random();
 
+        //Calculo decimales Random para redondear el importe del corte
+        Random rndRedondeo = new Random();
+        float centavosRedondeo = 0.93f; 
+
         public int SucAnterior
         {
             get { return sucAnterior; }
@@ -111,7 +115,7 @@ namespace Presentacion.Caja
             }
             checkCtaCte_CheckedChanged(null,null);
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
-            checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
+            //checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
 
             //se cargar los porcentajes de ajuste por tarjeta
             porcAjEfectivo = Entidades.Parametros.porcAjEfectivo;
@@ -597,6 +601,10 @@ namespace Presentacion.Caja
                     oTemporalLineaVenta = null;
                     limpiarCamposCorte();
                     oLineaVenta = null;
+                    ////restablezco el redondeo
+                    //rndRedondeo = new Random();
+                    //centavosRedondeo = (rndRedondeo.Next(75, 99));
+                    //centavosRedondeo = centavosRedondeo / 100;
 
                     txtCodigo.Focus();
                 }
@@ -1309,6 +1317,7 @@ namespace Presentacion.Caja
             if (checkBoxRedondeo.Checked)
             {
                 int precioSinDecimal = Convert.ToInt32(Math.Truncate(importe));
+                float centavos = importe - precioSinDecimal;
                 int cantDigitos = precioSinDecimal.ToString().Length;
                 ///obtengo el numero la unidad del importe (CDU,dd)
                 ///C=Centena / D=Decena / U=Unidad / dd=decimales
@@ -1316,13 +1325,13 @@ namespace Presentacion.Caja
                     precioSinDecimal.ToString().Length - 1));
 
                 //si la unidad del importe es mayor o igual a 5 pesos
-                if (unidadPrecio >= 5 && unidadPrecio < 9)
+                if (unidadPrecio >= 5 && unidadPrecio <= 9)
                 {
-                    //Calculo unoa decimales Random para variar el importe
-                    Random rndRedondeo = new Random();
-                    float centavosRedondeo = (rndRedondeo.Next(2, 50)) ;
-                    centavosRedondeo = centavosRedondeo / 100;
-                    importe = (precioSinDecimal + (10 - unidadPrecio)) - centavosRedondeo;
+                    //Calculo unos decimales Random para variar el importe
+                    //Random rndRedondeo = new Random();
+                    //float centavosRedondeo = (rndRedondeo.Next(2, 50)) ;
+                    //importe = (precioSinDecimal + (10 - unidadPrecio)) - centavosRedondeo;
+                    importe = (precioSinDecimal + (9 - unidadPrecio)) + centavos;
                 }             
             }
             return importe;

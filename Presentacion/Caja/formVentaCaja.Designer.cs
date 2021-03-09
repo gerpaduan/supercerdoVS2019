@@ -451,6 +451,7 @@
             this.checkTicket.TabStop = false;
             this.checkTicket.Text = "&Ticket";
             this.checkTicket.UseVisualStyleBackColor = false;
+            this.checkTicket.Visible = false;
             this.checkTicket.CheckedChanged += new System.EventHandler(this.checkTicket_CheckedChanged);
             // 
             // checkBoxRedondeo

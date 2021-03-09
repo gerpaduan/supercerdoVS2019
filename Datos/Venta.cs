@@ -524,9 +524,9 @@ namespace Datos
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
             cmVenta.CommandType = CommandType.Text;
-            //cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > \'" + DateTime.Today.AddDays(-maxDiasParaFacturar) +
-            //    "\' and idVenta = \'" + idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
-            cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > @fechaEmisionAfip and idVenta = \'" + 
+            //cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > @fechaEmisionAfip and idVenta = \'" +
+            //    idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
+            cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where idVenta = \'" +
                 idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
             cmVenta.Parameters.Add("@fechaEmisionAfip", SqlDbType.DateTime2).Value = DateTime.Today.AddDays(-maxDiasParaFacturar);
             try

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Negocio", "Negocio\Negocio.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Datos", "Datos\Datos.csproj", "{45A66AFC-C105-4162-9422-5D793278719E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wsAFIPvs2008", "C:\Users\Germán\Documents\Visual Studio 2008\Projects\wsAFIPvs2008\wsAFIPvs2008\wsAFIPvs2008.csproj", "{5B716A48-0166-494F-A0F5-2DC93B38AC03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,10 @@ Global
 		{45A66AFC-C105-4162-9422-5D793278719E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45A66AFC-C105-4162-9422-5D793278719E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45A66AFC-C105-4162-9422-5D793278719E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B716A48-0166-494F-A0F5-2DC93B38AC03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B716A48-0166-494F-A0F5-2DC93B38AC03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B716A48-0166-494F-A0F5-2DC93B38AC03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B716A48-0166-494F-A0F5-2DC93B38AC03}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
