@@ -1110,6 +1110,9 @@ namespace Presentacion.Caja
                 }
                 catch (Exception ex)
                 {
+                    if (ex.Message.Contains("Valor demasiado grande o demasiado pequeño para Int32."))
+                        return;
+                    
                     MessageBox.Show("Error al cargar corte\n\n" + ex.Message);
                     limpiarCamposCorte();
                 }
@@ -1253,11 +1256,12 @@ namespace Presentacion.Caja
                             //camparar las centenar de Decimales y/o Unidad de peso para verificar que no hay un cambio brusco.
 
                             ///REDONDAR importe SI:
+                            ///*Codigo es menor a 100
                             ///*Cliente es consumidor final
                             ///*la cantidad de ganancia NO excede a $5
                             ///*el Kg no es un número redondo
                             ///
-                            bool redondear = oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < 5.1 && !esKgsRedondo ? true : false;
+                            bool redondear = oCorteE.codigo < 100 && oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < 5.1 && !esKgsRedondo ? true : false;
 
                             if (redondear)
                             {
@@ -1561,7 +1565,34 @@ namespace Presentacion.Caja
             //si se borra el corte actual se llama a metodo registrarTemporalLinea
             if (oCorteE != null && !ultimoTextoEnTxtCodigo.Equals(txtCodigo.Text))
             {
+                bool esCodigoBarra = txtCodigo.Text.Length == 13;
+                string codigo = "", precioEnCodBarra = "";
+                //Si tiene 13 digitos es codigo de barra
+                if (esCodigoBarra)
+                {
+                    checkLeerPeso.Checked = false;
+                    for (int i = 0; i < txtCodigo.Text.Length; i++)
+                    {
+                        if (i >= 3 && i <= 5)
+                            codigo += txtCodigo.Text[i];
+
+                        if (i >= 6 && i <= 11)
+                        {
+                            //Si precio es la unidad se agrega la coma decimal
+                            if (i == 10)
+                                precioEnCodBarra += '.';
+                            precioEnCodBarra += txtCodigo.Text[i];
+                            // precioEnCodBarra += i == 9 ? txtCodigo.Text[i] + '.' : (char)txtCodigo.Text[i]; 
+                        }
+                    }
+                    txtCodigo.Text = codigo;
+                    txtTotalCorte.Text = precioEnCodBarra;
+                }
                 registrarTemporalLineaVenta();
+
+                //si es Codigo Barra se divide el precio en etiqueta dividido el precio del corte
+                txtCantKgs.Text = esCodigoBarra && oCorteE != null ?
+                    (Utilidades.Util_Form.convertFloat(txtTotalCorte.Text, false) / oCorteE.precioKg).ToString("F3") : "";
             }
             cargarCorte();
         }
