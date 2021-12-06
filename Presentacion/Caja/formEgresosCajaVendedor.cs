@@ -159,8 +159,15 @@ namespace Presentacion.Caja
                 case "Tarjeta":
                         (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'Tarjeta Pago'");// comboFiltro.SelectedItem.ToString());
                         break;
+                case "Billetera":
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'Billetera Sta Fe'");
+                        break;
                 case "Egresos":
-                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "<> 'Tarjeta Pago'");// comboFiltro.SelectedItem.ToString());
+                        StringBuilder filter = new StringBuilder();
+                        filter.Append(nombreCol + "<> 'Tarjeta Pago'");
+                        filter.Append(" AND ");
+                        filter.Append(nombreCol + "<> 'Billetera Sta Fe'");
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = filter.ToString(); //string.Format(nombreCol + "<> 'Tarjeta Pago'");                      
                         break;
                 default:
                     break;

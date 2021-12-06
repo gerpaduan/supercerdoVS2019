@@ -8,9 +8,12 @@ namespace Entidades
 {
     public class Parametros
     {
-        public static float	porcAjEfectivo;//	0.01	porcentaje de ajuste que se agrega en kgs a quienes pagan en EFECTIVO
-        public static float	porcAjDebito;//	0.01	porcentaje de ajuste que se agrega en kgs a quienes pagan con DEBITO
-        public static float	porcAjCredito;//	0.01	porcentaje de ajuste que se agrega en kgs a quienes pagan con CREDITO
+        public static float	porcAjEfectivo;//	Porcentaje diferencia al precio de lista EFECTIVO
+        public static float porcAjDebito;//	Porcentaje diferencia al precio de lista DEBITO
+        public static float porcAjCredito;//	Porcentaje diferencia al precio de lista CREDITO
+        public static float porcAjBilletera;//	Porcentaje diferencia al precio de lista Billetera
+        public static float porcAjQr;//	Porcentaje diferencia al precio de lista con Qr
+        public static float porcAjTranf;//	Porcentaje diferencia al precio de lista Tranf
         public static int	idConsumidorFinal;//	6	id del cliento CONSUMIDOR FINAL en la Base de Datos
         public static float	limiteKgParaAjuste;//	6	Cantidad maxima limite de kgs a apartir de los cuales no se realiza el ajuste por tarjeta 
         public static float	comisionDebito;//6	comisionDebito	0.045	Comision que cobra MercadoPago en cobros con DEBITO

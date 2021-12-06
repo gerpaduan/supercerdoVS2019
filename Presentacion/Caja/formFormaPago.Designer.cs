@@ -32,6 +32,9 @@
             this.btnEfectivo = new System.Windows.Forms.Button();
             this.btnDebito = new System.Windows.Forms.Button();
             this.btnCredito = new System.Windows.Forms.Button();
+            this.btnTransf = new System.Windows.Forms.Button();
+            this.btnQr = new System.Windows.Forms.Button();
+            this.btnBilleteraStaFe = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -80,11 +83,50 @@
             this.btnCredito.Click += new System.EventHandler(this.btnCredito_Click);
             this.btnCredito.Enter += new System.EventHandler(this.btnCredito_Enter);
             // 
+            // btnTransf
+            // 
+            this.btnTransf.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnTransf.Location = new System.Drawing.Point(252, 137);
+            this.btnTransf.Name = "btnTransf";
+            this.btnTransf.Size = new System.Drawing.Size(114, 46);
+            this.btnTransf.TabIndex = 6;
+            this.btnTransf.Text = "6 - Transf.";
+            this.btnTransf.UseVisualStyleBackColor = true;
+            this.btnTransf.Click += new System.EventHandler(this.btnTransf_Click);
+            this.btnTransf.Enter += new System.EventHandler(this.btnTransf_Enter);
+            // 
+            // btnQr
+            // 
+            this.btnQr.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnQr.Location = new System.Drawing.Point(132, 137);
+            this.btnQr.Name = "btnQr";
+            this.btnQr.Size = new System.Drawing.Size(114, 46);
+            this.btnQr.TabIndex = 5;
+            this.btnQr.Text = "5 - Qr      ";
+            this.btnQr.UseVisualStyleBackColor = true;
+            this.btnQr.Click += new System.EventHandler(this.btnQr_Click);
+            this.btnQr.Enter += new System.EventHandler(this.btnQr_Enter);
+            // 
+            // btnBilleteraStaFe
+            // 
+            this.btnBilleteraStaFe.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBilleteraStaFe.Location = new System.Drawing.Point(12, 137);
+            this.btnBilleteraStaFe.Name = "btnBilleteraStaFe";
+            this.btnBilleteraStaFe.Size = new System.Drawing.Size(114, 46);
+            this.btnBilleteraStaFe.TabIndex = 4;
+            this.btnBilleteraStaFe.Text = "4 - Billetera";
+            this.btnBilleteraStaFe.UseVisualStyleBackColor = true;
+            this.btnBilleteraStaFe.Click += new System.EventHandler(this.btnBilleteraStaFe_Click);
+            this.btnBilleteraStaFe.Enter += new System.EventHandler(this.btnBilleteraStaFe_Enter);
+            // 
             // formFormaPago
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(386, 140);
+            this.ClientSize = new System.Drawing.Size(386, 206);
+            this.Controls.Add(this.btnTransf);
+            this.Controls.Add(this.btnQr);
+            this.Controls.Add(this.btnBilleteraStaFe);
             this.Controls.Add(this.btnCredito);
             this.Controls.Add(this.btnDebito);
             this.Controls.Add(this.btnEfectivo);
@@ -108,5 +150,8 @@
         private System.Windows.Forms.Button btnEfectivo;
         private System.Windows.Forms.Button btnDebito;
         private System.Windows.Forms.Button btnCredito;
+        private System.Windows.Forms.Button btnTransf;
+        private System.Windows.Forms.Button btnQr;
+        private System.Windows.Forms.Button btnBilleteraStaFe;
     }
 }

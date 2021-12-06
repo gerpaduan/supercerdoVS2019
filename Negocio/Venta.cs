@@ -138,7 +138,7 @@ namespace Negocio
             Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
 
             bool esEfectivo = oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());                   
-            //se genera el egreso de caja si paga con tarjeta
+            //se genera el egreso de caja si no es Efectivo
             if (!esEfectivo)
             {
                 float totalS = 0, totalKgs = 0;// getTotalVenta(oVentaConEgresoCaja.IdVenta);
@@ -151,12 +151,12 @@ namespace Negocio
                 Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
                 oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
-                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
+                oEgresoCajaE.IdTipoEgresoCaja = oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Billetera.ToString()) ? Entidades.EgresoCaja.idBilleteraStaFe : Entidades.EgresoCaja.idPagoTarjeta;
                 oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
                 oEgresoCajaE.Monto = totalS;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
                 oEgresoCajaE.Detalle = " | Kgs: " + totalKgs.ToString("N3") +
                     " | Precio: " + (totalS / totalKgs).ToString("N3") +
-                    " | TOT: " + totalS.ToString("N3");
+                    " | TOT: " + totalS.ToString("N3") + "\n\n" + oVentaConEgresoCaja.Observaciones;
                 oEgresoCajaE.Sucursal = oVentaConEgresoCaja.Sucursal;
                 oEgresoCajaE.IdCompra = 0;
                 oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();

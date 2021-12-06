@@ -289,6 +289,7 @@
             this.comboFiltro.Items.AddRange(new object[] {
             "Todos",
             "Tarjeta",
+            "Billetera",
             "Egresos"});
             this.comboFiltro.Location = new System.Drawing.Point(535, 22);
             this.comboFiltro.Name = "comboFiltro";
