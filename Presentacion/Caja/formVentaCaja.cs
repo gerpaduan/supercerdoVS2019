@@ -53,6 +53,7 @@ namespace Presentacion.Caja
         Color ultimoColor = Color.Green;
 
         bool dejarDeLeerPeso = false;
+        bool ventanaDuplicada = false; //cuando una venta esta en curso y se necesita registrar otra para rapidez en la atencion
         int sucAnterior;
         int tiempoInactivo = 0;
         int tiempoBloqueo = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoBloqueo"].ToString());
@@ -81,7 +82,7 @@ namespace Presentacion.Caja
         float totalVenta = 0, abona = 0, cambio = 0, ganPesosTotRedondeo = 0, ganKgsTotRedondeo = 0,
             ganPesosRedondeoLinea = 0, ganKgsRedondeoLinea = 0, acumRedondeoKgs = 0, acumRedondeImporte = 0;
 
-        float porcAjEfectivo, porcAjDebito, porcAjCredito, limiteKgParaAjuste;
+        float porcAjEfectivo, porcAjDebito, porcAjCredito, porcAjBilletera, porcAjQr, porcAjTranf, limiteKgParaAjuste;
         bool esAjustePorcTarj = false;
         int idConsumidorFinal;
 
@@ -121,6 +122,10 @@ namespace Presentacion.Caja
             porcAjEfectivo = Entidades.Parametros.porcAjEfectivo;
             porcAjDebito = Entidades.Parametros.porcAjDebito;
             porcAjCredito = Entidades.Parametros.porcAjCredito;
+            porcAjBilletera = Entidades.Parametros.porcAjBilletera;
+            porcAjQr = Entidades.Parametros.porcAjQr;
+            porcAjTranf = Entidades.Parametros.porcAjTranf;
+                
             limiteKgParaAjuste = Entidades.Parametros.limiteKgParaAjuste;
         }
 
@@ -309,7 +314,7 @@ namespace Presentacion.Caja
                     ticket.LineasEnBlanco(2);
 
 
-                    //se genera el egreso de caja si paga con tarjeta
+                    //se genera el egreso de caja si no es Efectivo
                     egresoCajaPagoTarjeta(oVentaE);
 
                     //Agregar en Cta Cte
@@ -337,9 +342,14 @@ namespace Presentacion.Caja
                     {
                         MessageBox.Show("Error al intentar generar Factura Electonica.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
                     }
-
                     oVentaE.IdVenta = 0;
                     limpiarListas();
+                    //si es ventada duplicada se cierra la misma
+                    if (ventanaDuplicada)
+                    {
+                        this.Close();
+                        return;
+                    }
                     ultimaVentaVendedor();
 
                     //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
@@ -499,6 +509,8 @@ namespace Presentacion.Caja
             txtDomicilio.Text = "";
             txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
+            txtNroOper.Text = "";
+            txtCelularCliBilletera.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
             txtTotalKgs.Text = "0,000";
@@ -549,7 +561,8 @@ namespace Presentacion.Caja
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
-            oVentaE.Observaciones = txtObservaciones.Text.Trim();
+            oVentaE.Observaciones = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Billetera.ToString()) ? txtObservaciones.Text.Trim() + 
+                "\n  *** Nro Oper: "+txtNroOper.Text+" || Cel: "+txtCelularCliBilletera.Text+" ***" : txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
             oVentaE.EnCtaCte = checkCtaCte.Checked; 
             //Si FormaPago <> 'Efectivo y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'
@@ -717,13 +730,15 @@ namespace Presentacion.Caja
             bool resp = true;
             if (string.IsNullOrEmpty(oVentaE.FormaPago))
             {
-                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = false;//Asegura q se inicien todos false
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked =
+                    checkBilletera.Checked = checkQr.Checked = checkTransf.Checked = false;//Asegura q se inicien todos false
                                 
                 formFormaPago frmFormaPago = new formFormaPago();
                 frmFormaPago.ShowDialog(this);
 
                 //si ninguna forma de pago está seleccionada no se valida
-                if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false)
+                if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false
+                    && checkBilletera.Checked == false && checkQr.Checked == false && checkTransf.Checked == false)
                     return false;
                 txtCodigo.Focus();
             }
@@ -821,12 +836,21 @@ namespace Presentacion.Caja
 
         private bool validacionFinal()
         {
+            //Si pago es con Billetera Santa Fe se exige Nro de Operacion y Celular
+            if (oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.Billetera.ToString()) &&
+                (string.IsNullOrEmpty(txtNroOper.Text) || string.IsNullOrEmpty(txtCelularCliBilletera.Text)))
+            {
+                MessageBox.Show("Ingrese Nro. Operación y Celular del Cliente",
+                       "Billetera Santa Fe", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtNroOper.Focus();
+                return false;
+            }
+
             //valida que un venta en CTA CTE sea solo en Efectivo
             if (checkCtaCte.Checked && !oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
             {
-                MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) sólo pueden ser en EFECTIVO."+
-                    "\n\nSi la venta es en CTA.CTE. seleccione la forma de pago en Efectivo."+
-                    "(La forma de pago que tiene seleccionada es: "+oVentaE.FormaPago.ToString()+")", 
+                MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) sólo pueden ser en EFECTIVO." +
+                    "\n\nSi la venta es en CTA.CTE. seleccione la forma de pago en Efectivo y vuelva a finalizar la venta.",
                     "Verifique la forma de pago", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
@@ -1139,20 +1163,25 @@ namespace Presentacion.Caja
             switch (oVentaE.FormaPago)
             {
                 case "Efectivo":
-                    //kgsTotalCalculado = (cantKg * porcAjEfectivo);
                     oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjEfectivo);
                     break;
                 case "Debito":
-                    //kgsTotalCalculado = (cantKg * porcAjDebito);
                     oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjDebito);
                     break;
                 case "Credito":
-                    //kgsTotalCalculado = (cantKg * porcAjCredito);
                     oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjCredito);
                     break;
+                case "Billetera":
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjBilletera);
+                    break;
+                case "Qr":
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjQr);
+                    break;
+                case "Tranf":
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjTranf);
+                    break;
                 default:
-                    //kgsTotalCalculado = (cantKg * porcAjEfectivo);
-                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjDebito);
+                    oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjBilletera);
                     break;
             }
             oCorteE.precioKg = Util_Form.convertFloat(Math.Round(oCorteE.precioKg, 2).ToString(), false);
@@ -1452,6 +1481,10 @@ namespace Presentacion.Caja
             }
             else
             {
+                //si es ventana duplicada se cierra automaticamente
+                if (ventanaDuplicada)
+                    return false;
+
                 if (oUsuario == null) return false;
 
                 DialogResult respuesta;
@@ -1530,6 +1563,8 @@ namespace Presentacion.Caja
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;
             this.txtDomicilio.Text = oCliente.Domicilio;
+            //Si es RRII (IdIva = 2) se selecciona Comprobante A
+            comboTipoComprobante.SelectedItem = oCliente.IdIva == 2 ? Entidades.Venta.tipoComprobanteEnum.A.ToString() : Entidades.Venta.tipoComprobanteEnum.X.ToString();
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
             lblClienteConBonif.Text = lblClienteConBonif.Visible ?
                 "Cliente con Bonificación (" + oCliente.Bonificacion.ToString("N2") + " %)" : "";
@@ -1551,6 +1586,15 @@ namespace Presentacion.Caja
                     break;
                 case Entidades.Venta.formaPagoEnum.Credito:
                     checkCredito.Checked = true;
+                    break;
+                case Entidades.Venta.formaPagoEnum.Billetera:
+                    checkBilletera.Checked = true;
+                    break;
+                case Entidades.Venta.formaPagoEnum.Qr:
+                    checkQr.Checked = true;
+                    break;
+                case Entidades.Venta.formaPagoEnum.Transferencia:
+                    checkTransf.Checked = true;
                     break;
             }                    
         }
@@ -1627,9 +1671,7 @@ namespace Presentacion.Caja
                     }
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
-                }
-
-                
+                }                
             }
         }
 
@@ -1665,21 +1707,6 @@ namespace Presentacion.Caja
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
-                //timer1.Enabled = false;
-
-                //txtCantKgs.Text = "Error balanza";
-                //timer1.Enabled = false;
-                //if (FormPrincipal.logueado && Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                //{
-                //    dejarDeLeerPeso = true;
-                //    checkLeerPeso.Checked = false;
-                //}
-                //else
-                //{
-                //    lblErrorBalanza.Text = ex.Message;
-                //    lblErrorBalanza.Visible = true;
-                //    timer1.Enabled = true;
-                //}
             }
         }
 
@@ -2419,10 +2446,14 @@ namespace Presentacion.Caja
         private void restablecerFormaDePago()
         {
             oVentaE.FormaPago = null;
+            panelBilletera.Visible = false;
 
             checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
             checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
             checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkBilletera.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkQr.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkTransf.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
         }
 
         private void setFormaDePago()
@@ -2431,6 +2462,9 @@ namespace Presentacion.Caja
             checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkEfectivo.Checked);
             checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkDebito.Checked);
             checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCredito.Checked);
+            checkBilletera.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkBilletera.Checked);
+            checkQr.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkQr.Checked);
+            checkTransf.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkTransf.Checked);
         }
 
         private void checkEfectivo_CheckedChanged(object sender, EventArgs e)
@@ -2438,7 +2472,8 @@ namespace Presentacion.Caja
             setFormaDePago();
             if (checkEfectivo.Checked)
             {
-                checkDebito.Checked = checkCredito.Checked = false;
+                checkDebito.Checked = checkCredito.Checked = checkBilletera.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
                 actualizarPrecios();
             }
@@ -2450,7 +2485,8 @@ namespace Presentacion.Caja
 
             if (checkDebito.Checked)
             {
-                checkEfectivo.Checked = checkCredito.Checked = false;
+                checkEfectivo.Checked = checkCredito.Checked = checkBilletera.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Debito.ToString();
                 actualizarPrecios();
             }
@@ -2462,10 +2498,55 @@ namespace Presentacion.Caja
 
             if (checkCredito.Checked)
             {
-                checkEfectivo.Checked = checkDebito.Checked = false;
+                checkEfectivo.Checked = checkDebito.Checked = checkBilletera.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
                 oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Credito.ToString();
                 actualizarPrecios();
             }
+        }
+
+
+        private void checkBilletera_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkBilletera.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Billetera.ToString();
+                panelBilletera.Visible = true;
+                actualizarPrecios();
+            }
+
+        }
+
+        private void checkQr_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkQr.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkBilletera.Checked =
+                    checkTransf.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Qr.ToString();
+                actualizarPrecios();
+            }
+
+        }
+
+        private void checkTransf_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkTransf.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = 
+                    checkBilletera.Checked = checkQr.Checked = false;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.Transferencia.ToString();
+                actualizarPrecios();
+            }
+
         }
 
         private void actualizarPrecios()
@@ -2511,6 +2592,15 @@ namespace Presentacion.Caja
                 txtCuit.ReadOnly = txtDomicilio.ReadOnly = false;
                 txtCuit.Focus();
             }
+        }
+
+        private void duplicarVentana_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            formVentaCaja frmVentaCajaDuplicada = new formVentaCaja();
+            frmVentaCajaDuplicada.oUsuario = oUsuario;
+            frmVentaCajaDuplicada.ventanaDuplicada = true;
+            frmVentaCajaDuplicada.duplicarVentana.Visible = false;
+            frmVentaCajaDuplicada.Show();
         }
 
     }
