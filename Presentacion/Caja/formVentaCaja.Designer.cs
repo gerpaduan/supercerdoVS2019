@@ -40,8 +40,17 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.duplicarVentana = new System.Windows.Forms.LinkLabel();
+            this.panelBilletera = new System.Windows.Forms.Panel();
+            this.label23 = new System.Windows.Forms.Label();
+            this.txtCelularCliBilletera = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.txtNroOper = new System.Windows.Forms.TextBox();
             this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkBilletera = new System.Windows.Forms.CheckBox();
+            this.checkTransf = new System.Windows.Forms.CheckBox();
+            this.checkQr = new System.Windows.Forms.CheckBox();
             this.checkEfectivo = new System.Windows.Forms.CheckBox();
             this.checkCredito = new System.Windows.Forms.CheckBox();
             this.checkDebito = new System.Windows.Forms.CheckBox();
@@ -130,6 +139,7 @@
             this.btnBloquear = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.pnlBuscar.SuspendLayout();
+            this.panelBilletera.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -144,6 +154,8 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.Gray;
+            this.pnlBuscar.Controls.Add(this.duplicarVentana);
+            this.pnlBuscar.Controls.Add(this.panelBilletera);
             this.pnlBuscar.Controls.Add(this.comboTipoComprobante);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.txtDomicilio);
@@ -170,8 +182,73 @@
             this.pnlBuscar.Controls.Add(this.comboColors);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(975, 200);
+            this.pnlBuscar.Size = new System.Drawing.Size(975, 207);
             this.pnlBuscar.TabIndex = 4;
+            // 
+            // duplicarVentana
+            // 
+            this.duplicarVentana.AutoSize = true;
+            this.duplicarVentana.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.duplicarVentana.Image = ((System.Drawing.Image)(resources.GetObject("duplicarVentana.Image")));
+            this.duplicarVentana.LinkColor = System.Drawing.SystemColors.Window;
+            this.duplicarVentana.Location = new System.Drawing.Point(931, 6);
+            this.duplicarVentana.Name = "duplicarVentana";
+            this.duplicarVentana.Size = new System.Drawing.Size(36, 18);
+            this.duplicarVentana.TabIndex = 66;
+            this.duplicarVentana.TabStop = true;
+            this.duplicarVentana.Text = " ___";
+            this.duplicarVentana.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.duplicarVentana_LinkClicked);
+            // 
+            // panelBilletera
+            // 
+            this.panelBilletera.Controls.Add(this.label23);
+            this.panelBilletera.Controls.Add(this.txtCelularCliBilletera);
+            this.panelBilletera.Controls.Add(this.label10);
+            this.panelBilletera.Controls.Add(this.txtNroOper);
+            this.panelBilletera.Location = new System.Drawing.Point(631, 81);
+            this.panelBilletera.Name = "panelBilletera";
+            this.panelBilletera.Size = new System.Drawing.Size(341, 53);
+            this.panelBilletera.TabIndex = 65;
+            this.panelBilletera.Visible = false;
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label23.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label23.Location = new System.Drawing.Point(49, 29);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(58, 20);
+            this.label23.TabIndex = 68;
+            this.label23.Text = "Celular";
+            // 
+            // txtCelularCliBilletera
+            // 
+            this.txtCelularCliBilletera.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
+            this.txtCelularCliBilletera.Location = new System.Drawing.Point(115, 26);
+            this.txtCelularCliBilletera.Name = "txtCelularCliBilletera";
+            this.txtCelularCliBilletera.Size = new System.Drawing.Size(226, 26);
+            this.txtCelularCliBilletera.TabIndex = 66;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(-2, 3);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(111, 20);
+            this.label10.TabIndex = 67;
+            this.label10.Text = "Nro Operacion";
+            // 
+            // txtNroOper
+            // 
+            this.txtNroOper.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
+            this.txtNroOper.Location = new System.Drawing.Point(115, 0);
+            this.txtNroOper.Name = "txtNroOper";
+            this.txtNroOper.Size = new System.Drawing.Size(226, 26);
+            this.txtNroOper.TabIndex = 65;
+            this.txtNroOper.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // comboTipoComprobante
             // 
@@ -197,16 +274,67 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.checkBilletera);
+            this.groupBox1.Controls.Add(this.checkTransf);
+            this.groupBox1.Controls.Add(this.checkQr);
             this.groupBox1.Controls.Add(this.checkEfectivo);
             this.groupBox1.Controls.Add(this.checkCredito);
             this.groupBox1.Controls.Add(this.checkDebito);
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox1.Location = new System.Drawing.Point(317, 58);
+            this.groupBox1.Location = new System.Drawing.Point(320, 57);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(226, 48);
+            this.groupBox1.Size = new System.Drawing.Size(226, 77);
             this.groupBox1.TabIndex = 62;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Forma de Pago";
+            // 
+            // checkBilletera
+            // 
+            this.checkBilletera.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkBilletera.AutoSize = true;
+            this.checkBilletera.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkBilletera.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBilletera.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBilletera.Location = new System.Drawing.Point(9, 44);
+            this.checkBilletera.Name = "checkBilletera";
+            this.checkBilletera.Size = new System.Drawing.Size(76, 30);
+            this.checkBilletera.TabIndex = 62;
+            this.checkBilletera.TabStop = false;
+            this.checkBilletera.Text = "Billetera";
+            this.checkBilletera.UseVisualStyleBackColor = false;
+            this.checkBilletera.CheckedChanged += new System.EventHandler(this.checkBilletera_CheckedChanged);
+            // 
+            // checkTransf
+            // 
+            this.checkTransf.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkTransf.AutoSize = true;
+            this.checkTransf.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkTransf.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTransf.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTransf.Location = new System.Drawing.Point(153, 44);
+            this.checkTransf.Name = "checkTransf";
+            this.checkTransf.Size = new System.Drawing.Size(68, 30);
+            this.checkTransf.TabIndex = 64;
+            this.checkTransf.TabStop = false;
+            this.checkTransf.Text = "Transf ";
+            this.checkTransf.UseVisualStyleBackColor = false;
+            this.checkTransf.CheckedChanged += new System.EventHandler(this.checkTransf_CheckedChanged);
+            // 
+            // checkQr
+            // 
+            this.checkQr.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkQr.AutoSize = true;
+            this.checkQr.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkQr.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkQr.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkQr.Location = new System.Drawing.Point(86, 44);
+            this.checkQr.Name = "checkQr";
+            this.checkQr.Size = new System.Drawing.Size(67, 30);
+            this.checkQr.TabIndex = 63;
+            this.checkQr.TabStop = false;
+            this.checkQr.Text = "QR      ";
+            this.checkQr.UseVisualStyleBackColor = false;
+            this.checkQr.CheckedChanged += new System.EventHandler(this.checkQr_CheckedChanged);
             // 
             // checkEfectivo
             // 
@@ -337,7 +465,7 @@
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkCtaCte.Location = new System.Drawing.Point(350, 27);
+            this.checkCtaCte.Location = new System.Drawing.Point(355, 27);
             this.checkCtaCte.Name = "checkCtaCte";
             this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
             this.checkCtaCte.TabIndex = 49;
@@ -353,7 +481,7 @@
             this.lblErrorBalanza.BackColor = System.Drawing.Color.SandyBrown;
             this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
-            this.lblErrorBalanza.Location = new System.Drawing.Point(519, 109);
+            this.lblErrorBalanza.Location = new System.Drawing.Point(552, 113);
             this.lblErrorBalanza.Name = "lblErrorBalanza";
             this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
             this.lblErrorBalanza.TabIndex = 48;
@@ -428,7 +556,7 @@
             this.grupoCortes.Controls.Add(this.label15);
             this.grupoCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grupoCortes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.grupoCortes.Location = new System.Drawing.Point(12, 120);
+            this.grupoCortes.Location = new System.Drawing.Point(12, 127);
             this.grupoCortes.Name = "grupoCortes";
             this.grupoCortes.Size = new System.Drawing.Size(951, 76);
             this.grupoCortes.TabIndex = 19;
@@ -961,7 +1089,7 @@
             dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaLineasVenta.DefaultCellStyle = dataGridViewCellStyle8;
-            this.grillaLineasVenta.Location = new System.Drawing.Point(12, 205);
+            this.grillaLineasVenta.Location = new System.Drawing.Point(12, 213);
             this.grillaLineasVenta.MultiSelect = false;
             this.grillaLineasVenta.Name = "grillaLineasVenta";
             this.grillaLineasVenta.ReadOnly = true;
@@ -976,7 +1104,7 @@
             this.grillaLineasVenta.RowHeadersVisible = false;
             this.grillaLineasVenta.RowTemplate.Height = 40;
             this.grillaLineasVenta.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaLineasVenta.Size = new System.Drawing.Size(789, 327);
+            this.grillaLineasVenta.Size = new System.Drawing.Size(789, 320);
             this.grillaLineasVenta.TabIndex = 39;
             this.grillaLineasVenta.TabStop = false;
             // 
@@ -1061,7 +1189,7 @@
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCantItems.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(810, 226);
+            this.txtCantItems.Location = new System.Drawing.Point(811, 235);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(150, 24);
@@ -1075,7 +1203,7 @@
             this.label16.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label16.Location = new System.Drawing.Point(807, 205);
+            this.label16.Location = new System.Drawing.Point(808, 214);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(94, 18);
             this.label16.TabIndex = 40;
@@ -1329,7 +1457,7 @@
             this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKgs.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKgs.Location = new System.Drawing.Point(810, 274);
+            this.txtTotalKgs.Location = new System.Drawing.Point(811, 283);
             this.txtTotalKgs.Name = "txtTotalKgs";
             this.txtTotalKgs.ReadOnly = true;
             this.txtTotalKgs.Size = new System.Drawing.Size(150, 24);
@@ -1343,7 +1471,7 @@
             this.label12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(807, 253);
+            this.label12.Location = new System.Drawing.Point(808, 262);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(87, 18);
             this.label12.TabIndex = 52;
@@ -1416,6 +1544,8 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formVentaCaja_FormClosing);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
+            this.panelBilletera.ResumeLayout(false);
+            this.panelBilletera.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.grupoCortes.ResumeLayout(false);
@@ -1525,5 +1655,14 @@
         protected System.Windows.Forms.Label label22;
         private System.Windows.Forms.MaskedTextBox txtKgsRedondeo;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.CheckBox checkBilletera;
+        private System.Windows.Forms.CheckBox checkTransf;
+        private System.Windows.Forms.CheckBox checkQr;
+        private System.Windows.Forms.TextBox txtNroOper;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox txtCelularCliBilletera;
+        private System.Windows.Forms.Panel panelBilletera;
+        private System.Windows.Forms.Label label23;
+        private System.Windows.Forms.LinkLabel duplicarVentana;
     }
 }
