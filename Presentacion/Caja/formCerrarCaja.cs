@@ -350,6 +350,9 @@ namespace Presentacion.Caja
                     panelTaparCamposCierre.BringToFront();
                     btnVerEgresosCaja.TabStop = false;
                     btnCajaAnterior.Visible = false;
+                    //Ingreso billetes se modifica la ubicacion del boton
+                    btnIngresoBilletes.Location = btnCajaAnterior.Location;
+                    //
                     oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
                     if (!tipoCierreActual.Equals(tipoCierre.ReAbrirCaja) && oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
                     {
@@ -541,6 +544,10 @@ namespace Presentacion.Caja
             formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
             frmIngresoBilletes.txtBoxAcargar = this.txtCajaCierre;
             frmIngresoBilletes.ShowDialog();
+            if (tipoCierreActual.Equals(tipoCierre.AbrirCaja) || tipoCierreActual.Equals(tipoCierre.ReAbrirCaja))
+            {
+                txtCajaInicial.Text = frmIngresoBilletes.total.ToString();
+            }
         }
 
         private void btnReAbrir_Click(object sender, EventArgs e)
