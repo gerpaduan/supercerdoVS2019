@@ -92,7 +92,7 @@ namespace Presentacion
                 totalS = totalS + float.Parse(fila["totalS"].ToString());
             }
 
-            txtTotalKgs.Text = Convert.ToString( totalKg);
+            txtTotalKgs.Text = Convert.ToString(totalKg);
         }
 
         private void modificarCompra()
