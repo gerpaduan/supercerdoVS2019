@@ -544,9 +544,10 @@ namespace Presentacion.Caja
             formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
             frmIngresoBilletes.txtBoxAcargar = this.txtCajaCierre;
             frmIngresoBilletes.ShowDialog();
-            if (tipoCierreActual.Equals(tipoCierre.AbrirCaja) || tipoCierreActual.Equals(tipoCierre.ReAbrirCaja))
+            if (!frmIngresoBilletes.txtBoxAcargar.Text.Equals("0") && 
+                (tipoCierreActual.Equals(tipoCierre.AbrirCaja) || tipoCierreActual.Equals(tipoCierre.ReAbrirCaja)))
             {
-                txtCajaInicial.Text = frmIngresoBilletes.total.ToString();
+                txtCajaInicial.Text = frmIngresoBilletes.txtBoxAcargar.Text;
             }
         }
 
