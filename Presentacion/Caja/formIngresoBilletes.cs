@@ -29,7 +29,7 @@ namespace Presentacion.Caja
 
         private void formIngresoBilletes_Load(object sender, EventArgs e)
         {
-
+            txtBoxAcargar.Text = "0";
         }
 
         private void txtPress_Enter(object sender, KeyEventArgs e)
@@ -156,6 +156,5 @@ namespace Presentacion.Caja
                 return;
             }
         }
-
     }
 }
