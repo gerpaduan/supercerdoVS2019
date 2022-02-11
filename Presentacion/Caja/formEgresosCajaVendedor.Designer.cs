@@ -49,6 +49,8 @@
             this.btnNuevoGasto = new System.Windows.Forms.Button();
             this.btnVerGasto = new System.Windows.Forms.Button();
             this.comboFiltro = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtItems = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).BeginInit();
             this.SuspendLayout();
             // 
@@ -91,7 +93,7 @@
             this.grillaEgresosCaja.RowHeadersVisible = false;
             this.grillaEgresosCaja.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaEgresosCaja.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaEgresosCaja.Size = new System.Drawing.Size(649, 245);
+            this.grillaEgresosCaja.Size = new System.Drawing.Size(649, 248);
             this.grillaEgresosCaja.TabIndex = 44;
             this.grillaEgresosCaja.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaEgresosCaja_CellClick);
             this.grillaEgresosCaja.SelectionChanged += new System.EventHandler(this.grillaEgresosCaja_SelectionChanged);
@@ -100,7 +102,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(538, 461);
+            this.btnCancelar.Location = new System.Drawing.Point(538, 478);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(102, 26);
             this.btnCancelar.TabIndex = 45;
@@ -226,7 +228,7 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(12, 448);
+            this.groupBox1.Location = new System.Drawing.Point(12, 465);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(625, 7);
             this.groupBox1.TabIndex = 56;
@@ -236,7 +238,7 @@
             // 
             this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalS.Location = new System.Drawing.Point(538, 427);
+            this.txtTotalS.Location = new System.Drawing.Point(538, 448);
             this.txtTotalS.Name = "txtTotalS";
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(102, 21);
@@ -249,7 +251,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(493, 429);
+            this.label1.Location = new System.Drawing.Point(493, 450);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(39, 16);
             this.label1.TabIndex = 58;
@@ -298,12 +300,37 @@
             this.comboFiltro.TabStop = false;
             this.comboFiltro.SelectedIndexChanged += new System.EventHandler(this.comboFiltro_SelectedIndexChanged);
             // 
+            // label2
+            // 
+            this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(493, 429);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(40, 16);
+            this.label2.TabIndex = 63;
+            this.label2.Text = "Items";
+            // 
+            // txtItems
+            // 
+            this.txtItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtItems.Location = new System.Drawing.Point(538, 426);
+            this.txtItems.Name = "txtItems";
+            this.txtItems.ReadOnly = true;
+            this.txtItems.Size = new System.Drawing.Size(102, 21);
+            this.txtItems.TabIndex = 62;
+            this.txtItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
             // formEgresosCajaVendedor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.SteelBlue;
-            this.ClientSize = new System.Drawing.Size(649, 491);
+            this.ClientSize = new System.Drawing.Size(649, 508);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.txtItems);
             this.Controls.Add(this.comboFiltro);
             this.Controls.Add(this.btnVerGasto);
             this.Controls.Add(this.btnNuevoGasto);
@@ -354,5 +381,7 @@
         protected System.Windows.Forms.Button btnNuevoGasto;
         protected System.Windows.Forms.Button btnVerGasto;
         private System.Windows.Forms.ComboBox comboFiltro;
+        protected System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtItems;
     }
 }

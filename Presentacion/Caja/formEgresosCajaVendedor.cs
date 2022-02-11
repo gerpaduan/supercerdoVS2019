@@ -47,11 +47,14 @@ namespace Presentacion.Caja
 
         private void CargarTotal()
         {
+            int items = 0;
             decimal total = 0;
             foreach (DataGridViewRow row in grillaEgresosCaja.Rows)
             {
+                items++;
                 total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
             }
+            txtItems.Text = items.ToString();
             txtTotalS.Text = total.ToString("F2");
         }
 
