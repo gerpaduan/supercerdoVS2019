@@ -114,7 +114,7 @@ namespace Datos
             return dtTipoEgresoCaja;
         }
 
-        public DataTable obtenerEgresosCaja(int idSucursal, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerEgresosCaja(int idSucursal, int idUsuario, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtEgresosCaja = new DataTable();
             daCierreCaja = new SqlDataAdapter();
@@ -127,6 +127,7 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@texto", texto);
             cmCierreCaja.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCierreCaja.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCierreCaja.Parameters.AddWithValue("@idVendedor", idUsuario);
             cmCierreCaja.Parameters.AddWithValue("@idTipoEgresoCaja", idTipoEgresoCaja);
             cmCierreCaja.Parameters.AddWithValue("@idSucursal", idSucursal);
 

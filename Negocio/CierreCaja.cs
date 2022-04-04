@@ -106,9 +106,9 @@ namespace Negocio
             return idTipoEgreso;
         }
 
-        public DataTable obtenerEgresosCaja(int idSucursal, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable obtenerEgresosCaja(int idSucursal, int idUsuario, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            return oCierreD.obtenerEgresosCaja(idSucursal, idTipoEgresoCaja, texto, fechaDesde, fechaHasta);
+            return oCierreD.obtenerEgresosCaja(idSucursal, idUsuario, idTipoEgresoCaja, texto, fechaDesde, fechaHasta);
         }
 
         public Entidades.EgresoCaja addOrEditEgresoCaja(Entidades.EgresoCaja oEgresoCaja)
