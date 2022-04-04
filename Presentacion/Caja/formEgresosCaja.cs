@@ -14,12 +14,17 @@ namespace Presentacion.Caja
     {
         protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Usuario oUsuario;
 
         DataTable dtEgresosCaja = null;
+
+        ///se establece true cuando se esta cargando el forma para evitar actualizaciones en la grilla
+        ///al finalizar el Load se establece a false
+        bool loadingForm = true;
 
         public formEgresosCaja()
         {
@@ -31,10 +36,21 @@ namespace Presentacion.Caja
             this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today;
             fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
-            fechaDesde.Value = today.AddDays(-8); 
+            fechaDesde.Value = today.AddDays(-8);
             cargarSucursal();
+            cargarComboUsuario();
             cargarTiposEgresoCaja();
-            cargarGrilla();
+            loadingForm = false;
+            cargarGrilla();            
+        }
+
+
+        private void cargarComboUsuario()
+        {
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuariosConTodos();
+            comboUsuario.DisplayMember = "nombre";
+            comboUsuario.ValueMember = "id";
+            comboUsuario.SelectedIndex = 0;
         }
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)
@@ -50,8 +66,10 @@ namespace Presentacion.Caja
 
         public void cargarGrilla()
         {
+            if (loadingForm) return;
             lblActualizar.Visible = false;
-            dtEgresosCaja = oCierreN.obtenerEgresosCaja(oEgresoCajaE.Sucursal.idSucursal, oEgresoCajaE.IdTipoEgresoCaja, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
+            dtEgresosCaja = oCierreN.obtenerEgresosCaja(oEgresoCajaE.Sucursal.idSucursal, 
+                Convert.ToInt32(comboUsuario.SelectedValue.ToString()), oEgresoCajaE.IdTipoEgresoCaja, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
             grillaEgresosCaja.DataSource = dtEgresosCaja;
             grillaEgresosCaja.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
@@ -59,11 +77,14 @@ namespace Presentacion.Caja
             grillaEgresosCaja.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
 
+            int cantItems = 0;
             decimal total = 0;
             foreach (DataGridViewRow row in grillaEgresosCaja.Rows)
             {
+                cantItems++;
                 total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
             }
+            txtItems.Text = cantItems.ToString();
             txtTotalS.Text = total.ToString("F2");
         }
 
