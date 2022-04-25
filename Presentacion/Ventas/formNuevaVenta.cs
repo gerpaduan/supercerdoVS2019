@@ -187,6 +187,10 @@ namespace Presentacion.Ventas
 
                 try
                 {
+                    //si no se registro la venta se aborta el proceso
+                    if (oVentaE.IdVenta == 0) 
+                        return;
+
                     oVentaN.egresoCajaPagoTarjeta(oVentaE.IdVenta, oVentaE.Vendedor);
 
                     if (aCtaCte)
