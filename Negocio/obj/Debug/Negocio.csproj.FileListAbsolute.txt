@@ -1,0 +1,24 @@
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Negocio.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Negocio.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Datos.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Entidades.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Utilidades.dll
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Utilidades.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Entidades.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Debug\Datos.pdb
+E:\Sistemas\supercerdo\Negocio\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Negocio\obj\Debug\Negocio.dll
+E:\Sistemas\supercerdo\Negocio\obj\Debug\Negocio.pdb
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Negocio.dll
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Negocio.pdb
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Datos.dll
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Entidades.dll
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Utilidades.dll
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Datos.pdb
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Entidades.pdb
+C:\Notebook German\supercerdo VS2019\Negocio\bin\Debug\Utilidades.pdb
+C:\Notebook German\supercerdo VS2019\Negocio\obj\Debug\Negocio.csproj.AssemblyReference.cache
+C:\Notebook German\supercerdo VS2019\Negocio\obj\Debug\Negocio.csproj.CoreCompileInputs.cache
+C:\Notebook German\supercerdo VS2019\Negocio\obj\Debug\Negocio.csproj.CopyComplete
+C:\Notebook German\supercerdo VS2019\Negocio\obj\Debug\Negocio.dll
+C:\Notebook German\supercerdo VS2019\Negocio\obj\Debug\Negocio.pdb

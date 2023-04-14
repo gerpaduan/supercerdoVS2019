@@ -1,0 +1,29 @@
+E:\Sistemas\supercerdo\Utilidades\bin\Debug\Utilidades.dll
+E:\Sistemas\supercerdo\Utilidades\bin\Debug\Utilidades.pdb
+E:\Sistemas\supercerdo\Utilidades\bin\Debug\Interop.IWshRuntimeLibrary.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Interop.IWshRuntimeLibrary.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.csproj.ResolveComReference.cache
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.BarraProgreso.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.FormPesoBalanza.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.FormAppConfig.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.FormLogin.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.Util_Form.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.csproj.GenerateResource.Cache
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Debug\Utilidades.pdb
+C:\Notebook German\supercerdo VS2019\Utilidades\bin\Debug\Utilidades.dll
+C:\Notebook German\supercerdo VS2019\Utilidades\bin\Debug\Utilidades.pdb
+C:\Notebook German\supercerdo VS2019\Utilidades\bin\Debug\Interop.IWshRuntimeLibrary.dll
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.AssemblyReference.cache
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Interop.IWshRuntimeLibrary.dll
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.ResolveComReference.cache
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.BarraProgreso.resources
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.FormPesoBalanza.resources
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.FormAppConfig.resources
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.FormLogin.resources
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.Util_Form.resources
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.GenerateResource.cache
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.CoreCompileInputs.cache
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.dll
+C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.pdb

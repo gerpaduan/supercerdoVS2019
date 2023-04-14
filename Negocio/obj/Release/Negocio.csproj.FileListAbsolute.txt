@@ -1,0 +1,11 @@
+E:\Sistemas\supercerdo\Negocio\bin\Release\Negocio.dll
+E:\Sistemas\supercerdo\Negocio\bin\Release\Negocio.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Release\Datos.dll
+E:\Sistemas\supercerdo\Negocio\bin\Release\Entidades.dll
+E:\Sistemas\supercerdo\Negocio\bin\Release\Utilidades.dll
+E:\Sistemas\supercerdo\Negocio\bin\Release\Utilidades.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Release\Entidades.pdb
+E:\Sistemas\supercerdo\Negocio\bin\Release\Datos.pdb
+E:\Sistemas\supercerdo\Negocio\obj\Release\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Negocio\obj\Release\Negocio.dll
+E:\Sistemas\supercerdo\Negocio\obj\Release\Negocio.pdb

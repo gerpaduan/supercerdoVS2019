@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="DataSetCorte" targetNamespace="http://tempuri.org/DataSetCorte.xsd" xmlns:mstns="http://tempuri.org/DataSetCorte.xsd" xmlns="http://tempuri.org/DataSetCorte.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:msprop="urn:schemas-microsoft-com:xml-msprop" attributeFormDefault="qualified" elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:appinfo source="urn:schemas-microsoft-com:xml-msdatasource">
+      <DataSource DefaultConnectionIndex="0" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
+        <Connections />
+        <Tables />
+        <Sources />
+      </DataSource>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="DataSetCorte" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:Generator_UserDSName="DataSetCorte" msprop:Generator_DataSetName="DataSetCorte" msprop:EnableTableAdapterManager="true">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="dtCorte" msprop:Generator_UserTableName="dtCorte" msprop:Generator_RowDeletedName="dtCorteRowDeleted" msprop:Generator_RowChangedName="dtCorteRowChanged" msprop:Generator_RowClassName="dtCorteRow" msprop:Generator_RowChangingName="dtCorteRowChanging" msprop:Generator_RowEvArgName="dtCorteRowChangeEvent" msprop:Generator_RowEvHandlerName="dtCorteRowChangeEventHandler" msprop:Generator_TableClassName="dtCorteDataTable" msprop:Generator_TableVarName="tabledtCorte" msprop:Generator_RowDeletingName="dtCorteRowDeleting" msprop:Generator_TablePropName="dtCorte">
+          <xs:complexType>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="CortePorCompra" msprop:Generator_UserTableName="CortePorCompra" msprop:Generator_RowDeletedName="CortePorCompraRowDeleted" msprop:Generator_TableClassName="CortePorCompraDataTable" msprop:Generator_RowChangedName="CortePorCompraRowChanged" msprop:Generator_RowClassName="CortePorCompraRow" msprop:Generator_RowChangingName="CortePorCompraRowChanging" msprop:Generator_RowEvArgName="CortePorCompraRowChangeEvent" msprop:Generator_RowEvHandlerName="CortePorCompraRowChangeEventHandler" msprop:Generator_TablePropName="CortePorCompra" msprop:Generator_TableVarName="tableCortePorCompra" msprop:Generator_RowDeletingName="CortePorCompraRowDeleting">
+          <xs:complexType>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
