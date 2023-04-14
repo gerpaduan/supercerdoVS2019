@@ -1,0 +1,147 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using Presentacion.Ventas;
+
+namespace Presentacion
+{
+    public partial class formVentasVendedor : Form
+    {
+        public Entidades.CierreCaja oCierreE;
+        public Negocio.Venta oVentaN = new Negocio.Venta();
+
+        public DataTable dtVentas;
+        bool soloAnulados = false;
+
+        public formVentasVendedor()
+        {
+            InitializeComponent();            
+        }
+
+        public void cargarGrilla()
+        {
+            try
+            {
+                dtVentas = oVentaN.getVentasVendedorCierreCaja(oCierreE, soloAnulados);
+
+                grillaVentas.AutoGenerateColumns = false;
+                grillaVentas.DataSource = null;
+                grillaVentas.DataSource = dtVentas;
+                grillaVentas.Columns["totalKg"].Visible = !soloAnulados;
+                grillaVentas.Columns["totalS"].Visible = !soloAnulados;
+                foreach (DataGridViewRow row in grillaVentas.Rows)
+                {
+                    if (Convert.ToDecimal(row.Cells["totalS"].Value) == 0)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.Orange;
+                    }
+                }
+                cargarTotales();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar la grilla.\n\n"+ex.Message);
+            }
+        }
+
+        private void cargarTotales()
+        {
+            float totalS=0;
+
+            foreach (DataRow venta in dtVentas.Rows)
+            {
+                totalS += float.Parse(venta["totalS"].ToString());
+            }
+            txtTotalS.Text = soloAnulados ? "-" : String.Format("{0:0.00}", totalS );            
+        }
+
+        private void infoVenta()
+        {
+            int idVenta = Convert.ToInt32(grillaVentas.CurrentRow.Cells["idVenta"].Value.ToString());
+
+            if (Application.OpenForms["formInfoVenta"] != null)
+            {
+                Application.OpenForms["formInfoVenta"].Activate();
+                Application.OpenForms["formInfoVenta"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formInfoVenta frmInfoVenta = new formInfoVenta();
+                frmInfoVenta.idVenta = idVenta;
+                frmInfoVenta.ShowDialog();
+            }
+        }
+
+        private void btnBuscar_Click(object sender, EventArgs e)
+        {
+            cargarGrilla();
+        }
+
+        private void btnSeleccionar_Click(object sender, EventArgs e)
+        {
+            infoVenta();
+        }
+
+        private void btnCancelar_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void grillaVentas_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            infoVenta();
+        }
+
+        private void formVentasVendedor_Load(object sender, EventArgs e)
+        {
+            soloAnulados = true;
+            verSoloAnulados();
+            this.Text = this.Text + " || " + oCierreE.UsuarioInicio.Nombre;
+            this.Text += Utilidades.Conexion.getSucursalConexion();
+            txtSucursal.Text = oCierreE.Sucursal.sucursal;
+            txtVendedor.Text = oCierreE.UsuarioInicio.Nombre;
+            cargarGrilla();
+        }
+
+        private void btnVerTodas_Click(object sender, EventArgs e)
+        {
+            verSoloAnulados();
+            cargarGrilla();
+        }
+
+        private void verSoloAnulados()
+        {
+            if (soloAnulados)
+            {
+                soloAnulados = false;
+                btnVerTodas.Text = "Ver &anulados";
+            }
+            else
+            {
+                soloAnulados = true;
+                btnVerTodas.Text = "Ver &todas";
+            }
+        }
+
+        private void grillaVentas_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                e.SuppressKeyPress = true;
+                infoVenta();
+            }
+        }
+
+        private void btnLineasVenta_Click(object sender, EventArgs e)
+        {
+            formLineasVendedor frmLineasVendedor = new formLineasVendedor();
+            frmLineasVendedor.oCierreE = oCierreE;
+            frmLineasVendedor.Show();
+        }
+    }
+}

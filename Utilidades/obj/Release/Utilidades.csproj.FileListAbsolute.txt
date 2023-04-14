@@ -1,0 +1,14 @@
+E:\Sistemas\supercerdo\Utilidades\bin\Release\Utilidades.dll
+E:\Sistemas\supercerdo\Utilidades\bin\Release\Utilidades.pdb
+E:\Sistemas\supercerdo\Utilidades\bin\Release\Interop.IWshRuntimeLibrary.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Release\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Interop.IWshRuntimeLibrary.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.csproj.ResolveComReference.cache
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.BarraProgreso.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.FormPesoBalanza.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.FormAppConfig.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.FormLogin.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.Util_Form.resources
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.csproj.GenerateResource.Cache
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.dll
+E:\Sistemas\supercerdo\Utilidades\obj\Release\Utilidades.pdb

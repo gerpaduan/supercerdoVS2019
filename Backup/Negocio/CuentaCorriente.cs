@@ -1,0 +1,150 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Data;
+
+namespace Negocio
+{
+    public class CuentaCorriente
+    {
+        Datos.CuentaCorriente oCtaCteD = new Datos.CuentaCorriente();
+
+        public DataTable obtenerCtasCtes(string txtBusqueda)
+        {
+            return oCtaCteD.obtenerCtasCtes(txtBusqueda);
+        }
+
+        public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde)
+        {
+            DataTable dtMovCtaCte = oCtaCteD.getCtaCteByIdPersona(idPersona, fechaDesde);
+
+            for (int fila = 0; fila < dtMovCtaCte.Rows.Count; fila++)
+            {
+                dtMovCtaCte.Rows[fila]["Saldo"] = fila.Equals(0) ? dtMovCtaCte.Rows[fila]["importe"] : float.Parse(dtMovCtaCte.Rows[fila - 1]["Saldo"].ToString()) + float.Parse(dtMovCtaCte.Rows[fila]["importe"].ToString());
+            }
+
+            return dtMovCtaCte;
+        }
+
+        public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha,
+            Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
+            Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
+            Entidades.Usuario actualizadoPor, bool crearMovCtaCte)
+        {
+            Datos.CuentaCorriente oCtaCteN = new Datos.CuentaCorriente();
+            Entidades.MovCtaCte oMovCtaCte = oCtaCteN.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
+
+            ///si no tiene oMovCtaCte o Tiene y fue quitado de la cta se la crea 
+            if ((oMovCtaCte == null || oMovCtaCte.Id.Equals(0)) || oMovCtaCte.QuitadoCtaCta)
+            {
+                oMovCtaCte = new Entidades.MovCtaCte();
+            }
+            else
+            {
+                ///--si tiene mov cta cte y tiene el mismo TipoMov se actualiza                
+                ///--si tiene mov cta cte y es distinto tipo se crea un registro opuesto
+                ///-----
+                ///Si no coincide importe y tipo de mov. se crea un opuesto y luego el nuevo registro
+                if (!(oMovCtaCte.Tipo.Equals(tipoMov.ToString()) && 
+                    oMovCtaCte.Importe.Equals(oMovCtaCte.getImporte(importe,tipoMov))))
+                {
+                    oMovCtaCte.Id = 0;
+                    oMovCtaCte.Detalle = "";
+                    oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
+                    oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
+                    //se registra el registro opuesto
+                    oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+
+                    ///se crea la nueva instancia para el nuevo registro
+                    ///**Solo si el nuevo registro tiene distinto tipoMov (p/que no se registre 2 veces el mov cta cte)**
+                    switch (oMovCtaCte.getTablaEnum(oMovCtaCte.Tabla))
+                    {
+                        case Entidades.MovCtaCte.tablas.Compras:
+                            break;
+                        case Entidades.MovCtaCte.tablas.Ventas:
+                            if(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo).Equals(Entidades.MovCtaCte.tipoMov.Debito))
+                                return;
+                            break;
+                        case Entidades.MovCtaCte.tablas.Pagos:
+                            break;
+                        case Entidades.MovCtaCte.tablas.MovCtaCte:
+                            break;
+                        default:
+                            break;
+                    }
+                    oMovCtaCte = new Entidades.MovCtaCte();                    
+                }
+
+                ///-Si coincide Importe y tipo Mov y EnCtaCte es Falso Siginifica que se sacó la venta de Cta Cte
+                ///
+                if (!crearMovCtaCte && oMovCtaCte.Tipo.Equals(tipoMov.ToString()) &&
+                    oMovCtaCte.Importe.Equals(oMovCtaCte.getImporte(importe, tipoMov)))
+                {
+                    oMovCtaCte.Id = 0;
+                    oMovCtaCte.Detalle = !crearMovCtaCte ? "Quitado de Cta.Cte." : "";
+                    oMovCtaCte.QuitadoCtaCta = !crearMovCtaCte; 
+                    oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
+                    oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
+                    //se registra el registro opuesto
+                    oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+
+                    //se crea la nueva instancia para el nuevo registro
+                    oMovCtaCte = new Entidades.MovCtaCte();
+                }
+                
+            }
+            //si crearMovCtaCte es falso se aborta el proceso
+            if (!crearMovCtaCte) return;
+
+            oMovCtaCte.Persona = oPersonaE;
+            oMovCtaCte.Fecha = fecha;
+            oMovCtaCte.Tabla = tabla.ToString();
+            oMovCtaCte.IdTabla = idTabla;
+            oMovCtaCte.NroDoc = nroDoc;
+            oMovCtaCte.Detalle = detalle;
+            oMovCtaCte.Tipo = tipoMov.ToString();
+            oMovCtaCte.Importe = oMovCtaCte.getImporte(importe, tipoMov);
+            oMovCtaCte.Sucursal = oSucursalE;
+            oMovCtaCte.Creado = creado;
+            oMovCtaCte.CreadoPor = creadoPor;
+            oMovCtaCte.Actualizado = actualizado;
+            oMovCtaCte.ActualizadoPor = actualizadoPor;
+
+            oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+        }
+
+        #region Pagos
+
+        public Entidades.Pago getPagoById(int idPago)
+        {
+            return oCtaCteD.getPagoById(idPago);
+        }
+
+        public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE)
+        {
+            return oCtaCteD.addOrEditPago(oPagoE);
+        }
+
+        public void eliminarPago(Entidades.Pago oPagoE)
+        {
+            oCtaCteD.eliminarPago(oPagoE);
+        }
+
+        public DataTable obtenerPagos(string texto, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            return oCtaCteD.obtenerPagos(texto, fechaDesde, fechaHasta);
+        }
+
+        public void crearMovCtaCtePago(Entidades.Pago oPagoE)
+        {
+            oPagoE = oCtaCteD.getPagoById(oPagoE.Id);
+            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
+                 oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
+                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true);
+        }
+
+        #endregion
+    }
+}

@@ -1,0 +1,9 @@
+E:\Sistemas\supercerdo\Datos\bin\Release\Datos.dll
+E:\Sistemas\supercerdo\Datos\bin\Release\Datos.pdb
+E:\Sistemas\supercerdo\Datos\bin\Release\Entidades.dll
+E:\Sistemas\supercerdo\Datos\bin\Release\Utilidades.dll
+E:\Sistemas\supercerdo\Datos\bin\Release\Utilidades.pdb
+E:\Sistemas\supercerdo\Datos\bin\Release\Entidades.pdb
+E:\Sistemas\supercerdo\Datos\obj\Release\ResolveAssemblyReference.cache
+E:\Sistemas\supercerdo\Datos\obj\Release\Datos.dll
+E:\Sistemas\supercerdo\Datos\obj\Release\Datos.pdb

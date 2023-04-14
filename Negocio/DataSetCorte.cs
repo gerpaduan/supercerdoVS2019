@@ -1,7 +1,9 @@
-﻿namespace Negocio {
-    
-    
-    public partial class DataSetCorte {
+﻿namespace Negocio
+{
+
+
+    public partial class DataSetCorte
+    {
         partial class dtCorteDataTable
         {
         }
