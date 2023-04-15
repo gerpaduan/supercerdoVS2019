@@ -873,5 +873,10 @@ namespace Presentacion
             formFacturaElectronica factElectr = new formFacturaElectronica();
             factElectr.Show();
         }
+
+        private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
