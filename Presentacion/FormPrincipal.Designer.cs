@@ -80,7 +80,6 @@
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -97,7 +96,6 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.SandyBrown;
-            this.splitContainer1.Panel1.Controls.Add(this.label7);
             this.splitContainer1.Panel1.Controls.Add(this.checkAutoDesconectar);
             this.splitContainer1.Panel1.Controls.Add(this.btnLogin);
             this.splitContainer1.Panel1.Controls.Add(this.btnCerrarSesion);
@@ -711,16 +709,6 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(134, 460);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(35, 13);
-            this.label7.TabIndex = 104;
-            this.label7.Text = "label7";
-            this.label7.Click += new System.EventHandler(this.label7_Click);
-            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -801,7 +789,6 @@
         private System.Windows.Forms.ToolStripMenuItem stockActualToolStripMenuItem;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Button btnCerrarSesion;
-        private System.Windows.Forms.Label label7;
     }
 }
 
