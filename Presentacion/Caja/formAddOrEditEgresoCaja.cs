@@ -335,6 +335,7 @@ namespace Presentacion.Caja
                 ticket.TextoIzquierda("Creado: " + Utilidades.Util_Form.fechaFormato24Horas(creado));
                 if(oEgresoCajaE.Actualizado!= null) ticket.TextoIzquierda("Modif.: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Actualizado));
                 ticket.LineasEnBlanco(5);
+                ticket.realizarImpresion();
             }
             catch (Exception)
             {

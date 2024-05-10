@@ -871,7 +871,7 @@ namespace Presentacion
         private void button1_Click_2(object sender, EventArgs e)
         {
             formFacturaElectronica factElectr = new formFacturaElectronica();
-            factElectr.Show();
+            //factElectr.Show();//comenté xq me tiraba error en la depuracion
         }
 
     }

@@ -383,7 +383,7 @@ namespace Presentacion.Caja
                 foreach (Entidades.LineaVenta linea in oUltimaVenta.LineasVenta)
                 {
                     ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                        linea.PrecioKg, linea.CantKg, linea.PrecioKg * linea.CantKg);
+                        linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                 }
                 ticket.TextoDerecha("-------");
                 ticket.AgregaTotales("Total", Convert.ToDouble(txtTotalS.Text));
@@ -393,6 +393,7 @@ namespace Presentacion.Caja
                 ticket.TextoIzquierda("Cajero: " + oUltimaVenta.Vendedor.Id);
                 ticket.GraciasPorSuCompra();
                 ticket.LineasEnBlanco(2);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {

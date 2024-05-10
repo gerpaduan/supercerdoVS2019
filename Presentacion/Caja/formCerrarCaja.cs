@@ -168,6 +168,7 @@ namespace Presentacion.Caja
             ticket.AgregaTotales("Diferencia", Convert.ToDouble(oCierreE.Diferencia));
             ticket.AgregaTotales("Queda en Caja:", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
             ticket.LineasEnBlanco(3);
+            ticket.realizarImpresion();
 
             if (MessageBox.Show("¿Imprimir copia para administrador?", "",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
@@ -189,6 +190,7 @@ namespace Presentacion.Caja
                 ticket.AgregaTotales("Prox. Caja", Convert.ToDouble(oCierreE.CajaInicioSiguiente));
                 ticket.AgregaTotales("Retira", Convert.ToDouble(oCierreE.ImporteRetirado));
                 ticket.LineasEnBlanco(3);
+                ticket.realizarImpresion();
             }
         }
 

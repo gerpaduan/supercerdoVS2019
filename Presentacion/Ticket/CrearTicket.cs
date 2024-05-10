@@ -35,48 +35,48 @@ namespace Presentacion.Ticket
         int cantMaxChar = 32;
         public void LineasEnBlanco(int cantLineas)
         {
-            ticket = "\n";
+            ticket += "\n";
             for (int i = 1; i < cantLineas; i++)
             {
                 ticket += "\n";
             }
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void LineasGuion()
         {
-            ticket = "--------------------\n";   // agrega lineas separadoras -
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
+            ticket += "--------------------\n";   // agrega lineas separadoras -
+            ////RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void LineasAsterisco()
         {
-            ticket = "********************\n";   // agrega lineas separadoras *
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
+            ticket += "********************\n";   // agrega lineas separadoras *
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void LineasIgual()
         {
-            ticket = "====================\n";   // agrega lineas separadoras =
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
+            ticket += "====================\n";   // agrega lineas separadoras =
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void LineasTotales()
         {
-            ticket = "         -----------\n"; ;   // agrega lineas de total
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
+            ticket += "         -----------\n"; ;   // agrega lineas de total
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void EncabezadoVenta()
         {
-            ticket = "Articulo        Can    P.Unit    Importe\n";   // agrega lineas de  encabezados
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            ticket += "Articulo        Can    P.Unit    Importe\n";   // agrega lineas de  encabezados
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void GraciasPorSuCompra()
         {
-            ticket = "**Gracias por su compra**\n";
-            TextoCentro(ticket);
-            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
+            string texto = "**Gracias por su compra**\n";
+            TextoCentro(texto);
+            ////RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void NoValidoComoFactura()
         {
-            ticket = "-No valido como Factura-\n";
-            TextoCentro(ticket);
+            string texto = "-No valido como Factura-\n";
+            TextoCentro(texto);
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
         public void TextoIzquierda(string par1)                          // agrega texto a la izquierda
@@ -88,12 +88,12 @@ namespace Presentacion.Ticket
                 parte1 = par1.Remove(cantMaxChar, cort);        // si es mayor que cantMaxChar caracteres, lo corta
             }
             else { parte1 = par1; }                      // **********
-            ticket = parte1 + "\n";
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            ticket += parte1 + "\n";
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void TextoDerecha(string par1)
         {
-            ticket = "";
+            ticket += "";
             max = par1.Length;
             if (max > cantMaxChar)                                 // **********
             {
@@ -108,11 +108,11 @@ namespace Presentacion.Ticket
             }
             ticket += parte1 + "\n";                    //Agrega el texto
             
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void TextoCentro(string par1)
         {
-            ticket = "";
+            ticket += "";
             max = par1.Length;
             if (max > cantMaxChar)                                 // **********
             {
@@ -126,7 +126,7 @@ namespace Presentacion.Ticket
                 ticket += " ";                           // Agrega espacios antes del texto a centrar
             }                                            // **********
             ticket += parte1 + "\n";
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void TextoExtremos(string par1, string par2)
         {
@@ -137,7 +137,7 @@ namespace Presentacion.Ticket
                 parte1 = par1.Remove(18, cort);          // si par1 es mayor que 18 lo corta
             }
             else { parte1 = par1; }                      // **********
-            ticket = parte1;                             // agrega el primer parametro
+            ticket += parte1;                             // agrega el primer parametro
             max = par2.Length;
             if (max > 18)                                 // **********
             {
@@ -152,7 +152,7 @@ namespace Presentacion.Ticket
             }                                             // **********
             ticket += parte2+"\n";                     // agrega el segundo parametro al final
             
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
 
         public void TextoMuchasLineas(string par1)                          // agrega texto a la izquierda
@@ -177,13 +177,13 @@ namespace Presentacion.Ticket
                 }
                 parte1 += par1[index].ToString();
             }
-            ticket = parte1 + "\n";
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            ticket += parte1 + "\n";
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
 
         public void AgregaTotales(string par1, double total)
         {
-            ticket = par1;
+            ticket += par1;
             parte2 = total.ToString("F2");
             int espacios = cantMaxChar - parte2.Length;
             for (int i = par1.Length; i < espacios; i++)                // **********
@@ -191,12 +191,12 @@ namespace Presentacion.Ticket
                 ticket += " ";                           // Agrega espacios
             }
             ticket += parte2+"\n";
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void AgregaArticulo(string producto, double cant, double precio, double total)
         {
             string cantidad = cant.ToString("F3") + " x " + precio.ToString("F2");
-            ticket = cantidad+"\n";
+            ticket += cantidad+"\n";
 
             int longProd = producto.Length;
             int maxCharProd = 22;
@@ -217,22 +217,27 @@ namespace Presentacion.Ticket
                 ticket += " ";                           
             }                                            
             ticket += total.ToString("F2") + "\n";
-            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
 
+        }
+
+        public void realizarImpresion()
+        {
+            RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
         }
         public void CortaTicket()
         {
             string corte = "\x1B" + "m";                  // caracteres de corte
             string avance = "\x1B" + "d" + "\x09";        // avanza 9 renglones
-            RawPrinterHelper.SendStringToPrinter(impresora, avance, imprimir); // avanza
-            RawPrinterHelper.SendStringToPrinter(impresora, corte, imprimir); // corta
+            //RawPrinterHelper.SendStringToPrinter(impresora, avance, imprimir); // avanza
+            //RawPrinterHelper.SendStringToPrinter(impresora, corte, imprimir); // corta
         }
         public void AbreCajon()
         {
             string cajon0 = "\x1B" + "p" + "\x00" + "\x0F" + "\x96";                  // caracteres de apertura cajon 0
             string cajon1 = "\x1B" + "p" + "\x01" + "\x0F" + "\x96";                 // caracteres de apertura cajon 1
-            RawPrinterHelper.SendStringToPrinter(impresora, cajon0, imprimir); // abre cajon0
-            RawPrinterHelper.SendStringToPrinter(impresora, cajon1, imprimir); // abre cajon1
+            //RawPrinterHelper.SendStringToPrinter(impresora, cajon0, imprimir); // abre cajon0
+            //RawPrinterHelper.SendStringToPrinter(impresora, cajon1, imprimir); // abre cajon1
         }
     }
     #endregion
