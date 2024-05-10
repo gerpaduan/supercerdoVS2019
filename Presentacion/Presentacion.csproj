@@ -259,6 +259,7 @@
     <Compile Include="Embutidos\formLineasEmb.Designer.cs">
       <DependentUpon>formLineasEmb.cs</DependentUpon>
     </Compile>
+    <Compile Include="formFacturaElectronica.cs" />
     <Compile Include="Movimientos\formLineasMov.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -30,6 +30,7 @@ namespace Presentacion.Pruebas
                 ticket.TextoIzquierda(txtIngreseTexto.Text);
                 ticket.TextoCentro("Fin Prueba!");
                 ticket.LineasEnBlanco(5);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {

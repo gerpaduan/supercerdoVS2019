@@ -312,6 +312,7 @@ namespace Presentacion.Caja
                     ticket.TextoIzquierda("Cajero: " + oUsuario.Id);
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
+                    ticket.realizarImpresion();
 
 
                     //se genera el egreso de caja si no es Efectivo
@@ -491,6 +492,7 @@ namespace Presentacion.Caja
                 ticket.TextoIzquierda("Creado: " + Utilidades.Util_Form.fechaFormato24Horas(creado));
                 if (oEgresoCajaE.Actualizado != null) ticket.TextoIzquierda("Modif.: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Actualizado));
                 ticket.LineasEnBlanco(5);
+                ticket.realizarImpresion();
             }
             catch (Exception)
             {

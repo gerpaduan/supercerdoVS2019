@@ -27,3 +27,18 @@ C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.Gene
 C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.CoreCompileInputs.cache
 C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.dll
 C:\Notebook German\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.pdb
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\bin\Debug\Utilidades.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\bin\Debug\Utilidades.pdb
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\bin\Debug\Interop.IWshRuntimeLibrary.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.AssemblyReference.cache
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Interop.IWshRuntimeLibrary.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.ResolveComReference.cache
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.BarraProgreso.resources
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.FormPesoBalanza.resources
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.FormAppConfig.resources
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.FormLogin.resources
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.Util_Form.resources
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.GenerateResource.cache
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.CoreCompileInputs.cache
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.pdb

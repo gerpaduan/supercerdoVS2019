@@ -18,3 +18,14 @@ C:\Notebook German\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.CoreCompileInp
 C:\Notebook German\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.CopyComplete
 C:\Notebook German\supercerdo VS2019\Datos\obj\Debug\Datos.dll
 C:\Notebook German\supercerdo VS2019\Datos\obj\Debug\Datos.pdb
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\bin\Debug\Datos.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\bin\Debug\Datos.pdb
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\bin\Debug\Entidades.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\bin\Debug\Utilidades.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\bin\Debug\Entidades.pdb
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\bin\Debug\Utilidades.pdb
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.AssemblyReference.cache
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.CoreCompileInputs.cache
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.CopyComplete
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.dll
+C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.pdb

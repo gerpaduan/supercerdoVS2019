@@ -226,6 +226,7 @@ namespace Presentacion.Ventas
                 ticket.TextoIzquierda("Cajero: " + oVentaE.Vendedor.Id);
                 ticket.GraciasPorSuCompra();
                 ticket.LineasEnBlanco(2);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {

@@ -101,6 +101,7 @@ namespace Presentacion.Ticket
                 ticket.LineasEnBlanco(3);
                 ticket.TextoIzquierda("Firma:_ _ _ _ _ _ _ _ _ ");
                 ticket.LineasEnBlanco(4);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {
@@ -146,6 +147,7 @@ namespace Presentacion.Ticket
                     ticket.TextoIzquierda(descripcion + stockIniString + " " + stockRealString + " " + faltanteString);
                 }
                 ticket.LineasEnBlanco(4);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {
@@ -191,6 +193,7 @@ namespace Presentacion.Ticket
                     ticket.TextoIzquierda(descripcion + "   " + stockIniString + "   " + stockRealString);
                 }
                 ticket.LineasEnBlanco(4);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {
@@ -237,6 +240,7 @@ namespace Presentacion.Ticket
                     ticket.TextoIzquierda(descripcion + " " + stockActualString + " " + cantVentasString + " " + diffString);
                 }
                 ticket.LineasEnBlanco(4);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {
@@ -271,6 +275,7 @@ namespace Presentacion.Ticket
                     ticket.TextoExtremos(fila["corte"].ToString(), Convert.ToDecimal(fila["precioKg"]).ToString("F2"));
                 }
                 ticket.LineasEnBlanco(3);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {
@@ -299,6 +304,7 @@ namespace Presentacion.Ticket
                     ticket.TextoExtremos("   " + Convert.ToDecimal(fila["importe"]).ToString("F2"), "   " + Convert.ToDecimal(fila["saldo"]).ToString("F2"));
                 }
                 ticket.LineasEnBlanco(3);
+                ticket.realizarImpresion();
             }
             catch (Exception ex)
             {
