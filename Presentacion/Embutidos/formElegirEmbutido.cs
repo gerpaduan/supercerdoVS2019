@@ -69,11 +69,13 @@ namespace Presentacion.Embutidos
             {
                 int idCorteEmbutido = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorteEmbutido"].Value.ToString());
                 int idCorteEn = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorteEn"].Value.ToString());
+                int idCorteEn2 = Convert.ToInt32(grillaEmbutidos.CurrentRow.Cells["idCorteEn2"].Value.ToString());
 
                 formIngresoEmbutidoRapido frmIngresarEmbutidoRapido = new formIngresoEmbutidoRapido();
                 frmIngresarEmbutidoRapido.oUsuario = oUsuario;
                 frmIngresarEmbutidoRapido.oCorteEmbutidoE = oCorteN.findCorteById(idCorteEmbutido, false);
                 frmIngresarEmbutidoRapido.oCorteE = oCorteN.findCorteById(idCorteEn, false);//corte en embutido
+                frmIngresarEmbutidoRapido.oCorteE2 = oCorteN.findCorteById(idCorteEn2, false);//corte en embutido
                 frmIngresarEmbutidoRapido.frmEmbutidos = this.frmEmbutidos;
                 this.Close();
                 frmIngresarEmbutidoRapido.ShowDialog();

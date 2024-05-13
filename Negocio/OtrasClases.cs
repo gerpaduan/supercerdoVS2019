@@ -112,6 +112,14 @@ namespace Negocio
                         Entidades.Parametros.salMilanesa = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "pimientaMilanesa":
                         Entidades.Parametros.pimientaMilanesa = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "porcPanRayadoMilanesa":
+                        Entidades.Parametros.porcPanRayadoMilanesa = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "porcMermaEnPote":
+                        Entidades.Parametros.porcMermaEnPote = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "porcGrasaEnPote":
+                        Entidades.Parametros.porcGrasaEnPote = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "porcGrasaLiquida":
+                        Entidades.Parametros.porcGrasaLiquida = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     default:
                         break;
                 }

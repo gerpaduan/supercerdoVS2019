@@ -136,7 +136,7 @@ namespace Presentacion
             oEmbutidoE.corte = oCorteEmbutidoE;
 
             //creo y asigno la sucursal seleccionada
-            Entidades.Sucursal oSucursalE=new Entidades.Sucursal();
+            Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
             oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
             oEmbutidoE.sucursal = oSucursalE;
             oEmbutidoE.observaciones = txtObservaciones.Text.Trim();

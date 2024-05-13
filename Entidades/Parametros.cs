@@ -44,5 +44,9 @@ namespace Entidades
         public static float bracolorCodeguin;//	0,002	Cantidad de Bracolor por Kg en CODEGUIN
         public static float salMilanesa; // 35		0,022	Cantidad de Sal por Kg en MILANESA
         public static float pimientaMilanesa;//36	0,0017	Cantidad de Pimienta por Kg en MILANESA
+        public static float porcPanRayadoMilanesa;//	0,2	porcentaje de pan rayado en milanesa
+        public static float porcMermaEnPote;//	0,3	porcentaje Merma porque pones son 700 gramos
+        public static float porcGrasaEnPote;//	0,7	porcentaje de Grasa en Pote
+        public static float porcGrasaLiquida;//	0,75	porcenta de Grasa Liquida que se obtiene al cocinar
     }
 }

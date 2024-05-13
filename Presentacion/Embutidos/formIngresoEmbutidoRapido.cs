@@ -25,6 +25,7 @@ namespace Presentacion
 
         public Entidades.Corte oCorteEmbutidoE;
         public Entidades.Corte oCorteE;
+        public Entidades.Corte oCorteE2;
         Entidades.CortePorEmbutido oCortePorEmbutidoE;
         Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
         public Entidades.Usuario oUsuario;
@@ -112,13 +113,12 @@ namespace Presentacion
                     cargarEmbutido();
                     oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
 
-                    ////Se carga el rebozado - 17 es el equivalente al codigo de la milanesa
-                    //if (oEmbutidoE.corte.codigo.Equals(17))
-                    //{
-                    //    cargarRebozado();
-                    //}
-
-                    cargarCortePorEmbutido();
+                    //Si CorteEn es igual a CorteEn2 cargar como rebozado
+                    if(oCorteE.codigo != oCorteE2.codigo)
+                    {
+                        cargarRebozado();
+                    }
+                    cargarCortePorEmbutido(oCorteE, txtCantKgs.Text);
                     oCorteN.agregarCortePorEmbutido(oCortePorEmbutidoE);
                     saveChanges = true;
                     frmEmbutidos.cargarGrilla();
@@ -142,18 +142,18 @@ namespace Presentacion
         //}
 
 
-        private void cargarCortePorEmbutido()
+        private void cargarCortePorEmbutido(Entidades.Corte oCorte, string cantKgs)
         {
             oCortePorEmbutidoE = new Entidades.CortePorEmbutido();
             oCortePorEmbutidoE.embutido = oEmbutidoE;
-            oCortePorEmbutidoE.corte = oCorteE;
+            oCortePorEmbutidoE.corte = oCorte;
             try 
 	        {
-                oCortePorEmbutidoE.kgUtilizado = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                oCortePorEmbutidoE.kgUtilizado = float.Parse(cantKgs.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
             }
 	        catch (Exception)
 	        {
-                oCortePorEmbutidoE.kgUtilizado = float.Parse(txtCantKgs.Text.Trim());
+                oCortePorEmbutidoE.kgUtilizado = float.Parse(cantKgs.Trim());
             }
 
             oCortePorEmbutidoE.PesoBalanza = checkLeerPeso.Checked;
@@ -221,10 +221,30 @@ namespace Presentacion
         private void cargarRebozado()
         {
             //txtCodCorteEnEmbutido.Text = "301";
-            float rebozado = totalKg * float.Parse("0,20");
-            txtCantKgs.Text = rebozado.ToString();
-            cargarCortePorEmbutido();
-            agregarCorteEnEmbutido();
+
+            float rebozado = 0;
+            switch (oEmbutidoE.Corte.codigo)
+            {
+                //pote
+                case 13:
+                    //El pote es de 700 grms y la mema entonces es del 300 grms en la Unidad
+                    rebozado = float.Parse(txtCantKgs.Text) * (1-Entidades.Parametros.porcGrasaEnPote);
+                    txtCantKgs.Text = (float.Parse(txtCantKgs.Text) * Entidades.Parametros.porcGrasaEnPote).ToString();
+                    break;
+                //milanesa
+                case 17:
+                    rebozado = float.Parse(txtCantKgs.Text) * Entidades.Parametros.porcPanRayadoMilanesa;
+                    break;
+                //grasa liquida
+                case 59:
+                    //Grasa liquidad tiene merma en el kilo cocinado por chicharron y evaporacion
+                    rebozado = -1 * float.Parse(txtCantKgs.Text) * (1 - Entidades.Parametros.porcGrasaLiquida);
+                    break;
+                default:
+                    break;
+            } 
+            cargarCortePorEmbutido(oCorteE2, rebozado.ToString());
+            oCorteN.agregarCortePorEmbutido(oCortePorEmbutidoE);
         }
         //Fin rebozado
 
