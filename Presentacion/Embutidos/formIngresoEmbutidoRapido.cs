@@ -228,17 +228,17 @@ namespace Presentacion
                 //pote
                 case 13:
                     //El pote es de 700 grms y la mema entonces es del 300 grms en la Unidad
-                    rebozado = float.Parse(txtCantKgs.Text) * (1-Entidades.Parametros.porcGrasaEnPote);
-                    txtCantKgs.Text = (float.Parse(txtCantKgs.Text) * Entidades.Parametros.porcGrasaEnPote).ToString();
+                    rebozado = Util_Form.convertFloat(txtCantKgs.Text, true) * (1-Entidades.Parametros.porcGrasaEnPote);
+                    txtCantKgs.Text = (Util_Form.convertFloat(txtCantKgs.Text, true) * Entidades.Parametros.porcGrasaEnPote).ToString();
                     break;
                 //milanesa
                 case 17:
-                    rebozado = float.Parse(txtCantKgs.Text) * Entidades.Parametros.porcPanRayadoMilanesa;
+                    rebozado = Util_Form.convertFloat(txtCantKgs.Text, true) * Entidades.Parametros.porcPanRayadoMilanesa;
                     break;
                 //grasa liquida
                 case 59:
                     //Grasa liquidad tiene merma en el kilo cocinado por chicharron y evaporacion
-                    rebozado = -1 * float.Parse(txtCantKgs.Text) * (1 - Entidades.Parametros.porcGrasaLiquida);
+                    rebozado = -1 * Util_Form.convertFloat(txtCantKgs.Text, true) * (1 - Entidades.Parametros.porcGrasaLiquida);
                     break;
                 default:
                     break;
