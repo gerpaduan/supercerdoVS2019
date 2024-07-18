@@ -354,9 +354,13 @@ namespace Presentacion.Caja
                     btnCajaAnterior.Visible = false;
                     //Ingreso billetes se modifica la ubicacion del boton
                     btnIngresoBilletes.Location = btnCajaAnterior.Location;
-                    //
-                    oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-                    if (!tipoCierreActual.Equals(tipoCierre.ReAbrirCaja) && oCierreE != null && oCierreE.FechaHoraCierre.Equals(null))
+
+                    //Si Usuario abre caja por primera vez, findByIdOrLast será nulo
+                    Entidades.CierreCaja oUltimoCierreUsuario = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
+                    if (oUltimoCierreUsuario != null)
+                        oCierreE = oUltimoCierreUsuario;
+
+                    if (!tipoCierreActual.Equals(tipoCierre.ReAbrirCaja) && oCierreE.Id != 0 && oCierreE.FechaHoraCierre.Equals(null))
                     {
                         MessageBox.Show(oUserIncio.Nombre +" ya ha abierto la caja en la siguiente fecha\n" + "Fecha: " + oCierreE.FechaHoraInicio.ToString() +
                             "\n\nDebe Cerrar Caja para volver a abrir", "Abrir Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
