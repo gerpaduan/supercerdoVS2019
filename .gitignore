@@ -1,0 +1,51 @@
+# Ignorar carpetas de compilación de Visual Studio
+**/debug/
+**/Debug/
+**/release/
+**/Release/
+
+# Archivos de Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos de compilación
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.cache
+*.ilk
+*.log
+*.xml
+*.tlog
+
+# Archivos de paquetes
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+.nuget/
+
+# Archivos de entorno
+.env
+
+# Archivos de configuración local
+*.config
+*.settings
+
+# Archivos de base de datos local
+*.mdf
+*.ldf
+
+# Otros archivos generados por Visual Studio
+*.csproj.user
+*.dbmdl
+*.jfm
+
+# Archivos de compilación de Mac
+*.DS_Store

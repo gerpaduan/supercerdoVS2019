@@ -932,7 +932,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\wsAFIPvs2008 VS2019\wsAFIPvs2008\wsAFIPvs2008.csproj">
+    <ProjectReference Include="..\..\..\..\..\Dropbox\BackUp\wsAFIPvs2008 VS2019\wsAFIPvs2008\wsAFIPvs2008.csproj">
       <Project>{5b716a48-0166-494f-a0f5-2dc93b38ac03}</Project>
       <Name>wsAFIPvs2008</Name>
     </ProjectReference>

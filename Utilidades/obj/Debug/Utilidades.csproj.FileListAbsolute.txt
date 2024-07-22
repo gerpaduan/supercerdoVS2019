@@ -42,3 +42,18 @@ C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.Ge
 C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.csproj.CoreCompileInputs.cache
 C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.dll
 C:\Sistemas - Codigo\supercerdo VS2019\Utilidades\obj\Debug\Utilidades.pdb
+C:\Users\FPX\source\repos\Utilidades\bin\Debug\Utilidades.dll
+C:\Users\FPX\source\repos\Utilidades\bin\Debug\Utilidades.pdb
+C:\Users\FPX\source\repos\Utilidades\bin\Debug\Interop.IWshRuntimeLibrary.dll
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.csproj.AssemblyReference.cache
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Interop.IWshRuntimeLibrary.dll
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.csproj.ResolveComReference.cache
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.BarraProgreso.resources
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.FormPesoBalanza.resources
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.FormAppConfig.resources
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.FormLogin.resources
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.Util_Form.resources
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.csproj.GenerateResource.cache
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.csproj.CoreCompileInputs.cache
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.dll
+C:\Users\FPX\source\repos\Utilidades\obj\Debug\Utilidades.pdb

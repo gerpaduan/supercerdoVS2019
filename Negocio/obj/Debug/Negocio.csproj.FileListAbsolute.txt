@@ -35,3 +35,16 @@ C:\Sistemas - Codigo\supercerdo VS2019\Negocio\obj\Debug\Negocio.csproj.CoreComp
 C:\Sistemas - Codigo\supercerdo VS2019\Negocio\obj\Debug\Negocio.csproj.CopyComplete
 C:\Sistemas - Codigo\supercerdo VS2019\Negocio\obj\Debug\Negocio.dll
 C:\Sistemas - Codigo\supercerdo VS2019\Negocio\obj\Debug\Negocio.pdb
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Negocio.dll
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Negocio.pdb
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Datos.dll
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Entidades.dll
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Utilidades.dll
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Datos.pdb
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Entidades.pdb
+C:\Users\FPX\source\repos\Negocio\bin\Debug\Utilidades.pdb
+C:\Users\FPX\source\repos\Negocio\obj\Debug\Negocio.csproj.AssemblyReference.cache
+C:\Users\FPX\source\repos\Negocio\obj\Debug\Negocio.csproj.CoreCompileInputs.cache
+C:\Users\FPX\source\repos\Negocio\obj\Debug\Negocio.csproj.Up2Date
+C:\Users\FPX\source\repos\Negocio\obj\Debug\Negocio.dll
+C:\Users\FPX\source\repos\Negocio\obj\Debug\Negocio.pdb

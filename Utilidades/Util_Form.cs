@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Configuration;
 using System.IO;
 using IWshRuntimeLibrary;
+using System.Drawing.Imaging;
 
 namespace Utilidades
 {
@@ -18,6 +19,7 @@ namespace Utilidades
         public static Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
         public static Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
         public static Color checkedColor = Color.LimeGreen;
+        public static float escalaPantalla = convertFloat(ConfigurationManager.AppSettings["escalaPantalla"].ToString(), false);
 
         public Util_Form()
         {
@@ -316,17 +318,23 @@ namespace Utilidades
                     Directory.CreateDirectory(fullPath);
                 }
 
-                Bitmap BmpScreen = new Bitmap(Screen.PrimaryScreen.Bounds.Width,
-                                          Screen.PrimaryScreen.Bounds.Height,
-                                  System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+                // Obtener la resolución de la pantalla
+                int screenWidth = (int)Math.Round((Screen.PrimaryScreen.Bounds.Width * escalaPantalla));
+                int screenHeight = (int)Math.Round(Screen.PrimaryScreen.Bounds.Height * escalaPantalla);
 
-                Graphics ScreenShot = Graphics.FromImage(BmpScreen);
+                // Crear un bitmap con el tamaño de la pantalla
+                using (Bitmap bitmap = new Bitmap(screenWidth, screenHeight))
+                {
+                    // Crear un objeto gráfico desde el bitmap
+                    using (Graphics g = Graphics.FromImage(bitmap))
+                    {
+                        // Copiar la pantalla en el bitmap
+                        g.CopyFromScreen(0, 0, 0, 0, bitmap.Size);
+                    }
 
-                ScreenShot.CopyFromScreen(Screen.PrimaryScreen.Bounds.X,
-                                     Screen.PrimaryScreen.Bounds.Y, 0, 0,
-                    Screen.PrimaryScreen.Bounds.Size, CopyPixelOperation.SourceCopy);
-
-                BmpScreen.Save(fullPath + "\\" + fullNameCaptura, System.Drawing.Imaging.ImageFormat.Png);
+                    // Guardar el bitmap en un archivo
+                    bitmap.Save(fullPath + "\\" + fullNameCaptura, System.Drawing.Imaging.ImageFormat.Png);
+                }
             }
             catch (Exception)
             {
