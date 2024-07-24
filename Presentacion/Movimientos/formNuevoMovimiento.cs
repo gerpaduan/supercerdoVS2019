@@ -43,6 +43,7 @@ namespace Presentacion
 
         bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+        bool cantSuc2 = false;
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -124,6 +125,7 @@ namespace Presentacion
                 oMovimiento.IdMovimiento.ToString() : "-";
 
             comboSucOrigen.SelectedValue = Convert.ToInt32(oMovimiento.SucursalOrigen.idSucursal);
+            comboSucDestino.SelectedValue = Convert.ToInt32(oMovimiento.SucursalDestino.idSucursal);
             txtFechaMovimiento.Value = oMovimiento.FechaMovimiento;
             txtObservaciones.Text = oMovimiento.Observaciones;
 
@@ -137,6 +139,15 @@ namespace Presentacion
 
         public void agregarMovimiento()
         {
+            if (comboSucOrigen.SelectedValue.Equals(comboSucDestino.SelectedValue) || 
+                comboSucOrigen.SelectedValue.Equals(0) || comboSucDestino.SelectedValue.Equals(0))
+            {
+                MessageBox.Show("Debe seleccionar la Sucursal Origen y Sucursal Destino; y ser diferentes entre ellas",
+                    "Mensaje",MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                txtCodigo.Focus();
+                return;
+            }
+
             if (oCorteE != null && oCorteE.idCorte > 0)
             {
                 MessageBox.Show("No se puede guardar el movimiento porque hay un corte seleccionado");
@@ -484,6 +495,8 @@ namespace Presentacion
         {
             dtSucursalOrigen = oSucursalN.obtenerSucursales();
 
+            cantSuc2 = dtSucursalOrigen.Rows.Count == 2;
+
             comboSucOrigen.DataSource = dtSucursalOrigen;
             comboSucOrigen.DisplayMember = "sucursal";
             comboSucOrigen.ValueMember = "idSucursal";
@@ -492,6 +505,7 @@ namespace Presentacion
             comboSucDestino.DataSource = dtSucursalDestino;
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
+            comboSucDestino.SelectedValue = 0;
 
             comboSucOrigen.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());//-1;//No muestra ninguna sucursal
             cambiarSucursalDestino();
@@ -548,6 +562,10 @@ namespace Presentacion
 
         private void cambiarSucursalDestino()
         {
+            //si la cantidad de Sucursales es mayor a 2 no hace el intercambio de valores automaticamente
+            if (!cantSuc2)
+                return;
+
             if (comboSucOrigen.SelectedValue.Equals(1))
             {
                 comboSucDestino.SelectedValue = 2;
@@ -560,6 +578,10 @@ namespace Presentacion
 
         private void cambiarSucursalOrigen()
         {
+            //si la cantidad de Sucursales distinta a 2 no hace el intercambio de valores automaticamente
+            if (!cantSuc2)
+                return;
+
             if (comboSucDestino.SelectedValue.Equals(1))
             {
                 comboSucOrigen.SelectedValue = 2;

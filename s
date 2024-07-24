@@ -1,0 +1,54 @@
+[1mdiff --git a/Presentacion/FormPrincipal.cs b/Presentacion/FormPrincipal.cs[m
+[1mindex c5813e8..2dce810 100644[m
+[1m--- a/Presentacion/FormPrincipal.cs[m
+[1m+++ b/Presentacion/FormPrincipal.cs[m
+[36m@@ -27,6 +27,13 @@[m [mnamespace Presentacion[m
+     {        [m
+         public static bool logueado = false;[m
+         public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;[m
+[32m+[m[32m        public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();[m
+[32m+[m[32m        public static int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());[m
+[32m+[m[32m        public static string nombreSucursal = ConfigurationManager.AppSettings["nombreSucursal"].ToString();[m
+[32m+[m[32m        public static string cliente = ConfigurationManager.AppSettings["cliente"].ToString();[m
+[32m+[m[32m        public static string cuitCliente = ConfigurationManager.AppSettings["cuitCliente"].ToString();[m
+[32m+[m[32m        public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;[m
+[32m+[m[32m        public static string textForm = cliente + " | Suc. " + nombreSucursal;[m
+         bool formAbierto = false;[m
+         Entidades.Usuario oUsuario;[m
+ [m
+[36m@@ -281,12 +288,21 @@[m [mnamespace Presentacion[m
+ [m
+         private void FormPrincipal_Load(object sender, EventArgs e)[m
+         {[m
+[32m+[m[32m            this.Text = textForm;[m
+             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());[m
+[31m-            comboConexion.Text = Utilidades.Conexion.connStringActual;[m
+[31m-            ultimaConnSelect = comboConexion.Text;[m
+[31m-            Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();[m
+[31m-            this.Text += Utilidades.Conexion.getSucursalConexion();[m
+ [m
+[32m+[m[32m            //si no soy yo vacio items de comboConexion[m
+[32m+[m[32m            if (soyYo)[m
+[32m+[m[32m            {[m
+[32m+[m[32m                comboConexion.Text = Utilidades.Conexion.connStringActual;[m
+[32m+[m[32m                ultimaConnSelect = comboConexion.Text;[m
+[32m+[m[32m                Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();[m
+[32m+[m[32m                this.Text += Utilidades.Conexion.getSucursalConexion();[m
+[32m+[m[32m            }[m
+[32m+[m[32m            else[m
+[32m+[m[32m            {[m
+[32m+[m[32m                comboConexion.Text = connStringActual.ToString();[m
+[32m+[m[32m            }[m
+             //Se obtienen los parametros[m
+             Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();[m
+             oOtrasClasesN.obtenerParametros();[m
+[36m@@ -323,7 +339,8 @@[m [mnamespace Presentacion[m
+                 btnLogin.Visible = false;[m
+                 btnCerrarSesion.Visible = true;[m
+                 //btnTipoConexioin.Visible = true;[m
+[31m-                comboConexion.Enabled = true;[m
+[32m+[m[32m                //solo muestra cambiar combo conexion si es cuit German Paduan[m
+[32m+[m[32m                comboConexion.Enabled = true && cuitCliente == "20306210786";[m
+                 timerInactividadAdmin.Start();[m
+             }[m
+             else[m

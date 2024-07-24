@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.Data;
 using System.Configuration;
 using System.Data.Common;
+using System.Runtime.CompilerServices;
 
 namespace Utilidades
 {
@@ -17,11 +18,14 @@ namespace Utilidades
             sanMartin,
             sanMartinRemoto,
             sanLorenzo,
-            sanLorenzoRemoto
+            sanLorenzoRemoto,
+            servidor
         }
         public static tipoConexion tipoConn;
         public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
+        public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
         string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
+        public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
 
         SqlConnection conn;
         public SqlConnection conectar()
@@ -63,6 +67,9 @@ namespace Utilidades
                 case Conexion.tipoConexion.sanLorenzoRemoto:
                     connString = "sanLorenzoRemoto";
                     break;
+                case Conexion.tipoConexion.servidor:
+                    connString = "Servidor";
+                    break;
             }
             connString = ConfigurationManager.ConnectionStrings[connString.ToString()].ToString();
             return connString;
@@ -88,6 +95,9 @@ namespace Utilidades
                 case "sanLorenzoRemoto":
                     tipoConn = Conexion.tipoConexion.sanLorenzoRemoto;
                     break;
+                case "servidor":
+                    tipoConn = Conexion.tipoConexion.servidor;
+                    break;
             }
             return tipoConn;
         }
@@ -95,7 +105,7 @@ namespace Utilidades
         public static string getSucursalConexion()
         {
             getTipoConexion();
-            string sucursalConexion = " | Suc. ";
+            string sucursalConexion = " | Conn. ";
             switch (tipoConn)
             {
                 case Conexion.tipoConexion.local:
@@ -112,6 +122,9 @@ namespace Utilidades
                     break;
                 case Conexion.tipoConexion.sanLorenzoRemoto:
                     sucursalConexion += "San Lorenzo";
+                    break;
+                case Conexion.tipoConexion.servidor:
+                    sucursalConexion += "Servidor";
                     break;
             }
              return sucursalConexion;
@@ -138,6 +151,9 @@ namespace Utilidades
                 case Conexion.tipoConexion.sanLorenzoRemoto:
                     idSucursal = 1;
                     break;
+                default:
+                    idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+                    break;
             }
             return idSucursal;
         }
@@ -162,6 +178,12 @@ namespace Utilidades
                     break;
                 case "sanLorenzoRemoto":
                     idSucursal = 1;
+                    break;
+                case "servidor":
+                    idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+                    break;
+                default: 
+                    idSucursal = idSucursalAppConfig;
                     break;
             }
             return idSucursal;

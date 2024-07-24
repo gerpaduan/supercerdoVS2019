@@ -15,6 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Datos", "Datos\Datos.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wsAFIPvs2008", "..\..\..\..\Dropbox\BackUp\wsAFIPvs2008 VS2019\wsAFIPvs2008\wsAFIPvs2008.csproj", "{5B716A48-0166-494F-A0F5-2DC93B38AC03}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{9C1CE1E8-2722-47DA-A8EB-9892BE75ABA2}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -91,6 +91,7 @@
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -128,8 +129,9 @@
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
             this.splitContainer1.Panel2.Controls.Add(this.btnTipoConexioin);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
-            this.splitContainer1.Size = new System.Drawing.Size(997, 581);
-            this.splitContainer1.SplitterDistance = 203;
+            this.splitContainer1.Size = new System.Drawing.Size(1329, 715);
+            this.splitContainer1.SplitterDistance = 270;
+            this.splitContainer1.SplitterWidth = 5;
             this.splitContainer1.TabIndex = 0;
             // 
             // checkAutoDesconectar
@@ -138,9 +140,10 @@
             this.checkAutoDesconectar.Checked = true;
             this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkAutoDesconectar.Location = new System.Drawing.Point(92, 557);
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(123, 686);
+            this.checkAutoDesconectar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.checkAutoDesconectar.Name = "checkAutoDesconectar";
-            this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
+            this.checkAutoDesconectar.Size = new System.Drawing.Size(121, 20);
             this.checkAutoDesconectar.TabIndex = 31;
             this.checkAutoDesconectar.TabStop = false;
             this.checkAutoDesconectar.Text = "Auto-Desconec.";
@@ -152,9 +155,10 @@
             this.btnLogin.FlatAppearance.BorderSize = 0;
             this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLogin.ForeColor = System.Drawing.Color.Blue;
-            this.btnLogin.Location = new System.Drawing.Point(11, 554);
+            this.btnLogin.Location = new System.Drawing.Point(15, 682);
+            this.btnLogin.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnLogin.Name = "btnLogin";
-            this.btnLogin.Size = new System.Drawing.Size(79, 23);
+            this.btnLogin.Size = new System.Drawing.Size(105, 28);
             this.btnLogin.TabIndex = 32;
             this.btnLogin.TabStop = false;
             this.btnLogin.Text = "&Iniciar Sesión";
@@ -166,9 +170,10 @@
             this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
             this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarSesion.ForeColor = System.Drawing.Color.Blue;
-            this.btnCerrarSesion.Location = new System.Drawing.Point(11, 554);
+            this.btnCerrarSesion.Location = new System.Drawing.Point(15, 682);
+            this.btnCerrarSesion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCerrarSesion.Name = "btnCerrarSesion";
-            this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
+            this.btnCerrarSesion.Size = new System.Drawing.Size(104, 28);
             this.btnCerrarSesion.TabIndex = 33;
             this.btnCerrarSesion.TabStop = false;
             this.btnCerrarSesion.Text = "&Cerrar Ses&ión";
@@ -184,9 +189,10 @@
             this.btnEgresosCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEgresosCaja.ForeColor = System.Drawing.Color.Black;
-            this.btnEgresosCaja.Location = new System.Drawing.Point(15, 209);
+            this.btnEgresosCaja.Location = new System.Drawing.Point(20, 257);
+            this.btnEgresosCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnEgresosCaja.Name = "btnEgresosCaja";
-            this.btnEgresosCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnEgresosCaja.Size = new System.Drawing.Size(227, 33);
             this.btnEgresosCaja.TabIndex = 30;
             this.btnEgresosCaja.TabStop = false;
             this.btnEgresosCaja.Text = "E&gresos Caja";
@@ -202,9 +208,10 @@
             this.btnUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnUsuarios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnUsuarios.ForeColor = System.Drawing.Color.Black;
-            this.btnUsuarios.Location = new System.Drawing.Point(15, 418);
+            this.btnUsuarios.Location = new System.Drawing.Point(20, 514);
+            this.btnUsuarios.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnUsuarios.Name = "btnUsuarios";
-            this.btnUsuarios.Size = new System.Drawing.Size(170, 27);
+            this.btnUsuarios.Size = new System.Drawing.Size(227, 33);
             this.btnUsuarios.TabIndex = 28;
             this.btnUsuarios.TabStop = false;
             this.btnUsuarios.Text = "&Usuarios";
@@ -220,9 +227,10 @@
             this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnReportes.ForeColor = System.Drawing.Color.Black;
-            this.btnReportes.Location = new System.Drawing.Point(15, 481);
+            this.btnReportes.Location = new System.Drawing.Point(20, 592);
+            this.btnReportes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnReportes.Name = "btnReportes";
-            this.btnReportes.Size = new System.Drawing.Size(170, 27);
+            this.btnReportes.Size = new System.Drawing.Size(227, 33);
             this.btnReportes.TabIndex = 27;
             this.btnReportes.TabStop = false;
             this.btnReportes.Text = "Re&portes";
@@ -234,9 +242,10 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label6.Location = new System.Drawing.Point(12, 460);
+            this.label6.Location = new System.Drawing.Point(16, 566);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(77, 18);
+            this.label6.Size = new System.Drawing.Size(94, 24);
             this.label6.TabIndex = 26;
             this.label6.Text = "Reportes";
             // 
@@ -249,9 +258,10 @@
             this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnPersonas.ForeColor = System.Drawing.Color.Black;
-            this.btnPersonas.Location = new System.Drawing.Point(15, 391);
+            this.btnPersonas.Location = new System.Drawing.Point(20, 481);
+            this.btnPersonas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnPersonas.Name = "btnPersonas";
-            this.btnPersonas.Size = new System.Drawing.Size(170, 27);
+            this.btnPersonas.Size = new System.Drawing.Size(227, 33);
             this.btnPersonas.TabIndex = 25;
             this.btnPersonas.TabStop = false;
             this.btnPersonas.Text = "&Personas";
@@ -267,9 +277,10 @@
             this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCortes.ForeColor = System.Drawing.Color.Black;
-            this.btnCortes.Location = new System.Drawing.Point(15, 364);
+            this.btnCortes.Location = new System.Drawing.Point(20, 448);
+            this.btnCortes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCortes.Name = "btnCortes";
-            this.btnCortes.Size = new System.Drawing.Size(170, 27);
+            this.btnCortes.Size = new System.Drawing.Size(227, 33);
             this.btnCortes.TabIndex = 24;
             this.btnCortes.TabStop = false;
             this.btnCortes.Text = "Cor&tes";
@@ -281,9 +292,10 @@
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label5.Location = new System.Drawing.Point(12, 343);
+            this.label5.Location = new System.Drawing.Point(16, 422);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(127, 18);
+            this.label5.Size = new System.Drawing.Size(157, 24);
             this.label5.TabIndex = 23;
             this.label5.Text = "Mantenimientos";
             // 
@@ -296,9 +308,10 @@
             this.btnEmbutidos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEmbutidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEmbutidos.ForeColor = System.Drawing.Color.Black;
-            this.btnEmbutidos.Location = new System.Drawing.Point(15, 287);
+            this.btnEmbutidos.Location = new System.Drawing.Point(20, 353);
+            this.btnEmbutidos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnEmbutidos.Name = "btnEmbutidos";
-            this.btnEmbutidos.Size = new System.Drawing.Size(170, 27);
+            this.btnEmbutidos.Size = new System.Drawing.Size(227, 33);
             this.btnEmbutidos.TabIndex = 22;
             this.btnEmbutidos.TabStop = false;
             this.btnEmbutidos.Text = "&Embutidos y Otros";
@@ -314,9 +327,10 @@
             this.btnStock.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnStock.ForeColor = System.Drawing.Color.Black;
-            this.btnStock.Location = new System.Drawing.Point(15, 313);
+            this.btnStock.Location = new System.Drawing.Point(20, 385);
+            this.btnStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnStock.Name = "btnStock";
-            this.btnStock.Size = new System.Drawing.Size(170, 27);
+            this.btnStock.Size = new System.Drawing.Size(227, 33);
             this.btnStock.TabIndex = 21;
             this.btnStock.TabStop = false;
             this.btnStock.Text = "&Stock";
@@ -332,9 +346,10 @@
             this.btnMovimientos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnMovimientos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnMovimientos.ForeColor = System.Drawing.Color.Black;
-            this.btnMovimientos.Location = new System.Drawing.Point(15, 260);
+            this.btnMovimientos.Location = new System.Drawing.Point(20, 320);
+            this.btnMovimientos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnMovimientos.Name = "btnMovimientos";
-            this.btnMovimientos.Size = new System.Drawing.Size(170, 27);
+            this.btnMovimientos.Size = new System.Drawing.Size(227, 33);
             this.btnMovimientos.TabIndex = 19;
             this.btnMovimientos.TabStop = false;
             this.btnMovimientos.Text = "&Movimientos";
@@ -350,9 +365,10 @@
             this.btnAbrirCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAbrirCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnAbrirCaja.ForeColor = System.Drawing.Color.Black;
-            this.btnAbrirCaja.Location = new System.Drawing.Point(15, 159);
+            this.btnAbrirCaja.Location = new System.Drawing.Point(20, 196);
+            this.btnAbrirCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnAbrirCaja.Name = "btnAbrirCaja";
-            this.btnAbrirCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnAbrirCaja.Size = new System.Drawing.Size(227, 33);
             this.btnAbrirCaja.TabIndex = 18;
             this.btnAbrirCaja.TabStop = false;
             this.btnAbrirCaja.Text = "&Abrir Caja";
@@ -368,9 +384,10 @@
             this.btnCerrarCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCerrarCaja.ForeColor = System.Drawing.Color.Black;
-            this.btnCerrarCaja.Location = new System.Drawing.Point(15, 185);
+            this.btnCerrarCaja.Location = new System.Drawing.Point(20, 228);
+            this.btnCerrarCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCerrarCaja.Name = "btnCerrarCaja";
-            this.btnCerrarCaja.Size = new System.Drawing.Size(170, 27);
+            this.btnCerrarCaja.Size = new System.Drawing.Size(227, 33);
             this.btnCerrarCaja.TabIndex = 17;
             this.btnCerrarCaja.TabStop = false;
             this.btnCerrarCaja.Text = "Ce&rrar Caja";
@@ -386,9 +403,10 @@
             this.btnCajaVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCajaVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCajaVentas.ForeColor = System.Drawing.Color.Black;
-            this.btnCajaVentas.Location = new System.Drawing.Point(15, 132);
+            this.btnCajaVentas.Location = new System.Drawing.Point(20, 162);
+            this.btnCajaVentas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCajaVentas.Name = "btnCajaVentas";
-            this.btnCajaVentas.Size = new System.Drawing.Size(170, 27);
+            this.btnCajaVentas.Size = new System.Drawing.Size(227, 33);
             this.btnCajaVentas.TabIndex = 15;
             this.btnCajaVentas.TabStop = false;
             this.btnCajaVentas.Text = "&Caja Ventas";
@@ -404,9 +422,10 @@
             this.btnCompras.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCompras.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCompras.ForeColor = System.Drawing.Color.Black;
-            this.btnCompras.Location = new System.Drawing.Point(15, 30);
+            this.btnCompras.Location = new System.Drawing.Point(20, 37);
+            this.btnCompras.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCompras.Name = "btnCompras";
-            this.btnCompras.Size = new System.Drawing.Size(170, 27);
+            this.btnCompras.Size = new System.Drawing.Size(227, 33);
             this.btnCompras.TabIndex = 14;
             this.btnCompras.TabStop = false;
             this.btnCompras.Text = "C&ompras";
@@ -418,9 +437,10 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label3.Location = new System.Drawing.Point(12, 239);
+            this.label3.Location = new System.Drawing.Point(16, 294);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(92, 18);
+            this.label3.Size = new System.Drawing.Size(115, 24);
             this.label3.TabIndex = 0;
             this.label3.Text = "Mercadería";
             // 
@@ -433,9 +453,10 @@
             this.btnVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnVentas.ForeColor = System.Drawing.Color.Black;
-            this.btnVentas.Location = new System.Drawing.Point(15, 81);
+            this.btnVentas.Location = new System.Drawing.Point(20, 100);
+            this.btnVentas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnVentas.Name = "btnVentas";
-            this.btnVentas.Size = new System.Drawing.Size(170, 27);
+            this.btnVentas.Size = new System.Drawing.Size(227, 33);
             this.btnVentas.TabIndex = 3;
             this.btnVentas.TabStop = false;
             this.btnVentas.Text = "Ve&ntas";
@@ -447,9 +468,10 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label1.Location = new System.Drawing.Point(12, 60);
+            this.label1.Location = new System.Drawing.Point(16, 74);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(59, 18);
+            this.label1.Size = new System.Drawing.Size(74, 24);
             this.label1.TabIndex = 0;
             this.label1.Text = "Ventas";
             // 
@@ -458,9 +480,10 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label4.Location = new System.Drawing.Point(12, 111);
+            this.label4.Location = new System.Drawing.Point(16, 137);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(42, 18);
+            this.label4.Size = new System.Drawing.Size(51, 24);
             this.label4.TabIndex = 0;
             this.label4.Text = "Caja";
             // 
@@ -469,9 +492,10 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label2.Location = new System.Drawing.Point(12, 9);
+            this.label2.Location = new System.Drawing.Point(16, 11);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(77, 18);
+            this.label2.Size = new System.Drawing.Size(93, 24);
             this.label2.TabIndex = 0;
             this.label2.Text = "Compras";
             // 
@@ -487,18 +511,20 @@
             "sanMartinRemoto",
             "sanLorenzo",
             "sanLorenzoRemoto"});
-            this.comboConexion.Location = new System.Drawing.Point(630, 1);
+            this.comboConexion.Location = new System.Drawing.Point(840, 1);
+            this.comboConexion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboConexion.Name = "comboConexion";
-            this.comboConexion.Size = new System.Drawing.Size(157, 23);
+            this.comboConexion.Size = new System.Drawing.Size(208, 26);
             this.comboConexion.TabIndex = 103;
             this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
             // 
             // lblConectadoA
             // 
             this.lblConectadoA.AutoSize = true;
-            this.lblConectadoA.Location = new System.Drawing.Point(548, 5);
+            this.lblConectadoA.Location = new System.Drawing.Point(731, 6);
+            this.lblConectadoA.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblConectadoA.Name = "lblConectadoA";
-            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
+            this.lblConectadoA.Size = new System.Drawing.Size(93, 16);
             this.lblConectadoA.TabIndex = 102;
             this.lblConectadoA.Text = "|  Conectado a";
             // 
@@ -508,9 +534,10 @@
             this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnTipoConexioin.Location = new System.Drawing.Point(382, 0);
+            this.btnTipoConexioin.Location = new System.Drawing.Point(509, 0);
+            this.btnTipoConexioin.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnTipoConexioin.Name = "btnTipoConexioin";
-            this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
+            this.btnTipoConexioin.Size = new System.Drawing.Size(152, 28);
             this.btnTipoConexioin.TabIndex = 100;
             this.btnTipoConexioin.TabStop = false;
             this.btnTipoConexioin.Text = "Local";
@@ -520,6 +547,7 @@
             // 
             // menuStrip1
             // 
+            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.comprasToolStripMenuItem,
             this.ventasToolStripMenuItem,
@@ -529,7 +557,7 @@
             this.probarToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(790, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1054, 28);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -538,13 +566,13 @@
             this.comprasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.verComprasToolStripMenuItem});
             this.comprasToolStripMenuItem.Name = "comprasToolStripMenuItem";
-            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(67, 20);
+            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(82, 24);
             this.comprasToolStripMenuItem.Text = "Compras";
             // 
             // verComprasToolStripMenuItem
             // 
             this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
-            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
+            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(176, 26);
             this.verComprasToolStripMenuItem.Text = "Ver Compras";
             this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
             // 
@@ -555,27 +583,27 @@
             this.verToolStripMenuItem,
             this.lineasVentaToolStripMenuItem});
             this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
-            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(53, 20);
+            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(66, 24);
             this.ventasToolStripMenuItem.Text = "Ventas";
             // 
             // verVentasToolStripMenuItem
             // 
             this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
             // verToolStripMenuItem
             // 
             this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
             this.verToolStripMenuItem.Text = "Temporal Linea Venta";
             this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
             // 
             // lineasVentaToolStripMenuItem
             // 
             this.lineasVentaToolStripMenuItem.Name = "lineasVentaToolStripMenuItem";
-            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
             this.lineasVentaToolStripMenuItem.Text = "Lineas Venta ";
             this.lineasVentaToolStripMenuItem.Click += new System.EventHandler(this.lineasVentaToolStripMenuItem_Click);
             // 
@@ -584,13 +612,13 @@
             this.cajaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cierresCajaToolStripMenuItem});
             this.cajaToolStripMenuItem.Name = "cajaToolStripMenuItem";
-            this.cajaToolStripMenuItem.Size = new System.Drawing.Size(42, 20);
+            this.cajaToolStripMenuItem.Size = new System.Drawing.Size(52, 24);
             this.cajaToolStripMenuItem.Text = "Caja";
             // 
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(170, 26);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -605,27 +633,27 @@
             this.ctasCtesToolStripMenuItem,
             this.pagosToolStripMenuItem});
             this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
-            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
+            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(124, 24);
             this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
             // 
             // cortesToolStripMenuItem
             // 
             this.cortesToolStripMenuItem.Name = "cortesToolStripMenuItem";
-            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.cortesToolStripMenuItem.Text = "Cortes";
             this.cortesToolStripMenuItem.Click += new System.EventHandler(this.cortesToolStripMenuItem_Click);
             // 
             // personasToolStripMenuItem
             // 
             this.personasToolStripMenuItem.Name = "personasToolStripMenuItem";
-            this.personasToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.personasToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.personasToolStripMenuItem.Text = "Personas";
             this.personasToolStripMenuItem.Click += new System.EventHandler(this.personasToolStripMenuItem_Click);
             // 
             // baseDeDatosToolStripMenuItem
             // 
             this.baseDeDatosToolStripMenuItem.Name = "baseDeDatosToolStripMenuItem";
-            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
             // 
@@ -635,42 +663,42 @@
             this.verBalanzaToolStripMenuItem,
             this.leerPesoToolStripMenuItem});
             this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
-            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.balanzaToolStripMenuItem.Text = "Balanza";
             this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
             // 
             // verBalanzaToolStripMenuItem
             // 
             this.verBalanzaToolStripMenuItem.Name = "verBalanzaToolStripMenuItem";
-            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(133, 22);
+            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(169, 26);
             this.verBalanzaToolStripMenuItem.Text = "Ver Balanza";
             this.verBalanzaToolStripMenuItem.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem_Click);
             // 
             // leerPesoToolStripMenuItem
             // 
             this.leerPesoToolStripMenuItem.Name = "leerPesoToolStripMenuItem";
-            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(133, 22);
+            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(169, 26);
             this.leerPesoToolStripMenuItem.Text = "Leer Peso";
             this.leerPesoToolStripMenuItem.Click += new System.EventHandler(this.leerPesoToolStripMenuItem_Click);
             // 
             // configuraciónToolStripMenuItem
             // 
             this.configuraciónToolStripMenuItem.Name = "configuraciónToolStripMenuItem";
-            this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.configuraciónToolStripMenuItem.Text = "Configuración";
             this.configuraciónToolStripMenuItem.Click += new System.EventHandler(this.configuraciónToolStripMenuItem_Click);
             // 
             // ctasCtesToolStripMenuItem
             // 
             this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
-            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
             this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click);
             // 
             // pagosToolStripMenuItem
             // 
             this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
-            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
             this.pagosToolStripMenuItem.Text = "Pagos";
             this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click);
             // 
@@ -679,13 +707,13 @@
             this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stockActualToolStripMenuItem});
             this.stockToolStripMenuItem.Name = "stockToolStripMenuItem";
-            this.stockToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.stockToolStripMenuItem.Size = new System.Drawing.Size(59, 24);
             this.stockToolStripMenuItem.Text = "Stock";
             // 
             // stockActualToolStripMenuItem
             // 
             this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(174, 26);
             this.stockActualToolStripMenuItem.Text = "Stock Actual";
             this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
             // 
@@ -694,13 +722,13 @@
             this.probarToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.imprimirTicketToolStripMenuItem});
             this.probarToolStripMenuItem.Name = "probarToolStripMenuItem";
-            this.probarToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.probarToolStripMenuItem.Size = new System.Drawing.Size(67, 24);
             this.probarToolStripMenuItem.Text = "Probar";
             // 
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(224, 26);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -711,17 +739,18 @@
             // 
             // FormPrincipal
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(997, 581);
+            this.ClientSize = new System.Drawing.Size(1329, 715);
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MainMenuStrip = this.menuStrip1;
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Super Cerdo";
+            this.Text = "Nombre Negocio";
             this.Activated += new System.EventHandler(this.FormPrincipal_Activated);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormPrincipal_FormClosing);
             this.Load += new System.EventHandler(this.FormPrincipal_Load);

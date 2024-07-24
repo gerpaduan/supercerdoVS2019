@@ -27,6 +27,13 @@ namespace Presentacion
     {        
         public static bool logueado = false;
         public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;
+        public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
+        public static int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+        public static string nombreSucursal = ConfigurationManager.AppSettings["nombreSucursal"].ToString();
+        public static string cliente = ConfigurationManager.AppSettings["cliente"].ToString();
+        public static string cuitCliente = ConfigurationManager.AppSettings["cuitCliente"].ToString();
+        public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
+        public static string textForm = cliente + " | Suc. " + nombreSucursal;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
 
@@ -281,12 +288,21 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
+            this.Text = textForm;
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
-            comboConexion.Text = Utilidades.Conexion.connStringActual;
-            ultimaConnSelect = comboConexion.Text;
-            Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
-            this.Text += Utilidades.Conexion.getSucursalConexion();
 
+            //si no soy yo vacio items de comboConexion
+            if (soyYo)
+            {
+                comboConexion.Text = Utilidades.Conexion.connStringActual;
+                ultimaConnSelect = comboConexion.Text;
+                Utilidades.Conexion.tipoConn = Utilidades.Conexion.getTipoConexion();
+                this.Text += Utilidades.Conexion.getSucursalConexion();
+            }
+            else
+            {
+                comboConexion.Text = connStringActual.ToString();
+            }
             //Se obtienen los parametros
             Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
             oOtrasClasesN.obtenerParametros();
@@ -323,7 +339,8 @@ namespace Presentacion
                 btnLogin.Visible = false;
                 btnCerrarSesion.Visible = true;
                 //btnTipoConexioin.Visible = true;
-                comboConexion.Enabled = true;
+                //solo muestra cambiar combo conexion si es cuit German Paduan
+                comboConexion.Enabled = true && cuitCliente == "20306210786";
                 timerInactividadAdmin.Start();
             }
             else

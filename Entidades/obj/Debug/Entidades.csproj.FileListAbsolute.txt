@@ -15,3 +15,9 @@ C:\Sistemas - Codigo\supercerdo VS2019\Entidades\obj\Debug\Entidades.csproj.Asse
 C:\Sistemas - Codigo\supercerdo VS2019\Entidades\obj\Debug\Entidades.csproj.CoreCompileInputs.cache
 C:\Sistemas - Codigo\supercerdo VS2019\Entidades\obj\Debug\Entidades.dll
 C:\Sistemas - Codigo\supercerdo VS2019\Entidades\obj\Debug\Entidades.pdb
+C:\Users\FPX\source\repos\Entidades\bin\Debug\Entidades.dll
+C:\Users\FPX\source\repos\Entidades\bin\Debug\Entidades.pdb
+C:\Users\FPX\source\repos\Entidades\obj\Debug\Entidades.csproj.AssemblyReference.cache
+C:\Users\FPX\source\repos\Entidades\obj\Debug\Entidades.csproj.CoreCompileInputs.cache
+C:\Users\FPX\source\repos\Entidades\obj\Debug\Entidades.dll
+C:\Users\FPX\source\repos\Entidades\obj\Debug\Entidades.pdb

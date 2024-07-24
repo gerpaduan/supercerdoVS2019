@@ -29,3 +29,14 @@ C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.CoreCompileI
 C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.csproj.CopyComplete
 C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.dll
 C:\Sistemas - Codigo\supercerdo VS2019\Datos\obj\Debug\Datos.pdb
+C:\Users\FPX\source\repos\Datos\bin\Debug\Datos.dll
+C:\Users\FPX\source\repos\Datos\bin\Debug\Datos.pdb
+C:\Users\FPX\source\repos\Datos\bin\Debug\Entidades.dll
+C:\Users\FPX\source\repos\Datos\bin\Debug\Utilidades.dll
+C:\Users\FPX\source\repos\Datos\bin\Debug\Entidades.pdb
+C:\Users\FPX\source\repos\Datos\bin\Debug\Utilidades.pdb
+C:\Users\FPX\source\repos\Datos\obj\Debug\Datos.csproj.AssemblyReference.cache
+C:\Users\FPX\source\repos\Datos\obj\Debug\Datos.csproj.CoreCompileInputs.cache
+C:\Users\FPX\source\repos\Datos\obj\Debug\Datos.csproj.Up2Date
+C:\Users\FPX\source\repos\Datos\obj\Debug\Datos.dll
+C:\Users\FPX\source\repos\Datos\obj\Debug\Datos.pdb
