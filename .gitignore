@@ -1,3 +1,19 @@
+# Ignorar carpetas de compilación
+bin/
+obj/
+debug/
+Debug/
+release/
+Release/
+
+# Ignorar otros archivos de compilación y temporales
+*.log
+*.tmp
+*.obj
+*.exe
+*.dll
+*.pdb
+
 # Ignorar carpetas de compilación de Visual Studio
 **/debug/
 **/Debug/
