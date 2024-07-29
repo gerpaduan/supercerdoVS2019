@@ -120,6 +120,8 @@ namespace Negocio
                         Entidades.Parametros.porcGrasaEnPote = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
                     case "porcGrasaLiquida":
                         Entidades.Parametros.porcGrasaLiquida = float.Parse(dtParametros.Rows[fila]["valor"].ToString()); break;
+                    case "idIndefinido":
+                        Entidades.Parametros.idIndefinido = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); break;
                     default:
                         break;
                 }

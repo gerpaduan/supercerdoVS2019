@@ -1,0 +1,2 @@
+﻿Agregar Cliente en tabla parámetro el idConsumidorFinal = 6
+Agregar Cliente Indefinido = 4 y obtener el codigo para asignarlo en Stock cuando no se selecciona cliente

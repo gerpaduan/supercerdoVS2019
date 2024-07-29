@@ -977,6 +977,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon_LogoAzulSuperCerdo.ico" />
+    <Content Include="Para Implementar.txt" />
     <None Include="Resources\lock_32x32-32.ico" />
     <None Include="Resources\16 %28Lock on%29.ico" />
     <None Include="Resources\16 %28Lock off%29.ico" />
