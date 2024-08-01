@@ -61,7 +61,7 @@
             // 
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.groupCortes);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
@@ -71,7 +71,7 @@
             // 
             // groupCortes
             // 
-            this.groupCortes.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupCortes.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.groupCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupCortes.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupCortes.Location = new System.Drawing.Point(11, 272);
@@ -83,7 +83,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.groupBox1.Controls.Add(this.btnCopiarRS);
             this.groupBox1.Controls.Add(this.lblNombreIdentif);
             this.groupBox1.Controls.Add(this.txtIdentificacion);
@@ -333,7 +333,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Bisque;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(473, 455);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.btnGuardar);

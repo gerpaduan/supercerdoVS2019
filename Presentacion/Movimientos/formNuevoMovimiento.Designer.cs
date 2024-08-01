@@ -129,7 +129,7 @@
             // pnlBuscar
             // 
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.checkPermitirIngreso);
             this.pnlBuscar.Controls.Add(this.btnVerAcum);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
@@ -208,7 +208,7 @@
             // groupBox2
             // 
             this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox2.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.groupBox2.Controls.Add(this.label18);
             this.groupBox2.Controls.Add(this.checkSinBalanza);
             this.groupBox2.Controls.Add(this.checkTicket);
@@ -423,7 +423,7 @@
             // groupBox1
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.groupBox1.Controls.Add(this.lblIdDestino);
             this.groupBox1.Controls.Add(this.lblIdOrigen);
             this.groupBox1.Controls.Add(this.comboSucDestino);

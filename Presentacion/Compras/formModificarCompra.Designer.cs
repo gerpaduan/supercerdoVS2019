@@ -344,7 +344,7 @@
             // 
             // pnlBuscar
             // 
-            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.checkCtaCte);
             this.pnlBuscar.Controls.Add(this.groupCantMedias);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
@@ -470,7 +470,7 @@
             // groupBox1
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.groupBox1.Controls.Add(this.txtFechaCompra);
             this.groupBox1.Controls.Add(this.btnBuscarProv);
             this.groupBox1.Controls.Add(this.txtProveedor);
@@ -594,7 +594,7 @@
             // grupoMediaRes
             // 
             this.grupoMediaRes.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.grupoMediaRes.BackColor = System.Drawing.Color.SteelBlue;
+            this.grupoMediaRes.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.grupoMediaRes.Controls.Add(this.txtPrecioKg);
             this.grupoMediaRes.Controls.Add(this.label7);
             this.grupoMediaRes.Controls.Add(this.btnQuitar);
@@ -996,7 +996,7 @@
             // 
             // panelCompraAnulada
             // 
-            this.panelCompraAnulada.BackColor = System.Drawing.Color.SteelBlue;
+            this.panelCompraAnulada.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.panelCompraAnulada.Controls.Add(this.label10);
             this.panelCompraAnulada.Location = new System.Drawing.Point(0, 0);
             this.panelCompraAnulada.Name = "panelCompraAnulada";
@@ -1123,7 +1123,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Bisque;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(817, 581);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.txtActualizadoPor);

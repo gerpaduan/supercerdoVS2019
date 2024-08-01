@@ -122,7 +122,7 @@
             // 
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlBuscar.BackColor = System.Drawing.Color.SteelBlue;
+            this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.checkCtaCte);
             this.pnlBuscar.Controls.Add(this.groupCantMedias);
             this.pnlBuscar.Controls.Add(this.groupBox2);
@@ -251,7 +251,7 @@
             // grupoMediaRes
             // 
             this.grupoMediaRes.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.grupoMediaRes.BackColor = System.Drawing.Color.SteelBlue;
+            this.grupoMediaRes.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.grupoMediaRes.Controls.Add(this.txtPrecioKg);
             this.grupoMediaRes.Controls.Add(this.label7);
             this.grupoMediaRes.Controls.Add(this.btnQuitar);
@@ -456,7 +456,7 @@
             // groupBox1
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.groupBox1.BackColor = System.Drawing.Color.SteelBlue;
+            this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.groupBox1.Controls.Add(this.comboSucursal);
             this.groupBox1.Controls.Add(this.txtSucursal);
             this.groupBox1.Controls.Add(this.btnBuscarProv);
@@ -967,7 +967,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.Bisque;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(857, 579);
             this.Controls.Add(this.label15);
             this.Controls.Add(this.txtActualizadoPor);
