@@ -99,7 +99,7 @@
             this.pnlBuscar.Controls.Add(this.txtDescripcion);
             this.pnlBuscar.Controls.Add(this.label2);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 47);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(1351, 110);
             this.pnlBuscar.TabIndex = 6;
@@ -122,7 +122,7 @@
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
             this.comboSucursal.Location = new System.Drawing.Point(129, 7);
-            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.comboSucursal.Name = "comboSucursal";
             this.comboSucursal.Size = new System.Drawing.Size(213, 24);
             this.comboSucursal.TabIndex = 41;
@@ -148,9 +148,9 @@
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox1.Location = new System.Drawing.Point(928, 50);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(387, 9);
             this.groupBox1.TabIndex = 25;
             this.groupBox1.TabStop = false;
@@ -173,7 +173,7 @@
             this.fechaDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaDesde.Location = new System.Drawing.Point(987, 73);
-            this.fechaDesde.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.fechaDesde.Margin = new System.Windows.Forms.Padding(4);
             this.fechaDesde.Name = "fechaDesde";
             this.fechaDesde.Size = new System.Drawing.Size(129, 22);
             this.fechaDesde.TabIndex = 5;
@@ -206,7 +206,7 @@
             "Pesaje Cortes",
             "Ajuste Stock"});
             this.comboTipoCompra.Location = new System.Drawing.Point(129, 39);
-            this.comboTipoCompra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboTipoCompra.Margin = new System.Windows.Forms.Padding(4);
             this.comboTipoCompra.Name = "comboTipoCompra";
             this.comboTipoCompra.Size = new System.Drawing.Size(213, 24);
             this.comboTipoCompra.TabIndex = 12;
@@ -217,7 +217,7 @@
             this.fechaHasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaHasta.Location = new System.Drawing.Point(1184, 73);
-            this.fechaHasta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.fechaHasta.Margin = new System.Windows.Forms.Padding(4);
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(129, 22);
             this.fechaHasta.TabIndex = 7;
@@ -252,7 +252,7 @@
             // btnBuscar
             // 
             this.btnBuscar.Location = new System.Drawing.Point(352, 70);
-            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(92, 30);
             this.btnBuscar.TabIndex = 8;
@@ -263,7 +263,7 @@
             // txtDescripcion
             // 
             this.txtDescripcion.Location = new System.Drawing.Point(129, 73);
-            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4);
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(213, 22);
             this.txtDescripcion.TabIndex = 0;
@@ -392,7 +392,7 @@
             dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaCompras.DefaultCellStyle = dataGridViewCellStyle4;
             this.grillaCompras.Location = new System.Drawing.Point(16, 165);
-            this.grillaCompras.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaCompras.Margin = new System.Windows.Forms.Padding(4);
             this.grillaCompras.MultiSelect = false;
             this.grillaCompras.Name = "grillaCompras";
             this.grillaCompras.ReadOnly = true;
@@ -551,7 +551,7 @@
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnSeleccionar.Location = new System.Drawing.Point(997, 638);
-            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(164, 33);
             this.btnSeleccionar.TabIndex = 17;
@@ -564,7 +564,7 @@
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCancelar.Location = new System.Drawing.Point(1169, 638);
-            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(164, 33);
             this.btnCancelar.TabIndex = 16;
@@ -577,7 +577,7 @@
             this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTotalKgs.Location = new System.Drawing.Point(1195, 594);
-            this.txtTotalKgs.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTotalKgs.Margin = new System.Windows.Forms.Padding(4);
             this.txtTotalKgs.Name = "txtTotalKgs";
             this.txtTotalKgs.ReadOnly = true;
             this.txtTotalKgs.Size = new System.Drawing.Size(135, 24);
@@ -603,7 +603,7 @@
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(16, 629);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1314, 1);
             this.panel1.TabIndex = 23;
@@ -623,7 +623,7 @@
             this.Controls.Add(this.pnlBuscar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.KeyPreview = true;
-            this.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Margin = new System.Windows.Forms.Padding(5);
             this.MinimizeBox = true;
             this.Name = "formStock";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
