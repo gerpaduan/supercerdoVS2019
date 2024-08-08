@@ -28,6 +28,8 @@ namespace Presentacion
  
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
+        int cantServidores = Convert.ToInt32(ConfigurationManager.AppSettings["cantServidores"].ToString());
+
         bool cargar = false;
 
         public formMovimientos()
@@ -105,6 +107,9 @@ namespace Presentacion
             //grillaCompras.Columns["fechaCompra"].DefaultCellStyle.Format = "ddd dd MMM HH:mm:ss";
             grillaMovimientos.Columns["creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaMovimientos.Columns["actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
+
+            grillaMovimientos.Columns["Id Origen"].Visible = cantServidores > 1;
+            grillaMovimientos.Columns["Estado"].Visible = cantServidores > 1;
         }
 
         private void infoMovimiento()
