@@ -158,7 +158,6 @@ namespace Datos
             cmCtaCte.Parameters.AddWithValue("@actualizadoPor", oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.Id : 0);
 
             cmCtaCte.Connection.Open();
-            cmCtaCte.ExecuteNonQuery();
             oPagoE.Id = (int)cmCtaCte.ExecuteScalar();
             cmCtaCte.Connection.Close();
 
