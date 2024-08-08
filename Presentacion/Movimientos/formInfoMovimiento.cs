@@ -238,6 +238,7 @@ namespace Presentacion.Movimientos
 
         private bool logueoUsuario()
         {
+            this.BringToFront();
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
             return (oUsuario != null);

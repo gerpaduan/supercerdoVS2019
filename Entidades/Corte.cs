@@ -12,7 +12,10 @@ namespace Entidades
             Embutido,
             Corte,
             Unidad,
+            Pesable,
+            Elaborado,
             Otro
+                
         }
 
         public int idCorte;

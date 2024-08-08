@@ -41,6 +41,7 @@ namespace Presentacion.Pagos
             }
             else
             {
+                this.BringToFront();
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
                 frmLogin.ShowDialog(this);
 

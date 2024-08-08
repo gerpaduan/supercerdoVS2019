@@ -21,7 +21,6 @@ namespace Presentacion
         DataTable dtCortesFiltrado;
 
         int codigoDesde, codigoHasta;
-       
         public formCortes()
         {
             InitializeComponent();
@@ -31,9 +30,14 @@ namespace Presentacion
         #region eventos
         private void nuevo_Click(object sender, EventArgs e)
         {
+            nuevoCorte();
+        }
+
+        private void nuevoCorte()
+        {
             formNuevoCorte frmNuevoCorte = new formNuevoCorte();
             frmNuevoCorte.frmCorte = this;
-            frmNuevoCorte.ShowDialog();
+            frmNuevoCorte.ShowDialog(this);
         }
 
         private void modificar_Click(object sender, EventArgs e)

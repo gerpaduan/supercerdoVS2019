@@ -134,6 +134,7 @@ namespace Presentacion.Stock
 
         private void logueoUsuario()
         {
+            this.BringToFront();
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
         }

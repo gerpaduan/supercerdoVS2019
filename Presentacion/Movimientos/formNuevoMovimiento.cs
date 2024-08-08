@@ -86,6 +86,7 @@ namespace Presentacion
         {
             //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             //frmLogin.ShowDialog(this);
+            this.BringToFront();
             Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
             frmSelectUser.ShowDialog(this);
         }

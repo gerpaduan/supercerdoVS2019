@@ -793,6 +793,7 @@ namespace Presentacion
 
         private void btnNuevo_Click(object sender, EventArgs e)
         {
+            this.BringToFront(); 
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.ShowDialog(this);
             formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();

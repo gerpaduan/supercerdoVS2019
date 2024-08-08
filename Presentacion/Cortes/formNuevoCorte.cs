@@ -114,23 +114,18 @@ namespace Presentacion
                 {
                     if (oCorteE.porcentaje <= 100 && oCorteE.porcentajeHueso <= 100 && oCorteE.porcentajeHueso >= 0 && oCorteE.porcentaje >= 0)
                     {
-                        bool cerrarForm = false;
-
                         if (!existeCodigoCorte())
                         {
                             oCorteN.addOrEditCorte(oCorteE);
-                            cerrarForm = true;
-                            if (frmCorte != null)
+                            if (oFrmInfoCorte != null)
                             {
-                                frmCorte.cargarGrilla();
+                                oFrmInfoCorte.recibirCorteModificado(oCorteE);
+                                this.Close();
+                                return;
                             }
-                            else
-                            {
-                                if(oFrmInfoCorte != null) oFrmInfoCorte.recibirCorteModificado(oCorteE);
-                            }
+                            limpiarCampos();
+                            txtCodigo.Focus();
                         }
-                        
-                        if(cerrarForm) this.Close();
                     }
                     else
                     {
@@ -269,8 +264,32 @@ namespace Presentacion
             }
         }
 
+        private void limpiarCampos()
+        {
+            idCorte = 0;
+            oCorteMaestroE = new Entidades.Corte();
+            oCorteE = new Entidades.Corte();
+
+            txtCodigo.Text = "";
+            txtDescCorte.Text = "";
+            txtPrecioKg.Text = "";
+            oCorteMaestroE = null;
+            comboTipo.SelectedIndex = -1;
+            txtPromedio.Text = "";
+            txtIndependiente.Checked = true;
+            checkMayorista.Checked = false;
+            checkHabilitado.Checked = true;
+            checkEnCierreStock.Checked = true;
+            checkAsignarMaestro.Checked = false;
+            txtCorteMaestro.Text = "";
+            txtPorcentajeCorteM.Text = "";
+            txtPorcHueso.Text = "0";
+            txtDesvioEstandar.Text = "0";
+            huboModificacion = false;
+        }
+
         #endregion
-        
+
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == (char)(Keys.Enter))
@@ -285,6 +304,8 @@ namespace Presentacion
             try
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
+
+                txtCodigo.Focus();
 
                 if (idCorte > 0)
                 {
@@ -363,6 +384,14 @@ namespace Presentacion
                     txtPromedio.ReadOnly = false;
                     txtPromedio.Text = "0";
                     break;
+            }
+        }
+
+        private void formNuevoCorte_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (frmCorte != null)
+            {
+                frmCorte.cargarGrilla();
             }
         }
     }
