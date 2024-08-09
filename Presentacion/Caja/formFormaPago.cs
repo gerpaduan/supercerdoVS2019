@@ -51,9 +51,9 @@ namespace Presentacion.Caja
             enviarFormaPago();
         }
 
-        private void btnBilleteraStaFe_Click(object sender, EventArgs e)
+        private void btnCtaCtePago_Click(object sender, EventArgs e)
         {
-            formaPago = Entidades.Venta.formaPagoEnum.Billetera;
+            formaPago = Entidades.Venta.formaPagoEnum.CteCte;
             enviarFormaPago();
         }
 
@@ -90,9 +90,9 @@ namespace Presentacion.Caja
                     btnCredito.Focus();
                     break;
                 case Keys.NumPad4:
-                    btnBilleteraStaFe.BackColor = Utilidades.Util_Form.checkedColor;
-                    formaPago = Entidades.Venta.formaPagoEnum.Billetera;
-                    btnBilleteraStaFe.Focus();
+                    btnCtaCtePago.BackColor = Utilidades.Util_Form.checkedColor;
+                    formaPago = Entidades.Venta.formaPagoEnum.CteCte;
+                    btnCtaCtePago.Focus();
                     break;
                 case Keys.NumPad5:
                     btnQr.BackColor = Utilidades.Util_Form.checkedColor;
@@ -149,10 +149,10 @@ namespace Presentacion.Caja
             btnCredito.BackColor = Utilidades.Util_Form.checkedColor;
         }
 
-        private void btnBilleteraStaFe_Enter(object sender, EventArgs e)
+        private void btnCtaCtePago_Enter(object sender, EventArgs e)
         {
             unfocused();
-            btnBilleteraStaFe.BackColor = Utilidades.Util_Form.checkedColor;
+            btnCtaCtePago.BackColor = Utilidades.Util_Form.checkedColor;
         }
 
         private void btnQr_Enter(object sender, EventArgs e)
@@ -176,7 +176,7 @@ namespace Presentacion.Caja
             btnEfectivo.BackColor = Utilidades.Util_Form.readOnlyColor;
             btnDebito.BackColor = Utilidades.Util_Form.readOnlyColor;
             btnCredito.BackColor = Utilidades.Util_Form.readOnlyColor;
-            btnBilleteraStaFe.BackColor = Utilidades.Util_Form.readOnlyColor;
+            btnCtaCtePago.BackColor = Utilidades.Util_Form.readOnlyColor;
             btnQr.BackColor = Utilidades.Util_Form.readOnlyColor;
             btnTransf.BackColor = Utilidades.Util_Form.readOnlyColor;
         }

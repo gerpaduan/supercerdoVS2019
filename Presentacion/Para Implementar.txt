@@ -1,2 +1,10 @@
 ﻿Agregar Cliente en tabla parámetro el idConsumidorFinal = 6
 Agregar Cliente Indefinido = 4 y obtener el codigo para asignarlo en Stock cuando no se selecciona cliente
+##
+ public class EgresoCaja
+     public static int idPagoTarjeta = 200;
+
+     **modificar este codigo idPagoTarjeta para hacer los egreso de caja venta. Ver de hacerlo general
+
+    idPagoTarjeta de Cta Cte = 100
+##

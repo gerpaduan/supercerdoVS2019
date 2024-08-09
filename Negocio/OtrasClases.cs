@@ -27,8 +27,8 @@ namespace Negocio
                     case "porcAjCredito":
                         Entidades.Parametros.porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
                         break;
-                    case "porcAjBilletera":
-                        Entidades.Parametros.porcAjBilletera = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                    case "porcAjCtaCte":
+                        Entidades.Parametros.porcAjCtaCte = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
                         break;
                     case "porcAjQr":
                         Entidades.Parametros.porcAjQr = float.Parse(dtParametros.Rows[fila]["valor"].ToString());

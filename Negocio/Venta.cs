@@ -151,8 +151,18 @@ namespace Negocio
                 Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
                 oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
-                oEgresoCajaE.IdTipoEgresoCaja = oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Billetera.ToString()) ? Entidades.EgresoCaja.idBilleteraStaFe : Entidades.EgresoCaja.idPagoTarjeta;
-                oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+
+                if ((oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CteCte.ToString())))
+                {
+                    oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCtaCte;
+                    oEgresoCajaE.Descripcion = "Venta a " + oVentaConEgresoCaja.Persona.razonSocial + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                }
+                else
+                {
+                    oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
+                    oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                }
+
                 oEgresoCajaE.Monto = totalS;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
                 oEgresoCajaE.Detalle = " | Kgs: " + totalKgs.ToString("N3") +
                     " | Precio: " + (totalS / totalKgs).ToString("N3") +

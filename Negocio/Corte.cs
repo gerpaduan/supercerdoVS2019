@@ -32,8 +32,8 @@ namespace Negocio
             
             Datos.OtrasClases oOtrasClasesD = new Datos.OtrasClases();
             DataTable dtParametros = oOtrasClasesD.obtenerParametros();
-            float porcAjEfectivo, porcAjDebito, porcAjCredito, porcAjBilletera, porcAjQr, porcAjTranf;
-            porcAjEfectivo=porcAjDebito=porcAjCredito=porcAjBilletera=porcAjQr=porcAjTranf=0;
+            float porcAjEfectivo, porcAjDebito, porcAjCredito, porcAjCtaCte, porcAjQr, porcAjTranf;
+            porcAjEfectivo=porcAjDebito=porcAjCredito=porcAjCtaCte=porcAjQr=porcAjTranf=0;
             for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
             {
                 switch (dtParametros.Rows[fila]["nombre"].ToString())
@@ -47,8 +47,8 @@ namespace Negocio
                     case "porcAjCredito":
                         porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
                         break;
-                    case "porcAjBilletera":
-                        porcAjBilletera = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+                    case "porcAjCtaCte":
+                        porcAjCtaCte = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
                         break;
                     case "porcAjQr":
                         porcAjQr = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
@@ -64,7 +64,7 @@ namespace Negocio
                 dtCortes.Rows[fila]["efectivo"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjEfectivo).ToString("F2");
                 dtCortes.Rows[fila]["debito"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjDebito).ToString("F2");
                 dtCortes.Rows[fila]["credito"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjCredito).ToString("F2");
-                dtCortes.Rows[fila]["billetera"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjBilletera).ToString("F2");
+                dtCortes.Rows[fila]["ctacte"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjCtaCte).ToString("F2");
                 dtCortes.Rows[fila]["qr"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjQr).ToString("F2");
                 dtCortes.Rows[fila]["transf"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjTranf).ToString("F2");
             }
