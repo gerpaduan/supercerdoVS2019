@@ -23,6 +23,7 @@ namespace Presentacion.Caja
         wsAFIPvs2008.formFacturaElectronica formFactElec;
 
         bool huboModificaciones = false;//se establece true cuando se modificó algo
+        bool formCargado = false;
 
         public formUltimaVenta()
         {
@@ -45,34 +46,45 @@ namespace Presentacion.Caja
             txtEmail.Text = oUltimaVenta.Email.ToString();
             txtObservaciones.Text = oUltimaVenta.Observaciones;
             checkCtaCte.Checked = oUltimaVenta.EnCtaCte;
-            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            //checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
 
-            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            //setFormaDePago();
+            //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            //checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            //checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
             switch (oUltimaVenta.FormaPago)
             {
                 case "Efectivo":
-                    checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    checkEfectivo.Checked = true;
+                    //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
                     break;
                 case "Debito":
-                    checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    checkDebito.Checked = true;//.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
                     break;
                 case "Credito":
-                    checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    checkCredito.Checked = true;//.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "CtaCte":
+                    checkCtaCtePago.Checked = true;//.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Qr":
+                    checkQr.Checked = true;//.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
+                    break;
+                case "Transferencia":
+                    checkTransf.Checked = true;//.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
                     break;
                 default:
                     break;
             }
 
             huboModificaciones = false;
-            
-            if (oUltimaVenta.EnCtaCte )
-            {
-                btnBuscarCliente.Visible = false;
-                panelInfoCtaCte.Visible = true;
-                //MessageBox.Show("No se permiten modificar el cliente en ventas que son a Cuenta Corriente.", "Cta. Cte", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            formCargado = true;
+            //if (oUltimaVenta.EnCtaCte )
+            //{
+            //    //btnBuscarCliente.Visible = false;
+            //    panelInfoCtaCte.Visible = true;
+            //    //MessageBox.Show("No se permiten modificar el cliente en ventas que son a Cuenta Corriente.", "Cta. Cte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //}
         }
 
         public void cargarGrilla()
@@ -197,58 +209,6 @@ namespace Presentacion.Caja
             }
         }
 
-        private void anularVenta_Click(object sender, EventArgs e)
-        {
-        //    DialogResult respuesta = MessageBox.Show("¿Está seguro que desea anular la venta?", "Anular venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-        //    if (respuesta.Equals(DialogResult.Yes))
-        //    {
-        //        huboModificaciones = true;
-        //        Entidades.LineaVenta oLineaVenta;
-        //        for (int nroFila = 0; nroFila < oUltimaVenta.LineasVenta.Count; nroFila++)
-        //        {
-        //            if (oUltimaVenta.LineasVenta[nroFila].CantKg > 0)
-        //            {
-        //                Entidades.LineaVenta oLineaVentaSelect = new Entidades.LineaVenta();
-        //                oLineaVentaSelect = oUltimaVenta.LineasVenta[nroFila];
-
-        //                bool existeAnulado = false;
-        //                foreach (Entidades.LineaVenta linea in oUltimaVenta.LineasVenta)
-        //                {
-        //                    if (oLineaVentaSelect.Corte.codigo == linea.Corte.codigo &&
-        //                        (linea.IndexAnulado == nroFila ||
-        //                        (oLineaVentaSelect.CantKg > 0 && oLineaVentaSelect.CantKg.Equals(-linea.CantKg))))
-        //                    {
-        //                        existeAnulado = true;
-        //                        break;
-        //                    }
-        //                }
-
-        //                if (oLineaVentaSelect.Estado == 0 && !existeAnulado)
-        //                {
-        //                    oLineaVenta = new Entidades.LineaVenta();
-
-        //                    oLineaVenta = new Entidades.LineaVenta();
-        //                    oLineaVenta.Corte = oLineaVentaSelect.Corte;
-        //                    oLineaVenta.Venta = oLineaVentaSelect.Venta;
-        //                    oLineaVenta.CantKg = oLineaVentaSelect.CantKg * -1;
-        //                    oLineaVenta.PrecioKg = oLineaVentaSelect.PrecioKg;
-        //                    oLineaVenta.Estado = 1;//anulado
-        //                    oLineaVenta.IndexAnulado = nroFila;
-        //                    lineaNuevosAnulados.Add(oLineaVenta);
-        //                }
-        //            }
-        //        }
-        //        foreach (Entidades.LineaVenta linea in lineaNuevosAnulados)
-        //        {
-        //            oUltimaVenta.LineasVenta.Add(linea);                    
-        //        }
-        //        cargarListaGrilla();
-        //        cargarGrilla();
-        //        cargarTotales();
-        //        anularVenta.Enabled = false;
-        //    }
-        }
-
         private void ImprimirTicket_Click(object sender, EventArgs e)
         {
             imprimirTicket();
@@ -258,10 +218,21 @@ namespace Presentacion.Caja
         {
             try
             {
-                //Validar que si es CTA CTA sea en EFECTIVO
-                if (oUltimaVenta.EnCtaCte && !oUltimaVenta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+                //Solicita que ingrese Forma de Pago
+                if (!ingresarFormaPago())
                 {
-                    MessageBox.Show("Una venta en Cta.Cte. sólo puede efectuarse en EFECTIVO.");
+                    MessageBox.Show("Ingrese una Forma de Pago.",
+                        "Verifique la forma de pago", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                //valida que un venta en CTA CTE sea solo en Cta Cte
+                if (checkCtaCte.Checked && (!oUltimaVenta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
+                    oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
+                {
+                    MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) no pueden ser a Consumidor Final y debe seleccionar Cta.Cte en forma de pago" +
+                        "\n\nCorrija y vuelva a finalizar la venta.",
+                        "Verifique la forma de pago", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -277,19 +248,14 @@ namespace Presentacion.Caja
                             oVentaN.agregarLineaVenta(lineaNuevoAnulado);
                         }
 
+                        formVentaCaja fVtaCaja = new formVentaCaja();
+                        //se genera el egreso de caja si no es Efectivo
+                        fVtaCaja.egresoCajaPagoTarjeta(oUltimaVenta);
+
                         //Agregar en Cta Cte
                         try
                         {
                             oVentaN.crearMovCtaCteVenta(oUltimaVenta);
-                            //se genera el egreso de caja por Cta. Cte
-                            if (oUltimaVenta.EnCtaCte)
-                            {
-                                ///generar egreso para modificacion de Vta en Cta Cte
-                                ///**anular registro y volver a cargar**
-                                formVentaCaja fVtaCaja = new formVentaCaja();
-                                fVtaCaja.egresoCajaPorCtaCte(oUltimaVenta);
-                            }
-
                         }
                         catch (Exception ex)
                         {
@@ -315,6 +281,19 @@ namespace Presentacion.Caja
             }
         }
 
+        private bool ingresarFormaPago()
+        {
+            bool resp = true;
+            if (string.IsNullOrEmpty(oUltimaVenta.FormaPago))
+            {
+                //si ninguna forma de pago está seleccionada no se valida
+                if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false
+                    && checkCtaCtePago.Checked == false && checkQr.Checked == false && checkTransf.Checked == false)
+                    return false;
+            }
+            return resp;
+        }
+
         private void btnBuscarCliente_Click(object sender, EventArgs e)
         {
             buscarCliente();
@@ -330,8 +309,11 @@ namespace Presentacion.Caja
         {
             huboModificaciones = true;
             oUltimaVenta.Persona = persona;
-            checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
-            checkCtaCte.Checked = oUltimaVenta.Persona.CtaCte;
+            restablecerFormaDePago();
+            //unchecked todos las formas de pago para que las vuelva a ingresar y evitar algun error por descuido
+            //con clientes en cta cte
+            checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
             this.txtCliente.Text = oUltimaVenta.Persona.razonSocial;
         }
 
@@ -467,6 +449,116 @@ namespace Presentacion.Caja
 
             anularCorte();
         }
+
+
+        #region FormaPago
+        private void restablecerFormaDePago()
+        {
+            if (!formCargado)
+                return;
+            huboModificaciones = true;
+            oUltimaVenta.FormaPago = null;
+
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkCtaCtePago.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkQr.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkTransf.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+        }
+
+        private void setFormaDePago()
+        {
+            restablecerFormaDePago();
+            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkEfectivo.Checked);
+            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkDebito.Checked);
+            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCredito.Checked);
+            checkCtaCtePago.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCtePago.Checked);
+            checkQr.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkQr.Checked);
+            checkTransf.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkTransf.Checked);
+        }
+
+        private void checkEfectivo_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+            if (checkEfectivo.Checked)
+            {
+                checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
+                oUltimaVenta.FormaPago = Entidades.Venta.formaPagoEnum.Efectivo.ToString();
+                
+            }
+        }
+
+        private void checkDebito_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkDebito.Checked)
+            {
+                checkEfectivo.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
+                oUltimaVenta.FormaPago = Entidades.Venta.formaPagoEnum.Debito.ToString();
+                
+            }
+        }
+
+        private void checkCredito_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkCredito.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
+                oUltimaVenta.FormaPago = Entidades.Venta.formaPagoEnum.Credito.ToString();
+                
+            }
+        }
+
+
+        private void checkCtaCtePago_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkCtaCtePago.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkQr.Checked =
+                    checkTransf.Checked = false;
+                oUltimaVenta.FormaPago = Entidades.Venta.formaPagoEnum.CtaCte.ToString();
+                //panelCtaCte.Visible = true;                
+            }
+            checkCtaCte.Checked = checkCtaCtePago.Checked;
+            oUltimaVenta.EnCtaCte = checkCtaCtePago.Checked;
+        }
+
+        private void checkQr_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkQr.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked =
+                    checkTransf.Checked = false;
+                oUltimaVenta.FormaPago = Entidades.Venta.formaPagoEnum.Qr.ToString();
+                
+            }
+        }
+
+        private void checkTransf_CheckedChanged(object sender, EventArgs e)
+        {
+            setFormaDePago();
+
+            if (checkTransf.Checked)
+            {
+                checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked =
+                    checkCtaCtePago.Checked = checkQr.Checked = false;
+                oUltimaVenta.FormaPago = Entidades.Venta.formaPagoEnum.Transferencia.ToString();
+                
+            }
+        }
+
+        #endregion
 
         private void checkTicket_CheckedChanged(object sender, EventArgs e)
         {

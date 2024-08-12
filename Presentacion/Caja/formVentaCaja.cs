@@ -511,7 +511,7 @@ namespace Presentacion.Caja
             txtDomicilio.Text = "";
             txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
-            txtCelularCliCteCte.Text = "";
+            txtCelularCliCtaCte.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
             txtTotalKgs.Text = "0,000";
@@ -841,7 +841,7 @@ namespace Presentacion.Caja
                 return false;
 
             //valida que un venta en CTA CTE sea solo en Cta Cte
-            if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CteCte.ToString()) ||
+            if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
                 oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
             {
                 MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) no pueden ser a Consumidor Final y debe seleccionar Cta.Cte en forma de pago" +
@@ -1166,7 +1166,7 @@ namespace Presentacion.Caja
                 case "Credito":
                     oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjCredito);
                     break;
-                case "CteCte":
+                case "CtaCte":
                     oCorteE.precioKg = (oCorteE.precioKgReferencia * porcAjCtaCte);
                     break;
                 case "Qr":
@@ -1582,7 +1582,7 @@ namespace Presentacion.Caja
                 case Entidades.Venta.formaPagoEnum.Credito:
                     checkCredito.Checked = true;
                     break;
-                case Entidades.Venta.formaPagoEnum.CteCte:
+                case Entidades.Venta.formaPagoEnum.CtaCte:
                     checkCtaCtePago.Checked = true;
                     break;
                 case Entidades.Venta.formaPagoEnum.Qr:
@@ -2438,10 +2438,11 @@ namespace Presentacion.Caja
             checkBoxRedondeo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkBoxRedondeo.Checked);
         }
 
+        #region FormaPago
         private void restablecerFormaDePago()
         {
             oVentaE.FormaPago = null;
-            panelCteCte.Visible = false;
+            panelCtaCte.Visible = false;
 
             checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
             checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
@@ -2501,7 +2502,7 @@ namespace Presentacion.Caja
         }
 
 
-        private void checkCteCte_CheckedChanged(object sender, EventArgs e)
+        private void checkCtaCtePago_CheckedChanged(object sender, EventArgs e)
         {
             setFormaDePago();
 
@@ -2509,8 +2510,8 @@ namespace Presentacion.Caja
             {
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkQr.Checked =
                     checkTransf.Checked = false;
-                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.CteCte.ToString();                
-                panelCteCte.Visible = true;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.CtaCte.ToString();                
+                panelCtaCte.Visible = true;
                 actualizarPrecios();
             }
 
@@ -2575,6 +2576,8 @@ namespace Presentacion.Caja
             //se vuelve a cargar el codigo ingresado para actualizar el precio
             txtCodigo.Text = codigoCorteIngresado;
         }
+
+        #endregion
 
         private void comboTipoComprobante_SelectedIndexChanged(object sender, EventArgs e)
         {

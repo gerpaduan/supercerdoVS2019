@@ -53,7 +53,7 @@ namespace Presentacion.Caja
 
         private void btnCtaCtePago_Click(object sender, EventArgs e)
         {
-            formaPago = Entidades.Venta.formaPagoEnum.CteCte;
+            formaPago = Entidades.Venta.formaPagoEnum.CtaCte;
             enviarFormaPago();
         }
 
@@ -91,7 +91,7 @@ namespace Presentacion.Caja
                     break;
                 case Keys.NumPad4:
                     btnCtaCtePago.BackColor = Utilidades.Util_Form.checkedColor;
-                    formaPago = Entidades.Venta.formaPagoEnum.CteCte;
+                    formaPago = Entidades.Venta.formaPagoEnum.CtaCte;
                     btnCtaCtePago.Focus();
                     break;
                 case Keys.NumPad5:

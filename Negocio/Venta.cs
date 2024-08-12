@@ -152,7 +152,7 @@ namespace Negocio
 
                 oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
 
-                if ((oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CteCte.ToString())))
+                if ((oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())))
                 {
                     oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCtaCte;
                     oEgresoCajaE.Descripcion = "Venta a " + oVentaConEgresoCaja.Persona.razonSocial + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();

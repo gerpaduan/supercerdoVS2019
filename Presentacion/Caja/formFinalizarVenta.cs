@@ -87,7 +87,7 @@ namespace Presentacion.Caja
         private void formFinalizarVenta_Load(object sender, EventArgs e)
         {
             esEfectivo = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());
-            esCtaCte = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CteCte.ToString());
+            esCtaCte = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString());
 
             if (!esEfectivo && !esCtaCte)
 	        {

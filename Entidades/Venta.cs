@@ -58,7 +58,7 @@ namespace Entidades
             Efectivo,
             Debito,
             Credito,
-            CteCte,
+            CtaCte,
             Qr,
             Transferencia,
             Nulo

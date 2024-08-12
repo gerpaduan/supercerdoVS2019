@@ -11,7 +11,7 @@ namespace Entidades
         public static float	porcAjEfectivo;//	Porcentaje diferencia al precio de lista EFECTIVO
         public static float porcAjDebito;//	Porcentaje diferencia al precio de lista DEBITO
         public static float porcAjCredito;//	Porcentaje diferencia al precio de lista CREDITO
-        public static float porcAjCtaCte;//	Porcentaje diferencia al precio de lista CteCte
+        public static float porcAjCtaCte;//	Porcentaje diferencia al precio de lista CtaCte
         public static float porcAjQr;//	Porcentaje diferencia al precio de lista con Qr
         public static float porcAjTranf;//	Porcentaje diferencia al precio de lista Tranf
         public static int	idConsumidorFinal;//	6	id del cliento CONSUMIDOR FINAL en la Base de Datos

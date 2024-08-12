@@ -8,3 +8,10 @@ Agregar Cliente Indefinido = 4 y obtener el codigo para asignarlo en Stock cuand
 
     idPagoTarjeta de Cta Cte = 100
 ##
+##
+para evitar error de truncamiento
+
+use SuperCerdo
+ALTER TABLE EgresosCaja
+ALTER COLUMN descripcion NVARCHAR(MAX);
+##

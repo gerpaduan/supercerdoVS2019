@@ -41,9 +41,9 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.duplicarVentana = new System.Windows.Forms.LinkLabel();
-            this.panelCteCte = new System.Windows.Forms.Panel();
+            this.panelCtaCte = new System.Windows.Forms.Panel();
             this.label23 = new System.Windows.Forms.Label();
-            this.txtCelularCliCteCte = new System.Windows.Forms.TextBox();
+            this.txtCelularCliCtaCte = new System.Windows.Forms.TextBox();
             this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.checkCtaCtePago = new System.Windows.Forms.CheckBox();
@@ -137,7 +137,7 @@
             this.btnBloquear = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.pnlBuscar.SuspendLayout();
-            this.panelCteCte.SuspendLayout();
+            this.panelCtaCte.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -153,7 +153,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.Gray;
             this.pnlBuscar.Controls.Add(this.duplicarVentana);
-            this.pnlBuscar.Controls.Add(this.panelCteCte);
+            this.pnlBuscar.Controls.Add(this.panelCtaCte);
             this.pnlBuscar.Controls.Add(this.comboTipoComprobante);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.txtDomicilio);
@@ -199,16 +199,16 @@
             this.duplicarVentana.Text = " ___";
             this.duplicarVentana.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.duplicarVentana_LinkClicked);
             // 
-            // panelCteCte
+            // panelCtaCte
             // 
-            this.panelCteCte.Controls.Add(this.label23);
-            this.panelCteCte.Controls.Add(this.txtCelularCliCteCte);
-            this.panelCteCte.Location = new System.Drawing.Point(841, 100);
-            this.panelCteCte.Margin = new System.Windows.Forms.Padding(4);
-            this.panelCteCte.Name = "panelCteCte";
-            this.panelCteCte.Size = new System.Drawing.Size(455, 65);
-            this.panelCteCte.TabIndex = 65;
-            this.panelCteCte.Visible = false;
+            this.panelCtaCte.Controls.Add(this.label23);
+            this.panelCtaCte.Controls.Add(this.txtCelularCliCtaCte);
+            this.panelCtaCte.Location = new System.Drawing.Point(841, 100);
+            this.panelCtaCte.Margin = new System.Windows.Forms.Padding(4);
+            this.panelCtaCte.Name = "panelCtaCte";
+            this.panelCtaCte.Size = new System.Drawing.Size(455, 65);
+            this.panelCtaCte.TabIndex = 65;
+            this.panelCtaCte.Visible = false;
             // 
             // label23
             // 
@@ -222,14 +222,14 @@
             this.label23.TabIndex = 68;
             this.label23.Text = "Celular";
             // 
-            // txtCelularCliCteCte
+            // txtCelularCliCtaCte
             // 
-            this.txtCelularCliCteCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
-            this.txtCelularCliCteCte.Location = new System.Drawing.Point(153, 3);
-            this.txtCelularCliCteCte.Margin = new System.Windows.Forms.Padding(4);
-            this.txtCelularCliCteCte.Name = "txtCelularCliCteCte";
-            this.txtCelularCliCteCte.Size = new System.Drawing.Size(300, 30);
-            this.txtCelularCliCteCte.TabIndex = 66;
+            this.txtCelularCliCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold);
+            this.txtCelularCliCtaCte.Location = new System.Drawing.Point(153, 3);
+            this.txtCelularCliCtaCte.Margin = new System.Windows.Forms.Padding(4);
+            this.txtCelularCliCtaCte.Name = "txtCelularCliCtaCte";
+            this.txtCelularCliCtaCte.Size = new System.Drawing.Size(300, 30);
+            this.txtCelularCliCtaCte.TabIndex = 66;
             // 
             // comboTipoComprobante
             // 
@@ -287,7 +287,7 @@
             this.checkCtaCtePago.TabStop = false;
             this.checkCtaCtePago.Text = "Cte.Cte ";
             this.checkCtaCtePago.UseVisualStyleBackColor = false;
-            this.checkCtaCtePago.CheckedChanged += new System.EventHandler(this.checkCteCte_CheckedChanged);
+            this.checkCtaCtePago.CheckedChanged += new System.EventHandler(this.checkCtaCte_CheckedChanged);
             // 
             // checkTransf
             // 
@@ -1620,8 +1620,8 @@
             this.Load += new System.EventHandler(this.formVentaCaja_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
-            this.panelCteCte.ResumeLayout(false);
-            this.panelCteCte.PerformLayout();
+            this.panelCtaCte.ResumeLayout(false);
+            this.panelCtaCte.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.grupoCortes.ResumeLayout(false);
@@ -1734,8 +1734,8 @@
         private System.Windows.Forms.CheckBox checkCtaCtePago;
         private System.Windows.Forms.CheckBox checkTransf;
         private System.Windows.Forms.CheckBox checkQr;
-        private System.Windows.Forms.TextBox txtCelularCliCteCte;
-        private System.Windows.Forms.Panel panelCteCte;
+        private System.Windows.Forms.TextBox txtCelularCliCtaCte;
+        private System.Windows.Forms.Panel panelCtaCte;
         private System.Windows.Forms.Label label23;
         private System.Windows.Forms.LinkLabel duplicarVentana;
     }
