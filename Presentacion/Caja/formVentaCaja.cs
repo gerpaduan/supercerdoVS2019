@@ -844,8 +844,8 @@ namespace Presentacion.Caja
             if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
                 oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
             {
-                MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) no pueden ser a Consumidor Final y debe seleccionar Cta.Cte en forma de pago" +
-                    "\n\nCorrija y vuelva a finalizar la venta.",
+                MessageBox.Show("Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
+                    "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.",
                     "Verifique la forma de pago", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
