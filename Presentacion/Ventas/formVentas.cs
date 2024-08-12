@@ -344,8 +344,15 @@ namespace Presentacion
                     consulta += " OR " + nombreCol + " = 'Debito'";
                 if (item == "Credito")
                     consulta += " OR " + nombreCol + " = 'Credito'";
-                if (item == "Otras")
-                    consulta += " OR (" + nombreCol + " <> 'Efectivo'" + " AND " + nombreCol + " <> 'Debito'" + " AND " + nombreCol + " <> 'Credito')";
+                if (item == "Qr")
+                    consulta += " OR " + nombreCol + " = 'Qr'";
+                if (item == "Transferencia")
+                    consulta += " OR " + nombreCol + " = 'Transferencia'";
+                if (item == "Cta.Cte")
+                    consulta += " OR " + nombreCol + " = 'CtaCte'";
+                //if (item == "Otras")
+                //    consulta += " OR (" + nombreCol + " <> 'Efectivo'" + " AND " + nombreCol + " <> 'Debito'" + 
+                //        " AND " + nombreCol + " <> 'Credito')";
             }
             arrayRowFilter[1] = consulta;
             aplicarRowFilter();
@@ -371,18 +378,18 @@ namespace Presentacion
 
         private void checkListCondVenta_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string nombreCol = "enCtaCte";
-            string consulta = "1 <> 1";// checkListCondVenta.CheckedItems.Count == 0 ? "1 = 1" : "1 <> 1";
-            foreach (string item in checkListCondVenta.CheckedItems)
-            {
-                if (item == "Contado")
-                    consulta += " OR " + nombreCol + " = '0'";
+            //string nombreCol = "enCtaCte";
+            //string consulta = "1 <> 1";// checkListCondVenta.CheckedItems.Count == 0 ? "1 = 1" : "1 <> 1";
+            //foreach (string item in checkListCondVenta.CheckedItems)
+            //{
+            //    if (item == "Contado")
+            //        consulta += " OR " + nombreCol + " = '0'";
 
-                if (item == "Cta.Cte")
-                    consulta += " OR " + nombreCol + " = '1'";
-            }
-            arrayRowFilter[3] = consulta;
-            aplicarRowFilter();
+            //    if (item == "Cta.Cte")
+            //        consulta += " OR " + nombreCol + " = '1'";
+            //}
+            //arrayRowFilter[3] = consulta;
+            //aplicarRowFilter();
         }
 
         private void aplicarRowFilter()
