@@ -64,7 +64,7 @@ namespace Negocio
                 dtCortes.Rows[fila]["efectivo"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjEfectivo).ToString("F2");
                 dtCortes.Rows[fila]["debito"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjDebito).ToString("F2");
                 dtCortes.Rows[fila]["credito"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjCredito).ToString("F2");
-                dtCortes.Rows[fila]["ctacte"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjCtaCte).ToString("F2");
+                //dtCortes.Rows[fila]["ctacte"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjCtaCte).ToString("F2");
                 dtCortes.Rows[fila]["qr"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjQr).ToString("F2");
                 dtCortes.Rows[fila]["transf"] = (float.Parse(dtCortes.Rows[fila]["precioKg"].ToString()) * porcAjTranf).ToString("F2");
             }

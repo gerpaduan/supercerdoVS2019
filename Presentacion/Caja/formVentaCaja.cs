@@ -731,7 +731,7 @@ namespace Presentacion.Caja
             if (string.IsNullOrEmpty(oVentaE.FormaPago))
             {
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked =
-                    checkCtaCtePago.Checked = checkQr.Checked = checkTransf.Checked = false;//Asegura q se inicien todos false
+                    checkCtaCtePago.Checked = checkQr.Checked = checkTransf.Checked = checkCtaCte.Checked = false;//Asegura q se inicien todos false
                                 
                 formFormaPago frmFormaPago = new formFormaPago();
                 frmFormaPago.ShowDialog(this);
@@ -1549,10 +1549,12 @@ namespace Presentacion.Caja
         {
             oCliente = persona;
             //checkCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
-            checkCtaCte.Checked = checkCtaCtePago.Checked = oCliente.CtaCte;
-            linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            //checkCtaCte.Checked = checkCtaCtePago.Checked = oCliente.CtaCte;
+
+            //linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+
             //Ocultar Ultimas Ventas Para Cocinas y Furlana
-            if (!oUsuario.Admin && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+            if (FormPrincipal.soyYo && !oUsuario.Admin && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
                 linkUltimasVentasCliente.Visible = false;
 
             this.txtCliente.Text = oCliente.razonSocial;
@@ -1567,6 +1569,12 @@ namespace Presentacion.Caja
 
             ////Actualizo el corte cargado 
             //cargarCorte(); ----postergado---
+
+            restablecerFormaDePago();
+            //unchecked todos las formas de pago para que las vuelva a ingresar y evitar algun error por descuido
+            //con clientes en cta cte.
+            checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
+                    checkTransf.Checked =  false;
         }
 
         public void EnviarFormaPago(Entidades.Venta.formaPagoEnum formaPago)
