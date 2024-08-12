@@ -311,7 +311,7 @@ namespace Presentacion.Caja
             oUltimaVenta.Persona = persona;
             restablecerFormaDePago();
             //unchecked todos las formas de pago para que las vuelva a ingresar y evitar algun error por descuido
-            //con clientes en cta cte
+            //con clientes en cta cte.
             checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
                     checkTransf.Checked = false;
             this.txtCliente.Text = oUltimaVenta.Persona.razonSocial;

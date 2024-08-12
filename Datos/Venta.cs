@@ -58,7 +58,7 @@ namespace Datos
             cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
             /// Se eliminan todas las LineaVenta, y se actualiza datos de Venta
             /// 
-            /// -Si tiene egreso de caja por venta cta cte se genera un registro opuesto
+            /// -Si tiene egreso de caja por venta cta cte se genera un registro opuesto.
             /// 
             cmVenta.CommandText = "modificarVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", oVentaE.IdVenta);

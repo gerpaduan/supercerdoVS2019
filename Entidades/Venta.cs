@@ -85,7 +85,7 @@ namespace Entidades
          private float acumRedondeoKgs;
          private float acumRedondeoImporte;
          private float comisionTarjeta;
-         private string imprimirTipoCbte;//0-SinTicket | 1-Ticket | 2-Factura
+         private string imprimirTipoCbte;//0-SinTicket | 1-Ticket | 2-Factura.
          private float totalImporte;
 
          public float TotalImporte

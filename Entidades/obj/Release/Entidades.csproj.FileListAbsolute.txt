@@ -1,5 +1,0 @@
-E:\Sistemas\supercerdo\Entidades\bin\Release\Entidades.dll
-E:\Sistemas\supercerdo\Entidades\bin\Release\Entidades.pdb
-E:\Sistemas\supercerdo\Entidades\obj\Release\ResolveAssemblyReference.cache
-E:\Sistemas\supercerdo\Entidades\obj\Release\Entidades.dll
-E:\Sistemas\supercerdo\Entidades\obj\Release\Entidades.pdb
