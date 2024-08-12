@@ -62,7 +62,7 @@ namespace Presentacion
         private void txtBuscarCorte_TextChanged(object sender, EventArgs e)
         {
             //buscarCorte();
-            lblActualizar.Visible = true;
+            //lblActualizar.Visible = true;
         }
         #endregion
 
@@ -122,21 +122,47 @@ namespace Presentacion
                 }
                 else
                 {
-                    formModificarPrecios frmModificarPrecios = new formModificarPrecios();
+                    List<Entidades.Corte> listCortes = new List<Entidades.Corte>();
 
                     foreach (DataGridViewRow filaCorte in grillaCortes.Rows)
                     {
+                        cargarCorte(filaCorte.Index);
+                        listCortes.Add(oCorteE);
+                    }
+
+                    formModificarPrecios frmModificarPrecios = new formModificarPrecios();
+
+                    foreach (Entidades.Corte filaCorte in listCortes)
+                    {
                         if (!frmModificarPrecios.finalizarMod)
                         {
-                            cargarCorte(filaCorte.Index);
-                            frmModificarPrecios.obtenerCorteFormCortes(oCorteE, this);
+                            //CargarCorte(filaCorte.Index);
+                            frmModificarPrecios.obtenerCorteFormCortes(filaCorte, listCortes, this);
                             frmModificarPrecios.ShowDialog();
+
+                            //si se modificó por porcentaje que cierra una vez q finalizó la modificacion en lotes
+                            if (frmModificarPrecios.precioPorPorc)
+                                return;
                         }
                         else
                         {
                             break;
                         }
                     }
+
+                    //foreach (DataGridViewRow filaCorte in grillaCortes.Rows)
+                    //{
+                    //    if (!frmModificarPrecios.finalizarMod)
+                    //    {
+                    //        cargarCorte(filaCorte.Index);
+                    //        frmModificarPrecios.obtenerCorteFormCortes(oCorteE, listCortes, this);
+                    //        frmModificarPrecios.ShowDialog();
+                    //    }
+                    //    else
+                    //    {
+                    //        break;
+                    //    }
+                    //}
                 }      
             }
             catch (Exception ex)
@@ -238,6 +264,7 @@ namespace Presentacion
         private void formCortes_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            comboTipo.SelectedIndex = 0;
             this.txtBuscarCorte.Select();
         }
 
@@ -266,10 +293,27 @@ namespace Presentacion
             string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";
             expresion+= " and ";
             expresion += !string.IsNullOrEmpty(txtCodigohasta.Text) ? "codigo <= " + codigoHasta :  "true";
+            if (!string.IsNullOrEmpty(comboTipo.Text) && !comboTipo.Text.Equals("Todos"))
+            {
+                expresion += " and ";
+                expresion += !string.IsNullOrEmpty(comboTipo.Text) ? "tipo = \'" + comboTipo.Text + "\'" : "true";
+            }
+            if (!string.IsNullOrEmpty(txtBuscarCorte.Text))
+            {
+                string buscaPorCodigo = (int.TryParse(txtBuscarCorte.Text, out int numero)) ? "codigo = " + numero : "true";
+
+                expresion += " and ";
+                expresion += " ( corte like \'" + txtBuscarCorte.Text + "%\' or " + buscaPorCodigo +" ) ";
+            }
+            if (!string.IsNullOrEmpty(txtBuscarMaestro.Text))
+            {
+                expresion += " and ";
+                expresion += " corteMaestro like \'%" + txtBuscarMaestro.Text + "%\'";
+            }
 
             DataRow[] foundRows;
             // Use the Select method to find all rows matching the filter.
-            foundRows = dtCortes.Select(expresion, "codigo");
+            foundRows = dtCortes.Select(expresion);//, "codigo");
 
             foreach (DataRow row in foundRows)
             {

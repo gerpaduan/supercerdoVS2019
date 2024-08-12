@@ -15,11 +15,13 @@ namespace Presentacion
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE=new Entidades.Corte();
+        List<Entidades.Corte> listCortes = new List<Entidades.Corte>();
         formCortes frmCorte;
         formInfoCorte oFrmInfoCorte;
 
         string mensaje = "";
         bool modificar = true;
+        public bool precioPorPorc = false;   
         public bool finalizarMod = false;
 
         public formModificarPrecios()
@@ -52,10 +54,11 @@ namespace Presentacion
             cargarCampos();
         }
 
-        public void obtenerCorteFormCortes(Entidades.Corte corteParam, formCortes frmCortesParam)
+        public void obtenerCorteFormCortes(Entidades.Corte corteParam, List<Entidades.Corte> listCortesParam, formCortes frmCortesParam)
         {
             frmCorte = frmCortesParam;
             oCorteE = corteParam;
+            listCortes = listCortesParam;
             cargarCampos();
         }
 
@@ -83,20 +86,55 @@ namespace Presentacion
 
         private void agregarCorte()
         {
-            if (cargarDatosCorte(oCorteE))	
-            {   
-                oCorteN.editPrecioCorte(oCorteE);
+            if (precioPorPorc)
+            {
+                if (!Utilidades.Util_Form.validarCampoNumerico(txtPorcentaje.Text, "%"))
+                    return;
+                
+                DialogResult resp = MessageBox.Show("Esta acción modificará los precios de toda la lista de cortes que se muestra en el formulario y no tiene vuelta atrás. ¿Deseas continuar?",
+                    "Advertencia", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
+                if (resp == DialogResult.No)
+                    return;
+
+                float porcentaje = Utilidades.Util_Form.convertFloat(txtPorcentaje.Text, false);
+                if (porcentaje < -100)
+                {
+                    MessageBox.Show("El porcentaje debe ser mayor a -100", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                float porcentajeDescuento = (1 + porcentaje / 100);
+
+
+                foreach (Entidades.Corte filaCorte in listCortes)
+                {
+                    filaCorte.precioKg = filaCorte.precioKg * porcentajeDescuento;
+                    oCorteN.editPrecioCorte(filaCorte);
+                }
+
                 if (frmCorte != null)
                 {
                     frmCorte.cargarGrilla();
-                } 
-                this.Close();               
+                }
+                this.Close();
             }
             else
             {
-                MessageBox.Show("Los siguiente campos tienen ingresado datos erroneos:\n" + mensaje);
-                txtPrecioKg.Focus();
-            }            
+                if (cargarDatosCorte(oCorteE))
+                {
+                    oCorteN.editPrecioCorte(oCorteE);
+                    if (frmCorte != null)
+                    {
+                        frmCorte.cargarGrilla();
+                    }
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Los siguiente campos tienen ingresado datos erroneos:\n" + mensaje);
+                    txtPrecioKg.Focus();
+                }
+            }         
         }
 
         private bool cargarDatosCorte(Entidades.Corte oCorteE)
@@ -138,6 +176,21 @@ namespace Presentacion
         private void formModificarPrecios_Load_1(object sender, EventArgs e)
         {
 
+        }
+
+        private void checkBoxPorcPrecio_CheckedChanged(object sender, EventArgs e)
+        {
+            precioPorPorc = checkBoxPorcPrecio.Checked;
+            boxModificarPrecio.Enabled = !precioPorPorc;
+            txtPorcentaje.Enabled = precioPorPorc;
+
+            if (precioPorPorc)
+                txtPorcentaje.Focus();  
+        }
+
+        private void txtPorcentaje_TextChanged(object sender, EventArgs e)
+        {
+            //Utilidades.Util_Form.validarCampoNumerico(txtPorcentaje.Text, "txtPorcentaje");
         }
     }
 }

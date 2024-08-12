@@ -111,7 +111,7 @@
             this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkHabilitado.Checked = true;
             this.checkHabilitado.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkHabilitado.Location = new System.Drawing.Point(393, 38);
+            this.checkHabilitado.Location = new System.Drawing.Point(392, 71);
             this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
@@ -157,19 +157,21 @@
             // 
             this.checkMayorista.AutoSize = true;
             this.checkMayorista.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkMayorista.Location = new System.Drawing.Point(397, 73);
+            this.checkMayorista.Location = new System.Drawing.Point(396, 39);
             this.checkMayorista.Margin = new System.Windows.Forms.Padding(4);
             this.checkMayorista.Name = "checkMayorista";
             this.checkMayorista.Size = new System.Drawing.Size(95, 22);
             this.checkMayorista.TabIndex = 6;
+            this.checkMayorista.TabStop = false;
             this.checkMayorista.Text = "Mayorista";
             this.checkMayorista.UseVisualStyleBackColor = true;
+            this.checkMayorista.Visible = false;
             // 
             // checkAsignarMaestro
             // 
             this.checkAsignarMaestro.AutoSize = true;
             this.checkAsignarMaestro.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkAsignarMaestro.Location = new System.Drawing.Point(349, 175);
+            this.checkAsignarMaestro.Location = new System.Drawing.Point(350, 173);
             this.checkAsignarMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.checkAsignarMaestro.Name = "checkAsignarMaestro";
             this.checkAsignarMaestro.Size = new System.Drawing.Size(138, 22);
@@ -310,7 +312,7 @@
             this.txtIndependiente.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.txtIndependiente.Checked = true;
             this.txtIndependiente.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.txtIndependiente.Location = new System.Drawing.Point(320, 140);
+            this.txtIndependiente.Location = new System.Drawing.Point(319, 139);
             this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(161, 22);
