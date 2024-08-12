@@ -123,6 +123,9 @@ namespace Presentacion
                                 this.Close();
                                 return;
                             }
+                            if (modificar)
+                                this.Close();
+
                             limpiarCampos();
                             txtCodigo.Focus();
                         }
