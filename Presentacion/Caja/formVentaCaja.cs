@@ -1554,7 +1554,7 @@ namespace Presentacion.Caja
             //linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
 
             //Ocultar Ultimas Ventas Para Cocinas y Furlana
-            if (FormPrincipal.soyYo && !oUsuario.Admin && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+            if ((FormPrincipal.soyYo || !oUsuario.Admin) && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
                 linkUltimasVentasCliente.Visible = false;
 
             this.txtCliente.Text = oCliente.razonSocial;
