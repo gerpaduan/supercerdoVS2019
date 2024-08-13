@@ -13,6 +13,7 @@ using System.Configuration;
 using System.Collections;
 using System.Reflection;
 using Utilidades;
+using Presentacion.CuentaCorriente;
 
 namespace Presentacion.Caja
 {
@@ -1548,14 +1549,16 @@ namespace Presentacion.Caja
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
-            //checkCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
-            //checkCtaCte.Checked = checkCtaCtePago.Checked = oCliente.CtaCte;
 
-            //linkUltimasVentasCliente.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            linkVerCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
 
             //Ocultar Ultimas Ventas Para Cocinas y Furlana
-            if ((FormPrincipal.soyYo || !oUsuario.Admin) && (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+            if ((FormPrincipal.soyYo || !oUsuario.Admin) && 
+                (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+            {
                 linkUltimasVentasCliente.Visible = false;
+                linkVerCtaCte.Visible=false;
+            }
 
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;
@@ -2307,6 +2310,20 @@ namespace Presentacion.Caja
                 {
                     MessageBox.Show("No se pudo cargar los datos de la última venta.", "Última venta no cargada");
                 }
+            }
+        }
+
+        private void linkVerCtaCte_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
+                frmCtaCtePersona.idPersona = oCliente.idPersona;
+                frmCtaCtePersona.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
