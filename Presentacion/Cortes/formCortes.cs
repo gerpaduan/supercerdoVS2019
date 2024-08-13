@@ -149,20 +149,6 @@ namespace Presentacion
                             break;
                         }
                     }
-
-                    //foreach (DataGridViewRow filaCorte in grillaCortes.Rows)
-                    //{
-                    //    if (!frmModificarPrecios.finalizarMod)
-                    //    {
-                    //        cargarCorte(filaCorte.Index);
-                    //        frmModificarPrecios.obtenerCorteFormCortes(oCorteE, listCortes, this);
-                    //        frmModificarPrecios.ShowDialog();
-                    //    }
-                    //    else
-                    //    {
-                    //        break;
-                    //    }
-                    //}
                 }      
             }
             catch (Exception ex)
