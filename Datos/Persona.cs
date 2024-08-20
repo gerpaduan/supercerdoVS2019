@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using Entidades;
 
 namespace Datos
 {
@@ -171,6 +172,32 @@ namespace Datos
             daPersona.Fill(dtIva);
 
             return dtIva;
+        }
+
+        public int existeCuit(string cuit)
+        {
+            int idPersona = 0;
+            cmPersona = new SqlCommand();
+            cmPersona.Connection = conn.conectar();
+            cmPersona.CommandType = CommandType.Text;
+            cmPersona.CommandText = "Select idPersona from Personas where REPLACE(cuit, '-', '') like " + cuit.ToString().Replace("-","");
+            try
+            {
+                cmPersona.Connection.Open();
+                SqlDataReader drVenta = cmPersona.ExecuteReader();
+                using (drVenta)
+                {
+                    while (drVenta.Read())
+                    {
+                        idPersona = Convert.ToInt32(drVenta["idPersona"]);
+                    }
+                    return idPersona;
+                }
+            }
+            finally
+            {
+                cmPersona.Connection.Close();
+            }
         }
 
         public DataTable obtenerProveedores()

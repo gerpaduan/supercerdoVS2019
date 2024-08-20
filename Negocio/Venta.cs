@@ -179,6 +179,10 @@ namespace Negocio
             }
         }
 
+        public void actualizarCliente(int idVenta, int idPersona)
+        {
+            oVentaD.actualizarCliente(idVenta, idPersona);
+        }
 
         #region FACTURA ELECTRONICA
 

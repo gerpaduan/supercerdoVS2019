@@ -1562,9 +1562,9 @@ namespace Presentacion.Caja
 
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;
-            this.txtDomicilio.Text = oCliente.Domicilio;
+            this.txtDomicilio.Text = oCliente.Domicilio + " - " + oCliente.Ciudad;
             //Si es RRII (IdIva = 2) se selecciona Comprobante A
-            comboTipoComprobante.SelectedItem = oCliente.IdIva == 2 ? Entidades.Venta.tipoComprobanteEnum.A.ToString() : Entidades.Venta.tipoComprobanteEnum.X.ToString();
+            //comboTipoComprobante.SelectedItem = oCliente.IdIva == 2 ? Entidades.Venta.tipoComprobanteEnum.A.ToString() : Entidades.Venta.tipoComprobanteEnum.X.ToString();
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
             lblClienteConBonif.Text = lblClienteConBonif.Visible ?
                 "Cliente con Bonificación (" + oCliente.Bonificacion.ToString("N2") + " %)" : "";

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data;
+﻿using System.Data;
 
 namespace Negocio
 {
@@ -51,12 +47,16 @@ namespace Negocio
             oPersonaD = new Datos.Persona();
             return oPersonaD.getIva();
         }
-
+        public int existeCuit(string cuit)
+        {
+            oPersonaD = new Datos.Persona();
+            return oPersonaD.existeCuit(cuit);
+        }
         public DataTable buscarProveedor(string buscarTexto)
         {
             oPersonaD = new Datos.Persona();
-             return oPersonaD.buscarProveedor(buscarTexto);
-           
+            return oPersonaD.buscarProveedor(buscarTexto);
+
         }
 
     }

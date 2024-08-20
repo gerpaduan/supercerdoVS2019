@@ -179,6 +179,18 @@ namespace Presentacion.Personas
 
         public Boolean validar()
         {
+            if (oPersonaN.existeCuit(txtCuit.Text) > 0)
+            {
+                MessageBox.Show("El CUIT ingresado ya existe para un cliente.", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if (comboIva.SelectedIndex < 0)
+            {
+                MessageBox.Show("Seleccione un valor en IVA. (consulte al cliente su condición frente al IVA)", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             bool retornar = false;
             //Cargando TextBox para validar
             int nroFilas = 0;
@@ -227,5 +239,23 @@ namespace Presentacion.Personas
             txtRazonSocial.Text = txtIdentificacion.Text;
         }
 
+        private void btnBuscarAfip_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string cuitSinGuiones = txtCuit.Text.Replace("-", "");
+                wsAFIPvs2008.formFacturaElectronica formFactElec = new wsAFIPvs2008.formFacturaElectronica();
+                formFactElec.loadForm();
+                formFactElec.ConsultarDatosContribuyente(cuitSinGuiones);
+                txtRazonSocial.Text = txtIdentificacion.Text = formFactElec.razonSocialAfip;
+                txtDomicilio.Text = formFactElec.domicilioFiscalAfip;
+                txtCiudad.Text = formFactElec.localidadAfip + ", " + formFactElec.provinciaAfip;
+                comboIva.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("No se pudo obtener los datos desde Afip. " + ex.Message);
+            }
+        }
     }
 }
