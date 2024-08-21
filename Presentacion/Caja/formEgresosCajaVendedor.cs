@@ -125,8 +125,21 @@ namespace Presentacion.Caja
                 if (oEgresoCajaE.Monto > 0 && (oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.EgresoCaja.idPagoTarjeta) ||
                     oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja)))
                 {
-                    //Obtiene los Numeros del String
-                    string resultString = System.Text.RegularExpressions.Regex.Match(oEgresoCajaE.Descripcion, @"\d+").Value;
+                    //Obtiene el ID de la Venta
+                    string resultString = "";
+                    string delimiter = "ID:";
+
+                    // Encuentra la posición de la cadena delimitadora
+                    int startIndex = oEgresoCajaE.Descripcion.IndexOf(delimiter);
+
+                    if (startIndex != -1)
+                    {
+                        // Calcula la posición de inicio de la subcadena deseada
+                        startIndex += delimiter.Length;
+
+                        // Extrae la subcadena después de la cadena delimitadora
+                        resultString = oEgresoCajaE.Descripcion.Substring(startIndex).Trim();
+                    }
 
                     idVentaSelected = Convert.ToInt32(resultString);
                     Ventas.formInfoVenta frmInfoVenta = new Ventas.formInfoVenta();

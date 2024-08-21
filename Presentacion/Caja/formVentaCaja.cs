@@ -14,6 +14,7 @@ using System.Collections;
 using System.Reflection;
 using Utilidades;
 using Presentacion.CuentaCorriente;
+using static Presentacion.Caja.formCerrarCaja;
 
 namespace Presentacion.Caja
 {
@@ -31,7 +32,8 @@ namespace Presentacion.Caja
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
-
+        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+        Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
         public Entidades.Usuario oUsuario;
@@ -523,8 +525,7 @@ namespace Presentacion.Caja
             panelAbonar.Visible = true;
             checkCtaCte.Visible = false;
             checkCtaCte.Checked = false;
-            lblClienteConBonif.Visible = false;            
-            linkUltimasVentasCliente.Visible = false;
+            lblClienteConBonif.Visible = false;          
             restablecerFormaDePago();
             comboTipoComprobante.SelectedIndex = 0; //Remito
 
@@ -1550,14 +1551,16 @@ namespace Presentacion.Caja
         {
             oCliente = persona;
 
-            linkVerCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            linkVerCtaCte.Visible = oUsuario.Admin;// !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) ?
+                "Ver ventas anteriores" : "Ver ultimas 5 ventas";
 
-            //Ocultar Ultimas Ventas Para Cocinas y Furlana
-            if ((FormPrincipal.soyYo || !oUsuario.Admin) && 
+            ////Ocultar Ultimas Ventas Para Cocinas y Furlana
+            if ((FormPrincipal.soyYo && !oUsuario.Admin) &&
                 (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
             {
                 linkUltimasVentasCliente.Visible = false;
-                linkVerCtaCte.Visible=false;
+                linkVerCtaCte.Visible = false;
             }
 
             this.txtCliente.Text = oCliente.razonSocial;
@@ -1784,8 +1787,6 @@ namespace Presentacion.Caja
 
         private void validarAperturaCaja()
         {
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-            Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
@@ -2451,11 +2452,22 @@ namespace Presentacion.Caja
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            formGetAllLineaVenta frmGetAllLV = new formGetAllLineaVenta();
-            frmGetAllLV.verUltimasVentasClientes = true;
-            frmGetAllLV.idPersona = oCliente.idPersona;
-            frmGetAllLV.idSucursal = oSucursalE.idSucursal;
-            frmGetAllLV.ShowDialog();
+            if (oCliente.idPersona == Entidades.Parametros.idConsumidorFinal)
+            {
+                formVentasVendedor frmVentasVendedor = new formVentasVendedor();
+                frmVentasVendedor.desdeCajaVenta = true;
+                frmVentasVendedor.oCierreE = oCierreE;
+                frmVentasVendedor.ShowDialog();
+            
+            }
+            else
+            {
+                formGetAllLineaVenta frmGetAllLV = new formGetAllLineaVenta();
+                frmGetAllLV.verUltimasVentasClientes = true;
+                frmGetAllLV.idPersona = oCliente.idPersona;
+                frmGetAllLV.idSucursal = oSucursalE.idSucursal;
+                frmGetAllLV.ShowDialog();
+            }
         }
 
         private void checkBoxRedondeo_CheckedChanged(object sender, EventArgs e)

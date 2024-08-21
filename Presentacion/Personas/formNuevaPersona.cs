@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -179,7 +180,9 @@ namespace Presentacion.Personas
 
         public Boolean validar()
         {
-            if (oPersonaN.existeCuit(txtCuit.Text) > 0)
+            //Obtiene los Numeros del String
+            string cuitSinGuion = System.Text.RegularExpressions.Regex.Match(txtCuit.Text, @"\d+").Value;
+            if (!string.IsNullOrEmpty(cuitSinGuion) && oPersonaN.existeCuit(txtCuit.Text) > 0)
             {
                 MessageBox.Show("El CUIT ingresado ya existe para un cliente.", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;

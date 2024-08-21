@@ -152,18 +152,6 @@ namespace Presentacion
                     frmInfoVenta.idVenta = idVenta;
                     frmInfoVenta.Show();
                 }
-
-                //if (Application.OpenForms["formInfoVenta"] != null)
-                //{
-                //    Application.OpenForms["formInfoVenta"].Activate();
-                //    Application.OpenForms["formInfoVenta"].WindowState = FormWindowState.Normal;
-                //}
-                //else
-                //{
-                //    formInfoVenta frmInfoVenta = new formInfoVenta();
-                //    frmInfoVenta.idVenta = idVenta;
-                //    frmInfoVenta.Show();
-                //}
             }
             catch (Exception)
             {

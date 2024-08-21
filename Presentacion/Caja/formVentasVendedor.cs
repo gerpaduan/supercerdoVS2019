@@ -17,6 +17,7 @@ namespace Presentacion
 
         public DataTable dtVentas;
         bool soloAnulados = false;
+        public bool desdeCajaVenta = false;
 
         public formVentasVendedor()
         {
@@ -51,13 +52,17 @@ namespace Presentacion
 
         private void cargarTotales()
         {
+            //Si es de caja venta la llamada al form, no se muestra el Total
+            if (desdeCajaVenta)
+                return;
+
             float totalS=0;
 
             foreach (DataRow venta in dtVentas.Rows)
             {
                 totalS += float.Parse(venta["totalS"].ToString());
             }
-            txtTotalS.Text = soloAnulados ? "-" : String.Format("{0:0.00}", totalS );            
+            txtTotalS.Text = soloAnulados ? "-" : String.Format("{0:0.00}", totalS );
         }
 
         private void infoVenta()
@@ -70,10 +75,19 @@ namespace Presentacion
                 Application.OpenForms["formInfoVenta"].WindowState = FormWindowState.Normal;
             }
             else
-            {
-                formInfoVenta frmInfoVenta = new formInfoVenta();
-                frmInfoVenta.idVenta = idVenta;
-                frmInfoVenta.ShowDialog();
+            {                
+                if (desdeCajaVenta)
+                {
+                    Caja.formUltimaVenta frmUltimaVenta = new Caja.formUltimaVenta();
+                    frmUltimaVenta.oUltimaVenta = oVentaN.getVentaById(idVenta);
+                    frmUltimaVenta.ShowDialog();
+                }
+                else
+                {
+                    formInfoVenta frmInfoVenta = new formInfoVenta();
+                    frmInfoVenta.idVenta = idVenta;
+                    frmInfoVenta.ShowDialog();
+                }
             }
         }
 
