@@ -48,6 +48,7 @@ namespace Entidades
         public static float porcMermaEnPote;//	0,3	porcentaje Merma porque pones son 700 gramos
         public static float porcGrasaEnPote;//	0,7	porcentaje de Grasa en Pote
         public static float porcGrasaLiquida;//	0,75	porcenta de Grasa Liquida que se obtiene al cocinar
-        public static int idIndefinido;//	4	id del cliento INDEFINIDO en la Base de Datos
+        public static int idIndefinido;//	4	id del cliente INDEFINIDO en la Base de Datos
+        public static int minAccesoUltimaVentaVendedor;//	cantidad de minutos que pueden pasar para q Vendedor pueda modificar ultima venta en la Base de Datos
     }
 }

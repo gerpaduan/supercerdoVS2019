@@ -218,6 +218,19 @@ namespace Presentacion.Caja
         {
             try
             {
+                //valido que la fecha/hora de la venta sea menor al minimo de minutos parametrizado
+                TimeSpan diffMinutosTime = DateTime.Now - oUltimaVenta.FechaVenta;
+                int diffMinutos = diffMinutosTime.Minutes;
+
+                //si no está loguedo, si fecha venta es distinta a hoy y pasaron minino de minutos para el acceso
+                if (!oUltimaVenta.Vendedor.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
+                    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
+                {
+                    MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.",
+                        "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 //Solicita que ingrese Forma de Pago
                 if (!ingresarFormaPago())
                 {
