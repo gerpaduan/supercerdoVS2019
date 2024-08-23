@@ -113,6 +113,20 @@ namespace Negocio
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
 
+        public DataTable obtenerAlicuotasIva(bool mostrarTodos)
+        {
+            DataTable dtAlicuotasIva = new DataTable();
+            oCorteD = new Datos.Corte();
+            dtAlicuotasIva = oCorteD.obtenerAlicuotasIva(mostrarTodos);
+
+            return dtAlicuotasIva;
+        }
+
+        public Entidades.AlicuotaIva findAlicuotaIvaById(int idIva)
+        {
+            return oCorteD.findAlicuotaIvaById(idIva);
+        }
+
         public Entidades.Embutido findEmbutidoById(int idEmbutido)
         {
             return oCorteD.findEmbutidoById(idEmbutido);

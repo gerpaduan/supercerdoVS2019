@@ -15,7 +15,6 @@ namespace Entidades
             Pesable,
             Elaborado,
             Otro
-                
         }
 
         public int idCorte;
@@ -35,6 +34,8 @@ namespace Entidades
         DateTime? actualizado;
         private float promedio;
         private bool habilitado;
+        private int idAlicuotaIva;
+        private float alicuotaIva;
 
         public bool Habilitado
         {
@@ -207,5 +208,7 @@ namespace Entidades
                 desvioEstandar = value;
             }
         }
+        public int IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
+        public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
     }
 }

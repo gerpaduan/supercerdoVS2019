@@ -45,6 +45,8 @@ namespace Datos
                         oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
                         oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
                         oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+                        oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
+                        oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
                     }
                     return oCorteE;
                 }
@@ -97,6 +99,8 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@porcentaje", oCorteE.porcentaje);
             cmCorte.Parameters.AddWithValue("@porcentajeHueso", oCorteE.porcentajeHueso);
             cmCorte.Parameters.AddWithValue("@desvioEstandar", oCorteE.desvioEstandar);
+            cmCorte.Parameters.AddWithValue("@idAlicuotaIva", oCorteE.IdAlicuotaIva);
+            cmCorte.Parameters.AddWithValue("@alicuotaIva", oCorteE.AlicuotaIva);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
@@ -219,7 +223,6 @@ namespace Datos
             return dtCortes;
 
         }
-
 
         public DataTable getListaElegirEmbutido()
         {
@@ -349,6 +352,60 @@ namespace Datos
                 oCorteE = null;
             }
         }
+
+        #region Alicuota Iva
+        public DataTable obtenerAlicuotasIva(bool mostrarTodos)
+        {
+            DataTable dtAlicuotasIva = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            string consulta = "Select idIva, iva from AlicuotasIva";
+            consulta += mostrarTodos ? " order by orden" : " where mostrar = 1 order by orden";
+            cmCorte.CommandText =  consulta;
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtAlicuotasIva);
+
+            cmCorte.Connection.Close();
+
+            return dtAlicuotasIva;
+        }
+
+        public Entidades.AlicuotaIva findAlicuotaIvaById(int idIva)
+        {
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "Select * from AlicuotasIva where idIva =" + idIva;
+
+            Entidades.AlicuotaIva oAlicuotaIvaE = new Entidades.AlicuotaIva();
+            try
+            {
+                cmCorte.Connection.Open();
+                SqlDataReader drCorte = cmCorte.ExecuteReader();
+
+                using (drCorte)
+                {
+                    while (drCorte.Read())
+                    {
+                        oAlicuotaIvaE.IdIva = Convert.ToInt32(drCorte["idIva"].ToString());
+                        oAlicuotaIvaE.Iva = Convert.ToInt32(drCorte["iva"].ToString());
+                        oAlicuotaIvaE.Orden = Convert.ToInt32(drCorte["orden"].ToString());
+                        oAlicuotaIvaE.Mostrar = bool.Parse(drCorte["mostrar"].ToString());
+                    }
+                    return oAlicuotaIvaE;
+                }
+            }
+            finally
+            {
+                cmCorte.Connection.Close();
+                oAlicuotaIvaE = null;
+            }
+        }
+        #endregion
 
         #region Embutidos
 

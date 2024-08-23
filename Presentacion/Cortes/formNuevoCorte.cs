@@ -78,6 +78,7 @@ namespace Presentacion
             txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
             oCorteMaestroE = oCorteE.corteMaestro;
             comboTipo.Text = oCorteE.tipo;
+            comboAlicuotaIva.SelectedValue = oCorteE.IdAlicuotaIva;
             txtPromedio.Text = oCorteE.Promedio.ToString("F3");
             txtIndependiente.Checked = oCorteE.independiente == 1;
             checkMayorista.Checked = oCorteE.Mayorista;
@@ -179,6 +180,8 @@ namespace Presentacion
             }
 
             oCorteE.Tipo = comboTipo.Text;
+            oCorteE.IdAlicuotaIva = Convert.ToInt32(comboAlicuotaIva.SelectedValue);
+            oCorteE.AlicuotaIva = Utilidades.Util_Form.convertFloat(comboAlicuotaIva.Text, false);
             oCorteE.Mayorista = checkMayorista.Checked;
             oCorteE.EnCierreStock = checkEnCierreStock.Checked;
             oCorteE.Habilitado = checkHabilitado.Checked;
@@ -307,6 +310,9 @@ namespace Presentacion
             try
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
+                comboAlicuotaIva.DataSource = oCorteN.obtenerAlicuotasIva(false);
+                comboAlicuotaIva.DisplayMember = "iva";
+                comboAlicuotaIva.ValueMember = "idIva";
 
                 txtCodigo.Focus();
 

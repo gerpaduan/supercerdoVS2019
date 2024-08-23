@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.comboAlicuotaIva = new System.Windows.Forms.ComboBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.checkHabilitado = new System.Windows.Forms.CheckBox();
             this.txtPromedio = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
@@ -78,6 +80,8 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.comboAlicuotaIva);
+            this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.checkHabilitado);
             this.groupBox1.Controls.Add(this.txtPromedio);
             this.groupBox1.Controls.Add(this.label8);
@@ -105,6 +109,35 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
             // 
+            // comboAlicuotaIva
+            // 
+            this.comboAlicuotaIva.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboAlicuotaIva.FormattingEnabled = true;
+            this.comboAlicuotaIva.Items.AddRange(new object[] {
+            "Pesable",
+            "Unidad",
+            "Elaborado",
+            "Corte",
+            "Embutido",
+            "Otro"});
+            this.comboAlicuotaIva.Location = new System.Drawing.Point(124, 203);
+            this.comboAlicuotaIva.Margin = new System.Windows.Forms.Padding(4);
+            this.comboAlicuotaIva.Name = "comboAlicuotaIva";
+            this.comboAlicuotaIva.Size = new System.Drawing.Size(93, 26);
+            this.comboAlicuotaIva.TabIndex = 5;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(31, 206);
+            this.label10.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(82, 18);
+            this.label10.TabIndex = 36;
+            this.label10.Text = "Alícuota Iva";
+            // 
             // checkHabilitado
             // 
             this.checkHabilitado.AutoSize = true;
@@ -115,7 +148,7 @@
             this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
-            this.checkHabilitado.TabIndex = 5;
+            this.checkHabilitado.TabIndex = 6;
             this.checkHabilitado.Text = "Habilitado";
             this.checkHabilitado.UseVisualStyleBackColor = true;
             // 
@@ -175,7 +208,7 @@
             this.checkAsignarMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.checkAsignarMaestro.Name = "checkAsignarMaestro";
             this.checkAsignarMaestro.Size = new System.Drawing.Size(138, 22);
-            this.checkAsignarMaestro.TabIndex = 8;
+            this.checkAsignarMaestro.TabIndex = 9;
             this.checkAsignarMaestro.Text = "Asignar maestro";
             this.checkAsignarMaestro.UseVisualStyleBackColor = true;
             this.checkAsignarMaestro.CheckedChanged += new System.EventHandler(this.checkAsignarMaestro_CheckedChanged);
@@ -316,7 +349,7 @@
             this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(161, 22);
-            this.txtIndependiente.TabIndex = 7;
+            this.txtIndependiente.TabIndex = 8;
             this.txtIndependiente.Text = "Corte Independiente";
             this.txtIndependiente.UseVisualStyleBackColor = true;
             this.txtIndependiente.CheckedChanged += new System.EventHandler(this.txtIndependiente_CheckedChanged);
@@ -500,5 +533,7 @@
         protected System.Windows.Forms.TextBox txtPromedio;
         protected System.Windows.Forms.Label label8;
         private System.Windows.Forms.CheckBox checkHabilitado;
+        protected System.Windows.Forms.ComboBox comboAlicuotaIva;
+        protected System.Windows.Forms.Label label10;
     }
 }

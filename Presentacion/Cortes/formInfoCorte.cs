@@ -56,7 +56,7 @@ namespace Presentacion
                     txtPrecioKg.Text = fila["precioKg"].ToString();
                     txtTipo.Text = fila["tipo"].ToString();
                     txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
-                    checkMayorista.Checked = Convert.ToBoolean(fila["mayorista"]);
+                    txtAlicuotaIva.Text = (fila["alicuotaIva"]).ToString();
                     checkHabilitado.Checked = Convert.ToBoolean(fila["habilitado"]);
                     checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
 
@@ -84,7 +84,7 @@ namespace Presentacion
             txtDescCorte.Text = oCorteE.corte;
             txtTipo.Text = oCorteE.tipo;
             txtIndependiente.Checked = oCorteE.independiente.Equals(1);
-            checkMayorista.Checked = oCorteE.Mayorista.Equals(1);
+            txtAlicuotaIva.Text = oCorteE.AlicuotaIva.ToString();
             //checkEnCierreStock.Checked = oCorteE.
             txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null) ? oCorteE.corteMaestro.corte : "-";
             txtPorcentajeCorte.Text =Convert.ToString( oCorteE.porcentaje);

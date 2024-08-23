@@ -30,49 +30,25 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCortes));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle18 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle19 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle20 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle21 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle22 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle23 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle24 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle25 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle26 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.modificarPrecios = new System.Windows.Forms.ToolStripButton();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.grillaCortes = new System.Windows.Forms.DataGridView();
-            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.precioKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.efectivo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.debito = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.credito = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.promedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idCorteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.independiente = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.porcentajeHueso = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.desvioEstandar = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.enCierreStock = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.mayorista = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.idSucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.sucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.stockSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.idSucursalSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.sucursalSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.stockSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -91,6 +67,31 @@
             this.label9 = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.precioKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.efectivo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.debito = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.credito = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.alicuotaIva = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.promedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idCorteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.independiente = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.porcentajeHueso = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.desvioEstandar = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.enCierreStock = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.mayorista = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.idSucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.sucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.stockSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.idSucursalSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.sucursalSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.stockSM = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.panel1.SuspendLayout();
@@ -179,6 +180,7 @@
             this.efectivo,
             this.debito,
             this.credito,
+            this.alicuotaIva,
             this.tipo,
             this.promedio,
             this.idCorteMaestro,
@@ -208,285 +210,6 @@
             this.grillaCortes.StandardTab = true;
             this.grillaCortes.TabIndex = 2;
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
-            // 
-            // idCorte
-            // 
-            this.idCorte.DataPropertyName = "idCorte";
-            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.idCorte.DefaultCellStyle = dataGridViewCellStyle14;
-            this.idCorte.HeaderText = "ID Corte";
-            this.idCorte.MinimumWidth = 6;
-            this.idCorte.Name = "idCorte";
-            this.idCorte.ReadOnly = true;
-            this.idCorte.Visible = false;
-            // 
-            // codigo
-            // 
-            this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle15;
-            this.codigo.HeaderText = "Código";
-            this.codigo.MinimumWidth = 6;
-            this.codigo.Name = "codigo";
-            this.codigo.ReadOnly = true;
-            this.codigo.Width = 80;
-            // 
-            // corte
-            // 
-            this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.corte.DataPropertyName = "corte";
-            dataGridViewCellStyle16.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.corte.DefaultCellStyle = dataGridViewCellStyle16;
-            this.corte.HeaderText = "Corte";
-            this.corte.MinimumWidth = 6;
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            this.corte.Width = 150;
-            // 
-            // precioKg
-            // 
-            this.precioKg.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.precioKg.DataPropertyName = "precioKg";
-            dataGridViewCellStyle17.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle17.Format = "N2";
-            dataGridViewCellStyle17.NullValue = null;
-            this.precioKg.DefaultCellStyle = dataGridViewCellStyle17;
-            this.precioKg.HeaderText = "Precio Kg.";
-            this.precioKg.MinimumWidth = 6;
-            this.precioKg.Name = "precioKg";
-            this.precioKg.ReadOnly = true;
-            this.precioKg.Width = 90;
-            // 
-            // efectivo
-            // 
-            this.efectivo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.efectivo.DataPropertyName = "efectivo";
-            dataGridViewCellStyle18.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle18.Format = "N2";
-            this.efectivo.DefaultCellStyle = dataGridViewCellStyle18;
-            this.efectivo.HeaderText = "Efectivo";
-            this.efectivo.MinimumWidth = 6;
-            this.efectivo.Name = "efectivo";
-            this.efectivo.ReadOnly = true;
-            this.efectivo.Width = 84;
-            // 
-            // debito
-            // 
-            this.debito.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.debito.DataPropertyName = "debito";
-            dataGridViewCellStyle19.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle19.Format = "N2";
-            this.debito.DefaultCellStyle = dataGridViewCellStyle19;
-            this.debito.HeaderText = "Debito";
-            this.debito.MinimumWidth = 6;
-            this.debito.Name = "debito";
-            this.debito.ReadOnly = true;
-            this.debito.Width = 76;
-            // 
-            // credito
-            // 
-            this.credito.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.credito.DataPropertyName = "credito";
-            dataGridViewCellStyle20.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle20.Format = "N2";
-            this.credito.DefaultCellStyle = dataGridViewCellStyle20;
-            this.credito.HeaderText = "Credito";
-            this.credito.MinimumWidth = 6;
-            this.credito.Name = "credito";
-            this.credito.ReadOnly = true;
-            this.credito.Width = 79;
-            // 
-            // tipo
-            // 
-            this.tipo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.tipo.DataPropertyName = "tipo";
-            this.tipo.HeaderText = "Tipo";
-            this.tipo.MinimumWidth = 6;
-            this.tipo.Name = "tipo";
-            this.tipo.ReadOnly = true;
-            this.tipo.Width = 80;
-            // 
-            // promedio
-            // 
-            this.promedio.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.promedio.DataPropertyName = "promedio";
-            dataGridViewCellStyle21.Format = "F3";
-            this.promedio.DefaultCellStyle = dataGridViewCellStyle21;
-            this.promedio.HeaderText = "Promedio";
-            this.promedio.MinimumWidth = 6;
-            this.promedio.Name = "promedio";
-            this.promedio.ReadOnly = true;
-            this.promedio.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.promedio.Width = 95;
-            // 
-            // idCorteMaestro
-            // 
-            this.idCorteMaestro.DataPropertyName = "idCorteMaestro";
-            this.idCorteMaestro.HeaderText = "ID Codigo Maestro";
-            this.idCorteMaestro.MinimumWidth = 6;
-            this.idCorteMaestro.Name = "idCorteMaestro";
-            this.idCorteMaestro.ReadOnly = true;
-            this.idCorteMaestro.Visible = false;
-            // 
-            // corteMaestro
-            // 
-            this.corteMaestro.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.corteMaestro.DataPropertyName = "corteMaestro";
-            this.corteMaestro.HeaderText = "Corte Maestro";
-            this.corteMaestro.MinimumWidth = 6;
-            this.corteMaestro.Name = "corteMaestro";
-            this.corteMaestro.ReadOnly = true;
-            this.corteMaestro.Width = 110;
-            // 
-            // independiente
-            // 
-            this.independiente.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.independiente.DataPropertyName = "independiente";
-            this.independiente.HeaderText = "Independiente";
-            this.independiente.MinimumWidth = 6;
-            this.independiente.Name = "independiente";
-            this.independiente.ReadOnly = true;
-            this.independiente.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.independiente.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            this.independiente.Width = 85;
-            // 
-            // porcentaje
-            // 
-            this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.porcentaje.DataPropertyName = "porcentaje";
-            dataGridViewCellStyle22.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle22.Format = "N3";
-            dataGridViewCellStyle22.NullValue = null;
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle22;
-            this.porcentaje.HeaderText = "Porcentaje";
-            this.porcentaje.MinimumWidth = 6;
-            this.porcentaje.Name = "porcentaje";
-            this.porcentaje.ReadOnly = true;
-            this.porcentaje.Width = 80;
-            // 
-            // porcentajeHueso
-            // 
-            this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
-            dataGridViewCellStyle23.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle23.Format = "N2";
-            dataGridViewCellStyle23.NullValue = null;
-            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle23;
-            this.porcentajeHueso.HeaderText = "% Desperdicio";
-            this.porcentajeHueso.MinimumWidth = 6;
-            this.porcentajeHueso.Name = "porcentajeHueso";
-            this.porcentajeHueso.ReadOnly = true;
-            this.porcentajeHueso.Width = 115;
-            // 
-            // desvioEstandar
-            // 
-            this.desvioEstandar.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.desvioEstandar.DataPropertyName = "desvioEstandar";
-            dataGridViewCellStyle24.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle24.Format = "N2";
-            dataGridViewCellStyle24.NullValue = null;
-            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle24;
-            this.desvioEstandar.FillWeight = 90F;
-            this.desvioEstandar.HeaderText = "Desvío Estandar";
-            this.desvioEstandar.MinimumWidth = 6;
-            this.desvioEstandar.Name = "desvioEstandar";
-            this.desvioEstandar.ReadOnly = true;
-            this.desvioEstandar.Width = 60;
-            // 
-            // habilitado
-            // 
-            this.habilitado.DataPropertyName = "habilitado";
-            this.habilitado.HeaderText = "Habilitado";
-            this.habilitado.MinimumWidth = 6;
-            this.habilitado.Name = "habilitado";
-            this.habilitado.ReadOnly = true;
-            // 
-            // enCierreStock
-            // 
-            this.enCierreStock.DataPropertyName = "enCierreStock";
-            this.enCierreStock.HeaderText = "En Cierre Stock";
-            this.enCierreStock.MinimumWidth = 6;
-            this.enCierreStock.Name = "enCierreStock";
-            this.enCierreStock.ReadOnly = true;
-            // 
-            // mayorista
-            // 
-            this.mayorista.DataPropertyName = "mayorista";
-            this.mayorista.HeaderText = "Mayorista";
-            this.mayorista.MinimumWidth = 6;
-            this.mayorista.Name = "mayorista";
-            this.mayorista.ReadOnly = true;
-            // 
-            // idSucursalSL
-            // 
-            this.idSucursalSL.DataPropertyName = "idSucursalSL";
-            this.idSucursalSL.HeaderText = "ID Sucursal SL";
-            this.idSucursalSL.MinimumWidth = 6;
-            this.idSucursalSL.Name = "idSucursalSL";
-            this.idSucursalSL.ReadOnly = true;
-            this.idSucursalSL.Visible = false;
-            // 
-            // sucursalSL
-            // 
-            this.sucursalSL.DataPropertyName = "sucursalSL";
-            this.sucursalSL.HeaderText = "Sucursal SL";
-            this.sucursalSL.MinimumWidth = 6;
-            this.sucursalSL.Name = "sucursalSL";
-            this.sucursalSL.ReadOnly = true;
-            this.sucursalSL.Visible = false;
-            // 
-            // stockSL
-            // 
-            this.stockSL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.stockSL.DataPropertyName = "stockSL";
-            dataGridViewCellStyle25.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle25.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle25.Format = "N3";
-            dataGridViewCellStyle25.NullValue = null;
-            this.stockSL.DefaultCellStyle = dataGridViewCellStyle25;
-            this.stockSL.FillWeight = 50F;
-            this.stockSL.HeaderText = "Stock S. Lorenzo";
-            this.stockSL.MinimumWidth = 6;
-            this.stockSL.Name = "stockSL";
-            this.stockSL.ReadOnly = true;
-            this.stockSL.Visible = false;
-            this.stockSL.Width = 90;
-            // 
-            // idSucursalSM
-            // 
-            this.idSucursalSM.DataPropertyName = "idSucursalSM";
-            this.idSucursalSM.HeaderText = "ID Sucursal SM";
-            this.idSucursalSM.MinimumWidth = 6;
-            this.idSucursalSM.Name = "idSucursalSM";
-            this.idSucursalSM.ReadOnly = true;
-            this.idSucursalSM.Visible = false;
-            // 
-            // sucursalSM
-            // 
-            this.sucursalSM.DataPropertyName = "sucursalSM";
-            this.sucursalSM.HeaderText = "Sucursal SM";
-            this.sucursalSM.MinimumWidth = 6;
-            this.sucursalSM.Name = "sucursalSM";
-            this.sucursalSM.ReadOnly = true;
-            this.sucursalSM.Visible = false;
-            // 
-            // stockSM
-            // 
-            this.stockSM.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.stockSM.DataPropertyName = "stockSM";
-            dataGridViewCellStyle26.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle26.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle26.Format = "N3";
-            dataGridViewCellStyle26.NullValue = null;
-            this.stockSM.DefaultCellStyle = dataGridViewCellStyle26;
-            this.stockSM.FillWeight = 50F;
-            this.stockSM.HeaderText = "Stock S. Martín";
-            this.stockSM.MinimumWidth = 6;
-            this.stockSM.Name = "stockSM";
-            this.stockSM.ReadOnly = true;
-            this.stockSM.Visible = false;
-            this.stockSM.Width = 90;
             // 
             // btnSeleccionar
             // 
@@ -715,6 +438,295 @@
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
             // 
+            // idCorte
+            // 
+            this.idCorte.DataPropertyName = "idCorte";
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.idCorte.DefaultCellStyle = dataGridViewCellStyle1;
+            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.MinimumWidth = 6;
+            this.idCorte.Name = "idCorte";
+            this.idCorte.ReadOnly = true;
+            this.idCorte.Visible = false;
+            // 
+            // codigo
+            // 
+            this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.codigo.DataPropertyName = "codigo";
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
+            this.codigo.HeaderText = "Código";
+            this.codigo.MinimumWidth = 6;
+            this.codigo.Name = "codigo";
+            this.codigo.ReadOnly = true;
+            this.codigo.Width = 80;
+            // 
+            // corte
+            // 
+            this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.corte.DataPropertyName = "corte";
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.corte.DefaultCellStyle = dataGridViewCellStyle3;
+            this.corte.HeaderText = "Corte";
+            this.corte.MinimumWidth = 6;
+            this.corte.Name = "corte";
+            this.corte.ReadOnly = true;
+            this.corte.Width = 150;
+            // 
+            // precioKg
+            // 
+            this.precioKg.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.precioKg.DataPropertyName = "precioKg";
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle4.Format = "N2";
+            dataGridViewCellStyle4.NullValue = null;
+            this.precioKg.DefaultCellStyle = dataGridViewCellStyle4;
+            this.precioKg.HeaderText = "Precio Kg.";
+            this.precioKg.MinimumWidth = 6;
+            this.precioKg.Name = "precioKg";
+            this.precioKg.ReadOnly = true;
+            this.precioKg.Width = 97;
+            // 
+            // efectivo
+            // 
+            this.efectivo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.efectivo.DataPropertyName = "efectivo";
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle5.Format = "N2";
+            this.efectivo.DefaultCellStyle = dataGridViewCellStyle5;
+            this.efectivo.HeaderText = "Efectivo";
+            this.efectivo.MinimumWidth = 6;
+            this.efectivo.Name = "efectivo";
+            this.efectivo.ReadOnly = true;
+            this.efectivo.Width = 84;
+            // 
+            // debito
+            // 
+            this.debito.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.debito.DataPropertyName = "debito";
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle6.Format = "N2";
+            this.debito.DefaultCellStyle = dataGridViewCellStyle6;
+            this.debito.HeaderText = "Debito";
+            this.debito.MinimumWidth = 6;
+            this.debito.Name = "debito";
+            this.debito.ReadOnly = true;
+            this.debito.Width = 76;
+            // 
+            // credito
+            // 
+            this.credito.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.credito.DataPropertyName = "credito";
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle7.Format = "N2";
+            this.credito.DefaultCellStyle = dataGridViewCellStyle7;
+            this.credito.HeaderText = "Credito";
+            this.credito.MinimumWidth = 6;
+            this.credito.Name = "credito";
+            this.credito.ReadOnly = true;
+            this.credito.Width = 79;
+            // 
+            // alicuotaIva
+            // 
+            this.alicuotaIva.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.alicuotaIva.DataPropertyName = "alicuotaIva";
+            this.alicuotaIva.HeaderText = "Alicuota Iva";
+            this.alicuotaIva.MinimumWidth = 6;
+            this.alicuotaIva.Name = "alicuotaIva";
+            this.alicuotaIva.ReadOnly = true;
+            this.alicuotaIva.Width = 105;
+            // 
+            // tipo
+            // 
+            this.tipo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.tipo.DataPropertyName = "tipo";
+            this.tipo.HeaderText = "Tipo";
+            this.tipo.MinimumWidth = 6;
+            this.tipo.Name = "tipo";
+            this.tipo.ReadOnly = true;
+            this.tipo.Width = 80;
+            // 
+            // promedio
+            // 
+            this.promedio.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.promedio.DataPropertyName = "promedio";
+            dataGridViewCellStyle8.Format = "F3";
+            this.promedio.DefaultCellStyle = dataGridViewCellStyle8;
+            this.promedio.HeaderText = "Promedio";
+            this.promedio.MinimumWidth = 6;
+            this.promedio.Name = "promedio";
+            this.promedio.ReadOnly = true;
+            this.promedio.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.promedio.Width = 95;
+            // 
+            // idCorteMaestro
+            // 
+            this.idCorteMaestro.DataPropertyName = "idCorteMaestro";
+            this.idCorteMaestro.HeaderText = "ID Codigo Maestro";
+            this.idCorteMaestro.MinimumWidth = 6;
+            this.idCorteMaestro.Name = "idCorteMaestro";
+            this.idCorteMaestro.ReadOnly = true;
+            this.idCorteMaestro.Visible = false;
+            // 
+            // corteMaestro
+            // 
+            this.corteMaestro.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.corteMaestro.DataPropertyName = "corteMaestro";
+            this.corteMaestro.HeaderText = "Corte Maestro";
+            this.corteMaestro.MinimumWidth = 6;
+            this.corteMaestro.Name = "corteMaestro";
+            this.corteMaestro.ReadOnly = true;
+            this.corteMaestro.Width = 120;
+            // 
+            // independiente
+            // 
+            this.independiente.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.independiente.DataPropertyName = "independiente";
+            this.independiente.HeaderText = "Independiente";
+            this.independiente.MinimumWidth = 6;
+            this.independiente.Name = "independiente";
+            this.independiente.ReadOnly = true;
+            this.independiente.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.independiente.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.independiente.Width = 85;
+            // 
+            // porcentaje
+            // 
+            this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.porcentaje.DataPropertyName = "porcentaje";
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Format = "N3";
+            dataGridViewCellStyle9.NullValue = null;
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle9;
+            this.porcentaje.HeaderText = "Porcentaje";
+            this.porcentaje.MinimumWidth = 6;
+            this.porcentaje.Name = "porcentaje";
+            this.porcentaje.ReadOnly = true;
+            this.porcentaje.Width = 80;
+            // 
+            // porcentajeHueso
+            // 
+            this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle10.Format = "N2";
+            dataGridViewCellStyle10.NullValue = null;
+            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle10;
+            this.porcentajeHueso.HeaderText = "% Desperdicio";
+            this.porcentajeHueso.MinimumWidth = 6;
+            this.porcentajeHueso.Name = "porcentajeHueso";
+            this.porcentajeHueso.ReadOnly = true;
+            this.porcentajeHueso.Width = 115;
+            // 
+            // desvioEstandar
+            // 
+            this.desvioEstandar.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.desvioEstandar.DataPropertyName = "desvioEstandar";
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle11.Format = "N2";
+            dataGridViewCellStyle11.NullValue = null;
+            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle11;
+            this.desvioEstandar.FillWeight = 90F;
+            this.desvioEstandar.HeaderText = "Desvío Estandar";
+            this.desvioEstandar.MinimumWidth = 6;
+            this.desvioEstandar.Name = "desvioEstandar";
+            this.desvioEstandar.ReadOnly = true;
+            this.desvioEstandar.Width = 60;
+            // 
+            // habilitado
+            // 
+            this.habilitado.DataPropertyName = "habilitado";
+            this.habilitado.HeaderText = "Habilitado";
+            this.habilitado.MinimumWidth = 6;
+            this.habilitado.Name = "habilitado";
+            this.habilitado.ReadOnly = true;
+            // 
+            // enCierreStock
+            // 
+            this.enCierreStock.DataPropertyName = "enCierreStock";
+            this.enCierreStock.HeaderText = "En Cierre Stock";
+            this.enCierreStock.MinimumWidth = 6;
+            this.enCierreStock.Name = "enCierreStock";
+            this.enCierreStock.ReadOnly = true;
+            // 
+            // mayorista
+            // 
+            this.mayorista.DataPropertyName = "mayorista";
+            this.mayorista.HeaderText = "Mayorista";
+            this.mayorista.MinimumWidth = 6;
+            this.mayorista.Name = "mayorista";
+            this.mayorista.ReadOnly = true;
+            // 
+            // idSucursalSL
+            // 
+            this.idSucursalSL.DataPropertyName = "idSucursalSL";
+            this.idSucursalSL.HeaderText = "ID Sucursal SL";
+            this.idSucursalSL.MinimumWidth = 6;
+            this.idSucursalSL.Name = "idSucursalSL";
+            this.idSucursalSL.ReadOnly = true;
+            this.idSucursalSL.Visible = false;
+            // 
+            // sucursalSL
+            // 
+            this.sucursalSL.DataPropertyName = "sucursalSL";
+            this.sucursalSL.HeaderText = "Sucursal SL";
+            this.sucursalSL.MinimumWidth = 6;
+            this.sucursalSL.Name = "sucursalSL";
+            this.sucursalSL.ReadOnly = true;
+            this.sucursalSL.Visible = false;
+            // 
+            // stockSL
+            // 
+            this.stockSL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.stockSL.DataPropertyName = "stockSL";
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle12.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle12.Format = "N3";
+            dataGridViewCellStyle12.NullValue = null;
+            this.stockSL.DefaultCellStyle = dataGridViewCellStyle12;
+            this.stockSL.FillWeight = 50F;
+            this.stockSL.HeaderText = "Stock S. Lorenzo";
+            this.stockSL.MinimumWidth = 6;
+            this.stockSL.Name = "stockSL";
+            this.stockSL.ReadOnly = true;
+            this.stockSL.Visible = false;
+            this.stockSL.Width = 90;
+            // 
+            // idSucursalSM
+            // 
+            this.idSucursalSM.DataPropertyName = "idSucursalSM";
+            this.idSucursalSM.HeaderText = "ID Sucursal SM";
+            this.idSucursalSM.MinimumWidth = 6;
+            this.idSucursalSM.Name = "idSucursalSM";
+            this.idSucursalSM.ReadOnly = true;
+            this.idSucursalSM.Visible = false;
+            // 
+            // sucursalSM
+            // 
+            this.sucursalSM.DataPropertyName = "sucursalSM";
+            this.sucursalSM.HeaderText = "Sucursal SM";
+            this.sucursalSM.MinimumWidth = 6;
+            this.sucursalSM.Name = "sucursalSM";
+            this.sucursalSM.ReadOnly = true;
+            this.sucursalSM.Visible = false;
+            // 
+            // stockSM
+            // 
+            this.stockSM.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.stockSM.DataPropertyName = "stockSM";
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle13.Format = "N3";
+            dataGridViewCellStyle13.NullValue = null;
+            this.stockSM.DefaultCellStyle = dataGridViewCellStyle13;
+            this.stockSM.FillWeight = 50F;
+            this.stockSM.HeaderText = "Stock S. Martín";
+            this.stockSM.MinimumWidth = 6;
+            this.stockSM.Name = "stockSM";
+            this.stockSM.ReadOnly = true;
+            this.stockSM.Visible = false;
+            this.stockSM.Width = 90;
+            // 
             // formCortes
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -766,6 +778,10 @@
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.TextBox txtCodigoDesde;
         protected System.Windows.Forms.Label lblActualizar;
+        protected System.Windows.Forms.ComboBox comboTipo;
+        protected System.Windows.Forms.Label label6;
+        protected System.Windows.Forms.TextBox txtBuscarMaestro;
+        protected System.Windows.Forms.Label label4;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
@@ -773,6 +789,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn efectivo;
         private System.Windows.Forms.DataGridViewTextBoxColumn debito;
         private System.Windows.Forms.DataGridViewTextBoxColumn credito;
+        private System.Windows.Forms.DataGridViewTextBoxColumn alicuotaIva;
         private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
         private System.Windows.Forms.DataGridViewTextBoxColumn promedio;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMaestro;
@@ -790,9 +807,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn stockSM;
-        protected System.Windows.Forms.ComboBox comboTipo;
-        protected System.Windows.Forms.Label label6;
-        protected System.Windows.Forms.TextBox txtBuscarMaestro;
-        protected System.Windows.Forms.Label label4;
     }
 }
