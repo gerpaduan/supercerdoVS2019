@@ -13,6 +13,8 @@ namespace Entidades
         public string corte;
         public float cantKgs;
         public float precioKg;
+        private float idAlicuotaIva;
+        private float alicuotaIva;
         public float totalS;
         public float bonificacion;
         public string estado;
@@ -155,5 +157,8 @@ namespace Entidades
                 totalS = value;
             }
         }
+
+        public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
+        public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
     }
 }

@@ -28,6 +28,8 @@ namespace Entidades
          float precioKg;
          float bonificacion;
          float precioReal;
+        private float idAlicuotaIva;
+        float alicuotaIva;
          Corte corte;
          Venta venta;
          int estado;
@@ -159,5 +161,8 @@ namespace Entidades
                 estado = value;
             }
         }
+
+        public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
+        public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
     }
 }

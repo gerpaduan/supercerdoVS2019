@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using Entidades;
 
 namespace Datos
 {
@@ -208,6 +209,8 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
             cmVenta.Parameters.AddWithValue("@idAnulado", oLineaE.Estado);
             cmVenta.Parameters.AddWithValue("@cantKg", Math.Round(oLineaE.CantKg, 3));
+            cmVenta.Parameters.AddWithValue("@idAlicuotaIva", oLineaE.Corte.IdAlicuotaIva);
+            cmVenta.Parameters.AddWithValue("@alicuotaIva", oLineaE.Corte.AlicuotaIva);
             cmVenta.Parameters.AddWithValue("@kgsAjusteTarj", Math.Round(oLineaE.KgsAjusteTarj, 3));
             cmVenta.Parameters.AddWithValue("@porcKgsAjusteTarj", oLineaE.CantKg == 0 ? 0 : Math.Round(oLineaE.KgsAjusteTarj / oLineaE.CantKg, 3));
             cmVenta.Parameters.AddWithValue("@precioKg", Math.Round(oLineaE.PrecioKg, 2));
@@ -341,6 +344,8 @@ namespace Datos
                         oLinea.Corte = oCorte;
 
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
+                        oLinea.IdAlicuotaIva = Convert.ToInt32(drLinea["idAlicuotaIva"]);
+                        oLinea.AlicuotaIva = float.Parse(drLinea["alicuotaIva"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
                         oLinea.KgsAjusteTarj = float.Parse(drLinea["kgsAjusteTarj"].ToString());
                         oLinea.Bonificacion = string.IsNullOrEmpty(drLinea["bonificacion"].ToString()) ? 0 : float.Parse(drLinea["bonificacion"].ToString());

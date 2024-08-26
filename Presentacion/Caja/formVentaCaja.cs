@@ -1092,6 +1092,8 @@ namespace Presentacion.Caja
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                                 oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
+                                oCorteE.IdAlicuotaIva = Convert.ToInt32(fila["idAlicuotaIva"].ToString());
+                                oCorteE.AlicuotaIva = float.Parse(fila["alicuotaIva"].ToString());
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.precioKgReferencia = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.tipo = fila["tipo"].ToString();

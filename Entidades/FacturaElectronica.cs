@@ -221,5 +221,9 @@ namespace Entidades
             get { return venta; }
             set { venta = value; }
         }
+
+        public List<AlicuotaIva> ListaAlicuota { get => listaAlicuota; set => listaAlicuota = value; }
+
+        private List<Entidades.AlicuotaIva> listaAlicuota;
     }
 }
