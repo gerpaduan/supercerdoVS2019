@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Cortes;
+using Utilidades;
 
 namespace Presentacion.Compras
 {
@@ -16,6 +17,7 @@ namespace Presentacion.Compras
         Negocio.Corte oCorteN = new Negocio.Corte();
         string estadoModificar;
         bool modificado = false;
+        bool buscaCodigoDesdeInterfase = false;
         formCompras frmCompras;
         Entidades.Usuario oUsuario;
         Entidades.Compra oCompraModificada = new Entidades.Compra();
@@ -53,6 +55,7 @@ namespace Presentacion.Compras
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
 
+            txtFechaCompra.TabStop = false;
             txtPrecioKg.TabStop = radioCorte.Checked;
             grupoMediaRes.Enabled = false;
             //cargarLista();
@@ -434,7 +437,7 @@ namespace Presentacion.Compras
                 if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
                 {
                     agregarMediaRes();
-                    txtCantKgs.Focus();
+                    txtKgMedia.Focus();
                 }
                 if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
                 oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
@@ -456,7 +459,7 @@ namespace Presentacion.Compras
             oCorteNuevaCompra = null;
             txtCodigo.Text = "";
             txtCorteNuevaCompra.Text = "";
-            //txtPrecioKg.Text = "";
+            txtPrecioKg.Text = oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ?  "" : txtPrecioKg.Text;
             txtCantKgs.Text = "";
             //comboSucursal.SelectedText = "";
 
@@ -500,45 +503,44 @@ namespace Presentacion.Compras
                 Entidades.Sucursal oSucursalE = new Entidades.Sucursal(); //creo objeto sucursal
                 oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
 
-                if (oSucursalE.IdSucursal == 1)
-                {
-                    oSucursalE.SucursalNombre = "San Lorenzo";
-                }
-                else
-                {
-                    oSucursalE.SucursalNombre = "San Martín";
-                }
 
                 cortePorCompra.idSucursal = oSucursalE.IdSucursal;
                 cortePorCompra.sucursal = oSucursalE.SucursalNombre;
 
-                int nroFila = validarCorteEnGrilla();
-                //si no está cargado
-                if (nroFila== -1)
-                {
-                    listaCortesEnGrilla.Add(cortePorCompra);
-                    cargarCortePorCompra(nroFila, cortePorCompra);
-                    cortePorCompra = null;
-                }
 
-                //si no se desea sumar kg al corte ya ingresado
-                if (nroFila == -2)
-                {
-                    cortePorCompra = null;
-                }
+                listaCortesEnGrilla.Add(cortePorCompra);
+                cargarCortePorCompra(-1, cortePorCompra);
+                cortePorCompra = null;
 
-                //sumar los kg al corte ya ingresado
-                if (nroFila > -1)
-                {
-                    listaCortesEnGrilla[nroFila].cantKgs = listaCortePorCompra[nroFila].cantKgs + cortePorCompra.cantKgs;
-                    listaCortesEnGrilla[nroFila].totalS = listaCortesEnGrilla[nroFila].totalS + (cortePorCompra.cantKgs * cortePorCompra.precioKg);
+                ///****SE CANCELA LA SUMA DE LAS LINEAS PARA EL MISMO CODIGO DE PRODUCTO
+                ///
+                //int nroFila = validarCorteEnGrilla();
+                ////si no está cargado
+                //if (nroFila== -1)
+                //{
+                //    listaCortesEnGrilla.Add(cortePorCompra);
+                //    cargarCortePorCompra(nroFila, cortePorCompra);
+                //    cortePorCompra = null;
+                //}
 
-                    cortePorCompra.cantKgs = listaCortesEnGrilla[nroFila].cantKgs;
-                    cortePorCompra.totalS = listaCortesEnGrilla[nroFila].totalS;
+                ////si no se desea sumar kg al corte ya ingresado
+                //if (nroFila == -2)
+                //{
+                //    cortePorCompra = null;
+                //}
 
-                    cargarCortePorCompra(nroFila, cortePorCompra);
-                    cortePorCompra = null;
-                }
+                ////sumar los kg al corte ya ingresado
+                //if (nroFila > -1)
+                //{
+                //    listaCortesEnGrilla[nroFila].cantKgs = listaCortePorCompra[nroFila].cantKgs + cortePorCompra.cantKgs;
+                //    listaCortesEnGrilla[nroFila].totalS = listaCortesEnGrilla[nroFila].totalS + (cortePorCompra.cantKgs * cortePorCompra.precioKg);
+
+                //    cortePorCompra.cantKgs = listaCortesEnGrilla[nroFila].cantKgs;
+                //    cortePorCompra.totalS = listaCortesEnGrilla[nroFila].totalS;
+
+                //    cargarCortePorCompra(nroFila, cortePorCompra);
+                //    cortePorCompra = null;
+                //}
             }
             catch (Exception ex)
             {
@@ -889,9 +891,12 @@ namespace Presentacion.Compras
         //comunicación con interface
         public void EnviarCorte(Entidades.Corte corte)
         {
-            //oCorteNuevaCompra = new Entidades.Corte();
+            buscaCodigoDesdeInterfase = true;
             oCorteNuevaCompra = corte;
-            this.txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
+            //this.txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
+            this.txtCodigo.Text = oCorteNuevaCompra.codigo.ToString();
+            //this.txtPrecioKg.Text = oCorteNuevaCompra.precioKg.ToString("F2");
+            //buscaCodigoDesdeInterfase = false;
         }
         
         private void btnBuscaCorte_Click(object sender, EventArgs e)
@@ -911,8 +916,8 @@ namespace Presentacion.Compras
         {
             if (e.KeyChar == (char)(Keys.Enter))
             {
-                e.Handled = true;
-                SendKeys.Send("{TAB}");
+                    e.Handled = true;
+                    SendKeys.Send("{TAB}");
             }
         }
 
@@ -942,9 +947,11 @@ namespace Presentacion.Compras
                             oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                             oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
+                            oCorteNuevaCompra.precioKg = Util_Form.convertFloat(fila["precioKG"].ToString(), false);
                         }
                         //se cargan los datos del corte
                         txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
+                        txtPrecioKg.Text = oCorteNuevaCompra.precioKg.ToString("F2");
                     }
                     else
                     {
@@ -988,7 +995,7 @@ namespace Presentacion.Compras
 
         private void txtCorteNuevaCompra_TextChanged(object sender, EventArgs e)
         {
-            txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
+            //txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
         }
 
         private void cargarReporte()
