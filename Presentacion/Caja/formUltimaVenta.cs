@@ -171,9 +171,6 @@ namespace Presentacion.Caja
             txtCantItems.Text = grillaLineasVenta.Rows.Count.ToString();
             txtTotalKgs.Text = totalKgs.ToString("F3");
             txtTotalS.Text = totalPesos.ToString("N2");
-            anularVenta.Enabled = totalPesos > 0 ? true : false;
-            //totalVenta = float.Parse(txtTotalS.Text.Trim());
-            //abonar();
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)

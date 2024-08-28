@@ -759,6 +759,24 @@ namespace Presentacion.Cortes
 
         private void formReporteStock_Load(object sender, EventArgs e)
         {
+            //this.comboTipoReporte.Items.AddRange(new object[] {
+            //"Stock Actual",
+            //"Cierre Stock",
+            //"Stock Progresivo",
+            //"Cierre Stock 2",
+            //"Ingreso - Egreso",
+            //"Acum. Ventas",
+            //"Total Cortes Vendidos",
+            //"Total Kgs Corte/Compra",
+            //"Movimiento/Corte",
+            //"Teorico - Real"}); 
+            this.comboTipoReporte.Items.AddRange(new object[] {
+            "Stock Actual",
+            "Cierre Stock",
+            "Stock Progresivo",
+            "Acum. Ventas",
+            "Total Cortes Vendidos"});
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             comboOrdenStock.SelectedIndex = 0;
         }
@@ -946,6 +964,19 @@ namespace Presentacion.Cortes
         }
 
         private void fechaDesdeProgresivo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyValue.Equals(13))
+            {
+                cargarGrilla();
+            }
+        }
+
+        private void txtDescripcion_TextChanged(object sender, EventArgs e)
+        {
+            lblActualizar.Visible = true;
+        }
+
+        private void txtDescripcion_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyValue.Equals(13))
             {

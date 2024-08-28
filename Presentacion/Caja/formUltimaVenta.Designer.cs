@@ -86,7 +86,6 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.cambiarVendedor = new System.Windows.Forms.ToolStripButton();
-            this.anularVenta = new System.Windows.Forms.ToolStripButton();
             this.ImprimirTicket = new System.Windows.Forms.ToolStripButton();
             this.facturaElec = new System.Windows.Forms.ToolStripButton();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
@@ -804,7 +803,6 @@
             this.barraControl.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cambiarVendedor,
-            this.anularVenta,
             this.ImprimirTicket,
             this.facturaElec});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
@@ -825,11 +823,6 @@
             this.cambiarVendedor.Text = "Cambiar vendedor";
             this.cambiarVendedor.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.cambiarVendedor.Click += new System.EventHandler(this.cambiarVendedor_Click);
-            // 
-            // anularVenta
-            // 
-            this.anularVenta.Name = "anularVenta";
-            this.anularVenta.Size = new System.Drawing.Size(29, 51);
             // 
             // ImprimirTicket
             // 
@@ -948,7 +941,6 @@
         protected internal System.Windows.Forms.ToolStrip barraControl;
         protected System.Windows.Forms.ToolStripButton cambiarVendedor;
         protected System.Windows.Forms.ToolStripButton ImprimirTicket;
-        protected System.Windows.Forms.ToolStripButton anularVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn idLineaVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;

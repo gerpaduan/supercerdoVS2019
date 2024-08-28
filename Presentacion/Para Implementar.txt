@@ -356,3 +356,9 @@ BEGIN
 END
 
 ****************************
+poner valores
+
+UPDATE [SuperCerdo].[dbo].[LineaVenta]
+SET [idAlicuotaIva] = 4, [alicuotaIva] = 10.5
+
+******************************

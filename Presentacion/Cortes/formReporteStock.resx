@@ -112,16 +112,16 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="btnExportar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        vwAADr8BOAVTJAAAATZJREFUOE+Vkq1uwzAURv0Ye4U9Rgf3FtNQVWhYWgVNRVXQNLayjrksgS5zmcsS
+        vgAADr4B6kKxwAAAATZJREFUOE+Vkq1uwzAURv0Ye4U9Rgf3FtNQVWhYWgVNRVXQNLayjrksgS5zmcsS
         aGgYeHc/x87q/GzalT61vvI5uXYiUqmLI3X1edBL/drStqgobp8WNnYdkV+IuTralpp2H2ZeUvFTfitz
         6wXyQiTLGQkmWCoeIEwg9xXJs6fno6dNoXPJkiAdwbqODkdNb6Wi3Z5TqLGgichP4U4cn6yJsRzdOjrV
         fBcTQZ0LAOv1a5Zm9TTpRRwCG9EextgA7M0Owdo5N0S/bKaCAcbYUdC0TQCw7niD934qOJ17AWCcG5eW
@@ -140,13 +140,13 @@
         QOALjyS6Aczn98wAAAAASUVORK5CYII=
 </value>
   </data>
-  <metadata name="barraControl.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+  <metadata name="barraControl.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
   <data name="Imprimir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAF1SURBVDhPlZBdS8JwFMb9DF75rbSPIkERRRGIIY0uJhEW
+        YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAF1SURBVDhPlZBdS8JwFMb9DF75rbSPIkERRRGIIY0uJhEW
         ZWUoFdmFveB6udCwF0qCSpGYtAuNRUQWdSV76hx35gypduDZfzt7nt85m69fJeYvIbJbf5c7ZL63UXsG
         rhvt/0PI+AGwjFeLAVdNQLv99AaR8NkjUDCAvA5vAJks4ey9BwAVmWk6hXPfSteA5I3HLU6eOuFE8QVK
         9g7RzDkDVDWOSCTKsu29RS/mli8wtaRhPLaK0clZTIzFoCoqUqk17O8doFKpoFwu90KE2mq9QcsXMB2L
@@ -155,7 +155,7 @@
         Mk0UESAYDLKZQqZp8lb0LLLjnaIGfSeF3SYKup9te//6afo95PN9Aa4Z+NRVkSxVAAAAAElFTkSuQmCC
 </value>
   </data>
-  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>50</value>
   </metadata>
 </root>
