@@ -480,7 +480,11 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
-            calcularFormula();
+            
+            ///Calcular Formula si es nuestro local
+            if (FormPrincipal.soyYo)
+                calcularFormula();
+
             capturarPantalla();
         }        
 
