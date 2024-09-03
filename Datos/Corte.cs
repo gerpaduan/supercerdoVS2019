@@ -515,6 +515,28 @@ namespace Datos
             cmCorte.Connection.Close();
         }
 
+        public DataTable getFormulaEmbutido(int idEmbutido)
+        {
+            DataTable dtFormula = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = "SELECT dbo.Corte.idCorte, dbo.Corte.codigo, dbo.Corte.corte, dbo.CortePorFormula.porcentaje, '' AS 'kgs', dbo.CortePorFormula.agregarAuto " +
+                "FROM  dbo.Formulas INNER JOIN  dbo.CortePorFormula ON dbo.Formulas.idFormula = dbo.CortePorFormula.idFormula INNER JOIN "+
+                "dbo.Corte ON dbo.CortePorFormula.idCorte = dbo.Corte.idCorte WHERE  dbo.Formulas.idEmbutido = " + idEmbutido + 
+                " ORDER BY dbo.CortePorFormula.agregarAuto desc";
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtFormula);
+
+            cmCorte.Connection.Close();
+            return dtFormula;
+        }
+        
+
         #endregion
 
         #region Alicuota Iva

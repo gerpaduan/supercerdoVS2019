@@ -205,6 +205,11 @@ namespace Negocio
         {
             oCorteD.eliminarFormula(idFormula);
         }
+
+        public DataTable getFormulaEmbutido(int idEmbutido)
+        {
+            return oCorteD.getFormulaEmbutido(idEmbutido);
+        }
             #endregion
 
             #region Movimiento

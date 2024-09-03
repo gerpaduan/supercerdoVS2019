@@ -10,6 +10,8 @@ using Presentacion.Embutidos;
 using Presentacion.Cortes;
 using System.Configuration;
 using Utilidades;
+using Entidades;
+using Microsoft.VisualBasic.Logging;
 
 
 namespace Presentacion
@@ -20,6 +22,7 @@ namespace Presentacion
 
         public formEmbutidos frmEmbutidos = new formEmbutidos();
         DataTable dtSucursales;
+        DataTable dtFormula;
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN=new Negocio.Corte();
 
@@ -78,16 +81,14 @@ namespace Presentacion
                 cargarEmbutido();
                 oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
 
-                //Se carga el rebozado - 17 es el equivalente al codigo de la milanesa
-                if (oEmbutidoE.corte.codigo.Equals(17))
-                {
-                    cargarRebozado();
-                }
+                //se cargan los ingredientes seatado como Agregar Automaticamente
+                cargarIngredientesFormula();
 
                 foreach (Entidades.CortePorEmbutido cortePorEmbutido in listaCortePorEmbutido)
                 {
                     oCorteN.agregarCortePorEmbutido(cortePorEmbutido);
                 }
+
                 saveChanges = true;
                 frmEmbutidos.cargarGrilla();
                 this.Close();
@@ -210,6 +211,25 @@ namespace Presentacion
             cargarGrilla();
         }
 
+        private void cargarIngredientesFormula()
+        {
+            ///Se cargan todos los ingredientes de la Formula que están seteado como Agregado Automaticamente
+            ///
+            for (int i = 0; i < dtFormula.Rows.Count; i++)
+            {
+                if (Convert.ToBoolean(dtFormula.Rows[i]["agregarAuto"]))
+                {
+                    oCortePorEmbutidoE = new Entidades.CortePorEmbutido();
+                    oCortePorEmbutidoE.embutido = oEmbutidoE;
+                    oCortePorEmbutidoE.corte = oCorteN.getCorteById(Convert.ToInt32(dtFormula.Rows[i]["idCorte"]),false);
+                    oCortePorEmbutidoE.kgUtilizado = Util_Form.convertFloat(dtFormula.Rows[i]["kgs"].ToString(), false);
+                    oCortePorEmbutidoE.PesoBalanza = false;
+
+                    listaCortePorEmbutido.Add(oCortePorEmbutidoE);
+                }
+            }
+        }
+
         private void cargarCortePorEmbutido()
         {
             oCortePorEmbutidoE = new Entidades.CortePorEmbutido();
@@ -323,138 +343,152 @@ namespace Presentacion
 
         private void calcularFormula()
         {
-            if (!oCorteEmbutidoE.tipo.Equals(Entidades.Corte.tipoCorte.Embutido.ToString()))
-            {
-                panelFormula.Visible = false;
-                //btnCalcularForm.Visible = false;
-                return;
-            }
-
-            panelFormula.Visible = true;
-            //btnCalcularForm.Visible = true;
-            
+            dtFormula = oCorteN.getFormulaEmbutido(oCorteEmbutidoE.idCorte);
+             
             //calcula total sin condimentos
             float totalKgSinCond = 0;
             foreach (Entidades.CortePorEmbutido oCortePorEmb in listaCortePorEmbutido)
             {
-                totalKgSinCond += !(oCortePorEmb.corte.codigo >= 2000 && oCortePorEmb.corte.codigo < 3000) ?
-                    oCortePorEmb.kgUtilizado : 0;
+                bool esFormula = false;
+                //recorre datatable de ingredientes en formula y si existe NO SUMA KGS para el calculo
+                for (int i = 0; i < dtFormula.Rows.Count; i++)
+                {
+                    esFormula = oCortePorEmb.corte.codigo.Equals(dtFormula.Rows[i]["codigo"]);
+                }
+                totalKgSinCond += !esFormula ? oCortePorEmb.kgUtilizado : 0;
             }
 
-            string sal, pimienta, nuez, bracolor, pimenton, producto;
-            sal = pimienta = nuez = bracolor = pimenton = producto = "-";
+
             int cantDecimales = 3;
-
-            switch (oCorteEmbutidoE.codigo)
+            float porcentaje;
+            for (int i = 0; i < dtFormula.Rows.Count; i++)
             {
-                    //chorizo
-                case 4:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salChorizo)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaChorizo)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezChorizo)), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.bracolorChorizo)), cantDecimales)).ToString("F3"));
-                    break;
-                    //salame
-                case 11:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salSalame)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaSalame)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezSalame)), cantDecimales)).ToString("F3"));
-                    producto = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.productoSalame)), cantDecimales)).ToString("F3"));
-                    break;
-                    //salchicha
-                case 33:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salSalchicha)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaSalchicha)), cantDecimales)).ToString("F3"));
-                    pimenton = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimentonSalchicha)), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.bracolorSalchicha)), cantDecimales)).ToString("F3"));
-                    break;
+                porcentaje = (Util_Form.convertFloat(dtFormula.Rows[i]["porcentaje"].ToString(), false));
+                dtFormula.Rows[i]["kgs"] = Convert.ToString((Math.Round((0.01 * totalKgSinCond *
+                        (porcentaje)), cantDecimales)).ToString("F3"));
+            }            
 
-                //morcilla
-                case 18:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salMorcilla)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaMorcilla)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezMorcilla)), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.bracolorMorcilla)), cantDecimales)).ToString("F3"));
-                    break;
-                //preparacion morcilla
-                case 2000:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salMorcilla)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaMorcilla)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezMorcilla)), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.bracolorMorcilla)), cantDecimales)).ToString("F3"));
-                    break;
-
-                //queso
-                case 28:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salQueso)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaQueso)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezQueso)), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.bracolorQueso)), cantDecimales)).ToString("F3"));
-                    break;
-
-                //preparacion queso
-                case 1999:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salQueso)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaQueso)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezQueso)), cantDecimales)).ToString("F3"));
-                    bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.bracolorQueso)), cantDecimales)).ToString("F3"));
-                    break;
-
-                //codeguin
-                case 43:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salCodeguin)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaCodeguin)), cantDecimales)).ToString("F3"));
-                    nuez = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.nuezCodeguin)), cantDecimales)).ToString("F3"));
-                    //bracolor = Convert.ToString((Math.Round((totalKgSinCond *
-                    //    (Entidades.Parametros.bracolorCodeguin)), cantDecimales)).ToString("F3"));
-                    break;
-
-                //milanesa
-                case 17:
-                    sal = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.salMilanesa)), cantDecimales)).ToString("F3"));
-                    pimienta = Convert.ToString((Math.Round((totalKgSinCond *
-                        (Entidades.Parametros.pimientaMilanesa)), cantDecimales)).ToString("F3"));
-                    break;
+            grillaFormula.DataSource = dtFormula;
+            // Deshabilitar la ordenación en todas las columnas
+            foreach (DataGridViewColumn column in grillaFormula.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
             }
 
-            txtSal.Text = sal;
-            txtPimienta.Text = pimienta;
-            txtNuez.Text = nuez;
-            txtBracolor.Text = bracolor;
-            txtPimenton.Text = pimenton;
-            txtProducto.Text = producto;
+
+            //string sal, pimienta, nuez, bracolor, pimenton, producto;
+            //sal = pimienta = nuez = bracolor = pimenton = producto = "-";
+
+            //switch (oCorteEmbutidoE.codigo)
+            //{
+            //        //chorizo
+            //    case 4:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salChorizo)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaChorizo)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezChorizo)), cantDecimales)).ToString("F3"));
+            //        bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.bracolorChorizo)), cantDecimales)).ToString("F3"));
+            //        break;
+            //        //salame
+            //    case 11:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salSalame)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaSalame)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezSalame)), cantDecimales)).ToString("F3"));
+            //        producto = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.productoSalame)), cantDecimales)).ToString("F3"));
+            //        break;
+            //        //salchicha
+            //    case 33:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salSalchicha)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaSalchicha)), cantDecimales)).ToString("F3"));
+            //        pimenton = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimentonSalchicha)), cantDecimales)).ToString("F3"));
+            //        bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.bracolorSalchicha)), cantDecimales)).ToString("F3"));
+            //        break;
+
+            //    //morcilla
+            //    case 18:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salMorcilla)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaMorcilla)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezMorcilla)), cantDecimales)).ToString("F3"));
+            //        bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.bracolorMorcilla)), cantDecimales)).ToString("F3"));
+            //        break;
+            //    //preparacion morcilla
+            //    case 2000:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salMorcilla)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaMorcilla)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezMorcilla)), cantDecimales)).ToString("F3"));
+            //        bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.bracolorMorcilla)), cantDecimales)).ToString("F3"));
+            //        break;
+
+            //    //queso
+            //    case 28:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salQueso)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaQueso)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezQueso)), cantDecimales)).ToString("F3"));
+            //        bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.bracolorQueso)), cantDecimales)).ToString("F3"));
+            //        break;
+
+            //    //preparacion queso
+            //    case 1999:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salQueso)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaQueso)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezQueso)), cantDecimales)).ToString("F3"));
+            //        bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.bracolorQueso)), cantDecimales)).ToString("F3"));
+            //        break;
+
+            //    //codeguin
+            //    case 43:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salCodeguin)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaCodeguin)), cantDecimales)).ToString("F3"));
+            //        nuez = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.nuezCodeguin)), cantDecimales)).ToString("F3"));
+            //        //bracolor = Convert.ToString((Math.Round((totalKgSinCond *
+            //        //    (Entidades.Parametros.bracolorCodeguin)), cantDecimales)).ToString("F3"));
+            //        break;
+
+            //    //milanesa
+            //    case 17:
+            //        sal = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.salMilanesa)), cantDecimales)).ToString("F3"));
+            //        pimienta = Convert.ToString((Math.Round((totalKgSinCond *
+            //            (Entidades.Parametros.pimientaMilanesa)), cantDecimales)).ToString("F3"));
+            //        break;
+            //}
+
+            //txtSal.Text = sal;
+            //txtPimienta.Text = pimienta;
+            //txtNuez.Text = nuez;
+            //txtBracolor.Text = bracolor;
+            //txtPimenton.Text = pimenton;
+            //txtProducto.Text = producto;
         }
 
         private void btnBuscarCorte_Click(object sender, EventArgs e)
@@ -480,11 +514,7 @@ namespace Presentacion
         private void btnAgregar_Click(object sender, EventArgs e)
         {
             agregarCorteEnEmbutido();
-            
-            ///Calcular Formula si es nuestro local
-            if (FormPrincipal.soyYo)
-                calcularFormula();
-
+            calcularFormula();
             capturarPantalla();
         }        
 
@@ -520,17 +550,6 @@ namespace Presentacion
                 SendKeys.Send("{TAB}");
             }
         }
-        
-        //Agregando rebozado si es Milanesa
-        private void cargarRebozado()
-        {
-            txtCodCorteEnEmbutido.Text = "301";
-            float rebozado = totalKg * float.Parse("0,20");
-            txtCantKgs.Text = rebozado.ToString();
-            cargarCortePorEmbutido();
-            agregarCorteEnEmbutido();
-        }
-        //Fin rebozado
 
         private void cargarCorteEnEmbutido()
         {
@@ -672,16 +691,6 @@ namespace Presentacion
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
-                //timer1.Enabled = false;
-                //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                //{
-                //    dejarDeLeerPeso = true;
-                //    checkLeerPeso.Checked = false;
-                //}
-                //else
-                //{
-                //timer1.Enabled = true;
-                //}
             }
         }
 
@@ -811,20 +820,6 @@ namespace Presentacion
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuarioNuevoEmbutido = usuario;
-        }
-
-        private void btnCalcularForm_Click(object sender, EventArgs e)
-        {
-            if (!panelFormula.Visible && MessageBox.Show("Si ya finalizó con la carga y desea obtener la fórmula presione 'Sí'", "Calcular fórmula",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2).Equals(DialogResult.No))
-                return;
-            
-            if (panelFormula.Visible && MessageBox.Show("¿Está seguro que desea actualizar la fórmula de los condimientos?", "Actualizar fórmula",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2).Equals(DialogResult.No))
-                return;
-
-            panelFormula.Visible = true;
-            calcularFormula();
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
