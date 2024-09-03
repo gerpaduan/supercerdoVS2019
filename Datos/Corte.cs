@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using Entidades;
+using Utilidades;
 
 namespace Datos
 {
@@ -352,6 +354,168 @@ namespace Datos
                 oCorteE = null;
             }
         }
+
+        #region formula 
+        public DataTable buscarFormula(string texto)
+        {
+            DataTable dtFormulas = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+
+            string consulta = "SELECT DISTINCT dbo.Formulas.idFormula, dbo.Corte.codigo, dbo.Corte.corte, dbo.Formulas.creado, dbo.Formulas.actualizado FROM" +
+                " dbo.Corte INNER JOIN  dbo.Formulas ON dbo.Corte.idCorte = dbo.Formulas.idEmbutido " +
+                " Where dbo.Corte.corte like '%" + texto + "%' "+// or dbo.Corte.codigo = " + texto + ""+
+                " ORDER BY dbo.Corte.codigo ";  //dbo.Corte.corte  like '%\" + texto + \"%'";
+            cmCorte.CommandText = consulta;
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtFormulas);
+            cmCorte.Parameters.AddWithValue("@texto", texto);
+
+            return dtFormulas;
+        }
+        public Entidades.Formula findFormulaByID(int idFormula)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "Select Formulas.* from Formulas where idFormula =" + idFormula;
+
+            SqlDataReader drFormula = cmCorte.ExecuteReader();
+
+            Entidades.Formula oFormula = new Entidades.Formula();
+            while (drFormula.Read())
+            {
+                oFormula.IdFormula = Convert.ToInt32(drFormula["idFormula"].ToString());
+                oFormula.Embutido = findCorteById(Convert.ToInt32(drFormula["idEmbutido"].ToString()), false);
+                
+                oFormula.Creado = Convert.ToDateTime(drFormula["creado"]);
+                oFormula.Actualizado = drFormula["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drFormula["actualizado"]);
+
+                Datos.Usuario oUsuarioD = new Usuario();
+                oFormula.CreadoPor = string.IsNullOrEmpty(drFormula["creadoPor"].ToString()) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drFormula["creadoPor"]));
+                oFormula.ActualizadoPor = string.IsNullOrEmpty(drFormula["actualizadoPor"].ToString()) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drFormula["actualizadoPor"]));
+
+                oFormula.ListaCortesEnFormula = cargarCortesPorFormula(oFormula);
+            }
+            cmCorte.Connection.Close();
+            return oFormula;
+        }
+        public List<Entidades.CortePorFormula> cargarCortesPorFormula(Entidades.Formula oFormula)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "SELECT * FROM CortePorFormula WHERE idFormula = " + oFormula.IdFormula;
+
+            List<Entidades.CortePorFormula> listaCortesPorFormula = new List<Entidades.CortePorFormula>();
+            SqlDataReader drFormula = cmCorte.ExecuteReader();
+
+            while (drFormula.Read())
+            {
+                Entidades.CortePorFormula oCortePorFormula = new Entidades.CortePorFormula();
+
+                oCortePorFormula.IdCorteEnFormula = Convert.ToInt32(drFormula["idCortePorFormula"].ToString());
+                oCortePorFormula.Formula = oFormula;
+                oCortePorFormula.CorteEnFormula = findCorteById(Convert.ToInt32(drFormula["idCorte"].ToString()),false);
+                oCortePorFormula.Porcentaje = float.Parse(drFormula["porcentaje"].ToString());
+                oCortePorFormula.AgregarAuto = Convert.ToBoolean(drFormula["agregarAuto"].ToString());
+
+                listaCortesPorFormula.Add(oCortePorFormula);
+                oCortePorFormula = null;
+            }
+            cmCorte.Connection.Close();
+            return listaCortesPorFormula;
+        }
+
+
+        public int existeFormula(int idEmbutido)
+        {
+            int idFormula = 0;
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = "Select idFormula from Formula where and idEmbutido = " + idEmbutido;
+            try
+            {
+                cmCorte.Connection.Open();
+                SqlDataReader drCorte = cmCorte.ExecuteReader();
+                using (drCorte)
+                {
+                    while (drCorte.Read())
+                    {
+                        idFormula = Convert.ToInt32(drCorte["idFormula"]);
+                    }
+                    return idFormula;
+                }
+            }
+            finally
+            {
+                cmCorte.Connection.Close();
+            }
+        }
+
+        public int addOrEditFormula(Entidades.Formula oFormula, List<Entidades.CortePorFormula> listaCortesPorFormula)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.CommandText = "addOrEditFormula";
+            cmCorte.Parameters.AddWithValue("@idFormula", oFormula.IdFormula);
+            cmCorte.Parameters.AddWithValue("@idEmbutido", oFormula.Embutido.idCorte); 
+            cmCorte.Parameters.AddWithValue("@creadoPor", oFormula.CreadoPor.Id);
+            cmCorte.Parameters.AddWithValue("@actualizadoPor", oFormula.ActualizadoPor!=null ? oFormula.ActualizadoPor.Id : 0);
+
+            oFormula.IdFormula = (int)cmCorte.ExecuteScalar();
+
+            cmCorte.CommandText = "agregarCortePorFormula";
+            cmCorte.Parameters.Clear();
+            foreach (Entidades.CortePorFormula item in listaCortesPorFormula)
+            {
+                cmCorte.Parameters.AddWithValue("@idFormula", oFormula.IdFormula);
+                cmCorte.Parameters.AddWithValue("@idCorte", item.CorteEnFormula1.idCorte );
+                cmCorte.Parameters.AddWithValue("@porcentaje", item.Porcentaje);
+                cmCorte.Parameters.AddWithValue("@agregarAuto", item.AgregarAuto);
+                cmCorte.ExecuteNonQuery();
+
+                cmCorte.Parameters.Clear();
+            }
+
+            cmCorte.Connection.Close();
+
+            return oFormula.IdFormula;
+        }
+
+        public void eliminarFormula(int idFormula)
+        {
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+
+            cmCorte.Connection.Open();
+
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "DELETE FROM  CortePorFormula WHERE idFormula = " + idFormula;
+            cmCorte.ExecuteNonQuery();
+
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "DELETE FROM  Formulas WHERE idFormula = " + idFormula;
+            cmCorte.ExecuteNonQuery();
+
+            cmCorte.Connection.Close();
+        }
+
+        #endregion
 
         #region Alicuota Iva
         public DataTable obtenerAlicuotasIva(bool mostrarTodos)

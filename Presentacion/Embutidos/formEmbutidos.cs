@@ -269,5 +269,20 @@ namespace Presentacion
             }
             oUsuario = null;
         }
+
+        private void formulas_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formFormulas"] != null)
+            {
+                Application.OpenForms["formFormulas"].Activate();
+                Application.OpenForms["formFormulas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formFormulas frmmFormulas = new formFormulas();
+                frmmFormulas.Show();
+            }
+
+        }
     }
 }

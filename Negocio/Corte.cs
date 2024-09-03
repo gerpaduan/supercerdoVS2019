@@ -184,9 +184,32 @@ namespace Negocio
              oCorteD.agregarCortePorEmbutido(oCortePorEmbutido);
          }
 
-         #region Movimiento
+        #region Formulas
+        public DataTable buscarFormula(string texto)
+        {
+            return oCorteD.buscarFormula(texto);
+        }
+        public Entidades.Formula findFormulaByID(int idFormula)
+        {
+            return oCorteD.findFormulaByID(idFormula);
+        }
+        public bool existeFormula(int idEmbutido)
+        { 
+            return (oCorteD.existeFormula(idEmbutido) > 0);
+        }
+            public int addOrEditFormula(Entidades.Formula oFormula, List<Entidades.CortePorFormula> listaCortesPorFormula)
+        {
+            return oCorteD.addOrEditFormula(oFormula, listaCortesPorFormula);
+        }
+        public void eliminarFormula(int idFormula)
+        {
+            oCorteD.eliminarFormula(idFormula);
+        }
+            #endregion
 
-         public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
+            #region Movimiento
+
+            public int addOrEditMovimiento(Entidades.Movimiento oMovimientoE)
          {
              return oCorteD.addOrEditMovimiento(oMovimientoE);
          }

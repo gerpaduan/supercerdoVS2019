@@ -32,15 +32,11 @@
             this.btnSalir = new System.Windows.Forms.Button();
             this.grillaEmbutidos = new System.Windows.Forms.DataGridView();
             this.barraControl = new System.Windows.Forms.ToolStrip();
-            this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.LineasEmb = new System.Windows.Forms.ToolStripButton();
-            this.btnIngrRapido = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.btnBuscaProd = new System.Windows.Forms.Button();
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
@@ -52,6 +48,11 @@
             this.label8 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnSeleccionar = new System.Windows.Forms.Button();
+            this.btnBuscaProd = new System.Windows.Forms.Button();
+            this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.LineasEmb = new System.Windows.Forms.ToolStripButton();
+            this.btnIngrRapido = new System.Windows.Forms.ToolStripButton();
+            this.formulas = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).BeginInit();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -98,7 +99,8 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.nuevo,
             this.LineasEmb,
-            this.btnIngrRapido});
+            this.btnIngrRapido,
+            this.formulas});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(13, 0, 0, 0);
@@ -106,38 +108,6 @@
             this.barraControl.TabIndex = 13;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
-            // 
-            // nuevo
-            // 
-            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
-            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.nuevo.Name = "nuevo";
-            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(58, 51);
-            this.nuevo.Text = "&Nuevo";
-            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
-            // 
-            // LineasEmb
-            // 
-            this.LineasEmb.Image = ((System.Drawing.Image)(resources.GetObject("LineasEmb.Image")));
-            this.LineasEmb.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.LineasEmb.Name = "LineasEmb";
-            this.LineasEmb.Size = new System.Drawing.Size(91, 51);
-            this.LineasEmb.Text = "Lineas Emb.";
-            this.LineasEmb.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.LineasEmb.Click += new System.EventHandler(this.LineasEmb_Click);
-            // 
-            // btnIngrRapido
-            // 
-            this.btnIngrRapido.Image = ((System.Drawing.Image)(resources.GetObject("btnIngrRapido.Image")));
-            this.btnIngrRapido.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnIngrRapido.Name = "btnIngrRapido";
-            this.btnIngrRapido.Size = new System.Drawing.Size(94, 51);
-            this.btnIngrRapido.Text = "Ingr. Rápido";
-            this.btnIngrRapido.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.btnIngrRapido.Click += new System.EventHandler(this.btnIngrRapido_Click);
             // 
             // pnlBuscar
             // 
@@ -213,19 +183,6 @@
             this.label7.Size = new System.Drawing.Size(66, 18);
             this.label7.TabIndex = 40;
             this.label7.Text = "Sucursal";
-            // 
-            // btnBuscaProd
-            // 
-            this.btnBuscaProd.AccessibleDescription = "";
-            this.btnBuscaProd.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscaProd.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscaProd.Image")));
-            this.btnBuscaProd.Location = new System.Drawing.Point(335, 43);
-            this.btnBuscaProd.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnBuscaProd.Name = "btnBuscaProd";
-            this.btnBuscaProd.Size = new System.Drawing.Size(37, 30);
-            this.btnBuscaProd.TabIndex = 15;
-            this.btnBuscaProd.UseVisualStyleBackColor = true;
-            this.btnBuscaProd.Click += new System.EventHandler(this.btnBuscaProd_Click);
             // 
             // txtDescripcion
             // 
@@ -368,6 +325,61 @@
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
+            // btnBuscaProd
+            // 
+            this.btnBuscaProd.AccessibleDescription = "";
+            this.btnBuscaProd.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscaProd.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscaProd.Image")));
+            this.btnBuscaProd.Location = new System.Drawing.Point(335, 43);
+            this.btnBuscaProd.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscaProd.Name = "btnBuscaProd";
+            this.btnBuscaProd.Size = new System.Drawing.Size(37, 30);
+            this.btnBuscaProd.TabIndex = 15;
+            this.btnBuscaProd.UseVisualStyleBackColor = true;
+            this.btnBuscaProd.Click += new System.EventHandler(this.btnBuscaProd_Click);
+            // 
+            // nuevo
+            // 
+            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
+            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.nuevo.Name = "nuevo";
+            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.nuevo.Size = new System.Drawing.Size(58, 51);
+            this.nuevo.Text = "&Nuevo";
+            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            // 
+            // LineasEmb
+            // 
+            this.LineasEmb.Image = ((System.Drawing.Image)(resources.GetObject("LineasEmb.Image")));
+            this.LineasEmb.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.LineasEmb.Name = "LineasEmb";
+            this.LineasEmb.Size = new System.Drawing.Size(91, 51);
+            this.LineasEmb.Text = "Lineas Emb.";
+            this.LineasEmb.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.LineasEmb.Click += new System.EventHandler(this.LineasEmb_Click);
+            // 
+            // btnIngrRapido
+            // 
+            this.btnIngrRapido.Image = ((System.Drawing.Image)(resources.GetObject("btnIngrRapido.Image")));
+            this.btnIngrRapido.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnIngrRapido.Name = "btnIngrRapido";
+            this.btnIngrRapido.Size = new System.Drawing.Size(94, 51);
+            this.btnIngrRapido.Text = "Ingr. Rápido";
+            this.btnIngrRapido.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.btnIngrRapido.Click += new System.EventHandler(this.btnIngrRapido_Click);
+            // 
+            // formulas
+            // 
+            this.formulas.Image = ((System.Drawing.Image)(resources.GetObject("formulas.Image")));
+            this.formulas.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.formulas.Name = "formulas";
+            this.formulas.Size = new System.Drawing.Size(73, 51);
+            this.formulas.Text = "Fórmulas";
+            this.formulas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.formulas.Click += new System.EventHandler(this.formulas_Click);
+            // 
             // formEmbutidos
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -423,5 +435,6 @@
         protected System.Windows.Forms.Label lblActualizar;
         private System.Windows.Forms.ToolStripButton LineasEmb;
         private System.Windows.Forms.ToolStripButton btnIngrRapido;
+        private System.Windows.Forms.ToolStripButton formulas;
     }
 }
