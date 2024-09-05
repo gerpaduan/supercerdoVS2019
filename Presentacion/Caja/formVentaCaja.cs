@@ -78,6 +78,8 @@ namespace Presentacion.Caja
 
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+        bool redondeo = Convert.ToBoolean(ConfigurationManager.AppSettings["redondeo"].ToString());
+        int importeMaxRedondeo = Convert.ToInt32(ConfigurationManager.AppSettings["importeMaxRedondeo"].ToString());        
         bool cartelPrimerCorteVendedor = Convert.ToBoolean(ConfigurationManager.AppSettings["cartelPrimerCorteVendedor"].ToString());
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
@@ -1292,7 +1294,7 @@ namespace Presentacion.Caja
                             ///*la cantidad de ganancia NO excede a $5
                             ///*el Kg no es un número redondo
                             ///
-                            bool redondear = oCorteE.codigo < 100 && oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < 5.1 && !esKgsRedondo ? true : false;
+                            bool redondear = oCorteE.codigo < 100 && oCliente.idPersona.Equals(idConsumidorFinal) && ganPesosTotRedondeo < importeMaxRedondeo && !esKgsRedondo ? true : false;
 
                             if (redondear)
                             {
@@ -1354,21 +1356,36 @@ namespace Presentacion.Caja
                 int precioSinDecimal = Convert.ToInt32(Math.Truncate(importe));
                 float centavos = importe - precioSinDecimal;
                 int cantDigitos = precioSinDecimal.ToString().Length;
-                ///obtengo el numero la unidad del importe (CDU,dd)
-                ///C=Centena / D=Decena / U=Unidad / dd=decimales
-                int unidadPrecio = Convert.ToInt32(char.GetNumericValue(precioSinDecimal.ToString(),
-                    precioSinDecimal.ToString().Length - 1));
+                /////obtengo el numero la unidad del importe (CDU,dd)
+                /////C=Centena / D=Decena / U=Unidad / dd=decimales
+                //int unidadPrecio = Convert.ToInt32(char.GetNumericValue(precioSinDecimal.ToString(),
+                //    precioSinDecimal.ToString().Length - 1));
 
-                //si la unidad del importe es mayor o igual a 5 pesos
-                if (unidadPrecio >= 5 && unidadPrecio <= 9)
+                ////si la unidad del importe es mayor o igual a 5 pesos
+                //if (unidadPrecio >= 5 && unidadPrecio <= 9)
+                //{
+                //    //Calculo unos decimales Random para variar el importe
+                //    //Random rndRedondeo = new Random();
+                //    //float centavosRedondeo = (rndRedondeo.Next(2, 50)) ;
+                //    //importe = (precioSinDecimal + (10 - unidadPrecio)) - centavosRedondeo;
+                //    importe = (precioSinDecimal + (9 - unidadPrecio)) + centavos;
+                //}             
+
+                ///obtengo el numero la decena del importe (CDU,dd)
+                ///C=Centena / D=Decena / U=Unidad / dd=decimales
+                int decenaPrecio; //= Convert.ToInt32(char.GetNumericValue(precioSinDecimal.ToString(),
+
+                //si el numero es mayor a mil se aplicar redondeo
+                if (cantDigitos > 3)
                 {
-                    //Calculo unos decimales Random para variar el importe
-                    //Random rndRedondeo = new Random();
-                    //float centavosRedondeo = (rndRedondeo.Next(2, 50)) ;
-                    //importe = (precioSinDecimal + (10 - unidadPrecio)) - centavosRedondeo;
-                    importe = (precioSinDecimal + (9 - unidadPrecio)) + centavos;
-                }             
+                     decenaPrecio = Convert.ToInt32(precioSinDecimal.ToString().Substring(cantDigitos - 2));
+
+                    //si la decena está entre 50 y 90 pesos
+                    if (decenaPrecio >= 50 && decenaPrecio <= 90)
+                        importe = (precioSinDecimal + (90 - decenaPrecio)) + centavos;
+                }
             }
+
             return importe;
         }
 
@@ -1783,6 +1800,7 @@ namespace Presentacion.Caja
                 ultimaVentaVendedor();
                 restablecerFormaDePago();
                 comboTipoComprobante.SelectedIndex = 0;
+                checkBoxRedondeo.Checked = checkBoxRedondeo.Visible = redondeo;
             }
             else
             {
