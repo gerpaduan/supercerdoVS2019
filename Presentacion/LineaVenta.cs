@@ -13,6 +13,8 @@ namespace Presentacion
         public string corte;
         public float cantKgs;
         public float precioKg;
+        private float idAlicuotaIva;
+        float alicuotaIva;
         public float totalS;
         public float bonificacion;
         public string estado;
@@ -23,6 +25,9 @@ namespace Presentacion
         public float kgsAjusteTarj;
         public float kgsRedondeo;
         public float kgsTotalCalculado;
+
+        public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
+        public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
 
         public float KgsTotalCalculado
         {

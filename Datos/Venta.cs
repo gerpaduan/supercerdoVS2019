@@ -316,6 +316,7 @@ namespace Datos
             cmVenta.CommandText = "obtenerLineasVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", idVenta);
 
+            Datos.Corte oCorteD = new Datos.Corte();    
             //creo lista de Lineas
             List<Entidades.LineaVenta> listaLineasVenta = new List<Entidades.LineaVenta>();
             try
@@ -335,13 +336,7 @@ namespace Datos
 
                         oLinea.Venta=oVenta;
 
-                        //se crea y asiga el corte
-                        Entidades.Corte oCorte = new Entidades.Corte();
-                        oCorte.idCorte = Convert.ToInt32(drLinea["idCorte"]);
-                        oCorte.codigo = Convert.ToInt32(drLinea["codigo"]);
-                        oCorte.corte = Convert.ToString(drLinea["corte"]);
-
-                        oLinea.Corte = oCorte;
+                        oLinea.Corte = oCorteD.getCorteById(Convert.ToInt32(drLinea["idCorte"]), false); //oCorte;
 
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.IdAlicuotaIva = Convert.ToInt32(drLinea["idAlicuotaIva"]);
@@ -372,7 +367,6 @@ namespace Datos
                         listaLineasVenta.Add(oLinea);
 
                         oVenta = null;
-                        oCorte = null;
                         oLinea = null;
                     }
                     return listaLineasVenta;

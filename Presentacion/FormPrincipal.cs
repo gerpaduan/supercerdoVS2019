@@ -67,8 +67,8 @@ namespace Presentacion
 
         private static void ventas()
         {
-            if (logueado)
-            {
+            //if (logueado)
+            //{
                 if (Application.OpenForms["formVentas"] != null)
                 {
                     Application.OpenForms["formVentas"].Activate();
@@ -76,15 +76,17 @@ namespace Presentacion
                 }
                 else
                 {
+                    if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+
                     formVentas frmVentas = new formVentas();
-                    frmVentas.Logueado = logueado;
+                    frmVentas.Logueado = true;
                     frmVentas.Show();
                 }
-            }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }
+            //}
+            //else
+            //{
+            //    MessageBox.Show("No está logueado");
+            //}
         }
 
         private void cajaVentas()

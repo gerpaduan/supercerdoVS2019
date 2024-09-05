@@ -45,12 +45,6 @@ namespace Presentacion
         {
             try
             {
-                if (!FormPrincipal.logueado)
-                {
-                    MessageBox.Show("No está logueado");
-                    return;
-                }
-
                 if (cargar)
                 {
                     lblActualizar.Visible = false;
@@ -64,17 +58,6 @@ namespace Presentacion
                     grillaVentas.DataSource = dtVentas;
                     grillaVentas.Columns["totalKg"].Visible = !soloAnulados;
                     grillaVentas.Columns["totalS"].Visible = !soloAnulados;
-
-                    if (Presentacion.FormPrincipal.logueado == false)
-                    {
-                        foreach (DataGridViewColumn col in grillaVentas.Columns)
-                        {
-                            if (col.Name.Equals("totalS"))
-                            {
-                                col.Visible = false;
-                            }
-                        }
-                    }
                     cargarTotales();
                     aplicarRowFilter();
                 }

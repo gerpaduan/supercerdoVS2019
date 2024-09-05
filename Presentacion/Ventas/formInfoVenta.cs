@@ -94,9 +94,6 @@ namespace Presentacion.Ventas
             comboTipoComprobante.SelectedItem = oVentaE.TipoComprobante.ToString();
             txtIdVenta.Text = oVentaE.IdVenta.ToString();
             txtVendedor.Text = oVentaE.Vendedor.Nombre;
-            checkCtaCte.Checked = oVentaE.EnCtaCte;
-            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
-            checkCtaCte.Enabled = false;//para evitar que se cambiar el estado
             txtSucursal.Text = oVentaE.Sucursal.sucursal;
             txtCliente.Text = oVentaE.Persona.razonSocial;
             txtCuit.Text = oVentaE.Persona.Cuit;
@@ -106,25 +103,7 @@ namespace Presentacion.Ventas
             txtObservaciones.Text = oVentaE.Observaciones;
             txtCreado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Creado);
             txtActualizado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Actualizado);
-
-            checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            switch (oVentaE.FormaPago)
-            {
-                case "Efectivo":
-                    checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
-                    break;
-                case "Debito":
-                    checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
-                    break;
-                case "Credito":
-                    checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(true);
-                    break;
-                default:
-                    break;
-            }
-
+            txtFormaPago.Text = oVentaE.FormaPago;
             cargarListaGrilla();
         }
 
@@ -175,26 +154,6 @@ namespace Presentacion.Ventas
         private void Imprimir_Click(object sender, EventArgs e)
         {
             imprimirTicket();
-            //try
-            //{
-            //    string titulo = oVentaE.Persona.razonSocial;
-            //    FormReportes frmReportes;
-
-            //    Reportes.ReporteVenta reporte = new Reportes.ReporteVenta();
-            //    frmReportes = new FormReportes(reporte, titulo, null, oVentaE.FechaVenta, oVentaE.FechaVenta);
-
-            //    frmReportes.ListaLineasVenta = listaLineaGrilla;
-            //    frmReportes.Objetos = true;
-            //    frmReportes.ReporteVenta = true;
-            //    frmReportes.Origen = oVentaE.Sucursal.SucursalNombre;
-            //    frmReportes.Destino = oVentaE.Sucursal.SucursalNombre;
-
-            //    frmReportes.Show();                
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show(ex.Message);
-            //}
         }
 
         private void imprimirTicket()
@@ -232,11 +191,6 @@ namespace Presentacion.Ventas
             {
                 MessageBox.Show("Hubo un error a imprimir el ticket.\n\n" + ex.Message, "Error ticket");
             }
-        }
-
-        private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
-        {
-            checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
         }
 
         private void facturaElec_Click(object sender, EventArgs e)

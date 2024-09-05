@@ -39,6 +39,7 @@ namespace Datos
                             oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
                         oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
+                        oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
                         oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
                         oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
                         oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
@@ -193,8 +194,12 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
-            cmCorte.CommandText = "obtenerCortes";
+            string consultaSQL = "SELECT     CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.mayorista, CorteP.enCierreStock, " +
+                " CorteP.tipo, CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, " +
+                " CorteP.independiente, CorteP.promedio, CorteP.idAlicuotaIva, CorteP.alicuotaIva FROM  dbo.Corte AS CorteM RIGHT OUTER JOIN " +
+                " dbo.Corte AS CorteP ON CorteM.idCorte = CorteP.idCorteMaestro";
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = consultaSQL;
 
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtCortes);
