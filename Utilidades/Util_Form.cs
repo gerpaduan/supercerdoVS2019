@@ -79,31 +79,32 @@ namespace Utilidades
 
         public static bool validarCampoNumerico(string texto, string nombreTextBox)
         {
-            bool resp = texto.Length > 0 ? true : false;
-            int index = 0;
-            int cantPuntosDecimal = 0;
-            
-            foreach (char letra in texto)
-            {
-                bool esNro = true;
-                if (!char.IsNumber(letra))
-                {
-                    esNro = false;
-                }
-                if ((!esNro && letra != '.' && letra != ',' && !(index==0 && letra == '-')))
-                {                    
-                    resp = false;
-                }
-                if (resp && (letra.Equals('.') || letra.Equals(',')))
-	            {
-                    cantPuntosDecimal++;
-                    if (cantPuntosDecimal > 1)
-                    {
-                        resp = false;
-                    }
-	            }
-                index++;
-            }
+            //bool resp = texto.Length > 0 ? true : false;
+            //int index = 0;
+            //int cantPuntosDecimal = 0;
+
+            //foreach (char letra in texto)
+            //{
+            //    bool esNro = true;
+            //    if (!char.IsNumber(letra))
+            //    {
+            //        esNro = false;
+            //    }
+            //    if ((!esNro && letra != '.' && letra != ',' && !(index==0 && letra == '-')))
+            //    {                    
+            //        resp = false;
+            //    }
+            //    if (resp && (letra.Equals('.') || letra.Equals(',')))
+            // {
+            //        cantPuntosDecimal++;
+            //        if (cantPuntosDecimal > 1)
+            //        {
+            //            resp = false;
+            //        }
+            // }
+            //    index++;
+            //}
+            bool resp = texto.Length > 0 ? double.TryParse(texto, out _) : false;
             if (!resp)
             {
                 MessageBox.Show("-" + nombreTextBox + " debe ser un número.", "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);

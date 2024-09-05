@@ -332,9 +332,13 @@ namespace Presentacion
 
         private void login()
         {
-            Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            frmLogin.ShowDialog();
-            logueado = frmLogin.Logueado();
+            //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
+            //frmLogin.ShowDialog();
+            //logueado = frmLogin.Logueado();
+
+
+            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+            logueado = true;
             checkAutoDesconectar.Visible = logueado;
             if (logueado)
             {

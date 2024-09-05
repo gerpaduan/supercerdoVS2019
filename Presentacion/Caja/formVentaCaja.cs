@@ -567,8 +567,9 @@ namespace Presentacion.Caja
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
             oVentaE.EnCtaCte = checkCtaCte.Checked; 
-            //Si FormaPago <> 'Efectivo y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'
-            oVentaE.TipoComprobante = (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))&& 
+            //Si FormaPago <> (Efectivo && CTACTE) y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'
+            oVentaE.TipoComprobante = (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()) ||
+                oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())) && 
                 comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
                 Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
             oVentaE.Cuit = txtCuit.Text;
@@ -826,13 +827,14 @@ namespace Presentacion.Caja
             } 
             else
             {
-                bool esMayorACero = Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
-                if (!esMayorACero && !checkLeerPeso.Checked)
+                bool esKgsMayorACero = Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
+                bool esPrecioMayorACero =  Utilidades.Util_Form.validarNumeroMayorACero(txtPrecioKg.Text, "Precio");
+                if (!esKgsMayorACero && !checkLeerPeso.Checked)
 	            {
                     txtCantKgs.Focus();
                     txtCantKgs.SelectAll();
 	            }
-                return esMayorACero;
+                return esKgsMayorACero && esPrecioMayorACero;
             }
         }
 
@@ -870,10 +872,11 @@ namespace Presentacion.Caja
             else
             {
                 Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-                if (!oCierreN.validarCajaAbiertaVendedor(Convert.ToDateTime(txtFecVenta.Text), oVentaE.Sucursal, oUsuario))
+                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(Convert.ToDateTime(txtFecVenta.Text), oVentaE.Sucursal, oUsuario);
+                if (totalVenta > 0 && !cajaAbierta)
                 {
-                    MessageBox.Show(oUsuario.Nombre + " debes abrir caja para poder registrar la venta.\n\n"+
-                    "Si abrió caja inténtelo nuevamente.", "No abrió caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(oUsuario.Nombre + " la caja ha sido cerrada.\n\n"+
+                    "Pasos:\n1- Anule todos los ítems y finalice la Venta.\n2- Abra caja y vuelva a registrar la venta.", "No abrió caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     txtFecVenta.Text = DateTime.Now.ToString();//se actualiza la hora
 

@@ -48,6 +48,7 @@ namespace Presentacion.Caja
                 }
                 validarAperturaForm();
                 txtSucursal.Text = oCierreE.Sucursal.sucursal;
+                txtCajaCierre.Select();
             }
             catch (Exception ex)
             {
@@ -280,7 +281,16 @@ namespace Presentacion.Caja
                     importeRetirado = cajaCierre - cajaInicioSiguiente;
                     txtImporteRetirado.Text = importeRetirado.ToString();
                 }
-             }             
+                //if (txtCajaInicioSiguiente.ReadOnly)
+                //{
+                //    txtCajaInicioSiguiente.Text = (cajaCierre - importeRetirado).ToString();
+                //}
+                //else
+                //{
+                //    importeRetirado = cajaCierre - cajaInicioSiguiente;
+                //    txtImporteRetirado.Text = importeRetirado.ToString();
+                //}
+            }             
         }
 
         private void txtCajaInicial_TextChanged(object sender, EventArgs e)
@@ -469,12 +479,13 @@ namespace Presentacion.Caja
             panelTaparCamposCierre.Visible = true;
             checkTicket.Visible = true;
             checkTicket.Checked = true;
-            controlEleccionImporte.Value = 1;
             controlEleccionImporte.Visible = esCerrarCaja;
             txtCajaCierre.ReadOnly = !esCerrarCaja;
             txtCajaCierre.BackColor = Util_Form.getBackColorTextBox(txtCajaCierre.ReadOnly);
-            txtCajaInicioSiguiente.ReadOnly = !esCerrarCaja;
-            txtCajaInicioSiguiente.BackColor = Util_Form.getBackColorTextBox(txtCajaInicioSiguiente.ReadOnly);
+            //txtCajaInicioSiguiente.ReadOnly = !esCerrarCaja;
+            //txtCajaInicioSiguiente.BackColor = Util_Form.getBackColorTextBox(txtCajaInicioSiguiente.ReadOnly);
+            txtImporteRetirado.ReadOnly = !esCerrarCaja;
+            txtImporteRetirado.BackColor = Util_Form.getBackColorTextBox(txtImporteRetirado.ReadOnly);
         }
 
         private void btnVerEgresosCaja_Click(object sender, EventArgs e)
