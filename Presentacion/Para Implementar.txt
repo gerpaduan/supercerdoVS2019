@@ -373,3 +373,59 @@ procedimiento
 
 addOrEditFormula
 agregarCortePorFormula
+
+********************
+Agregar campo 'activo' en usuario
+
+UPDATE [SuperCerdo].[dbo].[Usuarios]
+   SET [activo] = 1
+GO
+
+-----------------------------.
+
+USE [SuperCerdo]
+GO
+/****** Object:  StoredProcedure [dbo].[addOrEditUser]    Script Date: 09/05/2024 20:48:43 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[addOrEditUser]
+	-- Add the parameters for the stored procedure here
+	@id int = null,
+	@nombre	varchar(50)	,
+	@usuario varchar(50),	
+	@clave varchar(50),	
+	@admin	tinyint,	
+	@activo	tinyint,	
+	@colorForm	varchar(50)	
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	IF(@id = 0 or @id is null)
+		BEGIN
+			set @id = ((SELECT MAX(id) FROM Usuarios)+ 1)
+			
+			INSERT INTO Usuarios (id, nombre, usuario, clave, admin, activo, colorForm) 
+				values (@id, @nombre, @usuario, @clave, @admin, @activo, @colorForm)
+		END	
+	ELSE
+		BEGIN
+			UPDATE Usuarios SET 
+				nombre = @nombre, usuario = @usuario, clave = @clave, admin = @admin , activo = @activo, colorForm = @colorForm
+				WHERE id = @id
+		END		
+END
+
+
+
+

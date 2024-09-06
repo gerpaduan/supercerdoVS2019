@@ -53,7 +53,7 @@ namespace Presentacion.Usuarios
         private void ingresar()
         {
             oUsuarioE = oUsuarioN.validarUsuario(grillaUsuarios.CurrentRow.Cells["usuario"].Value.ToString(),
-                grillaUsuarios.CurrentRow.Cells["clave"].Value.ToString());
+                grillaUsuarios.CurrentRow.Cells["clave"].Value.ToString(), false);
             if (oUsuarioE != null)
             {
                 enviarUsuario();

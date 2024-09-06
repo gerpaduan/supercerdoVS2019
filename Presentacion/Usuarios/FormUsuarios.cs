@@ -27,7 +27,9 @@ namespace Presentacion.Usuario
 	        {
                 txtNombre.ReadOnly = false;
                 checkAdmin.Enabled = true;
+                checkActivo.Enabled = true;
                 btnGuardarDatos.Enabled = true;
+                btnNuevoUsuario.Enabled = true; 
                 checkOlvidoClave.Enabled = true;
 	        }
         }
@@ -46,12 +48,14 @@ namespace Presentacion.Usuario
             {
                 txtNombre.Text = oUsuarioE.Nombre;
                 checkAdmin.Checked = oUsuarioE.Admin;
+                checkActivo.Checked = oUsuarioE.Activo;
                 txtClave.Text = txtNueva.Text = txtRepetir.Text = "";
             }
             else
             {
                 txtNombre.Text = "";
                 checkAdmin.Checked = false;
+                checkActivo.Checked = false;
             }
             checkOlvidoClave.Checked = false;
         }
@@ -62,6 +66,7 @@ namespace Presentacion.Usuario
             {
                 oUsuarioE.Nombre = txtNombre.Text;
                 oUsuarioE.Admin = checkAdmin.Checked;
+                oUsuarioE.Activo = checkActivo.Checked;
 
                 //TODO - guarda datos en BD
                 addOrEditUser();
@@ -89,7 +94,7 @@ namespace Presentacion.Usuario
         {
             string mensaje = "Errores:\n\n";
             bool errores = false;
-            oUsuarioE = checkOlvidoClave.Checked ? oUsuarioE : oUsuarioN.validarUsuario(comboUsuario.Text, txtClave.Text);            
+            oUsuarioE = checkOlvidoClave.Checked ? oUsuarioE : oUsuarioN.validarUsuario(comboUsuario.Text, txtClave.Text, false);            
             if (oUsuarioE == null)
             {
                 errores = true;
@@ -140,6 +145,13 @@ namespace Presentacion.Usuario
             {
                 txtRepetir.Text = txtNueva.Text;
             }
+        }
+
+        private void btnNuevoUsuario_Click(object sender, EventArgs e)
+        {
+            FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
+            formNuevoUsuario1.ShowDialog();
+            cargarCombo();
         }
     }
 }

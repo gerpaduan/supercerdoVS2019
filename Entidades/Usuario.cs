@@ -42,6 +42,8 @@ namespace Entidades
             get { return admin; }
             set { admin = value; }
         }
+
+        bool activo;
         string colorForm;
 
         public string ColorForm
@@ -49,5 +51,7 @@ namespace Entidades
             get { return colorForm; }
             set { colorForm = value; }
         }
+
+        public bool Activo { get => activo; set => activo = value; }
     }
 }

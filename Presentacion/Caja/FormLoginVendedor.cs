@@ -49,7 +49,7 @@ namespace Presentacion.Caja
 
         private void ingresar()
         {
-            oUsuarioE = oUsuarioN.validarUsuario(comboUsuario.SelectedValue.ToString(), txtClave.Text);
+            oUsuarioE = oUsuarioN.validarUsuario(comboUsuario.SelectedValue.ToString(), txtClave.Text, false);
             if (oUsuarioE != null)
             {
                 enviarUsuario();

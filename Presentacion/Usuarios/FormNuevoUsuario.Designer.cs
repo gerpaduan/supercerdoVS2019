@@ -1,0 +1,207 @@
+﻿namespace Presentacion.Usuario
+{
+    partial class FormNuevoUsuario  
+    {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.label1 = new System.Windows.Forms.Label();
+            this.groupCambiarDatos = new System.Windows.Forms.GroupBox();
+            this.checkActivo = new System.Windows.Forms.CheckBox();
+            this.checkAdmin = new System.Windows.Forms.CheckBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.btnGuardarDatos = new System.Windows.Forms.Button();
+            this.txtNombre = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtClave = new System.Windows.Forms.TextBox();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.groupCambiarDatos.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(63, 31);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(67, 20);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "Usuario";
+            // 
+            // groupCambiarDatos
+            // 
+            this.groupCambiarDatos.Controls.Add(this.txtUsuario);
+            this.groupCambiarDatos.Controls.Add(this.checkActivo);
+            this.groupCambiarDatos.Controls.Add(this.label1);
+            this.groupCambiarDatos.Controls.Add(this.label2);
+            this.groupCambiarDatos.Controls.Add(this.checkAdmin);
+            this.groupCambiarDatos.Controls.Add(this.label5);
+            this.groupCambiarDatos.Controls.Add(this.btnGuardarDatos);
+            this.groupCambiarDatos.Controls.Add(this.txtClave);
+            this.groupCambiarDatos.Controls.Add(this.txtNombre);
+            this.groupCambiarDatos.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupCambiarDatos.Location = new System.Drawing.Point(13, 13);
+            this.groupCambiarDatos.Margin = new System.Windows.Forms.Padding(4);
+            this.groupCambiarDatos.Name = "groupCambiarDatos";
+            this.groupCambiarDatos.Padding = new System.Windows.Forms.Padding(4);
+            this.groupCambiarDatos.Size = new System.Drawing.Size(363, 277);
+            this.groupCambiarDatos.TabIndex = 11;
+            this.groupCambiarDatos.TabStop = false;
+            this.groupCambiarDatos.Text = "Datos Usuario";
+            // 
+            // checkActivo
+            // 
+            this.checkActivo.AutoSize = true;
+            this.checkActivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkActivo.Enabled = false;
+            this.checkActivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.checkActivo.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkActivo.Location = new System.Drawing.Point(85, 133);
+            this.checkActivo.Margin = new System.Windows.Forms.Padding(4);
+            this.checkActivo.Name = "checkActivo";
+            this.checkActivo.Size = new System.Drawing.Size(77, 24);
+            this.checkActivo.TabIndex = 4;
+            this.checkActivo.Text = "Activo";
+            this.checkActivo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkActivo.UseVisualStyleBackColor = true;
+            // 
+            // checkAdmin
+            // 
+            this.checkAdmin.AutoSize = true;
+            this.checkAdmin.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkAdmin.Enabled = false;
+            this.checkAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.checkAdmin.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkAdmin.Location = new System.Drawing.Point(27, 101);
+            this.checkAdmin.Margin = new System.Windows.Forms.Padding(4);
+            this.checkAdmin.Name = "checkAdmin";
+            this.checkAdmin.Size = new System.Drawing.Size(135, 24);
+            this.checkAdmin.TabIndex = 3;
+            this.checkAdmin.Text = "Administrador";
+            this.checkAdmin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkAdmin.UseVisualStyleBackColor = true;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label5.Location = new System.Drawing.Point(63, 66);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(68, 20);
+            this.label5.TabIndex = 1;
+            this.label5.Text = "Nombre";
+            // 
+            // btnGuardarDatos
+            // 
+            this.btnGuardarDatos.Enabled = false;
+            this.btnGuardarDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGuardarDatos.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnGuardarDatos.Location = new System.Drawing.Point(146, 223);
+            this.btnGuardarDatos.Margin = new System.Windows.Forms.Padding(4);
+            this.btnGuardarDatos.Name = "btnGuardarDatos";
+            this.btnGuardarDatos.Size = new System.Drawing.Size(188, 33);
+            this.btnGuardarDatos.TabIndex = 5;
+            this.btnGuardarDatos.Text = "Guardar &Datos";
+            this.btnGuardarDatos.UseVisualStyleBackColor = true;
+            this.btnGuardarDatos.Click += new System.EventHandler(this.btnGuardarDatos_Click);
+            // 
+            // txtNombre
+            // 
+            this.txtNombre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtNombre.Location = new System.Drawing.Point(147, 63);
+            this.txtNombre.Margin = new System.Windows.Forms.Padding(4);
+            this.txtNombre.Name = "txtNombre";
+            this.txtNombre.Size = new System.Drawing.Size(187, 26);
+            this.txtNombre.TabIndex = 2;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(37, 168);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(95, 20);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "Contraseña";
+            // 
+            // txtClave
+            // 
+            this.txtClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtClave.Location = new System.Drawing.Point(147, 165);
+            this.txtClave.Margin = new System.Windows.Forms.Padding(4);
+            this.txtClave.Name = "txtClave";
+            this.txtClave.PasswordChar = '*';
+            this.txtClave.Size = new System.Drawing.Size(187, 26);
+            this.txtClave.TabIndex = 5;
+            // 
+            // txtUsuario
+            // 
+            this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtUsuario.Location = new System.Drawing.Point(147, 28);
+            this.txtUsuario.Margin = new System.Windows.Forms.Padding(4);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.Size = new System.Drawing.Size(187, 26);
+            this.txtUsuario.TabIndex = 1;
+            // 
+            // FormNuevoUsuario
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.ClientSize = new System.Drawing.Size(402, 303);
+            this.Controls.Add(this.groupCambiarDatos);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(4);
+            this.Name = "FormNuevoUsuario";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Nuevo Usuario";
+            this.Load += new System.EventHandler(this.FormLoginVendedor_Load);
+            this.groupCambiarDatos.ResumeLayout(false);
+            this.groupCambiarDatos.PerformLayout();
+            this.ResumeLayout(false);
+
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.GroupBox groupCambiarDatos;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button btnGuardarDatos;
+        private System.Windows.Forms.TextBox txtNombre;
+        private System.Windows.Forms.CheckBox checkAdmin;
+        private System.Windows.Forms.CheckBox checkActivo;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtClave;
+        private System.Windows.Forms.TextBox txtUsuario;
+    }
+}

@@ -600,6 +600,12 @@
     <Compile Include="Usuarios\formSelectUser.Designer.cs">
       <DependentUpon>formSelectUser.cs</DependentUpon>
     </Compile>
+    <Compile Include="Usuarios\FormNuevoUsuario.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Usuarios\FormNuevoUsuario.Designer.cs">
+      <DependentUpon>FormNuevoUsuario.cs</DependentUpon>
+    </Compile>
     <Compile Include="Usuarios\FormUsuarios.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -906,6 +912,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Usuarios\formSelectUser.resx">
       <DependentUpon>formSelectUser.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Usuarios\FormNuevoUsuario.resx">
+      <DependentUpon>FormNuevoUsuario.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Usuarios\FormUsuarios.resx">
       <DependentUpon>FormUsuarios.cs</DependentUpon>

@@ -29,8 +29,8 @@ namespace Datos
             cmUsuario = new SqlCommand();
             cmUsuario.Connection = conn.conectar();
             cmUsuario.Connection.Open();
-            cmUsuario.CommandType = CommandType.StoredProcedure;
-            cmUsuario.CommandText = "getUsuariosActivos";
+            cmUsuario.CommandType = CommandType.Text;
+            cmUsuario.CommandText = "SELECT nombre,usuario,clave from Usuarios where activo = 1";
 
             cmUsuario.ExecuteNonQuery();
             daUsuario.SelectCommand = cmUsuario;
@@ -63,6 +63,7 @@ namespace Datos
                         oUsuarioE.User = Convert.ToString(drUsuario["usuario"]);
                         oUsuarioE.Clave = Convert.ToString(drUsuario["clave"]);
                         oUsuarioE.Admin = Convert.ToBoolean(drUsuario["admin"]);
+                        oUsuarioE.Activo = Convert.ToBoolean(drUsuario["activo"]);
                         oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);	
                     }
                     return oUsuarioE;
@@ -88,6 +89,7 @@ namespace Datos
             cmUsuario.Parameters.AddWithValue("@usuario", oUsuarioE.User);
             cmUsuario.Parameters.AddWithValue("@clave", oUsuarioE.Clave);
             cmUsuario.Parameters.AddWithValue("@admin", oUsuarioE.Admin);
+            cmUsuario.Parameters.AddWithValue("@activo", oUsuarioE.Activo);
             cmUsuario.Parameters.AddWithValue("@colorForm", oUsuarioE.ColorForm);
 
             cmUsuario.ExecuteNonQuery();

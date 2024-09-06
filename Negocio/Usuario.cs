@@ -57,6 +57,7 @@ namespace Negocio
                     user.User = Convert.ToString(drUsuario["usuario"]);
                     user.Clave = Convert.ToString(drUsuario["clave"]);
                     user.Admin = Convert.ToBoolean(drUsuario["admin"]);
+                    user.Activo = Convert.ToBoolean(drUsuario["activo"]);
                     user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
    
                     listUsuarios.Add(user);
@@ -70,7 +71,7 @@ namespace Negocio
             return convertDatatableToList();
         }
 
-        public Entidades.Usuario validarUsuario(string usuario, string clave)
+        public Entidades.Usuario validarUsuario(string usuario, string clave, bool soloNombreUsuario)
         {
             Entidades.Usuario userEncontrado = null;
             if (listUsuarios == null)
@@ -79,11 +80,23 @@ namespace Negocio
 	        }
             foreach (Entidades.Usuario user in listUsuarios)
             {
-                if (user.User.Equals(usuario) && user.Clave.Equals(clave))
+                if (soloNombreUsuario)
                 {
-                    userEncontrado = new Entidades.Usuario();
-                    userEncontrado = user;
-                    break;
+                    if (user.User.Equals(usuario))
+                    {
+                        userEncontrado = new Entidades.Usuario();
+                        userEncontrado = user;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (user.User.Equals(usuario) && user.Clave.Equals(clave))
+                    {
+                        userEncontrado = new Entidades.Usuario();
+                        userEncontrado = user;
+                        break;
+                    }
                 }
             }
             return userEncontrado;
