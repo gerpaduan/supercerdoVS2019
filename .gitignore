@@ -51,12 +51,9 @@ packages/
 .env
 
 # Archivos de configuración local
-*.config
+
 *.settings
 
-# Archivos de base de datos local
-*.mdf
-*.ldf
 
 # Otros archivos generados por Visual Studio
 *.csproj.user
