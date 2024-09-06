@@ -46,47 +46,34 @@ namespace Presentacion
 
         private static void compras()
         {
-            if (logueado)
+            if (Application.OpenForms["formCompras"] != null)
             {
-                if (Application.OpenForms["formCompras"] != null)
-                {
-                    Application.OpenForms["formCompras"].Activate();
-                    Application.OpenForms["formCompras"].WindowState = FormWindowState.Normal;
-                }
-                else
-                {
-                    formCompras frmCompras = new formCompras();
-                    frmCompras.Show();
-                }
+                Application.OpenForms["formCompras"].Activate();
+                Application.OpenForms["formCompras"].WindowState = FormWindowState.Normal;
             }
             else
             {
-                MessageBox.Show("No está logueado");
-            }
+                formCompras frmCompras = new formCompras();
+                frmCompras.Logueado = true;
+                frmCompras.Show();
+            }   
         }
 
         private static void ventas()
         {
-            //if (logueado)
-            //{
-                if (Application.OpenForms["formVentas"] != null)
-                {
-                    Application.OpenForms["formVentas"].Activate();
-                    Application.OpenForms["formVentas"].WindowState = FormWindowState.Normal;
-                }
-                else
-                {
-                    if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+            if (Application.OpenForms["formVentas"] != null)
+            {
+                Application.OpenForms["formVentas"].Activate();
+                Application.OpenForms["formVentas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
 
-                    formVentas frmVentas = new formVentas();
-                    frmVentas.Logueado = true;
-                    frmVentas.Show();
-                }
-            //}
-            //else
-            //{
-            //    MessageBox.Show("No está logueado");
-            //}
+                formVentas frmVentas = new formVentas();
+                frmVentas.Logueado = true;
+                frmVentas.Show();
+            }
         }
 
         private void cajaVentas()
@@ -898,5 +885,44 @@ namespace Presentacion
             //factElectr.Show();//comenté xq me tiraba error en la depuracion
         }
 
+        private void verBalanzaToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
+            {
+                int d = Application.OpenForms.Count;
+                if (frm.GetType() == typeof(FormPesoBalanza))
+                {
+                    frm.BringToFront();
+                    formAbierto = true;
+                    break;
+                }
+            }
+            if (!formAbierto)
+            {
+                Utilidades.FormPesoBalanza frmBalanza = new Utilidades.FormPesoBalanza();
+                frmBalanza.Show();
+            }
+        }
+
+        private void leerPesoToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            formBalanza frm = new formBalanza();
+            frm.Show();
+        }
+
+        private void fórmulasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formFormulas"] != null)
+            {
+                Application.OpenForms["formFormulas"].Activate();
+                Application.OpenForms["formFormulas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formFormulas frmmFormulas = new formFormulas();
+                frmmFormulas.Show();
+            }
+        }
     }
 }

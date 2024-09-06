@@ -12,6 +12,14 @@ namespace Presentacion
 {
     public partial class formCompras : formBaseColor
     {
+        private bool logueado = false;
+
+        public bool Logueado
+        {
+            get { return logueado; }
+            set { logueado = value; }
+        }
+
         Negocio.Compra oCompraN;
         DataTable dtCompras = new DataTable();
 

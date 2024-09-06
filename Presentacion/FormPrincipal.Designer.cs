@@ -63,9 +63,6 @@
             this.cortesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.personasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.balanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.verBalanzaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.leerPesoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ctasCtesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pagosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -74,6 +71,10 @@
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.balanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.verBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.fórmulasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -86,7 +87,6 @@
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Margin = new System.Windows.Forms.Padding(4);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -118,17 +118,17 @@
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
             this.splitContainer1.Panel2.Controls.Add(this.btnTipoConexioin);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
-            this.splitContainer1.Size = new System.Drawing.Size(1329, 727);
-            this.splitContainer1.SplitterDistance = 270;
-            this.splitContainer1.SplitterWidth = 5;
+            this.splitContainer1.Size = new System.Drawing.Size(997, 591);
+            this.splitContainer1.SplitterDistance = 202;
             this.splitContainer1.TabIndex = 0;
             // 
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(-16, 1);
+            this.pictureBox1.Location = new System.Drawing.Point(-12, 1);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(287, 52);
+            this.pictureBox1.Size = new System.Drawing.Size(215, 42);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 34;
             this.pictureBox1.TabStop = false;
@@ -139,10 +139,9 @@
             this.checkAutoDesconectar.Checked = true;
             this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkAutoDesconectar.Location = new System.Drawing.Point(123, 701);
-            this.checkAutoDesconectar.Margin = new System.Windows.Forms.Padding(4);
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(92, 570);
             this.checkAutoDesconectar.Name = "checkAutoDesconectar";
-            this.checkAutoDesconectar.Size = new System.Drawing.Size(121, 20);
+            this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
             this.checkAutoDesconectar.TabIndex = 31;
             this.checkAutoDesconectar.TabStop = false;
             this.checkAutoDesconectar.Text = "Auto-Desconec.";
@@ -154,10 +153,9 @@
             this.btnLogin.FlatAppearance.BorderSize = 0;
             this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLogin.ForeColor = System.Drawing.Color.White;
-            this.btnLogin.Location = new System.Drawing.Point(13, 697);
-            this.btnLogin.Margin = new System.Windows.Forms.Padding(4);
+            this.btnLogin.Location = new System.Drawing.Point(10, 566);
             this.btnLogin.Name = "btnLogin";
-            this.btnLogin.Size = new System.Drawing.Size(105, 28);
+            this.btnLogin.Size = new System.Drawing.Size(79, 23);
             this.btnLogin.TabIndex = 32;
             this.btnLogin.TabStop = false;
             this.btnLogin.Text = "&Iniciar Sesión";
@@ -169,10 +167,9 @@
             this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
             this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarSesion.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarSesion.Location = new System.Drawing.Point(16, 697);
-            this.btnCerrarSesion.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCerrarSesion.Location = new System.Drawing.Point(12, 566);
             this.btnCerrarSesion.Name = "btnCerrarSesion";
-            this.btnCerrarSesion.Size = new System.Drawing.Size(104, 28);
+            this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
             this.btnCerrarSesion.TabIndex = 33;
             this.btnCerrarSesion.TabStop = false;
             this.btnCerrarSesion.Text = "&Cerrar Ses&ión";
@@ -188,10 +185,9 @@
             this.btnEgresosCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEgresosCaja.ForeColor = System.Drawing.Color.White;
-            this.btnEgresosCaja.Location = new System.Drawing.Point(-7, 249);
-            this.btnEgresosCaja.Margin = new System.Windows.Forms.Padding(4);
+            this.btnEgresosCaja.Location = new System.Drawing.Point(-5, 202);
             this.btnEgresosCaja.Name = "btnEgresosCaja";
-            this.btnEgresosCaja.Size = new System.Drawing.Size(280, 50);
+            this.btnEgresosCaja.Size = new System.Drawing.Size(210, 41);
             this.btnEgresosCaja.TabIndex = 30;
             this.btnEgresosCaja.TabStop = false;
             this.btnEgresosCaja.Text = "E&gresos Caja";
@@ -207,10 +203,9 @@
             this.btnUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnUsuarios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnUsuarios.ForeColor = System.Drawing.Color.White;
-            this.btnUsuarios.Location = new System.Drawing.Point(-7, 532);
-            this.btnUsuarios.Margin = new System.Windows.Forms.Padding(4);
+            this.btnUsuarios.Location = new System.Drawing.Point(-5, 432);
             this.btnUsuarios.Name = "btnUsuarios";
-            this.btnUsuarios.Size = new System.Drawing.Size(280, 50);
+            this.btnUsuarios.Size = new System.Drawing.Size(210, 41);
             this.btnUsuarios.TabIndex = 28;
             this.btnUsuarios.TabStop = false;
             this.btnUsuarios.Text = "&Usuarios";
@@ -226,10 +221,9 @@
             this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnReportes.ForeColor = System.Drawing.Color.White;
-            this.btnReportes.Location = new System.Drawing.Point(-7, 580);
-            this.btnReportes.Margin = new System.Windows.Forms.Padding(4);
+            this.btnReportes.Location = new System.Drawing.Point(-5, 471);
             this.btnReportes.Name = "btnReportes";
-            this.btnReportes.Size = new System.Drawing.Size(279, 50);
+            this.btnReportes.Size = new System.Drawing.Size(209, 41);
             this.btnReportes.TabIndex = 27;
             this.btnReportes.TabStop = false;
             this.btnReportes.Text = "Re&portes";
@@ -245,10 +239,9 @@
             this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnPersonas.ForeColor = System.Drawing.Color.White;
-            this.btnPersonas.Location = new System.Drawing.Point(-7, 487);
-            this.btnPersonas.Margin = new System.Windows.Forms.Padding(4);
+            this.btnPersonas.Location = new System.Drawing.Point(-5, 396);
             this.btnPersonas.Name = "btnPersonas";
-            this.btnPersonas.Size = new System.Drawing.Size(279, 50);
+            this.btnPersonas.Size = new System.Drawing.Size(209, 41);
             this.btnPersonas.TabIndex = 25;
             this.btnPersonas.TabStop = false;
             this.btnPersonas.Text = "&Personas";
@@ -264,10 +257,9 @@
             this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCortes.ForeColor = System.Drawing.Color.White;
-            this.btnCortes.Location = new System.Drawing.Point(-7, 442);
-            this.btnCortes.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCortes.Location = new System.Drawing.Point(-5, 359);
             this.btnCortes.Name = "btnCortes";
-            this.btnCortes.Size = new System.Drawing.Size(279, 50);
+            this.btnCortes.Size = new System.Drawing.Size(209, 41);
             this.btnCortes.TabIndex = 24;
             this.btnCortes.TabStop = false;
             this.btnCortes.Text = "Cor&tes";
@@ -283,10 +275,9 @@
             this.btnEmbutidos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEmbutidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEmbutidos.ForeColor = System.Drawing.Color.White;
-            this.btnEmbutidos.Location = new System.Drawing.Point(-7, 347);
-            this.btnEmbutidos.Margin = new System.Windows.Forms.Padding(4);
+            this.btnEmbutidos.Location = new System.Drawing.Point(-5, 282);
             this.btnEmbutidos.Name = "btnEmbutidos";
-            this.btnEmbutidos.Size = new System.Drawing.Size(280, 50);
+            this.btnEmbutidos.Size = new System.Drawing.Size(210, 41);
             this.btnEmbutidos.TabIndex = 22;
             this.btnEmbutidos.TabStop = false;
             this.btnEmbutidos.Text = "&Embutidos | Elaborados";
@@ -302,10 +293,9 @@
             this.btnStock.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnStock.ForeColor = System.Drawing.Color.White;
-            this.btnStock.Location = new System.Drawing.Point(-7, 393);
-            this.btnStock.Margin = new System.Windows.Forms.Padding(4);
+            this.btnStock.Location = new System.Drawing.Point(-5, 319);
             this.btnStock.Name = "btnStock";
-            this.btnStock.Size = new System.Drawing.Size(280, 50);
+            this.btnStock.Size = new System.Drawing.Size(210, 41);
             this.btnStock.TabIndex = 21;
             this.btnStock.TabStop = false;
             this.btnStock.Text = "&Stock";
@@ -321,10 +311,9 @@
             this.btnMovimientos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnMovimientos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnMovimientos.ForeColor = System.Drawing.Color.White;
-            this.btnMovimientos.Location = new System.Drawing.Point(-7, 298);
-            this.btnMovimientos.Margin = new System.Windows.Forms.Padding(4);
+            this.btnMovimientos.Location = new System.Drawing.Point(-5, 242);
             this.btnMovimientos.Name = "btnMovimientos";
-            this.btnMovimientos.Size = new System.Drawing.Size(279, 50);
+            this.btnMovimientos.Size = new System.Drawing.Size(209, 41);
             this.btnMovimientos.TabIndex = 19;
             this.btnMovimientos.TabStop = false;
             this.btnMovimientos.Text = "&Movimientos";
@@ -340,10 +329,9 @@
             this.btnCerrarCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCerrarCaja.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarCaja.Location = new System.Drawing.Point(-7, 200);
-            this.btnCerrarCaja.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCerrarCaja.Location = new System.Drawing.Point(-5, 162);
             this.btnCerrarCaja.Name = "btnCerrarCaja";
-            this.btnCerrarCaja.Size = new System.Drawing.Size(280, 50);
+            this.btnCerrarCaja.Size = new System.Drawing.Size(210, 41);
             this.btnCerrarCaja.TabIndex = 17;
             this.btnCerrarCaja.TabStop = false;
             this.btnCerrarCaja.Text = "Ce&rrar Caja";
@@ -359,10 +347,9 @@
             this.btnCajaVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCajaVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCajaVentas.ForeColor = System.Drawing.Color.White;
-            this.btnCajaVentas.Location = new System.Drawing.Point(-7, 151);
-            this.btnCajaVentas.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCajaVentas.Location = new System.Drawing.Point(-5, 123);
             this.btnCajaVentas.Name = "btnCajaVentas";
-            this.btnCajaVentas.Size = new System.Drawing.Size(280, 50);
+            this.btnCajaVentas.Size = new System.Drawing.Size(210, 41);
             this.btnCajaVentas.TabIndex = 15;
             this.btnCajaVentas.TabStop = false;
             this.btnCajaVentas.Text = "&Caja Ventas";
@@ -378,10 +365,9 @@
             this.btnCompras.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCompras.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCompras.ForeColor = System.Drawing.Color.White;
-            this.btnCompras.Location = new System.Drawing.Point(-7, 53);
-            this.btnCompras.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCompras.Location = new System.Drawing.Point(-5, 43);
             this.btnCompras.Name = "btnCompras";
-            this.btnCompras.Size = new System.Drawing.Size(280, 50);
+            this.btnCompras.Size = new System.Drawing.Size(210, 41);
             this.btnCompras.TabIndex = 14;
             this.btnCompras.TabStop = false;
             this.btnCompras.Text = "C&ompras";
@@ -397,10 +383,9 @@
             this.btnVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnVentas.ForeColor = System.Drawing.Color.White;
-            this.btnVentas.Location = new System.Drawing.Point(-7, 102);
-            this.btnVentas.Margin = new System.Windows.Forms.Padding(4);
+            this.btnVentas.Location = new System.Drawing.Point(-5, 83);
             this.btnVentas.Name = "btnVentas";
-            this.btnVentas.Size = new System.Drawing.Size(280, 50);
+            this.btnVentas.Size = new System.Drawing.Size(210, 41);
             this.btnVentas.TabIndex = 3;
             this.btnVentas.TabStop = false;
             this.btnVentas.Text = "Ve&ntas";
@@ -419,20 +404,18 @@
             "sanMartinRemoto",
             "sanLorenzo",
             "sanLorenzoRemoto"});
-            this.comboConexion.Location = new System.Drawing.Point(840, 1);
-            this.comboConexion.Margin = new System.Windows.Forms.Padding(4);
+            this.comboConexion.Location = new System.Drawing.Point(630, 1);
             this.comboConexion.Name = "comboConexion";
-            this.comboConexion.Size = new System.Drawing.Size(208, 26);
+            this.comboConexion.Size = new System.Drawing.Size(157, 23);
             this.comboConexion.TabIndex = 103;
             this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
             // 
             // lblConectadoA
             // 
             this.lblConectadoA.AutoSize = true;
-            this.lblConectadoA.Location = new System.Drawing.Point(731, 6);
-            this.lblConectadoA.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblConectadoA.Location = new System.Drawing.Point(548, 5);
             this.lblConectadoA.Name = "lblConectadoA";
-            this.lblConectadoA.Size = new System.Drawing.Size(93, 16);
+            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
             this.lblConectadoA.TabIndex = 102;
             this.lblConectadoA.Text = "|  Conectado a";
             // 
@@ -442,10 +425,9 @@
             this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnTipoConexioin.Location = new System.Drawing.Point(509, 0);
-            this.btnTipoConexioin.Margin = new System.Windows.Forms.Padding(4);
+            this.btnTipoConexioin.Location = new System.Drawing.Point(480, 1);
             this.btnTipoConexioin.Name = "btnTipoConexioin";
-            this.btnTipoConexioin.Size = new System.Drawing.Size(152, 28);
+            this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
             this.btnTipoConexioin.TabIndex = 100;
             this.btnTipoConexioin.TabStop = false;
             this.btnTipoConexioin.Text = "Local";
@@ -467,7 +449,8 @@
             this.probarToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1054, 28);
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
+            this.menuStrip1.Size = new System.Drawing.Size(791, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -476,13 +459,13 @@
             this.comprasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.verComprasToolStripMenuItem});
             this.comprasToolStripMenuItem.Name = "comprasToolStripMenuItem";
-            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(82, 24);
+            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(67, 20);
             this.comprasToolStripMenuItem.Text = "Compras";
             // 
             // verComprasToolStripMenuItem
             // 
             this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
-            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(176, 26);
+            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.verComprasToolStripMenuItem.Text = "Ver Compras";
             this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
             // 
@@ -493,27 +476,27 @@
             this.verToolStripMenuItem,
             this.lineasVentaToolStripMenuItem});
             this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
-            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(66, 24);
+            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(53, 20);
             this.ventasToolStripMenuItem.Text = "Ventas";
             // 
             // verVentasToolStripMenuItem
             // 
             this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
             // verToolStripMenuItem
             // 
             this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.verToolStripMenuItem.Text = "Temporal Linea Venta";
             this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
             // 
             // lineasVentaToolStripMenuItem
             // 
             this.lineasVentaToolStripMenuItem.Name = "lineasVentaToolStripMenuItem";
-            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(235, 26);
+            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.lineasVentaToolStripMenuItem.Text = "Lineas Venta ";
             this.lineasVentaToolStripMenuItem.Click += new System.EventHandler(this.lineasVentaToolStripMenuItem_Click);
             // 
@@ -522,13 +505,13 @@
             this.cajaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cierresCajaToolStripMenuItem});
             this.cajaToolStripMenuItem.Name = "cajaToolStripMenuItem";
-            this.cajaToolStripMenuItem.Size = new System.Drawing.Size(52, 24);
+            this.cajaToolStripMenuItem.Size = new System.Drawing.Size(42, 20);
             this.cajaToolStripMenuItem.Text = "Caja";
             // 
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(170, 26);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -537,78 +520,55 @@
             this.mantenimientoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cortesToolStripMenuItem,
             this.personasToolStripMenuItem,
-            this.baseDeDatosToolStripMenuItem,
-            this.balanzaToolStripMenuItem,
-            this.configuraciónToolStripMenuItem,
             this.ctasCtesToolStripMenuItem,
-            this.pagosToolStripMenuItem});
+            this.pagosToolStripMenuItem,
+            this.fórmulasToolStripMenuItem,
+            this.configuraciónToolStripMenuItem,
+            this.baseDeDatosToolStripMenuItem});
             this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
-            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(124, 24);
+            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
             this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
             // 
             // cortesToolStripMenuItem
             // 
             this.cortesToolStripMenuItem.Name = "cortesToolStripMenuItem";
-            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
+            this.cortesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.cortesToolStripMenuItem.Text = "Cortes";
             this.cortesToolStripMenuItem.Click += new System.EventHandler(this.cortesToolStripMenuItem_Click);
             // 
             // personasToolStripMenuItem
             // 
             this.personasToolStripMenuItem.Name = "personasToolStripMenuItem";
-            this.personasToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
+            this.personasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.personasToolStripMenuItem.Text = "Personas";
             this.personasToolStripMenuItem.Click += new System.EventHandler(this.personasToolStripMenuItem_Click);
             // 
             // baseDeDatosToolStripMenuItem
             // 
             this.baseDeDatosToolStripMenuItem.Name = "baseDeDatosToolStripMenuItem";
-            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
+            this.baseDeDatosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.baseDeDatosToolStripMenuItem.Text = "Base de Datos";
             this.baseDeDatosToolStripMenuItem.Click += new System.EventHandler(this.baseDeDatosToolStripMenuItem_Click);
-            // 
-            // balanzaToolStripMenuItem
-            // 
-            this.balanzaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verBalanzaToolStripMenuItem,
-            this.leerPesoToolStripMenuItem});
-            this.balanzaToolStripMenuItem.Name = "balanzaToolStripMenuItem";
-            this.balanzaToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
-            this.balanzaToolStripMenuItem.Text = "Balanza";
-            this.balanzaToolStripMenuItem.Click += new System.EventHandler(this.balanzaToolStripMenuItem_Click);
-            // 
-            // verBalanzaToolStripMenuItem
-            // 
-            this.verBalanzaToolStripMenuItem.Name = "verBalanzaToolStripMenuItem";
-            this.verBalanzaToolStripMenuItem.Size = new System.Drawing.Size(169, 26);
-            this.verBalanzaToolStripMenuItem.Text = "Ver Balanza";
-            this.verBalanzaToolStripMenuItem.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem_Click);
-            // 
-            // leerPesoToolStripMenuItem
-            // 
-            this.leerPesoToolStripMenuItem.Name = "leerPesoToolStripMenuItem";
-            this.leerPesoToolStripMenuItem.Size = new System.Drawing.Size(169, 26);
-            this.leerPesoToolStripMenuItem.Text = "Leer Peso";
-            this.leerPesoToolStripMenuItem.Click += new System.EventHandler(this.leerPesoToolStripMenuItem_Click);
             // 
             // configuraciónToolStripMenuItem
             // 
             this.configuraciónToolStripMenuItem.Name = "configuraciónToolStripMenuItem";
-            this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
+            this.configuraciónToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.configuraciónToolStripMenuItem.Text = "Configuración";
+            this.configuraciónToolStripMenuItem.Visible = false;
             this.configuraciónToolStripMenuItem.Click += new System.EventHandler(this.configuraciónToolStripMenuItem_Click);
             // 
             // ctasCtesToolStripMenuItem
             // 
             this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
-            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
+            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
             this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click);
             // 
             // pagosToolStripMenuItem
             // 
             this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
-            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(187, 26);
+            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.pagosToolStripMenuItem.Text = "Pagos";
             this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click);
             // 
@@ -617,28 +577,29 @@
             this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stockActualToolStripMenuItem});
             this.stockToolStripMenuItem.Name = "stockToolStripMenuItem";
-            this.stockToolStripMenuItem.Size = new System.Drawing.Size(59, 24);
+            this.stockToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.stockToolStripMenuItem.Text = "Stock";
             // 
             // stockActualToolStripMenuItem
             // 
             this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(174, 26);
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.stockActualToolStripMenuItem.Text = "Stock Actual";
             this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
             // 
             // probarToolStripMenuItem
             // 
             this.probarToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.imprimirTicketToolStripMenuItem});
+            this.imprimirTicketToolStripMenuItem,
+            this.balanzaToolStripMenuItem1});
             this.probarToolStripMenuItem.Name = "probarToolStripMenuItem";
-            this.probarToolStripMenuItem.Size = new System.Drawing.Size(67, 24);
+            this.probarToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.probarToolStripMenuItem.Text = "Probar";
             // 
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(192, 26);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -647,17 +608,46 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
+            // balanzaToolStripMenuItem1
+            // 
+            this.balanzaToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.verBalanzaToolStripMenuItem1,
+            this.leerPesoToolStripMenuItem1});
+            this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
+            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.balanzaToolStripMenuItem1.Text = "Balanza";
+            // 
+            // verBalanzaToolStripMenuItem1
+            // 
+            this.verBalanzaToolStripMenuItem1.Name = "verBalanzaToolStripMenuItem1";
+            this.verBalanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.verBalanzaToolStripMenuItem1.Text = "Ver Balanza";
+            this.verBalanzaToolStripMenuItem1.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem1_Click);
+            // 
+            // leerPesoToolStripMenuItem1
+            // 
+            this.leerPesoToolStripMenuItem1.Name = "leerPesoToolStripMenuItem1";
+            this.leerPesoToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.leerPesoToolStripMenuItem1.Text = "Leer Peso";
+            this.leerPesoToolStripMenuItem1.Click += new System.EventHandler(this.leerPesoToolStripMenuItem1_Click);
+            // 
+            // fórmulasToolStripMenuItem
+            // 
+            this.fórmulasToolStripMenuItem.Name = "fórmulasToolStripMenuItem";
+            this.fórmulasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.fórmulasToolStripMenuItem.Text = "Fórmulas";
+            this.fórmulasToolStripMenuItem.Click += new System.EventHandler(this.fórmulasToolStripMenuItem_Click);
+            // 
             // FormPrincipal
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1329, 727);
+            this.ClientSize = new System.Drawing.Size(997, 591);
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
-            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "FormPrincipal";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -690,10 +680,7 @@
         private System.Windows.Forms.ToolStripMenuItem cortesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem personasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem;
         private System.Windows.Forms.Button btnTipoConexioin;
-        private System.Windows.Forms.ToolStripMenuItem verBalanzaToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem;
         private System.Windows.Forms.Button btnVentas;
         private System.Windows.Forms.Button btnCerrarCaja;
         private System.Windows.Forms.Button btnCajaVentas;
@@ -724,6 +711,10 @@
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Button btnCerrarSesion;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem verBalanzaToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem fórmulasToolStripMenuItem;
     }
 }
 

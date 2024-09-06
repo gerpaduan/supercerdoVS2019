@@ -282,7 +282,6 @@ namespace Presentacion
                 formFormulas frmmFormulas = new formFormulas();
                 frmmFormulas.Show();
             }
-
         }
     }
 }
