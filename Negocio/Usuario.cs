@@ -12,10 +12,10 @@ namespace Negocio
         public DataTable dtUsuarios;
         List<Entidades.Usuario> listUsuarios;
 
-        public DataTable obtenerUsuarios()
+        public DataTable obtenerUsuarios(bool soloActivos)
         {
             oUsuarioD = new Datos.Usuario();
-            dtUsuarios = oUsuarioD.obtenerUsuarios();
+            dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos);
             return dtUsuarios;
         }
 
@@ -27,9 +27,9 @@ namespace Negocio
             return dtUserActivos;
         }
 
-        public DataTable obtenerUsuariosConTodos()
+        public DataTable obtenerUsuariosConTodos(bool soloActivos)
         {
-            dtUsuarios = obtenerUsuarios();
+            dtUsuarios = obtenerUsuarios(soloActivos);
             DataRow drTodos = dtUsuarios.NewRow();
             drTodos["id"] = -1;
             drTodos["nombre"] = "Todos";
@@ -43,7 +43,7 @@ namespace Negocio
         {
             if (dtUsuarios == null)
 	        {
-        	    obtenerUsuarios();
+        	    obtenerUsuarios(false);
 	        }
             if (dtUsuarios.Rows.Count > 0)
             {

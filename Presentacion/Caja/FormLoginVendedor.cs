@@ -13,6 +13,7 @@ namespace Presentacion.Caja
     {
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
+        public bool soloActivos = false;
 
         public FormLoginVendedor()
         {
@@ -27,7 +28,7 @@ namespace Presentacion.Caja
 
         private void cargarCombo()
         {
-            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios();
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(soloActivos);
             comboUsuario.DisplayMember = "usuario";
             comboUsuario.ValueMember = "usuario";
         }

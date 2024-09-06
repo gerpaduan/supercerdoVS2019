@@ -178,7 +178,7 @@ namespace Presentacion
 
         private void cargarComboVendedor()
         {
-            comboUsuario.DataSource = oUsuarioN.obtenerUsuariosConTodos();
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuariosConTodos(true);
             comboUsuario.DisplayMember = "nombre";
             comboUsuario.ValueMember = "id";
             comboUsuario.SelectedValue = oCierreE.UsuarioInicio.Id;

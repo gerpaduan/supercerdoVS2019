@@ -94,6 +94,7 @@ namespace Presentacion
             formAbierto = false;
 
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.soloActivos = true;
             frmLogin.ShowDialog(this);
             foreach (Form frm in Application.OpenForms)
             {

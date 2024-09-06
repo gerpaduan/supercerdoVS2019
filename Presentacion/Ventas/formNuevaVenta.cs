@@ -73,7 +73,7 @@ namespace Presentacion.Ventas
 
         private void cargarComboVendedores()
         {
-            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios();
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(false);
             comboUsuario.DisplayMember = "nombre";
             comboUsuario.ValueMember = "id";
             comboUsuario.SelectedValue = 0;

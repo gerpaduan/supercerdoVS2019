@@ -91,6 +91,7 @@ CREATE TABLE [dbo].[AlicuotasIva](
 
 GO
 
+**Cargar Datos tomando tabla de bd notebook o sm**
 -----
 **Cargar Alicuotas en tabla
 **crear campos en corte
@@ -426,6 +427,10 @@ BEGIN
 		END		
 END
 
+********
+Agregar en Parametros
 
+id	nombre	valor	descripcion
+44	idIndefinido	4	id del cliente INDEFINIDO
 
 

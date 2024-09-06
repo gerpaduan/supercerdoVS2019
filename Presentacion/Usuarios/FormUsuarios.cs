@@ -36,7 +36,7 @@ namespace Presentacion.Usuario
 
         private void cargarCombo()
         {
-            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios();
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(false);
             comboUsuario.DisplayMember = "usuario";
             comboUsuario.ValueMember = "usuario";
         }
