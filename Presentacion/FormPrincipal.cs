@@ -504,40 +504,45 @@ namespace Presentacion
             
         }
 
-        private void btnTipoConexioin_Click(object sender, EventArgs e)
-        {
-            if (Application.OpenForms.Count == 1)
-            {
-                if (MessageBox.Show("¿ Está seguro que desea conectarse a otra base de datos?", "Cambiar de conexión",
-                 MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
-                {
-                    if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.local)
-                    {
-                        Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.sanLorenzo;
-                        btnTipoConexioin.Text = "San Lorenzo";
-                    }
-                    else
-                    {
-                        if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.sanLorenzo)
-                        {
-                            Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.sanMartin;
-                            btnTipoConexioin.Text = "San Martín";
-                        }
-                        else //(Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.sanMartin)
-                        {
-                            Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
-                            btnTipoConexioin.Text = "Local";
-                        }
+        //private void btnTipoConexioin_Click(object sender, EventArgs e)
+        //{
+        //    NewMethod();
+        //}
 
-                    }
-                    MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n"+Utilidades.Conexion.getConnString(),"Cambio de conexion",MessageBoxButtons.OK);                    
-                }
-            }
-            else
-            {
-                MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
-            }
-        }
+        //private void NewMethod()
+        //{
+        //    if (Application.OpenForms.Count == 1)
+        //    {
+        //        if (MessageBox.Show("¿ Está seguro que desea conectarse a otra base de datos?", "Cambiar de conexión",
+        //         MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+        //        {
+        //            if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.local)
+        //            {
+        //                Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.sanLorenzo;
+        //                btnTipoConexioin.Text = "San Lorenzo";
+        //            }
+        //            else
+        //            {
+        //                if (Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.sanLorenzo)
+        //                {
+        //                    Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.sanMartin;
+        //                    btnTipoConexioin.Text = "San Martín";
+        //                }
+        //                else //(Utilidades.Conexion.tipoConn == Utilidades.Conexion.tipoConexion.sanMartin)
+        //                {
+        //                    Utilidades.Conexion.tipoConn = Utilidades.Conexion.tipoConexion.local;
+        //                    btnTipoConexioin.Text = "Local";
+        //                }
+
+        //            }
+        //            MessageBox.Show("Ud. se ha conectado correctamente a la siguiente Base de Datos:\n\n" + Utilidades.Conexion.getConnString(), "Cambio de conexion", MessageBoxButtons.OK);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("Debe cerrar todas las ventanas para poder conectarse a otra base de datos");
+        //    }
+        //}
 
         private void verBalanzaToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -861,22 +866,7 @@ namespace Presentacion
 
         private void button1_Click_1(object sender, EventArgs e)
         {
-            if (Application.OpenForms["formElegirEmbutido"] != null)
-            {
 
-                Application.OpenForms["formElegirEmbutido"].Activate();
-                Application.OpenForms["formElegirEmbutido"].WindowState = FormWindowState.Normal;
-            }
-            else
-            {
-                Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
-                frmSelectUser.ShowDialog(this);
-                Presentacion.Embutidos.formElegirEmbutido frmElegirEmbutido = new Presentacion.Embutidos.formElegirEmbutido();
-                frmElegirEmbutido.oUsuario = oUsuario;
-                //frmElegirEmbutido.frmEmbutidos = this;
-                frmElegirEmbutido.Show();
-            }
-            oUsuario = null;
         }
 
         private void button1_Click_2(object sender, EventArgs e)

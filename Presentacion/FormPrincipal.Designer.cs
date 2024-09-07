@@ -49,7 +49,6 @@
             this.btnVentas = new System.Windows.Forms.Button();
             this.comboConexion = new System.Windows.Forms.ComboBox();
             this.lblConectadoA = new System.Windows.Forms.Label();
-            this.btnTipoConexioin = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.comprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verComprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -116,7 +115,6 @@
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.splitContainer1.Panel2.Controls.Add(this.comboConexion);
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
-            this.splitContainer1.Panel2.Controls.Add(this.btnTipoConexioin);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
             this.splitContainer1.Size = new System.Drawing.Size(997, 591);
             this.splitContainer1.SplitterDistance = 202;
@@ -419,22 +417,6 @@
             this.lblConectadoA.TabIndex = 102;
             this.lblConectadoA.Text = "|  Conectado a";
             // 
-            // btnTipoConexioin
-            // 
-            this.btnTipoConexioin.BackColor = System.Drawing.SystemColors.Control;
-            this.btnTipoConexioin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnTipoConexioin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTipoConexioin.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnTipoConexioin.Location = new System.Drawing.Point(480, 1);
-            this.btnTipoConexioin.Name = "btnTipoConexioin";
-            this.btnTipoConexioin.Size = new System.Drawing.Size(114, 23);
-            this.btnTipoConexioin.TabIndex = 100;
-            this.btnTipoConexioin.TabStop = false;
-            this.btnTipoConexioin.Text = "Local";
-            this.btnTipoConexioin.UseVisualStyleBackColor = false;
-            this.btnTipoConexioin.Visible = false;
-            this.btnTipoConexioin.Click += new System.EventHandler(this.btnTipoConexioin_Click);
-            // 
             // menuStrip1
             // 
             this.menuStrip1.BackColor = System.Drawing.Color.WhiteSmoke;
@@ -680,7 +662,6 @@
         private System.Windows.Forms.ToolStripMenuItem cortesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem personasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
-        private System.Windows.Forms.Button btnTipoConexioin;
         private System.Windows.Forms.Button btnVentas;
         private System.Windows.Forms.Button btnCerrarCaja;
         private System.Windows.Forms.Button btnCajaVentas;
