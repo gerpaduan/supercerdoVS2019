@@ -961,10 +961,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Users\Usuario\Dropbox\BackUp\wsAFIPvs2008 VS2019\wsAFIPvs2008\wsAFIPvs2008.csproj">
-      <Project>{5b716a48-0166-494f-a0f5-2dc93b38ac03}</Project>
-      <Name>wsAFIPvs2008</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Entidades\Entidades.csproj">
       <Project>{95970443-2425-451D-BD5B-1ADCAE0E6402}</Project>
       <Name>Entidades</Name>
@@ -976,6 +972,10 @@
     <ProjectReference Include="..\Utilidades\Utilidades.csproj">
       <Project>{8C5B62F7-7986-4EEA-BA1F-F51F41E00EBF}</Project>
       <Name>Utilidades</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\wsAFIPvs2008\wsAFIPvs2008.csproj">
+      <Project>{5b716a48-0166-494f-a0f5-2dc93b38ac03}</Project>
+      <Name>wsAFIPvs2008</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
