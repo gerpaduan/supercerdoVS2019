@@ -580,7 +580,7 @@ namespace Presentacion
         private void cambiarSucursalOrigen()
         {
             //si la cantidad de Sucursales distinta a 2 no hace el intercambio de valores automaticamente
-            if (!cantSuc2)
+            if (!cantSuc2 || comboSucDestino.SelectedValue == null)
                 return;
 
             if (comboSucDestino.SelectedValue.Equals(1))
