@@ -903,7 +903,7 @@ namespace Presentacion.Ventas
             //unchecked todos las formas de pago para que las vuelva a ingresar y evitar algun error por descuido
             //con clientes en cta cte.
             checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
-                    checkTransf.Checked = false;
+                    checkTransf.Checked = checkCtaCte.Checked = false;
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
