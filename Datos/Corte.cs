@@ -1134,8 +1134,17 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
 
             daCorte.SelectCommand = cmCorte;
-            daCorte.Fill(dtCierreStock);
-            cmCorte.Connection.Close();
+
+            try
+            {
+                daCorte.Fill(dtCierreStock);
+                cmCorte.Connection.Close();
+            }
+            catch (Exception)
+            {
+
+                cmCorte.Connection.Close();
+            }
 
             cmCorte = null;
             daCorte = null;

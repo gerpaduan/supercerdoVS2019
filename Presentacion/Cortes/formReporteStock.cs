@@ -249,7 +249,8 @@ namespace Presentacion.Cortes
         private void cargarGrilla()
         {
             lblActualizar.Visible = false;
-            //reporteTeoricoReal
+
+            ///reporteTeoricoReal
             if (comboTipoReporte.Text.Equals("Teorico - Real"))
             {
                 //DataTable dtReporteTeoricoReal = new DataTable();
@@ -280,7 +281,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
-            //Cierre Stock
+            ///Cierre Stock
             if (comboTipoReporte.Text == "Cierre Stock" || comboTipoReporte.Text == "Stock Actual" ||
                 comboTipoReporte.Text == "Stock Progresivo")
             {
@@ -445,7 +446,7 @@ namespace Presentacion.Cortes
                 }
             }
 
-            //Cierre Stock
+            ///Cierre Stock 2
             if (comboTipoReporte.Text == "Cierre Stock 2")
             {
                 //DataTable dtTeoricoReal = new DataTable();
@@ -494,7 +495,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
-            //StockIngresoEgreso
+            ///StockIngresoEgreso
             if (comboTipoReporte.Text.Equals("Ingreso - Egreso"))
             {
                 //DataTable dtTeoricoReal = new DataTable();
@@ -525,7 +526,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
-            //Acumulado de ventas
+            ///Acumulado de ventas
             if (comboTipoReporte.Text.Equals("Acum. Ventas"))
             {
                 grillaReportes.DataSource = null;
@@ -654,7 +655,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
-            //TotalPorCortesVendidos
+            ///TotalPorCortesVendidos
             if (comboTipoReporte.Text.Equals("Total Cortes Vendidos"))
             {
                 grillaReportes.DataSource = null;
@@ -676,7 +677,7 @@ namespace Presentacion.Cortes
                 }
             }
             
-            //TotalKgsCortePorCompra
+            ///TotalKgsCortePorCompra
             if (comboTipoReporte.Text.Equals("Total Kgs Corte/Compra"))
             {
                 //DataTable dtReporteTeoricoReal = new DataTable();
@@ -689,7 +690,7 @@ namespace Presentacion.Cortes
 
             }
 
-            //TotalMovimientosPorCorte
+            ///TotalMovimientosPorCorte
             if (comboTipoReporte.Text.Equals("Movimiento/Corte")) 
             {
                 //DataTable dtReporteTeoricoReal = new DataTable();
