@@ -1716,7 +1716,7 @@ namespace Presentacion.Caja
                 {
                     if (fijarPeso)
                     {
-                        txtCantKgs.Text = "1.500";
+                        txtCantKgs.Text = "0.200";
                     }
                     else
                     {

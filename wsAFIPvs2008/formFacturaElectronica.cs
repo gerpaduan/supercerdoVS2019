@@ -226,8 +226,9 @@ namespace wsAFIPvs2008
             label_Sucursal.Text = oVentaE.Sucursal.sucursal;
             if (cargarDatosAfip)
                 cargaDatosAfipRecibidos();
+            else
+                inicializaciones(mostrarSeleccionados);
 
-            inicializaciones(mostrarSeleccionados);
             cambiarIngresoImporte();
             cargarGrilla(); //cambio de lugar - antes estaba arriba de if(cargarDatosAfip)
 
@@ -640,8 +641,7 @@ namespace wsAFIPvs2008
             for (int index = 0; index < TiposComprobantesCMB.Items.Count; index++)
             {
                 CbteTipo item = (CbteTipo)TiposComprobantesCMB.Items[index];
-                if (item.Id == codTipoCbteAFip
-                    )
+                if (item.Id == codTipoCbteAFip)
                     TiposComprobantesCMB.SelectedIndex = index;
             }
         }
@@ -1355,8 +1355,13 @@ namespace wsAFIPvs2008
         {
             try
             {
+                if (TiposComprobantesCMB.SelectedValue == null)
+                {
+                    NroCbteTX.Text = "";
+                    return;
+                }
                 CbteTipo cm = new CbteTipo();
-                //cm.Id = Convert.ToInt32(TiposComprobantesCMB.SelectedValue.ToString());
+                cm.Id = Convert.ToInt32(TiposComprobantesCMB.SelectedValue.ToString());
                 var last = getServicio().FECompUltimoAutorizado(authRequest, ptoVtaAfip, cm.Id);
                 int ultimo_nro = last.CbteNro;
                 NroCbteTX.Text = (ultimo_nro + 1).ToString();

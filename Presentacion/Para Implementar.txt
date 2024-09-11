@@ -1,5 +1,6 @@
 ﻿Agregar Cliente en tabla parámetro el idConsumidorFinal = 6
 Agregar Cliente Indefinido = 4 y obtener el codigo para asignarlo en Stock cuando no se selecciona cliente
+
 ##
  public class EgresoCaja
      public static int idPagoTarjeta = 200;
@@ -95,6 +96,7 @@ GO
 -----
 **Cargar Alicuotas en tabla
 **crear campos en corte
+
 idAlicuotaIva	int	Checked
 alicuotaIva	float	Checked
 

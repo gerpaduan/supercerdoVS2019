@@ -947,6 +947,8 @@ namespace Presentacion.Ventas
 
         private void formNuevaVenta_Load(object sender, EventArgs e)
         {
+            checkLeerPeso.Checked =  Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString());
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             if (!(FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso()))
             {
