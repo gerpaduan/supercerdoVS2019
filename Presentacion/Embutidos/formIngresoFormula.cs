@@ -113,7 +113,7 @@ namespace Presentacion
 
             if (lblError.Visible)
             {
-                MessageBox.Show("El Embutido / Elaborado ya posee una la formula. Modifique la existente", "Ingresar Formula", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El Embutido / Elaborado ya posee una formula. Modifique la existente", "Ingresar Formula", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 btnBuscarEmbutido.Select();
                 return false;
             }
@@ -274,7 +274,7 @@ namespace Presentacion
             txtCodCorteEnFormula.Focus();
 
             //validar que no exista formula para el corte seleccionado
-            lblError.Visible = oCorteN.existeFormula(oFormulaE.IdFormula);
+            lblError.Visible = oCorteN.existeFormula(oFormulaE.Embutido.idCorte);
         }
 
 

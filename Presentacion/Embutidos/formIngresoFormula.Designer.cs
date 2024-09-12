@@ -29,15 +29,20 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formIngresoFormula));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaCortesPorEmbutido = new System.Windows.Forms.DataGridView();
+            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.agregarAuto = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -55,6 +60,7 @@
             this.txtCorteEnFormula = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.groupBoxFormula = new System.Windows.Forms.GroupBox();
+            this.lblError = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.btnBuscarEmbutido = new System.Windows.Forms.Button();
             this.txtCodigoEmbutido = new System.Windows.Forms.TextBox();
@@ -68,12 +74,6 @@
             this.label9 = new System.Windows.Forms.Label();
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
-            this.lblError = new System.Windows.Forms.Label();
-            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.agregarAuto = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBoxCortesFormula.SuspendLayout();
@@ -118,14 +118,14 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCortesPorEmbutido.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortesPorEmbutido.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
             this.grillaCortesPorEmbutido.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortesPorEmbutido.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idCorte,
@@ -133,28 +133,28 @@
             this.corte,
             this.porcentaje,
             this.agregarAuto});
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortesPorEmbutido.DefaultCellStyle = dataGridViewCellStyle9;
             this.grillaCortesPorEmbutido.Location = new System.Drawing.Point(15, 315);
             this.grillaCortesPorEmbutido.Margin = new System.Windows.Forms.Padding(4);
             this.grillaCortesPorEmbutido.MultiSelect = false;
             this.grillaCortesPorEmbutido.Name = "grillaCortesPorEmbutido";
             this.grillaCortesPorEmbutido.ReadOnly = true;
             this.grillaCortesPorEmbutido.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaCortesPorEmbutido.RowHeadersDefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaCortesPorEmbutido.RowHeadersDefaultCellStyle = dataGridViewCellStyle10;
             this.grillaCortesPorEmbutido.RowHeadersVisible = false;
             this.grillaCortesPorEmbutido.RowHeadersWidth = 51;
             this.grillaCortesPorEmbutido.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
@@ -162,6 +162,57 @@
             this.grillaCortesPorEmbutido.StandardTab = true;
             this.grillaCortesPorEmbutido.TabIndex = 15;
             this.grillaCortesPorEmbutido.TabStop = false;
+            // 
+            // idCorte
+            // 
+            this.idCorte.DataPropertyName = "idCorte";
+            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.MinimumWidth = 6;
+            this.idCorte.Name = "idCorte";
+            this.idCorte.ReadOnly = true;
+            this.idCorte.Visible = false;
+            // 
+            // codigo
+            // 
+            this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.codigo.DataPropertyName = "codigo";
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle7;
+            this.codigo.FillWeight = 80F;
+            this.codigo.HeaderText = "Codigo";
+            this.codigo.MinimumWidth = 6;
+            this.codigo.Name = "codigo";
+            this.codigo.ReadOnly = true;
+            this.codigo.Width = 70;
+            // 
+            // corte
+            // 
+            this.corte.DataPropertyName = "corte";
+            this.corte.FillWeight = 160.5497F;
+            this.corte.HeaderText = "Corte";
+            this.corte.MinimumWidth = 6;
+            this.corte.Name = "corte";
+            this.corte.ReadOnly = true;
+            // 
+            // porcentaje
+            // 
+            this.porcentaje.DataPropertyName = "Porcentaje";
+            dataGridViewCellStyle8.Format = "N2";
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle8;
+            this.porcentaje.FillWeight = 88.16828F;
+            this.porcentaje.HeaderText = "Porcentaje";
+            this.porcentaje.MinimumWidth = 6;
+            this.porcentaje.Name = "porcentaje";
+            this.porcentaje.ReadOnly = true;
+            // 
+            // agregarAuto
+            // 
+            this.agregarAuto.DataPropertyName = "agregarAuto";
+            this.agregarAuto.FillWeight = 51.28205F;
+            this.agregarAuto.HeaderText = "Agregar Auto.";
+            this.agregarAuto.MinimumWidth = 6;
+            this.agregarAuto.Name = "agregarAuto";
+            this.agregarAuto.ReadOnly = true;
             // 
             // pnlBuscar
             // 
@@ -241,7 +292,7 @@
             this.groupBoxCortesFormula.Size = new System.Drawing.Size(715, 106);
             this.groupBoxCortesFormula.TabIndex = 10;
             this.groupBoxCortesFormula.TabStop = false;
-            this.groupBoxCortesFormula.Text = "Cortes de Fórmula";
+            this.groupBoxCortesFormula.Text = "Ingredientes de la Fórmula";
             // 
             // checkAgregarAuto
             // 
@@ -424,6 +475,19 @@
             this.groupBoxFormula.TabStop = false;
             this.groupBoxFormula.Text = "Fórmula";
             // 
+            // lblError
+            // 
+            this.lblError.AutoSize = true;
+            this.lblError.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblError.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblError.Location = new System.Drawing.Point(303, 25);
+            this.lblError.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblError.Name = "lblError";
+            this.lblError.Size = new System.Drawing.Size(141, 36);
+            this.lblError.TabIndex = 53;
+            this.lblError.Text = "El Código ya posee \r\nuna fórmula";
+            this.lblError.Visible = false;
+            // 
             // label17
             // 
             this.label17.Anchor = System.Windows.Forms.AnchorStyles.None;
@@ -572,70 +636,6 @@
             this.txtCreado.Size = new System.Drawing.Size(192, 24);
             this.txtCreado.TabIndex = 51;
             this.txtCreado.TabStop = false;
-            // 
-            // lblError
-            // 
-            this.lblError.AutoSize = true;
-            this.lblError.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblError.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblError.Location = new System.Drawing.Point(291, 18);
-            this.lblError.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.lblError.Name = "lblError";
-            this.lblError.Size = new System.Drawing.Size(165, 36);
-            this.lblError.TabIndex = 53;
-            this.lblError.Text = "El Código seleccionado\r\n ya posee fórmula";
-            this.lblError.Visible = false;
-            // 
-            // idCorte
-            // 
-            this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
-            this.idCorte.MinimumWidth = 6;
-            this.idCorte.Name = "idCorte";
-            this.idCorte.ReadOnly = true;
-            this.idCorte.Visible = false;
-            // 
-            // codigo
-            // 
-            this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
-            this.codigo.FillWeight = 80F;
-            this.codigo.HeaderText = "Codigo";
-            this.codigo.MinimumWidth = 6;
-            this.codigo.Name = "codigo";
-            this.codigo.ReadOnly = true;
-            this.codigo.Width = 70;
-            // 
-            // corte
-            // 
-            this.corte.DataPropertyName = "corte";
-            this.corte.FillWeight = 160.5497F;
-            this.corte.HeaderText = "Corte";
-            this.corte.MinimumWidth = 6;
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            // 
-            // porcentaje
-            // 
-            this.porcentaje.DataPropertyName = "Porcentaje";
-            dataGridViewCellStyle3.Format = "N3";
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle3;
-            this.porcentaje.FillWeight = 88.16828F;
-            this.porcentaje.HeaderText = "Porcentaje";
-            this.porcentaje.MinimumWidth = 6;
-            this.porcentaje.Name = "porcentaje";
-            this.porcentaje.ReadOnly = true;
-            // 
-            // agregarAuto
-            // 
-            this.agregarAuto.DataPropertyName = "agregarAuto";
-            this.agregarAuto.FillWeight = 51.28205F;
-            this.agregarAuto.HeaderText = "Agregar Auto.";
-            this.agregarAuto.MinimumWidth = 6;
-            this.agregarAuto.Name = "agregarAuto";
-            this.agregarAuto.ReadOnly = true;
             // 
             // formIngresoFormula
             // 

@@ -190,8 +190,7 @@ namespace Presentacion
                     formEmbutidos_Load(null, null);
 
                 this.Close();
-            }
-             
+            }             
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

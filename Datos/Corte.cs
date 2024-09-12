@@ -448,7 +448,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.CommandType = CommandType.Text;
-            cmCorte.CommandText = "Select idFormula from Formula where and idEmbutido = " + idEmbutido;
+            cmCorte.CommandText = "Select idFormula from Formulas where idEmbutido = " + idEmbutido;
             try
             {
                 cmCorte.Connection.Open();

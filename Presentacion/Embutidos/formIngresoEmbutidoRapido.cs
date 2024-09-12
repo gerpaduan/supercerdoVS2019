@@ -10,6 +10,7 @@ using Presentacion.Embutidos;
 using Presentacion.Cortes;
 using System.Configuration;
 using Utilidades;
+using Entidades;
 
 
 namespace Presentacion
@@ -22,6 +23,7 @@ namespace Presentacion
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN=new Negocio.Corte();
+        DataTable dtFormula;
 
         public Entidades.Corte oCorteEmbutidoE;
         public Entidades.Corte oCorteE;
@@ -62,9 +64,9 @@ namespace Presentacion
 
             try
             {
-                //Validación para cuando es Merma
-                if (oCorteE.codigo == 10000 && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Cant. Kgs"))
-                    return true;      
+                ////Validación para cuando es Merma
+                //if (oCorteE.codigo == 10000 && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Cant. Kgs"))
+                //    return true;      
 
                 if (!Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Cant. Kgs"))
                 {
@@ -100,12 +102,44 @@ namespace Presentacion
             {
                 oEmbutidoE.ActualizadoPor = oUsuario;
             }
+
+            calcularFormula();
         }
 
+        private void calcularFormula()
+        {
+            dtFormula = oCorteN.getFormulaEmbutido(oCorteEmbutidoE.idCorte);
+
+            //calcula total sin condimentos
+            float totalKgSinCond = string.IsNullOrEmpty(txtCantKgs.Text) ? 0 : Util_Form.convertFloat(txtCantKgs.Text, true);
+
+            int cantDecimales = 3;
+            float porcentaje;
+            for (int i = 0; i < dtFormula.Rows.Count; i++)
+            {
+                porcentaje = (Util_Form.convertFloat(dtFormula.Rows[i]["porcentaje"].ToString(), false));
+                dtFormula.Rows[i]["kgs"] = Convert.ToString((Math.Round((0.01 * totalKgSinCond *
+                        (porcentaje)), cantDecimales)).ToString("F3"));
+            }
+
+            grillaFormula.DataSource = dtFormula;
+            // Deshabilitar la ordenación en todas las columnas
+            foreach (DataGridViewColumn column in grillaFormula.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+
+        }
         private void agregarEmbutido()
         {
             try
-            {                
+            {
+                if (dtFormula.Rows.Count == 0)
+                {
+                    MessageBox.Show("El Embutido|Elaborado seleccionado no tiene ingresada una fórmula.","",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                    return;
+                }
+
                 if (Utilidades.Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaEmbutido.Value, "Fecha") &&
                     Utilidades.Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
                     && validarCantKgs())
@@ -113,13 +147,14 @@ namespace Presentacion
                     cargarEmbutido();
                     oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
 
-                    //Si CorteEn es igual a CorteEn2 cargar como rebozado
-                    if(oCorteE.codigo != oCorteE2.codigo)
+                    //se cargan los ingredientes seatado como Agregar Automaticamente
+                    cargarIngredientesFormula();
+
+                    foreach (Entidades.CortePorEmbutido cortePorEmbutido in listaCortePorEmbutido)
                     {
-                        cargarRebozado();
+                        oCorteN.agregarCortePorEmbutido(cortePorEmbutido);
                     }
-                    cargarCortePorEmbutido(oCorteE, txtCantKgs.Text);
-                    oCorteN.agregarCortePorEmbutido(oCortePorEmbutidoE);
+
                     saveChanges = true;
                     frmEmbutidos.cargarGrilla();
                     MessageBox.Show("Los datos se guardaron correctamente!", "Mensaje");
@@ -132,14 +167,21 @@ namespace Presentacion
             }
         }
 
+        private void cargarIngredientesFormula()
+        {
+            ///Se cargan todos los ingredientes de la Formula
+            ///
+            for (int i = 0; i < dtFormula.Rows.Count; i++)
+            {
+                    oCortePorEmbutidoE = new Entidades.CortePorEmbutido();
+                    oCortePorEmbutidoE.embutido = oEmbutidoE;
+                    oCortePorEmbutidoE.corte = oCorteN.getCorteById(Convert.ToInt32(dtFormula.Rows[i]["idCorte"]), false);
+                    oCortePorEmbutidoE.kgUtilizado = Util_Form.convertFloat(dtFormula.Rows[i]["kgs"].ToString(), false);
+                    oCortePorEmbutidoE.PesoBalanza = false;
 
-        //private void agregarCorteEnEmbutido()
-        //{
-        //    if (validarCantKgs())
-        //    {
-        //        cargarCortePorEmbutido();            
-        //    }
-        //}
+                    listaCortePorEmbutido.Add(oCortePorEmbutidoE);
+            }
+        }
 
 
         private void cargarCortePorEmbutido(Entidades.Corte oCorte, string cantKgs)
@@ -333,9 +375,6 @@ namespace Presentacion
                 txtCodigoEmbutido.Text = oCorteEmbutidoE.codigo.ToString();
                 txtEmbutido.Text = oCorteEmbutidoE.CorteDesc;
 
-                //txtCorteEnEmbutido.Text = oCorteE.codigo.ToString();
-                //txtCorteEnEmbutido.Text = oCorteE.corte;
-
                 tipoDeCorte();
             }
         }
@@ -400,16 +439,6 @@ namespace Presentacion
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
-                //timer1.Enabled = false;
-                //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                //{
-                //    dejarDeLeerPeso = true;
-                //    checkLeerPeso.Checked = false;
-                //}
-                //else
-                //{
-                //timer1.Enabled = true;
-                //}
             }
         }
 
@@ -541,6 +570,11 @@ namespace Presentacion
         private void btnLimpiar_Click(object sender, EventArgs e)
         {
             txtCantKgs.Text = "";
+        }
+
+        private void txtCantKgs_TextChanged(object sender, EventArgs e)
+        {
+            calcularFormula();
         }
     }
 }

@@ -435,4 +435,38 @@ Agregar en Parametros
 id	nombre	valor	descripcion
 44	idIndefinido	4	id del cliente INDEFINIDO
 
+****
+Agregar el campo en COrtes
+
+ingresoRapidoEmbutido	tinyint	Checked
+
+
+**************
+
+USE [SuperCerdo]
+GO
+/****** Object:  StoredProcedure [dbo].[getListaElegirEmbutido]    Script Date: 09/12/2024 08:03:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[getListaElegirEmbutido]
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;	
+		
+   SELECT     CorteEmbutido.idCorte AS idCorteEmbutido, CorteEmbutido.codigo as codigoEmbutido, 
+		CorteEmbutido.corte as corteEmbutido
+		FROM         dbo.Corte as  CorteEmbutido
+		Where (CorteEmbutido.ingresoRapidoEmbutido = 1)
+			
+		Order by CorteEmbutido.codigo;
+END
 
