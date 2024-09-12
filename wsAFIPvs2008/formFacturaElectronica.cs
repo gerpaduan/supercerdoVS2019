@@ -1262,7 +1262,29 @@ namespace wsAFIPvs2008
                 ticket.LineasEnBlanco(1);
                 ticket.TextoIzquierda("CAE: " + oFactuElec.CAE1);
                 ticket.TextoIzquierda("Vto: " + oFactuElec.FecVtoCAE);
-                ticket.LineasEnBlanco(3);
+                ticket.LineasEnBlanco(1);
+                //si es transferencia se pide Nombre, DNI y Telefono
+                bool esTransferencia = oFactuElec.FormaPago == Entidades.Pago.formasPago.Transferencia.ToString();
+                if (esTransferencia)
+                {
+                    ticket.TextoIzquierda("Nombre:");
+                    ticket.TextoIzquierda("DNI:");
+                    ticket.TextoIzquierda("Telefono:");
+                    ticket.LineasEnBlanco(4);
+                }
+                else
+                {
+                    ticket.LineasEnBlanco(3);
+                }
+                ticket.realizarImpresion();
+                //si es transferencia preguntar si imprimir copia para el cliente
+                if (esTransferencia)
+                {
+                    DialogResult imprimirCopia = MessageBox.Show("¿Imprimir copia?.",
+                        "Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    if (DialogResult.Yes == imprimirCopia)
+                        ticket.realizarImpresion();
+                }
             }
             catch (Exception)
             {
