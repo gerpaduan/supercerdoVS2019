@@ -948,13 +948,13 @@ namespace Presentacion.Caja
                                 txtAbona.Select();
                                 txtAbona.Focus();
                             }
-                            if (cambio >= 100)
-                            {
-                                mensaje = "El cambio debe ser menor a $100.\nVerifique el pago ingresado e intente finalizar la venta nuevamente.";
-                                MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                txtAbona.Select();
-                                txtAbona.Focus();
-                            }
+                            //if (cambio >= 100)
+                            //{
+                            //    mensaje = "El cambio debe ser menor a $100.\nVerifique el pago ingresado e intente finalizar la venta nuevamente.";
+                            //    MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            //    txtAbona.Select();
+                            //    txtAbona.Focus();
+                            //}
                             return false;
                         }
                         else

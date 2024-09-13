@@ -315,6 +315,8 @@ namespace wsAFIPvs2008
         {
             Entidades.lineaVentaUnificada lineaVentaP;
             listaLineaGrilla.Clear();
+            listaIdAlicuotaConIva.Clear();
+            importeTotal, importeNeto, importeIva = 0;
 
             foreach (Entidades.LineaVenta lineaE in oVentaE.LineasVenta)
             {
@@ -1313,9 +1315,15 @@ namespace wsAFIPvs2008
             NetoTX.Text = "";
             txtCAE.Text = "";
             txtVTO.Text = "";
+            txtIva0.Text = "";
+            txtIva10_5.Text = "";
+            txtIva21.Text = "";
+            txtIva27.Text = "";
+            txtIva5.Text = "";
+            txtIva2_5.Text = "";
 
-            //Obtiene Ultimo Nro Comprobante segun parametros
-            var lastCbteObj = service.FECompUltimoAutorizado(authRequest, ptoVtaAfip, (int)TiposComprobantesCMB.SelectedValue);// TiposComprobantes.ResultGet[0].Id); 
+                //Obtiene Ultimo Nro Comprobante segun parametros
+                var lastCbteObj = service.FECompUltimoAutorizado(authRequest, ptoVtaAfip, (int)TiposComprobantesCMB.SelectedValue);// TiposComprobantes.ResultGet[0].Id); 
             NroCbteTX.Text = (lastCbteObj.CbteNro + 1).ToString();
         }
 
