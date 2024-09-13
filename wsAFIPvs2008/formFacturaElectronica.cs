@@ -316,7 +316,7 @@ namespace wsAFIPvs2008
             Entidades.lineaVentaUnificada lineaVentaP;
             listaLineaGrilla.Clear();
             listaIdAlicuotaConIva.Clear();
-            importeTotal, importeNeto, importeIva = 0;
+            importeTotal = importeNeto = importeIva = 0;
 
             foreach (Entidades.LineaVenta lineaE in oVentaE.LineasVenta)
             {
@@ -511,23 +511,18 @@ namespace wsAFIPvs2008
 
         private void iniciarTipoIva(bool mostrarSeleccionados)
         {
-            ///esta es una validacion 'cargarListaAlicuotas' para no cargar dos veces las alicuotas y 
-            ///evitar tocar codigo que pueda interferir en el correcto funcionamiento
-            bool cargarListaAlicuotas = listaAlicuotasFactura.Count == 0;
+            listaAlicuotasFactura.Clear();  //limpia lista para que no sume importes de ventas anteriores
 
             //Obtiene las Alícuotas y establece el 10.5%
             for (int index = 0; index < TipoIVACmb.Items.Count; index++)
             {
                 IvaTipo item = (IvaTipo)TipoIVACmb.Items[index];
 
-                if (cargarListaAlicuotas)
-                {
-                    //cargo las alicuotas de iva para luego aplicar el importe
-                    Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
-                    oAli.IdIva = Convert.ToInt32(item.Id);
-                    oAli.Iva = Util_Form.convertFloat(item.Desc.Replace("%", ""), true);
-                    listaAlicuotasFactura.Add(oAli);
-                }
+                //cargo las alicuotas de iva para luego aplicar el importe
+                Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
+                oAli.IdIva = Convert.ToInt32(item.Id);
+                oAli.Iva = Util_Form.convertFloat(item.Desc.Replace("%", ""), true);
+                listaAlicuotasFactura.Add(oAli);
 
                 if (item.Id == idIvaAliAfip)
                     TipoIVACmb.SelectedIndex = index;
