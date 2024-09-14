@@ -235,8 +235,9 @@ namespace wsAFIPvs2008
             FechaDTP.Value = oVentaE.FechaVenta;
             txtRazonSocial.Text = oVentaE.Persona.razonSocial;
             DocTX.Text = oVentaE.Persona.Cuit.Replace("-", "");
-            txtDomicilio.Text = oVentaE.Persona.Domicilio;
-            comboIva.SelectedIndex = (oVentaE.Persona.IdIva - 1);
+            txtDomicilio.Text = oVentaE.Persona.Domicilio + " - " + oVentaE.Persona.Ciudad;
+            //comboIva.SelectedIndex = (oVentaE.Persona.IdIva - 1);
+            comboIva.SelectedValue = oVentaE.Persona.IdIva;
             TotalTx.Text = oVentaE.TotalImporte.ToString("F2");
             TotalTx.ForeColor = Color.DarkRed;
             NroCbteTX.Text = oFactuElec.NroCbteAfip != null ? oFactuElec.NroCbteAfip : NroCbteTX.Text;
@@ -793,7 +794,7 @@ namespace wsAFIPvs2008
                 if (oFactuElec != null && oFactuElec.Id > 0 && !string.IsNullOrEmpty(oFactuElec.CAE1))
                 {
                    if (oFactuElec.RazonSocialAFIP.Equals(txtRazonSocial.Text) && oFactuElec.DomicilioAFIP.Equals(txtDomicilio.Text)
-                        && oFactuElec.CondicionIvaAFIP.Equals(comboIva.SelectedText))
+                        && oFactuElec.CondicionIvaAFIP.Equals(comboIva.Text))
                         MessageBox.Show("La Venta ya ha sido facturada", "Venta Facturada", MessageBoxButtons.OK, MessageBoxIcon.Information);                      
                    else
                    {
@@ -803,9 +804,9 @@ namespace wsAFIPvs2008
                        {
                            oFactuElec.RazonSocialAFIP = txtRazonSocial.Text;
                            oFactuElec.DomicilioAFIP = txtDomicilio.Text;
-                           oFactuElec.CondicionIvaAFIP = comboIva.SelectedText;
+                           oFactuElec.CondicionIvaAFIP = comboIva.Text;
                            oVentaN.addOrEditFactuElec(oFactuElec);
-                           imprimirTicket(oFactuElec.esFacturaA(TiposComprobantesCMB.SelectedValue.ToString()), respuesta);
+                           //imprimirTicket(oFactuElec.esFacturaA(TiposComprobantesCMB.SelectedValue.ToString()), respuesta);
                            limpiarCampos(service);
                        }
                    }
@@ -1500,8 +1501,20 @@ namespace wsAFIPvs2008
         {
             //Cond.Iva:  1 - Consumidor Final / 2 - RRII / 3 - Monotributo / 4 - Exento
             //Tipos Doc.: 80 - CUIT / 96 - DNI / 99 - Doc.(otro)
+            //1: Factura A
+            //2: Nota de Débito A
+            //3: Nota de Crédito A
+            //4: Recibo A
+            //6: Factura B
+            //7: Nota de Débito B
+            //8: Nota de Crédito B
+            //9: Recibo B
+            //11: Factura C
+            //12: Nota de Débito C
+            //13: Nota de Crédito C
+            //15: Recibo C
 
-            TiposComprobantesCMB.SelectedIndex = -1;
+            TiposComprobantesCMB.SelectedValue  = esRRII ? 6 : 11;
 
             switch (comboIva.SelectedValue)
             {
@@ -1737,7 +1750,7 @@ namespace wsAFIPvs2008
             {
                 //totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 totalTable.AddCell(new PdfPCell(new Phrase("Subtotal: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                totalTable.AddCell(new PdfPCell(new Phrase(NetoTX.Text, fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                totalTable.AddCell(new PdfPCell(new Phrase(oFactuElec.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             }
             totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             totalTable.AddCell(new PdfPCell(new Phrase("Total: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
