@@ -192,6 +192,8 @@ namespace wsAFIPvs2008
 
             cargarIva();
             cargarVenta();
+            RegistrarBtn.Focus();
+            RegistrarBtn.Select();
         }
 
         public void cargarVenta()
@@ -204,7 +206,8 @@ namespace wsAFIPvs2008
             FechaDTP.Enabled = logueado;
             checkTodosDatos.Enabled = logueado;
             CargaBtn.Enabled = logueado;
-            mostrarSeleccionados = !checkTodosDatos.Checked;            
+            mostrarSeleccionados = !checkTodosDatos.Checked;
+            txtFormaPago.Text = oVentaE.FormaPago;
             TotalTx.ReadOnly = mostrarSeleccionados;
             TotalTx.Text = "";
             //Si el Obj Venta es nulo se cargaDatosAfip y sale del metodo
@@ -1499,8 +1502,8 @@ namespace wsAFIPvs2008
 
         private void comboIva_SelectedIndexChanged(object sender, EventArgs e)
         {
-            //Cond.Iva:  1 - Consumidor Final / 2 - RRII / 3 - Monotributo / 4 - Exento
-            //Tipos Doc.: 80 - CUIT / 96 - DNI / 99 - Doc.(otro)
+            ///Cond.Iva:  1 - Consumidor Final / 2 - RRII / 3 - Monotributo / 4 - Exento
+            ///Tipos Doc.: 80 - CUIT / 96 - DNI / 99 - Doc.(otro)
             //1: Factura A
             //2: Nota de Débito A
             //3: Nota de Crédito A

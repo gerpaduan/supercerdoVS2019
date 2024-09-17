@@ -33,6 +33,8 @@
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtAlicuotaIva = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
             this.checkHabilitado = new System.Windows.Forms.CheckBox();
             this.txtPromedio = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
@@ -67,8 +69,6 @@
             this.label10 = new System.Windows.Forms.Label();
             this.txtStockSanMartin = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.txtAlicuotaIva = new System.Windows.Forms.TextBox();
-            this.label14 = new System.Windows.Forms.Label();
             this.barraControl.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
@@ -147,20 +147,42 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(16, 4);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(635, 257);
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
             // 
+            // txtAlicuotaIva
+            // 
+            this.txtAlicuotaIva.Location = new System.Drawing.Point(133, 191);
+            this.txtAlicuotaIva.Margin = new System.Windows.Forms.Padding(4);
+            this.txtAlicuotaIva.Name = "txtAlicuotaIva";
+            this.txtAlicuotaIva.ReadOnly = true;
+            this.txtAlicuotaIva.Size = new System.Drawing.Size(93, 24);
+            this.txtAlicuotaIva.TabIndex = 43;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label14.Location = new System.Drawing.Point(43, 195);
+            this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(82, 18);
+            this.label14.TabIndex = 42;
+            this.label14.Text = "Alícuota Iva";
+            // 
             // checkHabilitado
             // 
             this.checkHabilitado.AutoSize = true;
             this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkHabilitado.Enabled = false;
             this.checkHabilitado.Location = new System.Drawing.Point(55, 225);
-            this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
             this.checkHabilitado.TabIndex = 41;
@@ -170,7 +192,7 @@
             // txtPromedio
             // 
             this.txtPromedio.Location = new System.Drawing.Point(468, 222);
-            this.txtPromedio.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtPromedio.Margin = new System.Windows.Forms.Padding(4);
             this.txtPromedio.Name = "txtPromedio";
             this.txtPromedio.ReadOnly = true;
             this.txtPromedio.Size = new System.Drawing.Size(99, 24);
@@ -206,7 +228,7 @@
             this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkEnCierreStock.Enabled = false;
             this.checkEnCierreStock.Location = new System.Drawing.Point(467, 32);
-            this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(18, 17);
             this.checkEnCierreStock.TabIndex = 36;
@@ -216,7 +238,7 @@
             // 
             this.txtIdCorte.Enabled = false;
             this.txtIdCorte.Location = new System.Drawing.Point(133, 26);
-            this.txtIdCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtIdCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtIdCorte.Name = "txtIdCorte";
             this.txtIdCorte.ReadOnly = true;
             this.txtIdCorte.Size = new System.Drawing.Size(93, 24);
@@ -237,7 +259,7 @@
             // txtDesvioEstandar
             // 
             this.txtDesvioEstandar.Location = new System.Drawing.Point(468, 188);
-            this.txtDesvioEstandar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDesvioEstandar.Margin = new System.Windows.Forms.Padding(4);
             this.txtDesvioEstandar.Name = "txtDesvioEstandar";
             this.txtDesvioEstandar.ReadOnly = true;
             this.txtDesvioEstandar.Size = new System.Drawing.Size(99, 24);
@@ -273,7 +295,7 @@
             this.txtIndependiente.AutoSize = true;
             this.txtIndependiente.Enabled = false;
             this.txtIndependiente.Location = new System.Drawing.Point(468, 60);
-            this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(18, 17);
             this.txtIndependiente.TabIndex = 29;
@@ -282,7 +304,7 @@
             // txtPorcHueso
             // 
             this.txtPorcHueso.Location = new System.Drawing.Point(468, 155);
-            this.txtPorcHueso.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtPorcHueso.Margin = new System.Windows.Forms.Padding(4);
             this.txtPorcHueso.Name = "txtPorcHueso";
             this.txtPorcHueso.ReadOnly = true;
             this.txtPorcHueso.Size = new System.Drawing.Size(99, 24);
@@ -304,7 +326,7 @@
             // txtPorcentajeCorte
             // 
             this.txtPorcentajeCorte.Location = new System.Drawing.Point(468, 122);
-            this.txtPorcentajeCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtPorcentajeCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtPorcentajeCorte.Name = "txtPorcentajeCorte";
             this.txtPorcentajeCorte.ReadOnly = true;
             this.txtPorcentajeCorte.Size = new System.Drawing.Size(93, 24);
@@ -314,7 +336,7 @@
             // txtPrecioKg
             // 
             this.txtPrecioKg.Location = new System.Drawing.Point(133, 126);
-            this.txtPrecioKg.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtPrecioKg.Margin = new System.Windows.Forms.Padding(4);
             this.txtPrecioKg.Name = "txtPrecioKg";
             this.txtPrecioKg.ReadOnly = true;
             this.txtPrecioKg.Size = new System.Drawing.Size(93, 24);
@@ -336,7 +358,7 @@
             // txtTipo
             // 
             this.txtTipo.Location = new System.Drawing.Point(133, 159);
-            this.txtTipo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTipo.Margin = new System.Windows.Forms.Padding(4);
             this.txtTipo.Name = "txtTipo";
             this.txtTipo.ReadOnly = true;
             this.txtTipo.Size = new System.Drawing.Size(93, 24);
@@ -369,7 +391,7 @@
             // txtCodigo
             // 
             this.txtCodigo.Location = new System.Drawing.Point(133, 59);
-            this.txtCodigo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCodigo.Margin = new System.Windows.Forms.Padding(4);
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.ReadOnly = true;
             this.txtCodigo.Size = new System.Drawing.Size(93, 24);
@@ -390,7 +412,7 @@
             // txtCorteMaestro
             // 
             this.txtCorteMaestro.Location = new System.Drawing.Point(468, 89);
-            this.txtCorteMaestro.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCorteMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.txtCorteMaestro.Name = "txtCorteMaestro";
             this.txtCorteMaestro.ReadOnly = true;
             this.txtCorteMaestro.Size = new System.Drawing.Size(140, 24);
@@ -411,7 +433,7 @@
             // txtDescCorte
             // 
             this.txtDescCorte.Location = new System.Drawing.Point(133, 92);
-            this.txtDescCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDescCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtDescCorte.Name = "txtDescCorte";
             this.txtDescCorte.ReadOnly = true;
             this.txtDescCorte.Size = new System.Drawing.Size(192, 24);
@@ -433,7 +455,7 @@
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Location = new System.Drawing.Point(537, 426);
-            this.btnSalir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSalir.Margin = new System.Windows.Forms.Padding(4);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(109, 33);
             this.btnSalir.TabIndex = 18;
@@ -449,7 +471,7 @@
             this.pnlBuscar.Controls.Add(this.groupBox2);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 49);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(663, 372);
             this.pnlBuscar.TabIndex = 17;
@@ -466,9 +488,9 @@
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox2.Location = new System.Drawing.Point(16, 260);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox2.Size = new System.Drawing.Size(635, 103);
             this.groupBox2.TabIndex = 19;
             this.groupBox2.TabStop = false;
@@ -478,7 +500,7 @@
             // txtTotalStock
             // 
             this.txtTotalStock.Location = new System.Drawing.Point(449, 62);
-            this.txtTotalStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTotalStock.Margin = new System.Windows.Forms.Padding(4);
             this.txtTotalStock.Name = "txtTotalStock";
             this.txtTotalStock.ReadOnly = true;
             this.txtTotalStock.Size = new System.Drawing.Size(133, 24);
@@ -499,7 +521,7 @@
             // txtStockSanLorenzo
             // 
             this.txtStockSanLorenzo.Location = new System.Drawing.Point(149, 30);
-            this.txtStockSanLorenzo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtStockSanLorenzo.Margin = new System.Windows.Forms.Padding(4);
             this.txtStockSanLorenzo.Name = "txtStockSanLorenzo";
             this.txtStockSanLorenzo.ReadOnly = true;
             this.txtStockSanLorenzo.Size = new System.Drawing.Size(133, 24);
@@ -520,7 +542,7 @@
             // txtStockSanMartin
             // 
             this.txtStockSanMartin.Location = new System.Drawing.Point(149, 65);
-            this.txtStockSanMartin.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtStockSanMartin.Margin = new System.Windows.Forms.Padding(4);
             this.txtStockSanMartin.Name = "txtStockSanMartin";
             this.txtStockSanMartin.ReadOnly = true;
             this.txtStockSanMartin.Size = new System.Drawing.Size(133, 24);
@@ -538,27 +560,6 @@
             this.label12.TabIndex = 2;
             this.label12.Text = "San Martín";
             // 
-            // txtAlicuotaIva
-            // 
-            this.txtAlicuotaIva.Location = new System.Drawing.Point(133, 191);
-            this.txtAlicuotaIva.Margin = new System.Windows.Forms.Padding(4);
-            this.txtAlicuotaIva.Name = "txtAlicuotaIva";
-            this.txtAlicuotaIva.ReadOnly = true;
-            this.txtAlicuotaIva.Size = new System.Drawing.Size(93, 24);
-            this.txtAlicuotaIva.TabIndex = 43;
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label14.Location = new System.Drawing.Point(43, 195);
-            this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(82, 18);
-            this.label14.TabIndex = 42;
-            this.label14.Text = "Alícuota Iva";
-            // 
             // formInfoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -567,7 +568,7 @@
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
-            this.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.Margin = new System.Windows.Forms.Padding(5);
             this.MaximizeBox = false;
             this.Name = "formInfoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

@@ -1,5 +1,6 @@
 ﻿Agregar Cliente en tabla parámetro el idConsumidorFinal = 6
 Agregar Cliente Indefinido = 4 y obtener el codigo para asignarlo en Stock cuando no se selecciona cliente
+45	minAccesoUltimaVentaVendedor	300	Minutos limite para que el vendedor pueda modificar ultima venta
 
 ##
  public class EgresoCaja
@@ -470,3 +471,17 @@ BEGIN
 		Order by CorteEmbutido.codigo;
 END
 
+**************************************
+**************************************
+--Crear Base de Datos a partir de una existente
+
+use master
+RESTORE DATABASE DB
+FROM DISK = 'C:\Dropbox\BackUp\20240914SuperCerdoSM.bak'
+WITH 
+    MOVE 'SuperCerdo' TO 'c:\Program Files (x86)\Microsoft SQL Server\MSSQL10.SQLEXPRESS\MSSQL\DATA\DB.mdf', -- Cambiar ruta del archivo .mdf
+    MOVE 'SuperCerdo_log' TO 'c:\Program Files (x86)\Microsoft SQL Server\MSSQL10.SQLEXPRESS\MSSQL\DATA\DB_log.ldf'; -- Cambiar ruta del archivo de log .ldf
+    --REPLACE; -- Opcional si quieres sobrescribir una base de datos existente con el mismo nombre
+
+***************************************
+***************************************
