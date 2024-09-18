@@ -463,7 +463,7 @@
             // 
             // corte
             // 
-            this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.corte.DataPropertyName = "corte";
             dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.corte.DefaultCellStyle = dataGridViewCellStyle3;
@@ -471,7 +471,7 @@
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
-            this.corte.Width = 150;
+            this.corte.Width = 68;
             // 
             // precioKg
             // 
@@ -570,7 +570,7 @@
             // 
             // corteMaestro
             // 
-            this.corteMaestro.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.corteMaestro.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.corteMaestro.DataPropertyName = "corteMaestro";
             this.corteMaestro.HeaderText = "Corte Maestro";
             this.corteMaestro.MinimumWidth = 6;
@@ -631,6 +631,7 @@
             this.desvioEstandar.MinimumWidth = 6;
             this.desvioEstandar.Name = "desvioEstandar";
             this.desvioEstandar.ReadOnly = true;
+            this.desvioEstandar.Visible = false;
             this.desvioEstandar.Width = 60;
             // 
             // habilitado
@@ -656,6 +657,7 @@
             this.mayorista.MinimumWidth = 6;
             this.mayorista.Name = "mayorista";
             this.mayorista.ReadOnly = true;
+            this.mayorista.Visible = false;
             // 
             // idSucursalSL
             // 

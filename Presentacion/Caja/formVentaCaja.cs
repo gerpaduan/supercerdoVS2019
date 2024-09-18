@@ -1810,6 +1810,11 @@ namespace Presentacion.Caja
 
         private void validarAperturaCaja()
         {
+            ///Cuando el usuario abre caja por primera vez oCierreE es null y lanza error
+            ///Entonces valido y si es null, creo la instancia
+            if (oCierreE == null)
+                oCierreE = new Entidades.CierreCaja();
+
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
