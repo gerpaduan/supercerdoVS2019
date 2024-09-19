@@ -511,7 +511,7 @@ namespace Presentacion.Caja
             Negocio.Persona oPersonaN = new Negocio.Persona();
             int idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
-            this.txtCliente.Text = oCliente.razonSocial;
+            EnviarPersona(oCliente);
             txtCuit.Text = "";
             txtDomicilio.Text = "";
             txtFecVenta.Text = DateTime.Now.ToString();
