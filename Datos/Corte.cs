@@ -40,7 +40,7 @@ namespace Datos
                         oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
                         oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
-                        oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
+                        oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
                         oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
                         oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
                         oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
@@ -95,7 +95,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@promedio", oCorteE.Promedio);
             cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
             cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
-            cmCorte.Parameters.AddWithValue("@mayorista", oCorteE.Mayorista);
+            cmCorte.Parameters.AddWithValue("@ingresoRapidoEmbutido", oCorteE.IngresoRapidoEmbutido);
             cmCorte.Parameters.AddWithValue("@habilitado", oCorteE.Habilitado);
             cmCorte.Parameters.AddWithValue("@enCierreStock", oCorteE.EnCierreStock);
             cmCorte.Parameters.AddWithValue("@idCorteMaestro", oCorteE.corteMaestro != null ? oCorteE.corteMaestro.idCorte : 0);
@@ -194,7 +194,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            string consultaSQL = "SELECT     CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.mayorista, CorteP.enCierreStock, " +
+            string consultaSQL = "SELECT     CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.ingresoRapidoEmbutido, CorteP.enCierreStock, " +
                 " CorteP.tipo, CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, " +
                 " CorteP.independiente, CorteP.promedio, CorteP.idAlicuotaIva, CorteP.alicuotaIva FROM  dbo.Corte AS CorteM RIGHT OUTER JOIN " +
                 " dbo.Corte AS CorteP ON CorteM.idCorte = CorteP.idCorteMaestro";
@@ -341,7 +341,7 @@ namespace Datos
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
                         oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
                         oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
-                        oCorteE.Mayorista = Convert.ToBoolean(drCorte["mayorista"]);
+                        oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
                         oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
                         oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
                         oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());

@@ -23,7 +23,7 @@ namespace Entidades
         public float porcentaje;
         public string tipo;
         public int independiente;
-        private bool mayorista;
+        private bool ingresoRapidoEmbutido;
         private bool enCierreStock;
         public Corte corteMaestro;
         public float precioKg;
@@ -136,10 +136,10 @@ namespace Entidades
         }
 
 
-        public bool Mayorista
+        public bool IngresoRapidoEmbutido
         {
-            get { return mayorista; }
-            set { mayorista = value; }
+            get { return ingresoRapidoEmbutido; }
+            set { ingresoRapidoEmbutido = value; }
         }
 
         public bool EnCierreStock

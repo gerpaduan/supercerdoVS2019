@@ -678,8 +678,8 @@ namespace Presentacion.Caja
             lineaVentaP.cantKgs = lineaE.CantKg;
             lineaVentaP.kgsTotalCalculado = lineaE.KgsTotalCalculado;
             lineaVentaP.kgsAjusteTarj = lineaE.KgsAjusteTarj;
-            //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.Mayorista);
-            lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.Mayorista);
+            //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.IngresoRapidoEmbutido);
+            lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.IngresoRapidoEmbutido);
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.KgsTotalCalculado;
             lineaVentaP.Random = lineaE.Random;
 
@@ -766,14 +766,14 @@ namespace Presentacion.Caja
                 return false;
             }
 
-            //si es consumidor final no se permite precios mayorista excepto que esté logueado como admin
-            int inicioCodigoMayorista = (ConfigurationManager.AppSettings["codigoPrecioMayorista"]) != null ?
-                Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioMayorista"].ToString()) : 0;
-            if (oCorteE != null && oCorteE.Mayorista && !FormPrincipal.logueado && !oUsuario.Admin && 
+            //si es consumidor final no se permite precios ingresoRapidoEmbutido excepto que esté logueado como admin
+            int inicioCodigoIngresoRapidoEmbutido = (ConfigurationManager.AppSettings["codigoPrecioIngresoRapidoEmbutido"]) != null ?
+                Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioIngresoRapidoEmbutido"].ToString()) : 0;
+            if (oCorteE != null && oCorteE.IngresoRapidoEmbutido && !FormPrincipal.logueado && !oUsuario.Admin && 
                 oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
             {
-                MessageBox.Show("No tienes permiso para realizar ventas con precio mayorista a un consumidor final.\n\n"+
-                    "Busque el cliente o agréguelo para poder realizar la venta con precios mayoristas", "Precio mayorista");
+                MessageBox.Show("No tienes permiso para realizar ventas con precio ingresoRapidoEmbutido a un consumidor final.\n\n"+
+                    "Busque el cliente o agréguelo para poder realizar la venta con precios ingresoRapidoEmbutidos", "Precio ingresoRapidoEmbutido");
                 txtCodigo.Focus();
                 return false;
             }
@@ -890,7 +890,7 @@ namespace Presentacion.Caja
                 //se valida que no finalice venta con bonificacion para consumidor final
                 for (int index = 0; index < listaLineaVenta.Count; index++)
                 {
-                    if ((listaLineaVenta[index].Bonificacion != 0 || listaLineaVenta[index].Corte.Mayorista) && !FormPrincipal.logueado && !oUsuario.Admin && 
+                    if ((listaLineaVenta[index].Bonificacion != 0 || listaLineaVenta[index].Corte.IngresoRapidoEmbutido) && !FormPrincipal.logueado && !oUsuario.Admin && 
                         oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
                     {
                         bool esAnulado = false;
@@ -907,7 +907,7 @@ namespace Presentacion.Caja
 
                         if (!esAnulado)
                         {
-                            mensaje = "No tienes permiso para poder bonificar y/o vender productos mayoristas a un cliente Consumidor Final";
+                            mensaje = "No tienes permiso para poder bonificar y/o vender productos ingresoRapidoEmbutidos a un cliente Consumidor Final";
                             MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return false;
                         }  
@@ -1102,7 +1102,7 @@ namespace Presentacion.Caja
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.precioKgReferencia = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.tipo = fila["tipo"].ToString();
-                                oCorteE.Mayorista = Convert.ToBoolean(fila["mayorista"]);
+                                oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(fila["ingresoRapidoEmbutido"]);
                                 oCorteE.EnCierreStock = Convert.ToBoolean(fila["enCierreStock"]);
                                 oCorteE.Habilitado = Convert.ToBoolean(fila["habilitado"]);
                         }
@@ -1120,7 +1120,7 @@ namespace Presentacion.Caja
                         //Se establece el precio segun la forma de pago
                         establecerPrecioCorteSegunFormaPago();
 
-                        this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.Mayorista).ToString("N2");//oCorteE.precioKg.ToString("N");
+                        this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.IngresoRapidoEmbutido).ToString("N2");//oCorteE.precioKg.ToString("N");
                         
                         cargarTotalCorte();
                     }
@@ -2632,7 +2632,7 @@ namespace Presentacion.Caja
                         //listaLineaVenta[index].Corte = oCorteE;
                         listaLineaVenta[index].PrecioKg = oCorteE.precioKg;
 
-                        listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, linea.Corte.Mayorista);
+                        listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, linea.Corte.IngresoRapidoEmbutido);
                         listaLineaGrilla[index].totalS = listaLineaGrilla[index].precioKg * listaLineaGrilla[index].KgsTotalCalculado;
                     }
                 }

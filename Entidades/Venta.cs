@@ -7,10 +7,10 @@ namespace Entidades
 {
     public class Venta
     {
-        //se bonifican sólo si no son precios mayoristas
-        public float bonificar(Entidades.Persona oCliente, float precio, bool esPrecioMayorista)
+        //se bonifican sólo si no son precios ingresoRapidoEmbutidos
+        public float bonificar(Entidades.Persona oCliente, float precio, bool esPrecioIngresoRapidoEmbutido)
         {
-            return oCliente.Bonificacion != 0 && !esPrecioMayorista ? (precio * (1 - (oCliente.Bonificacion / 100))) : precio;
+            return oCliente.Bonificacion != 0 && !esPrecioIngresoRapidoEmbutido ? (precio * (1 - (oCliente.Bonificacion / 100))) : precio;
         }
 
         public float getImporteVenta(Entidades.Venta oVentaE)

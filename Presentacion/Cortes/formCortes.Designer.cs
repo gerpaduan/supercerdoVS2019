@@ -85,7 +85,7 @@
             this.desvioEstandar = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.enCierreStock = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.mayorista = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.ingresoRapidoEmbutido = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.idSucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.sucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.stockSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -191,7 +191,7 @@
             this.desvioEstandar,
             this.habilitado,
             this.enCierreStock,
-            this.mayorista,
+            this.ingresoRapidoEmbutido,
             this.idSucursalSL,
             this.sucursalSL,
             this.stockSL,
@@ -650,14 +650,13 @@
             this.enCierreStock.Name = "enCierreStock";
             this.enCierreStock.ReadOnly = true;
             // 
-            // mayorista
+            // ingresoRapidoEmbutido
             // 
-            this.mayorista.DataPropertyName = "mayorista";
-            this.mayorista.HeaderText = "Mayorista";
-            this.mayorista.MinimumWidth = 6;
-            this.mayorista.Name = "mayorista";
-            this.mayorista.ReadOnly = true;
-            this.mayorista.Visible = false;
+            this.ingresoRapidoEmbutido.DataPropertyName = "ingresoRapidoEmbutido";
+            this.ingresoRapidoEmbutido.HeaderText = "IngresoRapidoEmbutido";
+            this.ingresoRapidoEmbutido.MinimumWidth = 6;
+            this.ingresoRapidoEmbutido.Name = "ingresoRapidoEmbutido";
+            this.ingresoRapidoEmbutido.ReadOnly = true;
             // 
             // idSucursalSL
             // 
@@ -802,7 +801,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn desvioEstandar;
         private System.Windows.Forms.DataGridViewCheckBoxColumn habilitado;
         private System.Windows.Forms.DataGridViewCheckBoxColumn enCierreStock;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn mayorista;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn ingresoRapidoEmbutido;
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalSL;
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalSL;
         private System.Windows.Forms.DataGridViewTextBoxColumn stockSL;

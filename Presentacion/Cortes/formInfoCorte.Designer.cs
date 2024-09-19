@@ -33,19 +33,20 @@
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtIndependiente = new System.Windows.Forms.CheckBox();
+            this.checkIngresoRapidoEmbutido = new System.Windows.Forms.CheckBox();
+            this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
             this.txtAlicuotaIva = new System.Windows.Forms.TextBox();
             this.label14 = new System.Windows.Forms.Label();
             this.checkHabilitado = new System.Windows.Forms.CheckBox();
             this.txtPromedio = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
             this.label15 = new System.Windows.Forms.Label();
-            this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
             this.txtIdCorte = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
             this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
-            this.txtIndependiente = new System.Windows.Forms.CheckBox();
             this.txtPorcHueso = new System.Windows.Forms.MaskedTextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.txtPorcentajeCorte = new System.Windows.Forms.MaskedTextBox();
@@ -117,19 +118,20 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.txtIndependiente);
+            this.groupBox1.Controls.Add(this.checkIngresoRapidoEmbutido);
+            this.groupBox1.Controls.Add(this.checkEnCierreStock);
             this.groupBox1.Controls.Add(this.txtAlicuotaIva);
             this.groupBox1.Controls.Add(this.label14);
             this.groupBox1.Controls.Add(this.checkHabilitado);
             this.groupBox1.Controls.Add(this.txtPromedio);
             this.groupBox1.Controls.Add(this.label16);
             this.groupBox1.Controls.Add(this.label15);
-            this.groupBox1.Controls.Add(this.checkEnCierreStock);
             this.groupBox1.Controls.Add(this.txtIdCorte);
             this.groupBox1.Controls.Add(this.label13);
             this.groupBox1.Controls.Add(this.txtDesvioEstandar);
             this.groupBox1.Controls.Add(this.label11);
             this.groupBox1.Controls.Add(this.label9);
-            this.groupBox1.Controls.Add(this.txtIndependiente);
             this.groupBox1.Controls.Add(this.txtPorcHueso);
             this.groupBox1.Controls.Add(this.label7);
             this.groupBox1.Controls.Add(this.txtPorcentajeCorte);
@@ -150,14 +152,51 @@
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox1.Size = new System.Drawing.Size(635, 257);
+            this.groupBox1.Size = new System.Drawing.Size(635, 298);
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
             // 
+            // txtIndependiente
+            // 
+            this.txtIndependiente.AutoSize = true;
+            this.txtIndependiente.Enabled = false;
+            this.txtIndependiente.Location = new System.Drawing.Point(461, 96);
+            this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
+            this.txtIndependiente.Name = "txtIndependiente";
+            this.txtIndependiente.Size = new System.Drawing.Size(18, 17);
+            this.txtIndependiente.TabIndex = 29;
+            this.txtIndependiente.UseVisualStyleBackColor = true;
+            // 
+            // checkIngresoRapidoEmbutido
+            // 
+            this.checkIngresoRapidoEmbutido.AutoSize = true;
+            this.checkIngresoRapidoEmbutido.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkIngresoRapidoEmbutido.Enabled = false;
+            this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(267, 28);
+            this.checkIngresoRapidoEmbutido.Margin = new System.Windows.Forms.Padding(4);
+            this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
+            this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(189, 22);
+            this.checkIngresoRapidoEmbutido.TabIndex = 44;
+            this.checkIngresoRapidoEmbutido.TabStop = false;
+            this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoEmbutido";
+            this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
+            // 
+            // checkEnCierreStock
+            // 
+            this.checkEnCierreStock.AutoSize = true;
+            this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkEnCierreStock.Enabled = false;
+            this.checkEnCierreStock.Location = new System.Drawing.Point(460, 64);
+            this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4);
+            this.checkEnCierreStock.Name = "checkEnCierreStock";
+            this.checkEnCierreStock.Size = new System.Drawing.Size(18, 17);
+            this.checkEnCierreStock.TabIndex = 36;
+            this.checkEnCierreStock.UseVisualStyleBackColor = true;
+            // 
             // txtAlicuotaIva
             // 
-            this.txtAlicuotaIva.Location = new System.Drawing.Point(133, 191);
+            this.txtAlicuotaIva.Location = new System.Drawing.Point(105, 191);
             this.txtAlicuotaIva.Margin = new System.Windows.Forms.Padding(4);
             this.txtAlicuotaIva.Name = "txtAlicuotaIva";
             this.txtAlicuotaIva.ReadOnly = true;
@@ -169,7 +208,7 @@
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label14.Location = new System.Drawing.Point(43, 195);
+            this.label14.Location = new System.Drawing.Point(15, 195);
             this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(82, 18);
@@ -181,7 +220,7 @@
             this.checkHabilitado.AutoSize = true;
             this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkHabilitado.Enabled = false;
-            this.checkHabilitado.Location = new System.Drawing.Point(55, 225);
+            this.checkHabilitado.Location = new System.Drawing.Point(27, 225);
             this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
@@ -191,7 +230,7 @@
             // 
             // txtPromedio
             // 
-            this.txtPromedio.Location = new System.Drawing.Point(468, 222);
+            this.txtPromedio.Location = new System.Drawing.Point(463, 262);
             this.txtPromedio.Margin = new System.Windows.Forms.Padding(4);
             this.txtPromedio.Name = "txtPromedio";
             this.txtPromedio.ReadOnly = true;
@@ -203,7 +242,7 @@
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label16.Location = new System.Drawing.Point(379, 225);
+            this.label16.Location = new System.Drawing.Point(374, 265);
             this.label16.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(73, 18);
@@ -215,29 +254,17 @@
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(337, 31);
+            this.label15.Location = new System.Drawing.Point(330, 63);
             this.label15.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(113, 18);
             this.label15.TabIndex = 38;
             this.label15.Text = "En Cierre Stock";
             // 
-            // checkEnCierreStock
-            // 
-            this.checkEnCierreStock.AutoSize = true;
-            this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkEnCierreStock.Enabled = false;
-            this.checkEnCierreStock.Location = new System.Drawing.Point(467, 32);
-            this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4);
-            this.checkEnCierreStock.Name = "checkEnCierreStock";
-            this.checkEnCierreStock.Size = new System.Drawing.Size(18, 17);
-            this.checkEnCierreStock.TabIndex = 36;
-            this.checkEnCierreStock.UseVisualStyleBackColor = true;
-            // 
             // txtIdCorte
             // 
             this.txtIdCorte.Enabled = false;
-            this.txtIdCorte.Location = new System.Drawing.Point(133, 26);
+            this.txtIdCorte.Location = new System.Drawing.Point(105, 26);
             this.txtIdCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtIdCorte.Name = "txtIdCorte";
             this.txtIdCorte.ReadOnly = true;
@@ -249,7 +276,7 @@
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label13.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label13.Location = new System.Drawing.Point(59, 30);
+            this.label13.Location = new System.Drawing.Point(31, 30);
             this.label13.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(60, 18);
@@ -258,7 +285,7 @@
             // 
             // txtDesvioEstandar
             // 
-            this.txtDesvioEstandar.Location = new System.Drawing.Point(468, 188);
+            this.txtDesvioEstandar.Location = new System.Drawing.Point(463, 228);
             this.txtDesvioEstandar.Margin = new System.Windows.Forms.Padding(4);
             this.txtDesvioEstandar.Name = "txtDesvioEstandar";
             this.txtDesvioEstandar.ReadOnly = true;
@@ -271,7 +298,7 @@
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label11.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label11.Location = new System.Drawing.Point(332, 192);
+            this.label11.Location = new System.Drawing.Point(327, 232);
             this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(117, 18);
@@ -283,27 +310,16 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(303, 59);
+            this.label9.Location = new System.Drawing.Point(304, 95);
             this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(139, 18);
             this.label9.TabIndex = 30;
             this.label9.Text = "Corte Independiente";
             // 
-            // txtIndependiente
-            // 
-            this.txtIndependiente.AutoSize = true;
-            this.txtIndependiente.Enabled = false;
-            this.txtIndependiente.Location = new System.Drawing.Point(468, 60);
-            this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
-            this.txtIndependiente.Name = "txtIndependiente";
-            this.txtIndependiente.Size = new System.Drawing.Size(18, 17);
-            this.txtIndependiente.TabIndex = 29;
-            this.txtIndependiente.UseVisualStyleBackColor = true;
-            // 
             // txtPorcHueso
             // 
-            this.txtPorcHueso.Location = new System.Drawing.Point(468, 155);
+            this.txtPorcHueso.Location = new System.Drawing.Point(463, 195);
             this.txtPorcHueso.Margin = new System.Windows.Forms.Padding(4);
             this.txtPorcHueso.Name = "txtPorcHueso";
             this.txtPorcHueso.ReadOnly = true;
@@ -316,7 +332,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(344, 159);
+            this.label7.Location = new System.Drawing.Point(339, 199);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(104, 18);
@@ -325,17 +341,17 @@
             // 
             // txtPorcentajeCorte
             // 
-            this.txtPorcentajeCorte.Location = new System.Drawing.Point(468, 122);
+            this.txtPorcentajeCorte.Location = new System.Drawing.Point(463, 162);
             this.txtPorcentajeCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtPorcentajeCorte.Name = "txtPorcentajeCorte";
             this.txtPorcentajeCorte.ReadOnly = true;
-            this.txtPorcentajeCorte.Size = new System.Drawing.Size(93, 24);
+            this.txtPorcentajeCorte.Size = new System.Drawing.Size(99, 24);
             this.txtPorcentajeCorte.TabIndex = 26;
             this.txtPorcentajeCorte.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // txtPrecioKg
             // 
-            this.txtPrecioKg.Location = new System.Drawing.Point(133, 126);
+            this.txtPrecioKg.Location = new System.Drawing.Point(105, 126);
             this.txtPrecioKg.Margin = new System.Windows.Forms.Padding(4);
             this.txtPrecioKg.Name = "txtPrecioKg";
             this.txtPrecioKg.ReadOnly = true;
@@ -348,7 +364,7 @@
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(41, 129);
+            this.label5.Location = new System.Drawing.Point(13, 129);
             this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(77, 18);
@@ -357,7 +373,7 @@
             // 
             // txtTipo
             // 
-            this.txtTipo.Location = new System.Drawing.Point(133, 159);
+            this.txtTipo.Location = new System.Drawing.Point(105, 159);
             this.txtTipo.Margin = new System.Windows.Forms.Padding(4);
             this.txtTipo.Name = "txtTipo";
             this.txtTipo.ReadOnly = true;
@@ -369,7 +385,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(83, 162);
+            this.label6.Location = new System.Drawing.Point(55, 162);
             this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(37, 18);
@@ -381,7 +397,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(352, 126);
+            this.label2.Location = new System.Drawing.Point(347, 166);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(99, 18);
@@ -390,7 +406,7 @@
             // 
             // txtCodigo
             // 
-            this.txtCodigo.Location = new System.Drawing.Point(133, 59);
+            this.txtCodigo.Location = new System.Drawing.Point(105, 59);
             this.txtCodigo.Margin = new System.Windows.Forms.Padding(4);
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.ReadOnly = true;
@@ -402,7 +418,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(64, 63);
+            this.label1.Location = new System.Drawing.Point(36, 63);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(56, 18);
@@ -411,11 +427,11 @@
             // 
             // txtCorteMaestro
             // 
-            this.txtCorteMaestro.Location = new System.Drawing.Point(468, 89);
+            this.txtCorteMaestro.Location = new System.Drawing.Point(463, 129);
             this.txtCorteMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.txtCorteMaestro.Name = "txtCorteMaestro";
             this.txtCorteMaestro.ReadOnly = true;
-            this.txtCorteMaestro.Size = new System.Drawing.Size(140, 24);
+            this.txtCorteMaestro.Size = new System.Drawing.Size(164, 24);
             this.txtCorteMaestro.TabIndex = 5;
             // 
             // label3
@@ -423,7 +439,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(348, 92);
+            this.label3.Location = new System.Drawing.Point(343, 132);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(104, 18);
@@ -432,7 +448,7 @@
             // 
             // txtDescCorte
             // 
-            this.txtDescCorte.Location = new System.Drawing.Point(133, 92);
+            this.txtDescCorte.Location = new System.Drawing.Point(105, 92);
             this.txtDescCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtDescCorte.Name = "txtDescCorte";
             this.txtDescCorte.ReadOnly = true;
@@ -444,7 +460,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(76, 96);
+            this.label4.Location = new System.Drawing.Point(48, 96);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(45, 18);
@@ -487,11 +503,11 @@
             this.groupBox2.Controls.Add(this.label12);
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox2.Location = new System.Drawing.Point(16, 260);
+            this.groupBox2.Location = new System.Drawing.Point(16, 301);
             this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox2.Size = new System.Drawing.Size(635, 103);
+            this.groupBox2.Size = new System.Drawing.Size(635, 62);
             this.groupBox2.TabIndex = 19;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Stock por Sucursal";
@@ -628,5 +644,6 @@
         private System.Windows.Forms.CheckBox checkHabilitado;
         protected System.Windows.Forms.TextBox txtAlicuotaIva;
         protected System.Windows.Forms.Label label14;
+        private System.Windows.Forms.CheckBox checkIngresoRapidoEmbutido;
     }
 }

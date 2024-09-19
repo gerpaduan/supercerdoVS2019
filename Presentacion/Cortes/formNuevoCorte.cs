@@ -81,7 +81,7 @@ namespace Presentacion
             comboAlicuotaIva.SelectedValue = oCorteE.IdAlicuotaIva;
             txtPromedio.Text = oCorteE.Promedio.ToString("F3");
             txtIndependiente.Checked = oCorteE.independiente == 1;
-            checkMayorista.Checked = oCorteE.Mayorista;
+            checkIngresoRapidoEmbutido.Checked = oCorteE.IngresoRapidoEmbutido;
             checkHabilitado.Checked = oCorteE.Habilitado;
             checkEnCierreStock.Checked = oCorteE.EnCierreStock;
             checkAsignarMaestro.Checked = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0);
@@ -182,7 +182,7 @@ namespace Presentacion
             oCorteE.Tipo = comboTipo.Text;
             oCorteE.IdAlicuotaIva = Convert.ToInt32(comboAlicuotaIva.SelectedValue);
             oCorteE.AlicuotaIva = Utilidades.Util_Form.convertFloat(comboAlicuotaIva.Text, false);
-            oCorteE.Mayorista = checkMayorista.Checked;
+            oCorteE.IngresoRapidoEmbutido = checkIngresoRapidoEmbutido.Checked;
             oCorteE.EnCierreStock = checkEnCierreStock.Checked;
             oCorteE.Habilitado = checkHabilitado.Checked;
             oCorteE.independiente = txtIndependiente.Checked ? 1 : 0;
@@ -283,7 +283,7 @@ namespace Presentacion
             comboTipo.SelectedIndex = -1;
             txtPromedio.Text = "";
             txtIndependiente.Checked = true;
-            checkMayorista.Checked = false;
+            checkIngresoRapidoEmbutido.Checked = false;
             checkHabilitado.Checked = true;
             checkEnCierreStock.Checked = true;
             checkAsignarMaestro.Checked = false;

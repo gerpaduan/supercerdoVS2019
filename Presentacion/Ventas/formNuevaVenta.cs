@@ -1247,7 +1247,7 @@ namespace Presentacion.Ventas
                     //{
                     //    listaLineaVenta[index].PrecioKg = oCorteE.precioKg;
 
-                    //    listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, linea.Corte.Mayorista);
+                    //    listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, linea.Corte.IngresoRapidoEmbutido);
                     //    listaLineaGrilla[index].totalS = listaLineaGrilla[index].precioKg * listaLineaGrilla[index].KgsTotalCalculado;
                     //}
                 }

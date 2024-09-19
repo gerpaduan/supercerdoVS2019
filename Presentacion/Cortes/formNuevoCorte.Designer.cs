@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
+            this.btnGuardar = new System.Windows.Forms.Button();
+            this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboAlicuotaIva = new System.Windows.Forms.ComboBox();
@@ -37,7 +39,7 @@
             this.txtPromedio = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.checkEnCierreStock = new System.Windows.Forms.CheckBox();
-            this.checkMayorista = new System.Windows.Forms.CheckBox();
+            this.checkIngresoRapidoEmbutido = new System.Windows.Forms.CheckBox();
             this.checkAsignarMaestro = new System.Windows.Forms.CheckBox();
             this.groupMaestro = new System.Windows.Forms.GroupBox();
             this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
@@ -58,12 +60,36 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.btnCancelar = new System.Windows.Forms.Button();
-            this.btnGuardar = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // btnGuardar
+            // 
+            this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGuardar.Location = new System.Drawing.Point(459, 389);
+            this.btnGuardar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnGuardar.Name = "btnGuardar";
+            this.btnGuardar.Size = new System.Drawing.Size(121, 33);
+            this.btnGuardar.TabIndex = 8;
+            this.btnGuardar.Text = "&Guardar";
+            this.btnGuardar.UseVisualStyleBackColor = true;
+            this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
+            // 
+            // btnCancelar
+            // 
+            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancelar.Location = new System.Drawing.Point(588, 389);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnCancelar.Name = "btnCancelar";
+            this.btnCancelar.Size = new System.Drawing.Size(121, 33);
+            this.btnCancelar.TabIndex = 9;
+            this.btnCancelar.Text = "&Cancelar";
+            this.btnCancelar.UseVisualStyleBackColor = true;
+            this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
             // pnlBuscar
             // 
@@ -86,7 +112,7 @@
             this.groupBox1.Controls.Add(this.txtPromedio);
             this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.checkEnCierreStock);
-            this.groupBox1.Controls.Add(this.checkMayorista);
+            this.groupBox1.Controls.Add(this.checkIngresoRapidoEmbutido);
             this.groupBox1.Controls.Add(this.checkAsignarMaestro);
             this.groupBox1.Controls.Add(this.groupMaestro);
             this.groupBox1.Controls.Add(this.txtIndependiente);
@@ -186,19 +212,18 @@
             this.checkEnCierreStock.Text = "En Cierre Stock";
             this.checkEnCierreStock.UseVisualStyleBackColor = true;
             // 
-            // checkMayorista
+            // checkIngresoRapidoEmbutido
             // 
-            this.checkMayorista.AutoSize = true;
-            this.checkMayorista.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkMayorista.Location = new System.Drawing.Point(396, 39);
-            this.checkMayorista.Margin = new System.Windows.Forms.Padding(4);
-            this.checkMayorista.Name = "checkMayorista";
-            this.checkMayorista.Size = new System.Drawing.Size(95, 22);
-            this.checkMayorista.TabIndex = 6;
-            this.checkMayorista.TabStop = false;
-            this.checkMayorista.Text = "Mayorista";
-            this.checkMayorista.UseVisualStyleBackColor = true;
-            this.checkMayorista.Visible = false;
+            this.checkIngresoRapidoEmbutido.AutoSize = true;
+            this.checkIngresoRapidoEmbutido.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(284, 38);
+            this.checkIngresoRapidoEmbutido.Margin = new System.Windows.Forms.Padding(4);
+            this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
+            this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(189, 22);
+            this.checkIngresoRapidoEmbutido.TabIndex = 6;
+            this.checkIngresoRapidoEmbutido.TabStop = false;
+            this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoEmbutido";
+            this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
             // 
             // checkAsignarMaestro
             // 
@@ -452,32 +477,6 @@
             this.label4.TabIndex = 2;
             this.label4.Text = "Corte";
             // 
-            // btnCancelar
-            // 
-            this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(588, 389);
-            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
-            this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(121, 33);
-            this.btnCancelar.TabIndex = 9;
-            this.btnCancelar.Text = "&Cancelar";
-            this.btnCancelar.UseVisualStyleBackColor = true;
-            this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
-            // 
-            // btnGuardar
-            // 
-            this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(459, 389);
-            this.btnGuardar.Margin = new System.Windows.Forms.Padding(4);
-            this.btnGuardar.Name = "btnGuardar";
-            this.btnGuardar.Size = new System.Drawing.Size(121, 33);
-            this.btnGuardar.TabIndex = 8;
-            this.btnGuardar.Text = "&Guardar";
-            this.btnGuardar.UseVisualStyleBackColor = true;
-            this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
-            // 
             // formNuevoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -529,7 +528,7 @@
         protected System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox checkAsignarMaestro;
         private System.Windows.Forms.CheckBox checkEnCierreStock;
-        private System.Windows.Forms.CheckBox checkMayorista;
+        private System.Windows.Forms.CheckBox checkIngresoRapidoEmbutido;
         protected System.Windows.Forms.TextBox txtPromedio;
         protected System.Windows.Forms.Label label8;
         private System.Windows.Forms.CheckBox checkHabilitado;
