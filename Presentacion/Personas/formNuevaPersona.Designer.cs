@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.groupCortes = new System.Windows.Forms.GroupBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnBuscarAfip = new System.Windows.Forms.Button();
             this.btnCopiarRS = new System.Windows.Forms.Button();
             this.lblNombreIdentif = new System.Windows.Forms.Label();
             this.txtIdentificacion = new System.Windows.Forms.TextBox();
@@ -53,7 +53,6 @@
             this.txtRazonSocial = new System.Windows.Forms.TextBox();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.btnBuscarAfip = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -63,27 +62,12 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.pnlBuscar.Controls.Add(this.groupCortes);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(633, 516);
+            this.pnlBuscar.Size = new System.Drawing.Size(633, 346);
             this.pnlBuscar.TabIndex = 21;
-            // 
-            // groupCortes
-            // 
-            this.groupCortes.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.groupCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupCortes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupCortes.Location = new System.Drawing.Point(15, 335);
-            this.groupCortes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.groupCortes.Name = "groupCortes";
-            this.groupCortes.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.groupCortes.Size = new System.Drawing.Size(601, 177);
-            this.groupCortes.TabIndex = 1;
-            this.groupCortes.TabStop = false;
-            this.groupCortes.Text = "Promo Cortes";
             // 
             // groupBox1
             // 
@@ -112,19 +96,32 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(15, 5);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(601, 322);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Persona";
             // 
+            // btnBuscarAfip
+            // 
+            this.btnBuscarAfip.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarAfip.Location = new System.Drawing.Point(355, 110);
+            this.btnBuscarAfip.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscarAfip.Name = "btnBuscarAfip";
+            this.btnBuscarAfip.Size = new System.Drawing.Size(126, 28);
+            this.btnBuscarAfip.TabIndex = 55;
+            this.btnBuscarAfip.Text = "Buscar Cuit Afip";
+            this.btnBuscarAfip.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.btnBuscarAfip.UseVisualStyleBackColor = true;
+            this.btnBuscarAfip.Click += new System.EventHandler(this.btnBuscarAfip_Click);
+            // 
             // btnCopiarRS
             // 
             this.btnCopiarRS.ForeColor = System.Drawing.Color.Black;
             this.btnCopiarRS.Location = new System.Drawing.Point(491, 28);
-            this.btnCopiarRS.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCopiarRS.Margin = new System.Windows.Forms.Padding(4);
             this.btnCopiarRS.Name = "btnCopiarRS";
             this.btnCopiarRS.Size = new System.Drawing.Size(97, 28);
             this.btnCopiarRS.TabIndex = 54;
@@ -148,7 +145,7 @@
             // txtIdentificacion
             // 
             this.txtIdentificacion.Location = new System.Drawing.Point(148, 28);
-            this.txtIdentificacion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtIdentificacion.Margin = new System.Windows.Forms.Padding(4);
             this.txtIdentificacion.Name = "txtIdentificacion";
             this.txtIdentificacion.Size = new System.Drawing.Size(333, 24);
             this.txtIdentificacion.TabIndex = 0;
@@ -170,7 +167,7 @@
             this.comboIva.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboIva.FormattingEnabled = true;
             this.comboIva.Location = new System.Drawing.Point(149, 81);
-            this.comboIva.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboIva.Margin = new System.Windows.Forms.Padding(4);
             this.comboIva.Name = "comboIva";
             this.comboIva.Size = new System.Drawing.Size(199, 26);
             this.comboIva.TabIndex = 2;
@@ -178,7 +175,7 @@
             // txtCuit
             // 
             this.txtCuit.Location = new System.Drawing.Point(148, 111);
-            this.txtCuit.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCuit.Margin = new System.Windows.Forms.Padding(4);
             this.txtCuit.Mask = "00-00000000-0";
             this.txtCuit.Name = "txtCuit";
             this.txtCuit.Size = new System.Drawing.Size(199, 24);
@@ -199,7 +196,7 @@
             // txtCiudad
             // 
             this.txtCiudad.Location = new System.Drawing.Point(148, 188);
-            this.txtCiudad.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCiudad.Margin = new System.Windows.Forms.Padding(4);
             this.txtCiudad.Name = "txtCiudad";
             this.txtCiudad.Size = new System.Drawing.Size(199, 24);
             this.txtCiudad.TabIndex = 6;
@@ -219,7 +216,7 @@
             // txtDomicilio
             // 
             this.txtDomicilio.Location = new System.Drawing.Point(148, 162);
-            this.txtDomicilio.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDomicilio.Margin = new System.Windows.Forms.Padding(4);
             this.txtDomicilio.Name = "txtDomicilio";
             this.txtDomicilio.Size = new System.Drawing.Size(199, 24);
             this.txtDomicilio.TabIndex = 5;
@@ -251,7 +248,7 @@
             // txtTelefono
             // 
             this.txtTelefono.Location = new System.Drawing.Point(148, 137);
-            this.txtTelefono.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTelefono.Margin = new System.Windows.Forms.Padding(4);
             this.txtTelefono.Name = "txtTelefono";
             this.txtTelefono.Size = new System.Drawing.Size(199, 24);
             this.txtTelefono.TabIndex = 4;
@@ -271,7 +268,7 @@
             // txtBonificacion
             // 
             this.txtBonificacion.Location = new System.Drawing.Point(465, 188);
-            this.txtBonificacion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtBonificacion.Margin = new System.Windows.Forms.Padding(4);
             this.txtBonificacion.Name = "txtBonificacion";
             this.txtBonificacion.Size = new System.Drawing.Size(100, 24);
             this.txtBonificacion.TabIndex = 27;
@@ -283,7 +280,7 @@
             this.checkCtaCte.AutoSize = true;
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCte.Location = new System.Drawing.Point(389, 165);
-            this.checkCtaCte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkCtaCte.Margin = new System.Windows.Forms.Padding(4);
             this.checkCtaCte.Name = "checkCtaCte";
             this.checkCtaCte.Size = new System.Drawing.Size(88, 22);
             this.checkCtaCte.TabIndex = 26;
@@ -294,7 +291,7 @@
             // txtOtrosDatos
             // 
             this.txtOtrosDatos.Location = new System.Drawing.Point(148, 214);
-            this.txtOtrosDatos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtOtrosDatos.Margin = new System.Windows.Forms.Padding(4);
             this.txtOtrosDatos.Multiline = true;
             this.txtOtrosDatos.Name = "txtOtrosDatos";
             this.txtOtrosDatos.Size = new System.Drawing.Size(417, 99);
@@ -327,7 +324,7 @@
             // txtRazonSocial
             // 
             this.txtRazonSocial.Location = new System.Drawing.Point(148, 54);
-            this.txtRazonSocial.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtRazonSocial.Margin = new System.Windows.Forms.Padding(4);
             this.txtRazonSocial.Name = "txtRazonSocial";
             this.txtRazonSocial.Size = new System.Drawing.Size(333, 24);
             this.txtRazonSocial.TabIndex = 1;
@@ -336,8 +333,8 @@
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(376, 523);
-            this.btnGuardar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnGuardar.Location = new System.Drawing.Point(376, 356);
+            this.btnGuardar.Margin = new System.Windows.Forms.Padding(4);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(119, 33);
             this.btnGuardar.TabIndex = 8;
@@ -349,8 +346,8 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(503, 523);
-            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancelar.Location = new System.Drawing.Point(503, 356);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(112, 33);
             this.btnCancelar.TabIndex = 9;
@@ -358,30 +355,17 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
-            // btnBuscarAfip
-            // 
-            this.btnBuscarAfip.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarAfip.Location = new System.Drawing.Point(355, 110);
-            this.btnBuscarAfip.Margin = new System.Windows.Forms.Padding(4);
-            this.btnBuscarAfip.Name = "btnBuscarAfip";
-            this.btnBuscarAfip.Size = new System.Drawing.Size(126, 28);
-            this.btnBuscarAfip.TabIndex = 55;
-            this.btnBuscarAfip.Text = "Buscar Cuit Afip";
-            this.btnBuscarAfip.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.btnBuscarAfip.UseVisualStyleBackColor = true;
-            this.btnBuscarAfip.Click += new System.EventHandler(this.btnBuscarAfip_Click);
-            // 
             // formNuevaPersona
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
-            this.ClientSize = new System.Drawing.Size(631, 560);
+            this.ClientSize = new System.Drawing.Size(631, 393);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.btnCancelar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "formNuevaPersona";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -417,7 +401,6 @@
         private System.Windows.Forms.MaskedTextBox txtCuit;
         protected System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox comboIva;
-        protected System.Windows.Forms.GroupBox groupCortes;
         protected System.Windows.Forms.Label lblNombreIdentif;
         protected System.Windows.Forms.TextBox txtIdentificacion;
         private System.Windows.Forms.Button btnCopiarRS;

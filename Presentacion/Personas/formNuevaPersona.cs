@@ -108,6 +108,14 @@ namespace Presentacion.Personas
         {
             if (oPersonaE.idPersona > 0 && readOnly)
             {
+                ///Se valida que la persona no sea un ID reservado por el sistema
+                ///
+                if (oPersonaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) || oPersonaE.idPersona.Equals(Entidades.Parametros.idIndefinido))
+                {
+                    MessageBox.Show("La persona seleccionada es reservada por el sistema y no se puede modificar");
+                    return;
+                }
+
                 readOnly = false;
                 setearPropiedadesForm();
                 return;
