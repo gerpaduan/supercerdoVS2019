@@ -263,7 +263,6 @@ namespace Presentacion.Caja
                         textBoxes[nroFilas, valorTextBox] = txtMonto.Text;
                         textBoxes[nroFilas++, nombreTextBox] = lblMonto.Text;
 
-                        //TODO: hacer validacion a los campos y guardar los datos
                         if (Util_Form.validarArrayCamposVacios(textBoxes) && Util_Form.validarFecha(txtFechaEgresoCaja.Value, "Fecha")
                            && Util_Form.validarCampoNumerico(txtMonto.Text, "Monto"))
                         {

@@ -68,7 +68,6 @@ namespace Presentacion.Usuario
                 oUsuarioE.Admin = checkAdmin.Checked;
                 oUsuarioE.Activo = checkActivo.Checked;
 
-                //TODO - guarda datos en BD
                 addOrEditUser();
             }
             else
@@ -119,7 +118,6 @@ namespace Presentacion.Usuario
             if (!errores)
             {
                 oUsuarioE.Clave = txtNueva.Text;
-                //TODO - guardar cambios en BD
                 addOrEditUser();
 
                 //limpio campos
