@@ -59,9 +59,7 @@ namespace Presentacion.Usuario
             oUsuarioE.Admin = checkAdmin.Checked;
             oUsuarioE.Activo = checkActivo.Checked;
             oUsuarioE.Clave = txtClave.Text;
-            oUsuarioE.ColorForm = "43; 77; 129";
-
-            //TODO - guarda datos en BD
+            oUsuarioE.ColorForm = "SteelBlue";
             addOrEditUser();
         }
 

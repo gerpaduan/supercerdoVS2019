@@ -1081,8 +1081,7 @@ namespace Presentacion
                 foreach (DataRow corte in dtCorte.Rows)
                 {
                     int codigoSelect = Convert.ToInt32(corte["codigo"].ToString());
-                    //TODO: agregar campo 'cierre stock' a corte para setear los cortes que se deben mostrar
-                    if ((codigoSelect > 0 && codigoSelect < 200) && Convert.ToBoolean(corte["enCierreStock"]))
+                    if (Convert.ToBoolean(corte["enCierreStock"]))
                     {
                         var selected = listaCortePorCompra.Where(c => c.corte.codigo.Equals(codigoSelect));
 

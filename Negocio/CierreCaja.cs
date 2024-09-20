@@ -96,13 +96,13 @@ namespace Negocio
 
         public int getIdEgresoCajaPorCompra()
         {
-            DataTable tiposEgresos = obtenerTiposEgresoCaja();
-            int idTipoEgreso = 0;
-            foreach (DataRow row in tiposEgresos.Rows)
-            {
-                if (!string.IsNullOrEmpty(row["esCompra"].ToString()) && !row["esCompra"].ToString().Equals("0"))
-                    idTipoEgreso = Convert.ToInt32(row["id"].ToString());
-            }
+            //DataTable tiposEgresos = obtenerTiposEgresoCaja();
+            int idTipoEgreso = Entidades.Parametros.idCompraEgresoCaja;
+            //foreach (DataRow row in tiposEgresos.Rows)
+            //{
+            //    if (!string.IsNullOrEmpty(row["esCompra"].ToString()) && !row["esCompra"].ToString().Equals("0"))
+            //        idTipoEgreso = Convert.ToInt32(row["id"].ToString());
+            //}
             return idTipoEgreso;
         }
 

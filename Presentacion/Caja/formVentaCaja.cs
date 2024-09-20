@@ -678,8 +678,7 @@ namespace Presentacion.Caja
             lineaVentaP.cantKgs = lineaE.CantKg;
             lineaVentaP.kgsTotalCalculado = lineaE.KgsTotalCalculado;
             lineaVentaP.kgsAjusteTarj = lineaE.KgsAjusteTarj;
-            //lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.PrecioKg, lineaE.Corte.IngresoRapidoEmbutido);
-            lineaVentaP.precioKg = oVentaE.bonificar(oCliente, lineaE.Corte.precioKg, lineaE.Corte.IngresoRapidoEmbutido);
+            lineaVentaP.precioKg = lineaE.PrecioKg;
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.KgsTotalCalculado;
             lineaVentaP.Random = lineaE.Random;
 
@@ -1012,8 +1011,6 @@ namespace Presentacion.Caja
 
         private void quitarLinea()
         {
-            /// TODO: Al anular corte bonificado mantiene el precio del corte por defecto. Corregir. 
-            /// Obtener el precio de la linea y NO del corte
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
@@ -1120,7 +1117,7 @@ namespace Presentacion.Caja
                         //Se establece el precio segun la forma de pago
                         establecerPrecioCorteSegunFormaPago();
 
-                        this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, oCorteE.IngresoRapidoEmbutido).ToString("N2");//oCorteE.precioKg.ToString("N");
+                        this.txtPrecioKg.Text = oVentaE.bonificar(oCliente, oCorteE.precioKg, false).ToString("N2");//oCorteE.precioKg.ToString("N");
                         
                         cargarTotalCorte();
                     }
@@ -1791,7 +1788,9 @@ namespace Presentacion.Caja
                 txtVendedor.Text = oUsuario.Nombre;
                 lblVendedorNombre.Text = oUsuario.Nombre;
                 this.Text = oUsuario.Nombre;
-                Color colorUser = System.Drawing.Color.FromName(oUsuario.ColorForm);
+
+                Color colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
+                    System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129))))) : System.Drawing.Color.FromName(oUsuario.ColorForm);
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
                 comboColors.Text = colorUser.ToString();
@@ -2632,7 +2631,7 @@ namespace Presentacion.Caja
                         //listaLineaVenta[index].Corte = oCorteE;
                         listaLineaVenta[index].PrecioKg = oCorteE.precioKg;
 
-                        listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, linea.Corte.IngresoRapidoEmbutido);
+                        listaLineaGrilla[index].precioKg = oVentaE.bonificar(oCliente, oCorteE.precioKg, false);
                         listaLineaGrilla[index].totalS = listaLineaGrilla[index].precioKg * listaLineaGrilla[index].KgsTotalCalculado;
                     }
                 }

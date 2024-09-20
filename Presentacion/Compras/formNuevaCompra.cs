@@ -227,10 +227,23 @@ namespace Presentacion
                                 if (oEgresoCajaE == null)
                                     oEgresoCajaE = new Entidades.EgresoCaja();
 
+                                ///si la compra es en CTA CTE, 
+                                ///se informa en egresos pero el monto será 0 porque no salió el dinero de la caja
+                                string descripcionEgreso = "Compra a ";
+                                string detalleEgreso = string.Empty;
+                                float montoEgreso = Utilidades.Util_Form.convertFloat(txtTotal.Text, false);
+                                if (oCompraE.EnCtaCte)
+                                {
+                                    descripcionEgreso = "Compra CTA CTE a ";
+                                    detalleEgreso = " | $"+ montoEgreso.ToString("F2");
+                                    montoEgreso = 0;
+                                }
+                                descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
+
                                 oEgresoCajaE.Fecha = oCompraE.FechaCompra;
                                 oEgresoCajaE.IdTipoEgresoCaja = oCierreN.getIdEgresoCajaPorCompra();
-                                oEgresoCajaE.Descripcion = "Compra a " + oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString();
-                                oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtTotal.Text, false);
+                                oEgresoCajaE.Descripcion = descripcionEgreso;
+                                oEgresoCajaE.Monto = montoEgreso;
                                 oEgresoCajaE.Detalle = oCompraE.Observaciones;
                                 oEgresoCajaE.Sucursal = oCompraE.Sucursal;
                                 oEgresoCajaE.IdCompra = oCompraE.IdCompra;
@@ -239,7 +252,7 @@ namespace Presentacion
 
                                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
                                 MessageBox.Show("La Compra y el Egreso de caja se guardaron correctamente.");
-                                imprimirTicket(oEgresoCajaE);
+                                //imprimirTicket(oEgresoCajaE);
                                 this.Close();
                             }
                             catch (Exception ex)
@@ -975,6 +988,7 @@ namespace Presentacion
                 txtFechaCompra.Value = oCompraE.FechaCompra;
                 txtProveedor.Text = oCompraE.Proveedor.razonSocial;
                 txtNroRemito.Text = oCompraE.NroRemito;
+                checkCtaCte.Checked = oCompraE.EnCtaCte;
                 txtObservaciones.Text = oCompraE.Observaciones;
                 txtCreado.Text = Util_Form.fechaFormato24Horas(oCompraE.Creado);
                 txtCreadoPor.Text = oCompraE.CreadoPor != null ? oCompraE.CreadoPor.Nombre : "-";
