@@ -89,9 +89,13 @@ namespace Negocio
         }
 
         #region TipoEgresoCaja
-        public DataTable obtenerTiposEgresoCaja()
+        public DataTable obtenerTiposEgresoCaja(string buscarText, int idTipoEgreso)
         {
-            return oCierreD.obtenerTiposEgresoCaja();
+            return oCierreD.obtenerTiposEgresoCaja(buscarText, idTipoEgreso);
+        }
+        public void addOrEditTipoEgreso(int id, string tipoEgresoCaja, bool esGasto)
+        {
+            oCierreD.addOrEditTipoEgreso(id, tipoEgresoCaja,esGasto);
         }
 
         public int getIdEgresoCajaPorCompra()

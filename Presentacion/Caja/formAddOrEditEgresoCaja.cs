@@ -147,7 +147,7 @@ namespace Presentacion.Caja
 
         private void cargarTiposEgresoCaja()
         {
-            DataTable dtTipoEgresosCaja = oCierreN.obtenerTiposEgresoCaja();
+            DataTable dtTipoEgresosCaja = oCierreN.obtenerTiposEgresoCaja("", 0);
             dtTipoEgresosCaja.Rows[0][1] = dtTipoEgresosCaja.Rows[0][0].Equals(0) ? "Seleccione un tipo" : dtTipoEgresosCaja.Rows[0][1].ToString();
             comboTipoEgresoCaja.DataSource = dtTipoEgresosCaja;
             comboTipoEgresoCaja.DisplayMember = "tipoEgresoCaja";

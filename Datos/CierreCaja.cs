@@ -103,15 +103,64 @@ namespace Datos
 
         #region EgresosCaja
 
-        public DataTable obtenerTiposEgresoCaja()
+        public DataTable obtenerTiposEgresoCaja(string buscarText, int idTipoEgreso)
         {
-            string selectText = "Select * from TiposEgresoCaja order by orden, tipoEgresoCaja";
+            string where = string.IsNullOrEmpty(buscarText) ?(idTipoEgreso > 0 ? $"WHERE id = "+ idTipoEgreso : string.Empty) : $"WHERE tipoEgresoCaja LIKE '%{buscarText}%'";
+            string selectText = "Select  id, tipoEgresoCaja, esGasto as Es_Gasto, creado as Creado, actualizado as Actualizado, reservadoSistema as Reservado from TiposEgresoCaja "+ where +" order by orden, tipoEgresoCaja";
             DataTable dtTipoEgresoCaja = new DataTable();
             SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
             daCierreCaja.Fill(dtTipoEgresoCaja);           
             conn.cerraConexion();
 
             return dtTipoEgresoCaja;
+        }
+
+        public void addOrEditTipoEgreso(int id, string tipoEgresoCaja, bool esGasto)
+        {
+            bool esInsert = false;
+            //significa que es un nuevo registro
+            if (id == -1)
+            {
+                esInsert = true;    
+                // Consulta para obtener el ID más grande
+                string selectQuery = "SELECT ISNULL(MAX(id), 0) FROM TiposEgresoCaja";
+
+                // Obtener el valor más grande de Id
+                SqlCommand cmCierreCaja1 = new SqlCommand(selectQuery);
+                cmCierreCaja1.Connection = conn.conectar();
+                cmCierreCaja1.Connection.Open();
+
+                object result = cmCierreCaja1.ExecuteScalar(); // Obtener el resultado
+
+                // Si hay resultados, aumentar en 1 el Id
+                if (result != null)
+                {
+                    id = Convert.ToInt32(result) + 1;
+                }
+
+                cmCierreCaja1.Connection.Close();
+            }
+
+            cmCierreCaja = new SqlCommand();
+
+            cmCierreCaja.Connection = conn.conectar();
+            cmCierreCaja.Connection.Open();
+
+            string query = esInsert ? 
+                $"INSERT INTO TiposEgresoCaja (id, tipoEgresoCaja, esGasto, orden, reservadoSistema, creado) VALUES (@id, @tipoEgresoCaja, @esGasto, 10, @reservadoSistema, @creado)" :
+                $"UPDATE TiposEgresoCaja SET tipoEgresoCaja = @tipoEgresoCaja, esGasto = @esGasto, actualizado = @actualizado WHERE  id = @id";
+
+            cmCierreCaja.CommandType = CommandType.Text;
+            cmCierreCaja.CommandText = query;
+            cmCierreCaja.Parameters.AddWithValue("@id", id);
+            cmCierreCaja.Parameters.AddWithValue("@tipoEgresoCaja", tipoEgresoCaja);
+            cmCierreCaja.Parameters.AddWithValue("@esGasto", esGasto);
+            cmCierreCaja.Parameters.AddWithValue("@reservadoSistema", false);
+            cmCierreCaja.Parameters.AddWithValue("@creado", DateTime.Now);
+            cmCierreCaja.Parameters.AddWithValue("@actualizado", DateTime.Now);
+
+            cmCierreCaja.ExecuteNonQuery();
+            cmCierreCaja.Connection.Close();
         }
 
         public DataTable obtenerEgresosCaja(int idSucursal, int idUsuario, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)

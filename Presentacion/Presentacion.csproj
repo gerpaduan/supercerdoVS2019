@@ -100,6 +100,12 @@
     <Compile Include="Balanza\formBalanza.Designer.cs">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formAddOrEditTipoEgreso.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formAddOrEditTipoEgreso.Designer.cs">
+      <DependentUpon>formAddOrEditTipoEgreso.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formFinalizarVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -165,6 +171,12 @@
     </Compile>
     <Compile Include="Caja\formFormaPago.Designer.cs">
       <DependentUpon>formFormaPago.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formTiposEgresos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formTiposEgresos.Designer.cs">
+      <DependentUpon>formTiposEgresos.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formLineasVendedor.cs">
       <SubType>Form</SubType>
@@ -661,6 +673,9 @@
     <EmbeddedResource Include="Balanza\formBalanza.resx">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formAddOrEditTipoEgreso.resx">
+      <DependentUpon>formAddOrEditTipoEgreso.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formFinalizarVenta.resx">
       <DependentUpon>formFinalizarVenta.cs</DependentUpon>
     </EmbeddedResource>
@@ -693,6 +708,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formFormaPago.resx">
       <DependentUpon>formFormaPago.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formTiposEgresos.resx">
+      <DependentUpon>formTiposEgresos.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formLineasVendedor.resx">
       <DependentUpon>formLineasVendedor.cs</DependentUpon>

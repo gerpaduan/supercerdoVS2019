@@ -102,7 +102,7 @@ namespace Presentacion.Caja
 
         private void cargarTiposEgresoCaja()
         {
-            comboTipoEgresoCaja.DataSource = oCierreN.obtenerTiposEgresoCaja();
+            comboTipoEgresoCaja.DataSource = oCierreN.obtenerTiposEgresoCaja("", 0);
             comboTipoEgresoCaja.DisplayMember = "tipoEgresoCaja";
             comboTipoEgresoCaja.ValueMember = "id";
             //comboSucursal.SelectedIndex = idSucursal - 1;
@@ -210,6 +210,23 @@ namespace Presentacion.Caja
                 this.Close();
             }
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void tiposEgresos_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formTiposEgresos"] != null)
+            {
+
+                Application.OpenForms["formTiposEgresos"].Activate();
+                Application.OpenForms["formTiposEgresos"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formTiposEgresos frmTiposEgresos = new formTiposEgresos();
+                frmTiposEgresos.EnviarUsuario(oUsuario);
+                frmTiposEgresos.Show();
+            }
         }
     }
 }

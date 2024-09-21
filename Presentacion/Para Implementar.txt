@@ -653,3 +653,16 @@ FROM         dbo.Corte AS CorteP LEFT OUTER JOIN
                       dbo.Corte AS CorteM ON CorteP.idCorteMaestro = CorteM.idCorte
 WHERE     (CorteP.idCorte=@idCorte)
 END
+
+//////////////////
+
+Agregar campos en TipoEgresoCaja
+
+reservadoSistema	tinyint	Checked
+creado	datetime	Checked
+modificado	datetime	Checked
+
+
+use SuperCerdo
+update TiposEgresoCaja set reservadoSistema = 0
+
