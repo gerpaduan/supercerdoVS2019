@@ -31,6 +31,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formEgresosCaja));
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.tiposEgresos = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.label9 = new System.Windows.Forms.Label();
             this.comboUsuario = new System.Windows.Forms.ComboBox();
@@ -56,7 +57,6 @@
             this.grillaEgresosCaja = new System.Windows.Forms.DataGridView();
             this.label8 = new System.Windows.Forms.Label();
             this.txtItems = new System.Windows.Forms.TextBox();
-            this.tiposEgresos = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).BeginInit();
@@ -89,6 +89,16 @@
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
+            // tiposEgresos
+            // 
+            this.tiposEgresos.Image = ((System.Drawing.Image)(resources.GetObject("tiposEgresos.Image")));
+            this.tiposEgresos.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tiposEgresos.Name = "tiposEgresos";
+            this.tiposEgresos.Size = new System.Drawing.Size(104, 51);
+            this.tiposEgresos.Text = "Tipos Egresos";
+            this.tiposEgresos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.tiposEgresos.Click += new System.EventHandler(this.tiposEgresos_Click);
+            // 
             // pnlBuscar
             // 
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -111,7 +121,7 @@
             this.pnlBuscar.Controls.Add(this.txtDescripcion);
             this.pnlBuscar.Controls.Add(this.label2);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 55);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(1148, 103);
             this.pnlBuscar.TabIndex = 8;
@@ -133,7 +143,7 @@
             this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboUsuario.FormattingEnabled = true;
             this.comboUsuario.Location = new System.Drawing.Point(124, 6);
-            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(213, 24);
             this.comboUsuario.TabIndex = 54;
@@ -160,19 +170,20 @@
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox1.Location = new System.Drawing.Point(604, 57);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(528, 9);
             this.groupBox1.TabIndex = 41;
             this.groupBox1.TabStop = false;
             // 
             // comboSucursal
             // 
+            this.comboSucursal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
             this.comboSucursal.Location = new System.Drawing.Point(931, 4);
-            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.comboSucursal.Name = "comboSucursal";
             this.comboSucursal.Size = new System.Drawing.Size(200, 24);
             this.comboSucursal.TabIndex = 39;
@@ -181,6 +192,7 @@
             // 
             // label7
             // 
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
@@ -200,7 +212,7 @@
             "Media Res",
             "Cortes"});
             this.comboTipoEgresoCaja.Location = new System.Drawing.Point(124, 38);
-            this.comboTipoEgresoCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboTipoEgresoCaja.Margin = new System.Windows.Forms.Padding(4);
             this.comboTipoEgresoCaja.Name = "comboTipoEgresoCaja";
             this.comboTipoEgresoCaja.Size = new System.Drawing.Size(213, 24);
             this.comboTipoEgresoCaja.TabIndex = 12;
@@ -237,7 +249,7 @@
             this.fechaDesde.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaDesde.Location = new System.Drawing.Point(664, 73);
-            this.fechaDesde.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.fechaDesde.Margin = new System.Windows.Forms.Padding(4);
             this.fechaDesde.Name = "fechaDesde";
             this.fechaDesde.Size = new System.Drawing.Size(195, 22);
             this.fechaDesde.TabIndex = 5;
@@ -264,7 +276,7 @@
             this.fechaHasta.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaHasta.Location = new System.Drawing.Point(935, 73);
-            this.fechaHasta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.fechaHasta.Margin = new System.Windows.Forms.Padding(4);
             this.fechaHasta.Name = "fechaHasta";
             this.fechaHasta.Size = new System.Drawing.Size(196, 22);
             this.fechaHasta.TabIndex = 7;
@@ -274,7 +286,7 @@
             // btnBuscar
             // 
             this.btnBuscar.Location = new System.Drawing.Point(347, 69);
-            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(92, 30);
             this.btnBuscar.TabIndex = 8;
@@ -298,7 +310,7 @@
             // txtDescripcion
             // 
             this.txtDescripcion.Location = new System.Drawing.Point(124, 71);
-            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4);
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(213, 22);
             this.txtDescripcion.TabIndex = 0;
@@ -334,7 +346,7 @@
             this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTotalS.Location = new System.Drawing.Point(991, 591);
-            this.txtTotalS.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTotalS.Margin = new System.Windows.Forms.Padding(4);
             this.txtTotalS.Name = "txtTotalS";
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(135, 24);
@@ -346,7 +358,7 @@
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnSeleccionar.Location = new System.Drawing.Point(793, 628);
-            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(165, 33);
             this.btnSeleccionar.TabIndex = 27;
@@ -359,7 +371,7 @@
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCancelar.Location = new System.Drawing.Point(967, 628);
-            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(165, 33);
             this.btnCancelar.TabIndex = 26;
@@ -374,7 +386,7 @@
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(16, 619);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1115, 1);
             this.panel1.TabIndex = 30;
@@ -389,7 +401,7 @@
             this.grillaEgresosCaja.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.grillaEgresosCaja.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaEgresosCaja.Location = new System.Drawing.Point(16, 166);
-            this.grillaEgresosCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaEgresosCaja.Margin = new System.Windows.Forms.Padding(4);
             this.grillaEgresosCaja.Name = "grillaEgresosCaja";
             this.grillaEgresosCaja.ReadOnly = true;
             this.grillaEgresosCaja.RowHeadersVisible = false;
@@ -415,22 +427,12 @@
             this.txtItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtItems.Location = new System.Drawing.Point(991, 562);
-            this.txtItems.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtItems.Margin = new System.Windows.Forms.Padding(4);
             this.txtItems.Name = "txtItems";
             this.txtItems.ReadOnly = true;
             this.txtItems.Size = new System.Drawing.Size(135, 24);
             this.txtItems.TabIndex = 44;
             this.txtItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // tiposEgresos
-            // 
-            this.tiposEgresos.Image = ((System.Drawing.Image)(resources.GetObject("tiposEgresos.Image")));
-            this.tiposEgresos.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tiposEgresos.Name = "tiposEgresos";
-            this.tiposEgresos.Size = new System.Drawing.Size(104, 51);
-            this.tiposEgresos.Text = "Tipos Egresos";
-            this.tiposEgresos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.tiposEgresos.Click += new System.EventHandler(this.tiposEgresos_Click);
             // 
             // formEgresosCaja
             // 
@@ -448,7 +450,7 @@
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.barraControl);
             this.Controls.Add(this.pnlBuscar);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "formEgresosCaja";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Egresos de Caja";

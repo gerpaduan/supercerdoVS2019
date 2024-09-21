@@ -163,6 +163,23 @@ namespace Datos
             cmCierreCaja.Connection.Close();
         }
 
+        public void eliminarTipoEgreso(int id)
+        {
+            cmCierreCaja = new SqlCommand();
+
+            cmCierreCaja.Connection = conn.conectar();
+            cmCierreCaja.Connection.Open();
+
+            string query = $"DELETE FROM TiposEgresoCaja WHERE  id = @id";
+
+            cmCierreCaja.CommandType = CommandType.Text;
+            cmCierreCaja.CommandText = query;
+            cmCierreCaja.Parameters.AddWithValue("@id", id);
+
+            cmCierreCaja.ExecuteNonQuery();
+            cmCierreCaja.Connection.Close();
+        }
+
         public DataTable obtenerEgresosCaja(int idSucursal, int idUsuario, int idTipoEgresoCaja, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
             DataTable dtEgresosCaja = new DataTable();

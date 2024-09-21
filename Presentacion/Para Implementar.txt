@@ -666,3 +666,8 @@ modificado	datetime	Checked
 use SuperCerdo
 update TiposEgresoCaja set reservadoSistema = 0
 
+/////////////////
+
+Aplicar cambios de Clave Foraneas
+
+/////////////////

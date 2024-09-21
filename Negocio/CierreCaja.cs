@@ -97,6 +97,10 @@ namespace Negocio
         {
             oCierreD.addOrEditTipoEgreso(id, tipoEgresoCaja,esGasto);
         }
+        public void eliminarTipoEgreso(int id)
+        {
+            oCierreD.eliminarTipoEgreso(id);
+        }
 
         public int getIdEgresoCajaPorCompra()
         {

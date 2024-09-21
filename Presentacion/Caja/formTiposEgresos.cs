@@ -168,7 +168,7 @@ namespace Presentacion.Caja
         {
             try
             {
-                DialogResult respuesta = MessageBox.Show("¿Está seguro que desea eliminar la formula de "+ grilla.CurrentRow.Cells["CierreCaja"].Value.ToString().ToUpper()+"?. ", "Eliminar TipoEgreso", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                DialogResult respuesta = MessageBox.Show("¿Está seguro que desea eliminar el tipo egreso: "+ grilla.CurrentRow.Cells["tipoEgresoCaja"].Value.ToString().ToUpper()+"?. ", "Eliminar TipoEgreso", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                 if (respuesta == System.Windows.Forms.DialogResult.Yes)
                 {
@@ -177,8 +177,8 @@ namespace Presentacion.Caja
 
                     if (oUsuario != null && oUsuario.Admin)
                     {
-                        //oCierreCajaN.eliminarTipoEgreso(Convert.ToInt32(grilla.CurrentRow.Cells["idTipoEgreso"].Value.ToString()));
-                        MessageBox.Show("La TipoEgreso se eliminó correctamente");
+                        oCierreCajaN.eliminarTipoEgreso(Convert.ToInt32(grilla.CurrentRow.Cells["id"].Value.ToString()));
+                        MessageBox.Show("El Tipo Egreso se eliminó correctamente");
                         this.cargarGrilla();
                     }
                     else
