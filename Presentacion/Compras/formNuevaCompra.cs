@@ -52,9 +52,6 @@ namespace Presentacion
         {
             InitializeComponent();
 
-            oUsuario = new Entidades.Usuario();
-            oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)
-
             cambiarGrupo();
             cargarComboSucursal();
         }
@@ -342,11 +339,11 @@ namespace Presentacion
             oCompraE.Proveedor = oProvNuevaCompra;
             oCompraE.FechaCompra = txtFechaCompra.Value;
             oCompraE.Estado = "";
-            oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) || tipoCompra == "Cortes" ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
+            oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
             oCompraE.KgsMedias = string.IsNullOrEmpty(txtTotalKg.Text) || tipoCompra == "Cortes" ? null :
                 (float?)Utilidades.Util_Form.convertFloat(txtTotalKg.Text, false); //(int?)Convert.ToInt32(txtTotalKg.Text);
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
-            oCompraE.TipoCompra = tipoCompra;
+            oCompraE.TipoCompra = tipoCompra;// FormPrincipal.soyYo ? tipoCompra : (oCompraE.CantMedias == null ? "Cortes" : "Media Res");
             oCompraE.Sucursal = oSucursalE;
             oCompraE.EnCtaCte = checkCtaCte.Checked;
             switch (oCompraE.IdCompra)
@@ -808,6 +805,8 @@ namespace Presentacion
         private void cambiarGrupo()
         {
             limpiarCampos();
+
+
             if (radioMediaRes.Checked == true)
             {
                 panelCorte.Visible = false;
@@ -971,12 +970,23 @@ namespace Presentacion
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             txtUsuario.Text = oUsuario.Nombre;
-            cargarSucursal();
+            cargarSucursal();            
 
             checkCtaCte.Checked = false;
             checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
             radioCorte.Checked = esEgresoCaja;
             radioMediaRes.Enabled = !esEgresoCaja;
+
+            ///si no soy yo -> NO se muestra el 
+            ///
+            if (!FormPrincipal.soyYo)
+            {
+                radioCorte.Checked = true;
+                //panelCorte.Visible = true;
+                groupBoxTipoCompra.Visible = false;
+                groupCantMedias.Visible = true;
+            }
+
             if (idCompra > 0)
             {
                 oCompraE = oCompraN.findById_convertToCompra(idCompra);
@@ -1001,6 +1011,7 @@ namespace Presentacion
                 }
                 cargarGrilla();
             }
+
 
             //se valida que sea Admin para cambiar de sucursal
             comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);

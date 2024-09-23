@@ -6,11 +6,12 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Presentacion.Caja;
 using Presentacion.Compras;
 
 namespace Presentacion
 {
-    public partial class formCompras : formBaseColor
+    public partial class formCompras : formBaseColor, InterfaceUsuario
     {
         private bool logueado = false;
 
@@ -25,6 +26,7 @@ namespace Presentacion
 
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Entidades.Usuario oUsuario;
 
         bool cargar = false;
         public formCompras()
@@ -117,6 +119,11 @@ namespace Presentacion
 
         private void nuevaCompra()
         {
+
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.soloActivos = true;
+            frmLogin.ShowDialog(this);
+
             if (Application.OpenForms["formNuevaCompra"] != null)
             {
 
@@ -127,12 +134,18 @@ namespace Presentacion
             {
                 formNuevaCompra frmNuevaCompra = new formNuevaCompra();
                 frmNuevaCompra.asignarFormCompra(this);
+                frmNuevaCompra.oUsuario = oUsuario;
                 frmNuevaCompra.Show();
-            }        
+            }
+        }
+
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
         }
 
         #endregion
-        
+
         #region eventos
 
         private void btnCancelar_Click(object sender, EventArgs e)

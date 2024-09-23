@@ -1004,6 +1004,8 @@ namespace Presentacion.Ventas
         {
             try
             {
+                if (!FormPrincipal.leerBalanza) return;
+
                 if (checkLeerPeso.Checked)
                 {
                     if (Convert.ToBoolean(ConfigurationManager.AppSettings["singleton"].ToString()))
@@ -1036,20 +1038,25 @@ namespace Presentacion.Ventas
         {
             try
             {
-                if (checkLeerPeso.Checked)
+                if (checkLeerPeso.Checked && FormPrincipal.leerBalanza)
                 {
                     dejarDeLeerPeso = false;
+                    txtCantKgs.BackColor = SystemColors.ScrollBar;
                     txtCantKgs.ReadOnly = true;
                     txtCantKgs.TabStop = false;
+                    btnAgregar.Focus();
                     timer1.Enabled = true;
                 }
                 else
                 {
+                    txtCantKgs.BackColor = SystemColors.Window;
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
                     txtCantKgs.TabStop = true;
+                    txtCantKgs.Focus();
                     timer1.Enabled = false;
                 }
+
             }
             catch (Exception ex)
             {

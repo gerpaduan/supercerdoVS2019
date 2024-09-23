@@ -36,6 +36,7 @@ namespace Presentacion
         public static string textForm = cliente + " | Suc. " + nombreSucursal;
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
+        Entidades.Usuario oUserAdmin;
 
         string ultimaConnSelect;
 
@@ -53,6 +54,8 @@ namespace Presentacion
             }
             else
             {
+                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+
                 formCompras frmCompras = new formCompras();
                 frmCompras.Logueado = true;
                 frmCompras.Show();
@@ -320,11 +323,6 @@ namespace Presentacion
 
         private void login()
         {
-            //Utilidades.FormLogin frmLogin = new Utilidades.FormLogin();
-            //frmLogin.ShowDialog();
-            //logueado = frmLogin.Logueado();
-
-
             if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
             logueado = true;
             checkAutoDesconectar.Visible = logueado;

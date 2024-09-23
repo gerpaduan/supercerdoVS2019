@@ -68,21 +68,14 @@ namespace Presentacion.Caja
 
         private void addOrEditTipoEgreso(int idTipoEgreso)
         {
-            //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-            //frmLogin.ShowDialog(this);
-
             if (idTipoEgreso != -1 && Convert.ToBoolean(grilla.CurrentRow.Cells["Reservado"].Value))
             {
                 MessageBox.Show("El Tipo Egreso seleccionado es reservado por el sistema y no puede ser modificado/eliminado");
                 return;
             }
 
-            //if (oUsuario == null) return;
-            //if (!oUsuario.Admin)
-            //{
-            //    MessageBox.Show("No tienes permiso para ver tipos de egresos caja");
-            //    return;
-            //}
+
+            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
 
             if (Application.OpenForms["formAddOrEditTipoEgreso"] != null)
             {
@@ -190,7 +183,8 @@ namespace Presentacion.Caja
             }
             catch (Exception ex)
             {
-                MessageBox.Show("La TipoEgreso no se pudo eliminar.\n" + ex.Message);
+                string msg = ex.Message.Contains("FK") ? "No se puede eliminar porque existen egresos de caja con el Tipo Egreso seleccionado.\n\n" : "";
+                MessageBox.Show(msg + "Detalle del error: " + ex.Message);
             }
         }
 

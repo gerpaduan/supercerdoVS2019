@@ -350,7 +350,7 @@ namespace Presentacion.Compras
 
         private void establecerTipo(string tipoCompra)
         {
-            groupCantMedias.Visible = (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)));
+            //groupCantMedias.Visible = (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)));
             if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))//(tipoCompra=="Media Res")
             {
                 radioMediaRes.Checked = true;

@@ -126,10 +126,29 @@ namespace Presentacion.Caja
         {
             try
             {
+                if (string.IsNullOrEmpty(txtTipoEgresoCaja.Text))
+                {
+                    MessageBox.Show("El campo Tipo no puede ser vacío.");
+                    txtTipoEgresoCaja.Focus();  
+                    return;
+                }
+
                 int id = string.IsNullOrEmpty(txtIdTipoEgreso.Text) ? 0 : idTipoEgreso;
                 oCierreN.addOrEditTipoEgreso(id, txtTipoEgresoCaja.Text, checkEsGasto.Checked);
                 MessageBox.Show("El Tipo Egreso se registró correctamente");
-                this.Close();
+
+                ///Si es Nuevo registro se limpian campos
+                ///sino se cierra la ventana
+                if (id == -1)
+                {
+                    txtTipoEgresoCaja.Text = "";
+                    checkEsGasto.Checked = false;
+                    txtTipoEgresoCaja.Focus();
+                }
+                else
+                {
+                    this.Close();
+                }
             }
             catch (Exception ex)
             {

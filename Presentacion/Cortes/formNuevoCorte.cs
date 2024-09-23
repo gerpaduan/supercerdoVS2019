@@ -127,6 +127,9 @@ namespace Presentacion
                             if (modificar)
                                 this.Close();
 
+
+                            MessageBox.Show("El corte se agregó correctamente.", "",
+                                MessageBoxButtons.OK);
                             limpiarCampos();
                             txtCodigo.Focus();
                         }

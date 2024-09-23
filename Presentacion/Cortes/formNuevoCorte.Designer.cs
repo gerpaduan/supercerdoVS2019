@@ -313,7 +313,6 @@
             this.txtPorcentajeCorteM.Name = "txtPorcentajeCorteM";
             this.txtPorcentajeCorteM.Size = new System.Drawing.Size(99, 24);
             this.txtPorcentajeCorteM.TabIndex = 32;
-            this.txtPorcentajeCorteM.Text = "100";
             this.txtPorcentajeCorteM.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtPorcentajeCorteM.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             // 
