@@ -729,6 +729,12 @@ namespace Presentacion
 
         private void limpiarCampos()
         {
+            if (checkCodigo.Checked)
+            {
+                txtCantKgs.Text = "";
+                txtCantKgs.Focus();
+                return;
+            }
             //txtNroTropa.Text="";
             txtKgMedia.Text = "";
             oCorteNuevaCompra = null;
@@ -1158,5 +1164,12 @@ namespace Presentacion
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        private void checkCodigo_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkCodigo.Checked)
+            {
+                MessageBox.Show("Ha activado la función para que el corte seleccionado quede fijo");
+            }
+        }
     }
 }
