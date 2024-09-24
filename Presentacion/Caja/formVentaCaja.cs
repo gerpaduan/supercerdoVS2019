@@ -765,17 +765,6 @@ namespace Presentacion.Caja
                 return false;
             }
 
-            //si es consumidor final no se permite precios ingresoRapidoEmbutido excepto que esté logueado como admin
-            int inicioCodigoIngresoRapidoEmbutido = (ConfigurationManager.AppSettings["codigoPrecioIngresoRapidoEmbutido"]) != null ?
-                Convert.ToInt32(ConfigurationManager.AppSettings["codigoPrecioIngresoRapidoEmbutido"].ToString()) : 0;
-            if (oCorteE != null && oCorteE.IngresoRapidoEmbutido && !FormPrincipal.logueado && !oUsuario.Admin && 
-                oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
-            {
-                MessageBox.Show("No tienes permiso para realizar ventas con precio ingresoRapidoEmbutido a un consumidor final.\n\n"+
-                    "Busque el cliente o agréguelo para poder realizar la venta con precios ingresoRapidoEmbutidos", "Precio ingresoRapidoEmbutido");
-                txtCodigo.Focus();
-                return false;
-            }
 
             string mensaje = "Complete los siguientes campos: ";
             if (txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")

@@ -436,7 +436,11 @@ Agregar en Parametros
 id	nombre	valor	descripcion
 44	idIndefinido	4	id del cliente INDEFINIDO
 
-****
+
+**************************************************************************
+Actualizar desde aca **********************************************************************
+**********************************************************************
+
 Agregar el campo en COrtes
 
 ingresoRapidoEmbutido	tinyint	Checked
@@ -660,7 +664,7 @@ Agregar campos en TipoEgresoCaja
 
 reservadoSistema	tinyint	Checked
 creado	datetime	Checked
-modificado	datetime	Checked
+actualizado	datetime	Checked
 
 
 use SuperCerdo
