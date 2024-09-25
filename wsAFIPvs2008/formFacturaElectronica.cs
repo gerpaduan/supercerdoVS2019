@@ -1710,7 +1710,7 @@ namespace wsAFIPvs2008
 
             int cantLineasVacias = Convert.ToInt32(ConfigurationManager.AppSettings["cantLineasVacias"].ToString());
             //se le resta la cantidad e alicuota - 1 para evitar que pise el QR
-            cantLineasVacias -= (listaAlicuotasFactura.Count - 1);
+            cantLineasVacias -= (oFactuElec.Venta.LineasVenta.Count - 1);
             for (int i = 0; i < cantLineasVacias; i++)
                 documento.Add(new Paragraph("\n"));
 
