@@ -878,7 +878,7 @@ namespace Presentacion.Caja
                 //se valida que no finalice venta con bonificacion para consumidor final
                 for (int index = 0; index < listaLineaVenta.Count; index++)
                 {
-                    if ((listaLineaVenta[index].Bonificacion != 0 || listaLineaVenta[index].Corte.IngresoRapidoEmbutido) && !FormPrincipal.logueado && !oUsuario.Admin && 
+                    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
                         oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
                     {
                         bool esAnulado = false;
@@ -895,7 +895,7 @@ namespace Presentacion.Caja
 
                         if (!esAnulado)
                         {
-                            mensaje = "No tienes permiso para poder bonificar y/o vender productos ingresoRapidoEmbutidos a un cliente Consumidor Final";
+                            mensaje = "No tienes permiso para hacer bonificaciones a un cliente Consumidor Final";
                             MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return false;
                         }  
@@ -1579,10 +1579,6 @@ namespace Presentacion.Caja
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
             lblClienteConBonif.Text = lblClienteConBonif.Visible ?
                 "Cliente con Bonificación (" + oCliente.Bonificacion.ToString("N2") + " %)" : "";
-            this.txtCodigo.Focus();
-
-            ////Actualizo el corte cargado 
-            //cargarCorte(); ----postergado---
 
             restablecerFormaDePago();
             //unchecked todos las formas de pago para que las vuelva a ingresar y evitar algun error por descuido

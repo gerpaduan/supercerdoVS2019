@@ -1668,9 +1668,9 @@ namespace wsAFIPvs2008
 
             string datosCliente = "CUIT:   " + oFactuElec.NroDocAfip +
                 "              Apellido y Nombre/Razón Social:   " + oFactuElec.RazonSocialAFIP.ToUpper() +
-                "\n\nCondición frente al IVA:   " + oFactuElec.CondicionIvaAFIP.ToUpper() + 
+                "\n\nCondición frente al IVA:   " + comboIva.Text + //oFactuElec.CondicionIvaAFIP.ToUpper() + 
                 "\n\nDomicilio :   " + oFactuElec.DomicilioAFIP.ToUpper() +
-                "\n\nCondición de venta:   " + oFactuElec.CondicionVenta.ToUpper();
+                "\n\nCondición de venta:   " + txtFormaPago.Text.ToUpper(); //oFactuElec.CondicionVenta.ToUpper();
 
             clienteTable.AddCell(new PdfPCell(new Phrase(datosCliente, fontNormal)) { Border = 0 });
             documento.Add(clienteTable);
@@ -1813,7 +1813,7 @@ namespace wsAFIPvs2008
             // Crear la estructura del JSON utilizando la variable
             long _cuitEmisor = long.Parse(cuit);
             long _nroCmp = long.Parse(oFactuElec.NroCbteAfip);
-            long _nroDocRec = long.Parse(oFactuElec.NroDocAfip);
+            long _nroDocRec = string.IsNullOrEmpty(oFactuElec.NroDocAfip) ? 0 : long.Parse(oFactuElec.NroDocAfip);
             long _codAut = long.Parse(oFactuElec.CAE1);
             int _ptoVta = Convert.ToInt32(oFactuElec.PtoVtaAfip);
             int _tipoDocRec = Convert.ToInt32(TipoDocCMB.SelectedValue.ToString());
