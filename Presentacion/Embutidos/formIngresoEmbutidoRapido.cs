@@ -108,28 +108,41 @@ namespace Presentacion
 
         private void calcularFormula()
         {
-            dtFormula = oCorteN.getFormulaEmbutido(oCorteEmbutidoE.idCorte);
-
-            //calcula total sin condimentos
-            float totalKgSinCond = string.IsNullOrEmpty(txtCantKgs.Text) ? 0 : Util_Form.convertFloat(txtCantKgs.Text, true);
-
-            int cantDecimales = 3;
-            float porcentaje;
-            for (int i = 0; i < dtFormula.Rows.Count; i++)
+            try
             {
-                porcentaje = (Util_Form.convertFloat(dtFormula.Rows[i]["porcentaje"].ToString(), false));
-                dtFormula.Rows[i]["kgs"] = Convert.ToString((Math.Round((0.01 * totalKgSinCond *
-                        (porcentaje)), cantDecimales)).ToString("F3"));
-            }
+                ///se valida para que no tire carteles de error en peso balanza
+                double validacionNumerica;
+                if (!double.TryParse(txtCantKgs.Text, out validacionNumerica))
+                    return;
 
-            grillaFormula.DataSource = dtFormula;
-            // Deshabilitar la ordenación en todas las columnas
-            foreach (DataGridViewColumn column in grillaFormula.Columns)
+                dtFormula = oCorteN.getFormulaEmbutido(oCorteEmbutidoE.idCorte);
+
+                //calcula total sin condimentos
+                float totalKgSinCond = string.IsNullOrEmpty(txtCantKgs.Text) ? 0 : Util_Form.convertFloat(txtCantKgs.Text, false);
+
+                int cantDecimales = 3;
+                float porcentaje;
+                for (int i = 0; i < dtFormula.Rows.Count; i++)
+                {
+                    porcentaje = (Util_Form.convertFloat(dtFormula.Rows[i]["porcentaje"].ToString(), false));
+                    dtFormula.Rows[i]["kgs"] = Convert.ToString((Math.Round((0.01 * totalKgSinCond *
+                            (porcentaje)), cantDecimales)).ToString("F3"));
+                }
+
+                grillaFormula.DataSource = dtFormula;
+                // Deshabilitar la ordenación en todas las columnas
+                foreach (DataGridViewColumn column in grillaFormula.Columns)
+                {
+                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                }
+            }
+            catch (Exception)
             {
-                column.SortMode = DataGridViewColumnSortMode.NotSortable;
-            }
 
+                throw;
+            }
         }
+
         private void agregarEmbutido()
         {
             try
@@ -309,7 +322,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+               // MessageBox.Show(ex.Message);
             }
         }
 

@@ -927,7 +927,7 @@ namespace Presentacion.Caja
                 {
                     if (totalVenta >= 0)
                     {
-                        if ((abona > 0 && cambio < 0) || cambio >= 100)
+                        if ((abona > 0 && cambio < 0))
                         {
                             if (cambio < 0)
                             {
@@ -936,13 +936,6 @@ namespace Presentacion.Caja
                                 txtAbona.Select();
                                 txtAbona.Focus();
                             }
-                            //if (cambio >= 100)
-                            //{
-                            //    mensaje = "El cambio debe ser menor a $100.\nVerifique el pago ingresado e intente finalizar la venta nuevamente.";
-                            //    MessageBox.Show(mensaje, "Error en el pago", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            //    txtAbona.Select();
-                            //    txtAbona.Focus();
-                            //}
                             return false;
                         }
                         else
@@ -1757,6 +1750,8 @@ namespace Presentacion.Caja
 
         private void formVentaCaja_Load(object sender, EventArgs e)
         {
+            timer1.Enabled = false;
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   "+
                 "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
@@ -1785,6 +1780,9 @@ namespace Presentacion.Caja
                 restablecerFormaDePago();
                 comboTipoComprobante.SelectedIndex = 0;
                 checkBoxRedondeo.Checked = checkBoxRedondeo.Visible = redondeo;
+
+
+                timer1.Enabled = true;
             }
             else
             {
@@ -1802,7 +1800,7 @@ namespace Presentacion.Caja
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLast, "");
-            if (oCierreE == null || !oCierreE.UsuarioCierre.Id.Equals(0))
+            if (oCierreE == null || !(oCierreE.UsuarioCierre == null || oCierreE.UsuarioCierre.Id.Equals(0)))
             {
                 DialogResult resp = MessageBox.Show(oUsuario.Nombre + ":\nDebes Abrir Caja para poder registrar ventas.\n\n¿Desea abrir caja ahora?",
                     "Abrir Caja", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);//, MessageBoxButtons.YesNo, MessageBoxDefaultButton.Button2);

@@ -36,6 +36,7 @@ namespace Negocio
                     oCierreE = new Entidades.CierreCaja();
                     oCierreE.Id = Convert.ToInt32(drCierreCaja["id"]);
                     oCierreE.Sucursal = oSucursalE;
+                    oCierreE.UsuarioCierre = new Entidades.Usuario();
                     foreach (Entidades.Usuario user in listUsers)
                     {
                         if (Convert.ToInt32(drCierreCaja["usuarioInicio"]).Equals(user.Id))
