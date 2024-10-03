@@ -99,7 +99,7 @@
             this.modificar.Name = "modificar";
             this.modificar.Padding = new System.Windows.Forms.Padding(1);
             this.modificar.Size = new System.Drawing.Size(79, 46);
-            this.modificar.Text = "Modificar";
+            this.modificar.Text = "&Modificar";
             this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.modificar.Click += new System.EventHandler(this.modificar_Click);
             // 
@@ -111,7 +111,7 @@
             this.eliminar.Name = "eliminar";
             this.eliminar.Padding = new System.Windows.Forms.Padding(1);
             this.eliminar.Size = new System.Drawing.Size(69, 46);
-            this.eliminar.Text = "Eliminar";
+            this.eliminar.Text = "&Eliminar";
             this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
             // 
@@ -475,7 +475,7 @@
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(109, 33);
             this.btnSalir.TabIndex = 18;
-            this.btnSalir.Text = "Salir";
+            this.btnSalir.Text = "&Salir";
             this.btnSalir.UseVisualStyleBackColor = true;
             this.btnSalir.Click += new System.EventHandler(this.btnSalir_Click);
             // 

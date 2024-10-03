@@ -77,13 +77,14 @@
             this.alicuotaIva = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.promedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.nivel = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idCorteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.independiente = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.porcentajeHueso = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.desvioEstandar = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.enCierreStock = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ingresoRapidoEmbutido = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.idSucursalSL = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -183,13 +184,14 @@
             this.alicuotaIva,
             this.tipo,
             this.promedio,
+            this.nivel,
             this.idCorteMaestro,
+            this.porcentaje,
             this.corteMaestro,
             this.independiente,
-            this.porcentaje,
+            this.habilitado,
             this.porcentajeHueso,
             this.desvioEstandar,
-            this.habilitado,
             this.enCierreStock,
             this.ingresoRapidoEmbutido,
             this.idSucursalSL,
@@ -559,6 +561,16 @@
             this.promedio.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.promedio.Width = 95;
             // 
+            // nivel
+            // 
+            this.nivel.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.nivel.DataPropertyName = "nivel";
+            this.nivel.HeaderText = "Nivel";
+            this.nivel.MinimumWidth = 6;
+            this.nivel.Name = "nivel";
+            this.nivel.ReadOnly = true;
+            this.nivel.Width = 67;
+            // 
             // idCorteMaestro
             // 
             this.idCorteMaestro.DataPropertyName = "idCorteMaestro";
@@ -567,6 +579,20 @@
             this.idCorteMaestro.Name = "idCorteMaestro";
             this.idCorteMaestro.ReadOnly = true;
             this.idCorteMaestro.Visible = false;
+            // 
+            // porcentaje
+            // 
+            this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.porcentaje.DataPropertyName = "porcentaje";
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Format = "N3";
+            dataGridViewCellStyle9.NullValue = null;
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle9;
+            this.porcentaje.HeaderText = "Porcentaje";
+            this.porcentaje.MinimumWidth = 6;
+            this.porcentaje.Name = "porcentaje";
+            this.porcentaje.ReadOnly = true;
+            this.porcentaje.Width = 80;
             // 
             // corteMaestro
             // 
@@ -590,19 +616,13 @@
             this.independiente.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             this.independiente.Width = 85;
             // 
-            // porcentaje
+            // habilitado
             // 
-            this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.porcentaje.DataPropertyName = "porcentaje";
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle9.Format = "N3";
-            dataGridViewCellStyle9.NullValue = null;
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle9;
-            this.porcentaje.HeaderText = "Porcentaje";
-            this.porcentaje.MinimumWidth = 6;
-            this.porcentaje.Name = "porcentaje";
-            this.porcentaje.ReadOnly = true;
-            this.porcentaje.Width = 80;
+            this.habilitado.DataPropertyName = "habilitado";
+            this.habilitado.HeaderText = "Habilitado";
+            this.habilitado.MinimumWidth = 6;
+            this.habilitado.Name = "habilitado";
+            this.habilitado.ReadOnly = true;
             // 
             // porcentajeHueso
             // 
@@ -633,14 +653,6 @@
             this.desvioEstandar.ReadOnly = true;
             this.desvioEstandar.Visible = false;
             this.desvioEstandar.Width = 60;
-            // 
-            // habilitado
-            // 
-            this.habilitado.DataPropertyName = "habilitado";
-            this.habilitado.HeaderText = "Habilitado";
-            this.habilitado.MinimumWidth = 6;
-            this.habilitado.Name = "habilitado";
-            this.habilitado.ReadOnly = true;
             // 
             // enCierreStock
             // 
@@ -793,13 +805,14 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn alicuotaIva;
         private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
         private System.Windows.Forms.DataGridViewTextBoxColumn promedio;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nivel;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMaestro;
+        private System.Windows.Forms.DataGridViewTextBoxColumn porcentaje;
         private System.Windows.Forms.DataGridViewTextBoxColumn corteMaestro;
         private System.Windows.Forms.DataGridViewCheckBoxColumn independiente;
-        private System.Windows.Forms.DataGridViewTextBoxColumn porcentaje;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn habilitado;
         private System.Windows.Forms.DataGridViewTextBoxColumn porcentajeHueso;
         private System.Windows.Forms.DataGridViewTextBoxColumn desvioEstandar;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn habilitado;
         private System.Windows.Forms.DataGridViewCheckBoxColumn enCierreStock;
         private System.Windows.Forms.DataGridViewCheckBoxColumn ingresoRapidoEmbutido;
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalSL;
