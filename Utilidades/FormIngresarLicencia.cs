@@ -45,7 +45,8 @@ namespace Utilidades
 
         public void Logueado()
         {
-            claveSistema = DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + DateTime.Now.Day.ToString(); //ConfigurationManager.AppSettings["admin"].ToString();
+            string day = DateTime.Now.Day > 9 ? DateTime.Now.Day.ToString() : "0" + DateTime.Now.Day.ToString();
+            claveSistema = DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + day; //ConfigurationManager.AppSettings["admin"].ToString();
             clave = txtClave.Text.Trim();
             if (clave.Equals(claveSistema))
             {
@@ -53,7 +54,7 @@ namespace Utilidades
                 groupLicencias.Visible = true;
                 lblErrorLicencia.Visible = false;
                 serialCPU.Text = Utilidades.Util_Form.GetCPUId();
-                serialHD.Text = Utilidades.Util_Form.GetHDSerial();
+                //serialHD.Text = Utilidades.Util_Form.GetHDSerial();
                 btnAgregar.Visible = true;
             }
             else

@@ -132,5 +132,13 @@ namespace Presentacion
                 MessageBox.Show(ex.Message);
             }
         }
+
+        private void checkIngresoRapidoEmbutido_Paint(object sender, PaintEventArgs e)
+        {
+
+            CheckBox cb = sender as CheckBox;
+            TextRenderer.DrawText(e.Graphics, cb.Text, cb.Font, cb.ClientRectangle,
+                                  cb.Enabled ? cb.ForeColor : cb.ForeColor);
+        }
     }
 }

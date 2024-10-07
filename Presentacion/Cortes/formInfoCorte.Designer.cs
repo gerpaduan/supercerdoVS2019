@@ -181,6 +181,7 @@
             this.checkIngresoRapidoEmbutido.TabStop = false;
             this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoEmbutido";
             this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
+            this.checkIngresoRapidoEmbutido.Paint += new System.Windows.Forms.PaintEventHandler(this.checkIngresoRapidoEmbutido_Paint);
             // 
             // checkEnCierreStock
             // 
@@ -227,6 +228,7 @@
             this.checkHabilitado.TabIndex = 41;
             this.checkHabilitado.Text = "Habilitado";
             this.checkHabilitado.UseVisualStyleBackColor = true;
+            this.checkHabilitado.Paint += new System.Windows.Forms.PaintEventHandler(this.checkIngresoRapidoEmbutido_Paint);
             // 
             // txtPromedio
             // 
@@ -236,6 +238,7 @@
             this.txtPromedio.ReadOnly = true;
             this.txtPromedio.Size = new System.Drawing.Size(99, 24);
             this.txtPromedio.TabIndex = 39;
+            this.txtPromedio.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label16
             // 
