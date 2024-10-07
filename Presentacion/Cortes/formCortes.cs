@@ -42,15 +42,15 @@ namespace Presentacion
 
         private void modificar_Click(object sender, EventArgs e)
         {
-            //modificarCorte();
+            modificarCorte();
 
             ///Actualizando Nivel 
             ///
-            for (int i = 0; i < grillaCortes.Rows.Count; i++)
-            {
-                cargarCorte(i);
-                oCorteN.addOrEditCorte(oCorteE);
-            }
+            //for (int i = 0; i < grillaCortes.Rows.Count; i++)
+            //{
+            //    cargarCorte(i);
+            //    oCorteN.addOrEditCorte(oCorteE);
+            //}
         }
     
         private void stock_Click(object sender, EventArgs e)

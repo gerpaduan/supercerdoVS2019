@@ -10,6 +10,21 @@ namespace Negocio
     {
         Datos.OtrasClases oOtrasClasesD = new Datos.OtrasClases();
 
+
+        #region Licencia
+        public bool existeLicencia(string nroLicencia)
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            return oOtrasClasesD.existeLicencia(nroLicencia);
+        }
+
+        public void agregarLicencia(string nroLicencia)
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            oOtrasClasesD.agregarLicencia(nroLicencia);
+        }
+        #endregion
+
         public void obtenerParametros()
         { 
             DataTable dtParametros = oOtrasClasesD.obtenerParametros();            

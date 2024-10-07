@@ -856,3 +856,5 @@ order by CorteP.codigo
 END
 
 **********************
+
+AGregar tabal Licencias

@@ -10,6 +10,7 @@ using System.Configuration;
 using System.IO;
 using IWshRuntimeLibrary;
 using System.Drawing.Imaging;
+using System.Management;
 
 namespace Utilidades
 {
@@ -369,5 +370,27 @@ namespace Utilidades
                 return Color.White;
             }
         }
+
+        public static string GetCPUId()
+        {
+            string cpuInfo = String.Empty;
+            string temp = String.Empty;
+            ManagementClass mc = new ManagementClass("Win32_Processor");
+            ManagementObjectCollection moc = mc.GetInstances();
+            foreach (ManagementObject mo in moc)
+            {
+                if ((cpuInfo == String.Empty))
+                { cpuInfo = mo.Properties["ProcessorId"].Value.ToString(); }
+            }
+            return cpuInfo;
+        }
+
+        public static string GetHDSerial()
+        {
+            ManagementObject disk = new ManagementObject("Win32_LogicalDisk.DeviceID=\"C:\"");
+            PropertyData diskPropertyA = disk.Properties["VolumeSerialNumber"];
+            return diskPropertyA.Value.ToString();
+        }
+
     }
 }

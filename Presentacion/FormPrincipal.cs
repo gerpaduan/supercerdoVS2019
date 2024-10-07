@@ -19,12 +19,14 @@ using System.Configuration;
 using Utilidades;
 using System.IO;
 using wsAFIPvs2008;
+using Negocio;
 
 
 namespace Presentacion
 {
     public partial class FormPrincipal : Form, InterfaceUsuario
-    {        
+    {
+        bool cerrarFormPorError = true;
         public static bool logueado = false;
         public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;
         public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
@@ -281,6 +283,47 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
+            try
+            {
+                string CPU = Utilidades.Util_Form.GetCPUId();
+                //string HD = Utilidades.Util_Form.GetHDSerial();
+
+                Negocio.OtrasClases otrasClasesN = new OtrasClases();
+                if (otrasClasesN.existeLicencia(CPU))
+                {
+                    //se ingresa al sistema
+                }
+                else
+                {
+                    //DialogResult resp = MessageBox.Show("Esta copia no cuenta con la licencia habilitada. Contactar al proveedor.", "Licencia no habilitada", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    Utilidades.FormIngresarLicencia frmLicencia = new Utilidades.FormIngresarLicencia();
+                    frmLicencia.ShowDialog();
+
+                    if (frmLicencia.Licencia())
+                    {
+                        if (CPU != "")
+                        {
+                            otrasClasesN.agregarLicencia(CPU);
+                        }
+                        //if (HD != "")
+                        //{
+                        //    Utilidades.Util_Form.agregarLicencia(HD);
+                        //}
+                    }
+                    else
+                    {
+                        Application.Exit();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al validar licencia. El Sistema se cerrará..\n\n"+ex.Message);
+                Application.Exit();
+            }
+
+
             this.Text = textForm;
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
 
@@ -372,6 +415,8 @@ namespace Presentacion
 
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (cerrarFormPorError) return;
+
             if (e.CloseReason == CloseReason.WindowsShutDown) return;
 
             bool permitirCerrar = true;

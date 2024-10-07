@@ -42,6 +42,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -60,6 +61,12 @@
       <DependentUpon>BarraProgreso.cs</DependentUpon>
     </Compile>
     <Compile Include="Conexion.cs" />
+    <Compile Include="FormIngresarLicencia.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormIngresarLicencia.Designer.cs">
+      <DependentUpon>FormIngresarLicencia.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormPesoBalanza.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -91,6 +98,9 @@
     <EmbeddedResource Include="BarraProgreso.resx">
       <DependentUpon>BarraProgreso.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormIngresarLicencia.resx">
+      <DependentUpon>FormIngresarLicencia.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormPesoBalanza.resx">
       <DependentUpon>FormPesoBalanza.cs</DependentUpon>
