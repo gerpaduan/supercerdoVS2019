@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using Datos;
+using System.Data.SqlClient;
 
 namespace Negocio
 {
@@ -25,7 +27,32 @@ namespace Negocio
         }
         #endregion
 
-        public void obtenerParametros()
+        #region VencimientosLicencia
+        public DataTable obtenerVencimientoLicencia(DateTime fechaDesde)
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            return oOtrasClasesD.obtenerVencimientoLicencia(fechaDesde);
+        }
+
+        public DateTime fechaVencimientoLicencia()
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            return oOtrasClasesD.fechaVencimientoLicencia();
+        }
+
+        public void agregaVencimientosLicencia(DateTime fechaDesde)
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            oOtrasClasesD.agregaVencimientosLicencia(fechaDesde);
+        }
+        public void agregarPagoCuota(DateTime fechaVencimiento)
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            oOtrasClasesD.agregarPagoCuota(fechaVencimiento);
+        }
+            #endregion
+
+            public void obtenerParametros()
         { 
             DataTable dtParametros = oOtrasClasesD.obtenerParametros();            
 

@@ -98,6 +98,11 @@ namespace Utilidades
             //groupLicencias.Visible = false;
         }
 
+        private void txtClave_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
         private void txtClave_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar.Equals(Convert.ToChar(Keys.Enter)))

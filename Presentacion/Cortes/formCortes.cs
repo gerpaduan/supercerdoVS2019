@@ -44,8 +44,8 @@ namespace Presentacion
         {
             modificarCorte();
 
-            ///Actualizando Nivel 
-            ///
+            /////Actualizando Nivel 
+            /////
             //for (int i = 0; i < grillaCortes.Rows.Count; i++)
             //{
             //    cargarCorte(i);
@@ -187,17 +187,7 @@ namespace Presentacion
             oCorteMaestroE = new Entidades.Corte();
 
             oCorteE.idCorte = Convert.ToInt32(grillaCortes.Rows[fila].Cells["idCorte"].Value.ToString());
-            oCorteE.codigo = Convert.ToInt32(grillaCortes.Rows[fila].Cells["codigo"].Value.ToString());
-            oCorteE.corte = grillaCortes.Rows[fila].Cells["corte"].Value.ToString();
-            oCorteE.precioKg = float.Parse(grillaCortes.Rows[fila].Cells["precioKg"].Value.ToString());
-            oCorteE.independiente = Convert.ToInt32(grillaCortes.Rows[fila].Cells["independiente"].Value.ToString());
-            oCorteE.tipo = grillaCortes.Rows[fila].Cells["tipo"].Value.ToString();
-            oCorteE.corteMaestro = oCorteMaestroE;
-            oCorteE.corteMaestro.idCorte = Convert.ToInt32(grillaCortes.Rows[fila].Cells["idCorteMaestro"].Value.ToString());
-            oCorteE.corteMaestro.corte = grillaCortes.Rows[fila].Cells["corteMaestro"].Value.ToString();
-            oCorteE.porcentaje = float.Parse(grillaCortes.Rows[fila].Cells["porcentaje"].Value.ToString());
-            oCorteE.desvioEstandar = float.Parse(grillaCortes.Rows[fila].Cells["desvioEstandar"].Value.ToString());
-            oCorteE.porcentajeHueso = float.Parse(grillaCortes.Rows[fila].Cells["porcentajeHueso"].Value.ToString());
+            oCorteE = oCorteN.getCorteById(oCorteE.idCorte, true);
         }        
 
         #endregion

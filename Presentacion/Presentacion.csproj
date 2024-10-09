@@ -285,6 +285,12 @@
       <DependentUpon>formLineasEmb.cs</DependentUpon>
     </Compile>
     <Compile Include="formFacturaElectronica.cs" />
+    <Compile Include="Licencia\formVencimientoCuotas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Licencia\formVencimientoCuotas.Designer.cs">
+      <DependentUpon>formVencimientoCuotas.cs</DependentUpon>
+    </Compile>
     <Compile Include="Movimientos\formLineasMov.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -783,6 +789,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormPrincipal.resx">
       <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Licencia\formVencimientoCuotas.resx">
+      <DependentUpon>formVencimientoCuotas.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Movimientos\formLineasMov.resx">
       <DependentUpon>formLineasMov.cs</DependentUpon>

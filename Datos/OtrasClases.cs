@@ -70,6 +70,67 @@ namespace Datos
             cmOtrasClases.ExecuteNonQuery();
             cmOtrasClases.Connection.Close();
         }
+
+
+        #endregion
+
+        #region VencimientosLicencia
+        public DataTable obtenerVencimientoLicencia(DateTime fechaDesde)
+        {
+            DataTable dt = new DataTable();
+            daOtrasClases = new SqlDataAdapter("SELECT fechaVencimiento, case WHEN pagado = 1 then 'PAGADO' ELSE 'PENDIENTE' END AS pagado, fechaPago "+
+                "FROM VencimientosLicencia WHERE (pagado = 0 or fechaVencimiento > \'" + fechaDesde.Date +
+                "\') and (fechaVencimiento < DATEADD(MONTH, 2, GETDATE())) order by fechaVencimiento", conn.conectar());
+            daOtrasClases.Fill(dt);
+
+            return dt;
+        }
+
+        public DateTime fechaVencimientoLicencia()
+        {
+            cmOtrasClases = new SqlCommand();
+
+            cmOtrasClases.Connection = conn.conectar();
+            cmOtrasClases.Connection.Open();
+            cmOtrasClases.CommandText = "SELECT TOP 1 fechaVencimiento FROM VencimientosLicencia WHERE (pagado = 0) ORDER BY fechaVencimiento";
+
+            DateTime resp = Convert.ToDateTime(cmOtrasClases.ExecuteScalar());
+            cmOtrasClases.Connection.Close();
+
+            return resp;
+        }
+
+        public void agregaVencimientosLicencia(DateTime fechaDesde)
+        {
+            cmOtrasClases = new SqlCommand();
+
+            cmOtrasClases.Connection = conn.conectar();
+            cmOtrasClases.Connection.Open();
+            for (int i = 0; i < 400; i++)
+            {                
+                cmOtrasClases.CommandText = "Insert into VencimientosLicencia (fechaVencimiento, pagado) values (@fechaVencimiento, @pagado)";
+                cmOtrasClases.Parameters.AddWithValue("@fechaVencimiento", fechaDesde.AddMonths(i));
+                cmOtrasClases.Parameters.AddWithValue("@pagado", false);
+                cmOtrasClases.ExecuteNonQuery();
+
+                cmOtrasClases.Parameters.Clear();   
+            }
+            cmOtrasClases.Connection.Close();
+        }
+        public void agregarPagoCuota(DateTime fechaVencimiento)
+        {
+            cmOtrasClases = new SqlCommand();
+
+            cmOtrasClases.Connection = conn.conectar();
+            cmOtrasClases.Connection.Open();
+            cmOtrasClases.CommandText = "UPDATE VencimientosLicencia SET pagado = @pagado, fechaPago = @fechaPago where fechaVencimiento = @fechaVencimiento";
+            cmOtrasClases.Parameters.AddWithValue("@fechaVencimiento", fechaVencimiento);
+            cmOtrasClases.Parameters.AddWithValue("@pagado", true);
+            cmOtrasClases.Parameters.AddWithValue("@fechaPago", DateTime.Today);
+            cmOtrasClases.ExecuteNonQuery();
+            cmOtrasClases.Connection.Close();
+        }
+
         #endregion
 
     }

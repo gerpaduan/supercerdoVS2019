@@ -50,6 +50,7 @@
             this.txtClave.Size = new System.Drawing.Size(184, 22);
             this.txtClave.TabIndex = 4;
             this.txtClave.UseSystemPasswordChar = true;
+            this.txtClave.TextChanged += new System.EventHandler(this.txtClave_TextChanged);
             // 
             // label1
             // 
@@ -109,8 +110,8 @@
             this.lblErrorLicencia.Name = "lblErrorLicencia";
             this.lblErrorLicencia.Size = new System.Drawing.Size(288, 80);
             this.lblErrorLicencia.TabIndex = 13;
-            this.lblErrorLicencia.Text = "Esta copia no cuenta con la licencia habilitada. \r\n\r\nContactar al proveedor.\r\n\r\nE" +
-    "mail: germanpaduan@gmail.com\r\n";
+            this.lblErrorLicencia.Text = "Esta copia no cuenta con la licencia habilitada. \r\n(ymd)\r\nContactar al proveedor." +
+    "\r\n\r\nEmail: germanpaduan@gmail.com\r\n";
             // 
             // serialHD
             // 

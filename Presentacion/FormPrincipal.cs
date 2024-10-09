@@ -20,6 +20,7 @@ using Utilidades;
 using System.IO;
 using wsAFIPvs2008;
 using Negocio;
+using Presentacion.Licencia;
 
 
 namespace Presentacion
@@ -285,10 +286,42 @@ namespace Presentacion
         {
             try
             {
+                Negocio.OtrasClases otrasClasesN = new OtrasClases();
+
+                #region validarLicenciaCuotas
+                ///se valida que la licencia no esté vencida
+                ///
+                DateTime fechaVencimiento = otrasClasesN.fechaVencimientoLicencia();
+
+                // Calcular la diferencia de fechas
+                TimeSpan diferencia = fechaVencimiento - DateTime.Now;
+
+                // Obtener el resultado en días
+                int diasDiferencia = diferencia.Days;
+
+                if (diasDiferencia < 5 && diasDiferencia >= 0)
+                {
+                    MessageBox.Show("Su licencia vence en "+diasDiferencia +" dias.", "Vencimiento",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                }
+                else if (diasDiferencia < 0 && diasDiferencia >= -30)
+                {
+                    int caduca = 30 + diasDiferencia;
+                    MessageBox.Show("Su licencia está vencida.\nEl Sistema se bloqueará en "+caduca+" dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else if (diasDiferencia < -31)
+                {
+                    MessageBox.Show("Su licencia ha caducado.\nIngrese el código de pago y vuelva a abrir el sistema.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    verVencimientoCuotas();
+                    Application.Exit();
+                }
+
+                #endregion
+
+
+
                 string CPU = Utilidades.Util_Form.GetCPUId();
                 //string HD = Utilidades.Util_Form.GetHDSerial();
 
-                Negocio.OtrasClases otrasClasesN = new OtrasClases();
                 if (otrasClasesN.existeLicencia(CPU))
                 {
                     //se ingresa al sistema
@@ -955,6 +988,29 @@ namespace Presentacion
             {
                 formFormulas frmmFormulas = new formFormulas();
                 frmmFormulas.Show();
+            }
+        }
+
+        private void verVencimientosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void vencimientosLicenciaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            verVencimientoCuotas();
+        }
+
+        private void verVencimientoCuotas()
+        {
+            if (Application.OpenForms["formVencimientoCuotas"] != null)
+            {
+                Application.OpenForms["formVencimientoCuotas"].Activate();
+                Application.OpenForms["formVencimientoCuotas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formVencimientoCuotas frmVencimientoCuotas = new formVencimientoCuotas();
+                frmVencimientoCuotas.ShowDialog();
             }
         }
     }
