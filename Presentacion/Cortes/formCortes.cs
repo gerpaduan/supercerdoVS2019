@@ -20,11 +20,11 @@ namespace Presentacion
         DataTable dtCortes;
         DataTable dtCortesFiltrado;
 
-        int codigoDesde, codigoHasta;
+        bool comboCargado = false;
+        long codigoDesde, codigoHasta;
         public formCortes()
         {
             InitializeComponent();
-            cargarGrilla();
         }
 
         #region eventos
@@ -78,8 +78,10 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
+            if (!comboCargado)
+                return;
+
             lblActualizar.Visible = false;
-            oCorteN = new Negocio.Corte();
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
 
@@ -247,8 +249,14 @@ namespace Presentacion
 
         private void formCortes_Load(object sender, EventArgs e)
         {
+            oCorteN = new Negocio.Corte();
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            comboTipo.DataSource = oCorteN.obtenerTiposProducto(true);
+            comboTipo.DisplayMember = "tipo";
+            comboTipo.ValueMember = "tipo";
             comboTipo.SelectedIndex = 0;
+            comboCargado = true;
+            cargarGrilla();
             this.txtBuscarCorte.Select();
         }
 
@@ -256,7 +264,7 @@ namespace Presentacion
         {
             if (!string.IsNullOrEmpty(txtCodigoDesde.Text) && Utilidades.Util_Form.validarCampoNumeroEntero(txtCodigoDesde.Text, "Desde"))
             {
-                codigoDesde = Convert.ToInt32(txtCodigoDesde.Text);
+                codigoDesde = Convert.ToInt64(txtCodigoDesde.Text);
             }
             filtarGrilla();
         }
@@ -265,13 +273,16 @@ namespace Presentacion
         {
             if (!string.IsNullOrEmpty(txtCodigohasta.Text) && Utilidades.Util_Form.validarCampoNumeroEntero(txtCodigohasta.Text, "Hasta"))
             {
-                codigoHasta = Convert.ToInt32(txtCodigohasta.Text);
+                codigoHasta = Convert.ToInt64(txtCodigohasta.Text);
             }
             filtarGrilla();
         }
 
         public void filtarGrilla()
         {
+            if (!comboCargado)
+                return;
+
             dtCortesFiltrado = dtCortes.Clone();
             // Presuming the DataTable has a column named Date.
             string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";
@@ -284,7 +295,7 @@ namespace Presentacion
             }
             if (!string.IsNullOrEmpty(txtBuscarCorte.Text))
             {
-                string buscaPorCodigo = (int.TryParse(txtBuscarCorte.Text, out int numero)) ? "codigo = " + numero : "true";
+                string buscaPorCodigo = (long.TryParse(txtBuscarCorte.Text, out long numero)) ? "codigo = " + numero : "true";
 
                 expresion += " and ";
                 expresion += " ( corte like \'" + txtBuscarCorte.Text + "%\' or " + buscaPorCodigo +" ) ";

@@ -870,7 +870,7 @@ namespace Presentacion
                         foreach (DataRow fila in dtCorte.Rows)
                         {
                             oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                            oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                            oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
                         }
 
@@ -942,7 +942,7 @@ namespace Presentacion
                 {
                     Entidades.Corte oCorteNuevoE = new Entidades.Corte();
                     oCorteNuevoE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                    oCorteNuevoE.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                    oCorteNuevoE.codigo = Convert.ToInt64(fila["codigo"].ToString());
                     oCorteNuevoE.corte = fila["corte"].ToString();
 
                     EnviarCorte(oCorteNuevoE);

@@ -633,7 +633,7 @@ namespace Presentacion
                             if (fila["codigo"].ToString().Equals(txtCodigo.Text))
                             {
                                 oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                                oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                                oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                                 oCorteNuevaCompra.corte = fila["corte"].ToString();
                                 oCorteNuevaCompra.tipo = fila["tipo"].ToString();
                                 break;
@@ -1080,7 +1080,7 @@ namespace Presentacion
                 DataTable dtCortesSinStock = dtCorte.Clone();
                 foreach (DataRow corte in dtCorte.Rows)
                 {
-                    int codigoSelect = Convert.ToInt32(corte["codigo"].ToString());
+                    long codigoSelect = Convert.ToInt64(corte["codigo"].ToString());
                     if (Convert.ToBoolean(corte["enCierreStock"]))
                     {
                         var selected = listaCortePorCompra.Where(c => c.corte.codigo.Equals(codigoSelect));

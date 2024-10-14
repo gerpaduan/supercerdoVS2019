@@ -9,7 +9,7 @@ namespace Presentacion
     {
         int idLineaVenta;
         public int idCorte;
-        public int codigo;
+        public long codigo;
         public string corte;
         public float cantKgs;
         public float precioKg;
@@ -89,7 +89,7 @@ namespace Presentacion
             }
         }
 
-        public int Codigo
+        public long Codigo
         {
             get
             {

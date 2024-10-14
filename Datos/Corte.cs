@@ -31,7 +31,7 @@ namespace Datos
                     while (drCorte.Read())
                     {
                         oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
-                        oCorteE.Codigo = Convert.ToInt32(drCorte["codigo"]);
+                        oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
                         oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
                         oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
@@ -50,6 +50,7 @@ namespace Datos
                         oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
                         oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
                         oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
+                        oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
                     }
                     return oCorteE;
                 }
@@ -104,6 +105,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@desvioEstandar", oCorteE.desvioEstandar);
             cmCorte.Parameters.AddWithValue("@idAlicuotaIva", oCorteE.IdAlicuotaIva);
             cmCorte.Parameters.AddWithValue("@alicuotaIva", oCorteE.AlicuotaIva);
+            cmCorte.Parameters.AddWithValue("@pesable", oCorteE.Pesable);
 
             cmCorte.ExecuteNonQuery();
             cmCorte.Connection.Close();
@@ -145,11 +147,12 @@ namespace Datos
 
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtCortes);
+            cmCorte.Connection.Close();
 
             return dtCortes;
         }
 
-        public DataTable buscarCodigoCorte(int codigo)
+        public DataTable buscarCodigoCorte(long codigo)
         {
             DataTable dtCortes = new DataTable();
 
@@ -164,6 +167,7 @@ namespace Datos
 
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtCortes);
+            cmCorte.Connection.Close();
 
             return dtCortes;
         }
@@ -195,7 +199,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
             string consultaSQL = "SELECT     CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.ingresoRapidoEmbutido, CorteP.enCierreStock, " +
-                " CorteP.tipo, CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, " +
+                " CorteP.tipo, CorteP.pesable, CorteP.nivel, CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, " +
                 " CorteP.independiente, CorteP.promedio, CorteP.idAlicuotaIva, CorteP.alicuotaIva FROM  dbo.Corte AS CorteM RIGHT OUTER JOIN " +
                 " dbo.Corte AS CorteP ON CorteM.idCorte = CorteP.idCorteMaestro";
             cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
@@ -204,10 +208,26 @@ namespace Datos
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtCortes);
 
-            cmCorte.Connection.Close();
-            
+            cmCorte.Connection.Close();            
             return dtCortes;
+        }
+        public DataTable cargarDtCortes()
+        {
+            DataTable dtCortes = new DataTable();
+            daCorte = new SqlDataAdapter();
 
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            string consultaSQL = "SELECT * FROM Corte";
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = consultaSQL;
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtCortes);
+
+            cmCorte.Connection.Close();
+            return dtCortes;
         }
 
         public DataTable obtenerEmbutidos(string txtBusqueda)
@@ -335,7 +355,7 @@ namespace Datos
                     while (drCorte.Read())
                     {
                         oCorteE.idCorte = Convert.ToInt32(drCorte["idCorte"].ToString());
-                        oCorteE.codigo = Convert.ToInt32(drCorte["codigo"].ToString());
+                        oCorteE.codigo = Convert.ToInt64(drCorte["codigo"].ToString());
                         oCorteE.corte = drCorte["corte"].ToString();
                         oCorteE.tipo = drCorte["tipo"].ToString();
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
@@ -348,7 +368,10 @@ namespace Datos
                         oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
                         oCorteE.porcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
                         oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
-                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);                     
+                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+                        oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
+                        oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
+                        oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
                     }
                     return oCorteE;
                 }
@@ -540,7 +563,27 @@ namespace Datos
             cmCorte.Connection.Close();
             return dtFormula;
         }
-        
+
+        public DataTable obtenerTiposProducto(bool mostrarTodos)
+        {
+            DataTable dtTiposProducto = new DataTable();
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            string consulta = "SELECT  tipo FROM  TiposProducto";
+            consulta += mostrarTodos ? " ORDER BY orden, tipo" : " where orden > 0 ORDER BY orden, tipo";
+            cmCorte.CommandText = consulta;
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtTiposProducto);
+
+            cmCorte.Connection.Close();
+
+            return dtTiposProducto;
+        }
+
 
         #endregion
 
@@ -996,7 +1039,7 @@ namespace Datos
 
                 Entidades.Corte corte =new Entidades.Corte();
                 corte.idCorte = Convert.ToInt32(drMovimiento["idCorte"].ToString());
-                corte.codigo = Convert.ToInt32(drMovimiento["codigo"].ToString());
+                corte.codigo = Convert.ToInt64(drMovimiento["codigo"].ToString());
                 corte.corte = drMovimiento["corte"].ToString();
 
                 oCortePorMovimiento.Corte = corte;

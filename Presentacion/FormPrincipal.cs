@@ -37,6 +37,10 @@ namespace Presentacion
         public static string cuitCliente = ConfigurationManager.AppSettings["cuitCliente"].ToString();
         public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
         public static string textForm = cliente + " | Suc. " + nombreSucursal;
+        //codigo de barras
+        public static int cantDigitosProdEnCodBarra = Convert.ToInt32(ConfigurationManager.AppSettings["cantDigitosProdEnCodBarra"].ToString());
+        public static bool esCodBarraPorCantidad = ConfigurationManager.AppSettings["codBarraPorCantidad"].ToString().Equals("0") ? true : false;
+
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
         Entidades.Usuario oUserAdmin;

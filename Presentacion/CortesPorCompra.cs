@@ -12,7 +12,7 @@ namespace Presentacion
         public float totalS;
         public float precioKg;
         public string sucursal;
-        public int codigo;
+        public long codigo;
         public int idSucursal;
         public int idCorte;
         private int index;
@@ -41,7 +41,7 @@ namespace Presentacion
                 idCorte = value;
             }
         }
-        public int Codigo
+        public long Codigo
         {
             get
             {

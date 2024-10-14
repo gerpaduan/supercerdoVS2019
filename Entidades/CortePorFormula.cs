@@ -15,7 +15,7 @@ namespace Entidades
 
         //parar poder agregar a la grilla
         int idCorte;
-        int codigo;
+        long codigo;
         string corte;
 
         public int IdCorteEnFormula { get => idCorteEnFormula; set => idCorteEnFormula = value; }
@@ -25,7 +25,7 @@ namespace Entidades
         public float Porcentaje { get => porcentaje; set => porcentaje = value; }
         public bool AgregarAuto { get => agregarAuto; set => agregarAuto = value; }
         public int IdCorte { get => idCorte; set => idCorte = value; }
-        public int Codigo { get => codigo; set => codigo = value; }
+        public long Codigo { get => codigo; set => codigo = value; }
         public string Corte { get => corte; set => corte = value; }
     }
 }

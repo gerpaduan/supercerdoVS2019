@@ -76,6 +76,7 @@
             this.credito = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.alicuotaIva = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pesable = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.promedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.nivel = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idCorteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -183,6 +184,7 @@
             this.credito,
             this.alicuotaIva,
             this.tipo,
+            this.pesable,
             this.promedio,
             this.nivel,
             this.idCorteMaestro,
@@ -548,6 +550,16 @@
             this.tipo.ReadOnly = true;
             this.tipo.Width = 80;
             // 
+            // pesable
+            // 
+            this.pesable.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.pesable.DataPropertyName = "pesable";
+            this.pesable.HeaderText = "Pesable";
+            this.pesable.MinimumWidth = 6;
+            this.pesable.Name = "pesable";
+            this.pesable.ReadOnly = true;
+            this.pesable.Width = 64;
+            // 
             // promedio
             // 
             this.promedio.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
@@ -804,6 +816,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn credito;
         private System.Windows.Forms.DataGridViewTextBoxColumn alicuotaIva;
         private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn pesable;
         private System.Windows.Forms.DataGridViewTextBoxColumn promedio;
         private System.Windows.Forms.DataGridViewTextBoxColumn nivel;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMaestro;

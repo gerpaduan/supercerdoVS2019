@@ -154,7 +154,7 @@ namespace Presentacion
 
             try
             {
-                oCorteE.Codigo = Convert.ToInt32(txtCodigo.Text.Trim());
+                oCorteE.Codigo = Convert.ToInt64(txtCodigo.Text.Trim());
             }
             catch (Exception)
             {
@@ -186,6 +186,7 @@ namespace Presentacion
             oCorteE.IdAlicuotaIva = Convert.ToInt32(comboAlicuotaIva.SelectedValue);
             oCorteE.AlicuotaIva = Utilidades.Util_Form.convertFloat(comboAlicuotaIva.Text, false);
             oCorteE.IngresoRapidoEmbutido = checkIngresoRapidoEmbutido.Checked;
+            oCorteE.Pesable = checkPesable.Checked;
             oCorteE.EnCierreStock = checkEnCierreStock.Checked;
             oCorteE.Habilitado = checkHabilitado.Checked;
             oCorteE.independiente = txtIndependiente.Checked ? 1 : 0;
@@ -313,6 +314,11 @@ namespace Presentacion
             try
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
+                comboTipo.DataSource = oCorteN.obtenerTiposProducto(false);
+                comboTipo.DisplayMember = "tipo";
+                comboTipo.ValueMember = "tipo";
+                comboTipo.SelectedIndex = -1;
+
                 comboAlicuotaIva.DataSource = oCorteN.obtenerAlicuotasIva(false);
                 comboAlicuotaIva.DisplayMember = "iva";
                 comboAlicuotaIva.ValueMember = "idIva";
@@ -404,6 +410,28 @@ namespace Presentacion
             if (frmCorte != null)
             {
                 frmCorte.cargarGrilla();
+            }
+        }
+
+        private void checkPesable_CheckedChanged(object sender, EventArgs e)
+        {
+            huboModificacion = true;
+        }
+
+        private void txtDescCorte_TextChanged(object sender, EventArgs e)
+        {
+            huboModificacion = true;
+
+            if (checkMayuscula.Checked)
+            {
+                // Guardar la posición actual del cursor
+                int cursorPosition = txtDescCorte.SelectionStart;
+
+                // Convertir el texto a mayúsculas
+                txtDescCorte.Text = txtDescCorte.Text.ToUpper();
+
+                // Restaurar la posición del cursor
+                txtDescCorte.SelectionStart = cursorPosition;
             }
         }
     }

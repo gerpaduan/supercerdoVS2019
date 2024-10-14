@@ -19,7 +19,7 @@ namespace Entidades
 
         public int idCorte;
         public string corte;
-        public int codigo;
+        public long codigo;
         public float porcentaje;
         public string tipo;
         public int independiente;
@@ -36,6 +36,7 @@ namespace Entidades
         private bool habilitado;
         private int idAlicuotaIva;
         private float alicuotaIva;
+        private bool pesable;
 
         public bool Habilitado
         {
@@ -74,7 +75,7 @@ namespace Entidades
             }
         }
 
-        public int Codigo
+        public long Codigo
         {
             get
             {
@@ -210,5 +211,6 @@ namespace Entidades
         }
         public int IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
         public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
+        public bool Pesable { get => pesable; set => pesable = value; }
     }
 }

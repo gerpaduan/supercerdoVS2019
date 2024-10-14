@@ -9,7 +9,7 @@ namespace Presentacion
     {
         private int idCortePorMovimiento;
         private int idCorte;
-        private int codigo;
+        private long codigo;
         private string corte;
         private float cantKg;
         private int cantUnidad;
@@ -70,7 +70,7 @@ namespace Presentacion
             }
         }
 
-        public int Codigo
+        public long Codigo
         {
             get
             {

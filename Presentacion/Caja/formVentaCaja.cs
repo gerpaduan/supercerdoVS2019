@@ -30,6 +30,7 @@ namespace Presentacion.Caja
         public string precioBonificado = "";
         formVentas frmVentas;
         Negocio.Corte oCorteN = new Negocio.Corte();
+        DataTable dtCortes = new DataTable();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
         Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
@@ -91,6 +92,12 @@ namespace Presentacion.Caja
         bool esAjustePorcTarj = false;
         int idConsumidorFinal;
 
+        /// <summary>
+        /// Variable Para manejar los codigos de barra internos
+        /// </summary>
+
+        bool esCodBarraInterno , esCodBarraEstandar = false;
+        string codigoEnCodBarra = "", segundoModulo = "";
         #endregion
 
 
@@ -246,7 +253,7 @@ namespace Presentacion.Caja
                             {
                                 grillaLineasVenta.Rows[nroFila].Cells["Corte"].Style.Font = new Font(grillaLineasVenta.Font.ToString(), 13);
                             }
-                            if (Convert.ToInt32(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo &&
+                            if (Convert.ToInt64(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo &&
                                 linea.IndexAnulado == nroFila && Entidades.LineaVenta.esAnulado(linea.Estado))
                             {
                                 grillaLineasVenta.Rows[nroFila].DefaultCellStyle.ForeColor = Color.Red;
@@ -625,6 +632,7 @@ namespace Presentacion.Caja
                     //centavosRedondeo = centavosRedondeo / 100;
 
                     txtCodigo.Focus();
+                    txtCodigo.SelectAll();
                 }
                 catch (Exception ex)
                 {
@@ -783,6 +791,7 @@ namespace Presentacion.Caja
                     {
                         MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         txtCodigo.Focus();
+                        txtCodigo.SelectAll();
                     }
                     else
                     {
@@ -824,7 +833,20 @@ namespace Presentacion.Caja
                     txtCantKgs.Focus();
                     txtCantKgs.SelectAll();
 	            }
-                return esKgsMayorACero && esPrecioMayorACero;
+
+                //validar que cantidad kilos sea menor a mil
+                float numeroKgs;
+                bool esKgsMenorAMil = true;
+                if (float.TryParse(txtCantKgs.Text.Replace('.',','), out numeroKgs) && (numeroKgs > 1000))
+                {
+                    esKgsMenorAMil = false;
+                    MessageBox.Show("La cantidad de kgs ingresada debe ser menor a 1.000 (mil).", "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtCantKgs.Text = "";
+                    txtCantKgs.Focus();
+                    txtCantKgs.SelectAll();
+                }
+
+                return esKgsMayorACero && esPrecioMayorACero && esKgsMenorAMil;
             }
         }
 
@@ -1066,15 +1088,17 @@ namespace Presentacion.Caja
                     oCorteE = null;
                     oCorteE = new Entidades.Corte();
 
-                    DataTable dtCortes = new DataTable();
-                    dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
+                    //dtCortes = oCorteN.buscarCodigoCorte(Convert.ToInt64(txtCodigo.Text.Trim()));
 
-                    if (dtCortes.Rows.Count > 0)
+                    DataRow[] filas = dtCortes.Select("codigo = " + Convert.ToInt64(txtCodigo.Text.Trim()));
+                    //if (dtCortes.Rows.Count > 0)
+                    if (filas.Length > 0)
                     {
-                        foreach (DataRow fila in dtCortes.Rows)
+                        //foreach (DataRow fila in dtCortes.Rows)
+                        foreach (DataRow fila in filas)
                         {
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                                oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                                oCorteE.codigo = Convert.ToInt64(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.IdAlicuotaIva = Convert.ToInt32(fila["idAlicuotaIva"].ToString());
                                 oCorteE.AlicuotaIva = float.Parse(fila["alicuotaIva"].ToString());
@@ -1084,9 +1108,10 @@ namespace Presentacion.Caja
                                 oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(fila["ingresoRapidoEmbutido"]);
                                 oCorteE.EnCierreStock = Convert.ToBoolean(fila["enCierreStock"]);
                                 oCorteE.Habilitado = Convert.ToBoolean(fila["habilitado"]);
+                                oCorteE.Pesable = Convert.ToBoolean(fila["pesable"]);
                         }
                         //cargo los campos                        
-                        this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
+                        //this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
                         this.txtCorte.Text = oCorteE.corte;
 
                         //si no está habilitado no muestra el importe
@@ -1506,6 +1531,7 @@ namespace Presentacion.Caja
 
         private void buscarCorte()
         {
+            dtCortes = oCorteN.cargarDtCortes();
             formBuscarCorte frmBuscarCorte = new formBuscarCorte();
             frmBuscarCorte.Show(this);
         }
@@ -1609,42 +1635,163 @@ namespace Presentacion.Caja
         {
             if (grillaLineasVenta.Rows.Count.Equals(0))
             {
-                //titilarTextBoxVendedor();
-            }
-
-            //si se borra el corte actual se llama a metodo registrarTemporalLinea
-            if (oCorteE != null && !ultimoTextoEnTxtCodigo.Equals(txtCodigo.Text))
-            {
-                bool esCodigoBarra = txtCodigo.Text.Length == 13;
-                string codigo = "", precioEnCodBarra = "";
-                //Si tiene 13 digitos es codigo de barra
-                if (esCodigoBarra)
-                {
-                    checkLeerPeso.Checked = false;
-                    for (int i = 0; i < txtCodigo.Text.Length; i++)
-                    {
-                        if (i >= 3 && i <= 5)
-                            codigo += txtCodigo.Text[i];
-
-                        if (i >= 6 && i <= 11)
-                        {
-                            //Si precio es la unidad se agrega la coma decimal
-                            if (i == 10)
-                                precioEnCodBarra += '.';
-                            precioEnCodBarra += txtCodigo.Text[i];
-                            // precioEnCodBarra += i == 9 ? txtCodigo.Text[i] + '.' : (char)txtCodigo.Text[i]; 
-                        }
-                    }
-                    txtCodigo.Text = codigo;
-                    txtTotalCorte.Text = precioEnCodBarra;
-                }
-                registrarTemporalLineaVenta();
-
-                //si es Codigo Barra se divide el precio en etiqueta dividido el precio del corte
-                txtCantKgs.Text = esCodigoBarra && oCorteE != null ?
-                    (Utilidades.Util_Form.convertFloat(txtTotalCorte.Text, false) / oCorteE.precioKg).ToString("F3") : "";
+                //al iniciar la venta se actualizan los cortes cargándose el dtCortes
+                if (txtCodigo.Text.Length == 1)
+                    dtCortes = oCorteN.cargarDtCortes();
             }
             cargarCorte();
+
+            if ((txtCodigo.Text.Length == 8 && esDigitoControlCorrectoEAN8(false)) ||
+               txtCodigo.Text.Length == 13 && esDigitoControlCorrectoEAN13(false))
+            {
+                // Desplazar el foco a otro control para disparar el evento Leave.
+                this.ActiveControl = null;  // Esto simula que el usuario sale del TextBox.
+                txtCodigo.Focus();
+                txtCodigo.SelectAll();
+            }
+            ///Codigo Viejo //si se borra el corte actual se llama a metodo registrarTemporalLinea
+            ///if (oCorteE != null && !ultimoTextoEnTxtCodigo.Equals(txtCodigo.Text))
+
+        }
+
+        private void codigoDeBarraMetodo()
+        {
+            ///si codigo es EAN-8
+            /// 
+            if (txtCodigo.Text.Length == 8)
+            {
+                if (!esDigitoControlCorrectoEAN8(true))
+                {
+                    txtCodigo.Focus();
+                    txtCodigo.SelectAll();
+                    return;
+                }
+                esCodBarraEstandar = true;
+            }
+
+            ///Si codigo es longitud 13 y comienza con 20 o 21 entonces es de barra codigo interno
+            ///                        
+            if (txtCodigo.Text.Length == 13)
+            {
+                if (!esDigitoControlCorrectoEAN13(true))
+                {
+                    txtCodigo.Focus();
+                    txtCodigo.SelectAll();
+                    return;
+                }
+
+                int prefijo = Convert.ToInt32(txtCodigo.Text.Substring(0, 2));
+                //si  está entre 20 y 29 es codigo interno
+                esCodBarraEstandar = !(prefijo > 19 && prefijo < 30);
+                if (!esCodBarraEstandar)
+                {
+                    esCodBarraInterno = true;
+
+                    codigoEnCodBarra = txtCodigo.Text.Substring(2, FormPrincipal.cantDigitosProdEnCodBarra);
+                    segundoModulo = txtCodigo.Text.Substring((2 + FormPrincipal.cantDigitosProdEnCodBarra), (13 - ((2 + FormPrincipal.cantDigitosProdEnCodBarra + 1))));
+
+                    txtCodigo.Text = codigoEnCodBarra;
+                    // registrarTemporalLineaVenta();
+                }
+            }
+
+            if (esCodBarraEstandar)
+            {
+                ///si balanza no está activada y tiene una cantidas, se deja esa cantidad sino 1
+                txtCantKgs.Text = (!checkLeerPeso.Checked && !string.IsNullOrEmpty(txtCantKgs.Text)) ? txtCantKgs.Text : "1";
+                esCodBarraEstandar = false;
+                codigoEnCodBarra = segundoModulo = "";
+                agregarLinea();
+                txtCodigo.Focus();
+                txtCodigo.SelectAll();
+            }
+            if (esCodBarraInterno && oCorteE != null)
+            {
+                //checkLeerPeso.Checked = false;
+                if (FormPrincipal.esCodBarraPorCantidad)
+                {
+                    txtCantKgs.Text = segundoModulo.Insert(segundoModulo.Length - 3, ".");
+                }
+                else
+                {
+                    txtTotalCorte.Text = segundoModulo.Insert(segundoModulo.Length - 2, ".");
+                    float totalCorte = Util_Form.convertFloat(txtTotalCorte.Text, false);
+                    txtCantKgs.Text = (totalCorte / oCorteE.precioKg).ToString("F3");
+                }
+
+                codigoEnCodBarra = segundoModulo = "";
+                agregarLinea();
+                txtCodigo.Focus();
+                txtCodigo.SelectAll();
+            }
+        }
+
+        private bool esDigitoControlCorrectoEAN13(bool mostrarMensaje)
+        {
+            #region DigitoControl_CodigoBarra
+            string codigoBarra = txtCodigo.Text.Substring(0, txtCodigo.Text.Length - 1);// "400638133393"; // Primeros 12 dígitos del EAN-13
+            int digitoControlDeCodBarra = Convert.ToInt32(txtCodigo.Text.Substring(12, 1));// Convert.ToChar(txtCodigo.Text[12]));
+            int sumaImpares = 0;
+            int sumaPares = 0;
+
+            // Recorre cada dígito del código
+            for (int i = 0; i < codigoBarra.Length; i++)
+            {
+                int digito = int.Parse(codigoBarra[i].ToString());
+
+                // Si la posición es impar, suma a sumaImpares
+                // Si la posición es par, suma a sumaPares
+                if ((i + 1) % 2 == 0)  // Posiciones pares (1-indexed)
+                {
+                    sumaPares += digito;
+                }
+                else // Posiciones impares (1-indexed)
+                {
+                    sumaImpares += digito;
+                }
+            }
+
+            // Multiplica la suma de los pares por 3
+            sumaPares *= 3;
+
+            // Suma total
+            int sumaTotal = sumaImpares + sumaPares;
+
+            // Cálculo del dígito de control
+            int digitoControl = (10 - (sumaTotal % 10)) % 10;
+            bool esCorrectoCodBarra = (digitoControl == digitoControlDeCodBarra);
+            if(!esCorrectoCodBarra && mostrarMensaje)
+                MessageBox.Show("Error al leer codigo de barra", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            
+            return esCorrectoCodBarra;
+
+            #endregion
+        }
+
+        public bool esDigitoControlCorrectoEAN8(bool mostrarMensaje)
+        {
+            string ean8 = txtCodigo.Text.Substring(0, txtCodigo.Text.Length - 1);// "400638133393"; // Primeros 12 dígitos del EAN-13
+            int digitoControlDeCodBarra = Convert.ToInt32(txtCodigo.Text.Substring(7, 1));// Convert.ToChar(txtCodigo.Text[12]));
+            int suma = 0;
+
+            // Recorremos el código y aplicamos las multiplicaciones correspondientes
+            for (int i = 0; i < 7; i++)
+                {
+                int digito = int.Parse(ean8[i].ToString());
+
+                // Si el índice es impar (0, 2, 4, 6), multiplicamos por 3.
+                // Si es par (1, 3, 5), multiplicamos por 1.
+                suma += (i % 2 == 0) ? digito * 3 : digito;
+            }
+
+            // Calculamos el dígito de control
+            int digitoControl = (10 - (suma % 10)) % 10;
+
+            bool esCorrectoCodBarra = (digitoControl == digitoControlDeCodBarra);
+            if (!esCorrectoCodBarra && mostrarMensaje)
+                MessageBox.Show("Error al leer codigo de barra EAN8", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            return esCorrectoCodBarra;
         }
 
         private void txtCodigo_KeyDown(object sender, KeyEventArgs e)
@@ -1667,13 +1814,18 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    if (txtCodigo.Focused)
+
+                    //20241013 - si hace foco y es vacío se manda un return para evitar el tab
+                    if (txtCodigo.Focused && String.IsNullOrEmpty(txtCodigo.Text))
                     {
+                        return;
                         ///Al ingrtesar el primer corte, luego de ingresar el codigo aparecera el cartel de forma pago
                         ///la idea es q NO muestre el total del corte sin antes poner la forma pago
                         //Solicitar forma de pago si balanza es distinta a nulo o cero                        
                         
                         //bool resp = !ingresarFormaPago() ? true: false;
+
+                        
                     }
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
@@ -1780,7 +1932,7 @@ namespace Presentacion.Caja
                 restablecerFormaDePago();
                 comboTipoComprobante.SelectedIndex = 0;
                 checkBoxRedondeo.Checked = checkBoxRedondeo.Visible = redondeo;
-
+                dtCortes = oCorteN.cargarDtCortes();
 
                 timer1.Enabled = true;
             }
@@ -2184,22 +2336,39 @@ namespace Presentacion.Caja
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
             try
-            {
+                            {
+                ///Al leer con la pistola se aplica el tab
+                ///entonces aca se valida si es codigo de barra cuando todo el campo codigo está cargado 
+                ///y no surge el problema de cortar un ean13 en 8 digitos
+                ///
+                codigoDeBarraMetodo();
+
+                ///Si esCodBarraInterno es TRUE - salgo del método para evitar error
+                ///
+                if (esCodBarraInterno)
+                {
+                    esCodBarraInterno = false;
+                    return;
+                }
+
                 this.txtCodigo.BackColor = enableColor;
-                if ((oCorteE != null && oCorteE.idCorte > 0 && 
-                    oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked) || !FormPrincipal.leerBalanza)
+                ///se borra codigo viejo
+                //if ((oCorteE != null && oCorteE.idCorte > 0 && 
+                //    oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked) || !FormPrincipal.leerBalanza)
+
+                if ((!string.IsNullOrEmpty(txtCodigo.Text) && oCorteE != null && oCorteE.idCorte > 0 &&
+                    !oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && checkLeerPeso.Checked) ||
+                    (!esCodBarraEstandar && !esCodBarraInterno && !FormPrincipal.leerBalanza))
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
                 }
                 else
                 {
-                    if (!dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && !oCorteE.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                    ///todo probar !string.IsNullOrEmpty(txtCodigo.Text)
+                    if (!string.IsNullOrEmpty(txtCodigo.Text) && !dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && 
+                        oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && !checkLeerPeso.Checked)
                     {
-                        //checkLeerPeso.Checked = FormPrincipal.logueado ? 
-                        //    checkLeerPeso.Checked : true;
-                        //if (checkLeerPeso.Checked) btnAgregar.Focus();
-
                         checkLeerPeso.Checked = true;
                         btnAgregar.Focus();
                     }
@@ -2548,7 +2717,6 @@ namespace Presentacion.Caja
             }
         }
 
-
         private void checkCtaCtePago_CheckedChanged(object sender, EventArgs e)
         {
             setFormaDePago();
@@ -2648,6 +2816,5 @@ namespace Presentacion.Caja
             frmVentaCajaDuplicada.duplicarVentana.Visible = false;
             frmVentaCajaDuplicada.Show();
         }
-
     }
 }

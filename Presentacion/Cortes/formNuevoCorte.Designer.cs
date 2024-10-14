@@ -60,6 +60,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.checkPesable = new System.Windows.Forms.CheckBox();
+            this.checkMayuscula = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
@@ -106,6 +108,8 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.checkMayuscula);
+            this.groupBox1.Controls.Add(this.checkPesable);
             this.groupBox1.Controls.Add(this.comboAlicuotaIva);
             this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.checkHabilitado);
@@ -146,18 +150,18 @@
             "Corte",
             "Embutido",
             "Otro"});
-            this.comboAlicuotaIva.Location = new System.Drawing.Point(124, 203);
+            this.comboAlicuotaIva.Location = new System.Drawing.Point(124, 231);
             this.comboAlicuotaIva.Margin = new System.Windows.Forms.Padding(4);
             this.comboAlicuotaIva.Name = "comboAlicuotaIva";
             this.comboAlicuotaIva.Size = new System.Drawing.Size(93, 26);
-            this.comboAlicuotaIva.TabIndex = 5;
+            this.comboAlicuotaIva.TabIndex = 6;
             // 
             // label10
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(31, 206);
+            this.label10.Location = new System.Drawing.Point(31, 234);
             this.label10.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(82, 18);
@@ -174,24 +178,24 @@
             this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
-            this.checkHabilitado.TabIndex = 6;
+            this.checkHabilitado.TabIndex = 7;
             this.checkHabilitado.Text = "Habilitado";
             this.checkHabilitado.UseVisualStyleBackColor = true;
             // 
             // txtPromedio
             // 
-            this.txtPromedio.Location = new System.Drawing.Point(124, 171);
+            this.txtPromedio.Location = new System.Drawing.Point(124, 199);
             this.txtPromedio.Margin = new System.Windows.Forms.Padding(4);
             this.txtPromedio.Name = "txtPromedio";
             this.txtPromedio.Size = new System.Drawing.Size(93, 24);
-            this.txtPromedio.TabIndex = 4;
+            this.txtPromedio.TabIndex = 5;
             // 
             // label8
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(35, 175);
+            this.label8.Location = new System.Drawing.Point(35, 203);
             this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(73, 18);
@@ -208,7 +212,7 @@
             this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(135, 22);
-            this.checkEnCierreStock.TabIndex = 7;
+            this.checkEnCierreStock.TabIndex = 8;
             this.checkEnCierreStock.Text = "En Cierre Stock";
             this.checkEnCierreStock.UseVisualStyleBackColor = true;
             // 
@@ -220,7 +224,7 @@
             this.checkIngresoRapidoEmbutido.Margin = new System.Windows.Forms.Padding(4);
             this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
             this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(189, 22);
-            this.checkIngresoRapidoEmbutido.TabIndex = 6;
+            this.checkIngresoRapidoEmbutido.TabIndex = 7;
             this.checkIngresoRapidoEmbutido.TabStop = false;
             this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoEmbutido";
             this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
@@ -233,7 +237,7 @@
             this.checkAsignarMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.checkAsignarMaestro.Name = "checkAsignarMaestro";
             this.checkAsignarMaestro.Size = new System.Drawing.Size(138, 22);
-            this.checkAsignarMaestro.TabIndex = 9;
+            this.checkAsignarMaestro.TabIndex = 10;
             this.checkAsignarMaestro.Text = "Asignar maestro";
             this.checkAsignarMaestro.UseVisualStyleBackColor = true;
             this.checkAsignarMaestro.CheckedChanged += new System.EventHandler(this.checkAsignarMaestro_CheckedChanged);
@@ -373,7 +377,7 @@
             this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(161, 22);
-            this.txtIndependiente.TabIndex = 8;
+            this.txtIndependiente.TabIndex = 9;
             this.txtIndependiente.Text = "Corte Independiente";
             this.txtIndependiente.UseVisualStyleBackColor = true;
             this.txtIndependiente.CheckedChanged += new System.EventHandler(this.txtIndependiente_CheckedChanged);
@@ -404,13 +408,6 @@
             // 
             this.comboTipo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipo.FormattingEnabled = true;
-            this.comboTipo.Items.AddRange(new object[] {
-            "Pesable",
-            "Unidad",
-            "Elaborado",
-            "Corte",
-            "Embutido",
-            "Otro"});
             this.comboTipo.Location = new System.Drawing.Point(124, 135);
             this.comboTipo.Margin = new System.Windows.Forms.Padding(4);
             this.comboTipo.Name = "comboTipo";
@@ -461,7 +458,7 @@
             this.txtDescCorte.Name = "txtDescCorte";
             this.txtDescCorte.Size = new System.Drawing.Size(192, 24);
             this.txtDescCorte.TabIndex = 1;
-            this.txtDescCorte.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
+            this.txtDescCorte.TextChanged += new System.EventHandler(this.txtDescCorte_TextChanged);
             this.txtDescCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // label4
@@ -475,6 +472,36 @@
             this.label4.Size = new System.Drawing.Size(45, 18);
             this.label4.TabIndex = 2;
             this.label4.Text = "Corte";
+            // 
+            // checkPesable
+            // 
+            this.checkPesable.AutoSize = true;
+            this.checkPesable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkPesable.Checked = true;
+            this.checkPesable.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkPesable.Location = new System.Drawing.Point(58, 169);
+            this.checkPesable.Margin = new System.Windows.Forms.Padding(4);
+            this.checkPesable.Name = "checkPesable";
+            this.checkPesable.Size = new System.Drawing.Size(83, 22);
+            this.checkPesable.TabIndex = 4;
+            this.checkPesable.Text = "Pesable";
+            this.checkPesable.UseVisualStyleBackColor = true;
+            this.checkPesable.CheckedChanged += new System.EventHandler(this.checkPesable_CheckedChanged);
+            // 
+            // checkMayuscula
+            // 
+            this.checkMayuscula.AutoSize = true;
+            this.checkMayuscula.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkMayuscula.Checked = true;
+            this.checkMayuscula.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkMayuscula.Location = new System.Drawing.Point(8, 345);
+            this.checkMayuscula.Margin = new System.Windows.Forms.Padding(4);
+            this.checkMayuscula.Name = "checkMayuscula";
+            this.checkMayuscula.Size = new System.Drawing.Size(101, 22);
+            this.checkMayuscula.TabIndex = 37;
+            this.checkMayuscula.TabStop = false;
+            this.checkMayuscula.Text = "Mayúscula";
+            this.checkMayuscula.UseVisualStyleBackColor = true;
             // 
             // formNuevoCorte
             // 
@@ -533,5 +560,7 @@
         private System.Windows.Forms.CheckBox checkHabilitado;
         protected System.Windows.Forms.ComboBox comboAlicuotaIva;
         protected System.Windows.Forms.Label label10;
+        private System.Windows.Forms.CheckBox checkPesable;
+        private System.Windows.Forms.CheckBox checkMayuscula;
     }
 }

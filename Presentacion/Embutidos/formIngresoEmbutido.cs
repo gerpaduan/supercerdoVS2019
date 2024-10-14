@@ -566,7 +566,7 @@ namespace Presentacion
                         foreach (DataRow fila in dtCorte.Rows)
                         {
                             oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                            oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                            oCorteE.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteE.corte = fila["corte"].ToString();
                             oCorteE.tipo = fila["tipo"].ToString();
                         }

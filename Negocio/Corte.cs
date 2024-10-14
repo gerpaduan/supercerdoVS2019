@@ -78,7 +78,7 @@ namespace Negocio
             return oCorteD.buscarCorteSinMaestro(txtBusqueda);
         }
 
-        public DataTable buscarCodigoCorte(int codigo)
+        public DataTable buscarCodigoCorte(long codigo)
         {
             oCorteD = new Datos.Corte();
             return oCorteD.buscarCodigoCorte(codigo);
@@ -98,6 +98,11 @@ namespace Negocio
            
             return dtCorte;
         }
+        public DataTable cargarDtCortes()
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.cargarDtCortes();
+        }
 
         public DataTable obtenerInfoCorte(int idCorte)
         {
@@ -112,7 +117,13 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
-
+        public DataTable obtenerTiposProducto(bool mostrarTodos)
+        {
+            DataTable dtAlicuotasIva = new DataTable();
+            oCorteD = new Datos.Corte();
+            dtAlicuotasIva = oCorteD.obtenerTiposProducto(mostrarTodos);
+            return dtAlicuotasIva;
+        }
         public DataTable obtenerAlicuotasIva(bool mostrarTodos)
         {
             DataTable dtAlicuotasIva = new DataTable();

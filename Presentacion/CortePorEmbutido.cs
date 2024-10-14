@@ -8,7 +8,7 @@ namespace Presentacion
     public class CortePorEmbutido
     {
         public float kgUtilizado;
-        public int codigo;
+        public long codigo;
         public string corte;
         public int idCorte;
         private bool pesoBalanza;
@@ -31,7 +31,7 @@ namespace Presentacion
             }
         }
 
-        public int Codigo
+        public long Codigo
         {
             get
             {
