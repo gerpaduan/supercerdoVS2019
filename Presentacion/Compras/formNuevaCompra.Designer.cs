@@ -56,6 +56,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.btnQuitar = new System.Windows.Forms.Button();
             this.panelCorte = new System.Windows.Forms.Panel();
+            this.checkCodigo = new System.Windows.Forms.CheckBox();
             this.btnBuscaCorte = new System.Windows.Forms.Button();
             this.txtCodigo = new System.Windows.Forms.MaskedTextBox();
             this.label10 = new System.Windows.Forms.Label();
@@ -108,7 +109,6 @@
             this.label17 = new System.Windows.Forms.Label();
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
-            this.checkCodigo = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupCantMedias.SuspendLayout();
             this.groupBoxTipoCompra.SuspendLayout();
@@ -132,7 +132,7 @@
             this.pnlBuscar.Controls.Add(this.grupoMediaRes);
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(1143, 175);
             this.pnlBuscar.TabIndex = 3;
@@ -146,7 +146,7 @@
             this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
             this.checkCtaCte.Location = new System.Drawing.Point(728, 59);
-            this.checkCtaCte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkCtaCte.Margin = new System.Windows.Forms.Padding(4);
             this.checkCtaCte.Name = "checkCtaCte";
             this.checkCtaCte.Size = new System.Drawing.Size(118, 35);
             this.checkCtaCte.TabIndex = 52;
@@ -162,19 +162,19 @@
             this.groupCantMedias.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupCantMedias.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupCantMedias.Location = new System.Drawing.Point(861, 46);
-            this.groupCantMedias.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupCantMedias.Margin = new System.Windows.Forms.Padding(4);
             this.groupCantMedias.Name = "groupCantMedias";
-            this.groupCantMedias.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupCantMedias.Padding = new System.Windows.Forms.Padding(4);
             this.groupCantMedias.Size = new System.Drawing.Size(264, 50);
             this.groupCantMedias.TabIndex = 51;
             this.groupCantMedias.TabStop = false;
             // 
             // txtCantMedias
             // 
-            this.txtCantMedias.Location = new System.Drawing.Point(132, 15);
-            this.txtCantMedias.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCantMedias.Location = new System.Drawing.Point(158, 15);
+            this.txtCantMedias.Margin = new System.Windows.Forms.Padding(4);
             this.txtCantMedias.Name = "txtCantMedias";
-            this.txtCantMedias.Size = new System.Drawing.Size(109, 24);
+            this.txtCantMedias.Size = new System.Drawing.Size(98, 24);
             this.txtCantMedias.TabIndex = 18;
             this.txtCantMedias.TabStop = false;
             this.txtCantMedias.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -185,12 +185,12 @@
             this.label18.AutoSize = true;
             this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label18.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label18.Location = new System.Drawing.Point(19, 18);
+            this.label18.Location = new System.Drawing.Point(8, 19);
             this.label18.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(95, 18);
+            this.label18.Size = new System.Drawing.Size(142, 18);
             this.label18.TabIndex = 19;
-            this.label18.Text = "Cant. Medias";
+            this.label18.Text = "Cant. Medias Reses";
             // 
             // groupBoxTipoCompra
             // 
@@ -199,9 +199,9 @@
             this.groupBoxTipoCompra.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBoxTipoCompra.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBoxTipoCompra.Location = new System.Drawing.Point(932, 98);
-            this.groupBoxTipoCompra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxTipoCompra.Margin = new System.Windows.Forms.Padding(4);
             this.groupBoxTipoCompra.Name = "groupBoxTipoCompra";
-            this.groupBoxTipoCompra.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBoxTipoCompra.Padding = new System.Windows.Forms.Padding(4);
             this.groupBoxTipoCompra.Size = new System.Drawing.Size(193, 75);
             this.groupBoxTipoCompra.TabIndex = 50;
             this.groupBoxTipoCompra.TabStop = false;
@@ -213,7 +213,7 @@
             this.radioCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioCorte.ForeColor = System.Drawing.Color.White;
             this.radioCorte.Location = new System.Drawing.Point(48, 47);
-            this.radioCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioCorte.Margin = new System.Windows.Forms.Padding(4);
             this.radioCorte.Name = "radioCorte";
             this.radioCorte.Size = new System.Drawing.Size(74, 22);
             this.radioCorte.TabIndex = 100;
@@ -228,7 +228,7 @@
             this.radioMediaRes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.radioMediaRes.ForeColor = System.Drawing.Color.White;
             this.radioMediaRes.Location = new System.Drawing.Point(48, 25);
-            this.radioMediaRes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioMediaRes.Margin = new System.Windows.Forms.Padding(4);
             this.radioMediaRes.Name = "radioMediaRes";
             this.radioMediaRes.Size = new System.Drawing.Size(100, 22);
             this.radioMediaRes.TabIndex = 12;
@@ -241,7 +241,7 @@
             // 
             this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtUsuario.Location = new System.Drawing.Point(932, 12);
-            this.txtUsuario.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtUsuario.Margin = new System.Windows.Forms.Padding(4);
             this.txtUsuario.Name = "txtUsuario";
             this.txtUsuario.ReadOnly = true;
             this.txtUsuario.Size = new System.Drawing.Size(192, 24);
@@ -276,9 +276,9 @@
             this.grupoMediaRes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grupoMediaRes.ForeColor = System.Drawing.Color.Cornsilk;
             this.grupoMediaRes.Location = new System.Drawing.Point(15, 98);
-            this.grupoMediaRes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grupoMediaRes.Margin = new System.Windows.Forms.Padding(4);
             this.grupoMediaRes.Name = "grupoMediaRes";
-            this.grupoMediaRes.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grupoMediaRes.Padding = new System.Windows.Forms.Padding(4);
             this.grupoMediaRes.Size = new System.Drawing.Size(909, 75);
             this.grupoMediaRes.TabIndex = 10;
             this.grupoMediaRes.TabStop = false;
@@ -287,7 +287,7 @@
             // txtPrecioKg
             // 
             this.txtPrecioKg.Location = new System.Drawing.Point(637, 33);
-            this.txtPrecioKg.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtPrecioKg.Margin = new System.Windows.Forms.Padding(4);
             this.txtPrecioKg.Name = "txtPrecioKg";
             this.txtPrecioKg.Size = new System.Drawing.Size(97, 24);
             this.txtPrecioKg.TabIndex = 2;
@@ -313,7 +313,7 @@
             this.btnQuitar.ForeColor = System.Drawing.Color.Black;
             this.btnQuitar.Image = ((System.Drawing.Image)(resources.GetObject("btnQuitar.Image")));
             this.btnQuitar.Location = new System.Drawing.Point(825, 30);
-            this.btnQuitar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnQuitar.Margin = new System.Windows.Forms.Padding(4);
             this.btnQuitar.Name = "btnQuitar";
             this.btnQuitar.Size = new System.Drawing.Size(73, 32);
             this.btnQuitar.TabIndex = 7;
@@ -332,10 +332,23 @@
             this.panelCorte.Controls.Add(this.txtCorteNuevaCompra);
             this.panelCorte.Controls.Add(this.label14);
             this.panelCorte.Location = new System.Drawing.Point(8, 25);
-            this.panelCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panelCorte.Margin = new System.Windows.Forms.Padding(4);
             this.panelCorte.Name = "panelCorte";
             this.panelCorte.Size = new System.Drawing.Size(540, 46);
             this.panelCorte.TabIndex = 17;
+            // 
+            // checkCodigo
+            // 
+            this.checkCodigo.AutoSize = true;
+            this.checkCodigo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkCodigo.Location = new System.Drawing.Point(0, 14);
+            this.checkCodigo.Margin = new System.Windows.Forms.Padding(4);
+            this.checkCodigo.Name = "checkCodigo";
+            this.checkCodigo.Size = new System.Drawing.Size(18, 17);
+            this.checkCodigo.TabIndex = 47;
+            this.checkCodigo.TabStop = false;
+            this.checkCodigo.UseVisualStyleBackColor = true;
+            this.checkCodigo.CheckedChanged += new System.EventHandler(this.checkCodigo_CheckedChanged);
             // 
             // btnBuscaCorte
             // 
@@ -344,7 +357,7 @@
             this.btnBuscaCorte.ForeColor = System.Drawing.Color.Black;
             this.btnBuscaCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscaCorte.Image")));
             this.btnBuscaCorte.Location = new System.Drawing.Point(151, 7);
-            this.btnBuscaCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBuscaCorte.Margin = new System.Windows.Forms.Padding(4);
             this.btnBuscaCorte.Name = "btnBuscaCorte";
             this.btnBuscaCorte.Size = new System.Drawing.Size(37, 28);
             this.btnBuscaCorte.TabIndex = 0;
@@ -355,7 +368,7 @@
             // txtCodigo
             // 
             this.txtCodigo.Location = new System.Drawing.Point(88, 9);
-            this.txtCodigo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCodigo.Margin = new System.Windows.Forms.Padding(4);
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.Size = new System.Drawing.Size(52, 24);
             this.txtCodigo.TabIndex = 0;
@@ -380,7 +393,7 @@
             // 
             this.txtCantKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCantKgs.Location = new System.Drawing.Point(451, 9);
-            this.txtCantKgs.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCantKgs.Margin = new System.Windows.Forms.Padding(4);
             this.txtCantKgs.Name = "txtCantKgs";
             this.txtCantKgs.Size = new System.Drawing.Size(79, 24);
             this.txtCantKgs.TabIndex = 1;
@@ -407,7 +420,7 @@
             this.txtCorteNuevaCompra.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtCorteNuevaCompra.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtCorteNuevaCompra.Location = new System.Drawing.Point(249, 9);
-            this.txtCorteNuevaCompra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCorteNuevaCompra.Margin = new System.Windows.Forms.Padding(4);
             this.txtCorteNuevaCompra.Name = "txtCorteNuevaCompra";
             this.txtCorteNuevaCompra.Size = new System.Drawing.Size(148, 24);
             this.txtCorteNuevaCompra.TabIndex = 0;
@@ -433,7 +446,7 @@
             this.btnAgregar.ForeColor = System.Drawing.Color.Black;
             this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
             this.btnAgregar.Location = new System.Drawing.Point(744, 30);
-            this.btnAgregar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnAgregar.Margin = new System.Windows.Forms.Padding(4);
             this.btnAgregar.Name = "btnAgregar";
             this.btnAgregar.Size = new System.Drawing.Size(73, 32);
             this.btnAgregar.TabIndex = 3;
@@ -455,7 +468,7 @@
             // txtNroTropa
             // 
             this.txtNroTropa.Location = new System.Drawing.Point(169, 33);
-            this.txtNroTropa.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtNroTropa.Margin = new System.Windows.Forms.Padding(4);
             this.txtNroTropa.Name = "txtNroTropa";
             this.txtNroTropa.Size = new System.Drawing.Size(101, 24);
             this.txtNroTropa.TabIndex = 0;
@@ -465,7 +478,7 @@
             // txtKgMedia
             // 
             this.txtKgMedia.Location = new System.Drawing.Point(396, 33);
-            this.txtKgMedia.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtKgMedia.Margin = new System.Windows.Forms.Padding(4);
             this.txtKgMedia.Name = "txtKgMedia";
             this.txtKgMedia.Size = new System.Drawing.Size(128, 24);
             this.txtKgMedia.TabIndex = 1;
@@ -501,9 +514,9 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(15, 1);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(705, 95);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
@@ -514,7 +527,7 @@
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
             this.comboSucursal.Location = new System.Drawing.Point(127, 22);
-            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.comboSucursal.Name = "comboSucursal";
             this.comboSucursal.Size = new System.Drawing.Size(209, 26);
             this.comboSucursal.TabIndex = 3;
@@ -527,7 +540,7 @@
             // 
             this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSucursal.Location = new System.Drawing.Point(127, 23);
-            this.txtSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.txtSucursal.Name = "txtSucursal";
             this.txtSucursal.ReadOnly = true;
             this.txtSucursal.Size = new System.Drawing.Size(209, 26);
@@ -541,7 +554,7 @@
             this.btnBuscarProv.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarProv.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProv.Image")));
             this.btnBuscarProv.Location = new System.Drawing.Point(345, 59);
-            this.btnBuscarProv.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBuscarProv.Margin = new System.Windows.Forms.Padding(4);
             this.btnBuscarProv.Name = "btnBuscarProv";
             this.btnBuscarProv.Size = new System.Drawing.Size(37, 28);
             this.btnBuscarProv.TabIndex = 0;
@@ -552,7 +565,7 @@
             // txtProveedor
             // 
             this.txtProveedor.Location = new System.Drawing.Point(127, 60);
-            this.txtProveedor.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtProveedor.Margin = new System.Windows.Forms.Padding(4);
             this.txtProveedor.Name = "txtProveedor";
             this.txtProveedor.ReadOnly = true;
             this.txtProveedor.Size = new System.Drawing.Size(209, 24);
@@ -574,7 +587,7 @@
             // txtNroRemito
             // 
             this.txtNroRemito.Location = new System.Drawing.Point(497, 62);
-            this.txtNroRemito.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtNroRemito.Margin = new System.Windows.Forms.Padding(4);
             this.txtNroRemito.Name = "txtNroRemito";
             this.txtNroRemito.Size = new System.Drawing.Size(191, 24);
             this.txtNroRemito.TabIndex = 3;
@@ -599,7 +612,7 @@
             this.txtFechaCompra.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.txtFechaCompra.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaCompra.Location = new System.Drawing.Point(497, 28);
-            this.txtFechaCompra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtFechaCompra.Margin = new System.Windows.Forms.Padding(4);
             this.txtFechaCompra.Name = "txtFechaCompra";
             this.txtFechaCompra.Size = new System.Drawing.Size(191, 24);
             this.txtFechaCompra.TabIndex = 1;
@@ -660,7 +673,7 @@
             dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaMediaRes.DefaultCellStyle = dataGridViewCellStyle4;
             this.grillaMediaRes.Location = new System.Drawing.Point(16, 182);
-            this.grillaMediaRes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaMediaRes.Margin = new System.Windows.Forms.Padding(4);
             this.grillaMediaRes.MultiSelect = false;
             this.grillaMediaRes.Name = "grillaMediaRes";
             this.grillaMediaRes.ReadOnly = true;
@@ -731,7 +744,7 @@
             this.btnAceptar.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnAceptar.ForeColor = System.Drawing.SystemColors.ControlLight;
             this.btnAceptar.Location = new System.Drawing.Point(933, 620);
-            this.btnAceptar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnAceptar.Margin = new System.Windows.Forms.Padding(4);
             this.btnAceptar.Name = "btnAceptar";
             this.btnAceptar.Size = new System.Drawing.Size(196, 43);
             this.btnAceptar.TabIndex = 10;
@@ -747,7 +760,7 @@
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.btnCancelar.Location = new System.Drawing.Point(933, 671);
-            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(196, 32);
             this.btnCancelar.TabIndex = 11;
@@ -785,7 +798,7 @@
             this.txtTotalKg.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTotalKg.Location = new System.Drawing.Point(933, 256);
-            this.txtTotalKg.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTotalKg.Margin = new System.Windows.Forms.Padding(4);
             this.txtTotalKg.Name = "txtTotalKg";
             this.txtTotalKg.ReadOnly = true;
             this.txtTotalKg.Size = new System.Drawing.Size(191, 24);
@@ -798,7 +811,7 @@
             this.txtTotal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTotal.Location = new System.Drawing.Point(933, 308);
-            this.txtTotal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTotal.Margin = new System.Windows.Forms.Padding(4);
             this.txtTotal.Name = "txtTotal";
             this.txtTotal.ReadOnly = true;
             this.txtTotal.Size = new System.Drawing.Size(191, 24);
@@ -810,7 +823,7 @@
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.txtObservaciones.Location = new System.Drawing.Point(932, 361);
-            this.txtObservaciones.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtObservaciones.Margin = new System.Windows.Forms.Padding(4);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -862,7 +875,7 @@
             dataGridViewCellStyle11.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaCortePorCompra.DefaultCellStyle = dataGridViewCellStyle11;
             this.grillaCortePorCompra.Location = new System.Drawing.Point(15, 181);
-            this.grillaCortePorCompra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaCortePorCompra.Margin = new System.Windows.Forms.Padding(4);
             this.grillaCortePorCompra.MultiSelect = false;
             this.grillaCortePorCompra.Name = "grillaCortePorCompra";
             this.grillaCortePorCompra.ReadOnly = true;
@@ -949,7 +962,7 @@
             this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCantItems.Location = new System.Drawing.Point(933, 204);
-            this.txtCantItems.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCantItems.Margin = new System.Windows.Forms.Padding(4);
             this.txtCantItems.Name = "txtCantItems";
             this.txtCantItems.ReadOnly = true;
             this.txtCantItems.Size = new System.Drawing.Size(191, 24);
@@ -985,7 +998,7 @@
             // 
             this.txtActualizadoPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtActualizadoPor.Location = new System.Drawing.Point(935, 588);
-            this.txtActualizadoPor.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtActualizadoPor.Margin = new System.Windows.Forms.Padding(4);
             this.txtActualizadoPor.Name = "txtActualizadoPor";
             this.txtActualizadoPor.ReadOnly = true;
             this.txtActualizadoPor.Size = new System.Drawing.Size(191, 24);
@@ -996,7 +1009,7 @@
             // 
             this.txtActualizado.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtActualizado.Location = new System.Drawing.Point(935, 562);
-            this.txtActualizado.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtActualizado.Margin = new System.Windows.Forms.Padding(4);
             this.txtActualizado.Name = "txtActualizado";
             this.txtActualizado.ReadOnly = true;
             this.txtActualizado.Size = new System.Drawing.Size(191, 24);
@@ -1019,7 +1032,7 @@
             // 
             this.txtCreadoPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCreadoPor.Location = new System.Drawing.Point(932, 514);
-            this.txtCreadoPor.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCreadoPor.Margin = new System.Windows.Forms.Padding(4);
             this.txtCreadoPor.Name = "txtCreadoPor";
             this.txtCreadoPor.ReadOnly = true;
             this.txtCreadoPor.Size = new System.Drawing.Size(193, 24);
@@ -1030,25 +1043,12 @@
             // 
             this.txtCreado.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCreado.Location = new System.Drawing.Point(932, 489);
-            this.txtCreado.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCreado.Margin = new System.Windows.Forms.Padding(4);
             this.txtCreado.Name = "txtCreado";
             this.txtCreado.ReadOnly = true;
             this.txtCreado.Size = new System.Drawing.Size(193, 24);
             this.txtCreado.TabIndex = 51;
             this.txtCreado.TabStop = false;
-            // 
-            // checkCodigo
-            // 
-            this.checkCodigo.AutoSize = true;
-            this.checkCodigo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkCodigo.Location = new System.Drawing.Point(0, 14);
-            this.checkCodigo.Margin = new System.Windows.Forms.Padding(4);
-            this.checkCodigo.Name = "checkCodigo";
-            this.checkCodigo.Size = new System.Drawing.Size(18, 17);
-            this.checkCodigo.TabIndex = 47;
-            this.checkCodigo.TabStop = false;
-            this.checkCodigo.UseVisualStyleBackColor = true;
-            this.checkCodigo.CheckedChanged += new System.EventHandler(this.checkCodigo_CheckedChanged);
             // 
             // formNuevaCompra
             // 
@@ -1076,7 +1076,7 @@
             this.Controls.Add(this.grillaCortePorCompra);
             this.Controls.Add(this.grillaMediaRes);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "formNuevaCompra";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

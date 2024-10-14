@@ -39,12 +39,12 @@
             this.label4 = new System.Windows.Forms.Label();
             this.groupCambiarContra = new System.Windows.Forms.GroupBox();
             this.groupCambiarDatos = new System.Windows.Forms.GroupBox();
+            this.checkActivo = new System.Windows.Forms.CheckBox();
             this.checkAdmin = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.btnGuardarDatos = new System.Windows.Forms.Button();
             this.txtNombre = new System.Windows.Forms.TextBox();
             this.checkOlvidoClave = new System.Windows.Forms.CheckBox();
-            this.checkActivo = new System.Windows.Forms.CheckBox();
             this.btnNuevoUsuario = new System.Windows.Forms.Button();
             this.groupCambiarContra.SuspendLayout();
             this.groupCambiarDatos.SuspendLayout();
@@ -76,7 +76,7 @@
             // 
             this.txtClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtClave.Location = new System.Drawing.Point(201, 31);
-            this.txtClave.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtClave.Margin = new System.Windows.Forms.Padding(4);
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
             this.txtClave.Size = new System.Drawing.Size(187, 26);
@@ -87,7 +87,7 @@
             this.btnGuardarContra.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardarContra.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnGuardarContra.Location = new System.Drawing.Point(201, 135);
-            this.btnGuardarContra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnGuardarContra.Margin = new System.Windows.Forms.Padding(4);
             this.btnGuardarContra.Name = "btnGuardarContra";
             this.btnGuardarContra.Size = new System.Drawing.Size(188, 33);
             this.btnGuardarContra.TabIndex = 4;
@@ -100,7 +100,7 @@
             this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboUsuario.FormattingEnabled = true;
             this.comboUsuario.Location = new System.Drawing.Point(100, 15);
-            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(185, 24);
             this.comboUsuario.TabIndex = 0;
@@ -111,7 +111,7 @@
             // 
             this.txtNueva.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtNueva.Location = new System.Drawing.Point(201, 65);
-            this.txtNueva.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtNueva.Margin = new System.Windows.Forms.Padding(4);
             this.txtNueva.Name = "txtNueva";
             this.txtNueva.PasswordChar = '*';
             this.txtNueva.Size = new System.Drawing.Size(187, 26);
@@ -133,7 +133,7 @@
             // 
             this.txtRepetir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtRepetir.Location = new System.Drawing.Point(201, 96);
-            this.txtRepetir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtRepetir.Margin = new System.Windows.Forms.Padding(4);
             this.txtRepetir.Name = "txtRepetir";
             this.txtRepetir.PasswordChar = '*';
             this.txtRepetir.Size = new System.Drawing.Size(187, 26);
@@ -161,9 +161,9 @@
             this.groupCambiarContra.Controls.Add(this.label3);
             this.groupCambiarContra.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupCambiarContra.Location = new System.Drawing.Point(387, 62);
-            this.groupCambiarContra.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupCambiarContra.Margin = new System.Windows.Forms.Padding(4);
             this.groupCambiarContra.Name = "groupCambiarContra";
-            this.groupCambiarContra.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupCambiarContra.Padding = new System.Windows.Forms.Padding(4);
             this.groupCambiarContra.Size = new System.Drawing.Size(397, 176);
             this.groupCambiarContra.TabIndex = 10;
             this.groupCambiarContra.TabStop = false;
@@ -178,13 +178,28 @@
             this.groupCambiarDatos.Controls.Add(this.txtNombre);
             this.groupCambiarDatos.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupCambiarDatos.Location = new System.Drawing.Point(16, 62);
-            this.groupCambiarDatos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupCambiarDatos.Margin = new System.Windows.Forms.Padding(4);
             this.groupCambiarDatos.Name = "groupCambiarDatos";
-            this.groupCambiarDatos.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupCambiarDatos.Padding = new System.Windows.Forms.Padding(4);
             this.groupCambiarDatos.Size = new System.Drawing.Size(363, 176);
             this.groupCambiarDatos.TabIndex = 11;
             this.groupCambiarDatos.TabStop = false;
             this.groupCambiarDatos.Text = "Cambiar datos";
+            // 
+            // checkActivo
+            // 
+            this.checkActivo.AutoSize = true;
+            this.checkActivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkActivo.Enabled = false;
+            this.checkActivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.checkActivo.Location = new System.Drawing.Point(89, 101);
+            this.checkActivo.Margin = new System.Windows.Forms.Padding(4);
+            this.checkActivo.Name = "checkActivo";
+            this.checkActivo.Size = new System.Drawing.Size(77, 24);
+            this.checkActivo.TabIndex = 8;
+            this.checkActivo.Text = "Activo";
+            this.checkActivo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkActivo.UseVisualStyleBackColor = true;
             // 
             // checkAdmin
             // 
@@ -193,7 +208,7 @@
             this.checkAdmin.Enabled = false;
             this.checkAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.checkAdmin.Location = new System.Drawing.Point(31, 69);
-            this.checkAdmin.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkAdmin.Margin = new System.Windows.Forms.Padding(4);
             this.checkAdmin.Name = "checkAdmin";
             this.checkAdmin.Size = new System.Drawing.Size(135, 24);
             this.checkAdmin.TabIndex = 6;
@@ -218,7 +233,7 @@
             this.btnGuardarDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardarDatos.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnGuardarDatos.Location = new System.Drawing.Point(151, 135);
-            this.btnGuardarDatos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnGuardarDatos.Margin = new System.Windows.Forms.Padding(4);
             this.btnGuardarDatos.Name = "btnGuardarDatos";
             this.btnGuardarDatos.Size = new System.Drawing.Size(188, 33);
             this.btnGuardarDatos.TabIndex = 7;
@@ -230,7 +245,7 @@
             // 
             this.txtNombre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtNombre.Location = new System.Drawing.Point(151, 31);
-            this.txtNombre.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtNombre.Margin = new System.Windows.Forms.Padding(4);
             this.txtNombre.Name = "txtNombre";
             this.txtNombre.ReadOnly = true;
             this.txtNombre.Size = new System.Drawing.Size(187, 26);
@@ -244,7 +259,7 @@
             this.checkOlvidoClave.Enabled = false;
             this.checkOlvidoClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkOlvidoClave.Location = new System.Drawing.Point(608, 33);
-            this.checkOlvidoClave.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkOlvidoClave.Margin = new System.Windows.Forms.Padding(4);
             this.checkOlvidoClave.Name = "checkOlvidoClave";
             this.checkOlvidoClave.Size = new System.Drawing.Size(164, 21);
             this.checkOlvidoClave.TabIndex = 6;
@@ -253,24 +268,8 @@
             this.checkOlvidoClave.UseVisualStyleBackColor = true;
             this.checkOlvidoClave.CheckedChanged += new System.EventHandler(this.checkOlvidoClave_CheckedChanged);
             // 
-            // checkActivo
-            // 
-            this.checkActivo.AutoSize = true;
-            this.checkActivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkActivo.Enabled = false;
-            this.checkActivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.checkActivo.Location = new System.Drawing.Point(89, 101);
-            this.checkActivo.Margin = new System.Windows.Forms.Padding(4);
-            this.checkActivo.Name = "checkActivo";
-            this.checkActivo.Size = new System.Drawing.Size(77, 24);
-            this.checkActivo.TabIndex = 8;
-            this.checkActivo.Text = "Activo";
-            this.checkActivo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkActivo.UseVisualStyleBackColor = true;
-            // 
             // btnNuevoUsuario
             // 
-            this.btnNuevoUsuario.Enabled = false;
             this.btnNuevoUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnNuevoUsuario.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnNuevoUsuario.Location = new System.Drawing.Point(293, 13);
@@ -296,7 +295,7 @@
             this.Controls.Add(this.label1);
             this.ForeColor = System.Drawing.Color.Cornsilk;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "FormUsuarios";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Cambiar contraseña";

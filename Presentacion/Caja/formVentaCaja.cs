@@ -523,7 +523,6 @@ namespace Presentacion.Caja
             txtDomicilio.Text = "";
             txtFecVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
-            txtCelularCliCtaCte.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
             txtTotalKgs.Text = "0,000";
@@ -2658,7 +2657,6 @@ namespace Presentacion.Caja
         private void restablecerFormaDePago()
         {
             oVentaE.FormaPago = null;
-            panelCtaCte.Visible = false;
 
             checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
             checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
@@ -2725,8 +2723,7 @@ namespace Presentacion.Caja
             {
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkQr.Checked =
                     checkTransf.Checked = false;
-                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.CtaCte.ToString();                
-                panelCtaCte.Visible = true;
+                oVentaE.FormaPago = Entidades.Venta.formaPagoEnum.CtaCte.ToString();      
                 actualizarPrecios();
             }
 

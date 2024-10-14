@@ -28,7 +28,6 @@ namespace Presentacion.Usuario
                 txtNombre.ReadOnly = false;
                 checkAdmin.Enabled = true;
                 checkActivo.Enabled = true;
-                btnGuardarDatos.Enabled = true;
                 btnNuevoUsuario.Enabled = true; 
                 checkOlvidoClave.Enabled = true;
 	        }
@@ -68,6 +67,12 @@ namespace Presentacion.Usuario
                 oUsuarioE.Admin = checkAdmin.Checked;
                 oUsuarioE.Activo = checkActivo.Checked;
 
+                //el usuario Admin es reservado para el desarrollador del sistema
+                if (oUsuarioE.User.Equals("admin"))
+                {
+                    MessageBox.Show("El usuario Admin es reservado para el desarrollador del sistema", "Reservado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
                 addOrEditUser();
             }
             else
@@ -147,7 +152,12 @@ namespace Presentacion.Usuario
 
         private void btnNuevoUsuario_Click(object sender, EventArgs e)
         {
-            FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
+            if (!FormPrincipal.logueado)
+            {
+                MessageBox.Show("Debe iniciar sesion con un usuario administrador.", "Inicie sesión");
+                return;
+            }
+                FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
             formNuevoUsuario1.ShowDialog();
             cargarCombo();
         }

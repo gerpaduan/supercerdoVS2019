@@ -46,6 +46,7 @@ namespace Presentacion
                 txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
                 cargar = true;
                 cargarGrilla();
+                actualizar.Visible = FormPrincipal.soyYo;
             }
             catch (Exception ex)
             {

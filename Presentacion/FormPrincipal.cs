@@ -379,6 +379,8 @@ namespace Presentacion
             //Se obtienen los parametros
             Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
             oOtrasClasesN.obtenerParametros();
+
+            valorTextoMenuEncriptarDesencriptar();
         }
 
         private static void embutidos()
@@ -403,11 +405,21 @@ namespace Presentacion
 
         private void login()
         {
-            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.soloActivos = true;
+            frmLogin.ShowDialog(this);
+
+            if (oUsuario == null) return;
+            if (!oUsuario.Admin)
+            {
+                MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+            }
+
             logueado = true;
             checkAutoDesconectar.Visible = logueado;
             if (logueado)
             {
+                oUserAdmin = oUsuario.User.Equals("admin") ? oUsuario : null;
                 btnLogin.Visible = false;
                 btnCerrarSesion.Visible = true;
                 //btnTipoConexioin.Visible = true;
@@ -417,12 +429,14 @@ namespace Presentacion
             }
             else
             {
+                oUserAdmin = null;
                 btnLogin.Visible = true;
                 btnCerrarSesion.Visible = false;
                 //btnTipoConexioin.Visible = false;
                 comboConexion.Enabled = false;
                 timerInactividadAdmin.Stop();
             }
+            oUsuario = null;
         }
 
         private void verComprasToolStripMenuItem_Click(object sender, EventArgs e)
@@ -823,15 +837,6 @@ namespace Presentacion
 
         private void configuraciónToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (logueado)
-            {
-                Utilidades.FormAppConfig formAppConfig = new Utilidades.FormAppConfig();
-                formAppConfig.Show();
-            }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }
         }
 
         private void lineasVentaToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1016,6 +1021,68 @@ namespace Presentacion
                 formVencimientoCuotas frmVencimientoCuotas = new formVencimientoCuotas();
                 frmVencimientoCuotas.ShowDialog();
             }
+        }
+
+        private void valorTextoMenuEncriptarDesencriptar()
+        {
+            // Obtener la configuración del archivo app.config
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+            // Especificar la sección que deseas encriptar
+            ConfigurationSection section = config.GetSection("connectionStrings");
+            encriptarToolStripMenuItem.Text = (section != null && !section.SectionInformation.IsProtected) ? "Encriptar" :
+                (section != null && section.SectionInformation.IsProtected) ? "Desencriptar" : "Error en App.config";
+        }
+        private void encriptarToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (oUserAdmin == null)
+            {
+                MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+                return;
+            }
+
+            // Obtener la configuración del archivo app.config
+            Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+            // Especificar la sección que deseas encriptar
+            ConfigurationSection section = config.GetSection("connectionStrings");
+
+            if (section != null && !section.SectionInformation.IsProtected)
+            {
+                // Encriptar la sección si no está encriptada
+                section.SectionInformation.ProtectSection("DataProtectionConfigurationProvider");
+
+                // Guardar los cambios
+                config.Save(ConfigurationSaveMode.Full);
+
+                MessageBox.Show("La sección ha sido encriptada.");
+            }
+            else if(section != null && section.SectionInformation.IsProtected)
+            {
+                // Desencriptar la sección si está encriptada
+                section.SectionInformation.UnprotectSection();
+
+                // Guardar los cambios
+                config.Save(ConfigurationSaveMode.Full);
+
+                MessageBox.Show("La sección ha sido desencriptada.");
+            }
+            else
+            {
+                MessageBox.Show("La sección ya está encriptada o no se encontró.");
+            }
+            valorTextoMenuEncriptarDesencriptar();
+        }
+
+        private void appConfigToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (oUserAdmin == null)
+            {
+                MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+                return;
+            }
+            Utilidades.FormAppConfig formAppConfig = new Utilidades.FormAppConfig();
+            formAppConfig.Show();
         }
     }
 }

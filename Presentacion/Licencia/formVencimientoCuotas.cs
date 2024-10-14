@@ -112,7 +112,7 @@ namespace Presentacion.Licencia
             if (oUsuario == null) return;
             if (!(oUsuario.User.ToLower() ==  "admin"))
             {
-                MessageBox.Show("No tienes permiso para ver reportes");
+                MessageBox.Show("No tienes permiso para generar la cuotas");
                 return;
             }
 
