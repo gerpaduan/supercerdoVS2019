@@ -235,7 +235,7 @@
             this.btnReportes.Size = new System.Drawing.Size(279, 50);
             this.btnReportes.TabIndex = 27;
             this.btnReportes.TabStop = false;
-            this.btnReportes.Text = "Re&portes";
+            this.btnReportes.Text = "Reportes";
             this.btnReportes.UseVisualStyleBackColor = false;
             this.btnReportes.Click += new System.EventHandler(this.btnReportes_Click);
             // 
@@ -292,7 +292,7 @@
             this.btnEmbutidos.Size = new System.Drawing.Size(280, 50);
             this.btnEmbutidos.TabIndex = 22;
             this.btnEmbutidos.TabStop = false;
-            this.btnEmbutidos.Text = "&Embutidos | Elaborados";
+            this.btnEmbutidos.Text = "&Elaboración";
             this.btnEmbutidos.UseVisualStyleBackColor = false;
             this.btnEmbutidos.Click += new System.EventHandler(this.btnEmbutidos_Click);
             // 
@@ -454,7 +454,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(1055, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(1055, 30);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -463,7 +463,7 @@
             this.comprasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.verComprasToolStripMenuItem});
             this.comprasToolStripMenuItem.Name = "comprasToolStripMenuItem";
-            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(82, 24);
+            this.comprasToolStripMenuItem.Size = new System.Drawing.Size(82, 26);
             this.comprasToolStripMenuItem.Text = "Compras";
             // 
             // verComprasToolStripMenuItem
@@ -480,7 +480,7 @@
             this.verToolStripMenuItem,
             this.lineasVentaToolStripMenuItem});
             this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
-            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(66, 24);
+            this.ventasToolStripMenuItem.Size = new System.Drawing.Size(66, 26);
             this.ventasToolStripMenuItem.Text = "Ventas";
             // 
             // verVentasToolStripMenuItem
@@ -509,7 +509,7 @@
             this.cajaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cierresCajaToolStripMenuItem});
             this.cajaToolStripMenuItem.Name = "cajaToolStripMenuItem";
-            this.cajaToolStripMenuItem.Size = new System.Drawing.Size(52, 24);
+            this.cajaToolStripMenuItem.Size = new System.Drawing.Size(52, 26);
             this.cajaToolStripMenuItem.Text = "Caja";
             // 
             // cierresCajaToolStripMenuItem
@@ -531,7 +531,7 @@
             this.configuraciónToolStripMenuItem,
             this.baseDeDatosToolStripMenuItem});
             this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
-            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(124, 24);
+            this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(124, 26);
             this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
             // 
             // cortesToolStripMenuItem
@@ -598,7 +598,7 @@
             this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stockActualToolStripMenuItem});
             this.stockToolStripMenuItem.Name = "stockToolStripMenuItem";
-            this.stockToolStripMenuItem.Size = new System.Drawing.Size(59, 24);
+            this.stockToolStripMenuItem.Size = new System.Drawing.Size(59, 26);
             this.stockToolStripMenuItem.Text = "Stock";
             // 
             // stockActualToolStripMenuItem
@@ -614,7 +614,7 @@
             this.imprimirTicketToolStripMenuItem,
             this.balanzaToolStripMenuItem1});
             this.probarToolStripMenuItem.Name = "probarToolStripMenuItem";
-            this.probarToolStripMenuItem.Size = new System.Drawing.Size(67, 24);
+            this.probarToolStripMenuItem.Size = new System.Drawing.Size(67, 26);
             this.probarToolStripMenuItem.Text = "Probar";
             // 
             // imprimirTicketToolStripMenuItem
