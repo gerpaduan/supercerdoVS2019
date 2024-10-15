@@ -1696,7 +1696,16 @@ namespace Presentacion.Caja
 
             if (esCodBarraEstandar)
             {
-                ///si balanza no está activada y tiene una cantidas, se deja esa cantidad sino 1
+                ///si el CodigoBarra es de un producto pesable, Se lee el codigo, y se lee balanza. El usuario deberá agregar manualmente
+                ///
+                    if (oCorteE.Pesable)
+                {
+                    checkLeerPeso.Checked = FormPrincipal.leerBalanza;
+                    btnAgregar.Focus();
+                    return;
+                }
+
+                ///si balanza no está activada y tiene una cantidad, se deja esa cantidad sino 1
                 txtCantKgs.Text = (!checkLeerPeso.Checked && !string.IsNullOrEmpty(txtCantKgs.Text)) ? txtCantKgs.Text : "1";
                 esCodBarraEstandar = false;
                 codigoEnCodBarra = segundoModulo = "";
@@ -2335,7 +2344,7 @@ namespace Presentacion.Caja
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
             try
-                            {
+                {
                 ///Al leer con la pistola se aplica el tab
                 ///entonces aca se valida si es codigo de barra cuando todo el campo codigo está cargado 
                 ///y no surge el problema de cortar un ean13 en 8 digitos
@@ -2375,7 +2384,7 @@ namespace Presentacion.Caja
 
                 if (cartelPrimerCorteVendedor && !this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
                 {
-                    int cantCajaVenta = 0;
+                        int cantCajaVenta = 0;
                     foreach (Form frm in Application.OpenForms)
                     {
                         if (frm.GetType() == typeof(formVentaCaja))
