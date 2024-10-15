@@ -8,7 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
-using Presentacion.Reportes;
+
 using System.IO;
 
 namespace Presentacion.Cortes

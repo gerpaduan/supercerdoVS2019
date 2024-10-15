@@ -915,7 +915,7 @@ namespace Presentacion
                     //se llama la aplicacion para que inicie formStockActual independiente a la aplicacion
                     case "1":
                         string ruta = Directory.GetCurrentDirectory();
-                        ruta = ruta + "\\StockActual\\SuperCerdo.exe";
+                        ruta = ruta + "\\StockActual\\CarniSys.exe";
                         System.Diagnostics.Process.Start(ruta);
                         break;
                     default:

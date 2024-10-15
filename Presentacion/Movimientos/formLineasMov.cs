@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Movimientos;
-using Presentacion.Reportes;
+
 using Presentacion.Cortes;
 using System.Configuration;
 

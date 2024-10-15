@@ -39,7 +39,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\SuperCerdo\</OutputPath>
+    <OutputPath>bin\Debug\CarniSys\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -77,6 +77,7 @@
     </Reference>
     <Reference Include="System.Design" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Services, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\Windows\assembly\GAC_MSIL\System.Web.Services\2.0.0.0__b03f5f7f11d50a3a\System.Web.Services.dll</HintPath>
@@ -502,92 +503,6 @@
     <Compile Include="Pruebas\formTicketPrueba.Designer.cs">
       <DependentUpon>formTicketPrueba.cs</DependentUpon>
     </Compile>
-    <Compile Include="Reportes\FormReportes.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Reportes\FormReportes.Designer.cs">
-      <DependentUpon>FormReportes.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Reportes\ReporteCierreStock.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteCierreStock.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteEmbutido.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteEmbutido.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteIngresoEgreso.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteIngresoEgreso.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteKgsCortePorCompra.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteKgsCortePorCompra.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteMovimiento.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteMovimiento.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteMovimientoAcum.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteMovimientoAcum.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteMovimientosPorCorte.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteMovimientosPorCorte.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReportePagos.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReportePagos.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReportesDataSet.cs">
-      <DependentUpon>ReportesDataSet.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="Reportes\ReportesDataSet.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReportesDataSet.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="Reportes\Reportes.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Reportes.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteStockCortes.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteStockCortes.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteTotalPorCortes.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteTotalPorCortes.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reportes\ReporteVenta.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ReporteVenta.rpt</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Stock\formAddOrEditStock.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -873,57 +788,6 @@
     <EmbeddedResource Include="Pruebas\formTicketPrueba.resx">
       <DependentUpon>formTicketPrueba.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\FormReportes.resx">
-      <DependentUpon>FormReportes.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteCierreStock.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteCierreStock.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteEmbutido.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteEmbutido.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteIngresoEgreso.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteIngresoEgreso.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteKgsCortePorCompra.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteKgsCortePorCompra.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteMovimiento.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteMovimiento.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteMovimientoAcum.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteMovimientoAcum.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteMovimientosPorCorte.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteMovimientosPorCorte.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReportePagos.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReportePagos.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\Reportes.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>Reportes.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteStockCortes.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteStockCortes.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteTotalPorCortes.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteTotalPorCortes.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\ReporteVenta.rpt">
-      <Generator>CrystalDecisions.VSDesigner.CodeGen.ReportCodeGenerator</Generator>
-      <LastGenOutput>ReporteVenta.cs</LastGenOutput>
-    </EmbeddedResource>
     <EmbeddedResource Include="Stock\formAddOrEditStock.resx">
       <DependentUpon>formAddOrEditStock.cs</DependentUpon>
     </EmbeddedResource>
@@ -1014,17 +878,6 @@
   <ItemGroup>
     <None Include="Properties\DataSources\Entidades.Corte.datasource" />
     <None Include="Properties\DataSources\Entidades.CortePorMovimiento.datasource" />
-    <None Include="Reportes\ReportesDataSet.xsc">
-      <DependentUpon>ReportesDataSet.xsd</DependentUpon>
-    </None>
-    <None Include="Reportes\ReportesDataSet.xsd">
-      <SubType>Designer</SubType>
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>ReportesDataSet.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="Reportes\ReportesDataSet.xss">
-      <DependentUpon>ReportesDataSet.xsd</DependentUpon>
-    </None>
     <None Include="Resources\16 %28Database remove%29.ico" />
   </ItemGroup>
   <ItemGroup>

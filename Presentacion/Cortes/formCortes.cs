@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Presentacion.Reportes;
+
 using Presentacion.Cortes;
 
 namespace Presentacion
@@ -202,29 +202,6 @@ namespace Presentacion
         private void btnCancelar_Click(object sender, EventArgs e)
         {
             this.Close();            
-        }
-
-        private void imprimirReporte()
-        {
-            Reportes.ReportesDataSet.dtStockCortesDataTable dtStockCortes = new ReportesDataSet.dtStockCortesDataTable();
-            string titulo = "Reporte Stock Cortes";
-
-            foreach (DataRow fila in dtCortes.Rows)
-            {
-                DataRow dsFila = dtStockCortes.NewRow();
-
-                dsFila["Codigo"] = fila["codigo"];
-                dsFila["Corte"] = fila["corte"];
-                dsFila["StockSanLorenzo"] = fila["stockSL"];
-                dsFila["StockSanMartin"] = fila["stockSM"];
-
-                dtStockCortes.Rows.Add(dsFila);
-            }
-
-            Reportes.ReporteStockCortes reporte = new Reportes.ReporteStockCortes();
-            FormReportes frmReportes = new FormReportes(reporte, titulo, dtStockCortes , DateTime.Now , DateTime.Now);
-
-            frmReportes.Show();            
         }
 
         private void formCortes_KeyDown(object sender, KeyEventArgs e)

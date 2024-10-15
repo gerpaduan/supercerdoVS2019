@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Presentacion.Reportes;
+
 using System.Configuration;
 
 namespace Presentacion.Pagos

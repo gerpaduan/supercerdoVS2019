@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using Presentacion.Cortes;
-using Presentacion.Reportes;
+
 using Utilidades;
 using System.Configuration;
 using System.IO;
@@ -195,30 +195,30 @@ namespace Presentacion
             }
         }
 
-        private void imprimir()
-        {
-            try
-            {
-                Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(oMovimiento.IdMovimiento, true);
-                FormReportes frmReportes;
+        //private void imprimir()
+        //{
+        //    try
+        //    {
+        //        Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(oMovimiento.IdMovimiento, true);
+        //        FormReportes frmReportes;
 
-                string titulo = "Movimiento Acum.";
-                Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
-                frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
+        //        string titulo = "Movimiento Acum.";
+        //        Reportes.ReporteMovimientoAcum reporte = new Reportes.ReporteMovimientoAcum();
+        //        frmReportes = new FormReportes(reporte, titulo, null, oMovimientoE.FechaMovimiento, oMovimientoE.FechaMovimiento);
 
-                frmReportes.ListaCortesPorMov = listaEnGrilla;
-                frmReportes.Objetos = true;
-                frmReportes.ReporteMovimiento = true;
-                frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
-                frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
+        //        frmReportes.ListaCortesPorMov = listaEnGrilla;
+        //        frmReportes.Objetos = true;
+        //        frmReportes.ReporteMovimiento = true;
+        //        frmReportes.Origen = oMovimientoE.SucursalOrigen.SucursalNombre;
+        //        frmReportes.Destino = oMovimientoE.SucursalDestino.SucursalNombre;
 
-                frmReportes.Show();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
+        //        frmReportes.Show();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show(ex.Message);
+        //    }
+        //}
 
         private bool validacionFinal()
         {

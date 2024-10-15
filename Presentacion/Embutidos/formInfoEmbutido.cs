@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Presentacion.Reportes;
+
 using System.Configuration;
 using Presentacion.Caja;
 
@@ -154,38 +154,5 @@ namespace Presentacion.Embutidos
             oUsuario = usuario;
         }
 
-        private void Imprimir_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string titulo = oEmbutidoE.corte.corte;
-                FormReportes frmReportes;
-
-                ReportesDataSet.dtCortesPorEmbutidoDataTable dtCortesEmbutido = new ReportesDataSet.dtCortesPorEmbutidoDataTable();
-
-                foreach (DataRow fila in dtCortesPorEmbutido.Rows)
-                {
-                    DataRow dsFila = dtCortesEmbutido.NewRow();
-                    dsFila["Codigo"] = fila["Codigo"];
-                    dsFila["Corte"] = fila["Corte"];
-                    dsFila["TotalKg"] = fila["kgUtilizados"];
-
-                    dtCortesEmbutido.Rows.Add(dsFila);
-                }
-
-                Reportes.ReporteEmbutido reporte = new Reportes.ReporteEmbutido();
-                frmReportes = new FormReportes(reporte, titulo, dtCortesEmbutido, oEmbutidoE.fechaEmbutido, oEmbutidoE.fechaEmbutido);
-
-                frmReportes.Objetos = false;
-                frmReportes.ReporteMovimiento = false;
-
-                frmReportes.Show();
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-        }
     }
 }
