@@ -712,6 +712,19 @@ namespace Presentacion.Cortes
                 grillaReportes.Columns["Total Kgs"].DefaultCellStyle.Font = fuente;
             }
 
+            ///Balance
+            if (comboTipoReporte.Text.Equals("Balance"))
+            {
+                //DataTable dtReporteTeoricoReal = new DataTable();
+                grillaReportes.DataSource = null;
+                dtGrillaReporte = null;
+
+                dtGrillaReporte = oCorteN.Balance(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
+                    fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
+                grillaReportes.DataSource = dtGrillaReporte;
+
+            }
+
             try
             {
                 switch (comboOrdenStock.Text)
@@ -776,7 +789,8 @@ namespace Presentacion.Cortes
             "Cierre Stock",
             "Stock Progresivo",
             "Acum. Ventas",
-            "Total Cortes Vendidos"});
+            "Total Cortes Vendidos",
+            "Balance"});
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
             comboOrdenStock.SelectedIndex = 0;

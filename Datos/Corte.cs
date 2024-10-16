@@ -1345,6 +1345,60 @@ namespace Datos
 
             return dtTotalMovimientosPorCorte;
         }
+        public DataTable Balance(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            DataTable dtBalance = new DataTable();
+            daCorte = new SqlDataAdapter();
+            cmCorte = new SqlCommand();
+            //      @año_param = 2024,
+            //@mes1_param = 1,
+            //@dia1_desde = 1,
+            //@dia1_hasta = 31,
+            //@mes2_param = 10,
+            //@dia2_desde = 1,
+            //@dia2_hasta = 31
+
+            int ultimoDia = DateTime.DaysInMonth(fechaDesde.Year, fechaDesde.Month); // Obtiene el último día del mes
+            DateTime fechaUltimoDia = new DateTime(fechaDesde.Year, fechaDesde.Month, ultimoDia); // Fecha completa del último día
+
+            using (conn.conectar())
+            {
+                // Crear un comando SQL para ejecutar el procedimiento almacenado
+                SqlCommand cmCorte = new SqlCommand("BalanceConMeses_Prueba", conn.conectar());
+                cmCorte.CommandType = CommandType.StoredProcedure;
+                cmCorte.Parameters.AddWithValue("@año_param", fechaDesde.Year);
+                cmCorte.Parameters.AddWithValue("@mes1_param", fechaDesde.Month);
+                cmCorte.Parameters.AddWithValue("@dia1_desde", fechaDesde.Day);
+                cmCorte.Parameters.AddWithValue("@dia1_hasta", fechaHasta.Month > fechaDesde.Month ? ultimoDia : fechaHasta.Day);
+                cmCorte.Parameters.AddWithValue("@mes2_param", fechaHasta.Month > fechaDesde.Month ? fechaHasta.Month : 0);
+                cmCorte.Parameters.AddWithValue("@dia2_desde", fechaHasta.Month > fechaDesde.Month ? 1 : 0);
+                cmCorte.Parameters.AddWithValue("@dia2_hasta", fechaHasta.Month > fechaDesde.Month ? fechaHasta.Day : 0);
+
+                // Crear un adaptador para llenar el DataTable con los resultados
+                SqlDataAdapter adapter = new SqlDataAdapter(cmCorte);
+
+                // Crear y llenar un DataTable con los resultados del procedimiento
+                adapter.Fill(dtBalance);
+
+            }
+
+            foreach (DataRow row in dtBalance.Rows)
+            {
+                // Modificar el valor de una columna específica
+                if (row["Descripcion"].ToString().Equals("DETALLE BALANCE"))
+                {
+                    for (int i = 1; i < dtBalance.Columns.Count;  i++)
+                    {
+                        row[i] = "";
+                    }
+                }
+            }
+
+            cmCorte = null;
+            daCorte = null;
+
+            return dtBalance;
+        }
 
         #endregion
     }

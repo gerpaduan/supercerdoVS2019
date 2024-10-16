@@ -335,6 +335,12 @@ namespace Negocio
             oCorteD = new Datos.Corte();
             return oCorteD.TotalMovimientosPorCorte(texto, idSucursal, fechaDesde, fechaHasta);
         }
-         #endregion
-    }
+
+        public DataTable Balance(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
+        }
+            #endregion
+        }
 }
