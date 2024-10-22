@@ -177,10 +177,15 @@ namespace Datos
         public int existeCuit(string cuit)
         {
             int idPersona = 0;
+            cuit = cuit.ToString().Replace("-", "");
+
+            if (string.IsNullOrEmpty(cuit) || !int.TryParse(cuit, out int result))
+                return 0;
+
             cmPersona = new SqlCommand();
             cmPersona.Connection = conn.conectar();
             cmPersona.CommandType = CommandType.Text;
-            cmPersona.CommandText = "Select idPersona from Personas where REPLACE(cuit, '-', '') like " + cuit.ToString().Replace("-","");
+            cmPersona.CommandText = "Select idPersona from Personas where REPLACE(cuit, '-', '') like " + cuit;//.ToString().Replace("-","");
             try
             {
                 cmPersona.Connection.Open();

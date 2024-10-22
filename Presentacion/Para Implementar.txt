@@ -1098,3 +1098,231 @@ order by CorteP.codigo
 END
 
 **************************
+
+USE [SuperCerdo]
+GO
+/****** Object:  StoredProcedure [dbo].[BalanceConsFinal]    Script Date: 10/21/2024 17:38:18 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+Create PROCEDURE [dbo].[BalanceConsFinal_FecDesde_Hasta]
+
+
+		@idSucursal int,
+		@FechaDesde datetime,
+		@FechaHasta datetime
+AS
+BEGIN		  
+		  		  
+/********* BALANCE *************/
+		  
+		  Select 
+		  1 as orden,
+		  'BALANCE' as Descripcion
+			  ,sum(Kgs) as Kgs
+			  ,sum(Monto) as Monto
+			  ,sum(Tickets)as Tickets
+		  from
+		  (
+		  /***** Compra Medias ******/
+		  SELECT     dbo.Compras.idSucursal as idSucursal, 0 AS Kgs, 
+                      SUM(-dbo.MediaRes.kgMedia * dbo.MediaRes.precioMedia) AS Monto, 0 as Tickets
+			FROM         dbo.Compras INNER JOIN
+								  dbo.MediaRes ON dbo.Compras.idCompra = dbo.MediaRes.idCompra
+			WHERE  dbo.Compras.idSucursal = @idSucursal AND dbo.Compras.fechaCompra between @FechaDesde and @FechaHasta 
+			and ((dbo.Compras.tipoCompra = N'Media Res') OR
+							  (dbo.Compras.tipoCompra = N'Cortes'))
+		GROUP BY dbo.Compras.idSucursal
+		  
+		  UNION
+		  
+		/***** Compra Cortes ******/
+		SELECT   dbo.Compras.idSucursal as idSucursal, 0 AS Kgs, 
+                      SUM(-dbo.CortePorCompra.cantKg * dbo.CortePorCompra.precioKg) as Monto
+			  ,0 as Tickets
+		FROM         dbo.Compras INNER JOIN
+							  dbo.CortePorCompra ON dbo.Compras.idCompra = dbo.CortePorCompra.idCompra
+		WHERE  dbo.Compras.idSucursal = @idSucursal AND dbo.Compras.fechaCompra between @FechaDesde and @FechaHasta and ((dbo.Compras.tipoCompra = N'Media Res') OR
+							  (dbo.Compras.tipoCompra = N'Cortes'))
+		GROUP BY dbo.Compras.idSucursal
+		  
+		  UNION
+		  
+		/***** Gastos ******/
+		 SELECT    dbo.EgresosCaja.idSucursal as idSucursal,  0 as Kgs, SUM(-dbo.EgresosCaja.monto) as Monto ,0 as Tickets 
+		FROM         dbo.EgresosCaja INNER JOIN
+							  dbo.TiposEgresoCaja ON dbo.EgresosCaja.idTipoEgresoCaja = dbo.TiposEgresoCaja.id
+		WHERE     dbo.EgresosCaja.idSucursal = @idSucursal AND dbo.EgresosCaja.fechaHora between @FechaDesde and @FechaHasta AND (dbo.TiposEgresoCaja.esGasto = 1) AND (dbo.EgresosCaja.idCompra IS NULL)
+		GROUP BY dbo.EgresosCaja.idSucursal
+		  
+		  UNION
+		  
+		/***** Ventas ******/
+		SELECT 
+			idSucursal,
+			sum(Kgs) as Kgs
+			  ,sum(Monto) as Monto
+			  ,COUNT(*) as Tickets
+		  FROM (SELECT     dbo.Ventas.idVenta, dbo.Ventas.idSucursal as idSucursal, SUM(dbo.LineaVenta.cantKg) AS Kgs, SUM(dbo.LineaVenta.cantKg * dbo.LineaVenta.precioKg) AS Monto
+				FROM         dbo.Ventas INNER JOIN
+									  dbo.LineaVenta ON dbo.Ventas.idVenta = dbo.LineaVenta.idVenta INNER JOIN
+									  dbo.Corte ON dbo.LineaVenta.idCorte = dbo.Corte.idCorte INNER JOIN
+									  dbo.Sucursal ON dbo.Ventas.idSucursal = dbo.Sucursal.idSucursal
+				WHERE     dbo.Ventas.idSucursal = @idSucursal AND dbo.Ventas.fechaVenta between @FechaDesde and @FechaHasta AND (dbo.Ventas.enCtaCte = 0)
+				GROUP BY  dbo.Ventas.idVenta, dbo.Ventas.idSucursal) AS Ventas
+		GROUP BY idSucursal
+		  ) as Balance
+		  group by idSucursal		  
+		  
+		/************ DETALLES ***************/
+		UNION
+		
+		Select 
+		
+		  2 as orden,
+			'DETALLE BALANCE' as Descripcion
+			  ,'' as Kgs
+			  ,'' as Monto
+			  ,'' as Tickets	 
+			  
+		UNION 		
+		
+		/***** VENTAS A CONS.FINAL ******/
+		SELECT  		
+		  3 as orden,
+			'VENTAS A CONS.FINAL' as Descripcion
+			  ,sum(Kgs) as Kgs
+			  ,sum(Monto) as Monto
+			  ,COUNT(*) as Tickets
+		  FROM (SELECT     dbo.Ventas.idVenta, dbo.Ventas.idSucursal as idSucursal, SUM(dbo.LineaVenta.cantKg) AS Kgs, SUM(dbo.LineaVenta.cantKg * dbo.LineaVenta.precioKg) AS Monto
+				FROM         dbo.Ventas INNER JOIN
+									  dbo.LineaVenta ON dbo.Ventas.idVenta = dbo.LineaVenta.idVenta INNER JOIN
+									  dbo.Corte ON dbo.LineaVenta.idCorte = dbo.Corte.idCorte INNER JOIN
+									  dbo.Sucursal ON dbo.Ventas.idSucursal = dbo.Sucursal.idSucursal
+				WHERE     dbo.Ventas.idSucursal = @idSucursal AND dbo.Ventas.fechaVenta between @FechaDesde and @FechaHasta AND (dbo.Ventas.enCtaCte = 0)
+				GROUP BY  dbo.Ventas.idVenta, dbo.Ventas.idSucursal) AS VentaCF
+		GROUP BY idSucursal		  
+		  
+		  UNION
+		/***** Compra Medias ******/
+		SELECT 
+		  4 as orden,
+			'COMPRAS MEDIAS' as Descripcion,
+			0 AS Kgs, 
+             SUM(dbo.MediaRes.kgMedia * dbo.MediaRes.precioMedia) AS Monto, 
+             0 as Tickets
+			FROM         dbo.Compras INNER JOIN
+								  dbo.MediaRes ON dbo.Compras.idCompra = dbo.MediaRes.idCompra
+			WHERE  dbo.Compras.idSucursal = @idSucursal AND dbo.Compras.fechaCompra between @FechaDesde and @FechaHasta 
+			and ((dbo.Compras.tipoCompra = N'Media Res') OR
+							  (dbo.Compras.tipoCompra = N'Cortes'))
+			GROUP BY dbo.Compras.idSucursal
+		  
+		  UNION 
+		  
+		/***** Compra Cortes ******/
+		SELECT  
+		  5 as orden,
+			'COMPRAS' as Descripcion,
+			0 AS Kgs, 
+            SUM(-dbo.CortePorCompra.cantKg * dbo.CortePorCompra.precioKg) as Monto
+			,0 as Tickets
+			FROM         dbo.Compras INNER JOIN
+								  dbo.CortePorCompra ON dbo.Compras.idCompra = dbo.CortePorCompra.idCompra
+			WHERE  dbo.Compras.idSucursal = @idSucursal AND dbo.Compras.fechaCompra between @FechaDesde and @FechaHasta and ((dbo.Compras.tipoCompra = N'Media Res') OR
+								  (dbo.Compras.tipoCompra = N'Cortes'))
+			GROUP BY dbo.Compras.idSucursal
+		  
+		  
+		  UNION
+		  
+		/***** Gastos ******/
+		SELECT  
+		  6 as orden,
+			'GASTOS' as Descripcion,
+			0 as Kgs, 
+			SUM(-dbo.EgresosCaja.monto) as Monto ,
+			0 as Tickets 
+			FROM         dbo.EgresosCaja INNER JOIN
+								  dbo.TiposEgresoCaja ON dbo.EgresosCaja.idTipoEgresoCaja = dbo.TiposEgresoCaja.id
+			WHERE     dbo.EgresosCaja.idSucursal = @idSucursal AND dbo.EgresosCaja.fechaHora between @FechaDesde and @FechaHasta AND (dbo.TiposEgresoCaja.esGasto = 1) AND (dbo.EgresosCaja.idCompra IS NULL)
+			GROUP BY dbo.EgresosCaja.idSucursal
+		  
+		  UNION
+		  
+			Select 
+		  7 as orden,
+			'DETALLE VENTAS' as Descripcion
+			  ,'' as Kgs
+			  ,'' as Monto
+			  ,'' as Tickets	
+			  
+		  UNION
+		  /***** Ventas Cta Cte ******/
+		 
+		SELECT  
+		  8 as orden,
+			'VENTAS CTA.CTE *' as Descripcion
+			  ,sum(Kgs) as Kgs
+			  ,sum(Monto) as Monto
+			  ,COUNT(*) as Tickets
+		  FROM (SELECT     dbo.Ventas.idVenta, dbo.Ventas.idSucursal as idSucursal, SUM(dbo.LineaVenta.cantKg) AS Kgs, SUM(dbo.LineaVenta.cantKg * dbo.LineaVenta.precioKg) AS Monto
+				FROM         dbo.Ventas INNER JOIN
+									  dbo.LineaVenta ON dbo.Ventas.idVenta = dbo.LineaVenta.idVenta INNER JOIN
+									  dbo.Corte ON dbo.LineaVenta.idCorte = dbo.Corte.idCorte INNER JOIN
+									  dbo.Sucursal ON dbo.Ventas.idSucursal = dbo.Sucursal.idSucursal
+				WHERE     dbo.Ventas.idSucursal = @idSucursal AND dbo.Ventas.fechaVenta between @FechaDesde and @FechaHasta AND (dbo.Ventas.enCtaCte = 1)
+				GROUP BY  dbo.Ventas.idVenta, dbo.Ventas.idSucursal) AS VentaCTACTE
+		GROUP BY idSucursal
+		  
+		  
+			UNION
+		  /***** Ventas Sin Efectivo ******/
+		  SELECT  
+		  9 as orden,
+			'VENTAS BANCARIZADAS/NO EFECTIVO **' as Descripcion
+			  ,sum(Kgs) as Kgs
+			  ,sum(Monto) as Monto
+			  ,COUNT(*) as Tickets
+		  FROM (SELECT     dbo.Ventas.idVenta, dbo.Ventas.idSucursal as idSucursal, SUM(dbo.LineaVenta.cantKg) AS Kgs, SUM(dbo.LineaVenta.cantKg * dbo.LineaVenta.precioKg) AS Monto
+				FROM         dbo.Ventas INNER JOIN
+									  dbo.LineaVenta ON dbo.Ventas.idVenta = dbo.LineaVenta.idVenta INNER JOIN
+									  dbo.Corte ON dbo.LineaVenta.idCorte = dbo.Corte.idCorte INNER JOIN
+									  dbo.Sucursal ON dbo.Ventas.idSucursal = dbo.Sucursal.idSucursal
+				WHERE     dbo.Ventas.idSucursal = @idSucursal AND dbo.Ventas.fechaVenta between @FechaDesde and @FechaHasta AND (dbo.Ventas.enCtaCte = 0)  AND (dbo.Ventas.formaPago <> 'Efectivo')
+				GROUP BY  dbo.Ventas.idVenta, dbo.Ventas.idSucursal) AS VentaBanco
+		GROUP BY idSucursal
+		  
+		  UNION
+			Select 
+		  10 as orden,
+			'NOTAS' as Descripcion
+			  ,'' as Kgs
+			  ,'' as Monto
+			  ,'' as Tickets	
+		  UNION
+		  
+			Select 
+		  11 as orden,
+			'*No sumadas al balance' as Descripcion
+			  ,'' as Kgs
+			  ,'' as Monto
+			  ,'' as Tickets	
+		  UNION
+			Select 
+		  12 as orden,
+			'**Sumadas al balance' as Descripcion
+			  ,'' as Kgs
+			  ,'' as Monto
+			  ,'' as Tickets	
+			  
+		  /**********/
+END
+

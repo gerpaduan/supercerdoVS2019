@@ -161,6 +161,12 @@ namespace Presentacion.Caja
         {
             try
             {
+                if (Convert.ToBoolean(grilla.CurrentRow.Cells["Reservado"].Value))
+                {
+                    MessageBox.Show("El Tipo Egreso seleccionado es reservado por el sistema y no puede eliminarse.");
+                    return;
+                }
+
                 DialogResult respuesta = MessageBox.Show("¿Está seguro que desea eliminar el tipo egreso: "+ grilla.CurrentRow.Cells["tipoEgresoCaja"].Value.ToString().ToUpper()+"?. ", "Eliminar TipoEgreso", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                 if (respuesta == System.Windows.Forms.DialogResult.Yes)

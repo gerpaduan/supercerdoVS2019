@@ -715,13 +715,28 @@ namespace Presentacion.Cortes
             ///Balance
             if (comboTipoReporte.Text.Equals("Balance"))
             {
-                //DataTable dtReporteTeoricoReal = new DataTable();
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
                 dtGrillaReporte = oCorteN.Balance(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                     fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date);
                 grillaReportes.DataSource = dtGrillaReporte;
+
+
+                //formato filas
+                for(int i = 0; grillaReportes.Rows.Count > i; i++)
+                {
+                    grillaReportes.Rows[0].DefaultCellStyle.Font = new System.Drawing.Font("Arial", 12, FontStyle.Bold);
+                    grillaReportes.Rows[0].DefaultCellStyle.BackColor = Color.LightGray;
+
+                    if (grillaReportes.Rows[i].Cells["Descripcion"].Value.ToString().Contains("COMPRAS") ||
+                        grillaReportes.Rows[i].Cells["Descripcion"].Value.ToString().Contains("VENTAS A CONS") ||
+                        grillaReportes.Rows[i].Cells["Descripcion"].Value.ToString().Contains("GASTOS"))
+                    {
+                        grillaReportes.Rows[i].DefaultCellStyle.Font = new System.Drawing.Font("Arial", 9, FontStyle.Italic);
+                        grillaReportes.Rows[i].DefaultCellStyle.BackColor = Color.LightGray;
+                    }
+                }
 
             }
 
@@ -907,7 +922,7 @@ namespace Presentacion.Cortes
                         else
                         {
                             valueCell = cell.Value.ToString();
-                            valueCell = (valueCell.Length > 6) ? valueCell.Substring(0, 6) : valueCell;
+                            valueCell = (valueCell.Length > 6 && grillaReportes.Columns.Count > 10) ? valueCell.Substring(0, 6) : valueCell;
                         }
                         pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
                     }
@@ -963,6 +978,21 @@ namespace Presentacion.Cortes
                 fechaDesdeProgresivo.Visible = true;
                 txtFechaHastaProgresivo.Visible = true;
             }
+
+            if (comboTipoReporte.Text.Equals("Balance"))
+            {
+                // Si la condición es verdadera, se oculta la hora mostrando solo la fecha
+                fechaDesdeProgresivo.Format = DateTimePickerFormat.Short;  // Muestra solo la fecha (dd/MM/yyyy)
+                txtFechaHastaProgresivo.Format = DateTimePickerFormat.Short;  // Muestra solo la fecha (dd/MM/yyyy)
+            }
+            else
+            {
+                // Si la condición es falsa, se muestra la fecha y la hora
+                fechaDesdeProgresivo.Format = DateTimePickerFormat.Custom;  // Formato personalizado
+                fechaDesdeProgresivo.CustomFormat = "dd/MM/yyyy HH:mm:ss";     // Muestra fecha y hora
+                txtFechaHastaProgresivo.Format = DateTimePickerFormat.Custom;  // Formato personalizado
+                txtFechaHastaProgresivo.CustomFormat = "dd/MM/yyyy HH:mm:ss";     // Muestra fecha y hora
+            }
         }
 
         private void txtFechaHastaProgresivo_KeyDown(object sender, KeyEventArgs e)
@@ -997,6 +1027,11 @@ namespace Presentacion.Cortes
             {
                 cargarGrilla();
             }
+        }
+
+        private void comboSucursal_SelectedValueChanged(object sender, EventArgs e)
+        {
+            lblActualizar.Visible = true;
         }
     }
 }

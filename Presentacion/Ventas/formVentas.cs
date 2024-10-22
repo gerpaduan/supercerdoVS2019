@@ -82,7 +82,7 @@ namespace Presentacion
                 totalKgs += float.Parse(row.Cells["totalKg"].Value.ToString());
                 totalS += float.Parse(row.Cells["totalS"].Value.ToString());
             }
-            txtCantItems.Text = dtVentas.Rows.Count.ToString();
+            txtCantItems.Text = grillaVentas.Rows.Count.ToString();
             txtTotComisionTarj.Text = String.Format("{0:0.00}", totComisionTarj);
             txtKgsAj.Text = String.Format("{0:0.000}", totalKgsAj);
             txtTotalSAj.Text = String.Format("{0:0.00}", totalImpAj);

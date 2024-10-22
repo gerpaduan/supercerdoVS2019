@@ -79,9 +79,10 @@
             this.panel1.Controls.Add(this.label2);
             this.panel1.Controls.Add(this.txtDescripcion);
             this.panel1.Controls.Add(this.label9);
-            this.panel1.Location = new System.Drawing.Point(-5, 44);
+            this.panel1.Location = new System.Drawing.Point(-7, 54);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1007, 91);
+            this.panel1.Size = new System.Drawing.Size(1343, 112);
             this.panel1.TabIndex = 12;
             // 
             // label1
@@ -90,9 +91,10 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(888, 41);
+            this.label1.Location = new System.Drawing.Point(1184, 50);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(74, 15);
+            this.label1.Size = new System.Drawing.Size(92, 18);
             this.label1.TabIndex = 55;
             this.label1.Text = "Orden Stock";
             // 
@@ -106,9 +108,10 @@
             "Sin Orden",
             "Ascendente",
             "Descendente"});
-            this.comboOrdenStock.Location = new System.Drawing.Point(891, 59);
+            this.comboOrdenStock.Location = new System.Drawing.Point(1188, 73);
+            this.comboOrdenStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboOrdenStock.Name = "comboOrdenStock";
-            this.comboOrdenStock.Size = new System.Drawing.Size(99, 21);
+            this.comboOrdenStock.Size = new System.Drawing.Size(131, 24);
             this.comboOrdenStock.TabIndex = 54;
             this.comboOrdenStock.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
             // 
@@ -118,9 +121,10 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(335, 16);
+            this.lblActualizar.Location = new System.Drawing.Point(447, 20);
+            this.lblActualizar.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblActualizar.Name = "lblActualizar";
-            this.lblActualizar.Size = new System.Drawing.Size(69, 15);
+            this.lblActualizar.Size = new System.Drawing.Size(84, 18);
             this.lblActualizar.TabIndex = 53;
             this.lblActualizar.Text = "Actualizar...";
             this.lblActualizar.Visible = false;
@@ -130,9 +134,10 @@
             this.btnExportar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnExportar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnExportar.Image = ((System.Drawing.Image)(resources.GetObject("btnExportar.Image")));
-            this.btnExportar.Location = new System.Drawing.Point(789, 53);
+            this.btnExportar.Location = new System.Drawing.Point(1052, 65);
+            this.btnExportar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnExportar.Name = "btnExportar";
-            this.btnExportar.Size = new System.Drawing.Size(82, 31);
+            this.btnExportar.Size = new System.Drawing.Size(109, 38);
             this.btnExportar.TabIndex = 25;
             this.btnExportar.Text = "Exportar";
             this.btnExportar.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
@@ -149,9 +154,11 @@
             this.groupBox1.Controls.Add(this.label4);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox1.Location = new System.Drawing.Point(333, 37);
+            this.groupBox1.Location = new System.Drawing.Point(444, 46);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(450, 51);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Size = new System.Drawing.Size(600, 63);
             this.groupBox1.TabIndex = 24;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Fechas";
@@ -160,9 +167,10 @@
             // 
             this.fechaDesdeProgresivo.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaDesdeProgresivo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.fechaDesdeProgresivo.Location = new System.Drawing.Point(77, 19);
+            this.fechaDesdeProgresivo.Location = new System.Drawing.Point(103, 23);
+            this.fechaDesdeProgresivo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.fechaDesdeProgresivo.Name = "fechaDesdeProgresivo";
-            this.fechaDesdeProgresivo.Size = new System.Drawing.Size(151, 20);
+            this.fechaDesdeProgresivo.Size = new System.Drawing.Size(200, 22);
             this.fechaDesdeProgresivo.TabIndex = 25;
             this.fechaDesdeProgresivo.ValueChanged += new System.EventHandler(this.txtFechaHastaProgresivo_ValueChanged);
             this.fechaDesdeProgresivo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.fechaDesdeProgresivo_KeyDown);
@@ -171,9 +179,10 @@
             // 
             this.txtFechaHastaProgresivo.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.txtFechaHastaProgresivo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaHastaProgresivo.Location = new System.Drawing.Point(281, 20);
+            this.txtFechaHastaProgresivo.Location = new System.Drawing.Point(375, 25);
+            this.txtFechaHastaProgresivo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtFechaHastaProgresivo.Name = "txtFechaHastaProgresivo";
-            this.txtFechaHastaProgresivo.Size = new System.Drawing.Size(151, 20);
+            this.txtFechaHastaProgresivo.Size = new System.Drawing.Size(200, 22);
             this.txtFechaHastaProgresivo.TabIndex = 24;
             this.txtFechaHastaProgresivo.ValueChanged += new System.EventHandler(this.txtFechaHastaProgresivo_ValueChanged);
             this.txtFechaHastaProgresivo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtFechaHastaProgresivo_KeyDown);
@@ -182,9 +191,10 @@
             // 
             this.comboCierreStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboCierreStock.FormattingEnabled = true;
-            this.comboCierreStock.Location = new System.Drawing.Point(280, 20);
+            this.comboCierreStock.Location = new System.Drawing.Point(373, 25);
+            this.comboCierreStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboCierreStock.Name = "comboCierreStock";
-            this.comboCierreStock.Size = new System.Drawing.Size(152, 21);
+            this.comboCierreStock.Size = new System.Drawing.Size(201, 24);
             this.comboCierreStock.TabIndex = 23;
             this.comboCierreStock.Visible = false;
             this.comboCierreStock.SelectedValueChanged += new System.EventHandler(this.comboCierreStock_SelectedValueChanged);
@@ -193,9 +203,10 @@
             // 
             this.comboInicioStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboInicioStock.FormattingEnabled = true;
-            this.comboInicioStock.Location = new System.Drawing.Point(77, 20);
+            this.comboInicioStock.Location = new System.Drawing.Point(103, 25);
+            this.comboInicioStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboInicioStock.Name = "comboInicioStock";
-            this.comboInicioStock.Size = new System.Drawing.Size(152, 21);
+            this.comboInicioStock.Size = new System.Drawing.Size(201, 24);
             this.comboInicioStock.TabIndex = 22;
             this.comboInicioStock.Visible = false;
             this.comboInicioStock.SelectedValueChanged += new System.EventHandler(this.comboInicioStock_SelectedValueChanged);
@@ -205,9 +216,10 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(235, 24);
+            this.label4.Location = new System.Drawing.Point(313, 30);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(39, 15);
+            this.label4.Size = new System.Drawing.Size(47, 18);
             this.label4.TabIndex = 14;
             this.label4.Text = "Hasta";
             // 
@@ -216,9 +228,10 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(28, 24);
+            this.label3.Location = new System.Drawing.Point(37, 30);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(43, 15);
+            this.label3.Size = new System.Drawing.Size(51, 18);
             this.label3.TabIndex = 12;
             this.label3.Text = "Desde";
             // 
@@ -227,9 +240,10 @@
             this.btnBuscar.AccessibleDescription = "";
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
             this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
-            this.btnBuscar.Location = new System.Drawing.Point(238, 52);
+            this.btnBuscar.Location = new System.Drawing.Point(317, 64);
+            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnBuscar.Name = "btnBuscar";
-            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscar.Size = new System.Drawing.Size(37, 28);
             this.btnBuscar.TabIndex = 21;
             this.btnBuscar.TabStop = false;
             this.btnBuscar.UseVisualStyleBackColor = true;
@@ -239,20 +253,22 @@
             // 
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(95, 12);
+            this.comboSucursal.Location = new System.Drawing.Point(127, 15);
+            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboSucursal.Name = "comboSucursal";
-            this.comboSucursal.Size = new System.Drawing.Size(137, 21);
+            this.comboSucursal.Size = new System.Drawing.Size(181, 24);
             this.comboSucursal.TabIndex = 19;
-            this.comboSucursal.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
+            this.comboSucursal.SelectedValueChanged += new System.EventHandler(this.comboSucursal_SelectedValueChanged);
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(34, 16);
+            this.label5.Location = new System.Drawing.Point(45, 20);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(55, 15);
+            this.label5.Size = new System.Drawing.Size(66, 18);
             this.label5.TabIndex = 20;
             this.label5.Text = "Sucursal";
             // 
@@ -261,9 +277,10 @@
             this.comboTipoReporte.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.comboTipoReporte.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipoReporte.FormattingEnabled = true;
-            this.comboTipoReporte.Location = new System.Drawing.Point(831, 10);
+            this.comboTipoReporte.Location = new System.Drawing.Point(1108, 12);
+            this.comboTipoReporte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboTipoReporte.Name = "comboTipoReporte";
-            this.comboTipoReporte.Size = new System.Drawing.Size(159, 21);
+            this.comboTipoReporte.Size = new System.Drawing.Size(211, 24);
             this.comboTipoReporte.TabIndex = 18;
             this.comboTipoReporte.SelectedValueChanged += new System.EventHandler(this.comboTipoReporte_SelectedValueChanged);
             // 
@@ -273,17 +290,19 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(774, 12);
+            this.label2.Location = new System.Drawing.Point(1032, 15);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(51, 15);
+            this.label2.Size = new System.Drawing.Size(61, 18);
             this.label2.TabIndex = 17;
             this.label2.Text = "Reporte";
             // 
             // txtDescripcion
             // 
-            this.txtDescripcion.Location = new System.Drawing.Point(95, 53);
+            this.txtDescripcion.Location = new System.Drawing.Point(127, 65);
+            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtDescripcion.Name = "txtDescripcion";
-            this.txtDescripcion.Size = new System.Drawing.Size(137, 20);
+            this.txtDescripcion.Size = new System.Drawing.Size(181, 22);
             this.txtDescripcion.TabIndex = 0;
             this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             this.txtDescripcion.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
@@ -293,18 +312,20 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(17, 54);
+            this.label9.Location = new System.Drawing.Point(23, 66);
+            this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(72, 15);
+            this.label9.Size = new System.Drawing.Size(87, 18);
             this.label9.TabIndex = 2;
             this.label9.Text = "Descripción";
             // 
             // btnSalir
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSalir.Location = new System.Drawing.Point(844, 576);
+            this.btnSalir.Location = new System.Drawing.Point(1125, 709);
+            this.btnSalir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnSalir.Name = "btnSalir";
-            this.btnSalir.Size = new System.Drawing.Size(141, 27);
+            this.btnSalir.Size = new System.Drawing.Size(188, 33);
             this.btnSalir.TabIndex = 10;
             this.btnSalir.Text = "&Salir";
             this.btnSalir.UseVisualStyleBackColor = true;
@@ -318,8 +339,8 @@
             this.Imprimir});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
-            this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(997, 49);
+            this.barraControl.Padding = new System.Windows.Forms.Padding(13, 0, 0, 0);
+            this.barraControl.Size = new System.Drawing.Size(1329, 54);
             this.barraControl.TabIndex = 11;
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
@@ -331,7 +352,7 @@
             this.Imprimir.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.Imprimir.Name = "Imprimir";
             this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.Imprimir.Size = new System.Drawing.Size(59, 46);
+            this.Imprimir.Size = new System.Drawing.Size(72, 51);
             this.Imprimir.Text = "Imprimir";
             this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Imprimir.Click += new System.EventHandler(this.nuevo_Click);
@@ -361,7 +382,8 @@
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle2;
-            this.grillaReportes.Location = new System.Drawing.Point(12, 142);
+            this.grillaReportes.Location = new System.Drawing.Point(16, 175);
+            this.grillaReportes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.grillaReportes.Name = "grillaReportes";
             this.grillaReportes.ReadOnly = true;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -378,20 +400,21 @@
             dataGridViewCellStyle4.NullValue = null;
             this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle4;
             this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaReportes.Size = new System.Drawing.Size(973, 428);
+            this.grillaReportes.Size = new System.Drawing.Size(1297, 527);
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
             // 
             // formReporteStock
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
-            this.ClientSize = new System.Drawing.Size(997, 609);
+            this.ClientSize = new System.Drawing.Size(1329, 750);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.grillaReportes);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.barraControl);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "formReporteStock";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Reporte Stock";
