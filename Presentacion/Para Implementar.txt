@@ -1325,8 +1325,142 @@ BEGIN
 			  
 		  /**********/
 END
+********************
+
+-- ================================================
+-- Template generated from Template Explorer using:
+-- Create Procedure (New Menu).SQL
+--
+-- Use the Specify Values for Template Parameters 
+-- command (Ctrl-Shift-M) to fill in the parameter 
+-- values below.
+--
+-- This block of comments will not be included in
+-- the definition of the procedure.
+-- ================================================
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE obtenerNivelCorte 
+	-- Add the parameters for the stored procedure here	
+	@idCorteMaestro int,
+	@nivel int = 0
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+	
+	DECLARE  @idMaestro int;
+	
+	IF (@idCorteMaestro > 0)
+			begin
+				set @idMaestro = (SELECT     TOP (1) idCorte
+					FROM         dbo.Corte
+					WHERE     (@idCorteMaestro IN
+							  (SELECT     idCorte
+								FROM          dbo.Corte AS Corte_n2
+								WHERE      (idCorteMaestro IN
+										   (SELECT     idCorte
+											 FROM          dbo.Corte AS Corte_n1
+											 WHERE      (idCorteMaestro IN
+										(SELECT     idCorte
+										  FROM          dbo.Corte AS Corte_n0
+										  WHERE      (idCorteMaestro IN
+											(SELECT     idCorte
+											  FROM          dbo.Corte AS Corte_n)))))))))
+				IF (@idMaestro > 0)
+					begin
+						set @nivel = 4;
+					end
+				
+				else
+				 begin							  
+					set @idMaestro = (SELECT TOP 1 [idCorte]
+					  FROM [SuperCerdo].[dbo].[Corte]
+					  where @idCorteMaestro in 
+					  (select Corte_n2.idCorte from Corte as Corte_n2 
+						where Corte_n2.idCorteMaestro in 
+						(select Corte_n1.idCorte from Corte as Corte_n1
+						where Corte_n1.idCorteMaestro in 
+							(select Corte_n0.idCorte from Corte as Corte_n0))))
+							
+					--Si encontró maestro se setea Nivel = 3
+					IF (@idMaestro > 0)
+						begin
+							set @nivel = 3;
+						end
+					
+					else
+						begin
+							set @idMaestro = (SELECT TOP 1 [idCorte]
+							  FROM [SuperCerdo].[dbo].[Corte]
+							  where @idCorteMaestro in 
+							  (select Corte_n1.idCorte from Corte as Corte_n1 
+								where Corte_n1.idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0)))
+									
+							--Si encontró maestro se setea Nivel = 2
+							IF (@idMaestro > 0)
+							begin
+								set @nivel = 2;
+							end
+							
+							else
+								begin
+									set @idMaestro = (SELECT TOP 1 [idCorte]
+									  FROM [SuperCerdo].[dbo].[Corte]
+									  where @idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0))
+											
+									--Si encontró maestro se setea Nivel = 3
+									IF (@idMaestro > 0)
+									begin
+										set @nivel = 1;
+									end
+								end
+						end
+					end
+			end
+	END
+	
+	select @nivel
+GO
+**************************
+USE [SuperCerdo]
+GO
+/****** Object:  StoredProcedure [dbo].[obtenerInfoCorte]    Script Date: 10/24/2024 18:21:04 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Name
+-- Create date: 
+-- Description:	Obtiene la información completa del corte seleccionado
+-- =============================================
+ALTER PROCEDURE [dbo].[obtenerInfoCorte] 
+	-- Add the parameters for the stored procedure here
+	@idCorte int
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+		SELECT     CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.nivel, CorteP.independiente, 
+		CorteP.ingresoRapidoEmbutido,  CorteP.habilitado,CorteP.enCierreStock, CorteP.tipo, CorteP.idCorteMaestro, 
+		CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, 
+		CorteP.promedio, CorteP.alicuotaIva
+FROM         dbo.Corte AS CorteP LEFT OUTER JOIN
+                      dbo.Corte AS CorteM ON CorteP.idCorteMaestro = CorteM.idCorte
+WHERE     (CorteP.idCorte=@idCorte)
+END
 
 *******************
 AGREGAR TABLA TIPO PRODUCTOS
-
-Y EVITAR QUE SE ELIMINE UN TIPO SI EXISTE EN CORTES

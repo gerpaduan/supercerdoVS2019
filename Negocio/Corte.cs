@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace Negocio
 {
@@ -361,7 +362,11 @@ namespace Negocio
             oCorteD = new Datos.Corte();
             return oCorteD.eliminarTipoProducto(tiposProducto);
         }
-            #endregion
-
+        #endregion
+        public int obtenerNivelCorte(int idCorteMaestro)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.obtenerNivelCorte(idCorteMaestro);
+        }
     }
 }

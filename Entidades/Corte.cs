@@ -37,6 +37,7 @@ namespace Entidades
         private int idAlicuotaIva;
         private float alicuotaIva;
         private bool pesable;
+        private int nivel;
 
         public bool Habilitado
         {
@@ -212,5 +213,6 @@ namespace Entidades
         public int IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
         public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
         public bool Pesable { get => pesable; set => pesable = value; }
+        public int Nivel { get => nivel; set => nivel = value; }
     }
 }

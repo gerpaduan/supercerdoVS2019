@@ -62,6 +62,18 @@ namespace Presentacion
             this.txtCorteMaestro.Text = oCorteMaestroE.corte;
             txtPorcentajeCorteM.Focus();
             huboModificacion = true;
+
+            //Si es mayor a nivel tres se informa que puede haber errores en la contabilidad del stock de los niveles superiores +3
+            int nivel = oCorteN.obtenerNivelCorte(oCorteMaestroE.idCorte);
+            if (nivel > 3)
+            {
+                lblActualizar.Text = "Nivel: " + nivel.ToString() + " (mayor a 3)\nSegún el Maestro seleccionado\n puede generar inconsistencia\n en el stock de productos\n con niveles superiores)";
+                lblActualizar.Visible = true;
+            }
+            else
+            {
+                lblActualizar.Visible = false;
+            }
         }
 
         #endregion

@@ -33,6 +33,7 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblActualizar = new System.Windows.Forms.Label();
             this.checkMayuscula = new System.Windows.Forms.CheckBox();
             this.checkPesable = new System.Windows.Forms.CheckBox();
             this.comboAlicuotaIva = new System.Windows.Forms.ComboBox();
@@ -50,6 +51,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.txtPorcentajeCorteM = new System.Windows.Forms.MaskedTextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.btnBuscarCorteM = new System.Windows.Forms.Button();
             this.txtCorteMaestro = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.txtIndependiente = new System.Windows.Forms.CheckBox();
@@ -61,7 +63,6 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.btnBuscarCorteM = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
@@ -71,7 +72,7 @@
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(459, 389);
+            this.btnGuardar.Location = new System.Drawing.Point(530, 389);
             this.btnGuardar.Margin = new System.Windows.Forms.Padding(4);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(121, 33);
@@ -84,7 +85,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(588, 389);
+            this.btnCancelar.Location = new System.Drawing.Point(659, 389);
             this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(121, 33);
@@ -102,12 +103,13 @@
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
             this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(727, 382);
+            this.pnlBuscar.Size = new System.Drawing.Size(798, 382);
             this.pnlBuscar.TabIndex = 10;
             // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.lblActualizar);
             this.groupBox1.Controls.Add(this.checkMayuscula);
             this.groupBox1.Controls.Add(this.checkPesable);
             this.groupBox1.Controls.Add(this.comboAlicuotaIva);
@@ -134,10 +136,24 @@
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox1.Size = new System.Drawing.Size(695, 374);
+            this.groupBox1.Size = new System.Drawing.Size(768, 374);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // lblActualizar
+            // 
+            this.lblActualizar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblActualizar.AutoSize = true;
+            this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
+            this.lblActualizar.Location = new System.Drawing.Point(109, 261);
+            this.lblActualizar.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.lblActualizar.Name = "lblActualizar";
+            this.lblActualizar.Size = new System.Drawing.Size(134, 18);
+            this.lblActualizar.TabIndex = 54;
+            this.lblActualizar.Text = "**Nivel mayor a 3**";
+            this.lblActualizar.Visible = false;
             // 
             // checkMayuscula
             // 
@@ -208,7 +224,7 @@
             this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkHabilitado.Checked = true;
             this.checkHabilitado.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkHabilitado.Location = new System.Drawing.Point(488, 69);
+            this.checkHabilitado.Location = new System.Drawing.Point(561, 69);
             this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
@@ -243,7 +259,7 @@
             this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkEnCierreStock.Checked = true;
             this.checkEnCierreStock.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkEnCierreStock.Location = new System.Drawing.Point(448, 102);
+            this.checkEnCierreStock.Location = new System.Drawing.Point(521, 102);
             this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(135, 22);
@@ -256,7 +272,7 @@
             this.checkIngresoRapidoEmbutido.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkIngresoRapidoEmbutido.AutoSize = true;
             this.checkIngresoRapidoEmbutido.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(389, 39);
+            this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(462, 39);
             this.checkIngresoRapidoEmbutido.Margin = new System.Windows.Forms.Padding(4);
             this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
             this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(194, 22);
@@ -270,7 +286,7 @@
             this.checkAsignarMaestro.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkAsignarMaestro.AutoSize = true;
             this.checkAsignarMaestro.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkAsignarMaestro.Location = new System.Drawing.Point(445, 169);
+            this.checkAsignarMaestro.Location = new System.Drawing.Point(518, 169);
             this.checkAsignarMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.checkAsignarMaestro.Name = "checkAsignarMaestro";
             this.checkAsignarMaestro.Size = new System.Drawing.Size(138, 22);
@@ -292,11 +308,11 @@
             this.groupMaestro.Controls.Add(this.label3);
             this.groupMaestro.Enabled = false;
             this.groupMaestro.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupMaestro.Location = new System.Drawing.Point(333, 209);
+            this.groupMaestro.Location = new System.Drawing.Point(346, 209);
             this.groupMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.groupMaestro.Name = "groupMaestro";
             this.groupMaestro.Padding = new System.Windows.Forms.Padding(4);
-            this.groupMaestro.Size = new System.Drawing.Size(353, 158);
+            this.groupMaestro.Size = new System.Drawing.Size(414, 158);
             this.groupMaestro.TabIndex = 29;
             this.groupMaestro.TabStop = false;
             this.groupMaestro.Text = "Corte Maestro";
@@ -369,13 +385,26 @@
             this.label2.TabIndex = 35;
             this.label2.Text = "% en Corte M";
             // 
+            // btnBuscarCorteM
+            // 
+            this.btnBuscarCorteM.AccessibleDescription = "";
+            this.btnBuscarCorteM.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarCorteM.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorteM.Image")));
+            this.btnBuscarCorteM.Location = new System.Drawing.Point(367, 24);
+            this.btnBuscarCorteM.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscarCorteM.Name = "btnBuscarCorteM";
+            this.btnBuscarCorteM.Size = new System.Drawing.Size(37, 28);
+            this.btnBuscarCorteM.TabIndex = 29;
+            this.btnBuscarCorteM.UseVisualStyleBackColor = true;
+            this.btnBuscarCorteM.Click += new System.EventHandler(this.btnBuscarCorteM_Click);
+            // 
             // txtCorteMaestro
             // 
             this.txtCorteMaestro.Location = new System.Drawing.Point(151, 26);
             this.txtCorteMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.txtCorteMaestro.Name = "txtCorteMaestro";
             this.txtCorteMaestro.ReadOnly = true;
-            this.txtCorteMaestro.Size = new System.Drawing.Size(140, 24);
+            this.txtCorteMaestro.Size = new System.Drawing.Size(208, 24);
             this.txtCorteMaestro.TabIndex = 30;
             this.txtCorteMaestro.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             // 
@@ -398,7 +427,7 @@
             this.txtIndependiente.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.txtIndependiente.Checked = true;
             this.txtIndependiente.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.txtIndependiente.Location = new System.Drawing.Point(422, 139);
+            this.txtIndependiente.Location = new System.Drawing.Point(495, 139);
             this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(161, 22);
@@ -436,7 +465,7 @@
             this.comboTipo.Location = new System.Drawing.Point(124, 135);
             this.comboTipo.Margin = new System.Windows.Forms.Padding(4);
             this.comboTipo.Name = "comboTipo";
-            this.comboTipo.Size = new System.Drawing.Size(155, 26);
+            this.comboTipo.Size = new System.Drawing.Size(174, 26);
             this.comboTipo.TabIndex = 3;
             this.comboTipo.SelectedIndexChanged += new System.EventHandler(this.comboTipo_SelectedIndexChanged);
             this.comboTipo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
@@ -481,7 +510,7 @@
             this.txtDescCorte.Location = new System.Drawing.Point(124, 69);
             this.txtDescCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtDescCorte.Name = "txtDescCorte";
-            this.txtDescCorte.Size = new System.Drawing.Size(192, 24);
+            this.txtDescCorte.Size = new System.Drawing.Size(303, 24);
             this.txtDescCorte.TabIndex = 1;
             this.txtDescCorte.TextChanged += new System.EventHandler(this.txtDescCorte_TextChanged);
             this.txtDescCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
@@ -498,24 +527,11 @@
             this.label4.TabIndex = 2;
             this.label4.Text = "Corte";
             // 
-            // btnBuscarCorteM
-            // 
-            this.btnBuscarCorteM.AccessibleDescription = "";
-            this.btnBuscarCorteM.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarCorteM.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorteM.Image")));
-            this.btnBuscarCorteM.Location = new System.Drawing.Point(304, 25);
-            this.btnBuscarCorteM.Margin = new System.Windows.Forms.Padding(4);
-            this.btnBuscarCorteM.Name = "btnBuscarCorteM";
-            this.btnBuscarCorteM.Size = new System.Drawing.Size(37, 28);
-            this.btnBuscarCorteM.TabIndex = 29;
-            this.btnBuscarCorteM.UseVisualStyleBackColor = true;
-            this.btnBuscarCorteM.Click += new System.EventHandler(this.btnBuscarCorteM_Click);
-            // 
             // formNuevoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(725, 426);
+            this.ClientSize = new System.Drawing.Size(796, 426);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.pnlBuscar);
@@ -570,5 +586,6 @@
         protected System.Windows.Forms.Label label10;
         private System.Windows.Forms.CheckBox checkPesable;
         private System.Windows.Forms.CheckBox checkMayuscula;
+        protected System.Windows.Forms.Label lblActualizar;
     }
 }

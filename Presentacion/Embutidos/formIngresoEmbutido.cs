@@ -160,7 +160,7 @@ namespace Presentacion
             try
             {
                 //Validación para cuando es Merma
-                if (oCorteE.codigo == 10000 && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Cant. Kgs"))
+                if (FormPrincipal.soyYo && oCorteE.codigo == 10000 && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Cant. Kgs"))
                     return true;      
 
                 if (!Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Cant. Kgs"))

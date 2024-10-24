@@ -36,6 +36,7 @@ namespace Datos
                         oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
                         oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+                        oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
                         if (cargarMaestro) 
                             oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
                         oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
@@ -1502,5 +1503,18 @@ namespace Datos
             return mensaje;
         }
         #endregion
+        public int obtenerNivelCorte(int idCorteMaestro)
+        {
+            SqlCommand cmCorte = new SqlCommand("obtenerNivelCorte", conn.conectar());
+            cmCorte.CommandType = CommandType.StoredProcedure;
+            cmCorte.Parameters.AddWithValue("@idCorteMaestro", idCorteMaestro);
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            object result = cmCorte.ExecuteScalar(); // Obtener el resultado
+                      
+            return (int)result;
+        }
+
     }
 }

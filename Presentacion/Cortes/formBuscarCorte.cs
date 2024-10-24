@@ -65,7 +65,7 @@ namespace Presentacion.Cortes
         private void cargarDatos(Entidades.Corte oCorte)
         {
             oCorte.idCorte = Convert.ToInt32(grillaCortes.CurrentRow.Cells[0].Value.ToString());
-            oCorte.codigo =  Convert.ToInt32(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());            
+            oCorte.codigo =  Convert.ToInt64(grillaCortes.CurrentRow.Cells["codigo"].Value.ToString());            
             oCorte.corte = grillaCortes.CurrentRow.Cells[2].Value.ToString();
 
             int nroFila = grillaCortes.Rows.GetFirstRow(DataGridViewElementStates.Selected);        
