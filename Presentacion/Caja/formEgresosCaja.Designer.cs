@@ -95,7 +95,7 @@
             this.tiposEgresos.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tiposEgresos.Name = "tiposEgresos";
             this.tiposEgresos.Size = new System.Drawing.Size(104, 51);
-            this.tiposEgresos.Text = "Tipos Egresos";
+            this.tiposEgresos.Text = "&Tipos Egresos";
             this.tiposEgresos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tiposEgresos.Click += new System.EventHandler(this.tiposEgresos_Click);
             // 

@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using Entidades;
 using Utilidades;
+using System.Security.Cryptography;
 
 namespace Datos
 {
@@ -1395,6 +1396,111 @@ namespace Datos
             return dtBalance;
         }
 
+        #endregion
+
+        #region Tipos Producto/Corte
+        public DataTable obtenerTiposProductoGrilla(string buscarText)
+        {
+            string where = string.IsNullOrEmpty(buscarText) ? "" : $"WHERE tipo LIKE '%{buscarText}%'";
+            string selectText = "Select  tipo, orden, creado as Creado, actualizado as Actualizado, reservadoSistema as Reservado from TiposProducto " + where + " order by orden, tipo";
+            DataTable dtTiposProducto = new DataTable();
+            SqlDataAdapter daCorte = new SqlDataAdapter(selectText, conn.conectar());
+            daCorte.Fill(dtTiposProducto);
+            conn.cerraConexion();
+
+            return dtTiposProducto;
+        }
+
+        public string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate)
+        {
+            string mensaje = "";
+            //significa que es un nuevo registro
+            if (esInsert)
+            {
+                // Consulta si existe un registro con el mismo nombre de tipo
+                string selectQuery = "SELECT COUNT(*) FROM TiposProducto WHERE tipo = @tiposProducto";
+                // Obtener el valor más grande de Id
+                SqlCommand cmCorte1 = new SqlCommand(selectQuery);
+                cmCorte1.Parameters.AddWithValue("@tiposProducto", tiposProducto);
+                cmCorte1.Connection = conn.conectar();
+                cmCorte1.Connection.Open();
+
+                object result = cmCorte1.ExecuteScalar(); // Obtener el resultado
+
+                // Si hay resultados, informa
+                if ((int)result != 0)
+                {
+                    mensaje = "Ya existe un Tipo con el mismo nombre.";
+                    cmCorte1.Connection.Close();
+                    return mensaje;
+                }
+                cmCorte1.Connection.Close();
+            }
+
+            cmCorte = new SqlCommand();
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            string query = esInsert ?
+                $"INSERT INTO TiposProducto (tipo, orden, reservadoSistema, creado) VALUES (@tipo, @orden, @reservadoSistema, @creado)" :
+                $"UPDATE TiposProducto SET tipo = @tipo, orden = @orden, actualizado = @actualizado WHERE  tipo like @tipoToUpdate";
+
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = query;
+            cmCorte.Parameters.AddWithValue("@tipo", tiposProducto); 
+            cmCorte.Parameters.AddWithValue("@tipoToUpdate", tipoToUpdate); 
+            cmCorte.Parameters.AddWithValue("@orden", orden);
+            cmCorte.Parameters.AddWithValue("@reservadoSistema", false);
+            cmCorte.Parameters.AddWithValue("@creado", DateTime.Now);
+            cmCorte.Parameters.AddWithValue("@actualizado", DateTime.Now);
+
+            cmCorte.ExecuteNonQuery();
+            cmCorte.Connection.Close();
+
+            return mensaje;
+        }
+
+        public string eliminarTipoProducto(string tiposProducto)
+        {
+            cmCorte = new SqlCommand();
+            string mensaje = "";
+
+            // Consulta si existen cortes con el tipo
+            string selectQuery = "SELECT COUNT(*) FROM Corte WHERE tipo = @tiposProducto";
+
+            // Obtener el valor más grande de Id
+            SqlCommand cmCorte1 = new SqlCommand(selectQuery);
+            cmCorte1.Parameters.AddWithValue("@tiposProducto", tiposProducto);
+            cmCorte1.Connection = conn.conectar();
+            cmCorte1.Connection.Open();
+
+            object result = cmCorte1.ExecuteScalar(); // Obtener el resultado
+
+            // Si hay resultados, informa
+            if (result != null)
+            {
+                mensaje = "Existen Productos/Cortes con el Tipo que quiere eliminar.\n\nPara poder eliminar el Tipo debe cambiar todo los Productos/Cortes asociados a éste.";
+                cmCorte1.Connection.Close();
+                return mensaje;
+            }
+            cmCorte1.Connection.Close();
+
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            string query = $"DELETE FROM TipoProducto WHERE  tipo = @tipo";
+
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = query;
+            cmCorte.Parameters.AddWithValue("@tipo", tiposProducto);
+
+            cmCorte.ExecuteNonQuery();
+            cmCorte.Connection.Close();
+
+            return mensaje;
+        }
         #endregion
     }
 }

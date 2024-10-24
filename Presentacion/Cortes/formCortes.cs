@@ -303,6 +303,22 @@ namespace Presentacion
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        private void tipos_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formTiposProducto"] != null)
+            {
+
+                Application.OpenForms["formTiposProducto"].Activate();
+                Application.OpenForms["formTiposProducto"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                formTiposProducto frmTiposProducto = new formTiposProducto();
+                frmTiposProducto.Show();
+            }
+        }
+
         private void txtBuscarCorte_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyValue.Equals(13))

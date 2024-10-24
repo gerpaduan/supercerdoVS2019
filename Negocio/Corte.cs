@@ -341,6 +341,27 @@ namespace Negocio
             oCorteD = new Datos.Corte();
             return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
         }
-            #endregion
+        #endregion
+
+        #region Tipos Producto/Corte
+        public DataTable obtenerTiposProductoGrilla(string buscarText)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.obtenerTiposProductoGrilla(buscarText);
         }
+
+        public string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.addOrEditTipoProducto(tiposProducto,orden, esInsert, tipoToUpdate);
+        }
+
+        public string eliminarTipoProducto(string tiposProducto)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.eliminarTipoProducto(tiposProducto);
+        }
+            #endregion
+
+    }
 }

@@ -237,6 +237,12 @@
     <Compile Include="CortePorEmbutido.cs" />
     <Compile Include="CortesPorCompra.cs" />
     <Compile Include="CortesPorMovimiento.cs" />
+    <Compile Include="Cortes\formAddOrEditTipoProducto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Cortes\formAddOrEditTipoProducto.Designer.cs">
+      <DependentUpon>formAddOrEditTipoProducto.cs</DependentUpon>
+    </Compile>
     <Compile Include="Cortes\formModificarPrecios.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -254,6 +260,12 @@
     </Compile>
     <Compile Include="Cortes\formReporteStock.Designer.cs">
       <DependentUpon>formReporteStock.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Cortes\formTiposProducto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Cortes\formTiposProducto.Designer.cs">
+      <DependentUpon>formTiposProducto.cs</DependentUpon>
     </Compile>
     <Compile Include="Embutidos\formFormulas.cs">
       <SubType>Form</SubType>
@@ -660,6 +672,9 @@
     <EmbeddedResource Include="Compras\formPorcentajeCortesCompra.resx">
       <DependentUpon>formPorcentajeCortesCompra.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Cortes\formAddOrEditTipoProducto.resx">
+      <DependentUpon>formAddOrEditTipoProducto.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Cortes\formModificarPrecios.resx">
       <DependentUpon>formModificarPrecios.cs</DependentUpon>
     </EmbeddedResource>
@@ -668,6 +683,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Cortes\formReporteStock.resx">
       <DependentUpon>formReporteStock.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cortes\formTiposProducto.resx">
+      <DependentUpon>formTiposProducto.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="CuentaCorriente\formCtaCtePersona.resx">
       <DependentUpon>formCtaCtePersona.cs</DependentUpon>

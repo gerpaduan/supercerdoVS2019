@@ -176,10 +176,10 @@
             this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(267, 28);
             this.checkIngresoRapidoEmbutido.Margin = new System.Windows.Forms.Padding(4);
             this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
-            this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(189, 22);
+            this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(194, 22);
             this.checkIngresoRapidoEmbutido.TabIndex = 44;
             this.checkIngresoRapidoEmbutido.TabStop = false;
-            this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoEmbutido";
+            this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoElaborado";
             this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
             this.checkIngresoRapidoEmbutido.Paint += new System.Windows.Forms.PaintEventHandler(this.checkIngresoRapidoEmbutido_Paint);
             // 
