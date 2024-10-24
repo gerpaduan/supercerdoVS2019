@@ -519,6 +519,7 @@ namespace Presentacion.Caja
         private void btnVentas_Click(object sender, EventArgs e)
         {
             formVentasVendedor frmVentasVendedor = new formVentasVendedor();
+            frmVentasVendedor.desdeCajaVenta = true;
             frmVentasVendedor.oCierreE = oCierreE;
             frmVentasVendedor.ShowDialog();
 

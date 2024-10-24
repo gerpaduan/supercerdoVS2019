@@ -1478,7 +1478,7 @@ namespace Datos
             object result = cmCorte1.ExecuteScalar(); // Obtener el resultado
 
             // Si hay resultados, informa
-            if (result != null)
+            if ((int)result != 0)
             {
                 mensaje = "Existen Productos/Cortes con el Tipo que quiere eliminar.\n\nPara poder eliminar el Tipo debe cambiar todo los Productos/Cortes asociados a éste.";
                 cmCorte1.Connection.Close();
@@ -1490,7 +1490,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            string query = $"DELETE FROM TipoProducto WHERE  tipo = @tipo";
+            string query = $"DELETE FROM TiposProducto WHERE  tipo = @tipo";
 
             cmCorte.CommandType = CommandType.Text;
             cmCorte.CommandText = query;

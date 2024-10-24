@@ -95,7 +95,7 @@
             this.pnlBuscar.Controls.Add(this.panel1);
             this.pnlBuscar.Controls.Add(this.panelTaparCamposCierre);
             this.pnlBuscar.Location = new System.Drawing.Point(0, 0);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(520, 567);
             this.pnlBuscar.TabIndex = 24;
@@ -103,7 +103,7 @@
             // btnImprimir
             // 
             this.btnImprimir.Location = new System.Drawing.Point(416, 27);
-            this.btnImprimir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnImprimir.Margin = new System.Windows.Forms.Padding(4);
             this.btnImprimir.Name = "btnImprimir";
             this.btnImprimir.Size = new System.Drawing.Size(88, 30);
             this.btnImprimir.TabIndex = 38;
@@ -119,7 +119,7 @@
             this.pickerFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.pickerFechaHoraInicio.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.pickerFechaHoraInicio.Location = new System.Drawing.Point(20, 180);
-            this.pickerFechaHoraInicio.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pickerFechaHoraInicio.Margin = new System.Windows.Forms.Padding(4);
             this.pickerFechaHoraInicio.Name = "pickerFechaHoraInicio";
             this.pickerFechaHoraInicio.Size = new System.Drawing.Size(239, 26);
             this.pickerFechaHoraInicio.TabIndex = 49;
@@ -133,7 +133,7 @@
             this.pickerFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.pickerFechaHoraCierre.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.pickerFechaHoraCierre.Location = new System.Drawing.Point(268, 180);
-            this.pickerFechaHoraCierre.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pickerFechaHoraCierre.Margin = new System.Windows.Forms.Padding(4);
             this.pickerFechaHoraCierre.Name = "pickerFechaHoraCierre";
             this.pickerFechaHoraCierre.Size = new System.Drawing.Size(235, 26);
             this.pickerFechaHoraCierre.TabIndex = 38;
@@ -147,7 +147,7 @@
             this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
             this.checkTicket.Location = new System.Drawing.Point(419, 112);
-            this.checkTicket.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.checkTicket.Margin = new System.Windows.Forms.Padding(4);
             this.checkTicket.Name = "checkTicket";
             this.checkTicket.Size = new System.Drawing.Size(76, 24);
             this.checkTicket.TabIndex = 47;
@@ -166,7 +166,7 @@
             this.panel2.Controls.Add(this.label1);
             this.panel2.Controls.Add(this.txtUserInicio);
             this.panel2.Location = new System.Drawing.Point(16, 15);
-            this.panel2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel2.Margin = new System.Windows.Forms.Padding(4);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(391, 121);
             this.panel2.TabIndex = 14;
@@ -188,7 +188,7 @@
             this.txtUserCierre.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtUserCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtUserCierre.Location = new System.Drawing.Point(164, 82);
-            this.txtUserCierre.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtUserCierre.Margin = new System.Windows.Forms.Padding(4);
             this.txtUserCierre.Name = "txtUserCierre";
             this.txtUserCierre.ReadOnly = true;
             this.txtUserCierre.Size = new System.Drawing.Size(199, 26);
@@ -200,7 +200,7 @@
             this.txtSucursal.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSucursal.Location = new System.Drawing.Point(164, 12);
-            this.txtSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.txtSucursal.Name = "txtSucursal";
             this.txtSucursal.ReadOnly = true;
             this.txtSucursal.Size = new System.Drawing.Size(199, 26);
@@ -236,7 +236,7 @@
             this.txtUserInicio.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtUserInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtUserInicio.Location = new System.Drawing.Point(164, 48);
-            this.txtUserInicio.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtUserInicio.Margin = new System.Windows.Forms.Padding(4);
             this.txtUserInicio.Name = "txtUserInicio";
             this.txtUserInicio.ReadOnly = true;
             this.txtUserInicio.Size = new System.Drawing.Size(199, 26);
@@ -260,7 +260,7 @@
             this.txtFechaHoraCierre.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtFechaHoraCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaHoraCierre.Location = new System.Drawing.Point(268, 181);
-            this.txtFechaHoraCierre.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtFechaHoraCierre.Margin = new System.Windows.Forms.Padding(4);
             this.txtFechaHoraCierre.Name = "txtFechaHoraCierre";
             this.txtFechaHoraCierre.ReadOnly = true;
             this.txtFechaHoraCierre.Size = new System.Drawing.Size(235, 26);
@@ -284,7 +284,7 @@
             this.txtFechaHoraInicio.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtFechaHoraInicio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaHoraInicio.Location = new System.Drawing.Point(20, 181);
-            this.txtFechaHoraInicio.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtFechaHoraInicio.Margin = new System.Windows.Forms.Padding(4);
             this.txtFechaHoraInicio.Name = "txtFechaHoraInicio";
             this.txtFechaHoraInicio.ReadOnly = true;
             this.txtFechaHoraInicio.Size = new System.Drawing.Size(239, 26);
@@ -315,7 +315,7 @@
             this.panel1.Controls.Add(this.txtCajaInicial);
             this.panel1.Controls.Add(this.lblCajaInicial);
             this.panel1.Location = new System.Drawing.Point(16, 214);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(487, 348);
             this.panel1.TabIndex = 13;
@@ -323,8 +323,8 @@
             // btnIngresoBilletes
             // 
             this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnIngresoBilletes.Location = new System.Drawing.Point(420, 161);
-            this.btnIngresoBilletes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(420, 164);
+            this.btnIngresoBilletes.Margin = new System.Windows.Forms.Padding(4);
             this.btnIngresoBilletes.Name = "btnIngresoBilletes";
             this.btnIngresoBilletes.Size = new System.Drawing.Size(48, 30);
             this.btnIngresoBilletes.TabIndex = 37;
@@ -338,7 +338,7 @@
             this.lblCortesAnulados.AutoSize = true;
             this.lblCortesAnulados.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCortesAnulados.ForeColor = System.Drawing.Color.Orange;
-            this.lblCortesAnulados.Location = new System.Drawing.Point(227, 53);
+            this.lblCortesAnulados.Location = new System.Drawing.Point(230, 53);
             this.lblCortesAnulados.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblCortesAnulados.Name = "lblCortesAnulados";
             this.lblCortesAnulados.Size = new System.Drawing.Size(160, 15);
@@ -362,7 +362,7 @@
             // btnCajaAnterior
             // 
             this.btnCajaAnterior.Location = new System.Drawing.Point(420, 23);
-            this.btnCajaAnterior.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCajaAnterior.Margin = new System.Windows.Forms.Padding(4);
             this.btnCajaAnterior.Name = "btnCajaAnterior";
             this.btnCajaAnterior.Size = new System.Drawing.Size(48, 30);
             this.btnCajaAnterior.TabIndex = 34;
@@ -372,8 +372,8 @@
             // 
             // btnVentas
             // 
-            this.btnVentas.Location = new System.Drawing.Point(420, 69);
-            this.btnVentas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnVentas.Location = new System.Drawing.Point(420, 72);
+            this.btnVentas.Margin = new System.Windows.Forms.Padding(4);
             this.btnVentas.Name = "btnVentas";
             this.btnVentas.Size = new System.Drawing.Size(48, 30);
             this.btnVentas.TabIndex = 33;
@@ -386,7 +386,7 @@
             this.controlEleccionImporte.Cursor = System.Windows.Forms.Cursors.Hand;
             this.controlEleccionImporte.LargeChange = 2;
             this.controlEleccionImporte.Location = new System.Drawing.Point(424, 255);
-            this.controlEleccionImporte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.controlEleccionImporte.Margin = new System.Windows.Forms.Padding(4);
             this.controlEleccionImporte.Maximum = 1;
             this.controlEleccionImporte.Name = "controlEleccionImporte";
             this.controlEleccionImporte.Orientation = System.Windows.Forms.Orientation.Vertical;
@@ -398,8 +398,8 @@
             // 
             // btnVerEgresosCaja
             // 
-            this.btnVerEgresosCaja.Location = new System.Drawing.Point(420, 113);
-            this.btnVerEgresosCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnVerEgresosCaja.Location = new System.Drawing.Point(420, 116);
+            this.btnVerEgresosCaja.Margin = new System.Windows.Forms.Padding(4);
             this.btnVerEgresosCaja.Name = "btnVerEgresosCaja";
             this.btnVerEgresosCaja.Size = new System.Drawing.Size(48, 30);
             this.btnVerEgresosCaja.TabIndex = 32;
@@ -411,7 +411,7 @@
             // 
             this.txtImporteRetirado.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtImporteRetirado.Location = new System.Drawing.Point(196, 302);
-            this.txtImporteRetirado.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtImporteRetirado.Margin = new System.Windows.Forms.Padding(4);
             this.txtImporteRetirado.Name = "txtImporteRetirado";
             this.txtImporteRetirado.Size = new System.Drawing.Size(215, 29);
             this.txtImporteRetirado.TabIndex = 31;
@@ -437,7 +437,7 @@
             // 
             this.txtCajaInicioSiguiente.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCajaInicioSiguiente.Location = new System.Drawing.Point(196, 260);
-            this.txtCajaInicioSiguiente.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCajaInicioSiguiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtCajaInicioSiguiente.Name = "txtCajaInicioSiguiente";
             this.txtCajaInicioSiguiente.ReadOnly = true;
             this.txtCajaInicioSiguiente.Size = new System.Drawing.Size(215, 29);
@@ -462,11 +462,11 @@
             // 
             // panel3
             // 
-            this.panel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(26)))), ((int)(((byte)(74)))), ((int)(((byte)(147)))));
+            this.panel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.panel3.Controls.Add(this.txtDiferencia);
             this.panel3.Controls.Add(this.label9);
             this.panel3.Location = new System.Drawing.Point(0, 199);
-            this.panel3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel3.Margin = new System.Windows.Forms.Padding(4);
             this.panel3.Name = "panel3";
             this.panel3.Size = new System.Drawing.Size(487, 52);
             this.panel3.TabIndex = 27;
@@ -476,7 +476,7 @@
             this.txtDiferencia.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtDiferencia.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDiferencia.Location = new System.Drawing.Point(196, 11);
-            this.txtDiferencia.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDiferencia.Margin = new System.Windows.Forms.Padding(4);
             this.txtDiferencia.Name = "txtDiferencia";
             this.txtDiferencia.ReadOnly = true;
             this.txtDiferencia.Size = new System.Drawing.Size(215, 29);
@@ -503,8 +503,8 @@
             // txtCajaCierre
             // 
             this.txtCajaCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCajaCierre.Location = new System.Drawing.Point(196, 160);
-            this.txtCajaCierre.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCajaCierre.Location = new System.Drawing.Point(196, 163);
+            this.txtCajaCierre.Margin = new System.Windows.Forms.Padding(4);
             this.txtCajaCierre.Name = "txtCajaCierre";
             this.txtCajaCierre.Size = new System.Drawing.Size(215, 29);
             this.txtCajaCierre.TabIndex = 24;
@@ -519,7 +519,7 @@
             this.lblCajaCierre.AutoSize = true;
             this.lblCajaCierre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblCajaCierre.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblCajaCierre.Location = new System.Drawing.Point(72, 166);
+            this.lblCajaCierre.Location = new System.Drawing.Point(72, 169);
             this.lblCajaCierre.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblCajaCierre.Name = "lblCajaCierre";
             this.lblCajaCierre.Size = new System.Drawing.Size(105, 20);
@@ -531,8 +531,8 @@
             // 
             this.txtEgresosCaja.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtEgresosCaja.Location = new System.Drawing.Point(196, 112);
-            this.txtEgresosCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtEgresosCaja.Location = new System.Drawing.Point(196, 115);
+            this.txtEgresosCaja.Margin = new System.Windows.Forms.Padding(4);
             this.txtEgresosCaja.Name = "txtEgresosCaja";
             this.txtEgresosCaja.ReadOnly = true;
             this.txtEgresosCaja.Size = new System.Drawing.Size(215, 29);
@@ -547,7 +547,7 @@
             this.lblEgresosCaja.AutoSize = true;
             this.lblEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblEgresosCaja.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblEgresosCaja.Location = new System.Drawing.Point(52, 118);
+            this.lblEgresosCaja.Location = new System.Drawing.Point(52, 121);
             this.lblEgresosCaja.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblEgresosCaja.Name = "lblEgresosCaja";
             this.lblEgresosCaja.Size = new System.Drawing.Size(122, 20);
@@ -558,8 +558,8 @@
             // 
             this.txtVentas.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.txtVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtVentas.Location = new System.Drawing.Point(196, 68);
-            this.txtVentas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtVentas.Location = new System.Drawing.Point(196, 71);
+            this.txtVentas.Margin = new System.Windows.Forms.Padding(4);
             this.txtVentas.Name = "txtVentas";
             this.txtVentas.ReadOnly = true;
             this.txtVentas.Size = new System.Drawing.Size(215, 29);
@@ -574,7 +574,7 @@
             this.lblVentas.AutoSize = true;
             this.lblVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblVentas.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblVentas.Location = new System.Drawing.Point(113, 74);
+            this.lblVentas.Location = new System.Drawing.Point(113, 77);
             this.lblVentas.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblVentas.Name = "lblVentas";
             this.lblVentas.Size = new System.Drawing.Size(67, 20);
@@ -585,7 +585,7 @@
             // 
             this.txtCajaInicial.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCajaInicial.Location = new System.Drawing.Point(196, 22);
-            this.txtCajaInicial.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtCajaInicial.Margin = new System.Windows.Forms.Padding(4);
             this.txtCajaInicial.Name = "txtCajaInicial";
             this.txtCajaInicial.Size = new System.Drawing.Size(215, 29);
             this.txtCajaInicial.TabIndex = 16;
@@ -608,7 +608,7 @@
             // panelTaparCamposCierre
             // 
             this.panelTaparCamposCierre.Location = new System.Drawing.Point(17, 272);
-            this.panelTaparCamposCierre.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panelTaparCamposCierre.Margin = new System.Windows.Forms.Padding(4);
             this.panelTaparCamposCierre.Name = "panelTaparCamposCierre";
             this.panelTaparCamposCierre.Size = new System.Drawing.Size(485, 288);
             this.panelTaparCamposCierre.TabIndex = 33;
@@ -617,7 +617,7 @@
             // 
             this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCerrarCaja.Location = new System.Drawing.Point(324, 575);
-            this.btnCerrarCaja.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCerrarCaja.Margin = new System.Windows.Forms.Padding(4);
             this.btnCerrarCaja.Name = "btnCerrarCaja";
             this.btnCerrarCaja.Size = new System.Drawing.Size(180, 37);
             this.btnCerrarCaja.TabIndex = 30;
@@ -634,7 +634,7 @@
             this.Controls.Add(this.btnCerrarCaja);
             this.Controls.Add(this.pnlBuscar);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "formCerrarCaja";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

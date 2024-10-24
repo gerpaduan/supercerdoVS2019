@@ -37,14 +37,6 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaVentas = new System.Windows.Forms.DataGridView();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.pnlBuscar = new System.Windows.Forms.Panel();
-            this.btnLineasVenta = new System.Windows.Forms.Button();
-            this.txtVendedor = new System.Windows.Forms.TextBox();
-            this.label17 = new System.Windows.Forms.Label();
-            this.txtSucursal = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.btnVerTodas = new System.Windows.Forms.Button();
             this.idVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idVendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -62,6 +54,14 @@
             this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.btnLineasVenta = new System.Windows.Forms.Button();
+            this.txtVendedor = new System.Windows.Forms.TextBox();
+            this.label17 = new System.Windows.Forms.Label();
+            this.txtSucursal = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.btnVerTodas = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.SuspendLayout();
@@ -83,7 +83,7 @@
             this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtTotalS.Location = new System.Drawing.Point(1128, 593);
-            this.txtTotalS.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtTotalS.Margin = new System.Windows.Forms.Padding(4);
             this.txtTotalS.Name = "txtTotalS";
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(167, 24);
@@ -95,11 +95,11 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Location = new System.Drawing.Point(1063, 636);
-            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4);
             this.btnSeleccionar.Name = "btnSeleccionar";
             this.btnSeleccionar.Size = new System.Drawing.Size(113, 33);
             this.btnSeleccionar.TabIndex = 29;
-            this.btnSeleccionar.Text = "S&eleccionar";
+            this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
             this.btnSeleccionar.Click += new System.EventHandler(this.btnSeleccionar_Click);
             // 
@@ -107,11 +107,11 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Location = new System.Drawing.Point(1184, 636);
-            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(112, 32);
             this.btnCancelar.TabIndex = 28;
-            this.btnCancelar.Text = "&Salir";
+            this.btnCancelar.Text = "Sali&r";
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
@@ -145,7 +145,7 @@
             this.actualizado,
             this.estado});
             this.grillaVentas.Location = new System.Drawing.Point(15, 105);
-            this.grillaVentas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaVentas.Margin = new System.Windows.Forms.Padding(4);
             this.grillaVentas.MultiSelect = false;
             this.grillaVentas.Name = "grillaVentas";
             this.grillaVentas.ReadOnly = true;
@@ -157,111 +157,6 @@
             this.grillaVentas.TabIndex = 27;
             this.grillaVentas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaVentas_CellDoubleClick);
             this.grillaVentas.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grillaVentas_KeyDown);
-            // 
-            // panel1
-            // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
-            this.panel1.Location = new System.Drawing.Point(16, 626);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1283, 1);
-            this.panel1.TabIndex = 37;
-            // 
-            // pnlBuscar
-            // 
-            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.pnlBuscar.Controls.Add(this.btnLineasVenta);
-            this.pnlBuscar.Controls.Add(this.txtVendedor);
-            this.pnlBuscar.Controls.Add(this.label17);
-            this.pnlBuscar.Controls.Add(this.txtSucursal);
-            this.pnlBuscar.Controls.Add(this.label2);
-            this.pnlBuscar.Controls.Add(this.btnVerTodas);
-            this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(1317, 97);
-            this.pnlBuscar.TabIndex = 0;
-            // 
-            // btnLineasVenta
-            // 
-            this.btnLineasVenta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnLineasVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLineasVenta.Location = new System.Drawing.Point(992, 64);
-            this.btnLineasVenta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnLineasVenta.Name = "btnLineasVenta";
-            this.btnLineasVenta.Size = new System.Drawing.Size(151, 30);
-            this.btnLineasVenta.TabIndex = 47;
-            this.btnLineasVenta.TabStop = false;
-            this.btnLineasVenta.Text = "&Lineas venta";
-            this.btnLineasVenta.UseVisualStyleBackColor = true;
-            this.btnLineasVenta.Click += new System.EventHandler(this.btnLineasVenta_Click);
-            // 
-            // txtVendedor
-            // 
-            this.txtVendedor.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtVendedor.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtVendedor.Location = new System.Drawing.Point(132, 54);
-            this.txtVendedor.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtVendedor.Name = "txtVendedor";
-            this.txtVendedor.ReadOnly = true;
-            this.txtVendedor.Size = new System.Drawing.Size(245, 30);
-            this.txtVendedor.TabIndex = 46;
-            this.txtVendedor.TabStop = false;
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label17.Location = new System.Drawing.Point(19, 58);
-            this.label17.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(98, 25);
-            this.label17.TabIndex = 45;
-            this.label17.Text = "Vendedor";
-            // 
-            // txtSucursal
-            // 
-            this.txtSucursal.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSucursal.Location = new System.Drawing.Point(132, 15);
-            this.txtSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.txtSucursal.Name = "txtSucursal";
-            this.txtSucursal.ReadOnly = true;
-            this.txtSucursal.Size = new System.Drawing.Size(245, 30);
-            this.txtSucursal.TabIndex = 44;
-            this.txtSucursal.TabStop = false;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(29, 18);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(89, 25);
-            this.label2.TabIndex = 43;
-            this.label2.Text = "Sucursal";
-            // 
-            // btnVerTodas
-            // 
-            this.btnVerTodas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnVerTodas.Location = new System.Drawing.Point(1151, 64);
-            this.btnVerTodas.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.btnVerTodas.Name = "btnVerTodas";
-            this.btnVerTodas.Size = new System.Drawing.Size(151, 30);
-            this.btnVerTodas.TabIndex = 0;
-            this.btnVerTodas.TabStop = false;
-            this.btnVerTodas.Text = "Ver &todas";
-            this.btnVerTodas.UseVisualStyleBackColor = true;
-            this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
             // 
             // idVenta
             // 
@@ -435,6 +330,111 @@
             this.estado.ReadOnly = true;
             this.estado.Width = 125;
             // 
+            // panel1
+            // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.panel1.Location = new System.Drawing.Point(16, 626);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(1283, 1);
+            this.panel1.TabIndex = 37;
+            // 
+            // pnlBuscar
+            // 
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pnlBuscar.Controls.Add(this.btnLineasVenta);
+            this.pnlBuscar.Controls.Add(this.txtVendedor);
+            this.pnlBuscar.Controls.Add(this.label17);
+            this.pnlBuscar.Controls.Add(this.txtSucursal);
+            this.pnlBuscar.Controls.Add(this.label2);
+            this.pnlBuscar.Controls.Add(this.btnVerTodas);
+            this.pnlBuscar.Location = new System.Drawing.Point(-1, 0);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
+            this.pnlBuscar.Name = "pnlBuscar";
+            this.pnlBuscar.Size = new System.Drawing.Size(1317, 97);
+            this.pnlBuscar.TabIndex = 0;
+            // 
+            // btnLineasVenta
+            // 
+            this.btnLineasVenta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnLineasVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnLineasVenta.Location = new System.Drawing.Point(992, 64);
+            this.btnLineasVenta.Margin = new System.Windows.Forms.Padding(4);
+            this.btnLineasVenta.Name = "btnLineasVenta";
+            this.btnLineasVenta.Size = new System.Drawing.Size(151, 30);
+            this.btnLineasVenta.TabIndex = 47;
+            this.btnLineasVenta.TabStop = false;
+            this.btnLineasVenta.Text = "&Lineas venta";
+            this.btnLineasVenta.UseVisualStyleBackColor = true;
+            this.btnLineasVenta.Click += new System.EventHandler(this.btnLineasVenta_Click);
+            // 
+            // txtVendedor
+            // 
+            this.txtVendedor.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtVendedor.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtVendedor.Location = new System.Drawing.Point(132, 54);
+            this.txtVendedor.Margin = new System.Windows.Forms.Padding(4);
+            this.txtVendedor.Name = "txtVendedor";
+            this.txtVendedor.ReadOnly = true;
+            this.txtVendedor.Size = new System.Drawing.Size(245, 30);
+            this.txtVendedor.TabIndex = 46;
+            this.txtVendedor.TabStop = false;
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label17.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label17.Location = new System.Drawing.Point(19, 58);
+            this.label17.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(98, 25);
+            this.label17.TabIndex = 45;
+            this.label17.Text = "Vendedor";
+            // 
+            // txtSucursal
+            // 
+            this.txtSucursal.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtSucursal.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSucursal.Location = new System.Drawing.Point(132, 15);
+            this.txtSucursal.Margin = new System.Windows.Forms.Padding(4);
+            this.txtSucursal.Name = "txtSucursal";
+            this.txtSucursal.ReadOnly = true;
+            this.txtSucursal.Size = new System.Drawing.Size(245, 30);
+            this.txtSucursal.TabIndex = 44;
+            this.txtSucursal.TabStop = false;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(29, 18);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(89, 25);
+            this.label2.TabIndex = 43;
+            this.label2.Text = "Sucursal";
+            // 
+            // btnVerTodas
+            // 
+            this.btnVerTodas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnVerTodas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnVerTodas.Location = new System.Drawing.Point(1151, 64);
+            this.btnVerTodas.Margin = new System.Windows.Forms.Padding(4);
+            this.btnVerTodas.Name = "btnVerTodas";
+            this.btnVerTodas.Size = new System.Drawing.Size(151, 30);
+            this.btnVerTodas.TabIndex = 0;
+            this.btnVerTodas.TabStop = false;
+            this.btnVerTodas.Text = "Ver &todas";
+            this.btnVerTodas.UseVisualStyleBackColor = true;
+            this.btnVerTodas.Click += new System.EventHandler(this.btnVerTodas_Click);
+            // 
             // formVentasVendedor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -449,7 +449,7 @@
             this.Controls.Add(this.grillaVentas);
             this.Controls.Add(this.pnlBuscar);
             this.KeyPreview = true;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "formVentasVendedor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Ventas";
