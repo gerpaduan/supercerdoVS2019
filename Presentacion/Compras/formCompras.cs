@@ -41,6 +41,7 @@ namespace Presentacion
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursal();
                 this.comboTipoCompra.SelectedIndex = 0;
+                this.comboTipoCompra.Enabled = FormPrincipal.soyYo;
                 fechaDesde.Value = DateTime.Today.AddDays(-7);
                 cargar = true;
                 cargarGrilla();

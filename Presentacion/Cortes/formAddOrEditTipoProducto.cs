@@ -21,7 +21,7 @@ namespace Presentacion.Cortes
         public string tipoProductoSelected = "";
         public string ordenSelected = "";
         public bool esInsert = false;
-
+        ToolTip toolTip = new ToolTip();
         bool readOnly = false;
         bool huboModificacion = false;
         public bool egresoDesdeCajaVenta = false;
@@ -161,6 +161,11 @@ namespace Presentacion.Cortes
                 // Restaurar la posición del cursor
                 txtTipoProducto.SelectionStart = cursorPosition;
             }
+        }
+
+        private void txtOrden_MouseEnter(object sender, EventArgs e)
+        {
+            toolTip.SetToolTip(txtOrden, "Orden que tendrá en la lista el Tipo Producto.\nPara igual número se ordenará alfabéticamente");
         }
     }
 }

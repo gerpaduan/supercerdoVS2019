@@ -65,6 +65,7 @@
             this.txtOrden.Size = new System.Drawing.Size(69, 26);
             this.txtOrden.TabIndex = 2;
             this.txtOrden.Text = "100";
+            this.txtOrden.MouseEnter += new System.EventHandler(this.txtOrden_MouseEnter);
             // 
             // label1
             // 
