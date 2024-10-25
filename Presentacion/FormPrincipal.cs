@@ -296,6 +296,9 @@ namespace Presentacion
                 ///se valida que la licencia no esté vencida
                 ///
                 DateTime fechaVencimiento = otrasClasesN.fechaVencimientoLicencia();
+                ///si fechaVencimiento es vacia es xq no tiene cuotas vencidas y consulta sql devuelve 1/1/0001 00:00:00
+                ///si fechaVencimiento es menor a fecha actual menos 30 años a fecha actual sumo un año para evitar este error
+                fechaVencimiento = fechaVencimiento < DateTime.Now.AddYears(-30) ? DateTime.Now.AddYears(1) : fechaVencimiento;
 
                 // Calcular la diferencia de fechas
                 TimeSpan diferencia = fechaVencimiento - DateTime.Now;

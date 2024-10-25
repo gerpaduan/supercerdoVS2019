@@ -788,7 +788,6 @@ namespace wsAFIPvs2008
                     personaPadron.IdIva = Convert.ToInt16(comboIva.SelectedValue);
                 }
 
-
                 WSFEHOMO.Service service = getServicio();
                 //**Certificado para loguearse con AFIP**
                 service.ClientCertificates.Add(oLoginClass.certificado);

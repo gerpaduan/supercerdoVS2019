@@ -177,9 +177,9 @@ namespace Datos
         public int existeCuit(string cuit)
         {
             int idPersona = 0;
-            cuit = cuit.ToString().Replace("-", "");
-
-            if (string.IsNullOrEmpty(cuit) || !int.TryParse(cuit, out int result))
+            cuit = !string.IsNullOrEmpty(cuit) ? cuit.ToString().Replace("-", "") : cuit;
+            bool esNumerico = long.TryParse(cuit, out long result);
+            if (string.IsNullOrEmpty(cuit) || !esNumerico)
                 return 0;
 
             cmPersona = new SqlCommand();
