@@ -105,7 +105,10 @@ namespace Negocio
                     case "idCompraEgresoCaja":
                         Entidades.Parametros.idCompraEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
                         break;
-                        
+                    case "mayuscula":
+                        Entidades.Parametros.mayuscula = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+                        break;
+
                     default:
                         break;
                 }

@@ -36,22 +36,12 @@ namespace Presentacion.Cortes
             this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
-                //bool closeForm = false;
-                //if (tipoProductoSelected == "" && oUsuario == null) closeForm = true;
-
-                //if (!closeForm)
-                //{
-                    if (!esInsert)
-                    {
-                        txtTipoProducto.Text = tipoProductoSelected;
-                        txtOrden.Text = ordenSelected;
-                        tipoProdLabel.Text = tipoProductoSelected.ToString();//asigno id para identificar el formulario al llamar
-                    }
-                //}
-                //else
-                //{
-                //    this.Close();
-                //}
+                if (!esInsert)
+                {
+                    txtTipoProducto.Text = tipoProductoSelected;
+                    txtOrden.Text = ordenSelected;
+                    tipoProdLabel.Text = tipoProductoSelected.ToString();//asigno id para identificar el formulario al llamar
+                }
                 txtTipoProducto.Select();
             }
             catch (Exception ex)

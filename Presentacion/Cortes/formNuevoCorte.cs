@@ -335,6 +335,7 @@ namespace Presentacion
                 comboAlicuotaIva.DisplayMember = "iva";
                 comboAlicuotaIva.ValueMember = "idIva";
 
+                checkMayuscula.Checked = Entidades.Parametros.mayuscula;
                 txtCodigo.Focus();
 
                 if (idCorte > 0)

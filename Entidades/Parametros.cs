@@ -23,5 +23,6 @@ namespace Entidades
         public static int idPagoTarjetaEgresoCaja;//idPagoTarjetaEgresoCaja Reservado para los Egresos de Caja
         public static int idCtaCteEgresoCaja;//idCtaCteEgresoCaja  Reservado para los Egresos de Caja
         public static int idCompraEgresoCaja;//idCompraEgresoCaja  Reservado para los Egresos de Caja
+        public static bool mayuscula;//	1 : Mayuscula Predefinida | 0: No
     }
 }
