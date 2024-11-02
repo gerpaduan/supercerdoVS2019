@@ -42,8 +42,32 @@ namespace Datos
             return dtParametros;
         }
 
-        #region Licencia
-        public bool existeLicencia(string nroLicencia)
+        public void actualizarParametros(DataTable dtParametros)
+        {
+            cmOtrasClases = new SqlCommand();
+
+            cmOtrasClases.Connection = conn.conectar();
+            using (cmOtrasClases.Connection)
+            {
+                // Define el comando UPDATE del SqlDataAdapter
+                SqlDataAdapter adapter = new SqlDataAdapter("SELECT  id, nombre, valor, descripcion FROM Parametros", cmOtrasClases.Connection);
+
+                DataTable dt = new DataTable();
+                // Genera automáticamente los comandos INSERT, UPDATE y DELETE
+                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                adapter.Fill(dt);
+                dtParametros.PrimaryKey = new DataColumn[] { dtParametros.Columns["id"] };
+                dt.PrimaryKey = new DataColumn[] { dt.Columns["id"] };
+                cmOtrasClases.Connection.Open();
+                dt = dtParametros;
+                // Ejecuta el update en la base de datos con los cambios del DataTable
+                adapter.Update(dt);
+                conn.cerraConexion();
+            }
+        }
+
+            #region Licencia
+            public bool existeLicencia(string nroLicencia)
         {           
             cmOtrasClases = new SqlCommand();
 

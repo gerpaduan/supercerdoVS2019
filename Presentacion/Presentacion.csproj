@@ -237,6 +237,12 @@
     <Compile Include="CortePorEmbutido.cs" />
     <Compile Include="CortesPorCompra.cs" />
     <Compile Include="CortesPorMovimiento.cs" />
+    <Compile Include="Cortes\formAddOrEditCostoCobro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Cortes\formAddOrEditCostoCobro.Designer.cs">
+      <DependentUpon>formAddOrEditCostoCobro.cs</DependentUpon>
+    </Compile>
     <Compile Include="Cortes\formAddOrEditTipoProducto.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -671,6 +677,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Compras\formPorcentajeCortesCompra.resx">
       <DependentUpon>formPorcentajeCortesCompra.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cortes\formAddOrEditCostoCobro.resx">
+      <DependentUpon>formAddOrEditCostoCobro.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Cortes\formAddOrEditTipoProducto.resx">
       <DependentUpon>formAddOrEditTipoProducto.cs</DependentUpon>

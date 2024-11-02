@@ -50,9 +50,18 @@ namespace Negocio
             oOtrasClasesD = new Datos.OtrasClases();
             oOtrasClasesD.agregarPagoCuota(fechaVencimiento);
         }
-            #endregion
+        #endregion
 
-            public void obtenerParametros()
+
+        public DataTable obtenerParametrosDt()
+        {
+            return oOtrasClasesD.obtenerParametros();
+        }
+        public void actualizarParametros(DataTable dtParametros)
+        {
+            oOtrasClasesD.actualizarParametros(dtParametros);
+        }
+        public void obtenerParametros()
         { 
             DataTable dtParametros = oOtrasClasesD.obtenerParametros();            
 

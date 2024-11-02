@@ -28,6 +28,8 @@ namespace Presentacion.Caja
         #region variables
         public string vendedor = "-";
         public string precioBonificado = "";
+        public bool bonificarTodos = false;
+        public string porcentajeBonif_String = "";
         formVentas frmVentas;
         Negocio.Corte oCorteN = new Negocio.Corte();
         DataTable dtCortes = new DataTable();
@@ -1913,9 +1915,9 @@ namespace Presentacion.Caja
             timer1.Enabled = false;
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   "+
+            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
                 "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
-                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |";
+                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |  AvPág = Cambiar Vendedor";
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -2154,17 +2156,45 @@ namespace Presentacion.Caja
                 frmBonificar.frmVentaCaja = this;
                 frmBonificar.ShowDialog();
 
-                listaLineaVenta[nroFila].PrecioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
-                //listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].PrecioReal)) * 100;
-                listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].Corte.precioKg)) * 100;
-                listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? oLineaVentaSelect.Corte.CorteDesc :
-                    (oLineaVentaSelect.Corte.CorteDesc.Length < 9 ? oLineaVentaSelect.Corte.CorteDesc : oLineaVentaSelect.Corte.CorteDesc.Substring(0,9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
-                listaLineaGrilla[nroFila].precioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
-                listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].KgsTotalCalculado;
+                //si es Bonificar todos se recorre toda la lista y se la actualiza
+                if (bonificarTodos)
+                {
+                    nroFila = 0;
+                    float porcentajeBonif_Float = (100 - Utilidades.Util_Form.convertFloat(porcentajeBonif_String, false)) / 100;
+
+                    ///TODO Permitir quitar bonificacion a todos los cortes si check todos está activado
+                    ///en la descripcion de la bonificacion muestra decimal
+                    ///si bonificacion todos es cero, no mostrar descripcion
+                    for (nroFila = 0; nroFila < listaLineaVenta.Count; nroFila++)
+                    {
+                        listaLineaVenta[nroFila].PrecioKg = listaLineaVenta[nroFila].Corte.precioKg * porcentajeBonif_Float;
+                        listaLineaVenta[nroFila].Bonificacion = Utilidades.Util_Form.convertFloat(porcentajeBonif_String, false);
+                        listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? listaLineaVenta[nroFila].Corte.CorteDesc :
+                            (listaLineaVenta[nroFila].Corte.CorteDesc.Length < 9 ? listaLineaVenta[nroFila].Corte.CorteDesc : listaLineaVenta[nroFila].Corte.CorteDesc.Substring(0, 9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
+                        listaLineaGrilla[nroFila].precioKg = listaLineaVenta[nroFila].PrecioKg;
+                        listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].KgsTotalCalculado;
+                    }
+                }
+                else
+                {
+                    listaLineaVenta[nroFila].PrecioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
+                    //listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].PrecioReal)) * 100;
+                    listaLineaVenta[nroFila].Bonificacion = (1 - (listaLineaVenta[nroFila].PrecioKg / listaLineaVenta[nroFila].Corte.precioKg)) * 100;
+                    listaLineaGrilla[nroFila].corte = listaLineaVenta[nroFila].Bonificacion == 0 ? oLineaVentaSelect.Corte.CorteDesc :
+                        (oLineaVentaSelect.Corte.CorteDesc.Length < 9 ? oLineaVentaSelect.Corte.CorteDesc : oLineaVentaSelect.Corte.CorteDesc.Substring(0, 9)) + " (Bonif. " + listaLineaVenta[nroFila].Bonificacion.ToString("F2") + "%)";
+                    listaLineaGrilla[nroFila].precioKg = Utilidades.Util_Form.convertFloat(precioBonificado, false);
+                    listaLineaGrilla[nroFila].totalS = listaLineaGrilla[nroFila].precioKg * listaLineaGrilla[nroFila].KgsTotalCalculado;
+                }
 
                 actualizarPrecios();
                 cargarGrilla();
 
+                //si bonificar todos no hubo error se informa el exito
+                if (bonificarTodos)
+                {
+                    bonificarTodos = false;
+                    MessageBox.Show("La bonificación se realizó correctamente.");
+                }
                 txtCodigo.Focus();
             }
             else

@@ -319,6 +319,12 @@ namespace Presentacion
             }
         }
 
+        private void btnCostoPorCobro_Click(object sender, EventArgs e)
+        {
+            formAddOrEditCostoCobro frmCostoPorCobre = new formAddOrEditCostoCobro();
+            frmCostoPorCobre.ShowDialog();
+        }
+
         private void txtBuscarCorte_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyValue.Equals(13))
