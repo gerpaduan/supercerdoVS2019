@@ -120,11 +120,6 @@ namespace Presentacion
 
         private void nuevaCompra()
         {
-
-            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-            frmLogin.soloActivos = true;
-            frmLogin.ShowDialog(this);
-
             if (Application.OpenForms["formNuevaCompra"] != null)
             {
 
@@ -133,6 +128,13 @@ namespace Presentacion
             }
             else
             {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
+                frmLogin.ShowDialog(this);
+
+                if (oUsuario == null)
+                    return;
+
                 formNuevaCompra frmNuevaCompra = new formNuevaCompra();
                 frmNuevaCompra.asignarFormCompra(this);
                 frmNuevaCompra.oUsuario = oUsuario;

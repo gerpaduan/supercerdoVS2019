@@ -48,6 +48,7 @@ namespace Presentacion
                 if (cargar)
                 {
                     lblActualizar.Visible = false;
+                    panelDetalleTotales.Visible = FormPrincipal.soyYo;
                     dtVentas = new DataTable();
                     dtVentas = oVentaN.obtenerVentas(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), idCliente, 
                         Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 

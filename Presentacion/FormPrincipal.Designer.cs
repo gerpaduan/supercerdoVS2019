@@ -31,7 +31,6 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
             this.btnLogin = new System.Windows.Forms.Button();
             this.btnCerrarSesion = new System.Windows.Forms.Button();
@@ -66,6 +65,8 @@
             this.fórmulasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.vencimientosLicenciaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configuraciónToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.encriptarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.appConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockActualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -75,14 +76,13 @@
             this.verBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.encriptarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.appConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.menuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -124,17 +124,6 @@
             this.splitContainer1.SplitterDistance = 269;
             this.splitContainer1.SplitterWidth = 5;
             this.splitContainer1.TabIndex = 0;
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(-16, 1);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(287, 52);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 34;
-            this.pictureBox1.TabStop = false;
             // 
             // checkAutoDesconectar
             // 
@@ -586,6 +575,20 @@
             this.configuraciónToolStripMenuItem.Text = "Configuración";
             this.configuraciónToolStripMenuItem.Click += new System.EventHandler(this.configuraciónToolStripMenuItem_Click);
             // 
+            // encriptarToolStripMenuItem
+            // 
+            this.encriptarToolStripMenuItem.Name = "encriptarToolStripMenuItem";
+            this.encriptarToolStripMenuItem.Size = new System.Drawing.Size(241, 26);
+            this.encriptarToolStripMenuItem.Text = "Encriptar/Desencriptar";
+            this.encriptarToolStripMenuItem.Click += new System.EventHandler(this.encriptarToolStripMenuItem_Click);
+            // 
+            // appConfigToolStripMenuItem
+            // 
+            this.appConfigToolStripMenuItem.Name = "appConfigToolStripMenuItem";
+            this.appConfigToolStripMenuItem.Size = new System.Drawing.Size(241, 26);
+            this.appConfigToolStripMenuItem.Text = "app.Config";
+            this.appConfigToolStripMenuItem.Click += new System.EventHandler(this.appConfigToolStripMenuItem_Click);
+            // 
             // baseDeDatosToolStripMenuItem
             // 
             this.baseDeDatosToolStripMenuItem.Name = "baseDeDatosToolStripMenuItem";
@@ -652,19 +655,16 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // encriptarToolStripMenuItem
+            // pictureBox1
             // 
-            this.encriptarToolStripMenuItem.Name = "encriptarToolStripMenuItem";
-            this.encriptarToolStripMenuItem.Size = new System.Drawing.Size(241, 26);
-            this.encriptarToolStripMenuItem.Text = "Encriptar/Desencriptar";
-            this.encriptarToolStripMenuItem.Click += new System.EventHandler(this.encriptarToolStripMenuItem_Click);
-            // 
-            // appConfigToolStripMenuItem
-            // 
-            this.appConfigToolStripMenuItem.Name = "appConfigToolStripMenuItem";
-            this.appConfigToolStripMenuItem.Size = new System.Drawing.Size(241, 26);
-            this.appConfigToolStripMenuItem.Text = "app.Config";
-            this.appConfigToolStripMenuItem.Click += new System.EventHandler(this.appConfigToolStripMenuItem_Click);
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(-16, 1);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(287, 52);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 34;
+            this.pictureBox1.TabStop = false;
             // 
             // FormPrincipal
             // 
@@ -690,9 +690,9 @@
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 
         }

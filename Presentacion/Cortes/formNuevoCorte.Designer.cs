@@ -441,7 +441,7 @@
             this.txtPrecioKg.Location = new System.Drawing.Point(124, 102);
             this.txtPrecioKg.Margin = new System.Windows.Forms.Padding(4);
             this.txtPrecioKg.Name = "txtPrecioKg";
-            this.txtPrecioKg.Size = new System.Drawing.Size(93, 24);
+            this.txtPrecioKg.Size = new System.Drawing.Size(174, 24);
             this.txtPrecioKg.TabIndex = 2;
             this.txtPrecioKg.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             this.txtPrecioKg.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
@@ -488,7 +488,7 @@
             this.txtCodigo.Location = new System.Drawing.Point(124, 36);
             this.txtCodigo.Margin = new System.Windows.Forms.Padding(4);
             this.txtCodigo.Name = "txtCodigo";
-            this.txtCodigo.Size = new System.Drawing.Size(93, 24);
+            this.txtCodigo.Size = new System.Drawing.Size(174, 24);
             this.txtCodigo.TabIndex = 0;
             this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
@@ -537,6 +537,7 @@
             this.Controls.Add(this.pnlBuscar);
             this.Margin = new System.Windows.Forms.Padding(5);
             this.MaximizeBox = false;
+            this.MinimizeBox = true;
             this.Name = "formNuevoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nuevo Corte";

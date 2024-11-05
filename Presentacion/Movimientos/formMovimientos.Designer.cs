@@ -29,12 +29,13 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formMovimientos));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.actualizar = new System.Windows.Forms.ToolStripButton();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             this.LineasMov = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -65,7 +66,6 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaMovimientos = new System.Windows.Forms.DataGridView();
-            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovimientos)).BeginInit();
@@ -74,15 +74,16 @@
             // barraControl
             // 
             this.barraControl.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.barraControl.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.nuevo,
-            this.actualizar,
             this.menuDuplicar,
-            this.LineasMov});
+            this.LineasMov,
+            this.actualizar});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
-            this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(815, 45);
+            this.barraControl.Padding = new System.Windows.Forms.Padding(13, 0, 0, 0);
+            this.barraControl.Size = new System.Drawing.Size(1087, 54);
             this.barraControl.TabIndex = 6;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -93,7 +94,7 @@
             this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.nuevo.Name = "nuevo";
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(48, 42);
+            this.nuevo.Size = new System.Drawing.Size(58, 51);
             this.nuevo.Text = "&Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
@@ -105,25 +106,38 @@
             this.actualizar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.actualizar.Name = "actualizar";
             this.actualizar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.actualizar.Size = new System.Drawing.Size(65, 42);
+            this.actualizar.Size = new System.Drawing.Size(81, 51);
             this.actualizar.Text = "&Actualizar";
             this.actualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.actualizar.Visible = false;
             this.actualizar.Click += new System.EventHandler(this.actualizar_Click);
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(71, 51);
+            this.menuDuplicar.Text = "&Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
             // 
             // LineasMov
             // 
             this.LineasMov.Image = ((System.Drawing.Image)(resources.GetObject("LineasMov.Image")));
             this.LineasMov.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.LineasMov.Name = "LineasMov";
-            this.LineasMov.Size = new System.Drawing.Size(74, 42);
+            this.LineasMov.Size = new System.Drawing.Size(90, 51);
             this.LineasMov.Text = "Lineas Mov.";
             this.LineasMov.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.LineasMov.Click += new System.EventHandler(this.LineasMov_Click);
             // 
             // pnlBuscar
             // 
-            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.groupBox3);
             this.pnlBuscar.Controls.Add(this.groupBox2);
@@ -141,21 +155,24 @@
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Controls.Add(this.txtFechaHasta);
             this.pnlBuscar.Controls.Add(this.label4);
-            this.pnlBuscar.Location = new System.Drawing.Point(-4, 45);
+            this.pnlBuscar.Location = new System.Drawing.Point(-5, 55);
+            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(823, 108);
+            this.pnlBuscar.Size = new System.Drawing.Size(1097, 133);
             this.pnlBuscar.TabIndex = 8;
             // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox3.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox3.Location = new System.Drawing.Point(16, 67);
+            this.groupBox3.Location = new System.Drawing.Point(21, 82);
+            this.groupBox3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(791, 7);
+            this.groupBox3.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox3.Size = new System.Drawing.Size(1055, 9);
             this.groupBox3.TabIndex = 47;
             this.groupBox3.TabStop = false;
             // 
@@ -165,9 +182,11 @@
             this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(518, 34);
+            this.groupBox2.Location = new System.Drawing.Point(691, 42);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(289, 7);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Size = new System.Drawing.Size(385, 9);
             this.groupBox2.TabIndex = 46;
             this.groupBox2.TabStop = false;
             // 
@@ -176,9 +195,11 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(77, 14);
+            this.groupBox1.Location = new System.Drawing.Point(103, 17);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(175, 7);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Size = new System.Drawing.Size(233, 9);
             this.groupBox1.TabIndex = 45;
             this.groupBox1.TabStop = false;
             // 
@@ -187,9 +208,10 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(16, 6);
+            this.label6.Location = new System.Drawing.Point(21, 7);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(55, 15);
+            this.label6.Size = new System.Drawing.Size(66, 18);
             this.label6.TabIndex = 44;
             this.label6.Text = "Sucursal";
             // 
@@ -197,9 +219,10 @@
             // 
             this.comboSucDestino.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucDestino.FormattingEnabled = true;
-            this.comboSucDestino.Location = new System.Drawing.Point(89, 47);
+            this.comboSucDestino.Location = new System.Drawing.Point(119, 58);
+            this.comboSucDestino.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboSucDestino.Name = "comboSucDestino";
-            this.comboSucDestino.Size = new System.Drawing.Size(133, 21);
+            this.comboSucDestino.Size = new System.Drawing.Size(176, 24);
             this.comboSucDestino.TabIndex = 43;
             this.comboSucDestino.TabStop = false;
             this.comboSucDestino.TextChanged += new System.EventHandler(this.comboSucDestino_TextChanged);
@@ -209,9 +232,10 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(39, 28);
+            this.label7.Location = new System.Drawing.Point(52, 34);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(44, 15);
+            this.label7.Size = new System.Drawing.Size(52, 18);
             this.label7.TabIndex = 40;
             this.label7.Text = "Origen";
             // 
@@ -219,9 +243,10 @@
             // 
             this.comboSucOrigen.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucOrigen.FormattingEnabled = true;
-            this.comboSucOrigen.Location = new System.Drawing.Point(89, 25);
+            this.comboSucOrigen.Location = new System.Drawing.Point(119, 31);
+            this.comboSucOrigen.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboSucOrigen.Name = "comboSucOrigen";
-            this.comboSucOrigen.Size = new System.Drawing.Size(133, 21);
+            this.comboSucOrigen.Size = new System.Drawing.Size(176, 24);
             this.comboSucOrigen.TabIndex = 42;
             this.comboSucOrigen.TabStop = false;
             this.comboSucOrigen.TextChanged += new System.EventHandler(this.comboSucOrigen_TextChanged);
@@ -231,9 +256,10 @@
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(34, 48);
+            this.label5.Location = new System.Drawing.Point(45, 59);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(49, 15);
+            this.label5.Size = new System.Drawing.Size(59, 18);
             this.label5.TabIndex = 41;
             this.label5.Text = "Destino";
             // 
@@ -242,18 +268,20 @@
             this.btnBuscarCorte.AccessibleDescription = "";
             this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorte.Image")));
-            this.btnBuscarCorte.Location = new System.Drawing.Point(224, 80);
+            this.btnBuscarCorte.Location = new System.Drawing.Point(299, 98);
+            this.btnBuscarCorte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnBuscarCorte.Name = "btnBuscarCorte";
-            this.btnBuscarCorte.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscarCorte.Size = new System.Drawing.Size(37, 28);
             this.btnBuscarCorte.TabIndex = 15;
             this.btnBuscarCorte.UseVisualStyleBackColor = true;
             this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscarCorte_Click);
             // 
             // txtDescripcion
             // 
-            this.txtDescripcion.Location = new System.Drawing.Point(89, 81);
+            this.txtDescripcion.Location = new System.Drawing.Point(119, 100);
+            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtDescripcion.Name = "txtDescripcion";
-            this.txtDescripcion.Size = new System.Drawing.Size(129, 20);
+            this.txtDescripcion.Size = new System.Drawing.Size(171, 22);
             this.txtDescripcion.TabIndex = 0;
             this.txtDescripcion.TextChanged += new System.EventHandler(this.btnBuscarCorte_Click);
             // 
@@ -262,9 +290,10 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(16, 83);
+            this.label2.Location = new System.Drawing.Point(21, 102);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(72, 15);
+            this.label2.Size = new System.Drawing.Size(87, 18);
             this.label2.TabIndex = 11;
             this.label2.Text = "Descripción";
             // 
@@ -274,9 +303,10 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(471, 28);
+            this.label1.Location = new System.Drawing.Point(628, 34);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(41, 15);
+            this.label1.Size = new System.Drawing.Size(49, 18);
             this.label1.TabIndex = 9;
             this.label1.Text = "Fecha";
             // 
@@ -285,9 +315,10 @@
             this.txtFechaDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFechaDesde.CustomFormat = "dd/MM/yyyy";
             this.txtFechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaDesde.Location = new System.Drawing.Point(565, 47);
+            this.txtFechaDesde.Location = new System.Drawing.Point(753, 58);
+            this.txtFechaDesde.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtFechaDesde.Name = "txtFechaDesde";
-            this.txtFechaDesde.Size = new System.Drawing.Size(95, 20);
+            this.txtFechaDesde.Size = new System.Drawing.Size(125, 22);
             this.txtFechaDesde.TabIndex = 5;
             this.txtFechaDesde.Value = new System.DateTime(2012, 5, 24, 0, 0, 0, 0);
             this.txtFechaDesde.ValueChanged += new System.EventHandler(this.btnBuscarCorte_Click);
@@ -298,9 +329,10 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(515, 49);
+            this.label3.Location = new System.Drawing.Point(687, 60);
+            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(43, 15);
+            this.label3.Size = new System.Drawing.Size(51, 18);
             this.label3.TabIndex = 4;
             this.label3.Text = "Desde";
             // 
@@ -309,9 +341,10 @@
             this.txtFechaHasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.txtFechaHasta.CustomFormat = "dd/MM/yyyy";
             this.txtFechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaHasta.Location = new System.Drawing.Point(711, 48);
+            this.txtFechaHasta.Location = new System.Drawing.Point(948, 59);
+            this.txtFechaHasta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtFechaHasta.Name = "txtFechaHasta";
-            this.txtFechaHasta.Size = new System.Drawing.Size(96, 20);
+            this.txtFechaHasta.Size = new System.Drawing.Size(127, 22);
             this.txtFechaHasta.TabIndex = 7;
             this.txtFechaHasta.ValueChanged += new System.EventHandler(this.btnBuscarCorte_Click);
             // 
@@ -321,9 +354,10 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(666, 50);
+            this.label4.Location = new System.Drawing.Point(888, 62);
+            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(39, 15);
+            this.label4.Size = new System.Drawing.Size(47, 18);
             this.label4.TabIndex = 6;
             this.label4.Text = "Hasta";
             // 
@@ -331,17 +365,20 @@
             // 
             this.movimiento.DataPropertyName = "movimiento";
             this.movimiento.HeaderText = "movimiento";
+            this.movimiento.MinimumWidth = 6;
             this.movimiento.Name = "movimiento";
             this.movimiento.ReadOnly = true;
             this.movimiento.Visible = false;
+            this.movimiento.Width = 125;
             // 
             // fechaMovimiento
             // 
             this.fechaMovimiento.DataPropertyName = "fechaMovimiento";
-            dataGridViewCellStyle4.Format = "d";
-            dataGridViewCellStyle4.NullValue = null;
-            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle1.Format = "d";
+            dataGridViewCellStyle1.NullValue = null;
+            this.fechaMovimiento.DefaultCellStyle = dataGridViewCellStyle1;
             this.fechaMovimiento.HeaderText = "Fecha Movimiento";
+            this.fechaMovimiento.MinimumWidth = 6;
             this.fechaMovimiento.Name = "fechaMovimiento";
             this.fechaMovimiento.ReadOnly = true;
             this.fechaMovimiento.Width = 80;
@@ -350,22 +387,27 @@
             // 
             this.corte.DataPropertyName = "corte";
             this.corte.HeaderText = "corte";
+            this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
             this.corte.Visible = false;
+            this.corte.Width = 125;
             // 
             // idSucursalOrigen
             // 
             this.idSucursalOrigen.DataPropertyName = "idSucursalOrigen";
             this.idSucursalOrigen.HeaderText = "idSucursalOrigen";
+            this.idSucursalOrigen.MinimumWidth = 6;
             this.idSucursalOrigen.Name = "idSucursalOrigen";
             this.idSucursalOrigen.ReadOnly = true;
             this.idSucursalOrigen.Visible = false;
+            this.idSucursalOrigen.Width = 125;
             // 
             // sucursalOrigen
             // 
             this.sucursalOrigen.DataPropertyName = "sucursalOrigen";
             this.sucursalOrigen.HeaderText = "Origen";
+            this.sucursalOrigen.MinimumWidth = 6;
             this.sucursalOrigen.Name = "sucursalOrigen";
             this.sucursalOrigen.ReadOnly = true;
             this.sucursalOrigen.Width = 70;
@@ -374,14 +416,17 @@
             // 
             this.idSucursalDestino.DataPropertyName = "idSucursalDestino";
             this.idSucursalDestino.HeaderText = "idSucursalDestino";
+            this.idSucursalDestino.MinimumWidth = 6;
             this.idSucursalDestino.Name = "idSucursalDestino";
             this.idSucursalDestino.ReadOnly = true;
             this.idSucursalDestino.Visible = false;
+            this.idSucursalDestino.Width = 125;
             // 
             // sucursalDestino
             // 
             this.sucursalDestino.DataPropertyName = "sucursalDestino";
             this.sucursalDestino.HeaderText = "Destino";
+            this.sucursalDestino.MinimumWidth = 6;
             this.sucursalDestino.Name = "sucursalDestino";
             this.sucursalDestino.ReadOnly = true;
             this.sucursalDestino.Width = 70;
@@ -390,6 +435,7 @@
             // 
             this.kgCorte.DataPropertyName = "kgCorte";
             this.kgCorte.HeaderText = "Kgs. Corte";
+            this.kgCorte.MinimumWidth = 6;
             this.kgCorte.Name = "kgCorte";
             this.kgCorte.ReadOnly = true;
             this.kgCorte.Width = 70;
@@ -397,19 +443,22 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle2;
             this.estado.HeaderText = "Estado";
+            this.estado.MinimumWidth = 6;
             this.estado.Name = "estado";
             this.estado.ReadOnly = true;
+            this.estado.Width = 125;
             // 
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(577, 473);
+            this.btnSeleccionar.Location = new System.Drawing.Point(769, 582);
+            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(114, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(152, 33);
             this.btnSeleccionar.TabIndex = 15;
             this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
@@ -419,9 +468,10 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(697, 473);
+            this.btnCancelar.Location = new System.Drawing.Point(929, 582);
+            this.btnCancelar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(106, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(141, 33);
             this.btnCancelar.TabIndex = 14;
             this.btnCancelar.Text = "&Cerrar";
             this.btnCancelar.UseVisualStyleBackColor = true;
@@ -432,52 +482,43 @@
             this.grillaMovimientos.AllowUserToAddRows = false;
             this.grillaMovimientos.AllowUserToOrderColumns = true;
             this.grillaMovimientos.AllowUserToResizeRows = false;
-            this.grillaMovimientos.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaMovimientos.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaMovimientos.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.grillaMovimientos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.NullValue = null;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle6;
-            this.grillaMovimientos.Location = new System.Drawing.Point(12, 157);
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle3.NullValue = null;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaMovimientos.DefaultCellStyle = dataGridViewCellStyle3;
+            this.grillaMovimientos.Location = new System.Drawing.Point(16, 193);
+            this.grillaMovimientos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.grillaMovimientos.Name = "grillaMovimientos";
             this.grillaMovimientos.ReadOnly = true;
             this.grillaMovimientos.RowHeadersVisible = false;
+            this.grillaMovimientos.RowHeadersWidth = 51;
             this.grillaMovimientos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaMovimientos.Size = new System.Drawing.Size(791, 310);
+            this.grillaMovimientos.Size = new System.Drawing.Size(1055, 382);
             this.grillaMovimientos.TabIndex = 16;
             this.grillaMovimientos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaMovimientos_CellDoubleClick);
             // 
-            // menuDuplicar
-            // 
-            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
-            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.menuDuplicar.Name = "menuDuplicar";
-            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
-            this.menuDuplicar.Text = "&Duplicar";
-            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
-            // 
             // formMovimientos
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(815, 504);
+            this.ClientSize = new System.Drawing.Size(1087, 620);
             this.Controls.Add(this.grillaMovimientos);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+            this.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
             this.MinimizeBox = true;
             this.Name = "formMovimientos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;

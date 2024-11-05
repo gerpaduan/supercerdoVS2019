@@ -35,9 +35,29 @@ namespace Presentacion
 
         private void nuevoCorte()
         {
-            formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-            frmNuevoCorte.frmCorte = this;
-            frmNuevoCorte.ShowDialog(this);
+            //formNuevoCorte frmNuevoCorte = new formNuevoCorte();
+            //frmNuevoCorte.frmCorte = this;
+            //frmNuevoCorte.ShowDialog(this);
+
+            if (Application.OpenForms["formNuevoCorte"] != null)
+            {
+
+                Application.OpenForms["formNuevoCorte"].Activate();
+                Application.OpenForms["formNuevoCorte"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                //frmLogin.soloActivos = true;
+                //frmLogin.ShowDialog(this);
+
+                //if (oUsuario == null)
+                //    return;
+
+                formNuevoCorte frmNuevoCorte = new formNuevoCorte();
+                frmNuevoCorte.frmCorte = this;
+                frmNuevoCorte.Show(this);
+            }
         }
 
         private void modificar_Click(object sender, EventArgs e)

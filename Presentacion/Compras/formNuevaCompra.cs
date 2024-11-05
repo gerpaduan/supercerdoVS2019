@@ -1110,12 +1110,19 @@ namespace Presentacion
                 && ((radioCorte.Checked && grillaCortePorCompra.Rows.Count == 0) ||
                 (radioMediaRes.Checked && grillaMediaRes.Rows.Count == 0))) mostrarCartelCierre = false;
 
-            if (!mostrarCartelCierre) return false;
+            if (!mostrarCartelCierre)
+            {
+                oFrmCompra.EnviarUsuario(null);
+                oUsuario = null;
+                return false;
+            }
 
             DialogResult respuesta = MessageBox.Show("Si cierra el formulario se perderan las modificaciones realizadas.\n¿Está seguro que desea salir?. ", "Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
             if ((respuesta == System.Windows.Forms.DialogResult.Yes))
             {
+                oFrmCompra.EnviarUsuario(null);
+                oUsuario = null;
                 return false;
             }
             else
