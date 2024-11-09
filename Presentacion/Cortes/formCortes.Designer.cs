@@ -45,6 +45,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
@@ -84,13 +85,14 @@
             this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pesable = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.promedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.nivel = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.puntoStock = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idCorteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corteMaestro = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.independiente = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.porcentajeHueso = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.habilitado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.independiente = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.nivel = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.desvioEstandar = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.enCierreStock = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.ingresoRapidoEmbutido = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -216,13 +218,14 @@
             this.tipo,
             this.pesable,
             this.promedio,
-            this.nivel,
+            this.puntoStock,
             this.idCorteMaestro,
             this.porcentaje,
             this.corteMaestro,
-            this.independiente,
-            this.habilitado,
             this.porcentajeHueso,
+            this.habilitado,
+            this.independiente,
+            this.nivel,
             this.desvioEstandar,
             this.enCierreStock,
             this.ingresoRapidoEmbutido,
@@ -620,6 +623,7 @@
             // 
             this.promedio.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.promedio.DataPropertyName = "promedio";
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
             dataGridViewCellStyle10.Format = "F3";
             this.promedio.DefaultCellStyle = dataGridViewCellStyle10;
             this.promedio.HeaderText = "Promedio";
@@ -629,15 +633,17 @@
             this.promedio.Resizable = System.Windows.Forms.DataGridViewTriState.False;
             this.promedio.Width = 95;
             // 
-            // nivel
+            // puntoStock
             // 
-            this.nivel.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.nivel.DataPropertyName = "nivel";
-            this.nivel.HeaderText = "Nivel";
-            this.nivel.MinimumWidth = 6;
-            this.nivel.Name = "nivel";
-            this.nivel.ReadOnly = true;
-            this.nivel.Width = 67;
+            this.puntoStock.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.puntoStock.DataPropertyName = "puntoStock";
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.puntoStock.DefaultCellStyle = dataGridViewCellStyle11;
+            this.puntoStock.HeaderText = "Pto.Stock";
+            this.puntoStock.MinimumWidth = 6;
+            this.puntoStock.Name = "puntoStock";
+            this.puntoStock.ReadOnly = true;
+            this.puntoStock.Width = 93;
             // 
             // idCorteMaestro
             // 
@@ -652,10 +658,10 @@
             // 
             this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.porcentaje.DataPropertyName = "porcentaje";
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle11.Format = "N3";
-            dataGridViewCellStyle11.NullValue = null;
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle12.Format = "N3";
+            dataGridViewCellStyle12.NullValue = null;
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle12;
             this.porcentaje.HeaderText = "Porcentaje";
             this.porcentaje.MinimumWidth = 6;
             this.porcentaje.Name = "porcentaje";
@@ -672,6 +678,30 @@
             this.corteMaestro.ReadOnly = true;
             this.corteMaestro.Width = 120;
             // 
+            // porcentajeHueso
+            // 
+            this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle13.Format = "N2";
+            dataGridViewCellStyle13.NullValue = null;
+            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle13;
+            this.porcentajeHueso.HeaderText = "% Desperdicio";
+            this.porcentajeHueso.MinimumWidth = 6;
+            this.porcentajeHueso.Name = "porcentajeHueso";
+            this.porcentajeHueso.ReadOnly = true;
+            this.porcentajeHueso.Width = 115;
+            // 
+            // habilitado
+            // 
+            this.habilitado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.habilitado.DataPropertyName = "habilitado";
+            this.habilitado.HeaderText = "Habilitado";
+            this.habilitado.MinimumWidth = 6;
+            this.habilitado.Name = "habilitado";
+            this.habilitado.ReadOnly = true;
+            this.habilitado.Width = 75;
+            // 
             // independiente
             // 
             this.independiente.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
@@ -684,38 +714,24 @@
             this.independiente.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
             this.independiente.Width = 122;
             // 
-            // habilitado
+            // nivel
             // 
-            this.habilitado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.habilitado.DataPropertyName = "habilitado";
-            this.habilitado.HeaderText = "Habilitado";
-            this.habilitado.MinimumWidth = 6;
-            this.habilitado.Name = "habilitado";
-            this.habilitado.ReadOnly = true;
-            this.habilitado.Width = 75;
-            // 
-            // porcentajeHueso
-            // 
-            this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
-            this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle12.Format = "N2";
-            dataGridViewCellStyle12.NullValue = null;
-            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle12;
-            this.porcentajeHueso.HeaderText = "% Desperdicio";
-            this.porcentajeHueso.MinimumWidth = 6;
-            this.porcentajeHueso.Name = "porcentajeHueso";
-            this.porcentajeHueso.ReadOnly = true;
-            this.porcentajeHueso.Width = 115;
+            this.nivel.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.nivel.DataPropertyName = "nivel";
+            this.nivel.HeaderText = "Nivel";
+            this.nivel.MinimumWidth = 6;
+            this.nivel.Name = "nivel";
+            this.nivel.ReadOnly = true;
+            this.nivel.Width = 67;
             // 
             // desvioEstandar
             // 
             this.desvioEstandar.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.desvioEstandar.DataPropertyName = "desvioEstandar";
-            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle13.Format = "N2";
-            dataGridViewCellStyle13.NullValue = null;
-            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle13;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle14.Format = "N2";
+            dataGridViewCellStyle14.NullValue = null;
+            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle14;
             this.desvioEstandar.FillWeight = 90F;
             this.desvioEstandar.HeaderText = "Desvío Estandar";
             this.desvioEstandar.MinimumWidth = 6;
@@ -766,11 +782,11 @@
             // 
             this.stockSL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSL.DataPropertyName = "stockSL";
-            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle14.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle14.Format = "N3";
-            dataGridViewCellStyle14.NullValue = null;
-            this.stockSL.DefaultCellStyle = dataGridViewCellStyle14;
+            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle15.Format = "N3";
+            dataGridViewCellStyle15.NullValue = null;
+            this.stockSL.DefaultCellStyle = dataGridViewCellStyle15;
             this.stockSL.FillWeight = 50F;
             this.stockSL.HeaderText = "Stock S. Lorenzo";
             this.stockSL.MinimumWidth = 6;
@@ -801,11 +817,11 @@
             // 
             this.stockSM.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSM.DataPropertyName = "stockSM";
-            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle15.Format = "N3";
-            dataGridViewCellStyle15.NullValue = null;
-            this.stockSM.DefaultCellStyle = dataGridViewCellStyle15;
+            dataGridViewCellStyle16.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle16.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle16.Format = "N3";
+            dataGridViewCellStyle16.NullValue = null;
+            this.stockSM.DefaultCellStyle = dataGridViewCellStyle16;
             this.stockSM.FillWeight = 50F;
             this.stockSM.HeaderText = "Stock S. Martín";
             this.stockSM.MinimumWidth = 6;
@@ -884,13 +900,14 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
         private System.Windows.Forms.DataGridViewCheckBoxColumn pesable;
         private System.Windows.Forms.DataGridViewTextBoxColumn promedio;
-        private System.Windows.Forms.DataGridViewTextBoxColumn nivel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn puntoStock;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorteMaestro;
         private System.Windows.Forms.DataGridViewTextBoxColumn porcentaje;
         private System.Windows.Forms.DataGridViewTextBoxColumn corteMaestro;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn independiente;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn habilitado;
         private System.Windows.Forms.DataGridViewTextBoxColumn porcentajeHueso;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn habilitado;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn independiente;
+        private System.Windows.Forms.DataGridViewTextBoxColumn nivel;
         private System.Windows.Forms.DataGridViewTextBoxColumn desvioEstandar;
         private System.Windows.Forms.DataGridViewCheckBoxColumn enCierreStock;
         private System.Windows.Forms.DataGridViewCheckBoxColumn ingresoRapidoEmbutido;

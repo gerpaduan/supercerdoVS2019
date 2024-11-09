@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.util;
 using System.Windows.Forms;
 using Presentacion.Cortes;
 
@@ -194,6 +195,7 @@ namespace Presentacion
                 mensaje += "\n" + "-Promedio";
             }
 
+            oCorteE.PuntoStock = Convert.ToInt32(txtPuntoStock.Text);
             oCorteE.Tipo = comboTipo.Text;
             oCorteE.IdAlicuotaIva = Convert.ToInt32(comboAlicuotaIva.SelectedValue);
             oCorteE.AlicuotaIva = Utilidades.Util_Form.convertFloat(comboAlicuotaIva.Text, false);
@@ -265,7 +267,7 @@ namespace Presentacion
             }
 
             if (this.txtCodigo.Text.Equals("") || this.txtDescCorte.Text.Equals("") 
-                || this.comboTipo.Text.Equals(""))
+                || this.comboTipo.Text.Equals("") || this.txtPuntoStock.Text.Equals(""))
             {
                 MessageBox.Show("Debe Completar todos los campos.", "Complete los campos", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -445,6 +447,16 @@ namespace Presentacion
 
                 // Restaurar la posición del cursor
                 txtDescCorte.SelectionStart = cursorPosition;
+            }
+        }
+
+        private void txtPuntoStock_TextChanged(object sender, EventArgs e)
+        {
+            huboModificacion = true;
+            if (!Utilidades.Util_Form.validarCampoNumeroEntero(txtPuntoStock.Text, "Punto Stock"))
+            {
+                txtPuntoStock.Text = "0";
+                txtPuntoStock.SelectAll();
             }
         }
     }

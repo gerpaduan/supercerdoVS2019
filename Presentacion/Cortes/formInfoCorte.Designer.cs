@@ -65,6 +65,8 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
+            this.txtPuntoStock = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -73,7 +75,7 @@
             // btnSalir
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSalir.Location = new System.Drawing.Point(724, 362);
+            this.btnSalir.Location = new System.Drawing.Point(724, 392);
             this.btnSalir.Margin = new System.Windows.Forms.Padding(4);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(109, 33);
@@ -87,10 +89,10 @@
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.groupBox1);
-            this.pnlBuscar.Location = new System.Drawing.Point(0, 49);
+            this.pnlBuscar.Location = new System.Drawing.Point(0, 53);
             this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(850, 305);
+            this.pnlBuscar.Size = new System.Drawing.Size(850, 331);
             this.pnlBuscar.TabIndex = 17;
             // 
             // groupBox1
@@ -99,6 +101,8 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.txtPuntoStock);
+            this.groupBox1.Controls.Add(this.label8);
             this.groupBox1.Controls.Add(this.txtNivel);
             this.groupBox1.Controls.Add(this.label17);
             this.groupBox1.Controls.Add(this.txtIndependiente);
@@ -135,14 +139,14 @@
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox1.Size = new System.Drawing.Size(817, 297);
+            this.groupBox1.Size = new System.Drawing.Size(817, 323);
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
             // 
             // txtNivel
             // 
-            this.txtNivel.Location = new System.Drawing.Point(105, 259);
+            this.txtNivel.Location = new System.Drawing.Point(105, 291);
             this.txtNivel.Margin = new System.Windows.Forms.Padding(4);
             this.txtNivel.Name = "txtNivel";
             this.txtNivel.ReadOnly = true;
@@ -155,7 +159,7 @@
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label17.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label17.Location = new System.Drawing.Point(57, 262);
+            this.label17.Location = new System.Drawing.Point(57, 294);
             this.label17.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(40, 18);
@@ -528,11 +532,32 @@
             this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
             // 
+            // txtPuntoStock
+            // 
+            this.txtPuntoStock.Location = new System.Drawing.Point(105, 259);
+            this.txtPuntoStock.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPuntoStock.Name = "txtPuntoStock";
+            this.txtPuntoStock.Size = new System.Drawing.Size(99, 24);
+            this.txtPuntoStock.TabIndex = 57;
+            this.txtPuntoStock.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label8.Location = new System.Drawing.Point(7, 262);
+            this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(90, 18);
+            this.label8.TabIndex = 58;
+            this.label8.Text = "Punto Stock";
+            // 
             // formInfoCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(850, 400);
+            this.ClientSize = new System.Drawing.Size(850, 430);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
@@ -590,5 +615,7 @@
         private System.Windows.Forms.CheckBox checkIngresoRapidoEmbutido;
         protected System.Windows.Forms.TextBox txtNivel;
         protected System.Windows.Forms.Label label17;
+        protected System.Windows.Forms.TextBox txtPuntoStock;
+        protected System.Windows.Forms.Label label8;
     }
 }

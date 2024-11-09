@@ -36,6 +36,7 @@ namespace Datos
                         oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
                         oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+                        oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
                         oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
                         if (cargarMaestro) 
                             oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
@@ -95,6 +96,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@codigo", oCorteE.codigo);
             cmCorte.Parameters.AddWithValue("@corte", oCorteE.corte);
             cmCorte.Parameters.AddWithValue("@tipo", oCorteE.tipo);
+            cmCorte.Parameters.AddWithValue("@puntoStock", oCorteE.PuntoStock);
             cmCorte.Parameters.AddWithValue("@promedio", oCorteE.Promedio);
             cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
             cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
@@ -362,6 +364,8 @@ namespace Datos
                         oCorteE.corte = drCorte["corte"].ToString();
                         oCorteE.tipo = drCorte["tipo"].ToString();
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+                        oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
+                        oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
                         oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
                         oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
                         oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);

@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
             this.comboOrdenStock = new System.Windows.Forms.ComboBox();
@@ -56,6 +56,8 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.grillaReportes = new System.Windows.Forms.DataGridView();
+            this.checkSoloFaltantes = new System.Windows.Forms.CheckBox();
+            this.checkOcultarColumnas = new System.Windows.Forms.CheckBox();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -67,6 +69,8 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.checkOcultarColumnas);
+            this.panel1.Controls.Add(this.checkSoloFaltantes);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.comboOrdenStock);
             this.panel1.Controls.Add(this.lblActualizar);
@@ -80,7 +84,7 @@
             this.panel1.Controls.Add(this.txtDescripcion);
             this.panel1.Controls.Add(this.label9);
             this.panel1.Location = new System.Drawing.Point(-7, 54);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1343, 112);
             this.panel1.TabIndex = 12;
@@ -109,7 +113,7 @@
             "Ascendente",
             "Descendente"});
             this.comboOrdenStock.Location = new System.Drawing.Point(1188, 73);
-            this.comboOrdenStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboOrdenStock.Margin = new System.Windows.Forms.Padding(4);
             this.comboOrdenStock.Name = "comboOrdenStock";
             this.comboOrdenStock.Size = new System.Drawing.Size(131, 24);
             this.comboOrdenStock.TabIndex = 54;
@@ -135,7 +139,7 @@
             this.btnExportar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnExportar.Image = ((System.Drawing.Image)(resources.GetObject("btnExportar.Image")));
             this.btnExportar.Location = new System.Drawing.Point(1052, 65);
-            this.btnExportar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnExportar.Margin = new System.Windows.Forms.Padding(4);
             this.btnExportar.Name = "btnExportar";
             this.btnExportar.Size = new System.Drawing.Size(109, 38);
             this.btnExportar.TabIndex = 25;
@@ -155,9 +159,9 @@
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(444, 46);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(600, 63);
             this.groupBox1.TabIndex = 24;
             this.groupBox1.TabStop = false;
@@ -168,7 +172,7 @@
             this.fechaDesdeProgresivo.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.fechaDesdeProgresivo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.fechaDesdeProgresivo.Location = new System.Drawing.Point(103, 23);
-            this.fechaDesdeProgresivo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.fechaDesdeProgresivo.Margin = new System.Windows.Forms.Padding(4);
             this.fechaDesdeProgresivo.Name = "fechaDesdeProgresivo";
             this.fechaDesdeProgresivo.Size = new System.Drawing.Size(200, 22);
             this.fechaDesdeProgresivo.TabIndex = 25;
@@ -180,7 +184,7 @@
             this.txtFechaHastaProgresivo.CustomFormat = "dd/MM/yyyy  HH:mm:ss";
             this.txtFechaHastaProgresivo.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.txtFechaHastaProgresivo.Location = new System.Drawing.Point(375, 25);
-            this.txtFechaHastaProgresivo.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtFechaHastaProgresivo.Margin = new System.Windows.Forms.Padding(4);
             this.txtFechaHastaProgresivo.Name = "txtFechaHastaProgresivo";
             this.txtFechaHastaProgresivo.Size = new System.Drawing.Size(200, 22);
             this.txtFechaHastaProgresivo.TabIndex = 24;
@@ -192,7 +196,7 @@
             this.comboCierreStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboCierreStock.FormattingEnabled = true;
             this.comboCierreStock.Location = new System.Drawing.Point(373, 25);
-            this.comboCierreStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboCierreStock.Margin = new System.Windows.Forms.Padding(4);
             this.comboCierreStock.Name = "comboCierreStock";
             this.comboCierreStock.Size = new System.Drawing.Size(201, 24);
             this.comboCierreStock.TabIndex = 23;
@@ -204,7 +208,7 @@
             this.comboInicioStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboInicioStock.FormattingEnabled = true;
             this.comboInicioStock.Location = new System.Drawing.Point(103, 25);
-            this.comboInicioStock.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboInicioStock.Margin = new System.Windows.Forms.Padding(4);
             this.comboInicioStock.Name = "comboInicioStock";
             this.comboInicioStock.Size = new System.Drawing.Size(201, 24);
             this.comboInicioStock.TabIndex = 22;
@@ -241,7 +245,7 @@
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
             this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
             this.btnBuscar.Location = new System.Drawing.Point(317, 64);
-            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(37, 28);
             this.btnBuscar.TabIndex = 21;
@@ -254,7 +258,7 @@
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
             this.comboSucursal.Location = new System.Drawing.Point(127, 15);
-            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.comboSucursal.Name = "comboSucursal";
             this.comboSucursal.Size = new System.Drawing.Size(181, 24);
             this.comboSucursal.TabIndex = 19;
@@ -278,7 +282,7 @@
             this.comboTipoReporte.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboTipoReporte.FormattingEnabled = true;
             this.comboTipoReporte.Location = new System.Drawing.Point(1108, 12);
-            this.comboTipoReporte.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboTipoReporte.Margin = new System.Windows.Forms.Padding(4);
             this.comboTipoReporte.Name = "comboTipoReporte";
             this.comboTipoReporte.Size = new System.Drawing.Size(211, 24);
             this.comboTipoReporte.TabIndex = 18;
@@ -300,7 +304,7 @@
             // txtDescripcion
             // 
             this.txtDescripcion.Location = new System.Drawing.Point(127, 65);
-            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4);
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.Size = new System.Drawing.Size(181, 22);
             this.txtDescripcion.TabIndex = 0;
@@ -323,7 +327,7 @@
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Location = new System.Drawing.Point(1125, 709);
-            this.btnSalir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSalir.Margin = new System.Windows.Forms.Padding(4);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(188, 33);
             this.btnSalir.TabIndex = 10;
@@ -365,44 +369,78 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.grillaReportes.ColumnHeadersHeight = 29;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.WhiteSmoke;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle6;
             this.grillaReportes.Location = new System.Drawing.Point(16, 175);
-            this.grillaReportes.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaReportes.Margin = new System.Windows.Forms.Padding(4);
             this.grillaReportes.Name = "grillaReportes";
             this.grillaReportes.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle7;
             this.grillaReportes.RowHeadersVisible = false;
             this.grillaReportes.RowHeadersWidth = 300;
-            dataGridViewCellStyle4.Format = "N2";
-            dataGridViewCellStyle4.NullValue = null;
-            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle8.Format = "N2";
+            dataGridViewCellStyle8.NullValue = null;
+            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle8;
             this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaReportes.Size = new System.Drawing.Size(1297, 527);
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
+            // 
+            // checkSoloFaltantes
+            // 
+            this.checkSoloFaltantes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkSoloFaltantes.AutoSize = true;
+            this.checkSoloFaltantes.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkSoloFaltantes.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
+            this.checkSoloFaltantes.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkSoloFaltantes.Location = new System.Drawing.Point(878, 15);
+            this.checkSoloFaltantes.Margin = new System.Windows.Forms.Padding(4);
+            this.checkSoloFaltantes.Name = "checkSoloFaltantes";
+            this.checkSoloFaltantes.Size = new System.Drawing.Size(125, 22);
+            this.checkSoloFaltantes.TabIndex = 56;
+            this.checkSoloFaltantes.Text = "Solo Faltantes";
+            this.checkSoloFaltantes.UseVisualStyleBackColor = true;
+            this.checkSoloFaltantes.Visible = false;
+            this.checkSoloFaltantes.CheckedChanged += new System.EventHandler(this.checkSoloFaltantes_CheckedChanged);
+            // 
+            // checkOcultarColumnas
+            // 
+            this.checkOcultarColumnas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkOcultarColumnas.AutoSize = true;
+            this.checkOcultarColumnas.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkOcultarColumnas.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
+            this.checkOcultarColumnas.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkOcultarColumnas.Location = new System.Drawing.Point(634, 15);
+            this.checkOcultarColumnas.Margin = new System.Windows.Forms.Padding(4);
+            this.checkOcultarColumnas.Name = "checkOcultarColumnas";
+            this.checkOcultarColumnas.Size = new System.Drawing.Size(199, 22);
+            this.checkOcultarColumnas.TabIndex = 57;
+            this.checkOcultarColumnas.Text = "Ocultar Columnas Detalle";
+            this.checkOcultarColumnas.UseVisualStyleBackColor = true;
+            this.checkOcultarColumnas.Visible = false;
+            this.checkOcultarColumnas.CheckedChanged += new System.EventHandler(this.checkOcultarColumnas_CheckedChanged);
             // 
             // formReporteStock
             // 
@@ -414,7 +452,7 @@
             this.Controls.Add(this.grillaReportes);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.barraControl);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "formReporteStock";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Reporte Stock";
@@ -456,5 +494,7 @@
         protected System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboOrdenStock;
         private System.Windows.Forms.DateTimePicker fechaDesdeProgresivo;
+        private System.Windows.Forms.CheckBox checkSoloFaltantes;
+        private System.Windows.Forms.CheckBox checkOcultarColumnas;
     }
 }

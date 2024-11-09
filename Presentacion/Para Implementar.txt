@@ -928,149 +928,12 @@ END
 
 
 *********************
-USE [SuperCerdo]
-GO
-/****** Object:  StoredProcedure [dbo].[addOrEditCorte]    Script Date: 10/13/2024 11:08:36 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
--- Author:		<Author,,Name>
--- Create date: <Create Date,,>
--- Description:	<Description,,>
--- =============================================
-ALTER PROCEDURE [dbo].[addOrEditCorte]
-	-- Add the parameters for the stored procedure here
-	@idCorte int = null,
-	@codigo bigint,
-	@corte nvarchar(50),
-	@precioKg float,
-	@ingresoRapidoEmbutido tinyint,
-	@habilitado tinyint,
-	@enCierreStock tinyint,
-	@tipo nvarchar(50),
-	@independiente int,
-	@idCorteMaestro int,
-	@porcentaje float,
-	@porcentajeHueso float,
-	@desvioEstandar float,
-	@promedio float,
-	@idAlicuotaIva int,
-	@alicuotaIva float,
-	@pesable tinyint,
-	@nivel int = 0
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-
-	DECLARE  @idMaestro int;
-	
-	
-	---Se calcula el Nivel del corte segun su Corte Maestro	
-	IF (@idCorteMaestro > 0)
-		begin
-			set @idMaestro = (SELECT TOP 1 [idCorte]
-			  FROM [SuperCerdo].[dbo].[Corte]
-			  where @idCorteMaestro in 
-			  (select Corte_n2.idCorte from Corte as Corte_n2 
-				where Corte_n2.idCorteMaestro in 
-				(select Corte_n1.idCorte from Corte as Corte_n1
-				where Corte_n1.idCorteMaestro in 
-					(select Corte_n0.idCorte from Corte as Corte_n0))))
-					
-			--Si encontró maestro se setea Nivel = 3
-			IF (@idMaestro > 0)
-			begin
-				set @nivel = 3;
-			end
-			
-			else
-				begin
-					set @idMaestro = (SELECT TOP 1 [idCorte]
-					  FROM [SuperCerdo].[dbo].[Corte]
-					  where @idCorteMaestro in 
-					  (select Corte_n1.idCorte from Corte as Corte_n1 
-						where Corte_n1.idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0)))
-							
-					--Si encontró maestro se setea Nivel = 2
-					IF (@idMaestro > 0)
-					begin
-						set @nivel = 2;
-					end
-					
-					else
-						begin
-							set @idMaestro = (SELECT TOP 1 [idCorte]
-							  FROM [SuperCerdo].[dbo].[Corte]
-							  where @idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0))
-									
-							--Si encontró maestro se setea Nivel = 3
-							IF (@idMaestro > 0)
-							begin
-								set @nivel = 1;
-							end
-						end
-				end
-		end
-	----FIN calculo de Nivel en Corte
-	
-
-    -- Edit
-	IF (@idCorte > 0)
-		begin
-			update Corte set codigo=@codigo,corte=@corte, precioKg=@precioKg, tipo=@tipo,
-			ingresoRapidoEmbutido = @ingresoRapidoEmbutido, habilitado = @habilitado, enCierreStock = @enCierreStock, independiente=@independiente,idCorteMaestro=@idCorteMaestro, porcentaje=@porcentaje,
-			porcentajeHueso=@porcentajeHueso,desvioEstandar=@desvioEstandar, promedio = @promedio, idAlicuotaIva = @idAlicuotaIva, alicuotaIva = @alicuotaIva, pesable = @pesable, nivel = @nivel, actualizado = SYSDATETIME() 
-			where idCorte=@idCorte
-
-			-----Se crea el registro del historial
-			insert into ActualizacionCorte (idCorte, codigo, corte, precioKg, ingresoRapidoEmbutido, enCierreStock, tipo, independiente,
-			 idCorteMaestro,porcentaje,porcentajeHueso, desvioEstandar, promedio, creado, actualizado)
-			 values (@idCorte, @codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @enCierreStock, @tipo, @independiente,@idCorteMaestro,@porcentaje,
-			 @porcentajeHueso, @desvioEstandar, @promedio, null, SYSDATETIME())		
-		end
-	-- Add
-	ELSE 
-		begin
-			if ( @idCorteMaestro = 0)
-				begin
-					insert into Corte (codigo, corte, precioKg, ingresoRapidoEmbutido, habilitado, enCierreStock, tipo, independiente, idCorteMaestro,
-					porcentaje,porcentajeHueso, desvioEstandar, promedio, idAlicuotaIva, alicuotaIva, pesable , nivel, creado)
-					 values (@codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @habilitado, @enCierreStock, @tipo, @independiente,@idCorteMaestro,@porcentaje,
-					 @porcentajeHueso, @desvioEstandar, @promedio, @idAlicuotaIva, @alicuotaIva, @pesable, @nivel, SYSDATETIME())					
-					
-					--SELECT @idCorte = SCOPE_IDENTITY()
-					--update Corte set Corte.idCorteMaestro = @idCorte, porcentaje = 100, porcentajeHueso = 0,
-					--desvioEstandar = 0
-					--where Corte.idCorte = @idCorte
-				end
-				
-			else
-				begin
-					insert into Corte (codigo, corte, precioKg, ingresoRapidoEmbutido, habilitado, enCierreStock, tipo, independiente, idCorteMaestro,
-					 porcentaje,porcentajeHueso,desvioEstandar, promedio, idAlicuotaIva, alicuotaIva, pesable, nivel, creado)
-					 values (@codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @habilitado, @enCierreStock, @tipo,@independiente,@idCorteMaestro,@porcentaje,
-					 @porcentajeHueso,@desvioEstandar, @promedio, @idAlicuotaIva, @alicuotaIva, @pesable, @nivel, SYSDATETIME())
-				end
-	
-			----se inician los stock de los sucursales a cero
-			--insert into StockCorteSucursal(idCorte,idSucursal,stock,stockTeorico)
-			--values ((select top 1 Corte.idCorte from Corte order by Corte.idCorte desc), 1, 0,0)
-			
-			--insert into StockCorteSucursal(idCorte,idSucursal,stock,stockTeorico)
-			--values ((select top 1 Corte.idCorte from Corte order by Corte.idCorte desc), 2, 0,0)
-		end
-END
-
 
 ***************************************************
 
 USE [SuperCerdo]
 GO
-/****** Object:  StoredProcedure [dbo].[buscarCorte]    Script Date: 10/13/2024 11:12:56 ******/
+/****** Object:  StoredProcedure [dbo].[buscarCorte]    Script Date: 11/06/2024 19:31:13 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1091,7 +954,7 @@ BEGIN
 
     -- Insert statements for procedure here
 	SELECT      CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.precioKg as 'efectivo', CorteP.precioKg as 'debito', CorteP.precioKg as 'credito', CorteP.precioKg as 'Billetera', CorteP.precioKg as 'Qr', CorteP.precioKg as 'Transf', CorteP.habilitado, CorteP.mayorista, CorteP.enCierreStock, CorteP.alicuotaIva, CorteP.tipo, CorteP.pesable, CorteP.nivel,CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, 
-                      CAST(CorteP.porcentaje AS numeric(10, 2)) AS porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, CorteP.independiente, CorteP.promedio, CorteP.ingresoRapidoEmbutido
+                      CAST(CorteP.porcentaje AS numeric(10, 2)) AS porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, CorteP.independiente, CorteP.promedio, CorteP.puntoStock, CorteP.ingresoRapidoEmbutido
 FROM         dbo.Corte AS CorteM RIGHT OUTER JOIN
                       dbo.Corte AS CorteP ON CorteM.idCorte = CorteP.idCorteMaestro
 WHERE    (CorteP.corte like '%'+@texto+'%'  OR cast(CorteP.codigo as nvarchar(50))= @texto or CorteM.corte like '%'+@texto+'%')
@@ -1467,3 +1330,182 @@ END
 
 *******************
 AGREGAR TABLA TIPO PRODUCTOS
+
+***************
+
+Agregar campo - puntoStock	int	Checked - en Corte
+
+
+********************
+
+USE [SuperCerdo]
+GO
+/****** Object:  StoredProcedure [dbo].[addOrEditCorte]    Script Date: 11/06/2024 18:53:26 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[addOrEditCorte]
+	-- Add the parameters for the stored procedure here
+	@idCorte int = null,
+	@codigo bigint,
+	@corte nvarchar(50),
+	@precioKg float,
+	@ingresoRapidoEmbutido tinyint,
+	@habilitado tinyint,
+	@enCierreStock tinyint,
+	@tipo nvarchar(50),
+	@independiente int,
+	@idCorteMaestro int,
+	@porcentaje float,
+	@porcentajeHueso float,
+	@desvioEstandar float,
+	@promedio float,
+	@idAlicuotaIva int,
+	@alicuotaIva float,
+	@pesable tinyint,
+	@nivel int = 0,
+	@puntoStock int = 0
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	DECLARE  @idMaestro int;
+	
+	
+	---Se calcula el Nivel del corte segun su Corte Maestro	
+	IF (@idCorteMaestro > 0)
+		begin
+			set @idMaestro = (SELECT     TOP (1) idCorte
+				FROM         dbo.Corte
+				WHERE     (@idCorteMaestro IN
+						  (SELECT     idCorte
+							FROM          dbo.Corte AS Corte_n2
+							WHERE      (idCorteMaestro IN
+									   (SELECT     idCorte
+										 FROM          dbo.Corte AS Corte_n1
+										 WHERE      (idCorteMaestro IN
+									(SELECT     idCorte
+									  FROM          dbo.Corte AS Corte_n0
+									  WHERE      (idCorteMaestro IN
+										(SELECT     idCorte
+										  FROM          dbo.Corte AS Corte_n)))))))))
+			IF (@idMaestro > 0)
+				begin
+					set @nivel = 4;
+				end
+			
+			else
+			 begin							  
+				set @idMaestro = (SELECT TOP 1 [idCorte]
+				  FROM [SuperCerdo].[dbo].[Corte]
+				  where @idCorteMaestro in 
+				  (select Corte_n2.idCorte from Corte as Corte_n2 
+					where Corte_n2.idCorteMaestro in 
+					(select Corte_n1.idCorte from Corte as Corte_n1
+					where Corte_n1.idCorteMaestro in 
+						(select Corte_n0.idCorte from Corte as Corte_n0))))
+						
+				--Si encontró maestro se setea Nivel = 3
+				IF (@idMaestro > 0)
+					begin
+						set @nivel = 3;
+					end
+				
+				else
+					begin
+						set @idMaestro = (SELECT TOP 1 [idCorte]
+						  FROM [SuperCerdo].[dbo].[Corte]
+						  where @idCorteMaestro in 
+						  (select Corte_n1.idCorte from Corte as Corte_n1 
+							where Corte_n1.idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0)))
+								
+						--Si encontró maestro se setea Nivel = 2
+						IF (@idMaestro > 0)
+						begin
+							set @nivel = 2;
+						end
+						
+						else
+							begin
+								set @idMaestro = (SELECT TOP 1 [idCorte]
+								  FROM [SuperCerdo].[dbo].[Corte]
+								  where @idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0))
+										
+								--Si encontró maestro se setea Nivel = 3
+								IF (@idMaestro > 0)
+								begin
+									set @nivel = 1;
+								end
+							end
+					end
+				end
+		end
+	----FIN calculo de Nivel en Corte
+	
+
+    -- Edit
+	IF (@idCorte > 0)
+		begin
+			update Corte set codigo=@codigo,corte=@corte, precioKg=@precioKg, tipo=@tipo,
+			ingresoRapidoEmbutido = @ingresoRapidoEmbutido, habilitado = @habilitado, enCierreStock = @enCierreStock, independiente=@independiente,idCorteMaestro=@idCorteMaestro, porcentaje=@porcentaje,
+			porcentajeHueso=@porcentajeHueso,desvioEstandar=@desvioEstandar, promedio = @promedio, puntoStock = @puntoStock, idAlicuotaIva = @idAlicuotaIva, alicuotaIva = @alicuotaIva, pesable = @pesable, nivel = @nivel, actualizado = SYSDATETIME() 
+			where idCorte=@idCorte
+
+			-----Se crea el registro del historial
+			insert into ActualizacionCorte (idCorte, codigo, corte, precioKg, ingresoRapidoEmbutido, enCierreStock, tipo, independiente,
+			 idCorteMaestro,porcentaje,porcentajeHueso, desvioEstandar, promedio, creado, actualizado)
+			 values (@idCorte, @codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @enCierreStock, @tipo, @independiente,@idCorteMaestro,@porcentaje,
+			 @porcentajeHueso, @desvioEstandar, @promedio, null, SYSDATETIME())		
+		end
+	-- Add
+	ELSE 
+		begin
+			if ( @idCorteMaestro = 0)
+				begin
+					insert into Corte (codigo, corte, precioKg, ingresoRapidoEmbutido, habilitado, enCierreStock, tipo, independiente, idCorteMaestro,
+					porcentaje,porcentajeHueso, desvioEstandar, promedio, puntoStock, idAlicuotaIva, alicuotaIva, pesable , nivel, creado)
+					 values (@codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @habilitado, @enCierreStock, @tipo, @independiente,@idCorteMaestro,@porcentaje,
+					 @porcentajeHueso, @desvioEstandar, @promedio, @puntoStock, @idAlicuotaIva, @alicuotaIva, @pesable, @nivel, SYSDATETIME())					
+					
+					--SELECT @idCorte = SCOPE_IDENTITY()
+					--update Corte set Corte.idCorteMaestro = @idCorte, porcentaje = 100, porcentajeHueso = 0,
+					--desvioEstandar = 0
+					--where Corte.idCorte = @idCorte
+				end
+				
+			else
+				begin
+					insert into Corte (codigo, corte, precioKg, ingresoRapidoEmbutido, habilitado, enCierreStock, tipo, independiente, idCorteMaestro,
+					 porcentaje,porcentajeHueso,desvioEstandar, promedio, puntoStock, idAlicuotaIva, alicuotaIva, pesable, nivel, creado)
+					 values (@codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @habilitado, @enCierreStock, @tipo,@independiente,@idCorteMaestro,@porcentaje,
+					 @porcentajeHueso,@desvioEstandar, @promedio, @puntoStock, @idAlicuotaIva, @alicuotaIva, @pesable, @nivel, SYSDATETIME())
+				end
+	
+			----se inician los stock de los sucursales a cero
+			--insert into StockCorteSucursal(idCorte,idSucursal,stock,stockTeorico)
+			--values ((select top 1 Corte.idCorte from Corte order by Corte.idCorte desc), 1, 0,0)
+			
+			--insert into StockCorteSucursal(idCorte,idSucursal,stock,stockTeorico)
+			--values ((select top 1 Corte.idCorte from Corte order by Corte.idCorte desc), 2, 0,0)
+		end
+END
+
+************************************
+
+UPDATE [SuperCerdo].[dbo].[Corte]
+   SET [puntoStock] = 0
+GO
+
+**********************************
+Modificar storeProcedure
+
+[a_CierreStock]
+[Acum_Ventas]

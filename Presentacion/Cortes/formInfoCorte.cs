@@ -28,6 +28,7 @@ namespace Presentacion
             frmNuevoCorte.idCorte = oCorteE.idCorte;
             frmNuevoCorte.oFrmInfoCorte = this;
             frmNuevoCorte.ShowDialog();
+            this.Close();
         }
 
         private void stock_Click(object sender, EventArgs e)
@@ -48,25 +49,43 @@ namespace Presentacion
         {
             try
             {
-                foreach (DataRow fila in dtCorte.Rows)
-                {
-                    txtIdCorte.Text = fila["idCorte"].ToString();
-                    txtCodigo.Text = fila["codigo"].ToString();
-                    txtDescCorte.Text = fila["corte"].ToString();
-                    txtPrecioKg.Text = fila["precioKg"].ToString();
-                    txtTipo.Text = fila["tipo"].ToString();
-                    txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
-                    txtAlicuotaIva.Text = (fila["alicuotaIva"]).ToString();
-                    checkHabilitado.Checked = Convert.ToBoolean(fila["habilitado"]);
-                    checkIngresoRapidoEmbutido.Checked = Convert.ToBoolean(fila["ingresoRapidoEmbutido"]);
-                    checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
+                txtIdCorte.Text = oCorteE.idCorte.ToString();
+                txtCodigo.Text = Convert.ToString(oCorteE.codigo);
+                txtDescCorte.Text = oCorteE.corte;
+                txtPrecioKg.Text = oCorteE.precioKg.ToString("F2"); 
+                txtTipo.Text = oCorteE.tipo;
+                txtAlicuotaIva.Text = oCorteE.AlicuotaIva.ToString();
+                txtPromedio.Text = oCorteE.Promedio.ToString("F2");
+                txtPuntoStock.Text = oCorteE.PuntoStock.ToString();
+                txtNivel.Text = oCorteE.Nivel.ToString();
+                checkIngresoRapidoEmbutido.Checked = oCorteE.IngresoRapidoEmbutido;
+                checkEnCierreStock.Checked = oCorteE.EnCierreStock;
+                txtIndependiente.Checked = oCorteE.independiente.Equals(1);
+                checkHabilitado.Checked = oCorteE.Habilitado;
+                txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null) ? oCorteE.corteMaestro.corte : "-";
+                txtPorcentajeCorte.Text = Convert.ToString(oCorteE.porcentaje);
+                txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+                txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
 
-                    txtCorteMaestro.Text = fila["corteMaestro"].ToString();
-                    txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
-                    txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
-                    txtDesvioEstandar.Text = fila["desvioEstandar"].ToString();
-                    txtPromedio.Text = fila["promedio"].ToString();
-                }
+                //foreach (DataRow fila in dtCorte.Rows)
+                //{
+                //    txtIdCorte.Text = fila["idCorte"].ToString();
+                //    txtCodigo.Text = fila["codigo"].ToString();
+                //    txtDescCorte.Text = fila["corte"].ToString();
+                //    txtPrecioKg.Text = fila["precioKg"].ToString();
+                //    txtTipo.Text = fila["tipo"].ToString();
+                //    txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
+                //    txtAlicuotaIva.Text = (fila["alicuotaIva"]).ToString();
+                //    checkHabilitado.Checked = Convert.ToBoolean(fila["habilitado"]);
+                //    checkIngresoRapidoEmbutido.Checked = Convert.ToBoolean(fila["ingresoRapidoEmbutido"]);
+                //    checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
+
+                //    txtCorteMaestro.Text = fila["corteMaestro"].ToString();
+                //    txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
+                //    txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
+                //    txtDesvioEstandar.Text = fila["desvioEstandar"].ToString();
+                //    txtPromedio.Text = fila["promedio"].ToString();
+                //}
             }
             catch (Exception ex)
             {
@@ -125,7 +144,8 @@ namespace Presentacion
                 this.Text += Utilidades.Conexion.getSucursalConexion();
 
                 oCorteE = oCorteN.getCorteById(idCorte, true);
-                cargarCorte();
+                //cargarCorte();
+                cargarCampos();
             }
             catch (Exception ex)
             {

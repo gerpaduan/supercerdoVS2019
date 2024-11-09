@@ -63,6 +63,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.txtPuntoStock = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
@@ -109,6 +111,8 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.txtPuntoStock);
+            this.groupBox1.Controls.Add(this.label11);
             this.groupBox1.Controls.Add(this.lblActualizar);
             this.groupBox1.Controls.Add(this.checkMayuscula);
             this.groupBox1.Controls.Add(this.checkPesable);
@@ -147,7 +151,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(109, 261);
+            this.lblActualizar.Location = new System.Drawing.Point(109, 293);
             this.lblActualizar.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(134, 18);
@@ -199,18 +203,18 @@
             "Corte",
             "Embutido",
             "Otro"});
-            this.comboAlicuotaIva.Location = new System.Drawing.Point(124, 231);
+            this.comboAlicuotaIva.Location = new System.Drawing.Point(124, 263);
             this.comboAlicuotaIva.Margin = new System.Windows.Forms.Padding(4);
             this.comboAlicuotaIva.Name = "comboAlicuotaIva";
             this.comboAlicuotaIva.Size = new System.Drawing.Size(93, 26);
-            this.comboAlicuotaIva.TabIndex = 6;
+            this.comboAlicuotaIva.TabIndex = 7;
             // 
             // label10
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(31, 234);
+            this.label10.Location = new System.Drawing.Point(31, 266);
             this.label10.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(82, 18);
@@ -228,7 +232,7 @@
             this.checkHabilitado.Margin = new System.Windows.Forms.Padding(4);
             this.checkHabilitado.Name = "checkHabilitado";
             this.checkHabilitado.Size = new System.Drawing.Size(95, 22);
-            this.checkHabilitado.TabIndex = 7;
+            this.checkHabilitado.TabIndex = 9;
             this.checkHabilitado.Text = "Habilitado";
             this.checkHabilitado.UseVisualStyleBackColor = true;
             // 
@@ -239,6 +243,7 @@
             this.txtPromedio.Name = "txtPromedio";
             this.txtPromedio.Size = new System.Drawing.Size(93, 24);
             this.txtPromedio.TabIndex = 5;
+            this.txtPromedio.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label8
             // 
@@ -263,7 +268,7 @@
             this.checkEnCierreStock.Margin = new System.Windows.Forms.Padding(4);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(135, 22);
-            this.checkEnCierreStock.TabIndex = 8;
+            this.checkEnCierreStock.TabIndex = 10;
             this.checkEnCierreStock.Text = "En Cierre Stock";
             this.checkEnCierreStock.UseVisualStyleBackColor = true;
             // 
@@ -276,8 +281,7 @@
             this.checkIngresoRapidoEmbutido.Margin = new System.Windows.Forms.Padding(4);
             this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
             this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(194, 22);
-            this.checkIngresoRapidoEmbutido.TabIndex = 7;
-            this.checkIngresoRapidoEmbutido.TabStop = false;
+            this.checkIngresoRapidoEmbutido.TabIndex = 8;
             this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoElaborado";
             this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
             // 
@@ -290,7 +294,7 @@
             this.checkAsignarMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.checkAsignarMaestro.Name = "checkAsignarMaestro";
             this.checkAsignarMaestro.Size = new System.Drawing.Size(138, 22);
-            this.checkAsignarMaestro.TabIndex = 10;
+            this.checkAsignarMaestro.TabIndex = 12;
             this.checkAsignarMaestro.Text = "Asignar maestro";
             this.checkAsignarMaestro.UseVisualStyleBackColor = true;
             this.checkAsignarMaestro.CheckedChanged += new System.EventHandler(this.checkAsignarMaestro_CheckedChanged);
@@ -431,7 +435,7 @@
             this.txtIndependiente.Margin = new System.Windows.Forms.Padding(4);
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(161, 22);
-            this.txtIndependiente.TabIndex = 9;
+            this.txtIndependiente.TabIndex = 11;
             this.txtIndependiente.Text = "Corte Independiente";
             this.txtIndependiente.UseVisualStyleBackColor = true;
             this.txtIndependiente.CheckedChanged += new System.EventHandler(this.txtIndependiente_CheckedChanged);
@@ -443,6 +447,7 @@
             this.txtPrecioKg.Name = "txtPrecioKg";
             this.txtPrecioKg.Size = new System.Drawing.Size(174, 24);
             this.txtPrecioKg.TabIndex = 2;
+            this.txtPrecioKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtPrecioKg.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             this.txtPrecioKg.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
@@ -490,6 +495,7 @@
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.Size = new System.Drawing.Size(174, 24);
             this.txtCodigo.TabIndex = 0;
+            this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
             this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
@@ -526,6 +532,29 @@
             this.label4.Size = new System.Drawing.Size(45, 18);
             this.label4.TabIndex = 2;
             this.label4.Text = "Corte";
+            // 
+            // txtPuntoStock
+            // 
+            this.txtPuntoStock.Location = new System.Drawing.Point(124, 231);
+            this.txtPuntoStock.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPuntoStock.Name = "txtPuntoStock";
+            this.txtPuntoStock.Size = new System.Drawing.Size(93, 24);
+            this.txtPuntoStock.TabIndex = 6;
+            this.txtPuntoStock.Text = "0";
+            this.txtPuntoStock.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPuntoStock.TextChanged += new System.EventHandler(this.txtPuntoStock_TextChanged);
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label11.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label11.Location = new System.Drawing.Point(18, 234);
+            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(90, 18);
+            this.label11.TabIndex = 56;
+            this.label11.Text = "Punto Stock";
             // 
             // formNuevoCorte
             // 
@@ -588,5 +617,7 @@
         private System.Windows.Forms.CheckBox checkPesable;
         private System.Windows.Forms.CheckBox checkMayuscula;
         protected System.Windows.Forms.Label lblActualizar;
+        protected System.Windows.Forms.TextBox txtPuntoStock;
+        protected System.Windows.Forms.Label label11;
     }
 }

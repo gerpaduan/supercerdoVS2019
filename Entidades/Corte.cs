@@ -38,6 +38,8 @@ namespace Entidades
         private float alicuotaIva;
         private bool pesable;
         private int nivel;
+        private int puntoStock;
+
 
         public bool Habilitado
         {
@@ -214,5 +216,6 @@ namespace Entidades
         public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
         public bool Pesable { get => pesable; set => pesable = value; }
         public int Nivel { get => nivel; set => nivel = value; }
+        public int PuntoStock { get => puntoStock; set => puntoStock = value; }
     }
 }

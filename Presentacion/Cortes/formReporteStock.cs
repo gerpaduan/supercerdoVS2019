@@ -27,6 +27,8 @@ namespace Presentacion.Cortes
         bool stockProgresivo = false;
         bool acumVentas = false;
         bool combosCierresCargados = false;
+        string[] arrayRowFilter = new string[] { "1 = 1", "1 = 1", "1 = 1", "1 = 1" };
+        string consultaRowFilter = "";
         DateTime fechaUltimoCierreStock;
 
         public formReporteStock()
@@ -249,7 +251,8 @@ namespace Presentacion.Cortes
         private void cargarGrilla()
         {
             lblActualizar.Visible = false;
-
+            checkSoloFaltantes.Checked = false;
+            checkOcultarColumnas.Checked = false;
             ///reporteTeoricoReal
             if (comboTipoReporte.Text.Equals("Teorico - Real"))
             {
@@ -409,6 +412,10 @@ namespace Presentacion.Cortes
                             string stock = Convert.ToDecimal(fila["promedio"]) == 0 ? stockKg.ToString("F2") :
                                 Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";//stockUn;// stockUn.ToString("F1") + " u";
                             fila["Stock.Un"] = stock;
+
+                            //Si Punto Stock mayor a cero significa que se necesita saber el faltante del producto
+                            //
+                            fila["Falta"] = Convert.ToDecimal(fila["Pto.Stock"]) > 0 && ((Convert.ToDecimal(fila["DIF"]) < 0) || (Convert.ToDecimal(fila["Pto.Stock"]) - (Convert.ToDecimal(fila["DIF"])) <= 0)) ? "X" : "";
                         }
                         grillaReportes.DataSource = dtGrillaReporte;
 
@@ -817,6 +824,8 @@ namespace Presentacion.Cortes
                 comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Progresivo") ||
                 comboTipoReporte.Text.Equals("Acum. Ventas")))
             {
+                checkSoloFaltantes.Visible = true;
+                checkOcultarColumnas.Visible = true;
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
 
@@ -856,7 +865,6 @@ namespace Presentacion.Cortes
                     comboCierreStock.DisplayMember = "fechaCompra";
                     comboCierreStock.ValueMember = "idCompra";
                 }
-
             }
         }
 
@@ -880,8 +888,12 @@ namespace Presentacion.Cortes
         {
             try
             {
-                //Creating iTextSharp Table from the DataTable data
-                PdfPTable pdfTable = new PdfPTable(grillaReportes.ColumnCount);
+                ////Creating iTextSharp Table from the DataTable data
+                //PdfPTable pdfTable = new PdfPTable(grillaReportes.ColumnCount);
+                
+                // Crea una tabla en el PDF con la misma cantidad de columnas visibles en el DataGridView
+                PdfPTable pdfTable = new PdfPTable(grillaReportes.Columns.GetColumnCount(DataGridViewElementStates.Visible));
+
                 pdfTable.DefaultCell.Padding = 3;
                 pdfTable.WidthPercentage = 100;
                 pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
@@ -892,21 +904,24 @@ namespace Presentacion.Cortes
                 //Adding Header row
                 foreach (DataGridViewColumn column in grillaReportes.Columns)
                 {
-                    PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
-                    cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
+                    if (column.Visible)
+                    {
+                        PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
+                        cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
 
-                    encabezado = comboTipoReporte.Text + "\n Sucursal: " + comboSucursal.Text;
-                    if (comboTipoReporte.Text == "Cierre Stock")
-                    {
-                        encabezado += " ||| Desde: " + comboInicioStock.Text +
-                            " | Hasta: " + comboCierreStock.Text + "\n\n";
+                        encabezado = comboTipoReporte.Text + "\n Sucursal: " + comboSucursal.Text;
+                        if (comboTipoReporte.Text == "Cierre Stock")
+                        {
+                            encabezado += " ||| Desde: " + comboInicioStock.Text +
+                                " | Hasta: " + comboCierreStock.Text + "\n\n";
+                        }
+                        else
+                        {
+                            encabezado += " ||| Desde: " + fechaDesdeProgresivo.Text +
+                                " | Hasta: " + txtFechaHastaProgresivo.Text + "\n\n";
+                        }
+                        pdfTable.AddCell(cell);
                     }
-                    else
-                    {
-                        encabezado += " ||| Desde: " + fechaDesdeProgresivo.Text +
-                            " | Hasta: " + txtFechaHastaProgresivo.Text + "\n\n";
-                    }
-                    pdfTable.AddCell(cell);
                 }
 
                 //Adding DataRow
@@ -914,17 +929,22 @@ namespace Presentacion.Cortes
                 {
                     foreach (DataGridViewCell cell in row.Cells)
                     {
-                        string valueCell = "";
-                        if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
+                        if (grillaReportes.Columns[cell.ColumnIndex].Visible) // Solo columnas visibles
                         {
-                            valueCell = String.Format("{0:0.00}", cell.Value);
+                            string valueCell = "";
+                            if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
+                            {
+                                valueCell = String.Format("{0:0.00}", cell.Value);
+                            }
+                            else
+                            {
+                                int cantColVisibles = grillaReportes.Columns.GetColumnCount(DataGridViewElementStates.Visible);
+                                valueCell = cell.Value.ToString();
+                                valueCell = (valueCell.Length > 6 && cantColVisibles > 10) ? valueCell.Substring(0, 6) : valueCell;
+                                
+                            }
+                            pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
                         }
-                        else
-                        {
-                            valueCell = cell.Value.ToString();
-                            valueCell = (valueCell.Length > 6 && grillaReportes.Columns.Count > 10) ? valueCell.Substring(0, 6) : valueCell;
-                        }
-                        pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
                     }
                 }
 
@@ -959,6 +979,8 @@ namespace Presentacion.Cortes
         private void comboTipoReporte_SelectedValueChanged(object sender, EventArgs e)
         {
             combosCierresCargados = false;
+            checkSoloFaltantes.Visible = false;
+            checkOcultarColumnas.Visible = false;
             if (comboTipoReporte.Text.Equals("Cierre Stock") ||
                 comboTipoReporte.Text.Equals("Stock Actual") ||
                 comboTipoReporte.Text.Equals("Stock Progresivo") ||
@@ -970,6 +992,8 @@ namespace Presentacion.Cortes
                 comboInicioStock.Visible = !acumVentas;
                 comboCierreStock.Visible = !stockProgresivo && !acumVentas;
                 cargarComboCierreStock();
+                checkSoloFaltantes.Visible = true;
+                checkOcultarColumnas.Visible = true;
             }
             else
             {
@@ -1032,6 +1056,49 @@ namespace Presentacion.Cortes
         private void comboSucursal_SelectedValueChanged(object sender, EventArgs e)
         {
             lblActualizar.Visible = true;
+        }
+
+        private void checkSoloFaltantes_CheckedChanged(object sender, EventArgs e)
+        {
+            string nombreCol = "Falta";
+            string consulta = "1 <> 1"; 
+            if (checkSoloFaltantes.Checked)
+                consulta += " OR " + nombreCol + " = 'X'";
+            else
+            {
+                consulta = "1 = 1";
+            }
+
+            arrayRowFilter[2] = consulta;
+            aplicarRowFilter();
+        }
+        private void aplicarRowFilter()
+        {
+            consultaRowFilter = "";
+
+            for (int i = 0; i < arrayRowFilter.Length; i++)
+            {
+                string and = (i != arrayRowFilter.Length - 1) ? " AND " : "";
+                consultaRowFilter += "( " + arrayRowFilter[i] + " )" + and;
+            }
+
+            (grillaReportes.DataSource as DataTable).DefaultView.RowFilter = string.Format(consultaRowFilter);
+        }
+
+        private void checkOcultarColumnas_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!combosCierresCargados)
+                return;
+
+            for (int i = 0; i < grillaReportes.Columns.Count; i++)
+            {
+                bool visible = !checkOcultarColumnas.Checked ? true :
+                   ( (grillaReportes.Columns[i].HeaderText == "Codigo" || grillaReportes.Columns[i].HeaderText == "Corte" ||
+                   grillaReportes.Columns[i].HeaderText == "Faltante" || grillaReportes.Columns[i].HeaderText == "Stock Actual"
+                   || grillaReportes.Columns[i].HeaderText == "Falta" || grillaReportes.Columns[i].HeaderText == "Pto.Stock") ? true : false );
+
+                grillaReportes.Columns[i].Visible = visible;
+            }            
         }
     }
 }
