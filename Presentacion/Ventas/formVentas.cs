@@ -89,7 +89,7 @@ namespace Presentacion
             txtTotalSAj.Text = String.Format("{0:0.00}", totalImpAj);
             totalKgs = totalKgs - totalKgsAj;//resta los kgs del ajuste
             txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
-            if (Presentacion.FormPrincipal.logueado)
+            if (logueado) //Presentacion.FormPrincipal.logueado)
             {
                 txtTotalS.Text = String.Format("{0:0.00}", totalS );
             }
