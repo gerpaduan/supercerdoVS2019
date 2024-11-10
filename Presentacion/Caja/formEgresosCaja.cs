@@ -19,6 +19,8 @@ namespace Presentacion.Caja
         protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Usuario oUsuario;
+        string[] arrayRowFilter = new string[] { "1 = 1", "1 = 1", "1 = 1", "1 = 1" };
+        string consultaRowFilter = "";
 
         DataTable dtEgresosCaja = null;
 
@@ -68,7 +70,7 @@ namespace Presentacion.Caja
         {
             if (loadingForm) return;
             lblActualizar.Visible = false;
-            dtEgresosCaja = oCierreN.obtenerEgresosCaja(oEgresoCajaE.Sucursal.idSucursal, 
+            dtEgresosCaja = oCierreN.obtenerEgresosCaja(oEgresoCajaE.Sucursal.idSucursal,
                 Convert.ToInt32(comboUsuario.SelectedValue.ToString()), oEgresoCajaE.IdTipoEgresoCaja, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
             grillaEgresosCaja.DataSource = dtEgresosCaja;
             grillaEgresosCaja.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
@@ -77,6 +79,22 @@ namespace Presentacion.Caja
             grillaEgresosCaja.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
 
+            // Obtener el índice de la columna "Gasto" original
+            int index = grillaEgresosCaja.Columns["Gasto"].Index;
+            grillaEgresosCaja.Columns.Remove("Gasto");
+            // Crear una columna de tipo DataGridViewCheckBoxColumn
+            DataGridViewCheckBoxColumn checkBoxColumn = new DataGridViewCheckBoxColumn();
+            checkBoxColumn.Name = "Gasto";
+            checkBoxColumn.HeaderText = "Gasto";
+            checkBoxColumn.DataPropertyName = "Gasto"; // Nombre de la propiedad en el origen de datos, si corresponde
+            // Añadir la columna CheckBox a la grilla
+            grillaEgresosCaja.Columns.Insert(index, checkBoxColumn);
+            cargarTotales();
+            buscarSoloGastos();
+        }
+
+        private void cargarTotales()
+        {
             int cantItems = 0;
             decimal total = 0;
             foreach (DataGridViewRow row in grillaEgresosCaja.Rows)
@@ -227,6 +245,40 @@ namespace Presentacion.Caja
                 frmTiposEgresos.EnviarUsuario(oUsuario);
                 frmTiposEgresos.Show();
             }
+        }
+
+        private void checkSoloGastos_CheckedChanged(object sender, EventArgs e)
+        {
+            buscarSoloGastos();
+        }
+
+        private void buscarSoloGastos()
+        {
+            string nombreCol = "Gasto";
+            string consulta = "1 <> 1";
+            if (checkSoloGastos.Checked)
+                consulta += " OR " + nombreCol + " = true";
+            else
+            {
+                consulta = "1 = 1";
+            }
+
+            arrayRowFilter[2] = consulta;
+            aplicarRowFilter();
+            cargarTotales();
+        }
+
+        private void aplicarRowFilter()
+        {
+            consultaRowFilter = "";
+
+            for (int i = 0; i < arrayRowFilter.Length; i++)
+            {
+                string and = (i != arrayRowFilter.Length - 1) ? " AND " : "";
+                consultaRowFilter += "( " + arrayRowFilter[i] + " )" + and;
+            }
+
+            (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(consultaRowFilter);
         }
     }
 }

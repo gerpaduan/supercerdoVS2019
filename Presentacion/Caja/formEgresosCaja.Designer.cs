@@ -57,6 +57,7 @@
             this.grillaEgresosCaja = new System.Windows.Forms.DataGridView();
             this.label8 = new System.Windows.Forms.Label();
             this.txtItems = new System.Windows.Forms.TextBox();
+            this.checkSoloGastos = new System.Windows.Forms.CheckBox();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).BeginInit();
@@ -104,6 +105,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pnlBuscar.Controls.Add(this.checkSoloGastos);
             this.pnlBuscar.Controls.Add(this.label9);
             this.pnlBuscar.Controls.Add(this.comboUsuario);
             this.pnlBuscar.Controls.Add(this.lblActualizar);
@@ -120,7 +122,7 @@
             this.pnlBuscar.Controls.Add(this.label4);
             this.pnlBuscar.Controls.Add(this.txtDescripcion);
             this.pnlBuscar.Controls.Add(this.label2);
-            this.pnlBuscar.Location = new System.Drawing.Point(0, 55);
+            this.pnlBuscar.Location = new System.Drawing.Point(0, 58);
             this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(1148, 103);
@@ -131,7 +133,7 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(49, 7);
+            this.label9.Location = new System.Drawing.Point(49, 8);
             this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(60, 18);
@@ -142,7 +144,7 @@
             // 
             this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboUsuario.FormattingEnabled = true;
-            this.comboUsuario.Location = new System.Drawing.Point(124, 6);
+            this.comboUsuario.Location = new System.Drawing.Point(124, 7);
             this.comboUsuario.Margin = new System.Windows.Forms.Padding(4);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(213, 24);
@@ -182,7 +184,7 @@
             this.comboSucursal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.comboSucursal.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboSucursal.FormattingEnabled = true;
-            this.comboSucursal.Location = new System.Drawing.Point(931, 4);
+            this.comboSucursal.Location = new System.Drawing.Point(931, 7);
             this.comboSucursal.Margin = new System.Windows.Forms.Padding(4);
             this.comboSucursal.Name = "comboSucursal";
             this.comboSucursal.Size = new System.Drawing.Size(200, 24);
@@ -196,7 +198,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(849, 7);
+            this.label7.Location = new System.Drawing.Point(849, 10);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(66, 18);
@@ -434,6 +436,22 @@
             this.txtItems.TabIndex = 44;
             this.txtItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
+            // checkSoloGastos
+            // 
+            this.checkSoloGastos.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkSoloGastos.AutoSize = true;
+            this.checkSoloGastos.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkSoloGastos.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
+            this.checkSoloGastos.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkSoloGastos.Location = new System.Drawing.Point(345, 40);
+            this.checkSoloGastos.Margin = new System.Windows.Forms.Padding(4);
+            this.checkSoloGastos.Name = "checkSoloGastos";
+            this.checkSoloGastos.Size = new System.Drawing.Size(114, 22);
+            this.checkSoloGastos.TabIndex = 57;
+            this.checkSoloGastos.Text = "Solo Gastos";
+            this.checkSoloGastos.UseVisualStyleBackColor = true;
+            this.checkSoloGastos.CheckedChanged += new System.EventHandler(this.checkSoloGastos_CheckedChanged);
+            // 
             // formEgresosCaja
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -495,5 +513,6 @@
         protected System.Windows.Forms.Label label9;
         private System.Windows.Forms.ComboBox comboUsuario;
         private System.Windows.Forms.ToolStripButton tiposEgresos;
+        private System.Windows.Forms.CheckBox checkSoloGastos;
     }
 }

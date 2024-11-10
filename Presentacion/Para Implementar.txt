@@ -1509,3 +1509,4 @@ Modificar storeProcedure
 
 [a_CierreStock]
 [Acum_Ventas]
+[obtenerEgresosCaja]
