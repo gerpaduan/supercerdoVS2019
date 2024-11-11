@@ -67,6 +67,7 @@ namespace Presentacion.Caja
         int titilarHasta = 2000;
         int tiempoRegistrarTemporal = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoRegistrarTemporal"].ToString());
         string ultimoTextoEnTxtCodigo = "";
+        bool factura = Convert.ToBoolean(ConfigurationManager.AppSettings["factura"].ToString());
         Random randomClass = new Random();
 
         //Calculo decimales Random para redondear el importe del corte
@@ -577,8 +578,8 @@ namespace Presentacion.Caja
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
             oVentaE.EnCtaCte = checkCtaCte.Checked; 
-            //Si FormaPago <> (Efectivo && CTACTE) y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'
-            oVentaE.TipoComprobante = (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()) ||
+            //Si no es factura y FormaPago <> (Efectivo && CTACTE) y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'            
+            oVentaE.TipoComprobante = !factura ? Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()) : (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()) ||
                 oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())) && 
                 comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
                 Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -14,8 +15,8 @@ namespace Presentacion.Caja
         public Entidades.Venta oVentaE;
         Entidades.Venta.imprimirCbteEnum imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
         bool esEfectivo, esCtaCte;
-        
-        
+        bool factura = Convert.ToBoolean(ConfigurationManager.AppSettings["factura"].ToString());
+
         public formFinalizarVenta()
         {
             InitializeComponent();
@@ -43,23 +44,26 @@ namespace Presentacion.Caja
                     break;
                     //Sin Ticket
                 case Keys.NumPad1:
-                    if (!esEfectivo && !esCtaCte) break;//Si no es efectivo no se permite hacer foco en el boton
+                    if (!esEfectivo && !esCtaCte && factura) break;//Si no es efectivo no se permite hacer foco en el boton
                     btnSinTicket.BackColor = Utilidades.Util_Form.checkedColor;
                     imprimirCbte = Entidades.Venta.imprimirCbteEnum.SinTicket;
                     btnSinTicket.Focus();
                     break;
                     //Ticket
                 case Keys.NumPad2:
-                    if (!esEfectivo && !esCtaCte) break;//Si no es efectivo no se permite hacer foco en el boton
+                    if (!esEfectivo && !esCtaCte && factura) break;//Si no es efectivo no se permite hacer foco en el boton
                     btnTicket.BackColor = Utilidades.Util_Form.checkedColor;
                     imprimirCbte = Entidades.Venta.imprimirCbteEnum.Ticket;
                     btnTicket.Focus();
                     break;
                     //Factura
                 case Keys.NumPad3:
-                    btnFactura.BackColor = Utilidades.Util_Form.checkedColor;
-                    imprimirCbte = Entidades.Venta.imprimirCbteEnum.Factura;
-                    btnFactura.Focus();
+                    if (factura)
+                    {
+                        btnFactura.BackColor = Utilidades.Util_Form.checkedColor;
+                        imprimirCbte = Entidades.Venta.imprimirCbteEnum.Factura;
+                        btnFactura.Focus();
+                    }
                     break;
                 case Keys.Enter:
                     if (!(imprimirCbte == Entidades.Venta.imprimirCbteEnum.Nulo))
@@ -88,12 +92,13 @@ namespace Presentacion.Caja
         {
             esEfectivo = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());
             esCtaCte = oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString());
-
-            if (!esEfectivo && !esCtaCte)
+            btnFactura.Enabled = factura;
+            if (!esEfectivo && !esCtaCte && factura)
 	        {
                 btnSinTicket.Enabled = false;
                 btnTicket.Enabled = false;                
 	        }
+
             lblFormaPago.Text = "-" + oVentaE.FormaPago +"-";
             lblFormaPago.AutoSize = false;
             lblFormaPago.Left = (this.ClientSize.Width / 2) - (lblFormaPago.Width / 2);
@@ -103,14 +108,14 @@ namespace Presentacion.Caja
         //Sin-Ticket
         private void btnEfectivo_Enter(object sender, EventArgs e)
         {
-            if (!esEfectivo && !esCtaCte) return;//Si no es efectivo no se permite hacer foco en el boton
+            if (!esEfectivo && !esCtaCte && factura) return;//Si no es efectivo no se permite hacer foco en el boton
             unfocused();
             btnSinTicket.BackColor = Utilidades.Util_Form.checkedColor;
         }
         //Ticket
         private void btnDebito_Enter(object sender, EventArgs e)
         {
-            if (!esEfectivo && !esCtaCte) return;//Si no es efectivo no se permite hacer foco en el boton
+            if (!esEfectivo && !esCtaCte && factura) return;//Si no es efectivo no se permite hacer foco en el boton
             unfocused();
             btnTicket.BackColor = Utilidades.Util_Form.checkedColor;
         }
@@ -130,14 +135,14 @@ namespace Presentacion.Caja
 
         private void btnSinTicket_Click(object sender, EventArgs e)
         {
-            if (!esEfectivo && !esCtaCte) return;//Si no es efectivo no se permite hacer foco en el boton
+            if (!esEfectivo && !esCtaCte && factura) return;//Si no es efectivo no se permite hacer foco en el boton
             imprimirCbte = Entidades.Venta.imprimirCbteEnum.SinTicket;
             enviarImprimirCbte();
         }
 
         private void btnTicket_Click(object sender, EventArgs e)
         {
-            if (!esEfectivo && !esCtaCte) return;//Si no es efectivo no se permite hacer foco en el boton
+            if (!esEfectivo && !esCtaCte && factura) return;//Si no es efectivo no se permite hacer foco en el boton
             imprimirCbte = Entidades.Venta.imprimirCbteEnum.Ticket;
             enviarImprimirCbte();
         }
