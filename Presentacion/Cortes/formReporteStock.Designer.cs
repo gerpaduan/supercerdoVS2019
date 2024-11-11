@@ -34,6 +34,8 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.checkOcultarColumnas = new System.Windows.Forms.CheckBox();
+            this.checkSoloFaltantes = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.comboOrdenStock = new System.Windows.Forms.ComboBox();
             this.lblActualizar = new System.Windows.Forms.Label();
@@ -56,8 +58,6 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.grillaReportes = new System.Windows.Forms.DataGridView();
-            this.checkSoloFaltantes = new System.Windows.Forms.CheckBox();
-            this.checkOcultarColumnas = new System.Windows.Forms.CheckBox();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -88,6 +88,40 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1343, 112);
             this.panel1.TabIndex = 12;
+            // 
+            // checkOcultarColumnas
+            // 
+            this.checkOcultarColumnas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkOcultarColumnas.AutoSize = true;
+            this.checkOcultarColumnas.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkOcultarColumnas.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
+            this.checkOcultarColumnas.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkOcultarColumnas.Location = new System.Drawing.Point(634, 15);
+            this.checkOcultarColumnas.Margin = new System.Windows.Forms.Padding(4);
+            this.checkOcultarColumnas.Name = "checkOcultarColumnas";
+            this.checkOcultarColumnas.Size = new System.Drawing.Size(199, 22);
+            this.checkOcultarColumnas.TabIndex = 57;
+            this.checkOcultarColumnas.Text = "Ocultar Columnas Detalle";
+            this.checkOcultarColumnas.UseVisualStyleBackColor = true;
+            this.checkOcultarColumnas.Visible = false;
+            this.checkOcultarColumnas.CheckedChanged += new System.EventHandler(this.checkOcultarColumnas_CheckedChanged);
+            // 
+            // checkSoloFaltantes
+            // 
+            this.checkSoloFaltantes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkSoloFaltantes.AutoSize = true;
+            this.checkSoloFaltantes.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkSoloFaltantes.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
+            this.checkSoloFaltantes.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkSoloFaltantes.Location = new System.Drawing.Point(878, 15);
+            this.checkSoloFaltantes.Margin = new System.Windows.Forms.Padding(4);
+            this.checkSoloFaltantes.Name = "checkSoloFaltantes";
+            this.checkSoloFaltantes.Size = new System.Drawing.Size(125, 22);
+            this.checkSoloFaltantes.TabIndex = 56;
+            this.checkSoloFaltantes.Text = "Solo Faltantes";
+            this.checkSoloFaltantes.UseVisualStyleBackColor = true;
+            this.checkSoloFaltantes.Visible = false;
+            this.checkSoloFaltantes.CheckedChanged += new System.EventHandler(this.checkSoloFaltantes_CheckedChanged);
             // 
             // label1
             // 
@@ -251,7 +285,7 @@
             this.btnBuscar.TabIndex = 21;
             this.btnBuscar.TabStop = false;
             this.btnBuscar.UseVisualStyleBackColor = true;
-            this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
+            this.btnBuscar.Click += new System.EventHandler(this.comboTipoReporte_SelectedValueChanged);
             // 
             // comboSucursal
             // 
@@ -407,40 +441,6 @@
             this.grillaReportes.Size = new System.Drawing.Size(1297, 527);
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
-            // 
-            // checkSoloFaltantes
-            // 
-            this.checkSoloFaltantes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.checkSoloFaltantes.AutoSize = true;
-            this.checkSoloFaltantes.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkSoloFaltantes.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
-            this.checkSoloFaltantes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkSoloFaltantes.Location = new System.Drawing.Point(878, 15);
-            this.checkSoloFaltantes.Margin = new System.Windows.Forms.Padding(4);
-            this.checkSoloFaltantes.Name = "checkSoloFaltantes";
-            this.checkSoloFaltantes.Size = new System.Drawing.Size(125, 22);
-            this.checkSoloFaltantes.TabIndex = 56;
-            this.checkSoloFaltantes.Text = "Solo Faltantes";
-            this.checkSoloFaltantes.UseVisualStyleBackColor = true;
-            this.checkSoloFaltantes.Visible = false;
-            this.checkSoloFaltantes.CheckedChanged += new System.EventHandler(this.checkSoloFaltantes_CheckedChanged);
-            // 
-            // checkOcultarColumnas
-            // 
-            this.checkOcultarColumnas.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.checkOcultarColumnas.AutoSize = true;
-            this.checkOcultarColumnas.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkOcultarColumnas.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
-            this.checkOcultarColumnas.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkOcultarColumnas.Location = new System.Drawing.Point(634, 15);
-            this.checkOcultarColumnas.Margin = new System.Windows.Forms.Padding(4);
-            this.checkOcultarColumnas.Name = "checkOcultarColumnas";
-            this.checkOcultarColumnas.Size = new System.Drawing.Size(199, 22);
-            this.checkOcultarColumnas.TabIndex = 57;
-            this.checkOcultarColumnas.Text = "Ocultar Columnas Detalle";
-            this.checkOcultarColumnas.UseVisualStyleBackColor = true;
-            this.checkOcultarColumnas.Visible = false;
-            this.checkOcultarColumnas.CheckedChanged += new System.EventHandler(this.checkOcultarColumnas_CheckedChanged);
             // 
             // formReporteStock
             // 

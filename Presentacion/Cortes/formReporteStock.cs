@@ -853,7 +853,7 @@ namespace Presentacion.Cortes
                         dtCierreStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), txtDescripcion.Text.Trim(), DateTime.Now, DateTime.Now, null);
                         DataRow fechaActual = dtCierreStock.NewRow();
                         fechaActual["idCompra"] = 0;
-                        fechaActual["fechaCompra"] = DateTime.Now;
+                        fechaActual["fechaCompra"] = DateTime.Now.AddMinutes(1);//sumo un minuto para q tome las ventas actuales y no esperar un minuto
                         dtCierreStock.Rows.Add(fechaActual);
                     }
                     else
@@ -978,6 +978,11 @@ namespace Presentacion.Cortes
 
         private void comboTipoReporte_SelectedValueChanged(object sender, EventArgs e)
         {
+            comboTipoReporteCambiaValor();
+        }
+
+        private void comboTipoReporteCambiaValor()
+        {
             combosCierresCargados = false;
             checkSoloFaltantes.Visible = false;
             checkOcultarColumnas.Visible = false;
@@ -1049,7 +1054,7 @@ namespace Presentacion.Cortes
         {
             if (e.KeyValue.Equals(13))
             {
-                cargarGrilla();
+                comboTipoReporteCambiaValor();
             }
         }
 

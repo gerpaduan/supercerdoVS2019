@@ -126,7 +126,7 @@ namespace Presentacion
             {   
                 if (cargarDatosCorte(oCorteE))	
                 {
-                    if (oCorteE.porcentaje <= 100 && oCorteE.porcentajeHueso <= 100 && oCorteE.porcentajeHueso >= 0 && oCorteE.porcentaje >= 0)
+                    if (true)//oCorteE.porcentaje <= 100 && oCorteE.porcentajeHueso <= 100 && oCorteE.porcentajeHueso >= 0 && oCorteE.porcentaje >= 0)
                     {
                         if (!existeCodigoCorte())
                         {

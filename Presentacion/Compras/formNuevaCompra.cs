@@ -863,7 +863,7 @@ namespace Presentacion
 
                     DataTable dtCorte = new DataTable();
 
-                    dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
+                    dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt64(txtCodigo.Text.Trim()));
 
                     if (dtCorte.Rows.Count > 0)
                     {

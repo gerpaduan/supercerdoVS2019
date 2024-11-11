@@ -674,7 +674,7 @@ namespace Presentacion.Ventas
                                 //cargo el corte
                                 oCorteE = new Entidades.Corte();
                                 oCorteE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                                oCorteE.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                                oCorteE.codigo = Convert.ToInt64(fila["codigo"].ToString());
                                 oCorteE.corte = fila["corte"].ToString();
                                 oCorteE.precioKg = float.Parse(fila["precioKg"].ToString());
                                 oCorteE.precioKgReferencia = float.Parse(fila["precioKg"].ToString());

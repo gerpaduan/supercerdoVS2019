@@ -96,7 +96,7 @@ namespace Presentacion.Compras
                 {
                     cortePorCompra = new CortesPorCompra();
                     cortePorCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                    cortePorCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                    cortePorCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                     cortePorCompra.corte = fila["corte"].ToString();
                     cortePorCompra.cantKgs = float.Parse(fila["cantKg"].ToString());
                     cortePorCompra.precioKg = float.Parse(fila["precioKg"].ToString());
@@ -937,14 +937,14 @@ namespace Presentacion.Compras
                     dtCortes = null;
                     DataTable dtCorte = new DataTable();
 
-                    dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt32(txtCodigo.Text.Trim()));
+                    dtCorte = oCorteN.buscarCodigoCorte(Convert.ToInt64(txtCodigo.Text.Trim()));
 
                     if (dtCorte.Rows.Count > 0)
                     {
                         foreach (DataRow fila in dtCorte.Rows)
                         {
                             oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                            oCorteNuevaCompra.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                            oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
                             oCorteNuevaCompra.precioKg = Util_Form.convertFloat(fila["precioKG"].ToString(), false);
                         }
@@ -982,7 +982,7 @@ namespace Presentacion.Compras
                 {
                     Entidades.Corte oCorteNuevoE = new Entidades.Corte();
                     oCorteNuevoE.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                    oCorteNuevoE.codigo = Convert.ToInt32(fila["codigo"].ToString());
+                    oCorteNuevoE.codigo = Convert.ToInt64(fila["codigo"].ToString());
                     oCorteNuevoE.corte = fila["corte"].ToString();
 
                     EnviarCorte(oCorteNuevoE);
