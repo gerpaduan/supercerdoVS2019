@@ -127,6 +127,7 @@ namespace Negocio
                     corte.IdCortePorCompra = row["idCortePorCompra"] != null ? Convert.ToInt32(row["idCortePorCompra"].ToString()) : 0;
                     corte.precioKgs = float.Parse(row["precioKg"].ToString());
                     corte.CantKgs = float.Parse(row["cantKg"].ToString());
+                    corte.Balanza = row["balanza"] != DBNull.Value ? Convert.ToBoolean(row["balanza"]) : false;
                     corte.Creado = row["creado"] != DBNull.Value ? (DateTime?)(row["creado"]) : oCompra.Creado;
                     int idUser = row["creadoPor"] != null ? Convert.ToInt32(row["creadoPor"].ToString()) : 0;
                     foreach (Entidades.Usuario  user in listaUsuario)

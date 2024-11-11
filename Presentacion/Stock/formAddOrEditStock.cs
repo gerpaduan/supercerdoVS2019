@@ -473,6 +473,7 @@ namespace Presentacion
                 oCortePorCompra.compra = oCompraE;
                 oCortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text, true); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                 oCortePorCompra.precioKg = float.Parse("0.00");
+                oCortePorCompra.Balanza = checkLeerPeso.Checked;
                 oCortePorCompra.Creado = DateTime.Now;
                 oCortePorCompra.CreadoPor = oUsuario;
 
@@ -519,6 +520,7 @@ namespace Presentacion
             cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
             cortesPorCompra.precioKg = oCortePorCompra.precioKg;
             cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
+            cortesPorCompra.Balanza = oCortePorCompra.Balanza;
             cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
             cortesPorCompra.Creado = oCortePorCompra.Creado;
 

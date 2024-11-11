@@ -12,6 +12,7 @@ namespace Entidades
         public Corte corte;
         public float cantKgs;
         public float precioKg;
+        private bool balanza;
         public Sucursal sucursal;
         private DateTime? creado;
         private Usuario creadoPor;
@@ -94,5 +95,7 @@ namespace Entidades
             get { return creadoPor; }
             set { creadoPor = value; }
         }
+
+        public bool Balanza { get => balanza; set => balanza = value; }
     }
 }

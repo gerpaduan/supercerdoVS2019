@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Text;
 
@@ -17,6 +18,7 @@ namespace Presentacion
         public int idCorte;
         private int index;
         private DateTime? creado;
+        private bool balanza;
 
         public DateTime? Creado
         {
@@ -124,6 +126,7 @@ namespace Presentacion
                 idSucursal = value;
             }
         }
-    
+
+        public bool Balanza { get => balanza; set => balanza = value; }
     }
 }

@@ -224,6 +224,7 @@ namespace Datos
             cmCompra.Parameters.AddWithValue("@idSucursal", oCorteE.sucursal.IdSucursal);
             cmCompra.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
             cmCompra.Parameters.AddWithValue("@cantKg", oCorteE.cantKgs);
+            cmCompra.Parameters.AddWithValue("@balanza", oCorteE.Balanza);
             cmCompra.Parameters.AddWithValue("@creado", oCorteE.Creado);
             cmCompra.Parameters.AddWithValue("@creadoPor", oCorteE.CreadoPor != null ? oCorteE.CreadoPor.Id : 0);
 
