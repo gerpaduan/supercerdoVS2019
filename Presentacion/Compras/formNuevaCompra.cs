@@ -740,6 +740,7 @@ namespace Presentacion
             oCorteNuevaCompra = null;
             txtCodigo.Text = "";
             txtCorteNuevaCompra.Text = "";
+            txtBoxPrecioNeto.Text = "";
             txtPrecioKg.Text = radioCorte.Checked ? "" : txtPrecioKg.Text;
             txtCantKgs.Text = "";
         }
@@ -905,23 +906,23 @@ namespace Presentacion
         #endregion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
-        {
+                {
 
-            if (e.KeyChar == (char)(Keys.Enter))
+                        if (e.KeyChar == (char)(Keys.Enter))
             {
                 if (radioCorte.TabStop)
                 {
-                    radioCorte.TabStop = false;
+                        radioCorte.TabStop = false;
                 }
                 //si txtBoxPrecio es vacio se mueve el foco a éste
                 if ((txtKgMedia.Focused || txtPrecioKg.Focused) && txtPrecioKg.Text.Equals(""))
                 {
-                    txtPrecioKg.Focus();
+                        txtPrecioKg.Focus();
                     return;
                 }
                 e.Handled = true;
 
-                SendKeys.Send("{TAB}");
+                        SendKeys.Send("{TAB}");
             }
         }
 
@@ -1177,6 +1178,41 @@ namespace Presentacion
             {
                 MessageBox.Show("Ha activado la función para que el corte seleccionado quede fijo");
             }
+        }
+
+        private void checkAplicarDescIva_CheckedChanged(object sender, EventArgs e)
+        {
+            panelCalcularPrecio.Enabled = checkCalcularPrecio.Checked;
+            if (checkCalcularPrecio.Checked)
+            {
+                txtBoxPrecioNeto.Focus();
+                txtBoxPrecioNeto.SelectAll();
+            }
+            else
+            {
+                txtBoxPrecioNeto.Text = "";
+                txtBoxDescuento.Text = txtIva.Text = "0";
+                txtPrecioKg.Focus();
+                txtPrecioKg.SelectAll();
+            }
+        }
+
+        private void calcularPrecioFinal()
+        {
+            if (validarCampoNumerico(txtBoxPrecioNeto.Text, "$") && validarCampoNumerico(txtBoxDescuento.Text,"%") &&
+                validarCampoNumerico(txtIva.Text,"Iva") )
+            {
+                txtPrecioKg.Text = ((Util_Form.convertFloat(txtBoxPrecioNeto.Text, false) *
+                    ((100 + Util_Form.convertFloat(txtBoxDescuento.Text, false)) / 100)) * (1 + (Util_Form.convertFloat(txtIva.Text, false) / 100))).ToString("F2");
+            }
+        }
+
+        private void txtBoxPrecioNeto_TextChanged(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(txtBoxPrecioNeto.Text))
+                return;
+
+            calcularPrecioFinal();
         }
     }
 }
