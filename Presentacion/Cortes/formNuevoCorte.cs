@@ -425,6 +425,7 @@ namespace Presentacion
             if (frmCorte != null)
             {
                 frmCorte.cargarGrilla();
+                frmCorte.ExportarDataTableAExcel();
             }
         }
 

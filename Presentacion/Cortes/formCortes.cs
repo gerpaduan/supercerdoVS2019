@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using OfficeOpenXml;
 
 using Presentacion.Cortes;
 
@@ -13,7 +16,7 @@ namespace Presentacion
 {
     public partial class formCortes : formBaseColor
     {
-        Negocio.Corte oCorteN;
+        Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE;
         Entidades.Corte oCorteMaestroE;
 
@@ -135,6 +138,8 @@ namespace Presentacion
                 frmNuevoCorte.idCorte = idCorte;
                 frmNuevoCorte.frmCorte = this;
                 frmNuevoCorte.ShowDialog();
+
+                ExportarDataTableAExcel();
             }
             catch (Exception ex)
             {
@@ -179,6 +184,8 @@ namespace Presentacion
                             break;
                         }
                     }
+
+                    ExportarDataTableAExcel();
                 }      
             }
             catch (Exception ex)
@@ -246,7 +253,6 @@ namespace Presentacion
 
         private void formCortes_Load(object sender, EventArgs e)
         {
-            oCorteN = new Negocio.Corte();
             this.Text += Utilidades.Conexion.getSucursalConexion();
             comboTipo.DataSource = oCorteN.obtenerTiposProducto(true);
             comboTipo.DisplayMember = "tipo";
@@ -351,6 +357,66 @@ namespace Presentacion
             {
                 cargarGrilla();
             }
-        }   
+        }
+
+        private void exportar_Click(object sender, EventArgs e)
+        {
+            ExportarDataTableAExcel();
+        }
+
+        public void ExportarDataTableAExcel()
+        {
+            try
+            {
+                // Establecer el contexto de la licencia para evitar la excepción
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+                string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+                DataTable dataTable = oCorteN.lista_precios();
+                string rutaArchivo = @ruta + "\\Lista_Precio.xlsx";
+
+                // Verificar si la carpeta existe, si no, crearla
+                if (!Directory.Exists(@ruta))
+                    Directory.CreateDirectory(@ruta);
+
+                // Crear el archivo de Excel
+                FileInfo archivo = new FileInfo(rutaArchivo);
+
+                // Verificar si el archivo ya existe; si es así, eliminarlo
+                if (archivo.Exists)
+                {
+                    archivo.Delete();
+                }
+
+                // Crear y llenar el archivo Excel
+                using (ExcelPackage excel = new ExcelPackage(archivo))
+                {
+                    // Crear una hoja de trabajo
+                    ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
+
+                    // Agregar encabezados
+                    for (int i = 0; i < dataTable.Columns.Count; i++)
+                    {
+                        hoja.Cells[1, i + 1].Value = dataTable.Columns[i].ColumnName;
+                    }
+
+                    // Agregar datos
+                    for (int i = 0; i < dataTable.Rows.Count; i++)
+                    {
+                        for (int j = 0; j < dataTable.Columns.Count; j++)
+                        {
+                            hoja.Cells[i + 2, j + 1].Value = dataTable.Rows[i][j];
+                        }
+                    }
+
+                    // Guardar el archivo
+                    excel.Save();
+                }            
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al exportar lista de precios excel automaticamente.\n\n"+ex.Message,"",MessageBoxButtons.OK,MessageBoxIcon.Error);
+            }
+        }
     }
 }

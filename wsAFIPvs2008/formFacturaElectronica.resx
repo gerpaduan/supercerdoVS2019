@@ -151,31 +151,31 @@
   <data name="imprimir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAIpSURBVDhPtZL/T1JRGMb5p1itrVZbbRpqZbawnBENV1I0
-        jGlByTSyJTXJwq2oKZQb1KAv6JCYWSxvBrkkZUq4CeQEiRABFeLL072Xa0zRra31bO8v57zP5znnPYf1
-        X+TxhWF6O7VtGYcnwbSWijKPOLzYrPSvLPwLS3huGUMlT7o9wGD9grVUBj+icdid03S9tDmgNxNwTgVQ
-        J+rA8XNtWwM+uuZATMwxmQVRycuJFNyzIRitDlScugKzjSgFRGJJaIwEsrk8AsHIhnSL/Ssck37UNipQ
-        I5DjtuYV7uksRYhr2kebhx2eP6nrycFIEh5fBA/1Nvru8q5+PDaOovK0rABwfwugWzcErfkzHhjsePL6
-        E7q1VrTdNUDcrgGvSYlDZHN5XTNOnL8BVe8AJAoNDtZfLgDu9L1BPJmikzcrk81hlRwodZJwdBXziwnI
-        OrVoaOkiT8C8hKLHBPO7CbywOaE1jeC+bhAd6meQdvZC1KoG/5IS3MZ2HObLUHZSggvkWq3wOvbWiAqA
-        VpWeyStVfCUNf3AZ4zNhfHCFMEDMgye+hYr6FrDLzxQAUuVTpr0ocn74mchg5vsKRt1RcHp2Qv9+kZ78
-        UcE17KkWFgHNN/uQzgBkGKLJPBZiecyGchjzrmFwPIF++xJUbDbUQzEacIArLpopSRSP4CUN1Obf1Abz
-        uqob5KjiXwWH/GVl5HPt5zZh37GL2H1EiF1VZ7GDI6CNW5r/TSzWbwHYL0mKJ5czAAAAAElFTkSuQmCC
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIfSURBVDhPtZH/S9NRGEb9p6QIioICTWdlRrNEp6GU1kIb
+        M10p2jJyhcuaUCt0ljCL2ZcpuoZZI5fNJE1Fl4LTRKetqdvUzW2e8LNUnApB9MD70+Wc5773xsT8j9gd
+        szS9G9h1DO39RDMbWYM7bCNEJ7ASYnxqjhetXYgkxbsLGk1fWfYH+en2YOkeEuaV2YbeaKV7YII0aQWn
+        L5TtLPjUN4a1d2xb84LXz+CoE4PJRmJGEUazdbvANe9Da7ASCq8yMe3a0t5q+Yatf5zUXCUp2aXc0b7m
+        fn3rpqRvyCHA7Tb7Rut687TLh93h4pHeLOxeWtXAE0MnokxFRDD4fYLq+jZ0xi88bLTw9M1nqnUmyu41
+        kl+uRVKg4limgvg0OWcu3kRd24xMqeVo+tWI4G7dWzw+/5a91xMMhVnyB4WbzLqXmJzxoqjUkVNYhSjz
+        z08oa5owvu/lpbkbXVMHD+pbqNA8p7iyFmmJhqwrKsS55RzPUhB3VsalEg2peTc4mCKNCErU+ujijXgW
+        A4xPL9AzPMvHPifN1kkk+bdJTC8kNv5cRFCsehbNsRKCX94gwz8W6Rx0k1CzF/2HGeHlT2Zf50By3qZA
+        fquOQBAWA+D2rTI1v8qoM0zXyDItPV4aLHOoY2PRtM0LgiPi/E14LTLlY0acYeHwb2YLvJ7knFKSsq6R
+        kFFEXJqcw+ICDp26zP4TeexLOs+ehGwB3BH+1/wGAdgvSbBSrMQAAAAASUVORK5CYII=
 </value>
   </data>
   <data name="pdf_Factura.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAIpSURBVDhPtZL/T1JRGMb5p1itrVZbbRpqZbawnBENV1I0
-        jGlByTSyJTXJwq2oKZQb1KAv6JCYWSxvBrkkZUq4CeQEiRABFeLL072Xa0zRra31bO8v57zP5znnPYf1
-        X+TxhWF6O7VtGYcnwbSWijKPOLzYrPSvLPwLS3huGUMlT7o9wGD9grVUBj+icdid03S9tDmgNxNwTgVQ
-        J+rA8XNtWwM+uuZATMwxmQVRycuJFNyzIRitDlScugKzjSgFRGJJaIwEsrk8AsHIhnSL/Ssck37UNipQ
-        I5DjtuYV7uksRYhr2kebhx2eP6nrycFIEh5fBA/1Nvru8q5+PDaOovK0rABwfwugWzcErfkzHhjsePL6
-        E7q1VrTdNUDcrgGvSYlDZHN5XTNOnL8BVe8AJAoNDtZfLgDu9L1BPJmikzcrk81hlRwodZJwdBXziwnI
-        OrVoaOkiT8C8hKLHBPO7CbywOaE1jeC+bhAd6meQdvZC1KoG/5IS3MZ2HObLUHZSggvkWq3wOvbWiAqA
-        VpWeyStVfCUNf3AZ4zNhfHCFMEDMgye+hYr6FrDLzxQAUuVTpr0ocn74mchg5vsKRt1RcHp2Qv9+kZ78
-        UcE17KkWFgHNN/uQzgBkGKLJPBZiecyGchjzrmFwPIF++xJUbDbUQzEacIArLpopSRSP4CUN1Obf1Abz
-        uqob5KjiXwWH/GVl5HPt5zZh37GL2H1EiF1VZ7GDI6CNW5r/TSzWbwHYL0mKJ5czAAAAAElFTkSuQmCC
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIfSURBVDhPtZH/S9NRGEb9p6QIioICTWdlRrNEp6GU1kIb
+        M10p2jJyhcuaUCt0ljCL2ZcpuoZZI5fNJE1Fl4LTRKetqdvUzW2e8LNUnApB9MD70+Wc5773xsT8j9gd
+        szS9G9h1DO39RDMbWYM7bCNEJ7ASYnxqjhetXYgkxbsLGk1fWfYH+en2YOkeEuaV2YbeaKV7YII0aQWn
+        L5TtLPjUN4a1d2xb84LXz+CoE4PJRmJGEUazdbvANe9Da7ASCq8yMe3a0t5q+Yatf5zUXCUp2aXc0b7m
+        fn3rpqRvyCHA7Tb7Rut687TLh93h4pHeLOxeWtXAE0MnokxFRDD4fYLq+jZ0xi88bLTw9M1nqnUmyu41
+        kl+uRVKg4limgvg0OWcu3kRd24xMqeVo+tWI4G7dWzw+/5a91xMMhVnyB4WbzLqXmJzxoqjUkVNYhSjz
+        z08oa5owvu/lpbkbXVMHD+pbqNA8p7iyFmmJhqwrKsS55RzPUhB3VsalEg2peTc4mCKNCErU+ujijXgW
+        A4xPL9AzPMvHPifN1kkk+bdJTC8kNv5cRFCsehbNsRKCX94gwz8W6Rx0k1CzF/2HGeHlT2Zf50By3qZA
+        fquOQBAWA+D2rTI1v8qoM0zXyDItPV4aLHOoY2PRtM0LgiPi/E14LTLlY0acYeHwb2YLvJ7knFKSsq6R
+        kFFEXJqcw+ICDp26zP4TeexLOs+ehGwB3BH+1/wGAdgvSbBSrMQAAAAASUVORK5CYII=
 </value>
   </data>
 </root>

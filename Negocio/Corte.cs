@@ -26,6 +26,32 @@ namespace Negocio
             oCorteD.addOrEditCorte(oCorteE);
         }
 
+        public DataTable lista_precios()
+        {
+            DataTable dtCortes = buscarCorte("");
+
+            string[] columnasPermitidas = { "codigo", "corte", "precioKg", "efectivo", "debito", "credito", "Qr", "Transf" };
+
+            // Crear una lista temporal para almacenar las columnas a eliminar
+            List<DataColumn> columnasAEliminar = new List<DataColumn>();
+
+            // Recorrer todas las columnas en el DataTable
+            foreach (DataColumn columna in dtCortes.Columns)
+            {
+                // Si el nombre de la columna no está en el array de columnas permitidas, agregarla a la lista de eliminación
+                if (!Array.Exists(columnasPermitidas, columnaPermitida => columnaPermitida == columna.ColumnName))
+                {
+                    columnasAEliminar.Add(columna);
+                }
+            }
+
+            // Eliminar todas las columnas que no están en la lista de columnas permitidas
+            foreach (DataColumn columna in columnasAEliminar)
+            {
+                dtCortes.Columns.Remove(columna);
+            }
+            return dtCortes;
+        }
         public DataTable buscarCorte(string txtBusqueda)
         {
             oCorteD = new Datos.Corte();

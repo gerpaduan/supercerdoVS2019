@@ -1901,6 +1901,11 @@ namespace wsAFIPvs2008
             }
         }
 
+        private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+
+        }
+
         private string ConvertirMontoEnTexto(decimal monto)
         {
             if (monto == 0)

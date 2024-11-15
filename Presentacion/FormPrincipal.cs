@@ -356,10 +356,11 @@ namespace Presentacion
                         Application.Exit();
                     }
                 }
+
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al validar licencia. El Sistema se cerrará..\n\n"+ex.Message);
+                MessageBox.Show("Error al validar licencia.\nPosiblemente no haya conexión al Servidor.\n El Sistema se cerrará..\n\n"+ex.Message);
                 Application.Exit();
             }
 
@@ -384,6 +385,11 @@ namespace Presentacion
             oOtrasClasesN.obtenerParametros();
 
             valorTextoMenuEncriptarDesencriptar();
+
+            //Se actualiza la lista de precios EXCEL exportable
+            formCortes frmCorte = new formCortes();
+            frmCorte.ExportarDataTableAExcel();
+            frmCorte = null;
         }
 
         private static void embutidos()
@@ -488,7 +494,19 @@ namespace Presentacion
            MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
                 e.Cancel = false;
-            }            
+            }
+
+            try
+            {
+                //Se actualiza la lista de precios EXCEL exportable
+                formCortes frmCorte = new formCortes();
+                frmCorte.ExportarDataTableAExcel();
+                frmCorte = null;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("La lista de precios no pudo exportarse.\n" + ex.Message);
+            }
         }
 
         private void linkCerrarCaja_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
