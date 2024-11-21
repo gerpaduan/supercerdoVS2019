@@ -1113,7 +1113,7 @@ namespace Presentacion
 
             if (!mostrarCartelCierre)
             {
-                oFrmCompra.EnviarUsuario(null);
+                //oFrmCompra.EnviarUsuario(null);
                 oUsuario = null;
                 return false;
             }
@@ -1122,7 +1122,7 @@ namespace Presentacion
 
             if ((respuesta == System.Windows.Forms.DialogResult.Yes))
             {
-                oFrmCompra.EnviarUsuario(null);
+                //oFrmCompra.EnviarUsuario(null);
                 oUsuario = null;
                 return false;
             }

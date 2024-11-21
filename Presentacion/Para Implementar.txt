@@ -1328,6 +1328,12 @@ FROM         dbo.Corte AS CorteP LEFT OUTER JOIN
 WHERE     (CorteP.idCorte=@idCorte)
 END
 
+****************
+
+
+
+
+
 *******************
 AGREGAR TABLA TIPO PRODUCTOS
 
@@ -1505,6 +1511,10 @@ UPDATE [SuperCerdo].[dbo].[Corte]
 GO
 
 **********************************
+*
+*
+*
+
 Modificar storeProcedure
 
 [a_CierreStock]

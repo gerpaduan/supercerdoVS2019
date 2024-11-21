@@ -291,7 +291,7 @@ namespace Presentacion
             string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";
             expresion+= " and ";
             expresion += !string.IsNullOrEmpty(txtCodigohasta.Text) ? "codigo <= " + codigoHasta :  "true";
-            if (!string.IsNullOrEmpty(comboTipo.Text) && !comboTipo.Text.Equals("Todos"))
+            if (!string.IsNullOrEmpty(comboTipo.Text) && !comboTipo.Text.ToUpper().Equals("TODOS"))
             {
                 expresion += " and ";
                 expresion += !string.IsNullOrEmpty(comboTipo.Text) ? "tipo = \'" + comboTipo.Text + "\'" : "true";
