@@ -1054,7 +1054,8 @@ namespace Presentacion.Cortes
         {
             if (e.KeyValue.Equals(13))
             {
-                comboTipoReporteCambiaValor();
+                //comboTipoReporteCambiaValor();
+                cargarGrilla();
             }
         }
 
