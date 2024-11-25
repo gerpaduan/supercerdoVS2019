@@ -28,15 +28,12 @@ namespace Presentacion.Usuario
 
         private void validarLogueoAdmin()
         {
-            if (FormPrincipal.logueado)
-            {
-                txtNombre.ReadOnly = false;
-                checkAdmin.Enabled = true;
-                checkActivo.Enabled = true;
-                btnNuevoUsuario.Enabled = true;
-                btnGuardarDatos.Enabled = true;
-                checkOlvidoClave.Enabled = true;
-            }
+            txtNombre.Enabled = FormPrincipal.logueado;
+            checkAdmin.Enabled = FormPrincipal.logueado;
+            checkActivo.Enabled = FormPrincipal.logueado;
+            btnNuevoUsuario.Enabled = FormPrincipal.logueado;
+            btnGuardarDatos.Enabled = FormPrincipal.logueado;
+            checkOlvidoClave.Enabled = FormPrincipal.logueado;
         }
 
         private void cargarCombo()
