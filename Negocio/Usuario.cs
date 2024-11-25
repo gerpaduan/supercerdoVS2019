@@ -16,6 +16,7 @@ namespace Negocio
         {
             oUsuarioD = new Datos.Usuario();
             dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos);
+            convertDatatableToList();
             return dtUsuarios;
         }
 
@@ -41,7 +42,7 @@ namespace Negocio
 
         public List<Entidades.Usuario> convertDatatableToList()
         {
-            if (dtUsuarios == null)
+            if (dtUsuarios == null || (listUsuarios != null && listUsuarios.Count != dtUsuarios.Rows.Count))
 	        {
         	    obtenerUsuarios(false);
 	        }
@@ -103,6 +104,8 @@ namespace Negocio
         }
 
         public Entidades.Usuario getUser(string usuario) {
+            convertDatatableToList();
+
             Entidades.Usuario userEncontrado = null;
             if (listUsuarios == null)
             {

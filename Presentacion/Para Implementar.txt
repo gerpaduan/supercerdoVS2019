@@ -1529,3 +1529,289 @@ balanza	tinyint	Checked
 
 [agregarCortePorCompra]
 [obtenerCortesPorCompra]
+
+
+
+
+
+******************
+
+app.Config
+
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <configSections>
+  </configSections>
+  <connectionStrings>
+    <!--****Base de Datos LOCAL****-->
+    <add name="local" connectionString="Data Source=.\sqlexpress;Initial Catalog=SuperCerdo;Integrated Security=True" providerName="System.Data.SqlClient" />
+    <add name="servidor" connectionString="Data Source=.\sqlexpress;Initial Catalog=SuperCerdo;Integrated Security=True" providerName="System.Data.SqlClient" />
+    <!--<add name="connecStringRemota" connectionString="Data Source=.\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;"/>-->
+	  <add name="carnisys" connectionString="Data Source=200.107.106.14,1433\sqlexpress;Initial Catalog=CarniSys0;User ID=sa;Password=sistema;" />
+
+	  <!--****Local San Martin***-->
+    <add name="sanMartin" connectionString="Data Source=192.168.0.151\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
+    <!--****Remoto SUPERCERDO San Martin***-->
+    <add name="sanMartinRemoto" connectionString="Data Source=200.107.107.39\sqlexpress;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
+    <!--<add name="sanMartinRemoto" connectionString="Data Source=200.107.107.39,1433\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;"/>-->
+    <!--****LOCAL SAN LORENZO***-->
+    <add name="sanLorenzo" connectionString="Data Source=192.168.1.93\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
+    <!--****REMOTO SAN LORENZO***-->
+    <add name="sanLorenzoRemoto" connectionString="Data Source=200.107.108.44\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
+  </connectionStrings>
+  <appSettings>
+    <!--****ConnectionString por defecto***-->
+    <!--****Cliente***-->
+    <add key="cliente" value="SuperCerdo" />
+    <add key="cuitCliente" value="20306210786" />
+    <!--**iva Cliente RRII:responsable inscripto || MT: monotributo || EXENTO: Exento**-->
+    <add key="ivaCliente" value="RRII" />
+    <!--****Sucursal***-->
+    <add key="Desc_connString" value="****ConnectionString por defecto***" />
+    <add key="connString" value="sanMartinRemoto" />
+    <!--<add key="connString" value="sanMartinRemoto" />-->
+    <!--****Sucursal***-->
+    <add key="Desc_idSucursal" value="****Id de Sucursal***" />
+    <add key="idSucursal" value="2" />
+    <add key="Nombre_Sucursal" value="****Nombre de Sucursal***" />
+    <add key="nombreSucursal" value="San Martin" />
+    <!--****Cantidad de Servidores***-->
+    <add key="Desc_cantServidores" value="****Cant. Servidores en total del Negocio || si = 1 Ocultar Col IdOrigen y Estado en Movimientos***" />
+    <add key="cantServidores" value="2" />
+	  
+	  
+	  <!--****CarniSys***-->
+	  <!--****CarniSys***-->
+	  <!--<add key="cliente" value="CarniSys" />
+	  <add key="cuitCliente" value="203062107816" />
+	  --><!--**iva Cliente RRII:responsable inscripto || MT: monotributo || EXENTO: Exento**--><!--
+	  <add key="ivaCliente" value="RRII" />
+	  --><!--****Sucursal***--><!--
+	  <add key="Desc_connString" value="****ConnectionString por defecto***" />
+	  --><!--<add key="connString" value="local" />--><!--
+	  <add key="connString" value="carnisys" />
+	  --><!--****Sucursal***--><!--
+	  <add key="Desc_idSucursal" value="****Id de Sucursal***" />
+	  <add key="idSucursal" value="1" />
+	  <add key="Nombre_Sucursal" value="****Nombre de Sucursal***" />
+	  <add key="nombreSucursal" value="Central" />
+	  --><!--****Cantidad de Servidores***--><!--
+	  <add key="Desc_cantServidores" value="****Cant. Servidores en total del Negocio || si = 1 Ocultar Col IdOrigen y Estado en Movimientos***" />
+	  <add key="cantServidores" value="1" />-->
+
+	  <!--****FIN CarniSys***-->
+	  <!--****FIN CarniSys***-->
+    <!---->
+    <!---->
+    <!--****          BALANZA            ***-->
+    <!---->
+    <!---->
+	<!--****  Marca Balanza  ***-->
+	<add key="Marca_Balanza" value="****Marca de la Balanza Conectada | Opciones: 'Systel' / 'Kretz' ***" />
+	<add key="balanza" value="Systel" />
+	  
+    <!--****Puerto Balanza***-->
+    <add key="Desc_Puerto" value="****Puerto Balanza (value 0 cuando no hay balanza conectada)***" />
+    <add key="puerto" value="COM3" />
+    <!---->
+    <!--****Puerto Balanza***-->
+    <add key="Desc_singleton" value="****Leer peso con Singleton***" />
+    <add key="singleton" value="false" />
+    <!---->
+    <!--****velocidad Timer Balanza***-->
+    <add key="Desc_timerBalanza" value="****velocidad Timer Balanza***" />
+    <add key="timerBalanza" value="100" />
+    <!---->
+    <!--****velocidad Timer Formularios***-->
+    <add key="Desc_timerForm" value="***velocidad Timer Formularios***" />
+    <add key="timerForm" value="50" />
+    <!---->
+    <!--****Fijar valor balanza para pruebas, esto evita leer el peso***-->
+    <add key="Desc_fijarPeso" value="Fijar valor balanza para pruebas, esto evita leer el peso***" />
+    <add key="fijarPeso" value="false" />
+    <!---->
+    <!--****valor de Visible para el checkbox de LeerPeso***-->
+    <add key="Desc_leerPesoCaja" value="****CajaVenta: Visible para el checkbox de LeerPeso***" />
+    <add key="leerPesoCaja" value="true" />
+    <!---->
+    <!--****valor de Visible para el checkbox de LeerPeso***-->
+    <add key="Desc_leerPeso" value="****valor de Visible para el checkbox de LeerPeso***" />
+    <add key="leerPeso" value="true" />
+    <!---->
+    <!---->
+    <!--****      FIN BALANZA            ***-->
+    <!---->
+    <!---->
+    <!--****          TICKETS  / FACTURA          ***-->
+    <!---->
+    <!---->
+    <!--****valor de Visible para el checkbox de Ticket***-->
+    <add key="Desc_ticket" value="****Caja Venta: valor de Visible para el checkbox de Ticket***" />
+    <add key="ticket" value="true" />
+    <!---->
+    <!--****Permite al vendedor acceder a la ultima venta y modificarla***-->
+    <add key="Desc_ultimaVenta" value="****Caja venta: Permite al vendedor acceder a la ultima venta y modificarla***" />
+    <add key="ultimaVenta" value="true" />
+    <!---->
+    <!--****valor checkbox de Ticket en Egreso Caja***-->
+    <add key="Desc_ticketForms" value="****Formularios: valor checkbox de Ticket***" />
+    <add key="ticketForms" value="false" />
+    <!---->
+    <!--****Impresora***-->
+    <add key="Desc_Impresora" value="****Nombre Impresora***" />
+    <add key="Impresora" value="\\ServidorSM\Xprinter" />
+    <!--<add key="ImpresoraRemota" value="\\Pc-9a3247099f75\GP-5890X Series" />-->
+    <!--<add key="Impresora" value="\\mostradorpc\GP-5890X Series" />-->
+    <!---->
+	  <!---->
+	  <!--****Permitir Factura - si no tiene el certificado Afip se pone falso***-->
+	  <add key="Desc_Factura" value="****Permitir Factura Electronica**" />
+	  <add key="factura" value="true" />
+	  <!---->
+    <!--****Ruta PDF donde se guardarán los PDF generados***-->
+    <add key="Desc_rutaPDF" value="****Ruta Carpeta Factura**" />
+    <add key="rutaPDF" value="C:\CarniSys_Docs" />
+    <!---->
+    <!--****Cantidad de Lineas Vacias que se imprimen en Lineas de Venta***-->
+    <add key="Desc_CantLineasVacias" value="****Cantidad Lineas Vacias en Lineas de Venta PDF Factura**" />
+    <add key="cantLineasVacias" value="16" />
+    <!---->
+    <!---->
+    <!--****      FIN    TICKETS            ***-->
+    <!---->
+    <!---->
+    <!--****      CODIGO BARRA           ***-->
+    <!---->
+    <!---->
+    <!--****Cantidad de digitos del Codigo del Producto en un Codigo de Barras***-->
+    <add key="Desc_cantDigitosProdEnCodBarra" value="****Cantidad de digitos del Codigo del Producto en un Codigo de Barras ***" />
+    <add key="cantDigitosProdEnCodBarra" value="4" />
+    <!---->
+    <!--****Segundo modulo del Codigo de Barras || 0 : Cantidad - 1: Monto Total***-->
+    <add key="Desc_codBarraPorCantidad" value="****Segundo modulo del Codigo de Barras || 0 : Cantidad -- 1: Monto Total ***" />
+    <add key="codBarraPorCantidad" value="1" />
+    <!---->
+    <!---->
+    <!--****      FIN    CODIGO BARRA            ***-->
+    <!---->
+    <!---->
+    <!---->
+    <!---->
+    <!--****      VALORES SETEO FORMULARIO            ***-->
+    <!---->
+    <!---->
+    <!--****Form Inicio App***-->
+    <add key="Desc_formInicioApp" value="****0: formPrincipal | 1:formStockActual***" />
+    <add key="formInicioApp" value="0" />
+    <!---->
+    <!--****Abrir Stock Actual externo***-->
+    <add key="Desc_abrirStockActualExterno" value="****Si valor '1' abre la aplicacion por fuera***" />
+    <add key="abrirStockActualExterno" value="1" />
+    <!---->
+    <!--****Fijar valor balanza para pruebas, esto evita leer el peso***-->
+    <add key="Desc_RedondeoCajaVenta" value="Activar redondeo en Caja Venta***" />
+    <add key="redondeo" value="true" />
+    <!---->
+    <!--****Fijar valor balanza para pruebas, esto evita leer el peso***-->
+    <add key="Desc_ImporteRedondeo" value="El importe maximo a redondear en pesos la venta (Debe ser un Int)***" />
+    <add key="importeMaxRedondeo" value="40" />
+    <!---->
+    <!---->
+    <!--****muestra la barra de progreso con la info del vendedor en el primer corte ingresado***-->
+    <add key="Desc_cartelPrimerCorteVendedor" value="****Caja Venta: titila vendedor al ingresar primer corte***" />
+    <add key="cartelPrimerCorteVendedor" value="true" />
+    <!---->
+    <!--****Cantidad de milisegundos segundo inactivo a bloquear pantalla CajaVenta***-->
+    <add key="Desc_tiempoBloqueo" value="****Bloquear Caja venta: milisec. inactivo***" />
+    <add key="tiempoBloqueo" value="600000" />
+    <!---->
+    <!--****Cantidad de milisegundo que deben pasar para registra el Temporal de Linea Venta***-->
+    <add key="Desc_tiempoRegistrarTemporal" value="****Temporal de Linea Venta: Milisec. de corte en balanza***" />
+    <add key="tiempoRegistrarTemporal" value="3000" />
+    <!---->
+    <!--****CERRAR SESION: cantidad de milisegundos segundo inactivo***-->
+    <add key="Desc_tiempoInactivoAdmin" value="****CERRAR SESION: Milisec. inactivo***" />
+    <add key="tiempoInactivoAdmin" value="1800000" />
+    <!---->
+    <!--****Escala de Pantalla en Windows (/100 - dividido 100)***-->
+    <add key="Porc_escalaPantalla" value="****Escala de pantalla en % Div 100***" />
+    <add key="escalaPantalla" value="1.25" />
+    <!---->
+    <!--****limite Dias para fecha desde***-->
+    <add key="Desc_cantDiasLimitFechaDesde" value="***CantDiasLimitFechaDesde***" />
+    <add key="cantDiasLimitFechaDesde" value="7" />
+    <!--****Ruta de Actualización de movimientos***-->
+    <add key="Desc_rutaActualizarMovimientos" value="****Ruta de Actualización de movimientos***" />
+    <add key="rutaActualizarMovimientos" value="C:\Users\Germán\Desktop\SuperCerdo\SuperCerdo.exe" />
+    <!---->
+    <!---->
+    <!--****      FIN            ***-->
+    <!---->
+    <!---->
+    <!---->
+    <!--****          COLORES CAMPOS          ***-->
+    <!---->
+    <!---->
+    <!--****TextBox enableColor White***-->
+    <add key="Desc_enableColor" value="****TextBox enableColor***" />
+    <add key="enableColor" value="Window" />
+    <!--****TextBox readOnlyColor Silver***-->
+    <add key="Desc_readOnlyColor" value="****TextBox readOnlyColor***" />
+    <add key="readOnlyColor" value="ScrollBar" />
+    <!--****TextBox focusColor***-->
+    <add key="Desc_focusColor" value="****TextBox focusColor***" />
+    <add key="focusColor" value="Orange" />
+    <!---->
+    <!---->
+    <!--****      FIN    COLORES            ***-->
+    <!---->
+    <!---->
+    <!---->
+    <!---->
+    <!--****          AFIP DATOS FACTURA         ***-->
+    <!---->
+    <!---->
+    <!--testing = 0 | produccion = 1-->
+    <add key="tipoServidor" value="1" />
+    <!--San Martin = 6 | San Lorenzo = 7-->
+    <add key="ptoVtaAfip" value="7" />
+    <add key="cuit" value="203062107861" />
+    <!--Alicuotas IVA -> ID 3 = 0% | ID 4 = 10.5% | ID 5 = 21% | ID 6 = 27%  -->
+    <add key="idIvaAliAfip" value="4" />
+    <!--Datos a imprimir.-->
+    <add key="Negocio" value="SuperCerdo" />
+    <add key="NegocioAgregado1" value="Tu Primer Carniceria de Cerdo" />
+    <add key="NegocioAgregado2" value="" />
+    <add key="NegocioAgregado3" value="-" />
+    <add key="NegocioAgregado4" value="CUIT: 20306210786" />
+    <add key="IIBB" value="IIBB: 1416543389" />
+    <add key="Dueno" value="German A. Paduan" />
+    <add key="Direccion" value="Dir:San Lorenzo 1208" />
+    <add key="Localidad" value="Reconquista - Santa Fe" />
+    <add key="InicioActividades" value="Inicio Act.: 05/03/2018" />
+    <add key="CondicionIVA" value="Resp. Inscripto" />
+    <add key="rutaCertificado" value="..\CarniSys\Templates\certif-prod.pfx" />
+    <add key="token" value="guarda el ultima valor del token" />
+    <add key="sign" value="guarda el ultima valor del sing" />
+    <add key="certificado" value="guarda el ultima valor del certificado" />
+    <add key="cmsFirmadoBase64" value="guarda el ultima valor del cmsFirmadoBase64" />
+    <add key="ticketResponse" value="" />
+    <!--value="guarda el ultima valor de la respuesta del ticket"-->
+    <add key="ClientSettingsProvider.ServiceUri" value="" />
+  </appSettings>
+  <startup>
+    <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.7.2" />
+  </startup>
+  <system.web>
+    <membership defaultProvider="ClientAuthenticationMembershipProvider">
+      <providers>
+        <add name="ClientAuthenticationMembershipProvider" type="System.Web.ClientServices.Providers.ClientFormsAuthenticationMembershipProvider, System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" serviceUri="" />
+      </providers>
+    </membership>
+    <roleManager defaultProvider="ClientRoleProvider" enabled="true">
+      <providers>
+        <add name="ClientRoleProvider" type="System.Web.ClientServices.Providers.ClientRoleProvider, System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" serviceUri="" cacheTimeout="86400" />
+      </providers>
+    </roleManager>
+  </system.web>
+</configuration>

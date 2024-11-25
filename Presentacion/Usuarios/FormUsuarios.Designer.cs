@@ -299,6 +299,7 @@
             this.Name = "FormUsuarios";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Cambiar contraseña";
+            this.Activated += new System.EventHandler(this.FormUsuarios_Activated);
             this.Load += new System.EventHandler(this.FormLoginVendedor_Load);
             this.groupCambiarContra.ResumeLayout(false);
             this.groupCambiarContra.PerformLayout();

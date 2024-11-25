@@ -23,14 +23,20 @@ namespace Presentacion.Usuario
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             cargarCombo();
+            validarLogueoAdmin();
+        }
+
+        private void validarLogueoAdmin()
+        {
             if (FormPrincipal.logueado)
-	        {
+            {
                 txtNombre.ReadOnly = false;
                 checkAdmin.Enabled = true;
                 checkActivo.Enabled = true;
-                btnNuevoUsuario.Enabled = true; 
+                btnNuevoUsuario.Enabled = true;
+                btnGuardarDatos.Enabled = true;
                 checkOlvidoClave.Enabled = true;
-	        }
+            }
         }
 
         private void cargarCombo()
@@ -74,6 +80,7 @@ namespace Presentacion.Usuario
                     return;
                 }
                 addOrEditUser();
+                cargarCombo();
             }
             else
             {
@@ -160,6 +167,11 @@ namespace Presentacion.Usuario
                 FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
             formNuevoUsuario1.ShowDialog();
             cargarCombo();
+        }
+
+        private void FormUsuarios_Activated(object sender, EventArgs e)
+        {
+            validarLogueoAdmin();
         }
     }
 }
