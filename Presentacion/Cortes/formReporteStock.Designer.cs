@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.checkOcultarColumnas = new System.Windows.Forms.CheckBox();
             this.checkSoloFaltantes = new System.Windows.Forms.CheckBox();
@@ -58,6 +58,7 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.grillaReportes = new System.Windows.Forms.DataGridView();
+            this.checkOcultarPtoStock = new System.Windows.Forms.CheckBox();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -69,6 +70,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.checkOcultarPtoStock);
             this.panel1.Controls.Add(this.checkOcultarColumnas);
             this.panel1.Controls.Add(this.checkSoloFaltantes);
             this.panel1.Controls.Add(this.label1);
@@ -95,7 +97,7 @@
             this.checkOcultarColumnas.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkOcultarColumnas.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
             this.checkOcultarColumnas.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkOcultarColumnas.Location = new System.Drawing.Point(458, 12);
+            this.checkOcultarColumnas.Location = new System.Drawing.Point(484, 5);
             this.checkOcultarColumnas.Name = "checkOcultarColumnas";
             this.checkOcultarColumnas.Size = new System.Drawing.Size(166, 19);
             this.checkOcultarColumnas.TabIndex = 57;
@@ -111,7 +113,7 @@
             this.checkSoloFaltantes.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkSoloFaltantes.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
             this.checkSoloFaltantes.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkSoloFaltantes.Location = new System.Drawing.Point(648, 12);
+            this.checkSoloFaltantes.Location = new System.Drawing.Point(656, 5);
             this.checkSoloFaltantes.Name = "checkSoloFaltantes";
             this.checkSoloFaltantes.Size = new System.Drawing.Size(104, 19);
             this.checkSoloFaltantes.TabIndex = 56;
@@ -380,43 +382,59 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle13.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle13.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle13.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle13.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle13.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle13;
             this.grillaReportes.ColumnHeadersHeight = 29;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.WhiteSmoke;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle14.BackColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle14.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle14.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle14.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle14.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle14;
             this.grillaReportes.Location = new System.Drawing.Point(12, 142);
             this.grillaReportes.Name = "grillaReportes";
             this.grillaReportes.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle15.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle15.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle15.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle15.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle15.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle15;
             this.grillaReportes.RowHeadersVisible = false;
             this.grillaReportes.RowHeadersWidth = 300;
-            dataGridViewCellStyle4.Format = "N2";
-            dataGridViewCellStyle4.NullValue = null;
-            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle16.Format = "N2";
+            dataGridViewCellStyle16.NullValue = null;
+            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle16;
             this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaReportes.Size = new System.Drawing.Size(973, 428);
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
+            // 
+            // checkOcultarPtoStock
+            // 
+            this.checkOcultarPtoStock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkOcultarPtoStock.AutoSize = true;
+            this.checkOcultarPtoStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkOcultarPtoStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.8F);
+            this.checkOcultarPtoStock.ForeColor = System.Drawing.Color.Cornsilk;
+            this.checkOcultarPtoStock.Location = new System.Drawing.Point(469, 24);
+            this.checkOcultarPtoStock.Name = "checkOcultarPtoStock";
+            this.checkOcultarPtoStock.Size = new System.Drawing.Size(181, 19);
+            this.checkOcultarPtoStock.TabIndex = 58;
+            this.checkOcultarPtoStock.Text = "Ocultar Columnas Pto. Stock";
+            this.checkOcultarPtoStock.UseVisualStyleBackColor = true;
+            this.checkOcultarPtoStock.Visible = false;
+            this.checkOcultarPtoStock.CheckedChanged += new System.EventHandler(this.checkOcultarPtoStock_CheckedChanged);
             // 
             // formReporteStock
             // 
@@ -471,5 +489,6 @@
         private System.Windows.Forms.DateTimePicker fechaDesdeProgresivo;
         private System.Windows.Forms.CheckBox checkSoloFaltantes;
         private System.Windows.Forms.CheckBox checkOcultarColumnas;
+        private System.Windows.Forms.CheckBox checkOcultarPtoStock;
     }
 }

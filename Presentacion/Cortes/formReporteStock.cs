@@ -253,6 +253,7 @@ namespace Presentacion.Cortes
             lblActualizar.Visible = false;
             checkSoloFaltantes.Checked = false;
             checkOcultarColumnas.Checked = false;
+            checkOcultarPtoStock.Visible = false;
             ///reporteTeoricoReal
             if (comboTipoReporte.Text.Equals("Teorico - Real"))
             {
@@ -826,6 +827,7 @@ namespace Presentacion.Cortes
             {
                 checkSoloFaltantes.Visible = true;
                 checkOcultarColumnas.Visible = true;
+                checkOcultarPtoStock.Visible = true;
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = DateTime.Today.Date.AddDays(1);
 
@@ -986,6 +988,7 @@ namespace Presentacion.Cortes
             combosCierresCargados = false;
             checkSoloFaltantes.Visible = false;
             checkOcultarColumnas.Visible = false;
+            checkOcultarPtoStock.Visible = false;
             if (comboTipoReporte.Text.Equals("Cierre Stock") ||
                 comboTipoReporte.Text.Equals("Stock Actual") ||
                 comboTipoReporte.Text.Equals("Stock Progresivo") ||
@@ -999,6 +1002,7 @@ namespace Presentacion.Cortes
                 cargarComboCierreStock();
                 checkSoloFaltantes.Visible = true;
                 checkOcultarColumnas.Visible = true;
+                checkOcultarPtoStock.Visible = true;
             }
             else
             {
@@ -1093,18 +1097,46 @@ namespace Presentacion.Cortes
 
         private void checkOcultarColumnas_CheckedChanged(object sender, EventArgs e)
         {
+            OcultarColDetalle();
+        }
+
+        private void OcultarColDetalle()
+        {
             if (!combosCierresCargados)
                 return;
 
             for (int i = 0; i < grillaReportes.Columns.Count; i++)
             {
                 bool visible = !checkOcultarColumnas.Checked ? true :
-                   ( (grillaReportes.Columns[i].HeaderText == "Codigo" || grillaReportes.Columns[i].HeaderText == "Corte" ||
+                   ((grillaReportes.Columns[i].HeaderText == "Codigo" || grillaReportes.Columns[i].HeaderText == "Corte" ||
                    grillaReportes.Columns[i].HeaderText == "Faltante" || grillaReportes.Columns[i].HeaderText == "Stock Actual"
-                   || grillaReportes.Columns[i].HeaderText == "Falta" || grillaReportes.Columns[i].HeaderText == "Pto.Stock") ? true : false );
+                   || grillaReportes.Columns[i].HeaderText == "Falta" || grillaReportes.Columns[i].HeaderText == "Pto.Stock") ? true : false);
 
                 grillaReportes.Columns[i].Visible = visible;
-            }            
+
+                if (grillaReportes.Columns[i].HeaderText == "Falta" ||
+                   grillaReportes.Columns[i].HeaderText == "Pto.Stock")
+                    OcultarColPtoStock();
+
+            }
+        }
+
+        private void checkOcultarPtoStock_CheckedChanged(object sender, EventArgs e)
+        {
+            OcultarColPtoStock();
+        }
+
+        private void OcultarColPtoStock()
+        {
+            if (!combosCierresCargados)
+                return;
+
+            for (int i = 0; i < grillaReportes.Columns.Count; i++)
+            {
+                if (grillaReportes.Columns[i].HeaderText == "Falta" ||
+                   grillaReportes.Columns[i].HeaderText == "Pto.Stock")
+                    grillaReportes.Columns[i].Visible = !checkOcultarPtoStock.Checked;
+            }
         }
     }
 }
