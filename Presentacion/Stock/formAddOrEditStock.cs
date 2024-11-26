@@ -9,6 +9,8 @@ using System.Windows.Forms;
 using Presentacion.Cortes;
 using Utilidades;
 using System.Configuration;
+using System.Numerics;
+using System.Web.UI.WebControls;
 
 
 namespace Presentacion
@@ -1107,7 +1109,7 @@ namespace Presentacion
             // Retrieve the Employee object from the "Assigned To" cell.
             string codigoCorteSelect = grillaSinStock.Rows[e.RowIndex].Cells[0].Value.ToString();
 
-            cargarCorteSinStock(codigoCorteSelect, "-0.0051");// "-0.0051" se pone este resultado por se el menor para q se pueda ver en reporte
+            cargarCorteSinStock(codigoCorteSelect, "-0.000");// "-0.0051" se pone este resultado por se el menor para q se pueda ver en reporte
 
             //se establece la seleccion de la fila
             int selectRow = e.RowIndex;
@@ -1256,16 +1258,31 @@ namespace Presentacion
 
                 DataTable dtStockActual = oCorteN.CierreStock(1, "", (int)comboSucursal.SelectedValue, desde, txtFechaCompra.Value, null);
 
-                string codigoCorteSelect;
+                // Establecer la columna 'Codigo' como clave primaria
+                dtStockActual.PrimaryKey = new DataColumn[] { dtStockActual.Columns["Codigo"] };
+
+                // Crear un DataTable de StockActual
+                DataTable dtAsignarStockActual = new DataTable();
+                dtAsignarStockActual.Columns.Add("Codigo", typeof(string));
+                dtAsignarStockActual.Columns.Add("Stock", typeof(string));
+
+                long codigoCorteSelect;
                 //se recorre grilla y se obtiene el stock de cada corte
                 for (int i = 0; i < grillaSinStock.Rows.Count; i++)
                 {
-                    codigoCorteSelect = grillaSinStock.Rows[i].Cells[0].Value.ToString();
+                    codigoCorteSelect = Convert.ToInt64(grillaSinStock.Rows[i].Cells[0].Value.ToString());
                     // Buscar la fila por 'Codigo'
-                    DataRow[] fila = dtStockActual.Select($"Codigo = {codigoCorteSelect}");
-
-                    cargarCorteSinStock(codigoCorteSelect, fila[0]["DIF"].ToString());
+                    DataRow fila = dtStockActual.Rows.Find(codigoCorteSelect);
+                    if (fila != null)
+                        dtAsignarStockActual.Rows.Add(codigoCorteSelect.ToString(), fila["DIF"].ToString());
                 }
+
+                //se cargan los cortes
+                for (int i = 0; i < dtAsignarStockActual.Rows.Count; i++)
+                {
+                    cargarCorteSinStock(dtAsignarStockActual.Rows[i]["Codigo"].ToString(), dtAsignarStockActual.Rows[i]["Stock"].ToString());
+                }
+
             }
         }
     }
