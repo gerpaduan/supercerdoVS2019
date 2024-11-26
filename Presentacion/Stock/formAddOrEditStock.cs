@@ -858,7 +858,7 @@ namespace Presentacion
 
         private void txtCodigo_Enter(object sender, EventArgs e)
         {
-            if (sender is TextBox )
+            if (sender is TextBox)
             {
                 TextBox objectToChangeColor = (TextBox)sender;
                 if (!objectToChangeColor.BackColor.Equals(focusColor)) ultimoColor = objectToChangeColor.BackColor;
@@ -1107,7 +1107,7 @@ namespace Presentacion
             // Retrieve the Employee object from the "Assigned To" cell.
             string codigoCorteSelect = grillaSinStock.Rows[e.RowIndex].Cells[0].Value.ToString();
 
-            cargarCorteSinStock(codigoCorteSelect);
+            cargarCorteSinStock(codigoCorteSelect, "-0.0051");// "-0.0051" se pone este resultado por se el menor para q se pueda ver en reporte
 
             //se establece la seleccion de la fila
             int selectRow = e.RowIndex;
@@ -1128,10 +1128,10 @@ namespace Presentacion
 	        }
         }
 
-        private void cargarCorteSinStock(string codigo)
+        private void cargarCorteSinStock(string codigo, string cantKgs)
         {
             txtCodigo.Text = codigo;
-            txtCantKgs.Text = "-0.0051";//se pone este resultado por se el menor para q se pueda ver en reporte            
+            txtCantKgs.Text = cantKgs; // "-0.0051";//se pone este resultado por se el menor para q se pueda ver en reporte            
             agregarCorte();
             comprobarStock();
             txtCodigo.Text = "";
@@ -1231,6 +1231,42 @@ namespace Presentacion
         {
             oProvNuevaCompra = proveedor;
             this.txtProveedor.Text = oProvNuevaCompra.razonSocial;
+        }
+
+        private void btnStockActual_Click(object sender, EventArgs e)
+        {
+            //preguntar si se agregar stock actual a todos los cortes
+            DialogResult resp = MessageBox.Show("¿Asignar el stock actual a cada ítem de la grilla?", "Asignar Stock Actual", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+            if (resp == DialogResult.Yes)
+            {
+
+                ///TODO: para todos los cortes de la grilla agregar el stock actual de ese corte
+                ///obtener datatable de stock actual y luego cargar el stock a la grilla
+                ///
+                DateTime desde = DateTime.Today.Date.AddYears(-10);
+                DateTime hasta = txtFechaCompra.Value;
+
+                DataTable dtInicioStock = oCompraN.obtenerCompras(Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
+                    Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), "", desde, hasta, null);
+
+                //setea ultima fecha de cierre para obtener stock actual para comparar en AcumVentas
+                desde = dtInicioStock.Rows.Count > 0 ? Convert.ToDateTime(dtInicioStock.Rows[0]["fechaCompra"]) : desde;
+
+
+                DataTable dtStockActual = oCorteN.CierreStock(1, "", (int)comboSucursal.SelectedValue, desde, txtFechaCompra.Value, null);
+
+                string codigoCorteSelect;
+                //se recorre grilla y se obtiene el stock de cada corte
+                for (int i = 0; i < grillaSinStock.Rows.Count; i++)
+                {
+                    codigoCorteSelect = grillaSinStock.Rows[i].Cells[0].Value.ToString();
+                    // Buscar la fila por 'Codigo'
+                    DataRow[] fila = dtStockActual.Select($"Codigo = {codigoCorteSelect}");
+
+                    cargarCorteSinStock(codigoCorteSelect, fila[0]["DIF"].ToString());
+                }
+            }
         }
     }
 }

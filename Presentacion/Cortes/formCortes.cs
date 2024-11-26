@@ -24,6 +24,7 @@ namespace Presentacion
         DataTable dtCortesFiltrado;
 
         bool comboCargado = false;
+        bool mostrarMensajeExport = false;
         long codigoDesde, codigoHasta;
         public formCortes()
         {
@@ -362,6 +363,7 @@ namespace Presentacion
         private void exportar_Click(object sender, EventArgs e)
         {
             ExportarDataTableAExcel();
+            mostrarMensajeExport = true;
         }
 
         public void ExportarDataTableAExcel()
@@ -411,8 +413,12 @@ namespace Presentacion
 
                     // Guardar el archivo
                     excel.Save();
-                    MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }            
+                    if (mostrarMensajeExport)
+                    {
+                        MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        mostrarMensajeExport = false;
+                    }
+                }
             }
             catch (Exception ex)
             {

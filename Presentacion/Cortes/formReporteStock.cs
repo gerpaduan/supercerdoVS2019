@@ -304,120 +304,120 @@ namespace Presentacion.Cortes
                         string fechaHastaString = stockProgresivo ? txtFechaHastaProgresivo.Text : comboCierreStock.Text;
                         dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                             Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null);
-                        foreach (DataRow fila in dtGrillaReporte.Rows)
-                        {
-                            decimal TotINGR = 0, TotEGR =0;
-                            if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
-                            {
-                                fila["Stock.Ini"] = 0;
-                            }
-                            else
-                            {
-                                TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
-                            }
+                        //foreach (DataRow fila in dtGrillaReporte.Rows)
+                        //{
+                        //    decimal TotINGR = 0, TotEGR =0;
+                        //    if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
+                        //    {
+                        //        fila["Stock.Ini"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
+                        //    }
 
-                            if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
-                            {
-                                fila["Compras"] = 0;
-                            }
-                            else
-                            {
-                                TotINGR += Convert.ToDecimal(fila["Compras"]);
-                            }
+                        //    if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
+                        //    {
+                        //        fila["Compras"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotINGR += Convert.ToDecimal(fila["Compras"]);
+                        //    }
 
-                            if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
-                            {
-                                fila["Ingr.Emb"] = 0;
-                            }
-                            else
-                            {
-                                TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
-                            }
+                        //    if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
+                        //    {
+                        //        fila["Ingr.Emb"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
+                        //    }
 
-                            if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
-                            {
-                                fila["Ingr.Stock"] = 0;
-                            }
-                            else
-                            {
-                                TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
-                            }
+                        //    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
+                        //    {
+                        //        fila["Ingr.Stock"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
+                        //    }
 
-                            if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
-                            {
-                                fila["Ingr. Mov"] = 0;
-                            }
-                            else
-                            {
-                                TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
-                            }
+                        //    if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
+                        //    {
+                        //        fila["Ingr. Mov"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
+                        //    }
 
-                            if (fila["Ajus.Stock"].ToString() == null || fila["Ajus.Stock"].ToString() == "")
-                            {
-                                fila["Ajus.Stock"] = 0;
-                            }
-                            else
-                            {
-                                TotINGR += Convert.ToDecimal(fila["Ajus.Stock"]);
-                            }
+                        //    if (fila["Ajus.Stock"].ToString() == null || fila["Ajus.Stock"].ToString() == "")
+                        //    {
+                        //        fila["Ajus.Stock"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotINGR += Convert.ToDecimal(fila["Ajus.Stock"]);
+                        //    }
 
-                            if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
-                            {
-                                fila["Egr.Stock"] = 0;
-                            }
-                            else
-                            {
-                                TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
-                            }
+                        //    if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
+                        //    {
+                        //        fila["Egr.Stock"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
+                        //    }
 
-                            if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
-                            {
-                                fila["Egr.Mov"] = 0;
-                            }
-                            else
-                            {
-                                TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
-                            }
+                        //    if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
+                        //    {
+                        //        fila["Egr.Mov"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
+                        //    }
 
-                            if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
-                            {
-                                fila["Egr.Emb"] = 0;
-                            }
-                            else
-                            {
-                                TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
-                            }
+                        //    if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
+                        //    {
+                        //        fila["Egr.Emb"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
+                        //    }
 
-                            if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
-                            {
-                                fila["Ventas"] = 0;
-                            }
-                            else
-                            {
-                                TotEGR += Convert.ToDecimal(fila["Ventas"]);
-                            }
+                        //    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
+                        //    {
+                        //        fila["Ventas"] = 0;
+                        //    }
+                        //    else
+                        //    {
+                        //        TotEGR += Convert.ToDecimal(fila["Ventas"]);
+                        //    }
 
-                            if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
-                            {
-                                fila["Stock.Cierre"] = 0;
-                            }
+                        //    if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
+                        //    {
+                        //        fila["Stock.Cierre"] = 0;
+                        //    }
 
-                            fila["Tot.INGR"] = TotINGR;
-                            fila["Tot.EGR"] = TotEGR;
-                            fila["DIF"] = TotINGR - TotEGR;
+                        //    fila["Tot.INGR"] = TotINGR;
+                        //    fila["Tot.EGR"] = TotEGR;
+                        //    fila["DIF"] = TotINGR - TotEGR;
 
-                            fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
+                        //    fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
 
-                            float stockKg = Utilidades.Util_Form.convertFloat(fila["Faltante"].ToString(), false);
-                            //string stockUn = Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";
-                            string stock = Convert.ToDecimal(fila["promedio"]) == 0 ? stockKg.ToString("F2") :
-                                Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";//stockUn;// stockUn.ToString("F1") + " u";
-                            fila["Stock.Un"] = stock;
+                        //    float stockKg = Utilidades.Util_Form.convertFloat(fila["Faltante"].ToString(), false);
+                        //    //string stockUn = Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";
+                        //    string stock = Convert.ToDecimal(fila["promedio"]) == 0 ? stockKg.ToString("F2") :
+                        //        Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";//stockUn;// stockUn.ToString("F1") + " u";
+                        //    fila["Stock.Un"] = stock;
 
-                            //Si Punto Stock mayor a cero significa que se necesita saber el faltante del producto
-                            //
-                            fila["Falta"] = Convert.ToDecimal(fila["Pto.Stock"]) > 0 && ((Convert.ToDecimal(fila["DIF"]) < 0) || (Convert.ToDecimal(fila["Pto.Stock"]) - (Convert.ToDecimal(fila["DIF"])) <= 0)) ? "X" : "";
-                        }
+                        //    //Si Punto Stock mayor a cero significa que se necesita saber el faltante del producto
+                        //    //
+                        //    fila["Falta"] = Convert.ToDecimal(fila["Pto.Stock"]) > 0 && ((Convert.ToDecimal(fila["DIF"]) < 0) || (Convert.ToDecimal(fila["Pto.Stock"]) - (Convert.ToDecimal(fila["DIF"])) <= 0)) ? "X" : "";
+                        //}
                         grillaReportes.DataSource = dtGrillaReporte;
 
                         System.Drawing.Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -546,101 +546,101 @@ namespace Presentacion.Cortes
                 DataTable dtStockActual = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                             fechaUltimoCierreStock, DateTime.Now, null);
 
-                foreach (DataRow fila in dtStockActual.Rows)
-                {
-                    decimal TotINGR = 0, TotEGR = 0;
-                    if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
-                    {
-                        fila["Stock.Ini"] = 0;
-                    }
-                    else
-                    {
-                        TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
-                    }
+                //foreach (DataRow fila in dtStockActual.Rows)
+                //{
+                //    decimal TotINGR = 0, TotEGR = 0;
+                //    if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
+                //    {
+                //        fila["Stock.Ini"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
+                //    }
 
-                    if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
-                    {
-                        fila["Compras"] = 0;
-                    }
-                    else
-                    {
-                        TotINGR += Convert.ToDecimal(fila["Compras"]);
-                    }
+                //    if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
+                //    {
+                //        fila["Compras"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotINGR += Convert.ToDecimal(fila["Compras"]);
+                //    }
 
-                    if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
-                    {
-                        fila["Ingr.Emb"] = 0;
-                    }
-                    else
-                    {
-                        TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
-                    }
+                //    if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
+                //    {
+                //        fila["Ingr.Emb"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
+                //    }
 
-                    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
-                    {
-                        fila["Ingr.Stock"] = 0;
-                    }
-                    else
-                    {
-                        TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
-                    }
+                //    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
+                //    {
+                //        fila["Ingr.Stock"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
+                //    }
 
-                    if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
-                    {
-                        fila["Ingr. Mov"] = 0;
-                    }
-                    else
-                    {
-                        TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
-                    }
+                //    if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
+                //    {
+                //        fila["Ingr. Mov"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
+                //    }
 
-                    if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
-                    {
-                        fila["Egr.Stock"] = 0;
-                    }
-                    else
-                    {
-                        TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
-                    }
+                //    if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
+                //    {
+                //        fila["Egr.Stock"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
+                //    }
 
-                    if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
-                    {
-                        fila["Egr.Mov"] = 0;
-                    }
-                    else
-                    {
-                        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
-                    }
+                //    if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
+                //    {
+                //        fila["Egr.Mov"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
+                //    }
 
-                    if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
-                    {
-                        fila["Egr.Emb"] = 0;
-                    }
-                    else
-                    {
-                        TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
-                    }
+                //    if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
+                //    {
+                //        fila["Egr.Emb"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
+                //    }
 
-                    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
-                    {
-                        fila["Ventas"] = 0;
-                    }
-                    else
-                    {
-                        TotEGR += Convert.ToDecimal(fila["Ventas"]);
-                    }
+                //    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
+                //    {
+                //        fila["Ventas"] = 0;
+                //    }
+                //    else
+                //    {
+                //        TotEGR += Convert.ToDecimal(fila["Ventas"]);
+                //    }
 
-                    if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
-                    {
-                        fila["Stock.Cierre"] = 0;
-                    }
+                //    if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
+                //    {
+                //        fila["Stock.Cierre"] = 0;
+                //    }
 
-                    fila["Tot.INGR"] = TotINGR;
-                    fila["Tot.EGR"] = TotEGR;
-                    fila["DIF"] = TotINGR - TotEGR;
+                //    fila["Tot.INGR"] = TotINGR;
+                //    fila["Tot.EGR"] = TotEGR;
+                //    fila["DIF"] = TotINGR - TotEGR;
 
-                    fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
-                }
+                //    fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
+                //}
 
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {

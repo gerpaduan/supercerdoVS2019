@@ -146,7 +146,7 @@ namespace Negocio
                         if (row["idCorte"].Equals(rowCorte["idCorte"]))
                         {
                             oCorte.idCorte = Convert.ToInt32(rowCorte["idCorte"]);
-                            oCorte.codigo = Convert.ToInt32(rowCorte["codigo"]);
+                            oCorte.codigo = Convert.ToInt64(rowCorte["codigo"]);
                             oCorte.corte = rowCorte["corte"].ToString();
                             oCorte.precioKg = float.Parse(rowCorte["precioKg"].ToString());
                             break;
