@@ -52,17 +52,32 @@ namespace Datos
                 // Define el comando UPDATE del SqlDataAdapter
                 SqlDataAdapter adapter = new SqlDataAdapter("SELECT  id, nombre, valor, descripcion FROM Parametros", cmOtrasClases.Connection);
 
-                DataTable dt = new DataTable();
-                // Genera automáticamente los comandos INSERT, UPDATE y DELETE
-                SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
-                adapter.Fill(dt);
+                //DataTable dt = new DataTable();
+                //// Genera automáticamente los comandos INSERT, UPDATE y DELETE
+                //SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
+                //adapter.Fill(dt);
+                //dtParametros.PrimaryKey = new DataColumn[] { dtParametros.Columns["id"] };
+                //dt.PrimaryKey = new DataColumn[] { dt.Columns["id"] };
+                //cmOtrasClases.Connection.Open();
+                //dt = dtParametros;
+                //// Ejecuta el update en la base de datos con los cambios del DataTable
+                //adapter.Update(dt);
+                //conn.cerraConexion();
+
+                //Llenar el esquema del DataTable
+                DataTable table = new DataTable();
+                adapter.FillSchema(table, SchemaType.Source); // Importante para obtener información de claves primarias
+                adapter.Fill(table);
+
                 dtParametros.PrimaryKey = new DataColumn[] { dtParametros.Columns["id"] };
-                dt.PrimaryKey = new DataColumn[] { dt.Columns["id"] };
-                cmOtrasClases.Connection.Open();
-                dt = dtParametros;
-                // Ejecuta el update en la base de datos con los cambios del DataTable
-                adapter.Update(dt);
-                conn.cerraConexion();
+                //Realizar cambios en el DataTable
+                table = dtParametros;
+                table.PrimaryKey = new DataColumn[] { table.Columns["id"] };
+
+                //Actualizar la base de datos
+                SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
+                adapter.Update(table);
+
             }
         }
 

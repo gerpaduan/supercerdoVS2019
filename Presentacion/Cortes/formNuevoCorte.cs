@@ -300,6 +300,7 @@ namespace Presentacion
             oCorteMaestroE = null;
             comboTipo.SelectedIndex = -1;
             txtPromedio.Text = "";
+            txtPuntoStock.Text = "0";
             txtIndependiente.Checked = true;
             checkIngresoRapidoEmbutido.Checked = false;
             checkHabilitado.Checked = true;

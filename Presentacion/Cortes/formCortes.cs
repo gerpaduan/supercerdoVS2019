@@ -411,6 +411,7 @@ namespace Presentacion
 
                     // Guardar el archivo
                     excel.Save();
+                    MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }            
             }
             catch (Exception ex)

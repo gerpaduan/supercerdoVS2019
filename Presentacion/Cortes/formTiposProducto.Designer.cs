@@ -222,6 +222,7 @@
             this.Name = "formTiposProducto";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Tipos Producto";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formTiposProducto_FormClosing);
             this.Load += new System.EventHandler(this.formTiposProducto_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grilla)).EndInit();
             this.barraControl.ResumeLayout(false);

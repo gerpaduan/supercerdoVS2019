@@ -22,6 +22,7 @@ namespace Presentacion.Cortes
 
         Entidades.Usuario oUsuario;
         bool cargar = false;
+        bool posibleModificaciones = false;
         public formTiposProducto()
         {
             InitializeComponent();        
@@ -82,6 +83,7 @@ namespace Presentacion.Cortes
             frmAddOrEditTipoProducto.ShowDialog();
             this.cargarGrilla();
 
+            posibleModificaciones = true;
             oUsuario = null;
         }
 
@@ -166,6 +168,7 @@ namespace Presentacion.Cortes
 
                         MessageBox.Show("El Tipo Producto se eliminó correctamente");
                         this.cargarGrilla();
+                        posibleModificaciones = true;
                     }
                     else
                     {
@@ -196,6 +199,12 @@ namespace Presentacion.Cortes
 
                 this.Close();
             }
+        }
+
+        private void formTiposProducto_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (posibleModificaciones)
+                MessageBox.Show("Si realizó modificaciones en los tipos de productos.\nPara una correcta visualización se recomienda cerrar y volver a abrir el formulario Cortes");
         }
     }
 }
