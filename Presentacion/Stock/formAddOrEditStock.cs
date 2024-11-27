@@ -10,7 +10,6 @@ using Presentacion.Cortes;
 using Utilidades;
 using System.Configuration;
 using System.Numerics;
-using System.Web.UI.WebControls;
 
 
 namespace Presentacion
@@ -1273,8 +1272,9 @@ namespace Presentacion
                     codigoCorteSelect = Convert.ToInt64(grillaSinStock.Rows[i].Cells[0].Value.ToString());
                     // Buscar la fila por 'Codigo'
                     DataRow fila = dtStockActual.Rows.Find(codigoCorteSelect);
-                    if (fila != null)
-                        dtAsignarStockActual.Rows.Add(codigoCorteSelect.ToString(), fila["DIF"].ToString());
+                    //si fila es null porque no hubo ingreso ni egreso de ese corte y se asigna 0
+                    string kgsStockActual = (fila != null) ? fila["DIF"].ToString() : "0";
+                    dtAsignarStockActual.Rows.Add(codigoCorteSelect.ToString(), kgsStockActual);
                 }
 
                 //se cargan los cortes

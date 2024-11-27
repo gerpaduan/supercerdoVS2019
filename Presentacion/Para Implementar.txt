@@ -1540,6 +1540,7 @@ CAMBIOS POR ERRORES DE BD CARNISIS
 ADDOREDITCORTE
 agregarCortePorCompra
 agregarCortePorEmbutido
+[buscarCorteSinMaestro]
 
 PORQUE APUNTA A UNA TABLA SUPERCERDO
 
