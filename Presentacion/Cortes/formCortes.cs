@@ -6,6 +6,8 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
 using OfficeOpenXml;
@@ -364,6 +366,76 @@ namespace Presentacion
         {
             ExportarDataTableAExcel();
             mostrarMensajeExport = true;
+        }
+
+        private void systelPLU_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Establecer el contexto de la licencia para evitar la excepción
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+                string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+                DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
+                string rutaArchivo = @ruta + "\\Systel\\PLU_Systel.csv";
+
+                // Verificar si la carpeta existe, si no, crearla
+                if (!Directory.Exists(@ruta))
+                    Directory.CreateDirectory(@ruta);
+
+                // Crear el archivo de Excel
+                FileInfo archivo = new FileInfo(rutaArchivo);
+
+                // Verificar si el archivo ya existe; si es así, eliminarlo
+                if (archivo.Exists)
+                {
+                    archivo.Delete();
+                }
+
+                // Crear y llenar el archivo Excel
+                using (ExcelPackage excel = new ExcelPackage(archivo))
+                {
+                    // Crear una hoja de trabajo
+                    ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
+
+                    //Sección; Código PLU; Descripción; Número de PLU; Precio de lista 1; Precio de lista 2; Tipo de venta; Vencimiento; Ingredientes
+
+                    // Agregar datos
+                    string fila = "";
+                    int nroFila = 0; 
+                    for (int i = 0; i < dataTable.Rows.Count; i++)
+                    {
+                        //Numérico es difente a ese intervalo se saltea 1-99.997 
+                        long codigo = Convert.ToInt64(dataTable.Rows[i]["codigo"].ToString());
+                        if (codigo > 0 && codigo < 99998)
+                        {
+                            string seccion = "1";
+                            string descripcion = dataTable.Rows[i]["corte"].ToString().Length > 18 ? dataTable.Rows[i]["corte"].ToString().Substring(0, 18) : dataTable.Rows[i]["corte"].ToString();
+                            string precio = float.Parse(dataTable.Rows[i]["precioKg"].ToString()).ToString("F2");
+                            string tipoVenta = dataTable.Rows[i]["pesable"].ToString().Equals("1") ? "P" : "U"; //(bool)(dataTable.Rows[i]["pesable"]) ? "P" : "U";
+
+                            fila = seccion + ";" + codigo.ToString() + ";" + descripcion + ";" +
+                                codigo.ToString() + ";" + precio + ";0,00" + ";" + tipoVenta + ";;";
+
+                            hoja.Cells[nroFila+1, 1].Value = fila;
+                            fila = "";
+                            nroFila++;
+                        }
+                    }
+
+                    // Guardar el archivo
+                    excel.Save();
+                    if (true)
+                    {
+                        MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        mostrarMensajeExport = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al exportar lista de precios excel automaticamente.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         public void ExportarDataTableAExcel()
