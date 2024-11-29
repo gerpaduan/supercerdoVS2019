@@ -38,8 +38,9 @@
             this.btnGuardar.Dock = System.Windows.Forms.DockStyle.Top;
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardar.Location = new System.Drawing.Point(0, 0);
+            this.btnGuardar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnGuardar.Name = "btnGuardar";
-            this.btnGuardar.Size = new System.Drawing.Size(832, 31);
+            this.btnGuardar.Size = new System.Drawing.Size(1109, 38);
             this.btnGuardar.TabIndex = 0;
             this.btnGuardar.Text = "Guardar";
             this.btnGuardar.UseVisualStyleBackColor = false;
@@ -48,20 +49,22 @@
             // checkServidor
             // 
             this.checkServidor.AutoSize = true;
-            this.checkServidor.Location = new System.Drawing.Point(12, 37);
+            this.checkServidor.Location = new System.Drawing.Point(16, 46);
+            this.checkServidor.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.checkServidor.Name = "checkServidor";
-            this.checkServidor.Size = new System.Drawing.Size(65, 17);
+            this.checkServidor.Size = new System.Drawing.Size(80, 20);
             this.checkServidor.TabIndex = 1;
             this.checkServidor.Text = "Servidor";
             this.checkServidor.UseVisualStyleBackColor = true;
             // 
             // FormAppConfig
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(832, 589);
+            this.ClientSize = new System.Drawing.Size(1109, 725);
             this.Controls.Add(this.checkServidor);
             this.Controls.Add(this.btnGuardar);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "FormAppConfig";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "App.config";

@@ -22,6 +22,9 @@ namespace Utilidades
 
         private void FormAppConfig_Load(object sender, EventArgs e)
         {
+            // Habilitar scroll en el formulario
+            this.AutoScroll = true;
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             Configuration config =
                 ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);            
@@ -38,7 +41,7 @@ namespace Utilidades
             int verticalInicio = 70;
             int vertical = verticalInicio;
             int count = 0;
-            int cambiarColumn = 20;
+            int cambiarColumn = 200;
             foreach (var setting in result)
             {
                 count++;                
@@ -47,7 +50,7 @@ namespace Utilidades
                     lbl = new Label();
                     lbl.Name = setting.key.ToString();
                     lbl.Text = setting.value.ToString();
-                    lbl.Size = new Size(400, 20);
+                    lbl.Size = new Size(700, 20);
                     lbl.Location = new Point(horizontal, vertical);
                     lbl.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, FontStyle.Bold);
                     this.Controls.Add(lbl);                    
@@ -64,12 +67,12 @@ namespace Utilidades
                     txtBox = new TextBox();
                     txtBox.Name = setting.key.ToString();
                     txtBox.Text = setting.value.ToString();
-                    txtBox.Size = new Size(150, 20);
+                    txtBox.Size = new Size(500, 20);
                     txtBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
                     txtBox.Location = new System.Drawing.Point(horizontal+120, vertical);
                     this.Controls.Add(txtBox);
                 }
-                vertical += 25; 
+                vertical += 25;
                 if (count.Equals(cambiarColumn))
                 {
                     cambiarColumn += cambiarColumn;

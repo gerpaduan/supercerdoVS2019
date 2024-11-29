@@ -437,8 +437,9 @@ namespace Negocio
                 fila["Stock.Un"] = stock;
 
                 //Si Punto Stock mayor a cero significa que se necesita saber el faltante del producto
-                //
-                fila["Falta"] = Convert.ToDecimal(fila["Pto.Stock"]) > 0 && ((Convert.ToDecimal(fila["DIF"]) < 0) || (Convert.ToDecimal(fila["Pto.Stock"]) - (Convert.ToDecimal(fila["DIF"])) <= 0)) ? "X" : "";
+                //si Stock es menor a cero o Pto Stock es mayor 
+                fila["Falta"] = Convert.ToDecimal(fila["Pto.Stock"]) > 0 && ((Convert.ToDecimal(fila["DIF"]) < 0) || (Convert.ToDecimal(fila["Pto.Stock"]) > (Convert.ToDecimal(fila["DIF"])))) ? "X" : "";
+
             }
             return dtGrillaReporte;
         }

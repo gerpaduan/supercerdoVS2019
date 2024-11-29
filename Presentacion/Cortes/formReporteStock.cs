@@ -304,6 +304,7 @@ namespace Presentacion.Cortes
                         string fechaHastaString = stockProgresivo ? txtFechaHastaProgresivo.Text : comboCierreStock.Text;
                         dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                             Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null);
+                        #region pasado a capa Negocio
                         //foreach (DataRow fila in dtGrillaReporte.Rows)
                         //{
                         //    decimal TotINGR = 0, TotEGR =0;
@@ -418,6 +419,8 @@ namespace Presentacion.Cortes
                         //    //
                         //    fila["Falta"] = Convert.ToDecimal(fila["Pto.Stock"]) > 0 && ((Convert.ToDecimal(fila["DIF"]) < 0) || (Convert.ToDecimal(fila["Pto.Stock"]) - (Convert.ToDecimal(fila["DIF"])) <= 0)) ? "X" : "";
                         //}
+                        #endregion
+
                         grillaReportes.DataSource = dtGrillaReporte;
 
                         System.Drawing.Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -986,9 +989,8 @@ namespace Presentacion.Cortes
         private void comboTipoReporteCambiaValor()
         {
             combosCierresCargados = false;
-            checkSoloFaltantes.Visible = false;
-            checkOcultarColumnas.Visible = false;
-            checkOcultarPtoStock.Visible = false;
+            checkSoloFaltantes.Visible = checkOcultarColumnas.Visible = checkOcultarPtoStock.Visible = false;
+            checkSoloFaltantes.Checked = checkOcultarColumnas.Checked = checkOcultarPtoStock.Checked = false;
             if (comboTipoReporte.Text.Equals("Cierre Stock") ||
                 comboTipoReporte.Text.Equals("Stock Actual") ||
                 comboTipoReporte.Text.Equals("Stock Progresivo") ||
@@ -1000,9 +1002,10 @@ namespace Presentacion.Cortes
                 comboInicioStock.Visible = !acumVentas;
                 comboCierreStock.Visible = !stockProgresivo && !acumVentas;
                 cargarComboCierreStock();
-                checkSoloFaltantes.Visible = true;
-                checkOcultarColumnas.Visible = true;
-                checkOcultarPtoStock.Visible = true;
+                checkSoloFaltantes.Visible = checkOcultarColumnas.Visible =
+                    checkOcultarPtoStock.Visible = !comboTipoReporte.Text.Equals("Acum. Ventas");
+                //checkOcultarColumnas.Visible = true;
+                //checkOcultarPtoStock.Visible = true;
             }
             else
             {
