@@ -1545,6 +1545,36 @@ agregarCortePorEmbutido
 PORQUE APUNTA A UNA TABLA SUPERCERDO
 
 
+GO
+/****** Object:  StoredProcedure [dbo].[buscarCorte]    Script Date: 30/11/2024 18:51:27 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Name
+-- Create date: 
+-- Description:	
+-- =============================================
+ALTER PROCEDURE [dbo].[buscarCorte] 
+	-- Add the parameters for the stored procedure here
+	@texto nvarchar(50)
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	SELECT      CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.precioKg as 'efectivo', CorteP.precioKg as 'debito', CorteP.precioKg as 'credito', CorteP.precioKg as 'Billetera', CorteP.precioKg as 'Qr', CorteP.precioKg as 'Transf', CorteP.puntoStock, CorteP.habilitado, CorteP.mayorista, CorteP.enCierreStock, CorteP.alicuotaIva, CorteP.tipo, CorteP.pesable, CorteP.nivel,CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, 
+                      CAST(CorteP.porcentaje AS numeric(10, 2)) AS porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, CorteP.independiente, CorteP.promedio, CorteP.ingresoRapidoEmbutido
+FROM         dbo.Corte AS CorteM RIGHT OUTER JOIN
+                      dbo.Corte AS CorteP ON CorteM.idCorte = CorteP.idCorteMaestro
+WHERE    (CorteP.corte like '%'+@texto+'%'  OR cast(CorteP.codigo as nvarchar(50))= @texto or CorteM.corte like '%'+@texto+'%')
+
+order by CorteP.codigo
+
+END
 
 ******************
 

@@ -9,10 +9,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
+using System.Web.Services.Description;
+using System.Web.UI.WebControls;
 using System.Windows.Forms;
 using OfficeOpenXml;
 
 using Presentacion.Cortes;
+using static System.Net.WebRequestMethods;
 
 namespace Presentacion
 {
@@ -323,7 +326,7 @@ namespace Presentacion
             grillaCortes.DataSource = dtCortesFiltrado;
         }
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
             {
@@ -372,12 +375,81 @@ namespace Presentacion
         {
             try
             {
+                string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+                DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
+                string rutaArchivo = @ruta + "\\PLU_Systel.csv";
+
+                MessageBox.Show("Se exportarán aquellos productos de la grilla dónde el código esté entre 1-99997 (código soportado por Systel).\n\n"
+                    + "Ubicación: "+rutaArchivo, "Exportar lista Systel",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                 // Establecer el contexto de la licencia para evitar la excepción
                 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
+
+                StringBuilder sb = new StringBuilder();
+
+                string fila = "";
+                // Agregar filas
+                for (int i = 0; i < dataTable.Rows.Count; i++)
+                {
+                    //Numérico es difente a ese intervalo se saltea 1-99.997 
+                    long codigo = Convert.ToInt64(dataTable.Rows[i]["codigo"].ToString());
+                    if (codigo > 0 && codigo < 99998)
+                    {
+                        string seccion = "1";
+                        string descripcion = dataTable.Rows[i]["corte"].ToString().Length > 18 ? dataTable.Rows[i]["corte"].ToString().Substring(0, 18) : dataTable.Rows[i]["corte"].ToString();
+                        string precio = float.Parse(dataTable.Rows[i]["precioKg"].ToString()).ToString("F2");
+                        string tipoVenta = dataTable.Rows[i]["pesable"].ToString().Equals("1") ? "P" : "U"; //(bool)(dataTable.Rows[i]["pesable"]) ? "P" : "U";
+
+                        fila = seccion + ";" + codigo.ToString() + ";" + descripcion + ";" +
+                            codigo.ToString() + ";" + precio + ";0,00" + ";" + tipoVenta + ";;";
+
+                        sb.Append(fila);
+                    }
+                    //sb.Length--; // Eliminar el último delimitador
+                    sb.AppendLine();
+                }
+
+                // Sobreescribir el archivo CSV
+                System.IO.File.WriteAllText(rutaArchivo, sb.ToString(), Encoding.UTF8);
+
+                if (true)
+                {
+                    MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    mostrarMensajeExport = false;
+                }            
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al exportar lista de precios excel automaticamente.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void importarCSV_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (FormPrincipal.oUserAdmin == null)
+                {
+                    MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+                    return;
+                }
+
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
                 DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
-                string rutaArchivo = @ruta + "\\Systel\\PLU_Systel.csv";
+                string rutaArchivo = @ruta + "\\PLU_Systel.csv";
+
+                DialogResult resp = MessageBox.Show("La importación creará productos para codigos nuevos y modificará datos de existentes.\n"+
+                    "¿Está seguro de importar lista de productos CSV?\n\n"+ "Ubicación: " + rutaArchivo, "Se perderán las modificaciones",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (resp.Equals(DialogResult.No))
+                    return;
+
+                // Establecer el contexto de la licencia para evitar la excepción
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
 
                 // Verificar si la carpeta existe, si no, crearla
                 if (!Directory.Exists(@ruta))
@@ -387,54 +459,56 @@ namespace Presentacion
                 FileInfo archivo = new FileInfo(rutaArchivo);
 
                 // Verificar si el archivo ya existe; si es así, eliminarlo
-                if (archivo.Exists)
+                if (System.IO.File.Exists(rutaArchivo))
                 {
-                    archivo.Delete();
-                }
-
-                // Crear y llenar el archivo Excel
-                using (ExcelPackage excel = new ExcelPackage(archivo))
-                {
-                    // Crear una hoja de trabajo
-                    ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
-
                     //Sección; Código PLU; Descripción; Número de PLU; Precio de lista 1; Precio de lista 2; Tipo de venta; Vencimiento; Ingredientes
+                    var lines = System.IO.File.ReadAllLines(rutaArchivo);
 
-                    // Agregar datos
-                    string fila = "";
-                    int nroFila = 0; 
-                    for (int i = 0; i < dataTable.Rows.Count; i++)
+                    string codigo , descripcion ,  precio , tipoVenta ;
+                    foreach (var line in lines)
                     {
-                        //Numérico es difente a ese intervalo se saltea 1-99.997 
-                        long codigo = Convert.ToInt64(dataTable.Rows[i]["codigo"].ToString());
-                        if (codigo > 0 && codigo < 99998)
-                        {
-                            string seccion = "1";
-                            string descripcion = dataTable.Rows[i]["corte"].ToString().Length > 18 ? dataTable.Rows[i]["corte"].ToString().Substring(0, 18) : dataTable.Rows[i]["corte"].ToString();
-                            string precio = float.Parse(dataTable.Rows[i]["precioKg"].ToString()).ToString("F2");
-                            string tipoVenta = dataTable.Rows[i]["pesable"].ToString().Equals("1") ? "P" : "U"; //(bool)(dataTable.Rows[i]["pesable"]) ? "P" : "U";
+                        oCorteE = new Entidades.Corte();
 
-                            fila = seccion + ";" + codigo.ToString() + ";" + descripcion + ";" +
-                                codigo.ToString() + ";" + precio + ";0,00" + ";" + tipoVenta + ";;";
+                        var values = line.Split(';'); // Divide los valores por comas
+                        //Console.WriteLine($"Columna 1: {values[0]}, Columna 2: {values[1]}");
+                        codigo = values[1];
+                        descripcion = values[2];
+                        precio = values[4];
+                        tipoVenta = values[6];
 
-                            hoja.Cells[nroFila+1, 1].Value = fila;
-                            fila = "";
-                            nroFila++;
-                        }
+                        oCorteE.Codigo = Convert.ToInt64(codigo);
+                        oCorteE.CorteDesc = descripcion;
+                        oCorteE.precioKg = Utilidades.Util_Form.convertFloat(precio, false);
+                        oCorteE.Promedio = Utilidades.Util_Form.convertFloat("0", false);
+                        oCorteE.Tipo = values[7];
+                        //< !--Alicuotas IVA->ID 3 = 0 % | ID 4 = 10.5 % | ID 5 = 21 % | ID 6 = 27 % -->
+                        oCorteE.IdAlicuotaIva = Convert.ToInt32(values[8]);
+                        oCorteE.AlicuotaIva = Utilidades.Util_Form.convertFloat(values[9], false);
+                        oCorteE.PuntoStock = Convert.ToInt32(values[10]);
+                        oCorteE.IngresoRapidoEmbutido = false;
+                        oCorteE.Pesable = tipoVenta == "P" ? true : false;
+                        oCorteE.EnCierreStock = true;
+                        oCorteE.Habilitado = true;
+                        oCorteE.independiente = true ? 1 : 0;
+                        oCorteE.CorteMaestro = null;
+                        oCorteE.Porcentaje = 100;
+                        oCorteE.porcentajeHueso = 0;
+                        oCorteE.desvioEstandar = 0;
+
+                        oCorteN.addOrEditCorte(oCorteE);
                     }
 
-                    // Guardar el archivo
-                    excel.Save();
                     if (true)
                     {
-                        MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("La importación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         mostrarMensajeExport = false;
                     }
+                    
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al exportar lista de precios excel automaticamente.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error al importar lista de precios excel automaticamente.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

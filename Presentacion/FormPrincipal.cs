@@ -43,7 +43,7 @@ namespace Presentacion
 
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
-        Entidades.Usuario oUserAdmin;
+        public static Entidades.Usuario oUserAdmin;
 
         string ultimaConnSelect;
 
