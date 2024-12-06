@@ -33,6 +33,8 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtPuntoStock = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.checkMayuscula = new System.Windows.Forms.CheckBox();
             this.checkPesable = new System.Windows.Forms.CheckBox();
@@ -63,8 +65,6 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.txtPuntoStock = new System.Windows.Forms.TextBox();
-            this.label11 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupMaestro.SuspendLayout();
@@ -144,6 +144,29 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Corte";
+            // 
+            // txtPuntoStock
+            // 
+            this.txtPuntoStock.Location = new System.Drawing.Point(124, 231);
+            this.txtPuntoStock.Margin = new System.Windows.Forms.Padding(4);
+            this.txtPuntoStock.Name = "txtPuntoStock";
+            this.txtPuntoStock.Size = new System.Drawing.Size(93, 24);
+            this.txtPuntoStock.TabIndex = 6;
+            this.txtPuntoStock.Text = "0";
+            this.txtPuntoStock.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPuntoStock.TextChanged += new System.EventHandler(this.txtPuntoStock_TextChanged);
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label11.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label11.Location = new System.Drawing.Point(18, 234);
+            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(90, 18);
+            this.label11.TabIndex = 56;
+            this.label11.Text = "Punto Stock";
             // 
             // lblActualizar
             // 
@@ -323,9 +346,11 @@
             // 
             // txtDesvioEstandar
             // 
+            this.txtDesvioEstandar.Enabled = false;
             this.txtDesvioEstandar.Location = new System.Drawing.Point(151, 126);
             this.txtDesvioEstandar.Margin = new System.Windows.Forms.Padding(4);
             this.txtDesvioEstandar.Name = "txtDesvioEstandar";
+            this.txtDesvioEstandar.ReadOnly = true;
             this.txtDesvioEstandar.Size = new System.Drawing.Size(99, 24);
             this.txtDesvioEstandar.TabIndex = 34;
             this.txtDesvioEstandar.Text = "0";
@@ -532,29 +557,6 @@
             this.label4.Size = new System.Drawing.Size(45, 18);
             this.label4.TabIndex = 2;
             this.label4.Text = "Corte";
-            // 
-            // txtPuntoStock
-            // 
-            this.txtPuntoStock.Location = new System.Drawing.Point(124, 231);
-            this.txtPuntoStock.Margin = new System.Windows.Forms.Padding(4);
-            this.txtPuntoStock.Name = "txtPuntoStock";
-            this.txtPuntoStock.Size = new System.Drawing.Size(93, 24);
-            this.txtPuntoStock.TabIndex = 6;
-            this.txtPuntoStock.Text = "0";
-            this.txtPuntoStock.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtPuntoStock.TextChanged += new System.EventHandler(this.txtPuntoStock_TextChanged);
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label11.Location = new System.Drawing.Point(18, 234);
-            this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(90, 18);
-            this.label11.TabIndex = 56;
-            this.label11.Text = "Punto Stock";
             // 
             // formNuevoCorte
             // 

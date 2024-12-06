@@ -176,13 +176,15 @@ namespace Presentacion.Cortes
                 //        TotINGR += Convert.ToDecimal(fila["Compras"]);
                 //    }
 
-                //    if (fila["Ingr.Emb"].ToString() == null || fila["Ingr.Emb"].ToString() == "")
+                //    if (fila["Ingr
+                //
+                //    .ToString() == null || fila["Ingr.Elab"].ToString() == "")
                 //    {
-                //        fila["Ingr.Emb"] = 0;
+                //        fila["Ingr.Elab"] = 0;
                 //    }
                 //    else
                 //    {
-                //        TotINGR += Convert.ToDecimal(fila["Ingr.Emb"]);
+                //        TotINGR += Convert.ToDecimal(fila["Ingr.Elab"]);
                 //    }
 
                 //    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
@@ -230,13 +232,13 @@ namespace Presentacion.Cortes
                 //        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
                 //    }
 
-                //    if (fila["Egr.Emb"].ToString() == null || fila["Egr.Emb"].ToString() == "")
+                //    if (fila["Egr.Elab"].ToString() == null || fila["Egr.Elab"].ToString() == "")
                 //    {
-                //        fila["Egr.Emb"] = 0;
+                //        fila["Egr.Elab"] = 0;
                 //    }
                 //    else
                 //    {
-                //        TotEGR += Convert.ToDecimal(fila["Egr.Emb"]);
+                //        TotEGR += Convert.ToDecimal(fila["Egr.Elab"]);
                 //    }
 
                 //    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
