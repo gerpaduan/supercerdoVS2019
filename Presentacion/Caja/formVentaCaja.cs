@@ -1817,6 +1817,12 @@ namespace Presentacion.Caja
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (e.KeyChar == '*')// (char)(Keys.Multiply))
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 if (txtAbona.Focused) //si esta en abona finaliza la venta
@@ -1991,6 +1997,9 @@ namespace Presentacion.Caja
         {
             switch (keyData)
             {
+                case Keys.Multiply:
+                    checkLeerPeso.Checked = !checkLeerPeso.Checked;
+                    break;
                 case Keys.Home:
                     txtCodigo.Focus();
                     break;
