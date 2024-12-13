@@ -9,4 +9,9 @@ namespace Presentacion
     {
         void EnviarUsuario(Entidades.Usuario usuario);
     }
+
+    public interface InterfaceSector
+    {  
+        void EnviarSector(string sector);
+    }
 }

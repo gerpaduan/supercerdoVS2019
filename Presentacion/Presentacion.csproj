@@ -204,6 +204,12 @@
     <Compile Include="Caja\formFormaPago.Designer.cs">
       <DependentUpon>formFormaPago.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\FormSelectPuntoExpendio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\FormSelectPuntoExpendio.Designer.cs">
+      <DependentUpon>FormSelectPuntoExpendio.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formTiposEgresos.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -233,6 +239,12 @@
     </Compile>
     <Compile Include="Caja\formUltimaVenta.Designer.cs">
       <DependentUpon>formUltimaVenta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formPuntoExpendio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formPuntoExpendio.Designer.cs">
+      <DependentUpon>formPuntoExpendio.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formVentasVendedor.cs">
       <SubType>Form</SubType>
@@ -679,6 +691,9 @@
     <EmbeddedResource Include="Caja\formFormaPago.resx">
       <DependentUpon>formFormaPago.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\FormSelectPuntoExpendio.resx">
+      <DependentUpon>FormSelectPuntoExpendio.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formTiposEgresos.resx">
       <DependentUpon>formTiposEgresos.cs</DependentUpon>
     </EmbeddedResource>
@@ -693,6 +708,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formUltimaVenta.resx">
       <DependentUpon>formUltimaVenta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formPuntoExpendio.resx">
+      <DependentUpon>formPuntoExpendio.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formVentasVendedor.resx">
       <DependentUpon>formVentasVendedor.cs</DependentUpon>

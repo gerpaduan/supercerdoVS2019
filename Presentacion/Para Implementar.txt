@@ -2649,7 +2649,16 @@ END
 
 
 
+********
+Agregar tablas
 
+Expendio
+LineaExpendio
+
+Procedimientos agregar de ambos
+
+en tabla Licencia
+agregar columna Sector
 
 
 

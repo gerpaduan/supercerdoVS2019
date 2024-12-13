@@ -1105,5 +1105,41 @@ namespace Presentacion
             Utilidades.FormAppConfig formAppConfig = new Utilidades.FormAppConfig();
             formAppConfig.Show();
         }
+
+        private void btnPuntoExpendio_Click(object sender, EventArgs e)
+        {
+            puntoExpendio();
+        }
+        private void puntoExpendio()
+        {
+            formAbierto = false;
+
+            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.soloActivos = true;
+            frmLogin.ShowDialog(this);
+            foreach (Form frm in Application.OpenForms)
+            {
+                if (frm.GetType() == typeof(formPuntoExpendio))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!formAbierto)
+            {
+                formPuntoExpendio frmPuntoExpendio = new formPuntoExpendio();
+                frmPuntoExpendio.oUsuario = oUsuario;
+                frmPuntoExpendio.Show();
+            }
+            oUsuario = null;
+        }
+
     }
 }

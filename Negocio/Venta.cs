@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Data.SqlClient;
 
 namespace Negocio
 {
@@ -184,14 +185,36 @@ namespace Negocio
             oVentaD.actualizarCliente(idVenta, idPersona);
         }
 
-        #region FACTURA ELECTRONICA
 
-        /// <summary>
-        /// Retorna cero si está pendiente de facturacion (CAE es vacio)
-        /// </summary>
-        /// <param name="idVenta"></param>
-        /// <returns></returns>
-        public int esVentaSinFacturar(int idVenta)
+        #region EXPENDIO
+        public int agregarExpendio(Entidades.Venta oVentaE)
+        {
+           return oVentaD.agregarExpendio(oVentaE);
+        }
+        public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
+        {
+            return oVentaD.agregarLineaExprendio(oLineaE);
+        }
+
+        public DataTable obtenerSectores()
+        {
+            return oVentaD.obtenerSectores();
+        }
+        public string getUltimoSectorSelect(string serialCPU)
+        {
+            return oVentaD.getUltimoSectorSelect(serialCPU);
+        }
+            #endregion
+
+
+            #region FACTURA ELECTRONICA
+
+            /// <summary>
+            /// Retorna cero si está pendiente de facturacion (CAE es vacio)
+            /// </summary>
+            /// <param name="idVenta"></param>
+            /// <returns></returns>
+            public int esVentaSinFacturar(int idVenta)
         {
             return oVentaD.esVentaSinFacturar(idVenta);
         }

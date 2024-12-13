@@ -5,6 +5,8 @@ using System.Text;
 using System.Data;
 using System.Data.SqlClient;
 using Entidades;
+using static System.Collections.Specialized.BitVector32;
+using System.Collections;
 
 namespace Datos
 {
@@ -527,6 +529,106 @@ namespace Datos
 
             cmVenta = null;
         }
+
+        #region EXPENDIO
+        public int agregarExpendio(Entidades.Venta oVentaE)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.StoredProcedure;
+            cmVenta.CommandTimeout = 90;
+            cmVenta.CommandText = "agregarExpendio"; 
+
+            cmVenta.Parameters.AddWithValue("@idExpendio", oVentaE.IdVenta);
+            cmVenta.Parameters.AddWithValue("@fechaExpendio", oVentaE.FechaVenta);
+            cmVenta.Parameters.AddWithValue("@idSucursal", oVentaE.Sucursal.idSucursal);
+            cmVenta.Parameters.AddWithValue("@idVendedor", oVentaE.Vendedor.Id);
+            cmVenta.Parameters.AddWithValue("@identificacionExpendio", oVentaE.IdentificacionExpendio);
+            cmVenta.Parameters.AddWithValue("@sector", oVentaE.Sector);
+            cmVenta.Parameters.AddWithValue("@cantItems", oVentaE.CantItems);
+            cmVenta.Parameters.AddWithValue("@importe", oVentaE.TotalImporte);
+            cmVenta.Parameters.AddWithValue("@serialCPU", oVentaE.SerialCPU);
+
+            cmVenta.Connection.Open();
+            SqlDataReader drVenta = cmVenta.ExecuteReader();
+            int idVenta = 0;
+            while (drVenta.Read())
+            {
+                idVenta = Convert.ToInt32(drVenta["idExpendio"].ToString());
+            }
+
+            cmVenta.Connection.Close();
+            return idVenta;
+        }
+
+        public Entidades.LineaVenta agregarLineaExprendio(Entidades.LineaVenta oLineaE)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = 90;
+            cmVenta.CommandText = "agregarLineaExpendio";
+            cmVenta.Parameters.AddWithValue("@idExpendio", oLineaE.Venta.IdVenta);
+            cmVenta.Parameters.AddWithValue("@idCorte", oLineaE.Corte.idCorte);
+            cmVenta.Parameters.AddWithValue("@pesoBalanza", oLineaE.PesoBalanza);
+            cmVenta.Parameters.AddWithValue("@cantKg", Math.Round(oLineaE.CantKg, 3));
+            cmVenta.Parameters.AddWithValue("@precioKg", Math.Round(oLineaE.PrecioKg, 2));
+
+            cmVenta.Connection.Open();
+            oLineaE.IdLineaVenta = (int)cmVenta.ExecuteScalar();
+            cmVenta.Connection.Close();
+
+            return oLineaE;
+        }
+
+
+        public DataTable obtenerSectores()
+        {
+            DataTable dtSectores = new DataTable();
+            daVenta = new SqlDataAdapter();
+
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text; cmVenta.CommandTimeout = 90;
+            string consulta = "SELECT  sector FROM  Sectores";
+            cmVenta.CommandText = consulta;
+
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtSectores);
+
+            cmVenta.Connection.Close();
+
+            return dtSectores;
+        }
+
+        public string getUltimoSectorSelect(string serialCPU)
+        {
+            string query = $"SELECT sector FROM Licencias WHERE nroLicencia = '{serialCPU}'";
+            string sector = "";
+            // Conexión a la base de datos
+            using (SqlConnection connection = conn.conectar())
+            {
+                // Abrir conexión
+                connection.Open();
+
+                // Crear comando
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    // Ejecutar el comando y leer los datos
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            // Obtener el valor de la columna "sector"
+                            sector = reader["sector"] != DBNull.Value ? reader["sector"].ToString().Trim() : string.Empty;
+                        }
+                    }
+                }
+            }
+            return sector;
+        }
+
+        #endregion
+
 
         #region FACTURA ELECTRONICA        
 

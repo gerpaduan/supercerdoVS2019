@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.btnPuntoExpendio = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
             this.btnLogin = new System.Windows.Forms.Button();
@@ -96,6 +97,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.splitContainer1.Panel1.Controls.Add(this.btnPuntoExpendio);
             this.splitContainer1.Panel1.Controls.Add(this.pictureBox1);
             this.splitContainer1.Panel1.Controls.Add(this.checkAutoDesconectar);
             this.splitContainer1.Panel1.Controls.Add(this.btnLogin);
@@ -125,6 +127,25 @@
             this.splitContainer1.SplitterDistance = 269;
             this.splitContainer1.SplitterWidth = 5;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // btnPuntoExpendio
+            // 
+            this.btnPuntoExpendio.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.btnPuntoExpendio.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(64)))));
+            this.btnPuntoExpendio.FlatAppearance.MouseDownBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnPuntoExpendio.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.btnPuntoExpendio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPuntoExpendio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
+            this.btnPuntoExpendio.ForeColor = System.Drawing.Color.White;
+            this.btnPuntoExpendio.Location = new System.Drawing.Point(-7, 441);
+            this.btnPuntoExpendio.Margin = new System.Windows.Forms.Padding(4);
+            this.btnPuntoExpendio.Name = "btnPuntoExpendio";
+            this.btnPuntoExpendio.Size = new System.Drawing.Size(280, 50);
+            this.btnPuntoExpendio.TabIndex = 35;
+            this.btnPuntoExpendio.TabStop = false;
+            this.btnPuntoExpendio.Text = "Punto E&xpendio";
+            this.btnPuntoExpendio.UseVisualStyleBackColor = false;
+            this.btnPuntoExpendio.Click += new System.EventHandler(this.btnPuntoExpendio_Click);
             // 
             // pictureBox1
             // 
@@ -192,7 +213,7 @@
             this.btnEgresosCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEgresosCaja.ForeColor = System.Drawing.Color.White;
-            this.btnEgresosCaja.Location = new System.Drawing.Point(-7, 249);
+            this.btnEgresosCaja.Location = new System.Drawing.Point(-7, 248);
             this.btnEgresosCaja.Margin = new System.Windows.Forms.Padding(4);
             this.btnEgresosCaja.Name = "btnEgresosCaja";
             this.btnEgresosCaja.Size = new System.Drawing.Size(280, 50);
@@ -211,7 +232,7 @@
             this.btnUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnUsuarios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnUsuarios.ForeColor = System.Drawing.Color.White;
-            this.btnUsuarios.Location = new System.Drawing.Point(-7, 532);
+            this.btnUsuarios.Location = new System.Drawing.Point(0, 580);
             this.btnUsuarios.Margin = new System.Windows.Forms.Padding(4);
             this.btnUsuarios.Name = "btnUsuarios";
             this.btnUsuarios.Size = new System.Drawing.Size(280, 50);
@@ -230,7 +251,7 @@
             this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnReportes.ForeColor = System.Drawing.Color.White;
-            this.btnReportes.Location = new System.Drawing.Point(-7, 580);
+            this.btnReportes.Location = new System.Drawing.Point(0, 628);
             this.btnReportes.Margin = new System.Windows.Forms.Padding(4);
             this.btnReportes.Name = "btnReportes";
             this.btnReportes.Size = new System.Drawing.Size(279, 50);
@@ -249,7 +270,7 @@
             this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnPersonas.ForeColor = System.Drawing.Color.White;
-            this.btnPersonas.Location = new System.Drawing.Point(-7, 487);
+            this.btnPersonas.Location = new System.Drawing.Point(0, 535);
             this.btnPersonas.Margin = new System.Windows.Forms.Padding(4);
             this.btnPersonas.Name = "btnPersonas";
             this.btnPersonas.Size = new System.Drawing.Size(279, 50);
@@ -268,7 +289,7 @@
             this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCortes.ForeColor = System.Drawing.Color.White;
-            this.btnCortes.Location = new System.Drawing.Point(-7, 442);
+            this.btnCortes.Location = new System.Drawing.Point(0, 490);
             this.btnCortes.Margin = new System.Windows.Forms.Padding(4);
             this.btnCortes.Name = "btnCortes";
             this.btnCortes.Size = new System.Drawing.Size(279, 50);
@@ -287,7 +308,7 @@
             this.btnEmbutidos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEmbutidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEmbutidos.ForeColor = System.Drawing.Color.White;
-            this.btnEmbutidos.Location = new System.Drawing.Point(-7, 347);
+            this.btnEmbutidos.Location = new System.Drawing.Point(-7, 346);
             this.btnEmbutidos.Margin = new System.Windows.Forms.Padding(4);
             this.btnEmbutidos.Name = "btnEmbutidos";
             this.btnEmbutidos.Size = new System.Drawing.Size(280, 50);
@@ -306,7 +327,7 @@
             this.btnStock.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnStock.ForeColor = System.Drawing.Color.White;
-            this.btnStock.Location = new System.Drawing.Point(-7, 393);
+            this.btnStock.Location = new System.Drawing.Point(-7, 392);
             this.btnStock.Margin = new System.Windows.Forms.Padding(4);
             this.btnStock.Name = "btnStock";
             this.btnStock.Size = new System.Drawing.Size(280, 50);
@@ -325,7 +346,7 @@
             this.btnMovimientos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnMovimientos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnMovimientos.ForeColor = System.Drawing.Color.White;
-            this.btnMovimientos.Location = new System.Drawing.Point(-7, 298);
+            this.btnMovimientos.Location = new System.Drawing.Point(-7, 297);
             this.btnMovimientos.Margin = new System.Windows.Forms.Padding(4);
             this.btnMovimientos.Name = "btnMovimientos";
             this.btnMovimientos.Size = new System.Drawing.Size(279, 50);
@@ -747,6 +768,7 @@
         private System.Windows.Forms.ToolStripMenuItem vencimientosLicenciaToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem encriptarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem appConfigToolStripMenuItem;
+        private System.Windows.Forms.Button btnPuntoExpendio;
     }
 }
 

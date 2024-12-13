@@ -86,7 +86,12 @@ namespace Entidades
          private float acumRedondeoImporte;
          private float comisionTarjeta;
          private string imprimirTipoCbte;//0-SinTicket | 1-Ticket | 2-Factura.
-         private float totalImporte;
+         private float totalImporte;        
+        //campos para punto de expendio
+        private string identificacionExpendio;
+        private string sector; 
+        private string cantItems;
+        private string serialCPU;
 
          public float TotalImporte
          {
@@ -302,5 +307,10 @@ namespace Entidades
                 estado = value;
             }
         }
+
+        public string IdentificacionExpendio { get => identificacionExpendio; set => identificacionExpendio = value; }
+        public string Sector { get => sector; set => sector = value; }
+        public string CantItems { get => cantItems; set => cantItems = value; }
+        public string SerialCPU { get => serialCPU; set => serialCPU = value; }
     }
 }
