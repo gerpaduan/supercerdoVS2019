@@ -1882,6 +1882,7 @@ namespace Presentacion.Caja
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
+                txtCodigo.Focus();
             }
         }
 
@@ -1998,12 +1999,14 @@ namespace Presentacion.Caja
             switch (keyData)
             {
                 case Keys.Multiply:
-                    checkLeerPeso.Checked = !checkLeerPeso.Checked;
+                    dejarDeLeerPeso = checkLeerPeso.Checked;
+                    checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
                     break;
                 case Keys.Home:
                     txtCodigo.Focus();
                     break;
                 case Keys.PageUp:
+                    cambiarPuntoDeVenta();
                     txtCodigo.Focus();
                     break;
                 case Keys.End:
@@ -2011,7 +2014,7 @@ namespace Presentacion.Caja
                     mostrarPago();
                     break;
                 case Keys.PageDown:
-                    cambiarPuntoDeVenta();
+                    MessageBox.Show("pto de expendio");
                     break;
                 case Keys.Insert:
                     oVentaE.FormaPago = null;

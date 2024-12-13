@@ -267,8 +267,7 @@ namespace Presentacion.Caja
                 cargarVenta();
 
                 try
-                {
-                    //acaa            
+                {        
                     oVentaE.IdVenta = oVentaN.agregarExpendio(oVentaE);
                     Ticket.CreaTicket ticket = new Ticket.CreaTicket();                
                                      
@@ -1292,13 +1291,7 @@ namespace Presentacion.Caja
         private void checkLeerPeso_CheckedChanged(object sender, EventArgs e)
         {
             try
-            {//acaa
-
-                /////si checkLeerPeso se descativo con el asterisco y cambio a true
-                /////se retorno valor a falso xq balanza ya fue desactivada
-                //if (!checkLeerPeso.Enabled && checkLeerPeso.Checked)
-                //    checkLeerPeso.Checked = false;
-
+            {
                 checkLeerPeso.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkLeerPeso.Checked);
 
                 if (checkLeerPeso.Checked && FormPrincipal.leerBalanza)
