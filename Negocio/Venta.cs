@@ -30,6 +30,10 @@ namespace Negocio
                     break;
             }
             oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
+            ///llama al metodo para asinar el idVenta a la tabla Expendios
+            foreach (int item in oVentaE.ListaExpendios)
+                oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+
             return oVentaE.IdVenta;
         }
 
@@ -195,8 +199,11 @@ namespace Negocio
         {
             return oVentaD.agregarLineaExprendio(oLineaE);
         }
-
-        public DataTable obtenerSectores()
+        public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
+        {
+            return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
+        }
+            public DataTable obtenerSectores()
         {
             return oVentaD.obtenerSectores();
         }

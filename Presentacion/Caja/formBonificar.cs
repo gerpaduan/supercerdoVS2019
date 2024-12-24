@@ -13,6 +13,7 @@ namespace Presentacion.Caja
     public partial class formBonificar : Form
     {
         public Entidades.LineaVenta oLineaVenta;
+        public formVentaCajaConExpendio frmVentaCajaConExp;
         public formVentaCaja frmVentaCaja;
         float precio, total;
         bool validado = true;

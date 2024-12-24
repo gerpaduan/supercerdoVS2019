@@ -92,7 +92,7 @@ namespace Entidades
         private string sector; 
         private string cantItems;
         private string serialCPU;
-
+        List<Int32> listaExpendios;
          public float TotalImporte
          {
              get { return totalImporte; }
@@ -312,5 +312,6 @@ namespace Entidades
         public string Sector { get => sector; set => sector = value; }
         public string CantItems { get => cantItems; set => cantItems = value; }
         public string SerialCPU { get => serialCPU; set => serialCPU = value; }
+        public List<Int32> ListaExpendios { get => listaExpendios; set => listaExpendios = value; }
     }
 }

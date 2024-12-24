@@ -15,10 +15,11 @@ using System.Reflection;
 using Utilidades;
 using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
+using System.Drawing.Text;
 
 namespace Presentacion.Caja
 {
-    public partial class formVentaCaja : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago, InterfaceImprimirCbte
+    public partial class formVentaCajaConExpendio : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago, InterfaceImprimirCbte
     {
         bool pesoBalanza = false;
         bool capturarPantallaFinal = false;
@@ -33,6 +34,8 @@ namespace Presentacion.Caja
         formVentas frmVentas;
         Negocio.Corte oCorteN = new Negocio.Corte();
         DataTable dtCortes = new DataTable();
+        DataTable dtExpendios = new DataTable(); 
+        DataTable tablaFiltrada;
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
         Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
@@ -94,7 +97,9 @@ namespace Presentacion.Caja
         float porcAjEfectivo, porcAjDebito, porcAjCredito, porcAjCtaCte, porcAjQr, porcAjTranf, limiteKgParaAjuste;
         bool esAjustePorcTarj = false;
         int idConsumidorFinal;
-
+        private bool isExpanded = false;
+        private bool changeComboExpendio = false;
+        private int idExpendioVenta;
         /// <summary>
         /// Variable Para manejar los codigos de barra internos
         /// </summary>
@@ -104,7 +109,7 @@ namespace Presentacion.Caja
         #endregion
 
 
-        public formVentaCaja()
+        public formVentaCajaConExpendio()
         {
             InitializeComponent();
 
@@ -358,7 +363,7 @@ namespace Presentacion.Caja
                     {
                         MessageBox.Show("Error al intentar generar Factura Electonica.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
                     }
-                    oVentaE.IdVenta = 0;
+                    oVentaE.IdVenta = 0; 
                     limpiarListas();
                     //si es ventada duplicada se cierra la misma
                     if (ventanaDuplicada)
@@ -554,6 +559,8 @@ namespace Presentacion.Caja
             listaLineaGrilla = new List<LineaVenta>();
             listaLineaVenta = new List<Entidades.LineaVenta>();
             grillaLineasVenta.DataSource = null;
+            oVentaE.ListaExpendios.Clear();
+            txtBuscarExpendio.Text = "";
         }
 
         private void cargarVenta()
@@ -691,7 +698,7 @@ namespace Presentacion.Caja
             lineaVentaP.precioKg = lineaE.PrecioKg;
             lineaVentaP.totalS = lineaE.PrecioKg * lineaE.KgsTotalCalculado;
             lineaVentaP.Random = lineaE.Random;
-
+            lineaVentaP.IdExpendio = lineaE.IdExpendio;
             if (lineaE.Estado == 1)
             {
                 lineaVentaP.estado = "Anulado";
@@ -737,6 +744,8 @@ namespace Presentacion.Caja
             ganKgsTotRedondeo += ganKgsRedondeoLinea;
             ganPesosTotRedondeo += ganPesosRedondeoLinea;
             ganPesosRedondeoLinea = ganKgsRedondeoLinea = 0;//Seteo a CERO las variables
+
+            oLineaVenta.IdExpendio = idExpendioVenta;
         }
 
         private bool ingresarFormaPago()
@@ -1054,6 +1063,7 @@ namespace Presentacion.Caja
                         oLineaVenta.Estado = 1;//anulado
                         oLineaVenta.Bonificacion = oLineaVentaSelect.Bonificacion;
                         oLineaVenta.IndexAnulado = nroFila;
+                        oLineaVenta.IdExpendio = oLineaVentaSelect.IdExpendio;
 
                         //se agrega el index del anulado al corte seleccionado para anular
                         //--el index equivale a la cantidad en listaLineaVenta antes de cargarLista--
@@ -1918,20 +1928,22 @@ namespace Presentacion.Caja
             }
         }
 
-        private void formVentaCaja_Load(object sender, EventArgs e)
+        private void formVentaCajaConExpendio_Load(object sender, EventArgs e)
         {
             timer1.Enabled = false;
-
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
                 "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
-                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear  |  RePág = Cambiar Vendedor |  AvPág = Expendios";
+                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
+            comboExpendioEstado.SelectedIndex = 0;
             if (oUsuario != null)
             {
                 validarAperturaCaja();
                 //se vuelve a validar que el usuario no sea nulo(sucede cuando no quiere abrir caja)
                 if (oUsuario == null) return;
 
+                oVentaE.ListaExpendios = new List<int> { 0 };
+                oVentaE.ListaExpendios.Clear();
                 oVentaE.Vendedor = oUsuario;
                 oVentaE.ImprimirTipoCbte = Entidades.Venta.imprimirCbteEnum.Nulo.ToString();
                 usuario.Text = oUsuario.User;
@@ -1953,6 +1965,8 @@ namespace Presentacion.Caja
                 dtCortes = oCorteN.cargarDtCortes();
 
                 timer1.Enabled = true;
+
+                panelExpendios();
             }
             else
             {
@@ -1985,7 +1999,7 @@ namespace Presentacion.Caja
                 {
                     //si estable nulo el Usuario porque decidió no abrir caja
                     oUsuario = null;
-                    formVentaCaja_Load(null, null);
+                    formVentaCajaConExpendio_Load(null, null);
                 }                
             }
         }
@@ -2014,7 +2028,7 @@ namespace Presentacion.Caja
                     mostrarPago();
                     break;
                 case Keys.PageDown:
-                    MessageBox.Show("pto de expendio");
+                    expendirExpendios();
                     break;
                 case Keys.Insert:
                     oVentaE.FormaPago = null;
@@ -2166,7 +2180,7 @@ namespace Presentacion.Caja
 
                 formBonificar frmBonificar = new formBonificar();
                 frmBonificar.oLineaVenta = oLineaVentaSelect;
-                frmBonificar.frmVentaCaja = this;
+                frmBonificar.frmVentaCajaConExp = this;
                 frmBonificar.ShowDialog();
 
                 //si es Bonificar todos se recorre toda la lista y se la actualiza
@@ -2243,7 +2257,7 @@ namespace Presentacion.Caja
             bool cambioForm = false;
             foreach (Form frm in Application.OpenForms)
             {
-                if (frm.GetType() == typeof(formVentaCaja))
+                if (frm.GetType() == typeof(formVentaCajaConExpendio))
                 {
                     foreach (Control ctrl in frm.Controls)
                     {
@@ -2284,7 +2298,7 @@ namespace Presentacion.Caja
             txtCambio.Text = cambio.ToString("N2");
         }
 
-        private void formVentaCaja_FormClosing(object sender, FormClosingEventArgs e)
+        private void formVentaCajaConExpendio_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = salir();
         }
@@ -2297,6 +2311,7 @@ namespace Presentacion.Caja
         private void bloquear()
         {
             panelBloquear.Visible = true;
+            panelBloquear.BringToFront();
             btnBloquear.Visible = false;
             btnAceptar.Enabled = false;
             btnAbonar.Enabled = false;
@@ -2304,7 +2319,7 @@ namespace Presentacion.Caja
             pnlBuscar.Enabled = false;
             panelPago.Enabled = false;
             grillaLineasVenta.Enabled = false;
-
+            panelDespliegue.Enabled = false;
             txtClave.Focus();
         }
 
@@ -2328,6 +2343,7 @@ namespace Presentacion.Caja
                 pnlBuscar.Enabled = true;
                 panelPago.Enabled = true;
                 grillaLineasVenta.Enabled = true;
+                panelDespliegue.Enabled = true;
 
                 timerBloquearCaja.Start();
                 tiempoInactivo = 0;
@@ -2430,7 +2446,7 @@ namespace Presentacion.Caja
                         int cantCajaVenta = 0;
                     foreach (Form frm in Application.OpenForms)
                     {
-                        if (frm.GetType() == typeof(formVentaCaja))
+                        if (frm.GetType() == typeof(formVentaCajaConExpendio))
                         {
                             cantCajaVenta++;
                             if (cantCajaVenta > 1)
@@ -2514,6 +2530,268 @@ namespace Presentacion.Caja
             sumaTitilar = 0;
             lblVendedorNombre.Visible = true;
             timerTitilar.Start();
+        }
+
+        private void panelExpendios()
+        {
+            ///panel expendio
+            panelDespliegue.Width = 30;// Inicialmente colapsado
+            panelDespliegue.Dock = DockStyle.Right;
+            panelExpendioLateral.Parent = this;
+        }
+
+        private void btnExpandir_Click(object sender, EventArgs e)
+        {
+            expendirExpendios();
+        }
+
+        private void expendirExpendios()
+        {
+            if (isExpanded)
+            {
+                // Colapsar el panel
+                panelDespliegue.Width = 0;
+                panelDespliegue.Visible = false;
+                // btnTogglePanel.Text = "Mostrar Panel";
+                txtCodigo.Focus();  
+            }
+            else
+            {
+                // Expandir el panel
+                panelDespliegue.Visible = true;
+                panelDespliegue.Width = 450; // Ajusta la altura según el contenido
+                panelDespliegue.BringToFront();
+                dtExpendios = oVentaN.obtenerUltimosExpendios(Convert.ToInt32(txtMinutosDesde.Text), oSucursalE.IdSucursal);
+                filtrarExpendio();
+                txtBuscarExpendio.Focus();
+            }
+
+            isExpanded = !isExpanded;
+            panelExpendioLateral.Visible = !isExpanded;
+            panelExpendioLateral.Parent = this;
+        }
+
+        private void txtBuscarExpendio_TextChanged(object sender, EventArgs e)
+        {
+            //para que actualice la grilla cuando se vacia el textBox xq sino cargaba la lista de la BD
+            if (string.IsNullOrWhiteSpace(txtBuscarExpendio.Text))
+                changeComboExpendio = true;
+
+            filtrarExpendio();
+        }
+        private void filtrarExpendio()
+        {
+
+            // Crear un nuevo DataTable con la misma estructura que el original
+            tablaFiltrada = dtExpendios.Clone();
+
+            if (dtExpendios.Rows.Count > 0)
+            {
+                try
+                {
+                    string filtroExpendioEnVenta = "";
+                    if (oVentaE.ListaExpendios != null && oVentaE.ListaExpendios.Count > 0)
+                    {
+                        foreach (int item in oVentaE.ListaExpendios)
+                        {
+                            filtroExpendioEnVenta += comboExpendioEstado.Text == "PENDIENTES" ? " AND idExpendio <> " + item : " OR idExpendio = " + item;
+                        }
+                    }
+
+                    //para poder filtar identif.Cliente q es string se asigna '0' a filtro de idExpendio
+                    string filtroPorId = int.TryParse(txtBuscarExpendio.Text, out int numero) ? txtBuscarExpendio.Text : "0";
+                    string filtroPorIdentif = "identificacionExpendio LIKE " + (int.TryParse(txtBuscarExpendio.Text, out int numero1) ? "'" + txtBuscarExpendio.Text + "'" : "'%"+ txtBuscarExpendio.Text + "%'");
+                    string filtroExpendio = !string.IsNullOrWhiteSpace(txtBuscarExpendio.Text) ? "(idExpendio = " + filtroPorId + " OR "+ filtroPorIdentif + " ) AND " : string.Empty;
+                    string filtroCombo = comboExpendioEstado.Text == "PENDIENTES" ? "(idVenta IS NULL OR idVenta = 0)"+filtroExpendioEnVenta: "(idVenta IS NOT NULL AND idVenta > 0)"+filtroExpendioEnVenta;
+                    string filtroCompleto = !string.IsNullOrEmpty(filtroExpendio) ? filtroExpendio+filtroCombo : filtroCombo;
+                    DataRow[] filas = dtExpendios.Select(filtroCompleto);
+                    
+                    // Crear un nuevo DataTable con la misma estructura que el original
+                    tablaFiltrada = dtExpendios.Clone();
+
+                    // Importar cada DataRow del arreglo al nuevo DataTable
+                    foreach (DataRow fila in filas)
+                    {
+                        tablaFiltrada.ImportRow(fila);
+                    }
+
+                    // Asignar el DataTable filtrado al DataGridView
+                    grillaExpendios.DataSource = tablaFiltrada;
+                    
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("Valor demasiado grande o demasiado pequeño para Int32."))
+                        return;
+
+                    MessageBox.Show("Error al cargar corte\n\n" + ex.Message);
+                }
+            }
+            else
+            {
+                tablaFiltrada = dtExpendios;
+            }
+            grillaExpendios.DataSource = tablaFiltrada;
+        }
+
+        private void txtBuscarExpendio_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            try
+            {
+                if (e.KeyChar == (char)(Keys.Enter))
+                {
+                    ///Si combo es "ASIGNADOS" 
+                    if (!comboExpendioEstado.Text.Equals("PENDIENTES"))
+                    {
+
+                        MessageBox.Show($"Los Expendios seleccionados ya han sido asignados a ésta u otra venta.",
+                                        "Error de Validación",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }                    
+
+                    //se verifica que no hay valores diferentes en identificacion expendio
+                    // Verificar si hay filas suficientes en el DataGridView
+                    if (grillaExpendios.Rows.Count > 1)
+                    {
+                        // Recorrer las filas del DataGridView
+                        for (int i = 0; i < grillaExpendios.Rows.Count; i++)
+                        {
+                            // Ignorar filas vacías o nuevas
+                            if (grillaExpendios.Rows[i].IsNewRow) continue;
+
+                            // Obtener el valor de referencia
+                            var valorReferencia = grillaExpendios.Rows[i].Cells["identificacionExpendio"].Value?.ToString();
+
+                            // Comparar el valor de referencia con los demás valores
+                            for (int j = 0; j < grillaExpendios.Rows.Count; j++)
+                            {
+                                // Evitar comparar la misma fila
+                                if (i == j || grillaExpendios.Rows[j].IsNewRow) continue;
+
+                                var valorComparado = grillaExpendios.Rows[j].Cells["identificacionExpendio"].Value?.ToString();
+
+                                // Verificar si el valor comparado es diferente
+                                if (valorComparado != valorReferencia)
+                                {
+                                    MessageBox.Show($"Los valores en las filas {i + 1} y {j + 1} de 'Identif. Cliente' no coinciden.\n"+
+                                        "Para evitar error clique el botón sobre la fila de Nro.Expendio.",
+                                                    "Error de Validación",
+                                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < grillaExpendios.Rows.Count; i++)
+                    {
+                        DataGridViewRow fila = grillaExpendios.Rows[i];
+
+                        // Verificar que la fila no sea una fila nueva
+                        if (!fila.IsNewRow)
+                        {
+                            agregarExpendio(fila);
+                        }
+                    }
+                    filtrarExpendio();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocurrio un error al cargar las lineas de expendios\n" + ex.Message,"",MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void agregarExpendio(DataGridViewRow fila)
+        {
+            // Obtener el valor de una celda específica
+            txtCodigo.Text = fila.Cells["cod"].Value.ToString();
+            txtCantKgs.Text = fila.Cells["Cant"].Value.ToString();
+            //se agrega el expendio a la venta
+            idExpendioVenta = Convert.ToInt32(fila.Cells["idExpendio"].Value);
+            if (!oVentaE.ListaExpendios.Contains(idExpendioVenta))
+                oVentaE.ListaExpendios.Add(idExpendioVenta);
+
+            agregarLinea();
+
+            fila.Cells["idVenta"].Value = "1";
+            //se reinicia idExpendio
+            idExpendioVenta = 0;
+        }
+
+        private void comboExpendioEstado_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            changeComboExpendio = true;
+            filtrarExpendio();
+            changeComboExpendio = false;
+        }
+
+        private void btnQuitarAsignados_Click(object sender, EventArgs e)
+        {
+            if (oVentaE.ListaExpendios == null || oVentaE.ListaExpendios.Count == 0)
+            {
+                MessageBox.Show($"La Venta aún no tiene asignado Expendios.",
+                                "Informe",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            DialogResult respuesta;
+            respuesta = MessageBox.Show("¿Está seguro que desea quitar expendios de la venta?.", "Eliminar expendios", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+            if (respuesta == DialogResult.No)
+                return;
+
+            listaLineaVenta.RemoveAll(item => item.IdExpendio > 0);
+            listaLineaGrilla.RemoveAll(item => item.IdExpendio > 0);
+            oVentaE.ListaExpendios.Clear();
+            cargarGrilla();
+            filtrarExpendio();
+        }
+
+        private void grillaExpendios_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ignore clicks that are not on button cells.  
+            if (e.RowIndex < 0 || e.ColumnIndex !=
+                grillaExpendios.Columns["btnAgregarExpendio"].Index) return;
+            ///Si combo es "ASIGNADOS" 
+            if (!comboExpendioEstado.Text.Equals("PENDIENTES"))
+            {
+                MessageBox.Show($"Los Expendios seleccionados ya han sido asignados a ésta u otra venta.",
+                                "Error de Validación",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Obtener el valor de la columna "identificacionExpendio" de la fila seleccionada
+            var valorSeleccionado = grillaExpendios.CurrentRow.Cells["idExpendio"].Value?.ToString();
+            // Recorrer todas las filas del DataGridView
+            foreach (DataGridViewRow fila in grillaExpendios.Rows)
+            {
+                // Ignorar filas vacías o nuevas
+                if (fila.IsNewRow) continue;
+
+                // Obtener el valor actual de la columna "identificacionExpendio"
+                var valorActual = fila.Cells["idExpendio"].Value?.ToString();
+
+                // Comparar si coincide con el valor seleccionado
+                if (valorActual == valorSeleccionado)
+                {
+                    agregarExpendio(fila);
+                }
+            }
+            filtrarExpendio();
+        }
+
+        private void txtMinutosDesde_SelectedItemChanged(object sender, EventArgs e)
+        {
+            dtExpendios = oVentaN.obtenerUltimosExpendios(Convert.ToInt32(txtMinutosDesde.Text), oSucursalE.IdSucursal);
+            filtrarExpendio();
+        }
+
+        private void btnDespligueLateral_Click(object sender, EventArgs e)
+        {
+            expendirExpendios();
         }
 
         private void lblUltimaVenta_Click(object sender, EventArgs e)
@@ -2859,7 +3137,7 @@ namespace Presentacion.Caja
 
         private void duplicarVentana_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            formVentaCaja frmVentaCajaDuplicada = new formVentaCaja();
+            formVentaCajaConExpendio frmVentaCajaDuplicada = new formVentaCajaConExpendio();
             frmVentaCajaDuplicada.oUsuario = oUsuario;
             frmVentaCajaDuplicada.ventanaDuplicada = true;
             frmVentaCajaDuplicada.duplicarVentana.Visible = false;

@@ -580,6 +580,47 @@ namespace Datos
             return oLineaE;
         }
 
+        public void asignarVentaEnExpendio(int idVenta, int idExpendio)
+        {
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.Connection.Open();
+
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandTimeout = 90;
+            cmVenta.CommandText = "UPDATE Expendios SET idVenta = @idVenta WHERE idExpendio = " + idExpendio;
+            cmVenta.Parameters.AddWithValue("@idVenta", idVenta);
+            cmVenta.Parameters.AddWithValue("@idExpendio", idExpendio);
+
+            cmVenta.ExecuteNonQuery();
+            cmVenta.Connection.Close();
+
+            cmVenta = null;
+        }
+        public DataTable obtenerUltimosExpendios(int ultimosMinutos, int idSucursal)
+        {
+            DataTable dtSectores = new DataTable();
+            daVenta = new SqlDataAdapter();
+
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text; cmVenta.CommandTimeout = 90;
+            DateTime fechaDesde = DateTime.Now.AddMinutes(-ultimosMinutos); 
+            string consulta = "SELECT fechaExpendio, dbo.Expendios.idExpendio as idExpendio, identificacionExpendio, sector, dbo.Corte.codigo as codigo, dbo.Corte.corte as corte, dbo.LineaExpendio.cantKg as cantKg, dbo.LineaExpendio.precioKg as precioKg, (dbo.LineaExpendio.cantKg * dbo.LineaExpendio.precioKg) as total, idVenta, dbo.Usuarios.nombre as vendedor " +
+                "FROM dbo.Expendios INNER JOIN dbo.LineaExpendio ON dbo.Expendios.idExpendio = dbo.LineaExpendio.idExpendio INNER JOIN dbo.Corte ON dbo.LineaExpendio.idCorte = dbo.Corte.idCorte "+
+                "INNER JOIN dbo.Usuarios ON dbo.Expendios.idVendedor = dbo.Usuarios.id WHERE fechaExpendio > @fechaDesde AND idSucursal = @idSucursal ORDER BY fechaExpendio ;";
+            cmVenta.CommandText = consulta;
+            cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal);
+
+            daVenta.SelectCommand = cmVenta;
+            daVenta.Fill(dtSectores);
+
+            cmVenta.Connection.Close();
+
+            return dtSectores;
+        }
 
         public DataTable obtenerSectores()
         {

@@ -19,7 +19,7 @@ namespace Presentacion.Properties {
     // a través de una herramienta como ResGen o Visual Studio.
     // Para agregar o quitar un miembro, edite el archivo .ResX y, a continuación, vuelva a ejecutar ResGen
     // con la opción /str o recompile su proyecto de VS.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -106,6 +106,46 @@ namespace Presentacion.Properties {
         internal static System.Drawing.Bitmap arrow_rotate_clockwise {
             get {
                 object obj = ResourceManager.GetObject("arrow_rotate_clockwise", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Barra_Lateral_Expendio_Min {
+            get {
+                object obj = ResourceManager.GetObject("Barra Lateral Expendio Min", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Barra_Lateral_Expendio_Min1 {
+            get {
+                object obj = ResourceManager.GetObject("Barra Lateral Expendio Min1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Barra_Lateral_Expendio_Min2 {
+            get {
+                object obj = ResourceManager.GetObject("Barra Lateral Expendio Min2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Barra_Lateral_Expendio1 {
+            get {
+                object obj = ResourceManager.GetObject("Barra Lateral Expendio1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

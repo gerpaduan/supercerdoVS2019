@@ -25,6 +25,7 @@ namespace Presentacion
         public float kgsAjusteTarj;
         public float kgsRedondeo;
         public float kgsTotalCalculado;
+        int idExpendio;
 
         public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
         public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
@@ -160,5 +161,7 @@ namespace Presentacion
                 totalS = value;
             }
         }
+
+        public int IdExpendio { get => idExpendio; set => idExpendio = value; }
     }
 }

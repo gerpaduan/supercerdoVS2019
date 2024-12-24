@@ -53,7 +53,7 @@ namespace wsAFIPvs2008
         private string urlWSFE;
         bool esRRII = ConfigurationManager.AppSettings["ivaCliente"].ToString().Equals("RRII");
         string cuit = ConfigurationManager.AppSettings["cuit"].ToString();
-        string certificado = ConfigurationManager.AppSettings["rutaCertificado"].ToString();
+        string certificado = Directory.GetCurrentDirectory() + ConfigurationManager.AppSettings["rutaCertificado"].ToString();
         string servidor_0test_1prod = ConfigurationManager.AppSettings["tipoServidor"].ToString();
         string servicioAfip = "wsfe";
         string clave = "";

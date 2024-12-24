@@ -41,11 +41,12 @@ namespace Entidades
          float kgsRedondeo;
          float kgsTotalCalculado;
          float ajustePrecio;
+        int idExpendio= 0;
 
          public float AjustePrecio
          {
-             get { return ajustePrecio; }
-             set { ajustePrecio = value; }
+             get { return AjustePrecio1; }
+             set { AjustePrecio1 = value; }
          }
 
          public float KgsTotalCalculado
@@ -164,5 +165,7 @@ namespace Entidades
 
         public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
         public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
+        public float AjustePrecio1 { get => ajustePrecio; set => ajustePrecio = value; }
+        public int IdExpendio { get => idExpendio; set => idExpendio = value; }
     }
 }

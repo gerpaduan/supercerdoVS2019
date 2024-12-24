@@ -1325,6 +1325,7 @@ namespace Presentacion.Caja
             timer1.Enabled = false;
             checkLeerPeso.Checked = FormPrincipal.leerBalanza;
             checkLeerPeso.Enabled = FormPrincipal.leerBalanza;
+            checkTicket.Checked = Convert.ToBoolean(ConfigurationManager.AppSettings["ticketExpendio"].ToString());
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
                 "" +
@@ -1778,11 +1779,19 @@ namespace Presentacion.Caja
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            formGetAllLineaVenta frmGetAllLV = new formGetAllLineaVenta();
-            frmGetAllLV.verUltimasVentasClientes = true;
-            frmGetAllLV.idPersona = oCliente.idPersona;
-            frmGetAllLV.idSucursal = oSucursalE.idSucursal;
-            frmGetAllLV.ShowDialog();
+            if (Application.OpenForms["formGetAllLineaExpendio"] != null)
+            {
+                Application.OpenForms["formGetAllLineaExpendio"].Activate();
+                Application.OpenForms["formGetAllLineaExpendio"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formGetAllLineaExpendio frmGetAllLV = new formGetAllLineaExpendio();
+                frmGetAllLV.oUsuarioE = oUsuario;
+                frmGetAllLV.idPersona = oCliente.idPersona;
+                frmGetAllLV.idSucursal = oSucursalE.idSucursal;
+                frmGetAllLV.Show();
+            }
         }
 
 

@@ -204,6 +204,12 @@
     <Compile Include="Caja\formFormaPago.Designer.cs">
       <DependentUpon>formFormaPago.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formGetAllLineaExpendio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formGetAllLineaExpendio.Designer.cs">
+      <DependentUpon>formGetAllLineaExpendio.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\FormSelectPuntoExpendio.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -245,6 +251,12 @@
     </Compile>
     <Compile Include="Caja\formPuntoExpendio.Designer.cs">
       <DependentUpon>formPuntoExpendio.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Caja\formVentaCajaConExpendio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formVentaCajaConExpendio.Designer.cs">
+      <DependentUpon>formVentaCajaConExpendio.cs</DependentUpon>
     </Compile>
     <Compile Include="Caja\formVentasVendedor.cs">
       <SubType>Form</SubType>
@@ -691,6 +703,9 @@
     <EmbeddedResource Include="Caja\formFormaPago.resx">
       <DependentUpon>formFormaPago.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formGetAllLineaExpendio.resx">
+      <DependentUpon>formGetAllLineaExpendio.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\FormSelectPuntoExpendio.resx">
       <DependentUpon>FormSelectPuntoExpendio.cs</DependentUpon>
     </EmbeddedResource>
@@ -711,6 +726,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formPuntoExpendio.resx">
       <DependentUpon>formPuntoExpendio.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formVentaCajaConExpendio.resx">
+      <DependentUpon>formVentaCajaConExpendio.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formVentasVendedor.resx">
       <DependentUpon>formVentasVendedor.cs</DependentUpon>
@@ -968,6 +986,10 @@
     <None Include="Resources\lock_32x32-32.ico" />
     <None Include="Resources\16 %28Lock on%29.ico" />
     <None Include="Resources\16 %28Lock off%29.ico" />
+    <None Include="Resources\Barra Lateral Expendio1.png" />
+    <None Include="Resources\Barra Lateral Expendio Min.png" />
+    <None Include="Resources\Barra Lateral Expendio Min1.png" />
+    <None Include="Resources\Barra Lateral Expendio Min2.png" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <ItemGroup>

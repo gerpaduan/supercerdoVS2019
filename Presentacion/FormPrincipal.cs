@@ -88,6 +88,33 @@ namespace Presentacion
 
         private void cajaVentas()
         {
+            //formAbierto = false;
+
+            //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            //frmLogin.soloActivos = true;
+            //frmLogin.ShowDialog(this);
+            //foreach (Form frm in Application.OpenForms)
+            //{
+            //    if (frm.GetType() == typeof(formVentaCaja))
+            //    {
+            //        foreach (Control ctrl in frm.Controls)
+            //        {
+            //            if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+            //            {
+            //                frm.BringToFront();
+            //                formAbierto = true;
+            //                break;
+            //            }
+            //        }
+            //    }
+            //}
+            //if (!formAbierto)
+            //{
+            //    formVentaCaja frmVentaCaja = new formVentaCaja();
+            //    frmVentaCaja.oUsuario = oUsuario;
+            //    frmVentaCaja.Show();
+            //}
+            //oUsuario = null;
             formAbierto = false;
 
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
@@ -95,7 +122,7 @@ namespace Presentacion
             frmLogin.ShowDialog(this);
             foreach (Form frm in Application.OpenForms)
             {
-                if (frm.GetType() == typeof(formVentaCaja))
+                if (frm.GetType() == typeof(formVentaCajaConExpendio))
                 {
                     foreach (Control ctrl in frm.Controls)
                     {
@@ -110,7 +137,7 @@ namespace Presentacion
             }
             if (!formAbierto)
             {
-                formVentaCaja frmVentaCaja = new formVentaCaja();
+                formVentaCajaConExpendio frmVentaCaja = new formVentaCajaConExpendio();
                 frmVentaCaja.oUsuario = oUsuario;
                 frmVentaCaja.Show();
             }
