@@ -146,7 +146,7 @@
             // idEmbutido
             // 
             this.idEmbutido.DataPropertyName = "idEmbutido";
-            this.idEmbutido.HeaderText = "Id Embutido";
+            this.idEmbutido.HeaderText = "Id Elaborado";
             this.idEmbutido.MinimumWidth = 6;
             this.idEmbutido.Name = "idEmbutido";
             this.idEmbutido.ReadOnly = true;
@@ -296,7 +296,7 @@
             this.groupBox1.Size = new System.Drawing.Size(376, 105);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Embutido / Otro";
+            this.groupBox1.Text = "Elaborado";
             // 
             // txtCodigoEmbutido
             // 
@@ -414,7 +414,7 @@
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(183, 24);
             this.label10.TabIndex = 7;
-            this.label10.Text = "Embutido Anulado";
+            this.label10.Text = "Elaborado Anulado";
             // 
             // panel1
             // 
@@ -448,7 +448,7 @@
             this.MaximizeBox = false;
             this.Name = "formInfoEmbutido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Información Embutido / Otro";
+            this.Text = "Información Elaborado";
             this.Load += new System.EventHandler(this.formInfoEmbutido_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).EndInit();
             this.pnlBuscar.ResumeLayout(false);

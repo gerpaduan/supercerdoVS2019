@@ -309,7 +309,7 @@
             this.Controls.Add(this.grillaEmbutidos);
             this.Name = "formLineasEmb";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Lineas Embutido";
+            this.Text = "Lineas Elaborados";
             this.Load += new System.EventHandler(this.formLineasEmb_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).EndInit();
             this.pnlBuscar.ResumeLayout(false);

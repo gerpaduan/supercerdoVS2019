@@ -149,7 +149,7 @@ namespace Presentacion
             {
                 if (dtFormula.Rows.Count == 0)
                 {
-                    MessageBox.Show("El Embutido|Elaborado seleccionado no tiene ingresada una fórmula.","",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                    MessageBox.Show("El Elaborado seleccionado no tiene ingresada una fórmula.","",MessageBoxButtons.OK,MessageBoxIcon.Error);
                     return;
                 }
 

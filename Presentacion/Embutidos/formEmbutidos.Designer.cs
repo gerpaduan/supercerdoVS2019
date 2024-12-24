@@ -356,7 +356,7 @@
             this.LineasEmb.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.LineasEmb.Name = "LineasEmb";
             this.LineasEmb.Size = new System.Drawing.Size(91, 51);
-            this.LineasEmb.Text = "Lineas Emb.";
+            this.LineasEmb.Text = "Lineas Elab.";
             this.LineasEmb.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.LineasEmb.Click += new System.EventHandler(this.LineasEmb_Click);
             // 
@@ -397,7 +397,7 @@
             this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "formEmbutidos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Embutidos | Elaborados";
+            this.Text = "Elaborados";
             this.Load += new System.EventHandler(this.formEmbutidos_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).EndInit();
             this.barraControl.ResumeLayout(false);

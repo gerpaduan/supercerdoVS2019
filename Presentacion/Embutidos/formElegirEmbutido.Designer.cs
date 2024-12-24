@@ -124,7 +124,7 @@
             this.Controls.Add(this.label7);
             this.Name = "formElegirEmbutido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Elegir Embutido";
+            this.Text = "Elegir Elaborado";
             this.Load += new System.EventHandler(this.formElegirEmbutido_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaEmbutidos)).EndInit();
             this.ResumeLayout(false);

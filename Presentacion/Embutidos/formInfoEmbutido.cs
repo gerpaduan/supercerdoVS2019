@@ -105,7 +105,7 @@ namespace Presentacion.Embutidos
 
         private void anularEmbutido()
         {
-            DialogResult respuesta=MessageBox.Show("¿Está seguro que desea anular el Embutido?. ","Anular Embutido", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            DialogResult respuesta=MessageBox.Show("¿Está seguro que desea anular el Elaborado?. ","Anular Elaborado", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
             if (respuesta == System.Windows.Forms.DialogResult.Yes)
             {

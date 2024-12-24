@@ -673,7 +673,7 @@
             this.MaximizeBox = false;
             this.Name = "formIngresoEmbutidoRapido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Ingreso Rápido de Embutidos";
+            this.Text = "Ingreso Rápido de Elaborados";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formIngresoEmbutidoRapido_FormClosing);
             this.Load += new System.EventHandler(this.formIngresoEmbutidoRapido_Load);
             this.pnlBuscar.ResumeLayout(false);

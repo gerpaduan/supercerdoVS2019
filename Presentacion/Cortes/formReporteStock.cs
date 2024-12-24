@@ -10,6 +10,8 @@ using iTextSharp.text.pdf;
 using iTextSharp.text;
 
 using System.IO;
+using OfficeOpenXml;
+using System.Configuration;
 
 namespace Presentacion.Cortes
 {
@@ -1142,6 +1144,130 @@ namespace Presentacion.Cortes
                    grillaReportes.Columns[i].HeaderText == "Pto.Stock")
                     grillaReportes.Columns[i].Visible = !checkOcultarPtoStock.Checked;
             }
+        }
+
+        private void exportExcel_Click(object sender, EventArgs e)
+        {
+            ExportarDataTableAExcel();
+        }
+
+        public void ExportarDataTableAExcel()
+        {
+            try
+            {
+                // Crear el formulario para pedir el nombre del archivo
+                string nombreArchivo = MostrarDialogoNombreArchivo();
+
+                // Establecer el contexto de la licencia para evitar la excepción
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+                nombreArchivo += ".xlsx";
+                string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+                string rutaArchivo = @ruta + "\\" + nombreArchivo;
+
+                // Verificar si la carpeta existe, si no, crearla
+                if (!Directory.Exists(@ruta))
+                    Directory.CreateDirectory(@ruta);
+
+                // Crear el archivo de Excel
+                FileInfo archivo = new FileInfo(rutaArchivo);
+
+                // Verificar si el archivo ya existe; si es así, eliminarlo
+                if (archivo.Exists)
+                {
+                    archivo.Delete();
+                }
+
+                // Crear y llenar el archivo Excel
+                using (ExcelPackage excel = new ExcelPackage(archivo))
+                {
+                    // Crear una hoja de trabajo
+                    ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
+
+                    // Agregar encabezados
+                    for (int i = 0; i < dtGrillaReporte.Columns.Count; i++)
+                    {
+                        hoja.Cells[1, i + 1].Value = dtGrillaReporte.Columns[i].ColumnName;
+                    }
+
+                    // Agregar datos
+                    for (int i = 0; i < dtGrillaReporte.Rows.Count; i++)
+                    {
+                        for (int j = 0; j < dtGrillaReporte.Columns.Count; j++)
+                        {
+                            var value = dtGrillaReporte.Rows[i][j];
+
+                            // Verifica si el valor es de tipo DateTime
+                            if (value is DateTime dateTimeValue)
+                            {
+                                // Aplica el formato deseado para las fechas
+                                hoja.Cells[i + 2, j + 1].Value = dateTimeValue.ToString("dd/MM/yyyy HH:mm"); // Cambia el formato según necesidad
+                            }
+                            else
+                            {
+                                hoja.Cells[i + 2, j + 1].Value = value;
+                            }
+
+                            //hoja.Cells[i + 2, j + 1].Value = dtGrillaReporte.Rows[i][j];
+                        }
+                    }
+
+                    // Guardar el archivo
+                    excel.Save();
+                    MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al exportar lista.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private string MostrarDialogoNombreArchivo()
+        {
+            // Crear un formulario para ingresar el nombre
+            Form dialogo = new Form
+            {
+                Width = 400,
+                Height = 150,
+                Text = "Nombre del archivo",
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            Label lblNombre = new Label
+            {
+                Text = "Ingrese el nombre del archivo:",
+                Top = 10,
+                Left = 10,
+                Width = 360
+            };
+
+            TextBox txtNombre = new TextBox
+            {
+                Top = 40,
+                Left = 10,
+                Width = 360
+            };
+
+            Button btnAceptar = new Button
+            {
+                Text = "Aceptar",
+                Top = 80,
+                Left = 150,
+                DialogResult = DialogResult.OK
+            };
+
+            dialogo.Controls.Add(lblNombre);
+            dialogo.Controls.Add(txtNombre);
+            dialogo.Controls.Add(btnAceptar);
+            dialogo.AcceptButton = btnAceptar;
+
+            if (dialogo.ShowDialog() == DialogResult.OK)
+            {
+                return txtNombre.Text.Trim();
+            }
+
+            return null;
         }
     }
 }

@@ -339,7 +339,7 @@
             this.MaximizeBox = false;
             this.Name = "formBuscarEmbutido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Buscar Embutido | Elaborado";
+            this.Text = "Buscar Elaborado";
             this.Load += new System.EventHandler(this.formBuscarEmbutido_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).EndInit();
             this.panel1.ResumeLayout(false);

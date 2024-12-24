@@ -683,7 +683,7 @@
             this.groupBox1.Size = new System.Drawing.Size(451, 105);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Embutido | Elaborado";
+            this.groupBox1.Text = "Elaborado";
             // 
             // label17
             // 
@@ -876,7 +876,7 @@
             this.MaximizeBox = false;
             this.Name = "formIngresoEmbutido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Ingreso de Embutidos | Elaborados";
+            this.Text = "Ingreso de Elaborados";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formIngresoEmbutido_FormClosing);
             this.Load += new System.EventHandler(this.formIngresoEmbutido_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).EndInit();

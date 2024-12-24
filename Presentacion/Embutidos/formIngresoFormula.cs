@@ -106,14 +106,14 @@ namespace Presentacion
         {
             if (oFormulaE.Embutido == null || oFormulaE.Embutido.idCorte == 0)
             {
-                MessageBox.Show("Seleccione el Embutido / Elaborado para la formula.", "Ingresar Formula", MessageBoxButtons.OK,MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione el Elaborado para la formula.", "Ingresar Formula", MessageBoxButtons.OK,MessageBoxIcon.Information);
                 btnBuscarEmbutido.Select();
                 return false;
             }
 
             if (lblError.Visible)
             {
-                MessageBox.Show("El Embutido / Elaborado ya posee una formula. Modifique la existente", "Ingresar Formula", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El Elaborado ya posee una formula. Modifique la existente", "Ingresar Formula", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 btnBuscarEmbutido.Select();
                 return false;
             }

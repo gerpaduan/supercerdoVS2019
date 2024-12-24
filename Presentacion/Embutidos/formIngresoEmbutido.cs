@@ -280,12 +280,12 @@ namespace Presentacion
             {                
                 if (oCorteEmbutidoE == null)
                 {
-                    mensaje += "\n" + "- Embutido";
+                    mensaje += "\n" + "- Elaborado";
                     btnAgregar.Focus();
                 }
                 if (oCorteE==null)
                 {
-                    mensaje += "\n" + "- Corte en Embutido";
+                    mensaje += "\n" + "- Corte en Elaborado";
                     txtCodCorteEnEmbutido.Focus();
                 }
                 if (txtCantKgs.Text.Trim()=="")
@@ -343,6 +343,8 @@ namespace Presentacion
 
         private void calcularFormula()
         {
+            if (oCorteEmbutidoE == null) return;
+
             dtFormula = oCorteN.getFormulaEmbutido(oCorteEmbutidoE.idCorte);
              
             //calcula total sin condimentos
@@ -539,7 +541,7 @@ namespace Presentacion
         {
             //se refresca para que se muestren los datos
             this.Refresh();
-            Util_Form.capturarPantalla("Embutido", txtFechaEmbutido.Value);
+            Util_Form.capturarPantalla("Elaborado", txtFechaEmbutido.Value);
         }
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
