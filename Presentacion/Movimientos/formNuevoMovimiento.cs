@@ -671,6 +671,12 @@ namespace Presentacion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (e.KeyChar == '*')// (char)(Keys.Multiply))
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 if (oCorteE != null && oCorteE.idCorte > 0)
@@ -735,7 +741,7 @@ namespace Presentacion
         {
             try
             {
-                if (!FormPrincipal.leerBalanza) checkLeerPeso.Checked = false;
+                if (!FormPrincipal.leerBalanza) return;
 
                 if (checkLeerPeso.Checked)
                 {
@@ -911,7 +917,7 @@ namespace Presentacion
         {
             try
             {
-                if (checkSinBalanza.Checked || (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked))
+                if ((oCorteE != null && oCorteE.idCorte > 0 && oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked))
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
@@ -936,6 +942,10 @@ namespace Presentacion
         {
             switch (keyData)
             {
+                case Keys.Multiply:
+                    dejarDeLeerPeso = checkLeerPeso.Checked;
+                    checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
+                    break;
                 case Keys.Home:
                     txtCodigo.Focus();
                     break;

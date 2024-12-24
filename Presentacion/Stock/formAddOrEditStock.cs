@@ -670,6 +670,12 @@ namespace Presentacion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (e.KeyChar == '*')// (char)(Keys.Multiply))
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 e.Handled = true;
@@ -714,7 +720,7 @@ namespace Presentacion
         {
             try
             {
-                if (!FormPrincipal.leerBalanza) checkLeerPeso.Checked = false;
+                if (!FormPrincipal.leerBalanza) return;
 
                 if (checkLeerPeso.Checked)
                 {
@@ -741,17 +747,8 @@ namespace Presentacion
             {
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
-                lblErrorBalanza.Visible = true;          
-                //timer1.Enabled = false;
-                //if (Utilidades.Util_Form.errorBalanza(ex.Message) == DialogResult.Yes)
-                //{
-                //    dejarDeLeerPeso = true;
-                //    checkLeerPeso.Checked = false;
-                //}
-                //else
-                //{
-                //    timer1.Enabled = true;
-                //}
+                lblErrorBalanza.Visible = true;
+                txtCodigo.Focus();
             }
         }
 
@@ -849,7 +846,8 @@ namespace Presentacion
             }
             else
             {
-                if (!dejarDeLeerPeso && oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && !oCorteNuevaCompra.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
+                if (!dejarDeLeerPeso && oCorteNuevaCompra != null && oCorteNuevaCompra.idCorte > 0 && 
+                    !oCorteNuevaCompra.tipo.Equals("Unidad") && !checkLeerPeso.Checked)
                 {
                     checkLeerPeso.Checked = true;
                     btnAgregar.Focus();
@@ -1175,6 +1173,10 @@ namespace Presentacion
         {
             switch (keyData)
             {
+                case Keys.Multiply:
+                    dejarDeLeerPeso = checkLeerPeso.Checked;
+                    checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
+                    break;
                 case Keys.Home:
                     txtCodigo.Focus();
                     break;
