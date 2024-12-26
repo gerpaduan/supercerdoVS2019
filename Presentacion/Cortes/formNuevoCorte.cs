@@ -107,7 +107,7 @@ namespace Presentacion
             txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.corteMaestro.corte : "-";
             txtPorcentajeCorteM.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? Convert.ToString(oCorteE.porcentaje) : "";
             txtPorcHueso.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? Convert.ToString(oCorteE.porcentajeHueso) : "";
-            txtDesvioEstandar.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.desvioEstandar.ToString() : "";
+            txtDesvioEstandar.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0) ? oCorteE.desvioEstandar.ToString() : "0";
         }
 
         #endregion
