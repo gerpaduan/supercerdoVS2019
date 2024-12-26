@@ -1254,7 +1254,7 @@ namespace Presentacion
                     Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock), "", desde, hasta, null);
 
                 //setea ultima fecha de cierre para obtener stock actual para comparar en AcumVentas
-                //si es modificacion se obtiene la segunda fila del datatable
+                //si es modificacion se obtiene la segunda fila del datatable (la primera [0] es la actual y va a dar siempre cero en edicion)
                 int row = oCompraE != null && oCompraE.IdCompra > 0 ? 1 : 0;
                 desde = dtInicioStock.Rows.Count > 0 ? Convert.ToDateTime(dtInicioStock.Rows[row]["fechaCompra"]) : desde;
 
