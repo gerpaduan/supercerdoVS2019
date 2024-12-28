@@ -66,6 +66,7 @@
             this.credito = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Qr = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Transf = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Marca = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.alicuotaIva = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pesable = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -90,6 +91,10 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnLimpiar = new System.Windows.Forms.Button();
+            this.btnBuscarCliente = new System.Windows.Forms.Button();
+            this.txtMarca = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
             this.txtBuscarMaestro = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.comboTipo = new System.Windows.Forms.ComboBox();
@@ -256,6 +261,7 @@
             this.credito,
             this.Qr,
             this.Transf,
+            this.Marca,
             this.alicuotaIva,
             this.tipo,
             this.pesable,
@@ -277,7 +283,7 @@
             this.idSucursalSM,
             this.sucursalSM,
             this.stockSM});
-            this.grillaCortes.Location = new System.Drawing.Point(16, 162);
+            this.grillaCortes.Location = new System.Drawing.Point(16, 187);
             this.grillaCortes.Margin = new System.Windows.Forms.Padding(4);
             this.grillaCortes.MultiSelect = false;
             this.grillaCortes.Name = "grillaCortes";
@@ -285,7 +291,7 @@
             this.grillaCortes.RowHeadersVisible = false;
             this.grillaCortes.RowHeadersWidth = 51;
             this.grillaCortes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortes.Size = new System.Drawing.Size(1349, 526);
+            this.grillaCortes.Size = new System.Drawing.Size(1349, 501);
             this.grillaCortes.StandardTab = true;
             this.grillaCortes.TabIndex = 2;
             this.grillaCortes.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCortes_CellDoubleClick);
@@ -403,6 +409,16 @@
             this.Transf.Name = "Transf";
             this.Transf.ReadOnly = true;
             this.Transf.Width = 74;
+            // 
+            // Marca
+            // 
+            this.Marca.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.Marca.DataPropertyName = "Marca";
+            this.Marca.HeaderText = "Marca";
+            this.Marca.MinimumWidth = 6;
+            this.Marca.Name = "Marca";
+            this.Marca.ReadOnly = true;
+            this.Marca.Width = 74;
             // 
             // alicuotaIva
             // 
@@ -676,6 +692,10 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.btnLimpiar);
+            this.panel1.Controls.Add(this.btnBuscarCliente);
+            this.panel1.Controls.Add(this.txtMarca);
+            this.panel1.Controls.Add(this.label14);
             this.panel1.Controls.Add(this.txtBuscarMaestro);
             this.panel1.Controls.Add(this.label4);
             this.panel1.Controls.Add(this.comboTipo);
@@ -693,12 +713,64 @@
             this.panel1.Location = new System.Drawing.Point(0, 55);
             this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1380, 100);
+            this.panel1.Size = new System.Drawing.Size(1380, 124);
             this.panel1.TabIndex = 7;
+            // 
+            // btnLimpiar
+            // 
+            this.btnLimpiar.AccessibleDescription = "";
+            this.btnLimpiar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnLimpiar.ForeColor = System.Drawing.Color.Black;
+            this.btnLimpiar.Location = new System.Drawing.Point(395, 39);
+            this.btnLimpiar.Margin = new System.Windows.Forms.Padding(4);
+            this.btnLimpiar.Name = "btnLimpiar";
+            this.btnLimpiar.Size = new System.Drawing.Size(81, 26);
+            this.btnLimpiar.TabIndex = 66;
+            this.btnLimpiar.TabStop = false;
+            this.btnLimpiar.Text = "Todas";
+            this.btnLimpiar.UseVisualStyleBackColor = true;
+            this.btnLimpiar.Click += new System.EventHandler(this.btnLimpiar_Click);
+            // 
+            // btnBuscarCliente
+            // 
+            this.btnBuscarCliente.AccessibleDescription = "";
+            this.btnBuscarCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBuscarCliente.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarCliente.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCliente.Image")));
+            this.btnBuscarCliente.Location = new System.Drawing.Point(347, 39);
+            this.btnBuscarCliente.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscarCliente.Name = "btnBuscarCliente";
+            this.btnBuscarCliente.Size = new System.Drawing.Size(40, 26);
+            this.btnBuscarCliente.TabIndex = 65;
+            this.btnBuscarCliente.TabStop = false;
+            this.btnBuscarCliente.UseVisualStyleBackColor = true;
+            this.btnBuscarCliente.Click += new System.EventHandler(this.btnBuscarCliente_Click);
+            // 
+            // txtMarca
+            // 
+            this.txtMarca.Location = new System.Drawing.Point(124, 41);
+            this.txtMarca.Margin = new System.Windows.Forms.Padding(4);
+            this.txtMarca.Name = "txtMarca";
+            this.txtMarca.ReadOnly = true;
+            this.txtMarca.Size = new System.Drawing.Size(213, 22);
+            this.txtMarca.TabIndex = 63;
+            this.txtMarca.Text = "TODAS";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label14.Location = new System.Drawing.Point(66, 42);
+            this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(50, 18);
+            this.label14.TabIndex = 64;
+            this.label14.Text = "Marca";
             // 
             // txtBuscarMaestro
             // 
-            this.txtBuscarMaestro.Location = new System.Drawing.Point(124, 42);
+            this.txtBuscarMaestro.Location = new System.Drawing.Point(124, 69);
             this.txtBuscarMaestro.Margin = new System.Windows.Forms.Padding(4);
             this.txtBuscarMaestro.Name = "txtBuscarMaestro";
             this.txtBuscarMaestro.Size = new System.Drawing.Size(181, 22);
@@ -710,7 +782,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(13, 43);
+            this.label4.Location = new System.Drawing.Point(13, 70);
             this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(104, 18);
@@ -753,7 +825,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(411, 71);
+            this.lblActualizar.Location = new System.Drawing.Point(411, 95);
             this.lblActualizar.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(84, 18);
@@ -767,7 +839,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(1187, 70);
+            this.label3.Location = new System.Drawing.Point(1187, 96);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(47, 18);
@@ -780,7 +852,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(997, 71);
+            this.label2.Location = new System.Drawing.Point(997, 97);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(51, 18);
@@ -790,7 +862,7 @@
             // txtCodigohasta
             // 
             this.txtCodigohasta.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCodigohasta.Location = new System.Drawing.Point(1247, 68);
+            this.txtCodigohasta.Location = new System.Drawing.Point(1247, 94);
             this.txtCodigohasta.Margin = new System.Windows.Forms.Padding(4);
             this.txtCodigohasta.Name = "txtCodigohasta";
             this.txtCodigohasta.Size = new System.Drawing.Size(117, 22);
@@ -802,7 +874,7 @@
             // txtCodigoDesde
             // 
             this.txtCodigoDesde.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCodigoDesde.Location = new System.Drawing.Point(1061, 68);
+            this.txtCodigoDesde.Location = new System.Drawing.Point(1061, 94);
             this.txtCodigoDesde.Margin = new System.Windows.Forms.Padding(4);
             this.txtCodigoDesde.Name = "txtCodigoDesde";
             this.txtCodigoDesde.Size = new System.Drawing.Size(116, 22);
@@ -817,7 +889,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(843, 41);
+            this.label1.Location = new System.Drawing.Point(843, 67);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(120, 18);
@@ -830,7 +902,7 @@
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox1.Location = new System.Drawing.Point(973, 50);
+            this.groupBox1.Location = new System.Drawing.Point(973, 76);
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
@@ -840,7 +912,7 @@
             // 
             // txtBuscarCorte
             // 
-            this.txtBuscarCorte.Location = new System.Drawing.Point(124, 69);
+            this.txtBuscarCorte.Location = new System.Drawing.Point(124, 96);
             this.txtBuscarCorte.Margin = new System.Windows.Forms.Padding(4);
             this.txtBuscarCorte.Name = "txtBuscarCorte";
             this.txtBuscarCorte.Size = new System.Drawing.Size(181, 22);
@@ -853,7 +925,7 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(71, 70);
+            this.label9.Location = new System.Drawing.Point(71, 97);
             this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(45, 18);
@@ -863,7 +935,7 @@
             // btnBuscar
             // 
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscar.Location = new System.Drawing.Point(313, 65);
+            this.btnBuscar.Location = new System.Drawing.Point(313, 89);
             this.btnBuscar.Margin = new System.Windows.Forms.Padding(4);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(89, 31);
@@ -929,6 +1001,9 @@
         protected System.Windows.Forms.Label label4;
         private System.Windows.Forms.ToolStripButton tipos;
         private System.Windows.Forms.ToolStripButton btnCostoPorCobro;
+        private System.Windows.Forms.ToolStripButton exportar;
+        private System.Windows.Forms.ToolStripButton systelPLU;
+        private System.Windows.Forms.ToolStripButton importarCSV;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
@@ -938,6 +1013,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn credito;
         private System.Windows.Forms.DataGridViewTextBoxColumn Qr;
         private System.Windows.Forms.DataGridViewTextBoxColumn Transf;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Marca;
         private System.Windows.Forms.DataGridViewTextBoxColumn alicuotaIva;
         private System.Windows.Forms.DataGridViewTextBoxColumn tipo;
         private System.Windows.Forms.DataGridViewCheckBoxColumn pesable;
@@ -959,8 +1035,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn stockSM;
-        private System.Windows.Forms.ToolStripButton exportar;
-        private System.Windows.Forms.ToolStripButton systelPLU;
-        private System.Windows.Forms.ToolStripButton importarCSV;
+        private System.Windows.Forms.Button btnLimpiar;
+        private System.Windows.Forms.Button btnBuscarCliente;
+        protected System.Windows.Forms.TextBox txtMarca;
+        protected System.Windows.Forms.Label label14;
     }
 }

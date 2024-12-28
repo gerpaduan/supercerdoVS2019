@@ -1530,6 +1530,8 @@ balanza	tinyint	Checked
 [agregarCortePorCompra]
 [obtenerCortesPorCompra]
 
+
+
 ****************
 25 NOVIEMBRE
 
@@ -2661,287 +2663,388 @@ en tabla Licencia
 agregar columna Sector
 
 
+***
+USE [CarniSys0]
+GO
+
+/****** Object:  Table [dbo].[CorteProveedor]    Script Date: 27/12/2024 11:46:24 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[CorteProveedor](
+	[idCorteProveedor] [int] IDENTITY(1,1) NOT NULL,
+	[idCorte] [int] NOT NULL,
+	[idProveedor] [int] NOT NULL,
+	[ultimoPrecio] [float] NULL,
+	[fechaUltimaCompra] [datetime] NULL,
+ CONSTRAINT [PK_CorteProveedor] PRIMARY KEY CLUSTERED 
+(
+	[idCorteProveedor] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
 
 
 
 ******************
 
-app.Config
+USE [CarniSys0]
+GO
 
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <configSections>
-  </configSections>
-  <connectionStrings>
-    <!--****Base de Datos LOCAL****-->
-    <add name="local" connectionString="Data Source=.\sqlexpress;Initial Catalog=SuperCerdo;Integrated Security=True" providerName="System.Data.SqlClient" />
-    <add name="servidor" connectionString="Data Source=.\sqlexpress;Initial Catalog=SuperCerdo;Integrated Security=True" providerName="System.Data.SqlClient" />
-    <!--<add name="connecStringRemota" connectionString="Data Source=.\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;"/>-->
-	  <add name="carnisys" connectionString="Data Source=200.107.106.14,1433\sqlexpress;Initial Catalog=CarniSys0;User ID=sa;Password=sistema;" />
+/****** Object:  StoredProcedure [dbo].[agregarCortePorCompra]    Script Date: 27/12/2024 12:18:08 ******/
+SET ANSI_NULLS ON
+GO
 
-	  <!--****Local San Martin***-->
-    <add name="sanMartin" connectionString="Data Source=192.168.0.151\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
-    <!--****Remoto SUPERCERDO San Martin***-->
-    <add name="sanMartinRemoto" connectionString="Data Source=200.107.107.39\sqlexpress;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
-    <!--<add name="sanMartinRemoto" connectionString="Data Source=200.107.107.39,1433\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;"/>-->
-    <!--****LOCAL SAN LORENZO***-->
-    <add name="sanLorenzo" connectionString="Data Source=192.168.1.93\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
-    <!--****REMOTO SAN LORENZO***-->
-    <add name="sanLorenzoRemoto" connectionString="Data Source=200.107.108.44\sqlexpress;Network Library=DBMSSOCN;;Initial Catalog=SuperCerdo;User ID=sa;Password=sistema;" />
-  </connectionStrings>
-  <appSettings>
-    <!--****ConnectionString por defecto***-->
-    <!--****Cliente***-->
-    <add key="cliente" value="SuperCerdo" />
-    <add key="cuitCliente" value="20306210786" />
-    <!--**iva Cliente RRII:responsable inscripto || MT: monotributo || EXENTO: Exento**-->
-    <add key="ivaCliente" value="RRII" />
-    <!--****Sucursal***-->
-    <add key="Desc_connString" value="****ConnectionString por defecto***" />
-    <add key="connString" value="sanMartinRemoto" />
-    <!--<add key="connString" value="sanMartinRemoto" />-->
-    <!--****Sucursal***-->
-    <add key="Desc_idSucursal" value="****Id de Sucursal***" />
-    <add key="idSucursal" value="2" />
-    <add key="Nombre_Sucursal" value="****Nombre de Sucursal***" />
-    <add key="nombreSucursal" value="San Martin" />
-    <!--****Cantidad de Servidores***-->
-    <add key="Desc_cantServidores" value="****Cant. Servidores en total del Negocio || si = 1 Ocultar Col IdOrigen y Estado en Movimientos***" />
-    <add key="cantServidores" value="2" />
-	  
-	  
-	  <!--****CarniSys***-->
-	  <!--****CarniSys***-->
-	  <!--<add key="cliente" value="CarniSys" />
-	  <add key="cuitCliente" value="203062107816" />
-	  --><!--**iva Cliente RRII:responsable inscripto || MT: monotributo || EXENTO: Exento**--><!--
-	  <add key="ivaCliente" value="RRII" />
-	  --><!--****Sucursal***--><!--
-	  <add key="Desc_connString" value="****ConnectionString por defecto***" />
-	  --><!--<add key="connString" value="local" />--><!--
-	  <add key="connString" value="carnisys" />
-	  --><!--****Sucursal***--><!--
-	  <add key="Desc_idSucursal" value="****Id de Sucursal***" />
-	  <add key="idSucursal" value="1" />
-	  <add key="Nombre_Sucursal" value="****Nombre de Sucursal***" />
-	  <add key="nombreSucursal" value="Central" />
-	  --><!--****Cantidad de Servidores***--><!--
-	  <add key="Desc_cantServidores" value="****Cant. Servidores en total del Negocio || si = 1 Ocultar Col IdOrigen y Estado en Movimientos***" />
-	  <add key="cantServidores" value="1" />-->
+SET QUOTED_IDENTIFIER ON
+GO
 
-	  <!--****FIN CarniSys***-->
-	  <!--****FIN CarniSys***-->
-    <!---->
-    <!---->
-    <!--****          BALANZA            ***-->
-    <!---->
-    <!---->
-	<!--****  Marca Balanza  ***-->
-	<add key="Marca_Balanza" value="****Marca de la Balanza Conectada | Opciones: 'Systel' / 'Kretz' ***" />
-	<add key="balanza" value="Systel" />
-	  
-    <!--****Puerto Balanza***-->
-    <add key="Desc_Puerto" value="****Puerto Balanza (value 0 cuando no hay balanza conectada)***" />
-    <add key="puerto" value="COM3" />
-    <!---->
-    <!--****Puerto Balanza***-->
-    <add key="Desc_singleton" value="****Leer peso con Singleton***" />
-    <add key="singleton" value="false" />
-    <!---->
-    <!--****velocidad Timer Balanza***-->
-    <add key="Desc_timerBalanza" value="****velocidad Timer Balanza***" />
-    <add key="timerBalanza" value="100" />
-    <!---->
-    <!--****velocidad Timer Formularios***-->
-    <add key="Desc_timerForm" value="***velocidad Timer Formularios***" />
-    <add key="timerForm" value="50" />
-    <!---->
-    <!--****Fijar valor balanza para pruebas, esto evita leer el peso***-->
-    <add key="Desc_fijarPeso" value="Fijar valor balanza para pruebas, esto evita leer el peso***" />
-    <add key="fijarPeso" value="false" />
-    <!---->
-    <!--****valor de Visible para el checkbox de LeerPeso***-->
-    <add key="Desc_leerPesoCaja" value="****CajaVenta: Visible para el checkbox de LeerPeso***" />
-    <add key="leerPesoCaja" value="true" />
-    <!---->
-    <!--****valor de Visible para el checkbox de LeerPeso***-->
-    <add key="Desc_leerPeso" value="****valor de Visible para el checkbox de LeerPeso***" />
-    <add key="leerPeso" value="true" />
-    <!---->
-    <!---->
-    <!--****      FIN BALANZA            ***-->
-    <!---->
-    <!---->
-    <!--****          TICKETS  / FACTURA          ***-->
-    <!---->
-    <!---->
-    <!--****valor de Visible para el checkbox de Ticket***-->
-    <add key="Desc_ticket" value="****Caja Venta: valor de Visible para el checkbox de Ticket***" />
-    <add key="ticket" value="true" />
-    <!---->
-    <!--****Permite al vendedor acceder a la ultima venta y modificarla***-->
-    <add key="Desc_ultimaVenta" value="****Caja venta: Permite al vendedor acceder a la ultima venta y modificarla***" />
-    <add key="ultimaVenta" value="true" />
-    <!---->
-    <!--****valor checkbox de Ticket en Egreso Caja***-->
-    <add key="Desc_ticketForms" value="****Formularios: valor checkbox de Ticket***" />
-    <add key="ticketForms" value="false" />
-    <!---->
-    <!--****Impresora***-->
-    <add key="Desc_Impresora" value="****Nombre Impresora***" />
-    <add key="Impresora" value="\\ServidorSM\Xprinter" />
-    <!--<add key="ImpresoraRemota" value="\\Pc-9a3247099f75\GP-5890X Series" />-->
-    <!--<add key="Impresora" value="\\mostradorpc\GP-5890X Series" />-->
-    <!---->
-	  <!---->
-	  <!--****Permitir Factura - si no tiene el certificado Afip se pone falso***-->
-	  <add key="Desc_Factura" value="****Permitir Factura Electronica**" />
-	  <add key="factura" value="true" />
-	  <!---->
-    <!--****Ruta PDF donde se guardarán los PDF generados***-->
-    <add key="Desc_rutaPDF" value="****Ruta Carpeta Factura**" />
-    <add key="rutaPDF" value="C:\CarniSys_Docs" />
-    <!---->
-    <!--****Cantidad de Lineas Vacias que se imprimen en Lineas de Venta***-->
-    <add key="Desc_CantLineasVacias" value="****Cantidad Lineas Vacias en Lineas de Venta PDF Factura**" />
-    <add key="cantLineasVacias" value="16" />
-    <!---->
-    <!---->
-    <!--****      FIN    TICKETS            ***-->
-    <!---->
-    <!---->
-    <!--****      CODIGO BARRA           ***-->
-    <!---->
-    <!---->
-    <!--****Cantidad de digitos del Codigo del Producto en un Codigo de Barras***-->
-    <add key="Desc_cantDigitosProdEnCodBarra" value="****Cantidad de digitos del Codigo del Producto en un Codigo de Barras ***" />
-    <add key="cantDigitosProdEnCodBarra" value="4" />
-    <!---->
-    <!--****Segundo modulo del Codigo de Barras || 0 : Cantidad - 1: Monto Total***-->
-    <add key="Desc_codBarraPorCantidad" value="****Segundo modulo del Codigo de Barras || 0 : Cantidad -- 1: Monto Total ***" />
-    <add key="codBarraPorCantidad" value="1" />
-    <!---->
-    <!---->
-    <!--****      FIN    CODIGO BARRA            ***-->
-    <!---->
-    <!---->
-    <!---->
-    <!---->
-    <!--****      VALORES SETEO FORMULARIO            ***-->
-    <!---->
-    <!---->
-    <!--****Form Inicio App***-->
-    <add key="Desc_formInicioApp" value="****0: formPrincipal | 1:formStockActual***" />
-    <add key="formInicioApp" value="0" />
-    <!---->
-    <!--****Abrir Stock Actual externo***-->
-    <add key="Desc_abrirStockActualExterno" value="****Si valor '1' abre la aplicacion por fuera***" />
-    <add key="abrirStockActualExterno" value="1" />
-    <!---->
-    <!--****Fijar valor balanza para pruebas, esto evita leer el peso***-->
-    <add key="Desc_RedondeoCajaVenta" value="Activar redondeo en Caja Venta***" />
-    <add key="redondeo" value="true" />
-    <!---->
-    <!--****Fijar valor balanza para pruebas, esto evita leer el peso***-->
-    <add key="Desc_ImporteRedondeo" value="El importe maximo a redondear en pesos la venta (Debe ser un Int)***" />
-    <add key="importeMaxRedondeo" value="40" />
-    <!---->
-    <!---->
-    <!--****muestra la barra de progreso con la info del vendedor en el primer corte ingresado***-->
-    <add key="Desc_cartelPrimerCorteVendedor" value="****Caja Venta: titila vendedor al ingresar primer corte***" />
-    <add key="cartelPrimerCorteVendedor" value="true" />
-    <!---->
-    <!--****Cantidad de milisegundos segundo inactivo a bloquear pantalla CajaVenta***-->
-    <add key="Desc_tiempoBloqueo" value="****Bloquear Caja venta: milisec. inactivo***" />
-    <add key="tiempoBloqueo" value="600000" />
-    <!---->
-    <!--****Cantidad de milisegundo que deben pasar para registra el Temporal de Linea Venta***-->
-    <add key="Desc_tiempoRegistrarTemporal" value="****Temporal de Linea Venta: Milisec. de corte en balanza***" />
-    <add key="tiempoRegistrarTemporal" value="3000" />
-    <!---->
-    <!--****CERRAR SESION: cantidad de milisegundos segundo inactivo***-->
-    <add key="Desc_tiempoInactivoAdmin" value="****CERRAR SESION: Milisec. inactivo***" />
-    <add key="tiempoInactivoAdmin" value="1800000" />
-    <!---->
-    <!--****Escala de Pantalla en Windows (/100 - dividido 100)***-->
-    <add key="Porc_escalaPantalla" value="****Escala de pantalla en % Div 100***" />
-    <add key="escalaPantalla" value="1.25" />
-    <!---->
-    <!--****limite Dias para fecha desde***-->
-    <add key="Desc_cantDiasLimitFechaDesde" value="***CantDiasLimitFechaDesde***" />
-    <add key="cantDiasLimitFechaDesde" value="7" />
-    <!--****Ruta de Actualización de movimientos***-->
-    <add key="Desc_rutaActualizarMovimientos" value="****Ruta de Actualización de movimientos***" />
-    <add key="rutaActualizarMovimientos" value="C:\Users\Germán\Desktop\SuperCerdo\SuperCerdo.exe" />
-    <!---->
-    <!---->
-    <!--****      FIN            ***-->
-    <!---->
-    <!---->
-    <!---->
-    <!--****          COLORES CAMPOS          ***-->
-    <!---->
-    <!---->
-    <!--****TextBox enableColor White***-->
-    <add key="Desc_enableColor" value="****TextBox enableColor***" />
-    <add key="enableColor" value="Window" />
-    <!--****TextBox readOnlyColor Silver***-->
-    <add key="Desc_readOnlyColor" value="****TextBox readOnlyColor***" />
-    <add key="readOnlyColor" value="ScrollBar" />
-    <!--****TextBox focusColor***-->
-    <add key="Desc_focusColor" value="****TextBox focusColor***" />
-    <add key="focusColor" value="Orange" />
-    <!---->
-    <!---->
-    <!--****      FIN    COLORES            ***-->
-    <!---->
-    <!---->
-    <!---->
-    <!---->
-    <!--****          AFIP DATOS FACTURA         ***-->
-    <!---->
-    <!---->
-    <!--testing = 0 | produccion = 1-->
-    <add key="tipoServidor" value="1" />
-    <!--San Martin = 6 | San Lorenzo = 7-->
-    <add key="ptoVtaAfip" value="7" />
-    <add key="cuit" value="203062107861" />
-    <!--Alicuotas IVA -> ID 3 = 0% | ID 4 = 10.5% | ID 5 = 21% | ID 6 = 27%  -->
-    <add key="idIvaAliAfip" value="4" />
-    <!--Datos a imprimir.-->
-    <add key="Negocio" value="SuperCerdo" />
-    <add key="NegocioAgregado1" value="Tu Primer Carniceria de Cerdo" />
-    <add key="NegocioAgregado2" value="" />
-    <add key="NegocioAgregado3" value="-" />
-    <add key="NegocioAgregado4" value="CUIT: 20306210786" />
-    <add key="IIBB" value="IIBB: 1416543389" />
-    <add key="Dueno" value="German A. Paduan" />
-    <add key="Direccion" value="Dir:San Lorenzo 1208" />
-    <add key="Localidad" value="Reconquista - Santa Fe" />
-    <add key="InicioActividades" value="Inicio Act.: 05/03/2018" />
-    <add key="CondicionIVA" value="Resp. Inscripto" />
-    <add key="rutaCertificado" value="..\CarniSys\Templates\certif-prod.pfx" />
-    <add key="token" value="guarda el ultima valor del token" />
-    <add key="sign" value="guarda el ultima valor del sing" />
-    <add key="certificado" value="guarda el ultima valor del certificado" />
-    <add key="cmsFirmadoBase64" value="guarda el ultima valor del cmsFirmadoBase64" />
-    <add key="ticketResponse" value="" />
-    <!--value="guarda el ultima valor de la respuesta del ticket"-->
-    <add key="ClientSettingsProvider.ServiceUri" value="" />
-  </appSettings>
-  <startup>
-    <supportedRuntime version="v4.0" sku=".NETFramework,Version=v4.7.2" />
-  </startup>
-  <system.web>
-    <membership defaultProvider="ClientAuthenticationMembershipProvider">
-      <providers>
-        <add name="ClientAuthenticationMembershipProvider" type="System.Web.ClientServices.Providers.ClientFormsAuthenticationMembershipProvider, System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" serviceUri="" />
-      </providers>
-    </membership>
-    <roleManager defaultProvider="ClientRoleProvider" enabled="true">
-      <providers>
-        <add name="ClientRoleProvider" type="System.Web.ClientServices.Providers.ClientRoleProvider, System.Web.Extensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" serviceUri="" cacheTimeout="86400" />
-      </providers>
-    </roleManager>
-  </system.web>
-</configuration>
+-- =============================================
+-- Author:		Name
+-- Create date: 
+-- Description:	
+-- =============================================
+ALTER PROCEDURE [dbo].[agregarCortePorCompra] 
+	-- Add the parameters for the stored procedure here
+	@idCompra int,
+	@idCorte int,
+	@idSucursal int,
+	@precioKg float,
+	@cantKg float,
+	@balanza tinyint,
+	@creado datetime = SYSDATETIME,
+	@creadoPor int = 0
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	insert into CortePorCompra(idCompra,idCorte,idSucursal,precioKg,cantKg, balanza, creado, creadoPor)
+	values (@idCompra,@idCorte,@idSucursal,@precioKg,@cantKg, @balanza, @creado, @creadoPor)
+	
+	
+	---Actualizar CorteProveedor
+	-- Declarar variables para almacenar datos
+    DECLARE @idProveedor INT;
+    DECLARE @fechaCompra DATETIME;
+
+    -- Obtener los valores de idProveedor, fechaCompra y ultimoPrecio desde la tabla Compras
+    SELECT 
+        @idProveedor = idProveedor, 
+        @fechaCompra = fechaCompra
+    FROM Compras
+    WHERE idCompra = @idCompra;
+
+    -- Verificar si existe el registro en CorteProveedor
+    IF EXISTS (SELECT 1 
+               FROM CorteProveedor 
+               WHERE idProveedor = @idProveedor AND idCorte = @idCorte)
+    BEGIN
+        -- Actualizar los campos si fechaUltimaCompra es menor que fechaCompra
+        UPDATE CorteProveedor
+        SET 
+            ultimoPrecio = @precioKg,
+            fechaUltimaCompra = @fechaCompra
+        WHERE idProveedor = @idProveedor
+          AND idCorte = @idCorte
+          AND fechaUltimaCompra < @fechaCompra;
+    END
+    ELSE
+    BEGIN
+        -- Insertar un nuevo registro en CorteProveedor
+        INSERT INTO CorteProveedor (idProveedor, idCorte, ultimoPrecio, fechaUltimaCompra)
+        VALUES (@idProveedor, @idCorte, @precioKg, @fechaCompra);
+    END
+END
+GO
+
+
+****
+
+USE [CarniSys0]
+GO
+/****** Object:  StoredProcedure [dbo].[quitarStockCorte]    Script Date: 27/12/2024 19:55:23 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Name
+-- Create date: 
+-- Description:	
+-- =============================================
+ALTER PROCEDURE [dbo].[quitarStockCorte] 
+	-- Add the parameters for the stored procedure here
+	@idCompra int,
+	@idCorte int,
+	@idSucursal int
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+		 
+	delete from CortePorCompra where CortePorCompra.idCompra=@idCompra and
+	CortePorCompra.idCorte=@idCorte and CortePorCompra.idSucursal=@idSucursal	
+	
+END
+
+***
+
+tabla Corte 
+agregar campo 
+
+ALTER TABLE Corte
+ADD idMarca int NULL;
+
+****
+
+USE [CarniSys0]
+GO
+/****** Object:  StoredProcedure [dbo].[addOrEditCorte]    Script Date: 28/12/2024 10:49:41 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[addOrEditCorte]
+	-- Add the parameters for the stored procedure here
+	@idCorte int = null,
+	@codigo bigint,
+	@corte nvarchar(50),
+	@precioKg float,
+	@ingresoRapidoEmbutido tinyint,
+	@habilitado tinyint,
+	@enCierreStock tinyint,
+	@tipo nvarchar(50),
+	@independiente int,
+	@idCorteMaestro int,
+	@porcentaje float,
+	@porcentajeHueso float,
+	@desvioEstandar float,
+	@promedio float,
+	@idAlicuotaIva int,
+	@alicuotaIva float,
+	@pesable tinyint,
+	@nivel int = 0,
+	@puntoStock int = 0,
+	@idMarca int
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	DECLARE  @idMaestro int;
+	DECLARE @id_deCodigo_encontrado int = 0;
+
+	
+	---Si existe idCorte es 0 y Codigo existe es porque se está llamando desde una Importacion	
+	IF @idCorte = 0
+    BEGIN
+		set @id_deCodigo_encontrado = (SELECT TOP (1) idCorte FROM  dbo.Corte where codigo = @codigo)
+    END 
+	IF @id_deCodigo_encontrado > 0
+    BEGIN
+		set @idCorte = @id_deCodigo_encontrado
+	END
+	--FIN de Validacion por Importacion csv
+
+
+	---Se calcula el Nivel del corte segun su Corte Maestro	
+	IF (@idCorteMaestro > 0)
+		begin
+			set @idMaestro = (SELECT     TOP (1) idCorte
+				FROM         dbo.Corte
+				WHERE     (@idCorteMaestro IN
+						  (SELECT     idCorte
+							FROM          dbo.Corte AS Corte_n2
+							WHERE      (idCorteMaestro IN
+									   (SELECT     idCorte
+										 FROM          dbo.Corte AS Corte_n1
+										 WHERE      (idCorteMaestro IN
+									(SELECT     idCorte
+									  FROM          dbo.Corte AS Corte_n0
+									  WHERE      (idCorteMaestro IN
+										(SELECT     idCorte
+										  FROM          dbo.Corte AS Corte_n)))))))))
+			IF (@idMaestro > 0)
+				begin
+					set @nivel = 4;
+				end
+			
+			else
+			 begin							  
+				set @idMaestro = (SELECT TOP 1 [idCorte]
+				  FROM Corte
+				  where @idCorteMaestro in 
+				  (select Corte_n2.idCorte from Corte as Corte_n2 
+					where Corte_n2.idCorteMaestro in 
+					(select Corte_n1.idCorte from Corte as Corte_n1
+					where Corte_n1.idCorteMaestro in 
+						(select Corte_n0.idCorte from Corte as Corte_n0))))
+						
+				--Si encontró maestro se setea Nivel = 3
+				IF (@idMaestro > 0)
+					begin
+						set @nivel = 3;
+					end
+				
+				else
+					begin
+						set @idMaestro = (SELECT TOP 1 [idCorte]
+						  FROM Corte
+						  where @idCorteMaestro in 
+						  (select Corte_n1.idCorte from Corte as Corte_n1 
+							where Corte_n1.idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0)))
+								
+						--Si encontró maestro se setea Nivel = 2
+						IF (@idMaestro > 0)
+						begin
+							set @nivel = 2;
+						end
+						
+						else
+							begin
+								set @idMaestro = (SELECT TOP 1 [idCorte]
+								  FROM Corte
+								  where @idCorteMaestro in (select Corte_n0.idCorte from Corte as Corte_n0))
+										
+								--Si encontró maestro se setea Nivel = 3
+								IF (@idMaestro > 0)
+								begin
+									set @nivel = 1;
+								end
+							end
+					end
+				end
+		end
+	----FIN calculo de Nivel en Corte
+	
+
+    -- Edit
+	IF (@idCorte > 0)
+		begin
+			update Corte set codigo=@codigo,corte=@corte, precioKg=@precioKg, tipo=@tipo,
+			ingresoRapidoEmbutido = @ingresoRapidoEmbutido, habilitado = @habilitado, enCierreStock = @enCierreStock, independiente=@independiente,idCorteMaestro=@idCorteMaestro, porcentaje=@porcentaje,
+			porcentajeHueso=@porcentajeHueso,desvioEstandar=@desvioEstandar, promedio = @promedio, puntoStock = @puntoStock, idAlicuotaIva = @idAlicuotaIva, alicuotaIva = @alicuotaIva, pesable = @pesable, nivel = @nivel, idMarca = @idMarca, actualizado = SYSDATETIME() 
+			where idCorte=@idCorte
+
+			-----Se crea el registro del historial
+			insert into ActualizacionCorte (idCorte, codigo, corte, precioKg, ingresoRapidoEmbutido, enCierreStock, tipo, independiente,
+			 idCorteMaestro,porcentaje,porcentajeHueso, desvioEstandar, promedio, creado, actualizado)
+			 values (@idCorte, @codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @enCierreStock, @tipo, @independiente,@idCorteMaestro,@porcentaje,
+			 @porcentajeHueso, @desvioEstandar, @promedio, null, SYSDATETIME())		
+		end
+	-- Add
+	ELSE 
+		begin
+			if ( @idCorteMaestro = 0)
+				begin
+					insert into Corte (codigo, corte, precioKg, ingresoRapidoEmbutido, habilitado, enCierreStock, tipo, independiente, idCorteMaestro,
+					porcentaje,porcentajeHueso, desvioEstandar, promedio, puntoStock, idAlicuotaIva, alicuotaIva, pesable , nivel, idMarca, creado)
+					 values (@codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @habilitado, @enCierreStock, @tipo, @independiente,@idCorteMaestro,@porcentaje,
+					 @porcentajeHueso, @desvioEstandar, @promedio, @puntoStock, @idAlicuotaIva, @alicuotaIva, @pesable, @nivel, @idMarca, SYSDATETIME())					
+					
+					--SELECT @idCorte = SCOPE_IDENTITY()
+					--update Corte set Corte.idCorteMaestro = @idCorte, porcentaje = 100, porcentajeHueso = 0,
+					--desvioEstandar = 0
+					--where Corte.idCorte = @idCorte
+				end
+				
+			else
+				begin
+					insert into Corte (codigo, corte, precioKg, ingresoRapidoEmbutido, habilitado, enCierreStock, tipo, independiente, idCorteMaestro,
+					 porcentaje,porcentajeHueso,desvioEstandar, promedio, puntoStock, idAlicuotaIva, alicuotaIva, pesable, nivel, idMarca, creado)
+					 values (@codigo,@corte,@precioKg, @ingresoRapidoEmbutido, @habilitado, @enCierreStock, @tipo,@independiente,@idCorteMaestro,@porcentaje,
+					 @porcentajeHueso,@desvioEstandar, @promedio, @puntoStock, @idAlicuotaIva, @alicuotaIva, @pesable, @nivel, @idMarca, SYSDATETIME())
+				end
+	
+			----se inician los stock de los sucursales a cero
+			--insert into StockCorteSucursal(idCorte,idSucursal,stock,stockTeorico)
+			--values ((select top 1 Corte.idCorte from Corte order by Corte.idCorte desc), 1, 0,0)
+			
+			--insert into StockCorteSucursal(idCorte,idSucursal,stock,stockTeorico)
+			--values ((select top 1 Corte.idCorte from Corte order by Corte.idCorte desc), 2, 0,0)
+		end
+END
+
+
+*************
+
+USE [CarniSys0]
+GO
+/****** Object:  StoredProcedure [dbo].[buscarCorte]    Script Date: 28/12/2024 10:57:45 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Name
+-- Create date: 
+-- Description:	
+-- =============================================
+ALTER PROCEDURE [dbo].[buscarCorte] 
+	-- Add the parameters for the stored procedure here
+	@texto nvarchar(50)
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	SELECT      CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.precioKg as 'efectivo', CorteP.precioKg as 'debito', CorteP.precioKg as 'credito', CorteP.precioKg as 'Billetera', CorteP.precioKg as 'Qr', CorteP.precioKg as 'Transf', dbo.Personas.identificacion as 'Marca', CorteP.puntoStock, CorteP.habilitado, CorteP.mayorista, CorteP.enCierreStock, CorteP.alicuotaIva, CorteP.tipo, CorteP.pesable, CorteP.nivel,CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, 
+                      CAST(CorteP.porcentaje AS numeric(10, 2)) AS porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, CorteP.independiente, CorteP.promedio, CorteP.ingresoRapidoEmbutido
+FROM         dbo.Personas RIGHT OUTER JOIN
+                  dbo.Corte AS CorteP ON dbo.Personas.idPersona = CorteP.idMarca LEFT OUTER JOIN
+                  dbo.Corte AS CorteM ON CorteP.idCorteMaestro = CorteM.idCorte
+WHERE    (CorteP.corte like '%'+@texto+'%'  OR cast(CorteP.codigo as nvarchar(50))= @texto or CorteM.corte like '%'+@texto+'%')
+
+order by CorteP.codigo
+
+END
+
+
+**********************
+
+USE [CarniSys0]
+GO
+/****** Object:  StoredProcedure [dbo].[obtenerInfoCorte]    Script Date: 28/12/2024 11:11:33 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Name
+-- Create date: 
+-- Description:	Obtiene la información completa del corte seleccionado
+-- =============================================
+ALTER PROCEDURE [dbo].[obtenerInfoCorte] 
+	-- Add the parameters for the stored procedure here
+	@idCorte int
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+		SELECT CorteP.idCorte, CorteP.codigo, CorteP.corte, CorteP.precioKg, CorteP.nivel, CorteP.independiente, CorteP.ingresoRapidoEmbutido, CorteP.habilitado, CorteP.enCierreStock, CorteP.tipo, CorteP.idCorteMaestro, 
+                  CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, CorteP.promedio, CorteP.alicuotaIva, CorteP.idMarca, dbo.Personas.identificacion as marca
+FROM     dbo.Corte AS CorteP LEFT OUTER JOIN
+                  dbo.Personas ON CorteP.idMarca = dbo.Personas.idPersona LEFT OUTER JOIN
+                  dbo.Corte AS CorteM ON CorteP.idCorteMaestro = CorteM.idCorte
+WHERE     (CorteP.idCorte=@idCorte)
+END
+
+**********************

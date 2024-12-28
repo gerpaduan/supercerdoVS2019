@@ -50,8 +50,10 @@ namespace Presentacion.Personas
             Entidades.Persona oPersonaE = new Entidades.Persona();
             try
             {
-                if (!grillaPersonas.CurrentRow.Selected)
-                    throw new Exception();
+                //if (!grillaPersonas.CurrentRow.Selected)
+                //    throw new Exception();
+                if (grillaPersonas.Rows.Count == 0)
+                    return;
 
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
                 oPersonaN = new Negocio.Persona();

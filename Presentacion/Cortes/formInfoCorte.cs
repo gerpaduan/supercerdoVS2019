@@ -54,6 +54,7 @@ namespace Presentacion
                 txtDescCorte.Text = oCorteE.corte;
                 txtPrecioKg.Text = oCorteE.precioKg.ToString("F2"); 
                 txtTipo.Text = oCorteE.tipo;
+                txtMarca.Text = oCorteE.Marca != null ? oCorteE.Marca.Identificacion : "";
                 txtAlicuotaIva.Text = oCorteE.AlicuotaIva.ToString();
                 txtPromedio.Text = oCorteE.Promedio.ToString("F2");
                 txtPuntoStock.Text = oCorteE.PuntoStock.ToString();
@@ -67,25 +68,7 @@ namespace Presentacion
                 txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
                 txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
 
-                //foreach (DataRow fila in dtCorte.Rows)
-                //{
-                //    txtIdCorte.Text = fila["idCorte"].ToString();
-                //    txtCodigo.Text = fila["codigo"].ToString();
-                //    txtDescCorte.Text = fila["corte"].ToString();
-                //    txtPrecioKg.Text = fila["precioKg"].ToString();
-                //    txtTipo.Text = fila["tipo"].ToString();
-                //    txtIndependiente.Checked = Convert.ToBoolean(fila["independiente"]);
-                //    txtAlicuotaIva.Text = (fila["alicuotaIva"]).ToString();
-                //    checkHabilitado.Checked = Convert.ToBoolean(fila["habilitado"]);
-                //    checkIngresoRapidoEmbutido.Checked = Convert.ToBoolean(fila["ingresoRapidoEmbutido"]);
-                //    checkEnCierreStock.Checked = Convert.ToBoolean(fila["enCierreStock"]);
-
-                //    txtCorteMaestro.Text = fila["corteMaestro"].ToString();
-                //    txtPorcentajeCorte.Text = fila["porcentaje"].ToString();
-                //    txtPorcHueso.Text = fila["porcentajeHueso"].ToString();
-                //    txtDesvioEstandar.Text = fila["desvioEstandar"].ToString();
-                //    txtPromedio.Text = fila["promedio"].ToString();
-                //}
+                grillaProveedores.DataSource = oCorteN.obtenerCorteProveedor(idCorte);
             }
             catch (Exception ex)
             {

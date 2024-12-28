@@ -15,11 +15,12 @@ using System.Windows.Forms;
 using OfficeOpenXml;
 
 using Presentacion.Cortes;
+using Presentacion.Personas;
 using static System.Net.WebRequestMethods;
 
 namespace Presentacion
 {
-    public partial class formCortes : formBaseColor
+    public partial class formCortes : formBaseColor, InterfacePersona
     {
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE;
@@ -31,6 +32,7 @@ namespace Presentacion
         bool comboCargado = false;
         bool mostrarMensajeExport = false;
         long codigoDesde, codigoHasta;
+        int idMarca = -1;//-1 busca a todos
         public formCortes()
         {
             InitializeComponent();
@@ -314,6 +316,11 @@ namespace Presentacion
                 expresion += " and ";
                 expresion += " corteMaestro like \'%" + txtBuscarMaestro.Text + "%\'";
             }
+            if (!string.IsNullOrEmpty(txtMarca.Text) && !txtMarca.Text.ToUpper().Equals("TODAS"))
+            {
+                expresion += " and ";
+                expresion += !string.IsNullOrEmpty(txtMarca.Text) ? "marca = \'" + txtMarca.Text + "\'" : "true";
+            }
 
             DataRow[] foundRows;
             // Use the Select method to find all rows matching the filter.
@@ -509,6 +516,35 @@ namespace Presentacion
             catch (Exception ex)
             {
                 MessageBox.Show("Error al importar lista de precios excel automaticamente.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnBuscarCliente_Click(object sender, EventArgs e)
+        {
+            buscarMarca();
+        }
+
+        private void buscarMarca()
+        {
+            formBuscarPersona frmBuscarPersona = new formBuscarPersona();
+            frmBuscarPersona.Show(this);
+        }
+
+        public void EnviarPersona(Entidades.Persona persona)
+        {
+            this.txtMarca.Text = persona.Identificacion;
+            idMarca = persona.idPersona;
+            //cargarGrilla();
+            filtarGrilla();
+        }
+
+        private void btnLimpiar_Click(object sender, EventArgs e)
+        {
+            if (idMarca != -1)//validacion para evitar conexion a la BD
+            {
+                idMarca = -1;
+                txtMarca.Text = "TODAS";
+                filtarGrilla();
             }
         }
 

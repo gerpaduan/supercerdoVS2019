@@ -12,7 +12,7 @@ using Presentacion.Cortes;
 
 namespace Presentacion
 {
-    public partial class formNuevoCorte : formBaseColor, InterfaceCorte
+    public partial class formNuevoCorte : formBaseColor, InterfaceCorte, InterfacePersona
     {
         public int idCorte = 0;
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
@@ -20,6 +20,7 @@ namespace Presentacion
         Entidades.Corte oCorteE=new Entidades.Corte();
         public formCortes frmCorte;// = new formCortes();
         public formInfoCorte oFrmInfoCorte;
+        Entidades.Persona oMarca;
 
         string mensaje = "";
 
@@ -98,8 +99,14 @@ namespace Presentacion
             checkHabilitado.Checked = oCorteE.Habilitado;
             checkEnCierreStock.Checked = oCorteE.EnCierreStock;
             checkAsignarMaestro.Checked = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0);
-            
+
+            oMarca = oCorteE.Marca;
+            cargarMarca();
             cargarCampoCorteMaestro();
+
+            ///cargar grilla proveedores
+            ///
+            grillaProveedores.DataSource = oCorteN.obtenerCorteProveedor(idCorte);
         }
 
         private void cargarCampoCorteMaestro()
@@ -160,6 +167,8 @@ namespace Presentacion
             }
         }
 
+        //TODO agregar Marca a Corte, modificar tabla, procedimientos, etc
+
         private bool cargarDatosCorte(Entidades.Corte oCorteE)
         {
             bool resp = true;
@@ -205,6 +214,7 @@ namespace Presentacion
             oCorteE.Habilitado = checkHabilitado.Checked;
             oCorteE.independiente = txtIndependiente.Checked ? 1 : 0;
 
+            oCorteE.Marca = oMarca;
             oCorteE.CorteMaestro = oCorteMaestroE;
 
             try
@@ -460,6 +470,40 @@ namespace Presentacion
                 txtPuntoStock.Text = "0";
                 txtPuntoStock.SelectAll();
             }
+        }
+
+        private void btnMarca_Click(object sender, EventArgs e)
+        {
+            buscarPersona();
+        }
+        private void buscarPersona()
+        {
+            Personas.formBuscarPersona frmBuscarPersona = new Personas.formBuscarPersona();
+            frmBuscarPersona.ShowDialog(this);
+        }
+
+        //comunicación con interface
+        public void EnviarPersona(Entidades.Persona proveedor)
+        {
+            oMarca = proveedor;
+            cargarMarca();
+        }
+
+        private void btnBorrarMarca_Click(object sender, EventArgs e)
+        {
+            DialogResult resp = MessageBox.Show("¿Eliminar Marca?"
+                    , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            if (resp.Equals(DialogResult.No))
+                return;
+
+            oMarca = null;
+            cargarMarca();
+        }
+
+        private void cargarMarca()
+        {
+            this.txtMarca.Text = oMarca != null ? oMarca.Identificacion : ""; 
+            btnBorrarMarca.Visible = string.IsNullOrEmpty(txtMarca.Text) ? false : true;
         }
     }
 }

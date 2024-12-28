@@ -34,6 +34,11 @@ namespace Datos
                         oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
                         oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
                         oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
+                        if (drCorte["idMarca"] != DBNull.Value)
+                        {
+                            Datos.Persona oPersonaD = new Datos.Persona();
+                            oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));
+                        }
                         oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
                         oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
@@ -96,6 +101,7 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@codigo", oCorteE.codigo);
             cmCorte.Parameters.AddWithValue("@corte", oCorteE.corte);
             cmCorte.Parameters.AddWithValue("@tipo", oCorteE.tipo);
+            cmCorte.Parameters.AddWithValue("@idMarca", oCorteE.Marca != null ? oCorteE.Marca.IdPersona : 0);
             cmCorte.Parameters.AddWithValue("@puntoStock", oCorteE.PuntoStock);
             cmCorte.Parameters.AddWithValue("@promedio", oCorteE.Promedio);
             cmCorte.Parameters.AddWithValue("@independiente", oCorteE.independiente);
@@ -388,6 +394,32 @@ namespace Datos
                 cmCorte.Connection.Close();
                 oCorteE = null;
             }
+        }
+
+        public DataTable obtenerCorteProveedor(int idCorte)
+        {
+            DataTable dtCorteProveedor = new DataTable();
+
+            daCorte = new SqlDataAdapter();
+
+            cmCorte = new SqlCommand();
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandText = "SELECT  "+
+                " dbo.Personas.razonSocial, dbo.CorteProveedor.ultimoPrecio, dbo.CorteProveedor.fechaUltimaCompra"+
+                "  FROM dbo.Corte INNER JOIN dbo.CorteProveedor ON dbo.Corte.idCorte = dbo.CorteProveedor.idCorte INNER JOIN "+"" +
+                " dbo.Personas ON dbo.CorteProveedor.idProveedor = dbo.Personas.idPersona "+
+                " WHERE  (dbo.CorteProveedor.idCorte = @idCorte)"+
+                " ORDER By dbo.CorteProveedor.fechaUltimaCompra desc";
+            cmCorte.Parameters.AddWithValue("@idCorte", idCorte);
+
+            daCorte.SelectCommand = cmCorte;
+            daCorte.Fill(dtCorteProveedor);
+
+            cmCorte.Connection.Close();
+
+            return dtCorteProveedor;
         }
 
         #region formula 

@@ -144,6 +144,10 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
+        public DataTable obtenerCorteProveedor(int idCorte)
+        {
+            return oCorteD.obtenerCorteProveedor(idCorte);
+        }
         public DataTable obtenerTiposProducto(bool mostrarTodos)
         {
             DataTable dtAlicuotasIva = new DataTable();

@@ -26,6 +26,7 @@ namespace Entidades
         private bool ingresoRapidoEmbutido;
         private bool enCierreStock;
         public Corte corteMaestro;
+        private Persona marca;
         public float precioKg;
         public float precioKgReferencia;
         public float porcentajeHueso;
@@ -217,5 +218,6 @@ namespace Entidades
         public bool Pesable { get => pesable; set => pesable = value; }
         public int Nivel { get => nivel; set => nivel = value; }
         public int PuntoStock { get => puntoStock; set => puntoStock = value; }
+        public Persona Marca { get => marca; set => marca = value; }
     }
 }
