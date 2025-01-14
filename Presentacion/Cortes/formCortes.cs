@@ -109,6 +109,8 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
+            ///TODO: hacer prueba exhuastiva en cargar miles de Cortes
+            ///
             if (!comboCargado)
                 return;
 
@@ -331,6 +333,7 @@ namespace Presentacion
                 dtCortesFiltrado.ImportRow(row);
             }
             grillaCortes.DataSource = dtCortesFiltrado;
+            txtCantItems.Text = dtCortesFiltrado.Rows.Count.ToString();
         }
 
         protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, Keys keyData)

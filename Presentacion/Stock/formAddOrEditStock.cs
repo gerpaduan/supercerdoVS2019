@@ -47,6 +47,7 @@ namespace Presentacion
        bool ultimaValidacion = true;
        bool huboModificaciones = false;
        bool dejarDeLeerPeso = false;
+       bool asignarStockActual = false;
        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
 
        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
@@ -411,7 +412,10 @@ namespace Presentacion
         private void agregarCorte()
         {
             cargarCortesPorCompra();
-            cargarGrilla();            
+            
+            //condicion para que no carga grilla por cada corte y hacerlo una vez terminado la asignacion del stock de cada corte
+            if (!asignarStockActual)
+                cargarGrilla();            
         }
 
         private void capturarPantalla()
@@ -631,19 +635,19 @@ namespace Presentacion
 
                     if (dtCorte.Rows.Count > 0)
                     {
-                        foreach (DataRow fila in dtCorte.Rows)
+                        DataRow[] resultado = dtCorte.Select($"codigo = '{txtCodigo.Text}'");
+                        if (resultado.Length > 0)
                         {
-                            if (fila["codigo"].ToString().Equals(txtCodigo.Text))
-                            {
-                                oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
-                                oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
-                                oCorteNuevaCompra.corte = fila["corte"].ToString();
-                                oCorteNuevaCompra.tipo = fila["tipo"].ToString();
-                                break;
-                            }
+                            DataRow fila = resultado[0];
+                            oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"]);
+                            oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"]);
+                            oCorteNuevaCompra.corte = fila["corte"].ToString();
+                            oCorteNuevaCompra.tipo = fila["tipo"].ToString();
                         }
+
                         //se cargan los datos del corte
-                        txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
+                        txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte; //comentado 07/01/25 xq creo q pasando codigo se obtienen datos del corte
+
                     }
                 }
             }
@@ -708,7 +712,7 @@ namespace Presentacion
 
         private void txtCorteNuevaCompra_TextChanged(object sender, EventArgs e)
         {
-            txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
+            //txtCorteNuevaCompra.AutoCompleteCustomSource = LoadAutoComplete();
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -1132,7 +1136,8 @@ namespace Presentacion
             txtCodigo.Text = codigo;
             txtCantKgs.Text = cantKgs; // "-0.0051";//se pone este resultado por se el menor para q se pueda ver en reporte            
             agregarCorte();
-            comprobarStock();
+            if(!asignarStockActual)
+                comprobarStock();
             txtCodigo.Text = "";
             huboModificaciones = true;
         }
@@ -1243,7 +1248,7 @@ namespace Presentacion
 
             if (resp == DialogResult.Yes)
             {
-
+                asignarStockActual = true;
                 ///TODO: para todos los cortes de la grilla agregar el stock actual de ese corte
                 ///obtener datatable de stock actual y luego cargar el stock a la grilla
                 ///
@@ -1259,7 +1264,7 @@ namespace Presentacion
                 desde = dtInicioStock.Rows.Count > 0 ? Convert.ToDateTime(dtInicioStock.Rows[row]["fechaCompra"]) : desde;
 
 
-                DataTable dtStockActual = oCorteN.CierreStock(1, "", (int)comboSucursal.SelectedValue, desde, txtFechaCompra.Value, null);
+                DataTable dtStockActual = oCorteN.CierreStock(1, "", (int)comboSucursal.SelectedValue, desde, txtFechaCompra.Value, null, "", 0, 0);
 
                 // Establecer la columna 'Codigo' como clave primaria
                 dtStockActual.PrimaryKey = new DataColumn[] { dtStockActual.Columns["Codigo"] };
@@ -1286,7 +1291,9 @@ namespace Presentacion
                 {
                     cargarCorteSinStock(dtAsignarStockActual.Rows[i]["Codigo"].ToString(), dtAsignarStockActual.Rows[i]["Stock"].ToString());
                 }
-
+                cargarGrilla();
+                comprobarStock();
+                asignarStockActual = false;
             }
         }
     }

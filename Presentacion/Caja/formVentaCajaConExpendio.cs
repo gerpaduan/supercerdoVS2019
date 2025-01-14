@@ -16,6 +16,7 @@ using Utilidades;
 using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
 using System.Drawing.Text;
+using System.Windows;
 
 namespace Presentacion.Caja
 {
@@ -285,7 +286,11 @@ namespace Presentacion.Caja
                 cargarVenta();
 
                 try
-                {                    
+                {
+                    oVentaN.cargaExhaustiva(oVentaE, listaLineaVenta);
+                    return;
+
+
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
                     Ticket.CreaTicket ticket = new Ticket.CreaTicket();                
                                      

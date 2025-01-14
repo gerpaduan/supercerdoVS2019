@@ -153,7 +153,7 @@ namespace Presentacion.Cortes
                 dtGrillaReporte = null;
 
                 dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), idSucursal,
-                    Convert.ToDateTime(comboInicioStock.Text), DateTime.Now, conexion);
+                    Convert.ToDateTime(comboInicioStock.Text), DateTime.Now, conexion, "", 0, 0);
                 #region pasado a capa Negocio
                 //foreach (DataRow fila in dtGrillaReporte.Rows)
                 //{
@@ -267,7 +267,7 @@ namespace Presentacion.Cortes
                 //        Math.Round(Convert.ToDecimal(stockKg / float.Parse(fila["promedio"].ToString()))).ToString() + " u";//stockUn;// stockUn.ToString("F1") + " u";
                 //    fila["Stock.Un"] = stock;
 
-                    #endregion
+                #endregion
 
                 grillaReportes.DataSource = dtGrillaReporte;
 

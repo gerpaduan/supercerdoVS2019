@@ -23,6 +23,22 @@ namespace Negocio
 
         public void addOrEditCorte(Entidades.Corte oCorteE)
         {
+            ///CARGA EXHAUSTIVA
+            ///
+            //oCorteE.codigo = 12500500;
+            //for (int i = 0; i < 1000; i++)
+            //{
+            //    oCorteE.codigo++;
+            //    oCorteE.corte = oCorteE.corte + i.ToString() + " Prov Marca 01";
+            //    //oCorteE.tipo = ;
+            //    oCorteE.Marca.idPersona = 316;
+
+            //    oCorteD.addOrEditCorte(oCorteE);
+            //}
+            ///FIN CARGA EXHAUSITIVA
+            ///
+
+
             oCorteD.addOrEditCorte(oCorteE);
         }
 
@@ -325,10 +341,10 @@ namespace Negocio
 
          }
 
-         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
+         public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal, string tipo, int idProveedor, int idMarca)
          {
              oCorteD = new Datos.Corte();
-             DataTable dtGrillaReporte = oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal);
+             DataTable dtGrillaReporte = oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal, tipo, idProveedor, idMarca);
 
             foreach (DataRow fila in dtGrillaReporte.Rows)
             {
@@ -448,10 +464,10 @@ namespace Negocio
             return dtGrillaReporte;
         }
 
-         public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo , int idProveedor, int idMarca)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
@@ -460,10 +476,10 @@ namespace Negocio
              return oCorteD.StockIngresoEgreso(texto, idSucursal, fechaDesde, fechaHasta);
          }
 
-         public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+         public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
          {
              oCorteD = new Datos.Corte();
-             return oCorteD.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta);
+             return oCorteD.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
         public DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)

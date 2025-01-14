@@ -12,17 +12,24 @@ using iTextSharp.text;
 using System.IO;
 using OfficeOpenXml;
 using System.Configuration;
+using Presentacion.Personas;
 
 namespace Presentacion.Cortes
 {
-    public partial class formReporteStock : Form
+    public partial class formReporteStock : Form, InterfacePersona
     {
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
+        Entidades.Persona oMarcaE = new Entidades.Persona();
+        Entidades.Persona oProveedor = new Entidades.Persona();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         DataTable dtSucursales;
 
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Compra oCompraN = new Negocio.Compra();
+
+        string cargarPersona = "";
+        string tipo = "";
+        int idMarca, idProveedor;
 
         DataTable dtGrillaReporte = new DataTable();
         bool stockActual = false;
@@ -306,7 +313,7 @@ namespace Presentacion.Cortes
 
                         string fechaHastaString = stockProgresivo ? txtFechaHastaProgresivo.Text : comboCierreStock.Text;
                         dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                            Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null);
+                            Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null, tipo , idProveedor, idMarca);
                         #region pasado a capa Negocio
                         //foreach (DataRow fila in dtGrillaReporte.Rows)
                         //{
@@ -467,7 +474,7 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
 
-                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date, null);
+                dtGrillaReporte = oCorteN.CierreStock(2, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value.Date, txtFechaHastaProgresivo.Value.Date, null, tipo, idProveedor, idMarca);
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
                     if (fila["Kgs En Embutidos"].ToString() == null || fila["Kgs En Embutidos"].ToString() == "")
@@ -547,106 +554,11 @@ namespace Presentacion.Cortes
                 dtGrillaReporte = null;
 
                 dtGrillaReporte = oCorteN.acum_Ventas(txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                    fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value);
-                
+                    fechaDesdeProgresivo.Value, txtFechaHastaProgresivo.Value, tipo, idProveedor, idMarca);
+
                 DataTable dtStockActual = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
-                            fechaUltimoCierreStock, DateTime.Now, null);
+                            fechaUltimoCierreStock, DateTime.Now, null, tipo, idProveedor, idMarca);
 
-                //foreach (DataRow fila in dtStockActual.Rows)
-                //{
-                //    decimal TotINGR = 0, TotEGR = 0;
-                //    if (fila["Stock.Ini"].ToString() == null || fila["Stock.Ini"].ToString() == "")
-                //    {
-                //        fila["Stock.Ini"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotINGR += Convert.ToDecimal(fila["Stock.Ini"]);
-                //    }
-
-                //    if (fila["Compras"].ToString() == null || fila["Compras"].ToString() == "")
-                //    {
-                //        fila["Compras"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotINGR += Convert.ToDecimal(fila["Compras"]);
-                //    }
-
-                //    if (fila["Ingr.Elab"].ToString() == null || fila["Ingr.Elab"].ToString() == "")
-                //    {
-                //        fila["Ingr.Elab"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotINGR += Convert.ToDecimal(fila["Ingr.Elab"]);
-                //    }
-
-                //    if (fila["Ingr.Stock"].ToString() == null || fila["Ingr.Stock"].ToString() == "")
-                //    {
-                //        fila["Ingr.Stock"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotINGR += Convert.ToDecimal(fila["Ingr.Stock"]);
-                //    }
-
-                //    if (fila["Ingr. Mov"].ToString() == null || fila["Ingr. Mov"].ToString() == "")
-                //    {
-                //        fila["Ingr. Mov"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotINGR += Convert.ToDecimal(fila["Ingr. Mov"]);
-                //    }
-
-                //    if (fila["Egr.Stock"].ToString() == null || fila["Egr.Stock"].ToString() == "")
-                //    {
-                //        fila["Egr.Stock"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotEGR += Convert.ToDecimal(fila["Egr.Stock"]);
-                //    }
-
-                //    if (fila["Egr.Mov"].ToString() == null || fila["Egr.Mov"].ToString() == "")
-                //    {
-                //        fila["Egr.Mov"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotEGR += Convert.ToDecimal(fila["Egr.Mov"]);
-                //    }
-
-                //    if (fila["Egr.Elab"].ToString() == null || fila["Egr.Elab"].ToString() == "")
-                //    {
-                //        fila["Egr.Elab"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotEGR += Convert.ToDecimal(fila["Egr.Elab"]);
-                //    }
-
-                //    if (fila["Ventas"].ToString() == null || fila["Ventas"].ToString() == "")
-                //    {
-                //        fila["Ventas"] = 0;
-                //    }
-                //    else
-                //    {
-                //        TotEGR += Convert.ToDecimal(fila["Ventas"]);
-                //    }
-
-                //    if (fila["Stock.Cierre"].ToString() == null || fila["Stock.Cierre"].ToString() == "")
-                //    {
-                //        fila["Stock.Cierre"] = 0;
-                //    }
-
-                //    fila["Tot.INGR"] = TotINGR;
-                //    fila["Tot.EGR"] = TotEGR;
-                //    fila["DIF"] = TotINGR - TotEGR;
-
-                //    fila["Faltante"] = Convert.ToDecimal(fila["DIF"]) - Convert.ToDecimal(fila["Stock.Cierre"]);
-                //}
 
                 foreach (DataRow fila in dtGrillaReporte.Rows)
                 {
@@ -685,7 +597,7 @@ namespace Presentacion.Cortes
                     {
                         dtGrillaReporte = oCorteN.TotalPorCortesVendidos(txtDescripcion.Text.Trim(), 
                             Convert.ToInt32(comboSucursal.SelectedValue.ToString()), fechaDesdeProgresivo.Value,
-                            txtFechaHastaProgresivo.Value);
+                            txtFechaHastaProgresivo.Value, tipo, idProveedor, idMarca);
                     }
                     grillaReportes.DataSource = dtGrillaReporte;
                 }
@@ -823,6 +735,12 @@ namespace Presentacion.Cortes
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
             comboOrdenStock.SelectedIndex = 0;
+
+
+            comboTipo.DataSource = oCorteN.obtenerTiposProducto(true);
+            comboTipo.DisplayMember = "tipo";
+            comboTipo.ValueMember = "tipo";
+            comboTipo.SelectedIndex = 0;
         }
 
         private void cargarComboCierreStock()
@@ -880,7 +798,9 @@ namespace Presentacion.Cortes
         {
             if (combosCierresCargados)
             {
-                cargarGrilla();
+                //cargarGrilla(); //se comenta para evitar que se cargue grilla erronemente al seleccionar un filtro mal y perder tiempo de espera
+
+                lblActualizar.Visible = true;
             }
         }
 
@@ -888,7 +808,9 @@ namespace Presentacion.Cortes
         {
             if (combosCierresCargados)
             {
-                cargarGrilla();
+                //cargarGrilla(); //se comenta para evitar que se cargue grilla erronemente al seleccionar un filtro mal y perder tiempo de espera
+
+                lblActualizar.Visible = true;
             }
         }
 
@@ -1158,6 +1080,10 @@ namespace Presentacion.Cortes
                 // Crear el formulario para pedir el nombre del archivo
                 string nombreArchivo = MostrarDialogoNombreArchivo();
 
+                //si es null se aborta la accion
+                if (nombreArchivo == null)
+                    return;
+
                 // Establecer el contexto de la licencia para evitar la excepción
                 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
@@ -1184,33 +1110,81 @@ namespace Presentacion.Cortes
                     // Crear una hoja de trabajo
                     ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
 
-                    // Agregar encabezados
-                    for (int i = 0; i < dtGrillaReporte.Columns.Count; i++)
-                    {
-                        hoja.Cells[1, i + 1].Value = dtGrillaReporte.Columns[i].ColumnName;
-                    }
+                    int fila = 1; // Fila inicial en Excel
+                    int columna = 1; // Columna inicial en Excel
 
-                    // Agregar datos
-                    for (int i = 0; i < dtGrillaReporte.Rows.Count; i++)
+                    // Exportar encabezados visibles
+                    foreach (DataGridViewColumn col in grillaReportes.Columns)
                     {
-                        for (int j = 0; j < dtGrillaReporte.Columns.Count; j++)
+                        if (col.Visible) // Solo columnas visibles
                         {
-                            var value = dtGrillaReporte.Rows[i][j];
-
-                            // Verifica si el valor es de tipo DateTime
-                            if (value is DateTime dateTimeValue)
-                            {
-                                // Aplica el formato deseado para las fechas
-                                hoja.Cells[i + 2, j + 1].Value = dateTimeValue.ToString("dd/MM/yyyy HH:mm"); // Cambia el formato según necesidad
-                            }
-                            else
-                            {
-                                hoja.Cells[i + 2, j + 1].Value = value;
-                            }
-
-                            //hoja.Cells[i + 2, j + 1].Value = dtGrillaReporte.Rows[i][j];
+                            hoja.Cells[fila, columna].Value = col.HeaderText;
+                            columna++;
                         }
                     }
+
+                    fila++; // Avanzar a la siguiente fila (datos)
+                    // Exportar filas visibles
+                    foreach (DataGridViewRow row in grillaReportes.Rows)
+                    {
+                        if (!row.IsNewRow) // Evitar la fila vacía al final
+                        {
+                            columna = 1; // Reiniciar columna
+                            foreach (DataGridViewColumn col in grillaReportes.Columns)
+                            {
+                                if (col.Visible) // Solo columnas visibles
+                                {
+                                    var value = row.Cells[col.Index].Value;
+
+                                    // Verifica si el valor es de tipo DateTime
+                                    if (value is DateTime dateTimeValue)
+                                    {
+                                        // Aplica el formato deseado para las fechas
+                                        hoja.Cells[fila, columna].Value = dateTimeValue.ToString("dd/MM/yyyy HH:mm"); // Cambia el formato según necesidad
+                                    }
+                                    else
+                                    {
+                                        hoja.Cells[fila, columna].Value = value;
+                                    }
+
+
+                                    //hoja.Cells[fila, columna].Value = row.Cells[col.Index].Value?.ToString();
+                                    columna++;
+                                }
+                            }
+                            fila++;
+                        }
+                    }
+
+                    //#########################3
+
+                    //// Agregar encabezados
+                    //for (int i = 0; i < dtGrillaReporte.Columns.Count; i++)
+                    //{
+                    //    hoja.Cells[1, i + 1].Value = dtGrillaReporte.Columns[i].ColumnName;
+                    //}
+
+                    //// Agregar datos
+                    //for (int i = 0; i < dtGrillaReporte.Rows.Count; i++)
+                    //{
+                    //    for (int j = 0; j < dtGrillaReporte.Columns.Count; j++)
+                    //    {
+                    //        var value = dtGrillaReporte.Rows[i][j];
+
+                    //        // Verifica si el valor es de tipo DateTime
+                    //        if (value is DateTime dateTimeValue)
+                    //        {
+                    //            // Aplica el formato deseado para las fechas
+                    //            hoja.Cells[i + 2, j + 1].Value = dateTimeValue.ToString("dd/MM/yyyy HH:mm"); // Cambia el formato según necesidad
+                    //        }
+                    //        else
+                    //        {
+                    //            hoja.Cells[i + 2, j + 1].Value = value;
+                    //        }
+
+                    //        //hoja.Cells[i + 2, j + 1].Value = dtGrillaReporte.Rows[i][j];
+                    //    }
+                    //}
 
                     // Guardar el archivo
                     excel.Save();
@@ -1264,10 +1238,90 @@ namespace Presentacion.Cortes
 
             if (dialogo.ShowDialog() == DialogResult.OK)
             {
+                if (string.IsNullOrEmpty(txtNombre.Text))
+                {
+                    MessageBox.Show("Debe ingresar un nombre para el archivo a exportar");
+                    return null;
+                }
                 return txtNombre.Text.Trim();
             }
 
             return null;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            cargarPersona = "Proveedor";
+            buscarPersona();
+        }
+
+        private void btnBuscarMarca_Click(object sender, EventArgs e)
+        {
+            cargarPersona = "Marca";
+            buscarPersona();
+        }
+
+        private void buscarPersona()
+        {
+            formBuscarPersona frmBuscarPersona = new formBuscarPersona();
+            frmBuscarPersona.Show(this);
+        }
+
+        ///TODO: recuperar marca, proveedor y tipo en dtcierre stock para poder filtrar <summary>
+        /// analizar si conviene armar otro reporte que se llame faltantes o lista a pedir, etc
+
+        private void btnLimpiar_Click(object sender, EventArgs e)
+        {
+            if (idMarca != 0)//validacion para evitar conexion a la BD
+            {
+                idMarca = 0;
+                oMarcaE = null;
+                txtMarca.Text = "TODAS";
+                lblActualizar.Visible = true;
+            }
+            btnTodasMarcas.Visible = idMarca != 0;
+        }
+
+        private void btnTodosProveedores_Click(object sender, EventArgs e)
+        {
+            if (idProveedor != 0)//validacion para evitar conexion a la BD
+            {
+                idProveedor = 0;
+                oProveedor = null;
+                txtProveedor.Text = "TODOS";
+                lblActualizar.Visible = true;
+            }
+            btnTodosProveedores.Visible = idProveedor != 0;
+        }
+
+        private void comboTipo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            tipo = string.IsNullOrEmpty(comboTipo.Text) || comboTipo.Text.ToUpper() == "TODOS" ? "" : comboTipo.Text;
+            if (combosCierresCargados)
+            {
+                lblActualizar.Visible = true;
+            }
+        }
+
+        public void EnviarPersona(Entidades.Persona persona)
+        {
+            if (cargarPersona == "Marca")
+            {
+                this.txtMarca.Text = persona.Identificacion;
+                oMarcaE = persona;
+                idMarca = persona.idPersona;
+            }
+            if (cargarPersona == "Proveedor")
+            {
+                this.txtProveedor.Text = persona.Identificacion;
+                oProveedor = persona;
+                idProveedor = persona.idPersona;
+            }
+
+            btnTodosProveedores.Visible = idProveedor != 0;
+            btnTodasMarcas.Visible = idMarca != 0;
+            //cargarGrilla();
+            //filtarGrilla();
         }
     }
 }

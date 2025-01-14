@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using System.Net.Sockets;
 
 namespace Negocio
 {
@@ -188,6 +189,51 @@ namespace Negocio
         {
             oVentaD.actualizarCliente(idVenta, idPersona);
         }
+
+        #region CARGA EXHAUSTIVA
+        public void cargaExhaustiva(Entidades.Venta oVentaE, List<Entidades.LineaVenta> listaLineaVenta)
+        {
+
+            DateTime dateTime = DateTime.Now.AddDays(-365);
+            for (int i = 0; i < 365; i++)
+            {
+                dateTime = dateTime.AddDays(i);
+                for (int j = 0; j < 300; j++)
+                {
+                    if (dateTime.Year > 2024)
+                    {
+                        string d = "2";
+                    }
+                    oVentaE.FechaVenta = dateTime;
+                    oVentaE.IdVenta = agregarVenta(oVentaE);
+
+                    Random random = new Random();
+                    int min = 5492; // Límite inferior
+                    int max = 6490; // Límite superior
+
+                    int idCorte_Random = random.Next(min, max + 1); // Incluye el límite superior
+
+                    for (int index = 0; index < listaLineaVenta.Count; index++)
+                    {
+                        Entidades.LineaVenta linea = listaLineaVenta[index];
+                        //setear por cada linea cantKg <- KgsTotalCalculado
+                        linea.CantKg = linea.KgsTotalCalculado;
+                        linea.Venta.IdVenta = oVentaE.IdVenta;
+                        linea.Corte.idCorte = random.Next(min, max + 1);
+                        try
+                        {
+                            agregarLineaVenta(linea);
+                        }
+                        catch (Exception)
+                        {
+                            int d = linea.Corte.idCorte;
+                        }
+                    }
+                }
+
+            }
+        }
+        #endregion
 
 
         #region EXPENDIO

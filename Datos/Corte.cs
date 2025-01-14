@@ -1191,7 +1191,7 @@ namespace Datos
             return dtReporteTeoricoReal;
         }
 
-        public DataTable CierreStock(int nroCierre,string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal)
+        public DataTable CierreStock(int nroCierre,string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal, string tipo, int idProveedor, int idMarca)
         {
             DataTable dtCierreStock = new DataTable();
             daCorte = new SqlDataAdapter();
@@ -1214,6 +1214,9 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCorte.Parameters.AddWithValue("@tipo", tipo);
+            cmCorte.Parameters.AddWithValue("@idProveedor", idProveedor);
+            cmCorte.Parameters.AddWithValue("@idMarca", idMarca);
 
             daCorte.SelectCommand = cmCorte;
 
@@ -1234,7 +1237,7 @@ namespace Datos
             return dtCierreStock;
         }
 
-        public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo , int idProveedor, int idMarca)
         {
             DataTable dtStockIngresoEgreso = new DataTable();
             daCorte = new SqlDataAdapter();
@@ -1248,6 +1251,9 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCorte.Parameters.AddWithValue("@tipo", tipo);
+            cmCorte.Parameters.AddWithValue("@idProveedor", idProveedor);
+            cmCorte.Parameters.AddWithValue("@idMarca", idMarca);
 
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtStockIngresoEgreso);
@@ -1284,7 +1290,7 @@ namespace Datos
             return dtStockIngresoEgreso;
         }
 
-        public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
+        public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
         {
             DataTable dtTotalPorCortesVendidos = new DataTable();
             daCorte = new SqlDataAdapter();
@@ -1298,6 +1304,9 @@ namespace Datos
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
             cmCorte.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+            cmCorte.Parameters.AddWithValue("@tipo", tipo);
+            cmCorte.Parameters.AddWithValue("@idProveedor", idProveedor);
+            cmCorte.Parameters.AddWithValue("@idMarca", idMarca);
 
             daCorte.SelectCommand = cmCorte;
             daCorte.Fill(dtTotalPorCortesVendidos);

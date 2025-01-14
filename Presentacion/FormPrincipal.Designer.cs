@@ -232,7 +232,7 @@
             this.btnUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnUsuarios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnUsuarios.ForeColor = System.Drawing.Color.White;
-            this.btnUsuarios.Location = new System.Drawing.Point(0, 580);
+            this.btnUsuarios.Location = new System.Drawing.Point(-6, 584);
             this.btnUsuarios.Margin = new System.Windows.Forms.Padding(4);
             this.btnUsuarios.Name = "btnUsuarios";
             this.btnUsuarios.Size = new System.Drawing.Size(280, 50);
@@ -251,7 +251,7 @@
             this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnReportes.ForeColor = System.Drawing.Color.White;
-            this.btnReportes.Location = new System.Drawing.Point(0, 628);
+            this.btnReportes.Location = new System.Drawing.Point(-5, 630);
             this.btnReportes.Margin = new System.Windows.Forms.Padding(4);
             this.btnReportes.Name = "btnReportes";
             this.btnReportes.Size = new System.Drawing.Size(279, 50);
@@ -270,7 +270,7 @@
             this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnPersonas.ForeColor = System.Drawing.Color.White;
-            this.btnPersonas.Location = new System.Drawing.Point(0, 535);
+            this.btnPersonas.Location = new System.Drawing.Point(-6, 535);
             this.btnPersonas.Margin = new System.Windows.Forms.Padding(4);
             this.btnPersonas.Name = "btnPersonas";
             this.btnPersonas.Size = new System.Drawing.Size(279, 50);
@@ -289,7 +289,7 @@
             this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCortes.ForeColor = System.Drawing.Color.White;
-            this.btnCortes.Location = new System.Drawing.Point(0, 490);
+            this.btnCortes.Location = new System.Drawing.Point(-7, 488);
             this.btnCortes.Margin = new System.Windows.Forms.Padding(4);
             this.btnCortes.Name = "btnCortes";
             this.btnCortes.Size = new System.Drawing.Size(279, 50);

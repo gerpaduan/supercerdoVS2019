@@ -91,6 +91,8 @@
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.txtCantItems = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.btnLimpiar = new System.Windows.Forms.Button();
             this.btnBuscarCliente = new System.Windows.Forms.Button();
             this.txtMarca = new System.Windows.Forms.TextBox();
@@ -692,6 +694,8 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.txtCantItems);
+            this.panel1.Controls.Add(this.label5);
             this.panel1.Controls.Add(this.btnLimpiar);
             this.panel1.Controls.Add(this.btnBuscarCliente);
             this.panel1.Controls.Add(this.txtMarca);
@@ -715,6 +719,31 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1380, 124);
             this.panel1.TabIndex = 7;
+            // 
+            // txtCantItems
+            // 
+            this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantItems.Location = new System.Drawing.Point(1247, 10);
+            this.txtCantItems.Margin = new System.Windows.Forms.Padding(4);
+            this.txtCantItems.Name = "txtCantItems";
+            this.txtCantItems.ReadOnly = true;
+            this.txtCantItems.Size = new System.Drawing.Size(117, 22);
+            this.txtCantItems.TabIndex = 67;
+            this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label5
+            // 
+            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label5.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label5.Location = new System.Drawing.Point(1151, 11);
+            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(83, 18);
+            this.label5.TabIndex = 68;
+            this.label5.Text = "Cant. ítems";
             // 
             // btnLimpiar
             // 
@@ -1039,5 +1068,7 @@
         private System.Windows.Forms.Button btnBuscarCliente;
         protected System.Windows.Forms.TextBox txtMarca;
         protected System.Windows.Forms.Label label14;
+        protected System.Windows.Forms.TextBox txtCantItems;
+        protected System.Windows.Forms.Label label5;
     }
 }
