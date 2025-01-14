@@ -203,13 +203,15 @@ namespace Negocio
                     if (dateTime.Year > 2024)
                     {
                         string d = "2";
+                        return;
                     }
                     oVentaE.FechaVenta = dateTime;
+                    oVentaE.Sucursal.idSucursal = 2;
                     oVentaE.IdVenta = agregarVenta(oVentaE);
 
                     Random random = new Random();
-                    int min = 5492; // Límite inferior
-                    int max = 6490; // Límite superior
+                    int min = 473; // Límite inferior
+                    int max = 850; // Límite superior
 
                     int idCorte_Random = random.Next(min, max + 1); // Incluye el límite superior
 

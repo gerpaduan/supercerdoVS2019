@@ -2026,7 +2026,6 @@ namespace Presentacion.Caja
                     break;
                 case Keys.PageUp:
                     cambiarPuntoDeVenta();
-                    txtCodigo.Focus();
                     break;
                 case Keys.End:
                     if (!estaBloqueado())
@@ -2271,12 +2270,16 @@ namespace Presentacion.Caja
                             Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso(null ,ctrl.Text.ToUpper());
                             barraProgreso.ShowDialog();
                             cambioForm = true;
+                            frm.TopMost = true;  // Asegúrate de que esté por encima de otras ventanas
                             frm.BringToFront();
+                            frm.Activate();
+                            frm.TopMost = false; // Restablece su estado normal
                             break;
                         }
                     }
                 }
-                if (cambioForm) { break; }
+                if (cambioForm)
+                { break; }
             }
         }
 

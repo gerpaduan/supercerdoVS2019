@@ -8,6 +8,9 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Ventas;
 using Presentacion.Personas;
+using OfficeOpenXml;
+using System.Configuration;
+using System.IO;
 
 namespace Presentacion
 {
@@ -47,6 +50,9 @@ namespace Presentacion
             {
                 if (cargar)
                 {
+                    Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando ventas", "Cargando...");
+                    barraProgreso.Show();
+
                     lblActualizar.Visible = false;
                     panelDetalleTotales.Visible = FormPrincipal.soyYo;
                     dtVentas = new DataTable();
@@ -390,6 +396,154 @@ namespace Presentacion
 
             cargarTotales();
         
+        }
+
+        private void exportExcel_Click(object sender, EventArgs e)
+        {
+            ExportarDataTableAExcel();
+        }
+
+        public void ExportarDataTableAExcel()
+        {
+            try
+            {
+                // Crear el formulario para pedir el nombre del archivo
+                string nombreArchivo = MostrarDialogoNombreArchivo();
+
+                //si es null se aborta la accion
+                if (nombreArchivo == null)
+                    return;
+
+                // Establecer el contexto de la licencia para evitar la excepción
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+                nombreArchivo += ".xlsx";
+                string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+                string rutaArchivo = @ruta + "\\" + nombreArchivo;
+
+                // Verificar si la carpeta existe, si no, crearla
+                if (!Directory.Exists(@ruta))
+                    Directory.CreateDirectory(@ruta);
+
+                // Crear el archivo de Excel
+                FileInfo archivo = new FileInfo(rutaArchivo);
+
+                // Verificar si el archivo ya existe; si es así, eliminarlo
+                if (archivo.Exists)
+                {
+                    archivo.Delete();
+                }
+
+                // Crear y llenar el archivo Excel
+                using (ExcelPackage excel = new ExcelPackage(archivo))
+                {
+                    // Crear una hoja de trabajo
+                    ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
+
+                    int fila = 1; // Fila inicial en Excel
+                    int columna = 1; // Columna inicial en Excel
+
+                    // Exportar encabezados visibles
+                    foreach (DataGridViewColumn col in grillaVentas.Columns)
+                    {
+                        if (col.Visible) // Solo columnas visibles
+                        {
+                            hoja.Cells[fila, columna].Value = col.HeaderText;
+                            columna++;
+                        }
+                    }
+
+                    fila++; // Avanzar a la siguiente fila (datos)
+                    // Exportar filas visibles
+                    foreach (DataGridViewRow row in grillaVentas.Rows)
+                    {
+                        if (!row.IsNewRow) // Evitar la fila vacía al final
+                        {
+                            columna = 1; // Reiniciar columna
+                            foreach (DataGridViewColumn col in grillaVentas.Columns)
+                            {
+                                if (col.Visible) // Solo columnas visibles
+                                {
+                                    var value = row.Cells[col.Index].Value;
+
+                                    // Verifica si el valor es de tipo DateTime
+                                    if (value is DateTime dateTimeValue)
+                                    {
+                                        // Aplica el formato deseado para las fechas
+                                        hoja.Cells[fila, columna].Value = dateTimeValue.ToString("dd/MM/yyyy HH:mm"); // Cambia el formato según necesidad
+                                    }
+                                    else
+                                    {
+                                        hoja.Cells[fila, columna].Value = value;
+                                    }
+                                    columna++;
+                                }
+                            }
+                            fila++;
+                        }
+                    }
+
+                    // Guardar el archivo
+                    excel.Save();
+                    MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al exportar lista.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private string MostrarDialogoNombreArchivo()
+        {
+            // Crear un formulario para ingresar el nombre
+            Form dialogo = new Form
+            {
+                Width = 400,
+                Height = 150,
+                Text = "Nombre del archivo",
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            Label lblNombre = new Label
+            {
+                Text = "Ingrese el nombre del archivo:",
+                Top = 10,
+                Left = 10,
+                Width = 360
+            };
+
+            TextBox txtNombre = new TextBox
+            {
+                Top = 40,
+                Left = 10,
+                Width = 360
+            };
+
+            Button btnAceptar = new Button
+            {
+                Text = "Aceptar",
+                Top = 80,
+                Left = 150,
+                DialogResult = DialogResult.OK
+            };
+
+            dialogo.Controls.Add(lblNombre);
+            dialogo.Controls.Add(txtNombre);
+            dialogo.Controls.Add(btnAceptar);
+            dialogo.AcceptButton = btnAceptar;
+
+            if (dialogo.ShowDialog() == DialogResult.OK)
+            {
+                if (string.IsNullOrEmpty(txtNombre.Text))
+                {
+                    MessageBox.Show("Debe ingresar un nombre para el archivo a exportar");
+                    return null;
+                }
+                return txtNombre.Text.Trim();
+            }
+
+            return null;
         }
     }
 }

@@ -30,14 +30,14 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.groupCambiarDatos = new System.Windows.Forms.GroupBox();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
             this.checkActivo = new System.Windows.Forms.CheckBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.checkAdmin = new System.Windows.Forms.CheckBox();
             this.label5 = new System.Windows.Forms.Label();
             this.btnGuardarDatos = new System.Windows.Forms.Button();
-            this.txtNombre = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.txtClave = new System.Windows.Forms.TextBox();
-            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.txtNombre = new System.Windows.Forms.TextBox();
             this.groupCambiarDatos.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -74,6 +74,15 @@
             this.groupCambiarDatos.TabStop = false;
             this.groupCambiarDatos.Text = "Datos Usuario";
             // 
+            // txtUsuario
+            // 
+            this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtUsuario.Location = new System.Drawing.Point(147, 28);
+            this.txtUsuario.Margin = new System.Windows.Forms.Padding(4);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.Size = new System.Drawing.Size(187, 26);
+            this.txtUsuario.TabIndex = 1;
+            // 
             // checkActivo
             // 
             this.checkActivo.AutoSize = true;
@@ -89,6 +98,18 @@
             this.checkActivo.Text = "Activo";
             this.checkActivo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkActivo.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(37, 168);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(95, 20);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "Contraseña";
             // 
             // checkAdmin
             // 
@@ -127,31 +148,10 @@
             this.btnGuardarDatos.Margin = new System.Windows.Forms.Padding(4);
             this.btnGuardarDatos.Name = "btnGuardarDatos";
             this.btnGuardarDatos.Size = new System.Drawing.Size(188, 33);
-            this.btnGuardarDatos.TabIndex = 5;
+            this.btnGuardarDatos.TabIndex = 6;
             this.btnGuardarDatos.Text = "Guardar &Datos";
             this.btnGuardarDatos.UseVisualStyleBackColor = true;
             this.btnGuardarDatos.Click += new System.EventHandler(this.btnGuardarDatos_Click);
-            // 
-            // txtNombre
-            // 
-            this.txtNombre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtNombre.Location = new System.Drawing.Point(147, 63);
-            this.txtNombre.Margin = new System.Windows.Forms.Padding(4);
-            this.txtNombre.Name = "txtNombre";
-            this.txtNombre.Size = new System.Drawing.Size(187, 26);
-            this.txtNombre.TabIndex = 2;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(37, 168);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(95, 20);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "Contraseña";
             // 
             // txtClave
             // 
@@ -163,14 +163,14 @@
             this.txtClave.Size = new System.Drawing.Size(187, 26);
             this.txtClave.TabIndex = 5;
             // 
-            // txtUsuario
+            // txtNombre
             // 
-            this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUsuario.Location = new System.Drawing.Point(147, 28);
-            this.txtUsuario.Margin = new System.Windows.Forms.Padding(4);
-            this.txtUsuario.Name = "txtUsuario";
-            this.txtUsuario.Size = new System.Drawing.Size(187, 26);
-            this.txtUsuario.TabIndex = 1;
+            this.txtNombre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtNombre.Location = new System.Drawing.Point(147, 63);
+            this.txtNombre.Margin = new System.Windows.Forms.Padding(4);
+            this.txtNombre.Name = "txtNombre";
+            this.txtNombre.Size = new System.Drawing.Size(187, 26);
+            this.txtNombre.TabIndex = 2;
             // 
             // FormNuevoUsuario
             // 

@@ -259,6 +259,9 @@ namespace Presentacion.Cortes
 
         private void cargarGrilla()
         {
+            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando reporte", "Cargando...");
+            barraProgreso.Show();
+
             lblActualizar.Visible = false;
             checkSoloFaltantes.Checked = false;
             checkOcultarColumnas.Checked = false;
@@ -666,24 +669,8 @@ namespace Presentacion.Cortes
 
             }
 
-            try
-            {
-                switch (comboOrdenStock.Text)
-                {
-                    case "Ascendente":
-                        grillaReportes.Sort(grillaReportes.Columns["Faltante"], ListSortDirection.Ascending);
-                        break;
-                    case "Descendente":
-                        grillaReportes.Sort(grillaReportes.Columns["Faltante"], ListSortDirection.Descending);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            catch (Exception)
-            {
-                
-            }
+
+            txtCantItems.Text = grillaReportes.Rows.Count.ToString();
         }
         
         private void cargarSucursales()
@@ -734,8 +721,6 @@ namespace Presentacion.Cortes
             "Balance"});
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            comboOrdenStock.SelectedIndex = 0;
-
 
             comboTipo.DataSource = oCorteN.obtenerTiposProducto(true);
             comboTipo.DisplayMember = "tipo";

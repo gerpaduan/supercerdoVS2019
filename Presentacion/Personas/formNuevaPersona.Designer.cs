@@ -287,6 +287,7 @@
             this.checkCtaCte.TabStop = false;
             this.checkCtaCte.Text = "Cta. Cte.";
             this.checkCtaCte.UseVisualStyleBackColor = true;
+            this.checkCtaCte.Visible = false;
             // 
             // txtOtrosDatos
             // 

@@ -11,6 +11,7 @@ using System.Configuration;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using System.IO;
+using OfficeOpenXml;
 
 namespace Presentacion
 {
@@ -48,6 +49,9 @@ namespace Presentacion
             {
                 if (cargar)
                 {
+                    Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando lineas de ventas", "Cargando...");
+                    barraProgreso.Show();
+
                     lblActualizar.Visible = false;
                     dtVentas = new DataTable();
                     dtVentas = verUltimasVentasClientes ? oVentaN.ultimasVentasCliente(idSucursal, idPersona) : 
@@ -80,8 +84,7 @@ namespace Presentacion
                                 ultimoColorFila = Color.LightGray == ultimoColorFila ? Color.LightGreen : Color.LightGray;
                                 grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
                                 cantMismoId = 0;
-                            }
-    
+                            }    
                             //Se setea el ultimo IdVenta
                             ultimoIdVenta = Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value);
                         }
@@ -100,6 +103,7 @@ namespace Presentacion
         {
             float totalKgs=0,totalS=0;
 
+            txtCantItems.Text = grillaVentas.Rows.Count.ToString();
             foreach (DataRow venta in dtVentas.Rows)
             {
                 totalKgs += float.Parse(venta["cantKg"].ToString());
@@ -241,97 +245,245 @@ namespace Presentacion
             frmVentaDuplicar.Show();
         }
 
-        private void exportPDF_Click(object sender, EventArgs e)
+        //private void exportPDF_Click(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        //Creating iTextSharp Table from the DataTable data
+        //        PdfPTable pdfTable = new PdfPTable(8);//grillaVentas.ColumnCount);
+        //        pdfTable.DefaultCell.Padding = 3;
+        //        pdfTable.WidthPercentage = 100;
+        //        pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
+        //        iTextSharp.text.Font fontsubtit = FontFactory.GetFont("Arial", 9);
+
+        //        string encabezado = "";
+
+        //        //Adding Header row
+        //        foreach (DataGridViewColumn column in grillaVentas.Columns)
+        //        {
+        //            if (column.Index == 0 || column.Index == 2 || column.Index == 3 || column.Index == 4
+        //                || column.Index == 5 || column.Index == 6 ||
+        //                    column.Index == 7 || column.Index == 8)// || column.Index == 9)
+        //            {
+        //                PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
+        //                cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
+
+        //                encabezado = "Cliente: " + txtDescripcion.Text;
+
+        //                encabezado += " \n\n Desde: " + fechaDesde.Text +
+        //                        " | Hasta: " + fechaHasta.Text + "\n\n";
+
+        //                pdfTable.AddCell(cell);
+        //            }
+        //        }
+
+        //        //Adding DataRow
+        //        foreach (DataGridViewRow row in grillaVentas.Rows)
+        //        {
+        //            foreach (DataGridViewCell cell in row.Cells)
+        //            {
+        //                if (cell.ColumnIndex == 0 || cell.ColumnIndex == 2 || cell.ColumnIndex == 3 ||
+        //                    cell.ColumnIndex == 4 || cell.ColumnIndex == 5 || cell.ColumnIndex == 6 ||
+        //                    cell.ColumnIndex == 7 || cell.ColumnIndex == 8)// || cell.ColumnIndex == 9)
+        //                {
+
+        //                    string valueCell = "";
+        //                    if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
+        //                    {
+        //                        valueCell = String.Format("{0:0.00}", cell.Value);
+        //                    }
+        //                    else
+        //                    {
+        //                        valueCell = cell.Value.ToString();
+        //                        valueCell = (valueCell.Length > 16) ? valueCell.Substring(0, 16) : valueCell;
+        //                    }
+        //                    pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
+        //                }
+        //            }
+        //        }
+
+        //        //agregando encabezado
+        //        Paragraph parrafo = new Paragraph();
+        //        parrafo.Alignment = Element.ALIGN_CENTER;
+        //        parrafo.Font = FontFactory.GetFont("Arial", 9);
+        //        parrafo.Add(encabezado);
+
+        //        //linea Totales
+
+        //        Paragraph lineaTotales = new Paragraph();
+        //        lineaTotales.Alignment = Element.ALIGN_RIGHT;
+        //        lineaTotales.Font = FontFactory.GetFont("Arial", 12);
+        //        lineaTotales.Add("TOTAL   $"+txtTotalS.Text);
+
+        //        string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".pdf";
+        //        using (FileStream stream = new FileStream(fileName, FileMode.Create))
+        //        {
+        //            Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
+        //            PdfWriter.GetInstance(pdfDoc, stream);
+        //            pdfDoc.Open();
+        //            pdfDoc.Add(parrafo);
+        //            pdfDoc.Add(pdfTable);
+        //            pdfDoc.Add(lineaTotales);
+        //            pdfDoc.Close();
+        //            stream.Close();
+
+        //            System.Diagnostics.Process prc = new System.Diagnostics.Process();
+        //            prc.StartInfo.FileName = fileName;
+        //            prc.Start();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show(ex.Message);
+        //    }           
+        //}
+
+        private void exportExcel_Click(object sender, EventArgs e)
+        {
+            ExportarDataTableAExcel();
+        }
+
+        public void ExportarDataTableAExcel()
         {
             try
             {
-                //Creating iTextSharp Table from the DataTable data
-                PdfPTable pdfTable = new PdfPTable(8);//grillaVentas.ColumnCount);
-                pdfTable.DefaultCell.Padding = 3;
-                pdfTable.WidthPercentage = 100;
-                pdfTable.HorizontalAlignment = Element.ALIGN_LEFT;
-                iTextSharp.text.Font fontsubtit = FontFactory.GetFont("Arial", 9);
+                // Crear el formulario para pedir el nombre del archivo
+                string nombreArchivo = MostrarDialogoNombreArchivo();
 
-                string encabezado = "";
+                //si es null se aborta la accion
+                if (nombreArchivo == null)
+                    return;
 
-                //Adding Header row
-                foreach (DataGridViewColumn column in grillaVentas.Columns)
+                // Establecer el contexto de la licencia para evitar la excepción
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+
+                nombreArchivo += ".xlsx";
+                string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+                string rutaArchivo = @ruta + "\\" + nombreArchivo;
+
+                // Verificar si la carpeta existe, si no, crearla
+                if (!Directory.Exists(@ruta))
+                    Directory.CreateDirectory(@ruta);
+
+                // Crear el archivo de Excel
+                FileInfo archivo = new FileInfo(rutaArchivo);
+
+                // Verificar si el archivo ya existe; si es así, eliminarlo
+                if (archivo.Exists)
                 {
-                    if (column.Index == 0 || column.Index == 2 || column.Index == 3 || column.Index == 4
-                        || column.Index == 5 || column.Index == 6 ||
-                            column.Index == 7 || column.Index == 8)// || column.Index == 9)
-                    {
-                        PdfPCell cell = new PdfPCell(new Phrase(column.HeaderText, fontsubtit));
-                        cell.BackgroundColor = new iTextSharp.text.BaseColor(240, 240, 240);  //.text.Color(240, 240, 240);
-
-                        encabezado = "Cliente: " + txtDescripcion.Text;
-
-                        encabezado += " \n\n Desde: " + fechaDesde.Text +
-                                " | Hasta: " + fechaHasta.Text + "\n\n";
-
-                        pdfTable.AddCell(cell);
-                    }
+                    archivo.Delete();
                 }
 
-                //Adding DataRow
-                foreach (DataGridViewRow row in grillaVentas.Rows)
+                // Crear y llenar el archivo Excel
+                using (ExcelPackage excel = new ExcelPackage(archivo))
                 {
-                    foreach (DataGridViewCell cell in row.Cells)
-                    {
-                        if (cell.ColumnIndex == 0 || cell.ColumnIndex == 2 || cell.ColumnIndex == 3 ||
-                            cell.ColumnIndex == 4 || cell.ColumnIndex == 5 || cell.ColumnIndex == 6 ||
-                            cell.ColumnIndex == 7 || cell.ColumnIndex == 8)// || cell.ColumnIndex == 9)
-                        {
+                    // Crear una hoja de trabajo
+                    ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
 
-                            string valueCell = "";
-                            if (cell.ValueType.Name.Equals("Double") || cell.ValueType.Name.Equals("Decimal"))
-                            {
-                                valueCell = String.Format("{0:0.00}", cell.Value);
-                            }
-                            else
-                            {
-                                valueCell = cell.Value.ToString();
-                                valueCell = (valueCell.Length > 16) ? valueCell.Substring(0, 16) : valueCell;
-                            }
-                            pdfTable.AddCell(new Phrase(valueCell, fontsubtit));
+                    int fila = 1; // Fila inicial en Excel
+                    int columna = 1; // Columna inicial en Excel
+
+                    // Exportar encabezados visibles
+                    foreach (DataGridViewColumn col in grillaVentas.Columns)
+                    {
+                        if (col.Visible) // Solo columnas visibles
+                        {
+                            hoja.Cells[fila, columna].Value = col.HeaderText;
+                            columna++;
                         }
                     }
-                }
 
-                //agregando encabezado
-                Paragraph parrafo = new Paragraph();
-                parrafo.Alignment = Element.ALIGN_CENTER;
-                parrafo.Font = FontFactory.GetFont("Arial", 9);
-                parrafo.Add(encabezado);
+                    fila++; // Avanzar a la siguiente fila (datos)
+                    // Exportar filas visibles
+                    foreach (DataGridViewRow row in grillaVentas.Rows)
+                    {
+                        if (!row.IsNewRow) // Evitar la fila vacía al final
+                        {
+                            columna = 1; // Reiniciar columna
+                            foreach (DataGridViewColumn col in grillaVentas.Columns)
+                            {
+                                if (col.Visible) // Solo columnas visibles
+                                {
+                                    var value = row.Cells[col.Index].Value;
 
-                //linea Totales
+                                    // Verifica si el valor es de tipo DateTime
+                                    if (value is DateTime dateTimeValue)
+                                    {
+                                        // Aplica el formato deseado para las fechas
+                                        hoja.Cells[fila, columna].Value = dateTimeValue.ToString("dd/MM/yyyy HH:mm"); // Cambia el formato según necesidad
+                                    }
+                                    else
+                                    {
+                                        hoja.Cells[fila, columna].Value = value;
+                                    }
+                                    columna++;
+                                }
+                            }
+                            fila++;
+                        }
+                    }
 
-                Paragraph lineaTotales = new Paragraph();
-                lineaTotales.Alignment = Element.ALIGN_RIGHT;
-                lineaTotales.Font = FontFactory.GetFont("Arial", 12);
-                lineaTotales.Add("TOTAL   $"+txtTotalS.Text);
+                    // Guardar el archivo
+                    excel.Save();
+                    MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".pdf";
-                using (FileStream stream = new FileStream(fileName, FileMode.Create))
-                {
-                    Document pdfDoc = new Document(PageSize.A4, 10f, 10f, 10f, 0f);
-                    PdfWriter.GetInstance(pdfDoc, stream);
-                    pdfDoc.Open();
-                    pdfDoc.Add(parrafo);
-                    pdfDoc.Add(pdfTable);
-                    pdfDoc.Add(lineaTotales);
-                    pdfDoc.Close();
-                    stream.Close();
-
-                    System.Diagnostics.Process prc = new System.Diagnostics.Process();
-                    prc.StartInfo.FileName = fileName;
-                    prc.Start();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
-            }           
+                MessageBox.Show("Error al exportar lista.\n\n" + ex.Message, "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private string MostrarDialogoNombreArchivo()
+        {
+            // Crear un formulario para ingresar el nombre
+            Form dialogo = new Form
+            {
+                Width = 400,
+                Height = 150,
+                Text = "Nombre del archivo",
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            Label lblNombre = new Label
+            {
+                Text = "Ingrese el nombre del archivo:",
+                Top = 10,
+                Left = 10,
+                Width = 360
+            };
+
+            TextBox txtNombre = new TextBox
+            {
+                Top = 40,
+                Left = 10,
+                Width = 360
+            };
+
+            Button btnAceptar = new Button
+            {
+                Text = "Aceptar",
+                Top = 80,
+                Left = 150,
+                DialogResult = DialogResult.OK
+            };
+
+            dialogo.Controls.Add(lblNombre);
+            dialogo.Controls.Add(txtNombre);
+            dialogo.Controls.Add(btnAceptar);
+            dialogo.AcceptButton = btnAceptar;
+
+            if (dialogo.ShowDialog() == DialogResult.OK)
+            {
+                if (string.IsNullOrEmpty(txtNombre.Text))
+                {
+                    MessageBox.Show("Debe ingresar un nombre para el archivo a exportar");
+                    return null;
+                }
+                return txtNombre.Text.Trim();
+            }
+
+            return null;
         }
     }
 }

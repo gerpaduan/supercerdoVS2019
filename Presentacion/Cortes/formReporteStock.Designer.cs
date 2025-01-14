@@ -28,17 +28,25 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnTodosProveedores = new System.Windows.Forms.Button();
+            this.btnBuscarProveedor = new System.Windows.Forms.Button();
+            this.txtProveedor = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.btnTodasMarcas = new System.Windows.Forms.Button();
+            this.btnBuscarMarca = new System.Windows.Forms.Button();
+            this.txtMarca = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.comboTipo = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             this.checkOcultarPtoStock = new System.Windows.Forms.CheckBox();
             this.checkOcultarColumnas = new System.Windows.Forms.CheckBox();
             this.checkSoloFaltantes = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.comboOrdenStock = new System.Windows.Forms.ComboBox();
             this.lblActualizar = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.fechaDesdeProgresivo = new System.Windows.Forms.DateTimePicker();
@@ -58,16 +66,8 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.exportExcel = new System.Windows.Forms.ToolStripButton();
             this.grillaReportes = new System.Windows.Forms.DataGridView();
-            this.btnTodasMarcas = new System.Windows.Forms.Button();
-            this.btnBuscarMarca = new System.Windows.Forms.Button();
-            this.txtMarca = new System.Windows.Forms.TextBox();
-            this.label14 = new System.Windows.Forms.Label();
-            this.comboTipo = new System.Windows.Forms.ComboBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.btnTodosProveedores = new System.Windows.Forms.Button();
-            this.btnBuscarProveedor = new System.Windows.Forms.Button();
-            this.txtProveedor = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
+            this.txtCantItems = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -79,6 +79,8 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.txtCantItems);
+            this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.btnTodosProveedores);
             this.panel1.Controls.Add(this.btnBuscarProveedor);
             this.panel1.Controls.Add(this.txtProveedor);
@@ -92,8 +94,6 @@
             this.panel1.Controls.Add(this.checkOcultarPtoStock);
             this.panel1.Controls.Add(this.checkOcultarColumnas);
             this.panel1.Controls.Add(this.checkSoloFaltantes);
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Controls.Add(this.comboOrdenStock);
             this.panel1.Controls.Add(this.lblActualizar);
             this.panel1.Controls.Add(this.groupBox1);
             this.panel1.Controls.Add(this.btnBuscar);
@@ -108,6 +108,135 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1343, 132);
             this.panel1.TabIndex = 12;
+            // 
+            // btnTodosProveedores
+            // 
+            this.btnTodosProveedores.AccessibleDescription = "";
+            this.btnTodosProveedores.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnTodosProveedores.ForeColor = System.Drawing.Color.Black;
+            this.btnTodosProveedores.Location = new System.Drawing.Point(396, 36);
+            this.btnTodosProveedores.Margin = new System.Windows.Forms.Padding(4);
+            this.btnTodosProveedores.Name = "btnTodosProveedores";
+            this.btnTodosProveedores.Size = new System.Drawing.Size(81, 26);
+            this.btnTodosProveedores.TabIndex = 76;
+            this.btnTodosProveedores.TabStop = false;
+            this.btnTodosProveedores.Text = "Todos";
+            this.btnTodosProveedores.UseVisualStyleBackColor = true;
+            this.btnTodosProveedores.Visible = false;
+            this.btnTodosProveedores.Click += new System.EventHandler(this.btnTodosProveedores_Click);
+            // 
+            // btnBuscarProveedor
+            // 
+            this.btnBuscarProveedor.AccessibleDescription = "";
+            this.btnBuscarProveedor.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBuscarProveedor.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarProveedor.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProveedor.Image")));
+            this.btnBuscarProveedor.Location = new System.Drawing.Point(348, 36);
+            this.btnBuscarProveedor.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscarProveedor.Name = "btnBuscarProveedor";
+            this.btnBuscarProveedor.Size = new System.Drawing.Size(40, 26);
+            this.btnBuscarProveedor.TabIndex = 75;
+            this.btnBuscarProveedor.TabStop = false;
+            this.btnBuscarProveedor.UseVisualStyleBackColor = true;
+            this.btnBuscarProveedor.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // txtProveedor
+            // 
+            this.txtProveedor.Location = new System.Drawing.Point(127, 38);
+            this.txtProveedor.Margin = new System.Windows.Forms.Padding(4);
+            this.txtProveedor.Name = "txtProveedor";
+            this.txtProveedor.ReadOnly = true;
+            this.txtProveedor.Size = new System.Drawing.Size(213, 22);
+            this.txtProveedor.TabIndex = 73;
+            this.txtProveedor.Text = "TODOS";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(42, 38);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(77, 18);
+            this.label7.TabIndex = 74;
+            this.label7.Text = "Proveedor";
+            // 
+            // btnTodasMarcas
+            // 
+            this.btnTodasMarcas.AccessibleDescription = "";
+            this.btnTodasMarcas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnTodasMarcas.ForeColor = System.Drawing.Color.Black;
+            this.btnTodasMarcas.Location = new System.Drawing.Point(396, 6);
+            this.btnTodasMarcas.Margin = new System.Windows.Forms.Padding(4);
+            this.btnTodasMarcas.Name = "btnTodasMarcas";
+            this.btnTodasMarcas.Size = new System.Drawing.Size(81, 26);
+            this.btnTodasMarcas.TabIndex = 72;
+            this.btnTodasMarcas.TabStop = false;
+            this.btnTodasMarcas.Text = "Todas";
+            this.btnTodasMarcas.UseVisualStyleBackColor = true;
+            this.btnTodasMarcas.Visible = false;
+            this.btnTodasMarcas.Click += new System.EventHandler(this.btnLimpiar_Click);
+            // 
+            // btnBuscarMarca
+            // 
+            this.btnBuscarMarca.AccessibleDescription = "";
+            this.btnBuscarMarca.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBuscarMarca.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarMarca.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarMarca.Image")));
+            this.btnBuscarMarca.Location = new System.Drawing.Point(348, 6);
+            this.btnBuscarMarca.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscarMarca.Name = "btnBuscarMarca";
+            this.btnBuscarMarca.Size = new System.Drawing.Size(40, 26);
+            this.btnBuscarMarca.TabIndex = 71;
+            this.btnBuscarMarca.TabStop = false;
+            this.btnBuscarMarca.UseVisualStyleBackColor = true;
+            this.btnBuscarMarca.Click += new System.EventHandler(this.btnBuscarMarca_Click);
+            // 
+            // txtMarca
+            // 
+            this.txtMarca.Location = new System.Drawing.Point(127, 8);
+            this.txtMarca.Margin = new System.Windows.Forms.Padding(4);
+            this.txtMarca.Name = "txtMarca";
+            this.txtMarca.ReadOnly = true;
+            this.txtMarca.Size = new System.Drawing.Size(213, 22);
+            this.txtMarca.TabIndex = 69;
+            this.txtMarca.Text = "TODAS";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label14.Location = new System.Drawing.Point(67, 9);
+            this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(50, 18);
+            this.label14.TabIndex = 70;
+            this.label14.Text = "Marca";
+            // 
+            // comboTipo
+            // 
+            this.comboTipo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipo.FormattingEnabled = true;
+            this.comboTipo.Location = new System.Drawing.Point(127, 66);
+            this.comboTipo.Margin = new System.Windows.Forms.Padding(4);
+            this.comboTipo.Name = "comboTipo";
+            this.comboTipo.Size = new System.Drawing.Size(181, 24);
+            this.comboTipo.TabIndex = 67;
+            this.comboTipo.SelectedIndexChanged += new System.EventHandler(this.comboTipo_SelectedIndexChanged);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label6.Location = new System.Drawing.Point(82, 68);
+            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(37, 18);
+            this.label6.TabIndex = 68;
+            this.label6.Text = "Tipo";
             // 
             // checkOcultarPtoStock
             // 
@@ -159,36 +288,6 @@
             this.checkSoloFaltantes.UseVisualStyleBackColor = true;
             this.checkSoloFaltantes.Visible = false;
             this.checkSoloFaltantes.CheckedChanged += new System.EventHandler(this.checkSoloFaltantes_CheckedChanged);
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(1185, 76);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(92, 18);
-            this.label1.TabIndex = 55;
-            this.label1.Text = "Orden Stock";
-            // 
-            // comboOrdenStock
-            // 
-            this.comboOrdenStock.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.comboOrdenStock.DisplayMember = "Sin Orden";
-            this.comboOrdenStock.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboOrdenStock.FormattingEnabled = true;
-            this.comboOrdenStock.Items.AddRange(new object[] {
-            "Sin Orden",
-            "Ascendente",
-            "Descendente"});
-            this.comboOrdenStock.Location = new System.Drawing.Point(1188, 98);
-            this.comboOrdenStock.Margin = new System.Windows.Forms.Padding(4);
-            this.comboOrdenStock.Name = "comboOrdenStock";
-            this.comboOrdenStock.Size = new System.Drawing.Size(131, 24);
-            this.comboOrdenStock.TabIndex = 54;
-            this.comboOrdenStock.SelectedValueChanged += new System.EventHandler(this.btnBuscar_Click);
             // 
             // lblActualizar
             // 
@@ -426,173 +525,69 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.grillaReportes.ColumnHeadersHeight = 29;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.WhiteSmoke;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle6;
             this.grillaReportes.Location = new System.Drawing.Point(16, 194);
             this.grillaReportes.Margin = new System.Windows.Forms.Padding(4);
             this.grillaReportes.Name = "grillaReportes";
             this.grillaReportes.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle7;
             this.grillaReportes.RowHeadersVisible = false;
             this.grillaReportes.RowHeadersWidth = 300;
-            dataGridViewCellStyle4.Format = "N2";
-            dataGridViewCellStyle4.NullValue = null;
-            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle8.Format = "N2";
+            dataGridViewCellStyle8.NullValue = null;
+            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle8;
             this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaReportes.Size = new System.Drawing.Size(1297, 508);
             this.grillaReportes.TabIndex = 13;
             this.grillaReportes.TabStop = false;
             // 
-            // btnTodasMarcas
+            // txtCantItems
             // 
-            this.btnTodasMarcas.AccessibleDescription = "";
-            this.btnTodasMarcas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTodasMarcas.ForeColor = System.Drawing.Color.Black;
-            this.btnTodasMarcas.Location = new System.Drawing.Point(396, 6);
-            this.btnTodasMarcas.Margin = new System.Windows.Forms.Padding(4);
-            this.btnTodasMarcas.Name = "btnTodasMarcas";
-            this.btnTodasMarcas.Size = new System.Drawing.Size(81, 26);
-            this.btnTodasMarcas.TabIndex = 72;
-            this.btnTodasMarcas.TabStop = false;
-            this.btnTodasMarcas.Text = "Todas";
-            this.btnTodasMarcas.UseVisualStyleBackColor = true;
-            this.btnTodasMarcas.Visible = false;
-            this.btnTodasMarcas.Click += new System.EventHandler(this.btnLimpiar_Click);
+            this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantItems.Location = new System.Drawing.Point(1202, 101);
+            this.txtCantItems.Margin = new System.Windows.Forms.Padding(4);
+            this.txtCantItems.Name = "txtCantItems";
+            this.txtCantItems.ReadOnly = true;
+            this.txtCantItems.Size = new System.Drawing.Size(117, 22);
+            this.txtCantItems.TabIndex = 77;
+            this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
-            // btnBuscarMarca
+            // label1
             // 
-            this.btnBuscarMarca.AccessibleDescription = "";
-            this.btnBuscarMarca.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBuscarMarca.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarMarca.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarMarca.Image")));
-            this.btnBuscarMarca.Location = new System.Drawing.Point(348, 6);
-            this.btnBuscarMarca.Margin = new System.Windows.Forms.Padding(4);
-            this.btnBuscarMarca.Name = "btnBuscarMarca";
-            this.btnBuscarMarca.Size = new System.Drawing.Size(40, 26);
-            this.btnBuscarMarca.TabIndex = 71;
-            this.btnBuscarMarca.TabStop = false;
-            this.btnBuscarMarca.UseVisualStyleBackColor = true;
-            this.btnBuscarMarca.Click += new System.EventHandler(this.btnBuscarMarca_Click);
-            // 
-            // txtMarca
-            // 
-            this.txtMarca.Location = new System.Drawing.Point(127, 8);
-            this.txtMarca.Margin = new System.Windows.Forms.Padding(4);
-            this.txtMarca.Name = "txtMarca";
-            this.txtMarca.ReadOnly = true;
-            this.txtMarca.Size = new System.Drawing.Size(213, 22);
-            this.txtMarca.TabIndex = 69;
-            this.txtMarca.Text = "TODAS";
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label14.Location = new System.Drawing.Point(67, 9);
-            this.label14.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(50, 18);
-            this.label14.TabIndex = 70;
-            this.label14.Text = "Marca";
-            // 
-            // comboTipo
-            // 
-            this.comboTipo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipo.FormattingEnabled = true;
-            this.comboTipo.Location = new System.Drawing.Point(127, 66);
-            this.comboTipo.Margin = new System.Windows.Forms.Padding(4);
-            this.comboTipo.Name = "comboTipo";
-            this.comboTipo.Size = new System.Drawing.Size(181, 24);
-            this.comboTipo.TabIndex = 67;
-            this.comboTipo.SelectedIndexChanged += new System.EventHandler(this.comboTipo_SelectedIndexChanged);
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label6.Location = new System.Drawing.Point(82, 68);
-            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(37, 18);
-            this.label6.TabIndex = 68;
-            this.label6.Text = "Tipo";
-            // 
-            // btnTodosProveedores
-            // 
-            this.btnTodosProveedores.AccessibleDescription = "";
-            this.btnTodosProveedores.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTodosProveedores.ForeColor = System.Drawing.Color.Black;
-            this.btnTodosProveedores.Location = new System.Drawing.Point(396, 36);
-            this.btnTodosProveedores.Margin = new System.Windows.Forms.Padding(4);
-            this.btnTodosProveedores.Name = "btnTodosProveedores";
-            this.btnTodosProveedores.Size = new System.Drawing.Size(81, 26);
-            this.btnTodosProveedores.TabIndex = 76;
-            this.btnTodosProveedores.TabStop = false;
-            this.btnTodosProveedores.Text = "Todos";
-            this.btnTodosProveedores.UseVisualStyleBackColor = true;
-            this.btnTodosProveedores.Visible = false;
-            this.btnTodosProveedores.Click += new System.EventHandler(this.btnTodosProveedores_Click);
-            // 
-            // btnBuscarProveedor
-            // 
-            this.btnBuscarProveedor.AccessibleDescription = "";
-            this.btnBuscarProveedor.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBuscarProveedor.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarProveedor.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProveedor.Image")));
-            this.btnBuscarProveedor.Location = new System.Drawing.Point(348, 36);
-            this.btnBuscarProveedor.Margin = new System.Windows.Forms.Padding(4);
-            this.btnBuscarProveedor.Name = "btnBuscarProveedor";
-            this.btnBuscarProveedor.Size = new System.Drawing.Size(40, 26);
-            this.btnBuscarProveedor.TabIndex = 75;
-            this.btnBuscarProveedor.TabStop = false;
-            this.btnBuscarProveedor.UseVisualStyleBackColor = true;
-            this.btnBuscarProveedor.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // txtProveedor
-            // 
-            this.txtProveedor.Location = new System.Drawing.Point(127, 38);
-            this.txtProveedor.Margin = new System.Windows.Forms.Padding(4);
-            this.txtProveedor.Name = "txtProveedor";
-            this.txtProveedor.ReadOnly = true;
-            this.txtProveedor.Size = new System.Drawing.Size(213, 22);
-            this.txtProveedor.TabIndex = 73;
-            this.txtProveedor.Text = "TODOS";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(42, 38);
-            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(77, 18);
-            this.label7.TabIndex = 74;
-            this.label7.Text = "Proveedor";
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(1111, 102);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(83, 18);
+            this.label1.TabIndex = 78;
+            this.label1.Text = "Cant. ítems";
             // 
             // formReporteStock
             // 
@@ -641,8 +636,6 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.DateTimePicker txtFechaHastaProgresivo;
         protected System.Windows.Forms.Label lblActualizar;
-        protected System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ComboBox comboOrdenStock;
         private System.Windows.Forms.DateTimePicker fechaDesdeProgresivo;
         private System.Windows.Forms.CheckBox checkSoloFaltantes;
         private System.Windows.Forms.CheckBox checkOcultarColumnas;
@@ -658,5 +651,7 @@
         protected System.Windows.Forms.Label label14;
         protected System.Windows.Forms.ComboBox comboTipo;
         protected System.Windows.Forms.Label label6;
+        protected System.Windows.Forms.TextBox txtCantItems;
+        protected System.Windows.Forms.Label label1;
     }
 }
