@@ -446,6 +446,7 @@ namespace Presentacion.Cortes
                         grillaReportes.Columns["Tot.EGR"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.BackColor = Color.LightBlue;
                         grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Stock.Cierre"].DefaultCellStyle.Format = "F4";
                         grillaReportes.Columns["Faltante"].DefaultCellStyle.Font = fuente;
 
                         grillaReportes.Columns["Stock.Un"].DefaultCellStyle.BackColor = Color.LightBlue;
@@ -1285,6 +1286,18 @@ namespace Presentacion.Cortes
             if (combosCierresCargados)
             {
                 lblActualizar.Visible = true;
+            }
+        }
+
+        private void grillaReportes_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (grillaReportes.Columns[e.ColumnIndex].Name == "Stock.Cierre" && e.Value != null)
+            {
+                if (decimal.TryParse(e.Value.ToString(), out decimal valor))
+                {
+                    e.Value = valor.ToString("N3"); // 3 decimales
+                    e.FormattingApplied = true;
+                }
             }
         }
 

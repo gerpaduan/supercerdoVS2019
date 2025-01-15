@@ -1110,7 +1110,7 @@ namespace Presentacion
             // Retrieve the Employee object from the "Assigned To" cell.
             string codigoCorteSelect = grillaSinStock.Rows[e.RowIndex].Cells[0].Value.ToString();
 
-            cargarCorteSinStock(codigoCorteSelect, "-0.000");// "-0.0051" se pone este resultado por se el menor para q se pueda ver en reporte
+            cargarCorteSinStock(codigoCorteSelect, "-0.0006");// "-0.0051" se pone este resultado por se el menor para q se pueda ver en reporte
 
             //se establece la seleccion de la fila
             int selectRow = e.RowIndex;
