@@ -207,7 +207,7 @@ namespace wsAFIPvs2008
             checkTodosDatos.Enabled = logueado;
             CargaBtn.Enabled = logueado;
             mostrarSeleccionados = !checkTodosDatos.Checked;
-            txtFormaPago.Text = oVentaE.FormaPago;
+            txtFormaPago.Text = oVentaE.FormaPago + (oVentaE.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
             TotalTx.ReadOnly = mostrarSeleccionados;
             TotalTx.Text = "";
             //Si el Obj Venta es nulo se cargaDatosAfip y sale del metodo
@@ -246,6 +246,7 @@ namespace wsAFIPvs2008
             NroCbteTX.Text = oFactuElec.NroCbteAfip != null ? oFactuElec.NroCbteAfip : NroCbteTX.Text;
             txtCAE.Text = oFactuElec.CAE1;
             txtVTO.Text = oFactuElec.FecVtoCAE;
+            txtObservaciones.Text = oVentaE.Observaciones;
             calcularImportes();
             RegistrarBtn.Focus();
         }

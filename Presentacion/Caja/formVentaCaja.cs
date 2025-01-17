@@ -451,7 +451,7 @@ namespace Presentacion.Caja
         {
             try
             {
-                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja.IdVenta, oUsuario);
+                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja.IdVenta, oUsuario, 0);
 
                 #region Codigo anterior: SE PASO A CAPA NEGOCIO
                 ///Codigo anterior: SE PASO A CAPA NEGOCIO

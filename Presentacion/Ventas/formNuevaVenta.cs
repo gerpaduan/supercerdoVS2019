@@ -183,7 +183,7 @@ namespace Presentacion.Ventas
                     if (oVentaE.IdVenta == 0) 
                         return;
 
-                    formVentaCaja fVtaCaja = new formVentaCaja();
+                    formVentaCajaConExpendio fVtaCaja = new formVentaCajaConExpendio();
                     //se genera el egreso de caja si no es Efectivo
                     fVtaCaja.egresoCajaPagoTarjeta(oVentaE);
 

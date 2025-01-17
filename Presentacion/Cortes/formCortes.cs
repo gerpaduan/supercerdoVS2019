@@ -114,6 +114,9 @@ namespace Presentacion
             if (!comboCargado)
                 return;
 
+            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando productos", "Cargando...");
+            barraProgreso.Show();
+
             lblActualizar.Visible = false;
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
@@ -127,6 +130,10 @@ namespace Presentacion
         
         public void buscarCorte()
         {
+            cargarGrilla();
+            return;
+
+            //se llama a cargar grilla directamente
             lblActualizar.Visible = false;
             oCorteN = new Negocio.Corte();
 
@@ -149,7 +156,7 @@ namespace Presentacion
                 frmNuevoCorte.frmCorte = this;
                 frmNuevoCorte.ShowDialog();
 
-                ExportarDataTableAExcel();
+                //ExportarDataTableAExcel();
             }
             catch (Exception ex)
             {
@@ -195,7 +202,7 @@ namespace Presentacion
                         }
                     }
 
-                    ExportarDataTableAExcel();
+                    //ExportarDataTableAExcel();
                 }      
             }
             catch (Exception ex)
@@ -269,7 +276,7 @@ namespace Presentacion
             comboTipo.ValueMember = "tipo";
             comboTipo.SelectedIndex = 0;
             comboCargado = true;
-            cargarGrilla();
+            //cargarGrilla();
             this.txtBuscarCorte.Select();
         }
 
@@ -293,7 +300,7 @@ namespace Presentacion
 
         public void filtarGrilla()
         {
-            if (!comboCargado)
+            if (!comboCargado || dtCortes == null)
                 return;
 
             dtCortesFiltrado = dtCortes.Clone();
@@ -486,6 +493,10 @@ namespace Presentacion
                         precio = values[4];
                         tipoVenta = values[6];
 
+                        if (codigo.Length > 10)
+                        {
+                            string d = "0";
+                        }
                         oCorteE.Codigo = Convert.ToInt64(codigo);
                         oCorteE.CorteDesc = descripcion;
                         oCorteE.precioKg = Utilidades.Util_Form.convertFloat(precio, false);
@@ -555,12 +566,26 @@ namespace Presentacion
         {
             try
             {
+                if (dtCortesFiltrado == null || dtCortesFiltrado.Rows.Count == 0)
+                {
+                    MessageBox.Show("No hay datos para exportar");
+                    return;
+                }
+                // Crear el formulario para pedir el nombre del archivo
+                string nombreArchivo = MostrarDialogoNombreArchivo();
+
+                //si es null se aborta la accion
+                if (nombreArchivo == null)
+                    return;
+
                 // Establecer el contexto de la licencia para evitar la excepción
                 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
+                DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
+
+                nombreArchivo += ".xlsx";
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
-                DataTable dataTable = oCorteN.lista_precios();
-                string rutaArchivo = @ruta + "\\Lista_Precio.xlsx";
+                string rutaArchivo = @ruta + "\\" + nombreArchivo;
 
                 // Verificar si la carpeta existe, si no, crearla
                 if (!Directory.Exists(@ruta))
@@ -581,20 +606,47 @@ namespace Presentacion
                     // Crear una hoja de trabajo
                     ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
 
+                    int indexCol = 1;
                     // Agregar encabezados
                     for (int i = 0; i < dataTable.Columns.Count; i++)
                     {
-                        hoja.Cells[1, i + 1].Value = dataTable.Columns[i].ColumnName;
+                        //codigo corte   precioKg efectivo    debito credito Qr Transf
+                        if (dataTable.Columns[i].ColumnName.Equals("codigo") || dataTable.Columns[i].ColumnName.Equals("corte") ||
+                            dataTable.Columns[i].ColumnName.Equals("precioKg") || dataTable.Columns[i].ColumnName.Equals("efectivo") ||
+                            dataTable.Columns[i].ColumnName.Equals("debito") || dataTable.Columns[i].ColumnName.Equals("credito") ||
+                            dataTable.Columns[i].ColumnName.Equals("Qr") || dataTable.Columns[i].ColumnName.Equals("Transf"))
+                        {
+                            hoja.Cells[1, indexCol++].Value = dataTable.Columns[i].ColumnName;                           
+                        }
                     }
-
+                                        
                     // Agregar datos
                     for (int i = 0; i < dataTable.Rows.Count; i++)
                     {
+                        indexCol = 1;
                         for (int j = 0; j < dataTable.Columns.Count; j++)
                         {
-                            hoja.Cells[i + 2, j + 1].Value = dataTable.Rows[i][j];
+                            if (dataTable.Columns[j].ColumnName.Equals("codigo") || dataTable.Columns[j].ColumnName.Equals("corte") ||
+                                dataTable.Columns[j].ColumnName.Equals("precioKg") || dataTable.Columns[j].ColumnName.Equals("efectivo") ||
+                                 dataTable.Columns[j].ColumnName.Equals("debito") || dataTable.Columns[j].ColumnName.Equals("credito") ||
+                                dataTable.Columns[j].ColumnName.Equals("Qr") || dataTable.Columns[j].ColumnName.Equals("Transf"))
+                                hoja.Cells[i + 2, indexCol++].Value = dataTable.Rows[i][j];
                         }
                     }
+                    //// Agregar encabezados
+                    //for (int i = 0; i < dataTable.Columns.Count; i++)
+                    //{
+                    //    hoja.Cells[1, i + 1].Value = dataTable.Columns[i].ColumnName;
+                    //}
+
+                    //// Agregar datos
+                    //for (int i = 0; i < dataTable.Rows.Count; i++)
+                    //{
+                    //    for (int j = 0; j < dataTable.Columns.Count; j++)
+                    //    {
+                    //        hoja.Cells[i + 2, j + 1].Value = dataTable.Rows[i][j];
+                    //    }
+                    //}
 
                     // Guardar el archivo
                     excel.Save();
@@ -610,5 +662,58 @@ namespace Presentacion
                 MessageBox.Show("Error al exportar lista de precios excel automaticamente.\n\n"+ex.Message,"",MessageBoxButtons.OK,MessageBoxIcon.Error);
             }
         }
+        private string MostrarDialogoNombreArchivo()
+        {
+            // Crear un formulario para ingresar el nombre
+            Form dialogo = new Form
+            {
+                Width = 400,
+                Height = 150,
+                Text = "Nombre del archivo",
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            System.Windows.Forms.Label lblNombre = new System.Windows.Forms.Label
+            {
+                Text = "Ingrese el nombre del archivo:",
+                Top = 10,
+                Left = 10,
+                Width = 360
+            };
+
+            System.Windows.Forms.TextBox txtNombre = new System.Windows.Forms.TextBox
+            {
+                Text = "ListaPrecio_" + DateTime.Today.ToShortDateString().Replace('/','-'),
+                Top = 40,
+                Left = 10,
+                Width = 360
+            };
+
+            System.Windows.Forms.Button btnAceptar = new System.Windows.Forms.Button
+            {
+                Text = "Aceptar",
+                Top = 80,
+                Left = 150,
+                DialogResult = DialogResult.OK
+            };
+
+            dialogo.Controls.Add(lblNombre);
+            dialogo.Controls.Add(txtNombre);
+            dialogo.Controls.Add(btnAceptar);
+            dialogo.AcceptButton = btnAceptar;
+
+            if (dialogo.ShowDialog() == DialogResult.OK)
+            {
+                if (string.IsNullOrEmpty(txtNombre.Text))
+                {
+                    MessageBox.Show("Debe ingresar un nombre para el archivo a exportar");
+                    return null;
+                }
+                return txtNombre.Text.Trim();
+            }
+
+            return null;
+        }
+
     }
 }

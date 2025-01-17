@@ -240,4 +240,18 @@ ALTER PROCEDURE [dbo].[Acum_Ventas]
 
 ALTER PROCEDURE [dbo].[TotalPorCortesVendidos] 
 
+
+Agregar en tabla Venta
+
+use CarniSys0
+ALTER TABLE Ventas
+ADD pagoMixtoEfectivo FLOAT NOT NULL DEFAULT 0;
+
+UPDATE Ventas
+SET pagoMixtoEfectivo = 0;
+
+ALTER PROCEDURE [dbo].[agregarVenta] 
+
+ALTER PROCEDURE [dbo].[modificarVenta] 
+
 **********************

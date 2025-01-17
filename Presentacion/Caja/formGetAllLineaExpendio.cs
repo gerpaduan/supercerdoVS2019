@@ -48,7 +48,6 @@ namespace Presentacion
         {
             try
             {
-                ///TODO: Aplicar filtros
                 if (cargar)
                 {
                     lblActualizar.Visible = false;
@@ -270,11 +269,19 @@ namespace Presentacion
         {
             try
             {
+                // Crear el formulario para pedir el nombre del archivo
+                string nombreArchivo = MostrarDialogoNombreArchivo();
+
+                //si es null se aborta la accion
+                if (nombreArchivo == null)
+                    return;
+
                 // Establecer el contexto de la licencia para evitar la excepción
                 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
 
-                string nombreArchivo = fechaDesde.Value.Year.ToString()+ fechaDesde.Value.Month.ToString()+ fechaDesde.Value.Day.ToString();
-                nombreArchivo += "Expendios.xlsx";
+                //string nombreArchivo = fechaDesde.Value.Year.ToString()+ fechaDesde.Value.Month.ToString()+ fechaDesde.Value.Day.ToString();
+                //nombreArchivo += "Expendios.xlsx";
+                nombreArchivo += ".xlsx";
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
                 string rutaArchivo = @ruta + "\\"+nombreArchivo;
 
@@ -340,6 +347,58 @@ namespace Presentacion
         private void exportExcel_Click(object sender, EventArgs e)
         {
             ExportarDataTableAExcel();
+        }
+
+        private string MostrarDialogoNombreArchivo()
+        {
+            // Crear un formulario para ingresar el nombre
+            Form dialogo = new Form
+            {
+                Width = 400,
+                Height = 150,
+                Text = "Nombre del archivo",
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            Label lblNombre = new Label
+            {
+                Text = "Ingrese el nombre del archivo:",
+                Top = 10,
+                Left = 10,
+                Width = 360
+            };
+
+            TextBox txtNombre = new TextBox
+            {
+                Top = 40,
+                Left = 10,
+                Width = 360
+            };
+
+            Button btnAceptar = new Button
+            {
+                Text = "Aceptar",
+                Top = 80,
+                Left = 150,
+                DialogResult = DialogResult.OK
+            };
+
+            dialogo.Controls.Add(lblNombre);
+            dialogo.Controls.Add(txtNombre);
+            dialogo.Controls.Add(btnAceptar);
+            dialogo.AcceptButton = btnAceptar;
+
+            if (dialogo.ShowDialog() == DialogResult.OK)
+            {
+                if (string.IsNullOrEmpty(txtNombre.Text))
+                {
+                    MessageBox.Show("Debe ingresar un nombre para el archivo a exportar");
+                    return null;
+                }
+                return txtNombre.Text.Trim();
+            }
+
+            return null;
         }
     }
 }

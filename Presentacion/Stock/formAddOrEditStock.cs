@@ -1249,9 +1249,6 @@ namespace Presentacion
             if (resp == DialogResult.Yes)
             {
                 asignarStockActual = true;
-                ///TODO: para todos los cortes de la grilla agregar el stock actual de ese corte
-                ///obtener datatable de stock actual y luego cargar el stock a la grilla
-                ///
                 DateTime desde = DateTime.Today.Date.AddYears(-10);
                 DateTime hasta = txtFechaCompra.Value;
 

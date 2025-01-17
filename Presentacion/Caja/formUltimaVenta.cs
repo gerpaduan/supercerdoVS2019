@@ -24,6 +24,7 @@ namespace Presentacion.Caja
 
         bool huboModificaciones = false;//se establece true cuando se modificó algo
         bool formCargado = false;
+        public float pagoMixtoEfectivo = 0f;
 
         public formUltimaVenta()
         {
@@ -46,12 +47,7 @@ namespace Presentacion.Caja
             txtEmail.Text = oUltimaVenta.Email.ToString();
             txtObservaciones.Text = oUltimaVenta.Observaciones;
             checkCtaCte.Checked = oUltimaVenta.EnCtaCte;
-            //checkCtaCte.Visible = !oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
-
-            //setFormaDePago();
-            //checkEfectivo.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            //checkDebito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
-            //checkCredito.BackColor = Utilidades.Util_Form.getBackColorCheckBox(false);
+            checkPagoMixto.Checked = oUltimaVenta.PagoMixtoEfectivo > 0;
             switch (oUltimaVenta.FormaPago)
             {
                 case "Efectivo":
@@ -79,12 +75,6 @@ namespace Presentacion.Caja
 
             huboModificaciones = false;
             formCargado = true;
-            //if (oUltimaVenta.EnCtaCte )
-            //{
-            //    //btnBuscarCliente.Visible = false;
-            //    panelInfoCtaCte.Visible = true;
-            //    //MessageBox.Show("No se permiten modificar el cliente en ventas que son a Cuenta Corriente.", "Cta. Cte", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            //}
         }
 
         public void cargarGrilla()
@@ -236,6 +226,30 @@ namespace Presentacion.Caja
                     return;
                 }
 
+                //se valida pago mixto, si deshabilita check significa que no cumple con las restricciones
+                if (checkPagoMixto.Checked && huboModificaciones)
+                {
+                    validarPagoMixto();
+                    if (!checkPagoMixto.Checked)
+                        return;
+
+                    ///si está tildado Pago Mixto
+                    ///mostrar form y calcular los diferentes montos y los egresos segun la forma de pago
+                    ///
+                    formPagoMixto formPagoMixto = new formPagoMixto();
+                    formPagoMixto.totalPesos = oUltimaVenta.TotalImporte;
+                    formPagoMixto.formaPago = oUltimaVenta.FormaPago;
+                    formPagoMixto.pagoMixtoEfectivo = oUltimaVenta.PagoMixtoEfectivo;
+                    formPagoMixto.formUltimaVenta = this;
+                    formPagoMixto.ShowDialog();
+                    //si le dio al boton ingresar en form pago mixto continuar sino return false
+                    if (!(pagoMixtoEfectivo > 0))
+                        return;
+                }
+
+                oUltimaVenta.PagoMixtoEfectivo = checkPagoMixto.Checked ? pagoMixtoEfectivo : 0;
+                
+
                 //valida que un venta en CTA CTE sea solo en Cta Cte
                 if (checkCtaCte.Checked && (!oUltimaVenta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
                     oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
@@ -246,8 +260,10 @@ namespace Presentacion.Caja
                     return;
                 }
 
-                if (huboModificaciones)
+                if (huboModificaciones || (oUltimaVenta.Observaciones != txtObservaciones.Text))
                 {
+                    oUltimaVenta.Observaciones = txtObservaciones.Text;
+
                     DialogResult respuesta = MessageBox.Show("¿Está seguro que desea modificar los datos de la venta?", "Modificar venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (respuesta.Equals(DialogResult.Yes))
                     {
@@ -258,7 +274,7 @@ namespace Presentacion.Caja
                             oVentaN.agregarLineaVenta(lineaNuevoAnulado);
                         }
 
-                        formVentaCaja fVtaCaja = new formVentaCaja();
+                        formVentaCajaConExpendio fVtaCaja = new formVentaCajaConExpendio();
                         //se genera el egreso de caja si no es Efectivo
                         fVtaCaja.egresoCajaPagoTarjeta(oUltimaVenta);
 
@@ -329,8 +345,6 @@ namespace Presentacion.Caja
 
         private void txtObservaciones_TextChanged(object sender, EventArgs e)
         {
-            huboModificaciones = true;            
-            oUltimaVenta.Observaciones = txtObservaciones.Text;
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -673,6 +687,26 @@ namespace Presentacion.Caja
                 formFactElec.logueado = FormPrincipal.logueado;
                 formFactElec.esShowDialog = true;
                 formFactElec.ShowDialog();
+            }
+        }
+
+        private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!formCargado)
+                return;
+
+            huboModificaciones = true;
+            validarPagoMixto();
+        }
+
+        private void validarPagoMixto()
+        {
+            if (checkPagoMixto.Checked && (checkEfectivo.Checked || checkCtaCte.Checked || oUltimaVenta.FormaPago == null))
+            {
+                MessageBox.Show("Para 'Pago Mixto' debe seleccionar una forma pago y ser diferente a Efectivo y Cta.Cte", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                checkPagoMixto.Checked = false;
+                checkEfectivo.Checked = false;
+                checkCtaCte.Checked = false;
             }
         }
     }

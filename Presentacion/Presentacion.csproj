@@ -132,6 +132,12 @@
     <Compile Include="Balanza\formBalanza.Designer.cs">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formPagoMixto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formPagoMixto.Designer.cs">
+      <DependentUpon>formPagoMixto.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\formAddOrEditTipoEgreso.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -667,6 +673,9 @@
     <EmbeddedResource Include="Balanza\formBalanza.resx">
       <DependentUpon>formBalanza.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formPagoMixto.resx">
+      <DependentUpon>formPagoMixto.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Caja\formAddOrEditTipoEgreso.resx">
       <DependentUpon>formAddOrEditTipoEgreso.cs</DependentUpon>
     </EmbeddedResource>
@@ -990,6 +999,7 @@
     <None Include="Resources\Barra Lateral Expendio Min.png" />
     <None Include="Resources\Barra Lateral Expendio Min1.png" />
     <None Include="Resources\Barra Lateral Expendio Min2.png" />
+    <Content Include="Resources\CarniSys_ICONO.ico" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <ItemGroup>

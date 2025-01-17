@@ -76,7 +76,9 @@ namespace Presentacion.Caja
 
         //Calculo decimales Random para redondear el importe del corte
         Random rndRedondeo = new Random();
-        float centavosRedondeo = 0.93f; 
+        float centavosRedondeo = 0.93f;
+
+        int nroErrorBalanza = 0;
 
         public int SucAnterior
         {
@@ -107,6 +109,7 @@ namespace Presentacion.Caja
 
         bool esCodBarraInterno , esCodBarraEstandar = false;
         string codigoEnCodBarra = "", segundoModulo = "";
+        public float pagoMixtoEfectivo = 0f;
         #endregion
 
 
@@ -287,8 +290,8 @@ namespace Presentacion.Caja
 
                 try
                 {
-                    oVentaN.cargaExhaustiva(oVentaE, listaLineaVenta);
-                    return;
+                    //oVentaN.cargaExhaustiva(oVentaE, listaLineaVenta);
+                    //return;
 
 
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
@@ -461,7 +464,7 @@ namespace Presentacion.Caja
         {
             try
             {
-                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja.IdVenta, oUsuario);
+                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja.IdVenta, oUsuario, oVentaConEgresoCaja.PagoMixtoEfectivo);
 
                 #region Codigo anterior: SE PASO A CAPA NEGOCIO
                 ///Codigo anterior: SE PASO A CAPA NEGOCIO
@@ -548,6 +551,7 @@ namespace Presentacion.Caja
             checkCtaCte.Checked = false;
             lblClienteConBonif.Visible = false;          
             restablecerFormaDePago();
+            checkPagoMixto.Checked = false;
             comboTipoComprobante.SelectedIndex = 0; //Remito
 
             totalVenta = 0;
@@ -595,6 +599,7 @@ namespace Presentacion.Caja
                 oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())) && 
                 comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
                 Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
+            oVentaE.PagoMixtoEfectivo = pagoMixtoEfectivo;
             oVentaE.Cuit = txtCuit.Text;
             oVentaE.Email = txtDomicilio.Text;
             oVentaE.TotalImporte = totalVenta;
@@ -871,6 +876,27 @@ namespace Presentacion.Caja
             //Solicita que ingrese Forma de Pago
             if (!ingresarFormaPago())
                 return false;
+
+            //se valida pago mixto, si deshabilita check significa que no cumple con las restricciones
+            if (checkPagoMixto.Checked)
+            {
+                validarPagoMixto();
+                if (!checkPagoMixto.Checked)
+                    return false;
+
+                ///si está tildado Pago Mixto
+                ///mostrar form y calcular los diferentes montos y los egresos segun la forma de pago
+                ///
+                formPagoMixto formPagoMixto = new formPagoMixto();
+                formPagoMixto.totalPesos = totalVenta;
+                formPagoMixto.formaPago = oVentaE.FormaPago;
+                formPagoMixto.formVentaCajaConExpendio = this;
+                formPagoMixto.ShowDialog();
+                //si le dio al boton ingresar en form pago mixto continuar sino return false
+                if (!(pagoMixtoEfectivo > 0))
+                    return false;
+            }
+            
 
             //valida que un venta en CTA CTE sea solo en Cta Cte
             if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
@@ -1898,6 +1924,15 @@ namespace Presentacion.Caja
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
                 txtCodigo.Focus();
+
+                nroErrorBalanza++;
+                //si tira error mas de 5 veces se desactiva balanza automaticamente y se pone contador en serio
+                if (nroErrorBalanza > 20)
+                {
+                    timer1.Stop();
+                    nroErrorBalanza = 0;
+                    MessageBox.Show("Balanza desactivada automaticamente");
+                }
             }
         }
 
@@ -2800,6 +2835,22 @@ namespace Presentacion.Caja
         private void btnDespligueLateral_Click(object sender, EventArgs e)
         {
             expendirExpendios();
+        }
+
+        private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
+        {
+            validarPagoMixto();
+        }
+
+        private void validarPagoMixto()
+        {
+            if (checkPagoMixto.Checked && (checkEfectivo.Checked || checkCtaCte.Checked || oVentaE.FormaPago == null))
+            {
+                MessageBox.Show("Para 'Pago Mixto' debe seleccionar una forma pago y ser diferente a Efectivo y Cta.Cte", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                checkPagoMixto.Checked = false;
+                checkEfectivo.Checked = false;
+                checkCtaCte.Checked = false;
+            }
         }
 
         private void lblUltimaVenta_Click(object sender, EventArgs e)

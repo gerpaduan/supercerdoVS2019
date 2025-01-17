@@ -167,7 +167,6 @@ namespace Presentacion
             }
         }
 
-        //TODO agregar Marca a Corte, modificar tabla, procedimientos, etc
 
         private bool cargarDatosCorte(Entidades.Corte oCorteE)
         {
@@ -436,7 +435,7 @@ namespace Presentacion
             if (frmCorte != null)
             {
                 frmCorte.cargarGrilla();
-                frmCorte.ExportarDataTableAExcel();
+                //frmCorte.ExportarDataTableAExcel();
             }
         }
 

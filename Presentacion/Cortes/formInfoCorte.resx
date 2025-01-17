@@ -126,6 +126,15 @@
   <metadata name="fechaUltimaCompra.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
+  <metadata name="dataGridViewTextBoxColumn3.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="ultimoPrecio.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="fechaUltimaCompra.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
   <metadata name="barraControl.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
@@ -133,7 +142,7 @@
   <data name="modificar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAFsSURBVDhPlZKxa8JAGMXzJzh08E+o0MWxa6CLW4UOdSud
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFsSURBVDhPlZKxa8JAGMXzJzh08E+o0MWxa6CLW4UOdSud
         inQQySChmzgUpxKcQjcdhLjFLSIULlsyFJKtHTPeeOMr3xdPvMQI/eBxcMnvvcfdWdZhwrhAmEpTtKf3
         dxncWQT9f23oR6UA2aAkLeAuBETbYlV5K0olLk2SFwzifQi8tJBdt0wTatA0CsB4EkB+9hgkBVcWfOuk
         iTbY7/dI0sRYCQ6+geWHD7Xu1uHS4KcazKPh+RcwWEncvoboP84RbkXFYGca0IEa8FqhOxIMR3GGYFMz
@@ -145,7 +154,7 @@
   <data name="eliminar.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAACESURBVDhPvY8xDoAgDEW7wP1P4+AF3FxN3B28gRvmg00I
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACESURBVDhPvY8xDoAgDEW7wP1P4+AF3FxN3B28gRvmg00I
         +aUYE1/SgfbxKSJfuaIkVNsfRgN+DaHeSIg3z8IeJZ1Eci8rxxOyVTJ6LNRkCiVg7WzkskRJcygB7cwF
         GyAAhS1wbh0TyFrsbII/Y2VLtvqZ+hVT6oWMXFaoR5sd3voUDbkBxg14zu5NAcAAAAAASUVORK5CYII=
 </value>

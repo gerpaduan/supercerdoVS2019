@@ -139,7 +139,7 @@ namespace Negocio
             return oVentaD.ultimasVentasCliente(idSucursal, idPersona);
         }
 
-        public void egresoCajaPagoTarjeta(int idVenta, Entidades.Usuario oUsuario)
+        public void egresoCajaPagoTarjeta(int idVenta, Entidades.Usuario oUsuario, float pagoMixtoEfectivo)
         {
             Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
 
@@ -157,7 +157,7 @@ namespace Negocio
                 Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
                 oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
-
+                string formaPagoDetalle = "";
                 if ((oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())))
                 {
                     oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCtaCte;
@@ -165,11 +165,14 @@ namespace Negocio
                 }
                 else
                 {
+                    formaPagoDetalle = pagoMixtoEfectivo > 0 ? 
+                        "Mixta - "+oVentaConEgresoCaja.FormaPago.ToString()+" $"+(totalS - pagoMixtoEfectivo).ToString("F2")+" | "+"Efvo $"+pagoMixtoEfectivo.ToString("F2") : 
+                        oVentaConEgresoCaja.FormaPago.ToString();
                     oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
-                    oEgresoCajaE.Descripcion = "Venta " + oVentaConEgresoCaja.FormaPago.ToString() + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
+                    oEgresoCajaE.Descripcion = "Venta " + formaPagoDetalle + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
                 }
 
-                oEgresoCajaE.Monto = totalS;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                oEgresoCajaE.Monto = totalS - pagoMixtoEfectivo;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
                 oEgresoCajaE.Detalle = " | Kgs: " + totalKgs.ToString("N3") +
                     " | Precio: " + (totalS / totalKgs).ToString("N3") +
                     " | TOT: " + totalS.ToString("N3") + "\n\n" + oVentaConEgresoCaja.Observaciones;
@@ -200,7 +203,7 @@ namespace Negocio
                 dateTime = dateTime.AddDays(i);
                 for (int j = 0; j < 300; j++)
                 {
-                    if (dateTime.Year > 2024)
+                    if (dateTime.Year > 2024 && dateTime.Month > 1)
                     {
                         string d = "2";
                         return;
@@ -211,7 +214,7 @@ namespace Negocio
 
                     Random random = new Random();
                     int min = 473; // Límite inferior
-                    int max = 850; // Límite superior
+                    int max = 490; // Límite superior
 
                     int idCorte_Random = random.Next(min, max + 1); // Incluye el límite superior
 

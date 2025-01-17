@@ -41,6 +41,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@acumRedondeoKgs", oVentaE.AcumRedondeoKgs);
             cmVenta.Parameters.AddWithValue("@acumRedondeoImporte", oVentaE.AcumRedondeoImporte);
             cmVenta.Parameters.AddWithValue("@comisionTarjeta", oVentaE.ComisionTarjeta);
+            cmVenta.Parameters.AddWithValue("@pagoMixtoEfectivo", oVentaE.PagoMixtoEfectivo);
 
             cmVenta.Connection.Open();
             SqlDataReader drVenta = cmVenta.ExecuteReader();
@@ -85,6 +86,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@acumRedondeoKgs", oVentaE.AcumRedondeoKgs);
             cmVenta.Parameters.AddWithValue("@acumRedondeoImporte", oVentaE.AcumRedondeoImporte);
             cmVenta.Parameters.AddWithValue("@comisionTarjeta", oVentaE.ComisionTarjeta);
+            cmVenta.Parameters.AddWithValue("@pagoMixtoEfectivo", oVentaE.PagoMixtoEfectivo);
 
             cmVenta.Connection.Open();
             cmVenta.ExecuteNonQuery();
@@ -269,6 +271,7 @@ namespace Datos
                         
                         oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
                         oVentaE.TotalImporte = getTotalVenta(idVenta);
+                        oVentaE.PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"].Equals(DBNull.Value) ? 0f : float.Parse(drVenta["pagoMixtoEfectivo"].ToString());
                     }
                     return oVentaE;
                 }
