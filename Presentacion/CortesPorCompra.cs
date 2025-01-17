@@ -19,6 +19,8 @@ namespace Presentacion
         private int index;
         private DateTime? creado;
         private bool balanza;
+        public float margen;
+        public float precioVenta;
 
         public DateTime? Creado
         {
@@ -128,5 +130,7 @@ namespace Presentacion
         }
 
         public bool Balanza { get => balanza; set => balanza = value; }
+        public float Margen { get => margen; set => margen = value; }
+        public float PrecioVenta { get => precioVenta; set => precioVenta = value; }
     }
 }

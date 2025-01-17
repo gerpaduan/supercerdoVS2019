@@ -16,6 +16,8 @@ namespace Entidades
         public Sucursal sucursal;
         private DateTime? creado;
         private Usuario creadoPor;
+        private float margen;
+        private float precioVenta;
 
 
         public int IdCortePorCompra
@@ -97,5 +99,7 @@ namespace Entidades
         }
 
         public bool Balanza { get => balanza; set => balanza = value; }
+        public float Margen { get => margen; set => margen = value; }
+        public float PrecioVenta { get => precioVenta; set => precioVenta = value; }
     }
 }

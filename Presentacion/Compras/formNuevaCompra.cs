@@ -204,6 +204,13 @@ namespace Presentacion
                             foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                             {
                                 oCompraN.agregarCortePorCompra(cortePorCompra);
+
+                                //se actualiza el precio del corte
+                                if (cortePorCompra.PrecioVenta > 0)
+                                {
+                                    cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
+                                    oCorteN.editPrecioCorte(cortePorCompra.Corte);
+                                }
                             }
                         }
 
@@ -562,6 +569,8 @@ namespace Presentacion
                     oCortePorCompra.sucursal = oSucursalE;
                     oCortePorCompra.Creado = DateTime.Now;
                     oCortePorCompra.CreadoPor = oUsuario;
+                    oCortePorCompra.Margen = string.IsNullOrEmpty(txtMargenGan.Text) ? 0f : float.Parse(txtMargenGan.Text.Trim());
+                    oCortePorCompra.PrecioVenta = string.IsNullOrEmpty(txtPrecioFinalVenta.Text) ? 0f : float.Parse(txtPrecioFinalVenta.Text.Trim());
 
                     listaCortePorCompra.Add(oCortePorCompra);
 
@@ -574,6 +583,8 @@ namespace Presentacion
                     cortesPorCompra.precioKg = oCortePorCompra.precioKg;
                     cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
                     cortesPorCompra.sucursal = oCortePorCompra.sucursal.SucursalNombre;
+                    cortesPorCompra.margen = oCortePorCompra.Margen;
+                    cortesPorCompra.precioVenta = oCortePorCompra.PrecioVenta;
 
                     listaCortesEnGrilla.Add(cortesPorCompra);
 
@@ -691,6 +702,17 @@ namespace Presentacion
                 }
                 else
                 {
+                    //si precio venta es menor a compra
+                    if (txtMargenGan.Text.Contains("-"))
+                    {
+                        MessageBox.Show("El Precio Venta no puede ser menor a Precio Compra (el margen de ganancia es negativo)", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        if (checkManualPrecio.Checked)
+                            txtPrecioFinalVenta.Focus();
+                        else
+                            txtMargenGan.Focus();
+                        return false;
+                    }
+
                     return true;
                 }
             }
@@ -743,6 +765,7 @@ namespace Presentacion
             txtBoxPrecioNeto.Text = "";
             txtPrecioKg.Text = radioCorte.Checked ? "" : txtPrecioKg.Text;
             txtCantKgs.Text = "";
+            txtPrecioFinalVenta.Text = "";
         }
 
         private void cargarGrilla()
@@ -873,6 +896,8 @@ namespace Presentacion
                             oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                             oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
+
+                            txtPrecioActualCorte.Text = fila["precioKg"].ToString();
                         }
 
                         //se cargan los datos del corte
@@ -906,25 +931,72 @@ namespace Presentacion
         #endregion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
-                {
+        {
+            //if (txtPrecioKg.Focused)
+            //{
+            //    //if (e.KeyChar == '*')// (char)(Keys.Multiply))
+            //    //{
+            //    //    e.Handled = true;
+            //    //    checkManualPrecio.Checked = true;
+            //    //    return;
+            //    //}
+            //    if (checkMargen.Checked)
+            //    {
+            //        txtMargenGan.Focus();
+            //    }
+            //    if (checkManualPrecio.Checked)
+            //    {
+            //        txtPrecioFinalVenta.Focus();
+            //    }
+            //}
 
-                        if (e.KeyChar == (char)(Keys.Enter))
-            {
+            if (e.KeyChar == (char)(Keys.Enter))
+                {
+                if (txtPrecioKg.Focused)
+                {
+                    if (checkMargen.Checked)
+                    {
+                        txtMargenGan.Focus();
+                        return;
+                    }
+                    if (checkManualPrecio.Checked)
+                    {
+                        txtPrecioFinalVenta.Focus();
+                        return;
+                    }
+                }
+
+                if (txtMargenGan.Focused || txtPrecioFinalVenta.Focused)
+                {
+                    btnAgregar.Focus();
+                    return;
+                }
+
                 if (radioCorte.TabStop)
                 {
-                        radioCorte.TabStop = false;
+                    radioCorte.TabStop = false;
                 }
                 //si txtBoxPrecio es vacio se mueve el foco a éste
-                if ((txtKgMedia.Focused || txtPrecioKg.Focused) && txtPrecioKg.Text.Equals(""))
+                    if ((txtKgMedia.Focused || txtCantKgs.Focused) && txtPrecioKg.Text.Equals(""))
                 {
-                        txtPrecioKg.Focus();
+                    txtPrecioKg.Focus();
                     return;
                 }
                 e.Handled = true;
 
-                        SendKeys.Send("{TAB}");
+                    SendKeys.Send("{TAB}");
             }
         }
+
+        /// <summary>
+        /// Actualizar precio Venta
+        /// </summary>
+        /// <returns></returns>
+        private void actualizarPrecioVenta()
+        {
+
+        }
+
 
         //Métodos autocompletar
         public AutoCompleteStringCollection LoadAutoComplete()
@@ -1077,6 +1149,7 @@ namespace Presentacion
             {
                 TextBox txtNumerico = (TextBox)sender;
                 if (!validarCampoNumerico(txtNumerico.Text, txtNumerico.Name)) txtNumerico.Text = "";
+                CalcularPrecioFinal();
                 return;
             }
 
@@ -1084,9 +1157,11 @@ namespace Presentacion
             {
                 MaskedTextBox txtNumerico = (MaskedTextBox)sender;
                 if (!validarCampoNumerico(txtNumerico.Text, txtNumerico.Name)) txtNumerico.Text = "";
+                CalcularPrecioFinal();
                 return;
             }
         }
+
 
         private bool validarCampoNumerico(string valor, string nombreTextBox)
         {
@@ -1213,6 +1288,80 @@ namespace Presentacion
                 return;
 
             calcularPrecioFinal();
+        }
+
+        private void checkManualPrecio_CheckedChanged(object sender, EventArgs e)
+        {
+            checkMargen.Checked =  false;
+            panelPrecioVenta.Enabled = checkManualPrecio.Checked || checkMargen.Checked;
+            txtPrecioFinalVenta.TabStop = checkManualPrecio.Checked;
+            txtPrecioFinalVenta.ReadOnly = !checkManualPrecio.Checked;
+            txtPrecioFinalVenta.Text = txtMargenGan.Text = "";
+        }
+
+        private void checkMargen_CheckedChanged(object sender, EventArgs e)
+        {
+            checkManualPrecio.Checked = false;
+            panelPrecioVenta.Enabled = checkManualPrecio.Checked || checkMargen.Checked;
+            txtMargenGan.TabStop = checkMargen.Checked;
+            txtMargenGan.ReadOnly = !checkMargen.Checked;
+            txtPrecioFinalVenta.Text = txtMargenGan.Text = "";
+        }
+
+        private void txtPrecioFinalVenta_TextChanged(object sender, EventArgs e)
+        {
+            CalcularMargen();
+        }
+
+        private void CalcularMargen()
+        {
+            if (!(checkManualPrecio.Checked))
+                return;
+
+            // Validar que ambos TextBox contengan valores numéricos
+            if (float.TryParse(txtPrecioKg.Text, out float precioKg) &&
+                float.TryParse(txtPrecioFinalVenta.Text, out float precioFinalVenta))
+            {
+                // Realizar la multiplicación
+                float margenGan = ((precioFinalVenta / precioKg) - 1) * 100;
+
+                txtMargenGan.Text = margenGan.ToString("0.00"); // Formato con 2 decimales
+            }
+            else
+            {
+                // Mostrar mensaje de error o limpiar el TextBox de resultado
+                if (string.IsNullOrEmpty(txtPrecioFinalVenta.Text))
+                {
+                    txtMargenGan.Text = "";
+                    return;
+                }
+
+                MessageBox.Show("Ingrese valores numéricos válidos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtPrecioFinalVenta.Text = string.Empty;
+                txtMargenGan.Text = string.Empty;
+            }
+        }
+        private void CalcularPrecioFinal()
+        {
+            if (!(checkMargen.Checked && (txtPrecioKg.Focused || txtMargenGan.Focused)))
+                return;
+
+            // Validar que ambos TextBox contengan valores numéricos
+            if (float.TryParse(txtPrecioKg.Text, out float precioKg) &&
+                float.TryParse(txtMargenGan.Text, out float margenGan))
+            {
+                // Realizar la multiplicación
+                float precioFinalVenta = precioKg * (1 + (margenGan / 100));
+
+                // Mostrar el resultado en txtPrecioFinalVenta
+                txtPrecioFinalVenta.Text = precioFinalVenta.ToString("0.00"); // Formato con 2 decimales
+            }
+            else
+            {
+                // Mostrar mensaje de error o limpiar el TextBox de resultado
+                //MessageBox.Show("Ingrese valores numéricos válidos en ambos campos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtPrecioFinalVenta.Text = string.Empty;
+            }
         }
     }
 }
