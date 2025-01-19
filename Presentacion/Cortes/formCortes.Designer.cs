@@ -30,22 +30,22 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCortes));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle49 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle50 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle51 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle52 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle53 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle54 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle55 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle56 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle57 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle58 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle59 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle60 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle61 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle62 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle63 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle64 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.nuevo = new System.Windows.Forms.ToolStripButton();
             this.modificar = new System.Windows.Forms.ToolStripButton();
@@ -54,8 +54,9 @@
             this.tipos = new System.Windows.Forms.ToolStripButton();
             this.systelPLU = new System.Windows.Forms.ToolStripButton();
             this.exportar = new System.Windows.Forms.ToolStripButton();
-            this.Imprimir = new System.Windows.Forms.ToolStripButton();
             this.importarCSV = new System.Windows.Forms.ToolStripButton();
+            this.Imprimir = new System.Windows.Forms.ToolStripButton();
+            this.etiquetas = new System.Windows.Forms.ToolStripButton();
             this.grillaCortes = new System.Windows.Forms.DataGridView();
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -130,7 +131,8 @@
             this.systelPLU,
             this.exportar,
             this.importarCSV,
-            this.Imprimir});
+            this.Imprimir,
+            this.etiquetas});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
             this.barraControl.Padding = new System.Windows.Forms.Padding(13, 0, 0, 0);
@@ -218,6 +220,17 @@
             this.exportar.ToolTipText = "Exportar Lista de precios";
             this.exportar.Click += new System.EventHandler(this.exportar_Click);
             // 
+            // importarCSV
+            // 
+            this.importarCSV.Image = ((System.Drawing.Image)(resources.GetObject("importarCSV.Image")));
+            this.importarCSV.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.importarCSV.Name = "importarCSV";
+            this.importarCSV.Size = new System.Drawing.Size(109, 51);
+            this.importarCSV.Text = "  &Importar CSV";
+            this.importarCSV.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.importarCSV.ToolTipText = "Importar lista productos desde carpeta C:\\CarniSys_Docs\r\n\r\n\r\n";
+            this.importarCSV.Click += new System.EventHandler(this.importarCSV_Click);
+            // 
             // Imprimir
             // 
             this.Imprimir.Image = ((System.Drawing.Image)(resources.GetObject("Imprimir.Image")));
@@ -230,20 +243,20 @@
             this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
             // 
-            // importarCSV
+            // etiquetas
             // 
-            this.importarCSV.Image = ((System.Drawing.Image)(resources.GetObject("importarCSV.Image")));
-            this.importarCSV.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.importarCSV.Name = "importarCSV";
-            this.importarCSV.Size = new System.Drawing.Size(109, 51);
-            this.importarCSV.Text = "  &Importar CSV";
-            this.importarCSV.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.importarCSV.ToolTipText = "Importar lista productos desde carpeta C:\\CarniSys_Docs\r\n\r\n\r\n";
-            this.importarCSV.Click += new System.EventHandler(this.importarCSV_Click);
+            this.etiquetas.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.etiquetas.Image = ((System.Drawing.Image)(resources.GetObject("etiquetas.Image")));
+            this.etiquetas.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.etiquetas.Name = "etiquetas";
+            this.etiquetas.Size = new System.Drawing.Size(29, 51);
+            this.etiquetas.Text = "toolStripButton1";
+            this.etiquetas.Click += new System.EventHandler(this.etiquetas_Click);
             // 
             // grillaCortes
             // 
             this.grillaCortes.AllowUserToAddRows = false;
+            this.grillaCortes.AllowUserToDeleteRows = false;
             this.grillaCortes.AllowUserToResizeRows = false;
             this.grillaCortes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
@@ -299,8 +312,8 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            dataGridViewCellStyle49.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.idCorte.DefaultCellStyle = dataGridViewCellStyle49;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.idCorte.DefaultCellStyle = dataGridViewCellStyle1;
             this.idCorte.HeaderText = "ID Corte";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
@@ -311,8 +324,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle50.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle50;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
             this.codigo.HeaderText = "Código";
             this.codigo.MinimumWidth = 6;
             this.codigo.Name = "codigo";
@@ -323,8 +336,8 @@
             // 
             this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.corte.DataPropertyName = "corte";
-            dataGridViewCellStyle51.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.corte.DefaultCellStyle = dataGridViewCellStyle51;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.corte.DefaultCellStyle = dataGridViewCellStyle3;
             this.corte.HeaderText = "Corte";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
@@ -335,10 +348,10 @@
             // 
             this.precioKg.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.precioKg.DataPropertyName = "precioKg";
-            dataGridViewCellStyle52.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle52.Format = "N2";
-            dataGridViewCellStyle52.NullValue = null;
-            this.precioKg.DefaultCellStyle = dataGridViewCellStyle52;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle4.Format = "N2";
+            dataGridViewCellStyle4.NullValue = null;
+            this.precioKg.DefaultCellStyle = dataGridViewCellStyle4;
             this.precioKg.HeaderText = "Precio Kg.";
             this.precioKg.MinimumWidth = 6;
             this.precioKg.Name = "precioKg";
@@ -349,9 +362,9 @@
             // 
             this.efectivo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.efectivo.DataPropertyName = "efectivo";
-            dataGridViewCellStyle53.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle53.Format = "N2";
-            this.efectivo.DefaultCellStyle = dataGridViewCellStyle53;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle5.Format = "N2";
+            this.efectivo.DefaultCellStyle = dataGridViewCellStyle5;
             this.efectivo.HeaderText = "Efectivo";
             this.efectivo.MinimumWidth = 6;
             this.efectivo.Name = "efectivo";
@@ -362,9 +375,9 @@
             // 
             this.debito.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.debito.DataPropertyName = "debito";
-            dataGridViewCellStyle54.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle54.Format = "N2";
-            this.debito.DefaultCellStyle = dataGridViewCellStyle54;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle6.Format = "N2";
+            this.debito.DefaultCellStyle = dataGridViewCellStyle6;
             this.debito.HeaderText = "Debito";
             this.debito.MinimumWidth = 6;
             this.debito.Name = "debito";
@@ -375,9 +388,9 @@
             // 
             this.credito.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.credito.DataPropertyName = "credito";
-            dataGridViewCellStyle55.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle55.Format = "N2";
-            this.credito.DefaultCellStyle = dataGridViewCellStyle55;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle7.Format = "N2";
+            this.credito.DefaultCellStyle = dataGridViewCellStyle7;
             this.credito.HeaderText = "Credito";
             this.credito.MinimumWidth = 6;
             this.credito.Name = "credito";
@@ -388,9 +401,9 @@
             // 
             this.Qr.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.Qr.DataPropertyName = "Qr";
-            dataGridViewCellStyle56.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle56.Format = "N2";
-            this.Qr.DefaultCellStyle = dataGridViewCellStyle56;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle8.Format = "N2";
+            this.Qr.DefaultCellStyle = dataGridViewCellStyle8;
             this.Qr.HeaderText = "Qr";
             this.Qr.MinimumWidth = 6;
             this.Qr.Name = "Qr";
@@ -401,9 +414,9 @@
             // 
             this.Transf.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.Transf.DataPropertyName = "Transf";
-            dataGridViewCellStyle57.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle57.Format = "N2";
-            this.Transf.DefaultCellStyle = dataGridViewCellStyle57;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Format = "N2";
+            this.Transf.DefaultCellStyle = dataGridViewCellStyle9;
             this.Transf.HeaderText = "Transf";
             this.Transf.MinimumWidth = 6;
             this.Transf.Name = "Transf";
@@ -454,9 +467,9 @@
             // 
             this.promedio.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.promedio.DataPropertyName = "promedio";
-            dataGridViewCellStyle58.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle58.Format = "F3";
-            this.promedio.DefaultCellStyle = dataGridViewCellStyle58;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle10.Format = "F3";
+            this.promedio.DefaultCellStyle = dataGridViewCellStyle10;
             this.promedio.HeaderText = "Promedio";
             this.promedio.MinimumWidth = 6;
             this.promedio.Name = "promedio";
@@ -468,8 +481,8 @@
             // 
             this.puntoStock.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.puntoStock.DataPropertyName = "puntoStock";
-            dataGridViewCellStyle59.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.puntoStock.DefaultCellStyle = dataGridViewCellStyle59;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.puntoStock.DefaultCellStyle = dataGridViewCellStyle11;
             this.puntoStock.HeaderText = "Pto.Stock";
             this.puntoStock.MinimumWidth = 6;
             this.puntoStock.Name = "puntoStock";
@@ -489,10 +502,10 @@
             // 
             this.porcentaje.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.porcentaje.DataPropertyName = "porcentaje";
-            dataGridViewCellStyle60.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle60.Format = "N3";
-            dataGridViewCellStyle60.NullValue = null;
-            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle60;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle12.Format = "N3";
+            dataGridViewCellStyle12.NullValue = null;
+            this.porcentaje.DefaultCellStyle = dataGridViewCellStyle12;
             this.porcentaje.HeaderText = "Porcentaje";
             this.porcentaje.MinimumWidth = 6;
             this.porcentaje.Name = "porcentaje";
@@ -513,10 +526,10 @@
             // 
             this.porcentajeHueso.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.porcentajeHueso.DataPropertyName = "porcentajeHueso";
-            dataGridViewCellStyle61.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle61.Format = "N2";
-            dataGridViewCellStyle61.NullValue = null;
-            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle61;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle13.Format = "N2";
+            dataGridViewCellStyle13.NullValue = null;
+            this.porcentajeHueso.DefaultCellStyle = dataGridViewCellStyle13;
             this.porcentajeHueso.HeaderText = "% Desperdicio";
             this.porcentajeHueso.MinimumWidth = 6;
             this.porcentajeHueso.Name = "porcentajeHueso";
@@ -559,10 +572,10 @@
             // 
             this.desvioEstandar.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.desvioEstandar.DataPropertyName = "desvioEstandar";
-            dataGridViewCellStyle62.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle62.Format = "N2";
-            dataGridViewCellStyle62.NullValue = null;
-            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle62;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle14.Format = "N2";
+            dataGridViewCellStyle14.NullValue = null;
+            this.desvioEstandar.DefaultCellStyle = dataGridViewCellStyle14;
             this.desvioEstandar.FillWeight = 90F;
             this.desvioEstandar.HeaderText = "Desvío Estandar";
             this.desvioEstandar.MinimumWidth = 6;
@@ -613,11 +626,11 @@
             // 
             this.stockSL.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSL.DataPropertyName = "stockSL";
-            dataGridViewCellStyle63.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle63.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle63.Format = "N3";
-            dataGridViewCellStyle63.NullValue = null;
-            this.stockSL.DefaultCellStyle = dataGridViewCellStyle63;
+            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle15.Format = "N3";
+            dataGridViewCellStyle15.NullValue = null;
+            this.stockSL.DefaultCellStyle = dataGridViewCellStyle15;
             this.stockSL.FillWeight = 50F;
             this.stockSL.HeaderText = "Stock S. Lorenzo";
             this.stockSL.MinimumWidth = 6;
@@ -648,11 +661,11 @@
             // 
             this.stockSM.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.stockSM.DataPropertyName = "stockSM";
-            dataGridViewCellStyle64.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle64.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle64.Format = "N3";
-            dataGridViewCellStyle64.NullValue = null;
-            this.stockSM.DefaultCellStyle = dataGridViewCellStyle64;
+            dataGridViewCellStyle16.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle16.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle16.Format = "N3";
+            dataGridViewCellStyle16.NullValue = null;
+            this.stockSM.DefaultCellStyle = dataGridViewCellStyle16;
             this.stockSM.FillWeight = 50F;
             this.stockSM.HeaderText = "Stock S. Martín";
             this.stockSM.MinimumWidth = 6;
@@ -1068,5 +1081,6 @@
         protected System.Windows.Forms.Label label14;
         protected System.Windows.Forms.TextBox txtCantItems;
         protected System.Windows.Forms.Label label5;
+        private System.Windows.Forms.ToolStripButton etiquetas;
     }
 }
