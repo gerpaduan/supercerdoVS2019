@@ -33,7 +33,7 @@ namespace Presentacion
         bool cargar = false;
         public formLineasVendedor()
         {
-            InitializeComponent();            
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
         }
 
         private void formLineasVendedor_Load(object sender, EventArgs e)

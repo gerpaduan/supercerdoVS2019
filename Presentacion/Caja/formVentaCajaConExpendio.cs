@@ -115,7 +115,7 @@ namespace Presentacion.Caja
 
         public formVentaCajaConExpendio()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
 
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;

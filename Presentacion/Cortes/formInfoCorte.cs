@@ -19,7 +19,7 @@ namespace Presentacion
 
         public formInfoCorte()
         {
-            InitializeComponent();           
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;           
         }
 
         private void modificar_Click(object sender, EventArgs e)

@@ -29,7 +29,7 @@ namespace Presentacion.Cortes
 
         public formStockActual()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formStockActual_Load(object sender, EventArgs e)

@@ -32,7 +32,7 @@ namespace Presentacion.Pagos
 
         public formAddOrEditPago()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formNuevoPago_Load(object sender, EventArgs e)

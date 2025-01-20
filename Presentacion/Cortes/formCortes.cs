@@ -21,6 +21,7 @@ using Presentacion.Cortes;
 using Presentacion.Personas;
 using static System.Net.WebRequestMethods;
 using static iTextSharp.awt.geom.Point2D;
+using static Presentacion.Program;
 
 namespace Presentacion
 {
@@ -39,7 +40,7 @@ namespace Presentacion
         int idMarca = -1;//-1 busca a todos
         public formCortes()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         #region eventos

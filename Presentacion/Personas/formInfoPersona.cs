@@ -17,7 +17,7 @@ namespace Presentacion.Personas
 
         public formInfoPersona()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             eliminar.Enabled = FormPrincipal.logueado;//solo permiter borrar si es admin
             txtRazonSocial.Enabled = FormPrincipal.logueado;//solo permite modif nombre si es admin
         }

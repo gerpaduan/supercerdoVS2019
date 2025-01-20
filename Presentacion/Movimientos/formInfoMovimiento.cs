@@ -29,7 +29,7 @@ namespace Presentacion.Movimientos
 
         public formInfoMovimiento()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
 
         }
 

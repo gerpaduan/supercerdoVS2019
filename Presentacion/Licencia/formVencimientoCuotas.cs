@@ -26,7 +26,7 @@ namespace Presentacion.Licencia
 
         public formVencimientoCuotas()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formVencimientoCuotas_Load(object sender, EventArgs e)

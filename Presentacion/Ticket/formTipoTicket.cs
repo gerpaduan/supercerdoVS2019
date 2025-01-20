@@ -13,7 +13,7 @@ namespace Presentacion.Ticket
     {
         public formTipoTicket()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formTipoTicket_Load(object sender, EventArgs e)

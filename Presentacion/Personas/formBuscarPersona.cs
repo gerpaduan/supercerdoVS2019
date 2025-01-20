@@ -15,7 +15,7 @@ namespace Presentacion.Personas
         bool tabStop = false;
         public formBuscarPersona()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarGrilla();
             txtBuscar.Focus(); 
             

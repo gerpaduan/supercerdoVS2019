@@ -24,7 +24,7 @@ namespace Presentacion.Caja
 
         public formIngresoBilletes()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formIngresoBilletes_Load(object sender, EventArgs e)

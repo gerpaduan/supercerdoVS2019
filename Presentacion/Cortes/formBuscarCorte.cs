@@ -17,7 +17,7 @@ namespace Presentacion.Cortes
 
         public formBuscarCorte()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void buscarCorte()

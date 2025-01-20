@@ -50,7 +50,7 @@ namespace Presentacion
 
         public formNuevaCompra()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
 
             cambiarGrupo();
             cargarComboSucursal();

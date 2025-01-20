@@ -42,7 +42,7 @@ namespace Presentacion.Cortes
 
         public formReporteStock()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarSucursales();
             cargarGrilla();
         }

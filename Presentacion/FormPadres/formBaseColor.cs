@@ -13,7 +13,7 @@ namespace Presentacion
     {
         public formBaseColor()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
     }
 }

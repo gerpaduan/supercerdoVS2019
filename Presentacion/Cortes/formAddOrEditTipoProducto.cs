@@ -28,7 +28,7 @@ namespace Presentacion.Cortes
 
         public formAddOrEditTipoProducto()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formAddOrEditTipoProducto_Load(object sender, EventArgs e)

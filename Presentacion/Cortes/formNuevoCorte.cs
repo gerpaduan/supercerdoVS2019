@@ -29,7 +29,7 @@ namespace Presentacion
 
         public formNuevoCorte()
         {
-            InitializeComponent();            
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
         }
 
         #region eventos

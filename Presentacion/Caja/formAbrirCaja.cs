@@ -12,7 +12,7 @@ namespace Presentacion.Caja
     {     
         public formAbrirCaja()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             tipoCierreActual = tipoCierre.AbrirCaja;
         }
 

@@ -151,6 +151,16 @@ namespace Presentacion.Properties {
         }
         
         /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Icon similar a (Icono).
+        /// </summary>
+        internal static System.Drawing.Icon CarniSys_ICONO {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys_ICONO", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap lock_32x32_32 {

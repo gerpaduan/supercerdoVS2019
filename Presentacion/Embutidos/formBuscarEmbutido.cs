@@ -15,7 +15,7 @@ namespace Presentacion.Embutidos
 
         public formBuscarEmbutido()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarGrilla();
         }
 

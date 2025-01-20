@@ -26,7 +26,7 @@ namespace Presentacion.CuentaCorriente
 
         public formCtaCtePersona()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formCtaCtePersona_Load(object sender, EventArgs e)

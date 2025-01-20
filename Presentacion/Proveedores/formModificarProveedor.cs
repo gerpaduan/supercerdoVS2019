@@ -13,7 +13,7 @@ namespace Presentacion
     {
         public formModificarProveedor()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)

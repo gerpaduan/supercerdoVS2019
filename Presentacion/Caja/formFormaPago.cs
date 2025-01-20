@@ -15,7 +15,7 @@ namespace Presentacion.Caja
 
         public formFormaPago()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         public void enviarFormaPago()

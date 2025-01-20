@@ -26,7 +26,7 @@ namespace Presentacion
 
         public formModificarPrecios()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             
         }
 

@@ -30,7 +30,7 @@ namespace Presentacion.Caja
 
         public formCerrarCaja()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formCerrarCaja_Load(object sender, EventArgs e)

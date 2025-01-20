@@ -17,7 +17,7 @@ namespace Presentacion.Compras
 
         public formCambiarPrecioKg(formModificarCompra formParam, int idCompraParam)
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
 
             idCompra = idCompraParam;
             frmModificarCompra = formParam;

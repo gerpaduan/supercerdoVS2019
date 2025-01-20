@@ -16,7 +16,7 @@ namespace Presentacion.Personas
 
         public formPersonas()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarGrilla();
         }
 

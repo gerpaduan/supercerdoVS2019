@@ -24,7 +24,7 @@ namespace Presentacion.Stock
 
         public FormVerPorcCortes()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void FormVerPorcCortes_Load(object sender, EventArgs e)

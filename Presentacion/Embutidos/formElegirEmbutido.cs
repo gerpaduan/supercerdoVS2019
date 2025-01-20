@@ -25,7 +25,7 @@ namespace Presentacion.Embutidos
 
         public formElegirEmbutido()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formElegirEmbutido_Load(object sender, EventArgs e)

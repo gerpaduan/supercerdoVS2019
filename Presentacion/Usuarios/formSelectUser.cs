@@ -17,7 +17,7 @@ namespace Presentacion.Usuarios
 
         public formSelectUser()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formSelectUser_Load(object sender, EventArgs e)

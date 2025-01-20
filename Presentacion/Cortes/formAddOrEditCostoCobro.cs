@@ -30,7 +30,7 @@ namespace Presentacion.Cortes
 
         public formAddOrEditCostoCobro()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formAddOrEditCostoCobro_Load(object sender, EventArgs e)

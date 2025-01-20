@@ -33,7 +33,7 @@ namespace Presentacion
         bool conVentas = false;
         public formTemporalLineaVenta()
         {
-            InitializeComponent();            
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
         }
 
         public void cargarGrilla()

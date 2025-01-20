@@ -16,7 +16,7 @@ namespace Presentacion
 
         public formBackUp()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)

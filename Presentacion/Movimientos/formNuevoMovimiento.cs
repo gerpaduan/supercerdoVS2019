@@ -52,7 +52,7 @@ namespace Presentacion
 
         public formNuevoMovimiento()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             idMovimientoLabel.Text = "0";
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             checkTicket.Checked = Convert.ToBoolean(ConfigurationManager.AppSettings["ticketForms"].ToString());

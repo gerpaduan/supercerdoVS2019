@@ -45,7 +45,7 @@ namespace Presentacion.Compras
 
         public formModificarCompra()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarComboSucursal();
             oUsuario = new Entidades.Usuario();
             oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)

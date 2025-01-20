@@ -30,7 +30,7 @@ namespace Presentacion.Caja
 
         public formAddOrEditEgresoCaja()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formAddOrEditEgresoCaja_Load(object sender, EventArgs e)

@@ -15,7 +15,7 @@ namespace Presentacion
 
         public formProveedores()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarGrilla();
         }
 

@@ -22,7 +22,7 @@ namespace Presentacion.Cortes
         List<int> idsSeleccionados = new List<int>();
         public formEtiquetas()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formEtiquetas_Load(object sender, EventArgs e)

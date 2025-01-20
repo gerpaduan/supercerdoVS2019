@@ -15,7 +15,7 @@ namespace Presentacion.CuentaCorriente
 
         public formCtasCtes()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formCtasCtes_Load(object sender, EventArgs e)

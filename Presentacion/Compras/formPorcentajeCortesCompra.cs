@@ -14,7 +14,7 @@ namespace Presentacion.Compras
         Negocio.Compra oCompraN = new Negocio.Compra();
         public formPorcentajeCortesCompra(int idCompra)
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarGrilla(idCompra);
         }
 

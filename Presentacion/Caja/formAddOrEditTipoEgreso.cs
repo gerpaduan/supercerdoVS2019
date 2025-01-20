@@ -25,7 +25,7 @@ namespace Presentacion.Caja
 
         public formAddOrEditTipoEgreso()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formAddOrEditTipoEgreso_Load(object sender, EventArgs e)

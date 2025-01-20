@@ -28,11 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle20 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle16 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle17 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle18 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle19 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grillaCortes = new System.Windows.Forms.DataGridView();
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.seleccionar = new System.Windows.Forms.DataGridViewCheckBoxColumn();
@@ -69,14 +69,14 @@
             this.codigo,
             this.corte,
             this.precioKg});
-            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle15.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle15.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle15.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle15.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle15.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaCortes.DefaultCellStyle = dataGridViewCellStyle15;
+            dataGridViewCellStyle20.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle20.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle20.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle20.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle20.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle20.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle20.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaCortes.DefaultCellStyle = dataGridViewCellStyle20;
             this.grillaCortes.Location = new System.Drawing.Point(10, 121);
             this.grillaCortes.MultiSelect = false;
             this.grillaCortes.Name = "grillaCortes";
@@ -93,8 +93,8 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.idCorte.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle16.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.idCorte.DefaultCellStyle = dataGridViewCellStyle16;
             this.idCorte.HeaderText = "ID Corte";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
@@ -114,8 +114,8 @@
             // 
             this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle17.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle17;
             this.codigo.HeaderText = "Código";
             this.codigo.MinimumWidth = 6;
             this.codigo.Name = "codigo";
@@ -126,8 +126,8 @@
             // 
             this.corte.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.corte.DataPropertyName = "corte";
-            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.corte.DefaultCellStyle = dataGridViewCellStyle13;
+            dataGridViewCellStyle18.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.corte.DefaultCellStyle = dataGridViewCellStyle18;
             this.corte.HeaderText = "Corte";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
@@ -138,10 +138,10 @@
             // 
             this.precioKg.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.precioKg.DataPropertyName = "precioKg";
-            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle14.Format = "N2";
-            dataGridViewCellStyle14.NullValue = null;
-            this.precioKg.DefaultCellStyle = dataGridViewCellStyle14;
+            dataGridViewCellStyle19.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle19.Format = "N2";
+            dataGridViewCellStyle19.NullValue = null;
+            this.precioKg.DefaultCellStyle = dataGridViewCellStyle19;
             this.precioKg.HeaderText = "Precio Kg.";
             this.precioKg.MinimumWidth = 6;
             this.precioKg.Name = "precioKg";
@@ -151,7 +151,7 @@
             // btnBuscar
             // 
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscar.Location = new System.Drawing.Point(257, 73);
+            this.btnBuscar.Location = new System.Drawing.Point(245, 72);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(67, 25);
             this.btnBuscar.TabIndex = 1;
@@ -165,13 +165,13 @@
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
             this.label9.Location = new System.Drawing.Point(7, 76);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(84, 15);
+            this.label9.Size = new System.Drawing.Size(72, 15);
             this.label9.TabIndex = 2;
-            this.label9.Text = "Codigo / Corte";
+            this.label9.Text = "Descripcion";
             // 
             // txtBuscarCorte
             // 
-            this.txtBuscarCorte.Location = new System.Drawing.Point(97, 76);
+            this.txtBuscarCorte.Location = new System.Drawing.Point(85, 75);
             this.txtBuscarCorte.Name = "txtBuscarCorte";
             this.txtBuscarCorte.Size = new System.Drawing.Size(154, 20);
             this.txtBuscarCorte.TabIndex = 0;
@@ -232,7 +232,7 @@
             // btnQuitarTodos
             // 
             this.btnQuitarTodos.ForeColor = System.Drawing.Color.Black;
-            this.btnQuitarTodos.Location = new System.Drawing.Point(591, 73);
+            this.btnQuitarTodos.Location = new System.Drawing.Point(591, 72);
             this.btnQuitarTodos.Name = "btnQuitarTodos";
             this.btnQuitarTodos.Size = new System.Drawing.Size(104, 25);
             this.btnQuitarTodos.TabIndex = 70;

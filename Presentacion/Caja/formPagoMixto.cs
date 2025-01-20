@@ -59,7 +59,7 @@ namespace Presentacion.Caja
 
         public formPagoMixto()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void txtImporteEfectivo_Enter(object sender, EventArgs e)

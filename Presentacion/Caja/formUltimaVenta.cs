@@ -28,7 +28,7 @@ namespace Presentacion.Caja
 
         public formUltimaVenta()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formUltimaVenta_Load(object sender, EventArgs e)

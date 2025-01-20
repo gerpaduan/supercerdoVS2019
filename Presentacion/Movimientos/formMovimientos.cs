@@ -34,7 +34,7 @@ namespace Presentacion
 
         public formMovimientos()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
         
         private void formMovimientos_Load(object sender, EventArgs e)

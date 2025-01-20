@@ -22,7 +22,7 @@ namespace Presentacion.Movimientos
 
         public formVerAcumulados()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formVerAcumulados_Load(object sender, EventArgs e)

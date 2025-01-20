@@ -23,7 +23,7 @@ namespace Presentacion.Caja
         int idTipoEgreso = -1;
         public formTiposEgresos()
         {
-            InitializeComponent();        
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;        
         }
 
         public void cargarGrilla()

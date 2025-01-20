@@ -26,7 +26,7 @@ namespace Presentacion.Pagos
 
         public formPagos()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void nuevo_Click(object sender, EventArgs e)

@@ -13,7 +13,7 @@ namespace Presentacion.FormPadres
     {
         public Form1()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
     }
 }

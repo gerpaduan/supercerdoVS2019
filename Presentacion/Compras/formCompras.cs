@@ -31,7 +31,7 @@ namespace Presentacion
         bool cargar = false;
         public formCompras()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
         
         private void formCompras_Load(object sender, EventArgs e)

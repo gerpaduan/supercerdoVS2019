@@ -26,7 +26,7 @@ namespace Presentacion.Caja
 
         public formBonificar()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formBonificar_Load(object sender, EventArgs e)

@@ -15,7 +15,7 @@ namespace Presentacion.Usuarios
 
         public FormValidarPermiso()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void FormValidarPermiso_Load(object sender, EventArgs e)

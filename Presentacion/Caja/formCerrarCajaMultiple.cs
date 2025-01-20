@@ -28,7 +28,7 @@ namespace Presentacion.Caja
 
         public formCerrarCajaMultiple()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formCerrarCajaMultiple_Load(object sender, EventArgs e)

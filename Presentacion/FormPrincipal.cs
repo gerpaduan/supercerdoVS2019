@@ -49,7 +49,7 @@ namespace Presentacion
 
         public FormPrincipal()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private static void compras()

@@ -16,7 +16,7 @@ namespace Presentacion.Balanza
         Utilidades.SingletonLeerPeso Leer_Peso = Utilidades.SingletonLeerPeso.CrearLeerPeso();
         public formBalanza()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formBalanza_Load(object sender, EventArgs e)

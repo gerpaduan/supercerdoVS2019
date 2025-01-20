@@ -34,7 +34,7 @@ namespace Presentacion
 
         public formLineasMov()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
         
         private void formLineasMov_Load(object sender, EventArgs e)

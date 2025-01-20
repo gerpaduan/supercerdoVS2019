@@ -27,7 +27,7 @@ namespace Presentacion.Personas
 
         public formNuevaPersona()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
         
         private void formNuevaPersona_Load(object sender, EventArgs e)

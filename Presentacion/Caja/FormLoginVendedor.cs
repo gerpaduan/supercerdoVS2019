@@ -17,7 +17,7 @@ namespace Presentacion.Caja
 
         public FormLoginVendedor()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void FormLoginVendedor_Load(object sender, EventArgs e)

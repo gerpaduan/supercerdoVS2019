@@ -27,7 +27,7 @@ namespace Presentacion.Caja
 
         public formCierresDeCaja()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formCierresDeCaja_Load(object sender, EventArgs e)

@@ -22,7 +22,7 @@ namespace Presentacion.Caja
 
         public formEgresosCajaVendedor()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void formEgresosCajaVendedor_Load(object sender, EventArgs e)

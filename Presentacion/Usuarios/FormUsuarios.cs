@@ -16,7 +16,7 @@ namespace Presentacion.Usuario
 
         public FormUsuarios()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void FormLoginVendedor_Load(object sender, EventArgs e)

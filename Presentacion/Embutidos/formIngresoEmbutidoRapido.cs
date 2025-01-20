@@ -53,7 +53,7 @@ namespace Presentacion
 
         public formIngresoEmbutidoRapido()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         #region Métodos

@@ -13,7 +13,7 @@ namespace Presentacion.Pruebas
     {
         public formTicketPrueba()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void btnImprimir_Click(object sender, EventArgs e)

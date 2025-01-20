@@ -14,7 +14,7 @@ namespace Presentacion
         Entidades.Persona oProvModificarE = new Entidades.Persona();
         public formInfoProveedor()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
         #region Acciones
 

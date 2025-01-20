@@ -16,7 +16,7 @@ namespace Presentacion.Caja
 
         public FormSelectPuntoExpendio()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         private void FormSelectPuntoExpendio_Load(object sender, EventArgs e)

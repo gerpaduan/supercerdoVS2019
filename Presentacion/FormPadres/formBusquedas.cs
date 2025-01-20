@@ -13,7 +13,7 @@ namespace Presentacion
     {
         public formBusquedas()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
     }
 

@@ -41,5 +41,15 @@ namespace Presentacion
         {
             MessageBox.Show(e.Exception.Message);
         }
+
+        public static class ConfiguracionGlobal
+        {
+            public static Icon IconoComun = new Icon("\\Resources\\CarniSys_ICONO.ico");
+
+            public static void AplicarIcono(Form formulario)
+            {
+                formulario.Icon = IconoComun;
+            }
+        }
     }
 }

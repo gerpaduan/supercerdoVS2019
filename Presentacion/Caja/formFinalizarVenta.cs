@@ -19,7 +19,7 @@ namespace Presentacion.Caja
 
         public formFinalizarVenta()
         {
-            InitializeComponent();
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
         public void enviarImprimirCbte()

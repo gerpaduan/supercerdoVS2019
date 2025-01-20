@@ -35,7 +35,7 @@ namespace Presentacion
 
         public formLineasEmb()
         {
-            InitializeComponent();        
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;        
         }
 
         private void formLineasEmb_Load(object sender, EventArgs e)

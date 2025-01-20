@@ -33,7 +33,7 @@ namespace Presentacion
         bool cargar = false;
         public formFormulas()
         {
-            InitializeComponent();        
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;        
         }
 
         public void cargarGrilla()

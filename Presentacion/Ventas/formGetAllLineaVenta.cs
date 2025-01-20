@@ -40,7 +40,7 @@ namespace Presentacion
         bool cargar = false;
         public formGetAllLineaVenta()
         {
-            InitializeComponent();            
+            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
         }
 
         public void cargarGrilla()
