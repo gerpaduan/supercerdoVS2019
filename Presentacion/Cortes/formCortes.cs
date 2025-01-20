@@ -667,13 +667,6 @@ namespace Presentacion
             }
         }
 
-        private void etiquetas_Click(object sender, EventArgs e)
-        {
-            formEtiquetas frmEtiquetas = new formEtiquetas();
-            frmEtiquetas.dtCortes = dtCortesFiltrado;
-            frmEtiquetas.Show();
-            //etiquetaPDF();
-        }
         private void etiquetaPDF()
         {
             // Ruta donde se guardará el archivo PDF
@@ -866,6 +859,13 @@ namespace Presentacion
             }
         }
 
+        private void etiquetas_Click_1(object sender, EventArgs e)
+        {
+            formEtiquetas frmEtiquetas = new formEtiquetas();
+            frmEtiquetas.dtCortes = dtCortesFiltrado;
+            frmEtiquetas.Show();
+            //etiquetaPDF();
+        }
 
         private string MostrarDialogoNombreArchivo()
         {

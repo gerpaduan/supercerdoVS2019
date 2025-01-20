@@ -80,7 +80,7 @@ namespace Presentacion.Cortes
             }
 
             grillaCortes.DataSource = dtCortesFiltrado;
-            txtCantItems.Text = dtCortesFiltrado.Rows.Count.ToString();
+            txtCantItems.Text = idsSeleccionados.Count.ToString();
 
 
             foreach (DataGridViewRow fila in grillaCortes.Rows)
@@ -114,7 +114,6 @@ namespace Presentacion.Cortes
                     else
                         idsSeleccionados.Remove(idCorteSelected);   
                 }
-                txtBuscarCorte.Focus();
                 txtCantItems.Text = idsSeleccionados.Count.ToString();
             }
         }
