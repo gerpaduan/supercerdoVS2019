@@ -150,6 +150,11 @@ namespace Presentacion.Cortes
 
         private void button1_Click(object sender, EventArgs e)
         {
+            if (idsSeleccionados.Count == 0)
+            {
+                MessageBox.Show("No se ha seleccionado ningún producto.");
+                return;
+            }
             etiquetaPDF();
         }
         private void etiquetaPDF()
@@ -222,10 +227,15 @@ namespace Presentacion.Cortes
             decimal[] precios = new decimal[totalProductos]; ;// { 100000.50m, 2.30m, 1.20m, 0.80m, 2.50m, 3.10m, 0.90m, 1.80m };
             string[] fechaActual = new string[totalProductos]; ; DateTime.Now.ToString("dd/MM/yyyy");
             iTextSharp.text.Font[] fontProduct = new iTextSharp.text.Font[totalProductos];
+            iTextSharp.text.Font[] fontPrecioProd = new iTextSharp.text.Font[totalProductos];
 
             iTextSharp.text.Font fontProducto1 = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 15, iTextSharp.text.Font.NORMAL);
             iTextSharp.text.Font fontProducto2 = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 13, iTextSharp.text.Font.NORMAL);
             iTextSharp.text.Font fontProducto3 = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 12, iTextSharp.text.Font.NORMAL);
+
+            iTextSharp.text.Font fontPrecio1 =new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 30, iTextSharp.text.Font.BOLD);
+            iTextSharp.text.Font fontPrecio2 = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 27, iTextSharp.text.Font.BOLD);
+
             int longMaxFuente1 = 25;
             int longMaxFuente2 = 45;
             for (int i = 0; i < dtCortesFiltrado.Rows.Count; i++)
@@ -252,6 +262,7 @@ namespace Presentacion.Cortes
                 }
 
                 precios[i] = Convert.ToDecimal(dtCortesFiltrado.Rows[i]["precioKg"].ToString());
+                fontPrecioProd[i] = precios[i] > 99999 ? fontPrecio2 : fontPrecio1;
                 //Numérico es difente a ese intervalo se saltea 1-99.997 
                 fechaActual[i] = "COD: " + dtCortesFiltrado.Rows[i]["codigo"].ToString() + " \t | \t " + DateTime.Now.Date.ToShortDateString();
 
@@ -288,7 +299,7 @@ namespace Presentacion.Cortes
                         // Crear la fuente para el nombre del producto (normal)
                         iTextSharp.text.Font fontProducto = fontProduct[productoIndex]; //new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 15, iTextSharp.text.Font.NORMAL);
                         // Crear la fuente para el precio (negrita y más grande)
-                        iTextSharp.text.Font fontPrecio = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 30, iTextSharp.text.Font.BOLD);
+                        iTextSharp.text.Font fontPrecio = fontPrecioProd[productoIndex];// new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 30, iTextSharp.text.Font.BOLD);
                         iTextSharp.text.Font fuenteFecha = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 6, iTextSharp.text.Font.ITALIC, BaseColor.DARK_GRAY);
 
                         // Primera fila: Nombre del producto
@@ -303,7 +314,7 @@ namespace Presentacion.Cortes
                         tablaEtiqueta.AddCell(celdaProducto);
 
                         // Segunda fila: Precio
-                        PdfPCell celdaPrecio = new PdfPCell(new Phrase($"${precios[productoIndex]:0.00}", fontPrecio))
+                        PdfPCell celdaPrecio = new PdfPCell(new Phrase($"${precios[productoIndex]:#,0.00}", fontPrecio))
                         {
                             Border = iTextSharp.text.Rectangle.NO_BORDER,
                             HorizontalAlignment = Element.ALIGN_CENTER,

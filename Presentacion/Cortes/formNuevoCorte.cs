@@ -26,6 +26,7 @@ namespace Presentacion
 
         bool modificar = false;
         bool huboModificacion = false;
+        bool actualizarFormCortes = false;
 
         public formNuevoCorte()
         {
@@ -137,7 +138,9 @@ namespace Presentacion
                     {
                         if (!existeCodigoCorte())
                         {
+                            string mensajeExito = "El corte se " + (oCorteE.idCorte != 0 ? "modificó" : "agregó") +" correctamente.";
                             oCorteN.addOrEditCorte(oCorteE);
+                            actualizarFormCortes = true;
                             if (oFrmInfoCorte != null)
                             {
                                 oFrmInfoCorte.recibirCorteModificado(oCorteE);
@@ -148,7 +151,7 @@ namespace Presentacion
                                 this.Close();
 
 
-                            MessageBox.Show("El corte se agregó correctamente.", "",
+                            MessageBox.Show(mensajeExito, "",
                                 MessageBoxButtons.OK);
                             limpiarCampos();
                             txtCodigo.Focus();
@@ -431,11 +434,11 @@ namespace Presentacion
         }
 
         private void formNuevoCorte_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            if (frmCorte != null)
+        {            
+            if (actualizarFormCortes && frmCorte != null)
             {
-                frmCorte.cargarGrilla();
-                //frmCorte.ExportarDataTableAExcel();
+                //para evitar cargar la grilla, solo se muestra lblActualizar si hubo modificaciones en los cortes
+                frmCorte.actualizarForm_Mensaje();
             }
         }
 

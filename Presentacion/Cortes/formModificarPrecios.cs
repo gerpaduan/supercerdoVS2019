@@ -114,7 +114,10 @@ namespace Presentacion
 
                 if (frmCorte != null)
                 {
-                    frmCorte.cargarGrilla();
+                    //para evitar cargar la grilla, solo se muestra lblActualizar si hubo modificaciones en los cortes
+                    frmCorte.actualizarForm_Mensaje();
+                    //frmCorte.cargarGrilla();
+
                 }
                 this.Close();
             }
@@ -125,7 +128,9 @@ namespace Presentacion
                     oCorteN.editPrecioCorte(oCorteE);
                     if (frmCorte != null)
                     {
-                        frmCorte.cargarGrilla();
+                        //para evitar cargar la grilla, solo se muestra lblActualizar si hubo modificaciones en los cortes
+                        frmCorte.actualizarForm_Mensaje();
+                        //frmCorte.cargarGrilla();
                     }
                     this.Close();
                 }

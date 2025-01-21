@@ -51,9 +51,6 @@ namespace Presentacion
 
         private void nuevoCorte()
         {
-            //formNuevoCorte frmNuevoCorte = new formNuevoCorte();
-            //frmNuevoCorte.frmCorte = this;
-            //frmNuevoCorte.ShowDialog(this);
 
             if (Application.OpenForms["formNuevoCorte"] != null)
             {
@@ -63,12 +60,6 @@ namespace Presentacion
             }
             else
             {
-                //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-                //frmLogin.soloActivos = true;
-                //frmLogin.ShowDialog(this);
-
-                //if (oUsuario == null)
-                //    return;
 
                 formNuevoCorte frmNuevoCorte = new formNuevoCorte();
                 frmNuevoCorte.frmCorte = this;
@@ -283,6 +274,11 @@ namespace Presentacion
             comboCargado = true;
             //cargarGrilla();
             this.txtBuscarCorte.Select();
+        }
+
+        public void actualizarForm_Mensaje()
+        {
+            lblActualizar.Visible = true;
         }
 
         private void txtCodigoDesde_TextChanged(object sender, EventArgs e)
@@ -862,9 +858,17 @@ namespace Presentacion
 
         private void etiquetas_Click_1(object sender, EventArgs e)
         {
-            formEtiquetas frmEtiquetas = new formEtiquetas();
-            frmEtiquetas.dtCortes = dtCortesFiltrado;
-            frmEtiquetas.Show();
+            if (Application.OpenForms["formEtiquetas"] != null)
+            {
+                Application.OpenForms["formEtiquetas"].Activate();
+                Application.OpenForms["formEtiquetas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formEtiquetas frmEtiquetas = new formEtiquetas();
+                frmEtiquetas.dtCortes = dtCortesFiltrado;
+                frmEtiquetas.Show();
+            }
             //etiquetaPDF();
         }
 
