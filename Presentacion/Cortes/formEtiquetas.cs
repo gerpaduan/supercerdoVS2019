@@ -237,14 +237,14 @@ namespace Presentacion.Cortes
             iTextSharp.text.Font fontPrecio2 = new iTextSharp.text.Font(iTextSharp.text.Font.FontFamily.HELVETICA, 27, iTextSharp.text.Font.BOLD);
 
             int longMaxFuente1 = 25;
-            int longMaxFuente2 = 45;
+            int longMaxFuente2 = 40;
             for (int i = 0; i < dtCortesFiltrado.Rows.Count; i++)
             {
                 int longTextoProd = dtCortesFiltrado.Rows[i]["corte"].ToString().Length;
 
                 if (longTextoProd > longMaxFuente2)
                 {
-                    nombresProductos[i] = dtCortesFiltrado.Rows[i]["corte"].ToString().Substring(0, longMaxFuente2);
+                    nombresProductos[i] = dtCortesFiltrado.Rows[i]["corte"].ToString();//.Substring(0, longMaxFuente2);
                     fontProduct[i] = fontProducto3;
                 }
                 else

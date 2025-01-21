@@ -304,6 +304,7 @@ namespace Presentacion
             if (!comboCargado || dtCortes == null)
                 return;
 
+            dtCortesFiltrado.Clear();
             dtCortesFiltrado = dtCortes.Clone();
             // Presuming the DataTable has a column named Date.
             string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";
@@ -316,10 +317,11 @@ namespace Presentacion
             }
             if (!string.IsNullOrEmpty(txtBuscarCorte.Text))
             {
-                string buscaPorCodigo = (long.TryParse(txtBuscarCorte.Text, out long numero)) ? "codigo = " + numero : "true";
-
                 expresion += " and ";
-                expresion += " ( corte like \'" + txtBuscarCorte.Text + "%\' or " + buscaPorCodigo +" ) ";
+                if (long.TryParse(txtBuscarCorte.Text, out long numero))
+                    expresion += " codigo = " + numero;
+                else
+                    expresion += "  corte like \'%" + txtBuscarCorte.Text + "%\'";
             }
             if (!string.IsNullOrEmpty(txtBuscarMaestro.Text))
             {
@@ -328,13 +330,13 @@ namespace Presentacion
             }
             if (!string.IsNullOrEmpty(txtMarca.Text) && !txtMarca.Text.ToUpper().Equals("TODAS"))
             {
-                expresion += " and ";
+                expresion += " and "; 
                 expresion += !string.IsNullOrEmpty(txtMarca.Text) ? "marca = \'" + txtMarca.Text + "\'" : "true";
             }
 
-            DataRow[] foundRows;
+            dtCortes.CaseSensitive = false;
             // Use the Select method to find all rows matching the filter.
-            foundRows = dtCortes.Select(expresion);//, "codigo");
+            DataRow[] foundRows = dtCortes.Select(expresion);//, "codigo");
 
             foreach (DataRow row in foundRows)
             {
