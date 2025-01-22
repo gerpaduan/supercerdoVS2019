@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formBuscarCorte));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtBuscarCorte = new System.Windows.Forms.TextBox();
@@ -40,14 +41,15 @@
             this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.precioKg = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.SuspendLayout();
             // 
             // panel1
             // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.panel1.Controls.Add(this.groupBox1);
             this.panel1.Controls.Add(this.txtBuscarCorte);
@@ -55,7 +57,7 @@
             this.panel1.Controls.Add(this.label9);
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(443, 58);
+            this.panel1.Size = new System.Drawing.Size(525, 58);
             this.panel1.TabIndex = 14;
             // 
             // groupBox1
@@ -65,7 +67,7 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox1.Location = new System.Drawing.Point(14, 42);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(415, 7);
+            this.groupBox1.Size = new System.Drawing.Size(497, 7);
             this.groupBox1.TabIndex = 26;
             this.groupBox1.TabStop = false;
             // 
@@ -73,7 +75,7 @@
             // 
             this.txtBuscarCorte.Location = new System.Drawing.Point(90, 21);
             this.txtBuscarCorte.Name = "txtBuscarCorte";
-            this.txtBuscarCorte.Size = new System.Drawing.Size(121, 20);
+            this.txtBuscarCorte.Size = new System.Drawing.Size(166, 20);
             this.txtBuscarCorte.TabIndex = 1;
             this.txtBuscarCorte.TextChanged += new System.EventHandler(this.btnBuscarCorte_Click);
             this.txtBuscarCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
@@ -83,7 +85,7 @@
             this.btnBuscarCorte.AccessibleDescription = "";
             this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorte.Image")));
-            this.btnBuscarCorte.Location = new System.Drawing.Point(218, 20);
+            this.btnBuscarCorte.Location = new System.Drawing.Point(262, 19);
             this.btnBuscarCorte.Name = "btnBuscarCorte";
             this.btnBuscarCorte.Size = new System.Drawing.Size(28, 23);
             this.btnBuscarCorte.TabIndex = 5;
@@ -106,9 +108,9 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(226, 306);
+            this.btnSeleccionar.Location = new System.Drawing.Point(214, 334);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(99, 27);
+            this.btnSeleccionar.Size = new System.Drawing.Size(156, 27);
             this.btnSeleccionar.TabIndex = 3;
             this.btnSeleccionar.TabStop = false;
             this.btnSeleccionar.Text = "&Seleccionar";
@@ -120,9 +122,9 @@
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(331, 306);
+            this.btnCancelar.Location = new System.Drawing.Point(376, 334);
             this.btnCancelar.Name = "btnCancelar";
-            this.btnCancelar.Size = new System.Drawing.Size(99, 27);
+            this.btnCancelar.Size = new System.Drawing.Size(135, 27);
             this.btnCancelar.TabIndex = 4;
             this.btnCancelar.TabStop = false;
             this.btnCancelar.Text = "&Cerrar";
@@ -133,23 +135,24 @@
             // 
             this.grillaCortes.AllowUserToAddRows = false;
             this.grillaCortes.AllowUserToResizeRows = false;
-            this.grillaCortes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaCortes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCortes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.grillaCortes.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.Raised;
             this.grillaCortes.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaCortes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.idCorte,
             this.Codigo,
-            this.corte});
+            this.corte,
+            this.precioKg});
             this.grillaCortes.Location = new System.Drawing.Point(15, 64);
             this.grillaCortes.MultiSelect = false;
             this.grillaCortes.Name = "grillaCortes";
             this.grillaCortes.ReadOnly = true;
             this.grillaCortes.RowHeadersVisible = false;
             this.grillaCortes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaCortes.Size = new System.Drawing.Size(414, 236);
+            this.grillaCortes.Size = new System.Drawing.Size(496, 264);
             this.grillaCortes.StandardTab = true;
             this.grillaCortes.TabIndex = 2;
             this.grillaCortes.TabStop = false;
@@ -165,11 +168,13 @@
             // 
             // Codigo
             // 
+            this.Codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.Codigo.DataPropertyName = "Codigo";
             this.Codigo.FillWeight = 37.68456F;
             this.Codigo.HeaderText = "Código";
             this.Codigo.Name = "Codigo";
             this.Codigo.ReadOnly = true;
+            this.Codigo.Width = 65;
             // 
             // corte
             // 
@@ -179,16 +184,28 @@
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
             // 
+            // precioKg
+            // 
+            this.precioKg.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.precioKg.DataPropertyName = "precioKg";
+            dataGridViewCellStyle2.Format = "N2";
+            this.precioKg.DefaultCellStyle = dataGridViewCellStyle2;
+            this.precioKg.HeaderText = "Precio";
+            this.precioKg.Name = "precioKg";
+            this.precioKg.ReadOnly = true;
+            this.precioKg.Width = 62;
+            // 
             // formBuscarCorte
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancelar;
-            this.ClientSize = new System.Drawing.Size(442, 340);
+            this.ClientSize = new System.Drawing.Size(524, 368);
             this.Controls.Add(this.grillaCortes);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.btnCancelar);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
             this.MaximizeBox = false;
             this.Name = "formBuscarCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -210,12 +227,11 @@
         protected System.Windows.Forms.Button btnCancelar;
         private System.Windows.Forms.Button btnBuscarCorte;
         protected System.Windows.Forms.DataGridView grillaCortes;
+        private System.Windows.Forms.TextBox txtBuscarCorte;
+        private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
         private System.Windows.Forms.DataGridViewTextBoxColumn Codigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn corte;
-        private System.Windows.Forms.TextBox txtBuscarCorte;
-        private System.Windows.Forms.GroupBox groupBox1;
-        
-
+        private System.Windows.Forms.DataGridViewTextBoxColumn precioKg;
     }
 }

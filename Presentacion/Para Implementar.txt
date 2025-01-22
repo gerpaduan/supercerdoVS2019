@@ -254,4 +254,6 @@ ALTER PROCEDURE [dbo].[agregarVenta]
 
 ALTER PROCEDURE [dbo].[modificarVenta] 
 
+ALTER PROCEDURE [dbo].[buscarCorteSinMaestro] 
+
 **********************

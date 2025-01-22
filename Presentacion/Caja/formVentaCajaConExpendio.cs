@@ -110,6 +110,7 @@ namespace Presentacion.Caja
         bool esCodBarraInterno , esCodBarraEstandar = false;
         string codigoEnCodBarra = "", segundoModulo = "";
         public float pagoMixtoEfectivo = 0f;
+        long codigoBuscado = 0;//si se llama al form buscar codigo se set codigoBuscado con el codigo del producto
         #endregion
 
 
@@ -593,12 +594,13 @@ namespace Presentacion.Caja
             oVentaE.DiaFestivo = "";
             oVentaE.Observaciones = txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
-            oVentaE.EnCtaCte = checkCtaCte.Checked; 
+            oVentaE.EnCtaCte = checkCtaCte.Checked;
             //Si no es factura y FormaPago <> (Efectivo && CTACTE) y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'            
-            oVentaE.TipoComprobante = !factura ? Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()) : (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()) ||
-                oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())) && 
-                comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
-                Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
+            oVentaE.TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString());
+                //!factura ? Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString()) : (!(oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()) ||
+                //oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString())) && 
+                ////comboTipoComprobante.SelectedItem.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString())) ?
+                //Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.B.ToString()) : Convert.ToChar(comboTipoComprobante.SelectedItem.ToString());
             oVentaE.PagoMixtoEfectivo = pagoMixtoEfectivo;
             oVentaE.Cuit = txtCuit.Text;
             oVentaE.Email = txtDomicilio.Text;
@@ -1585,9 +1587,9 @@ namespace Presentacion.Caja
 
             oCorteE = corte;
 
+            codigoBuscado = oCorteE.codigo;
             this.txtCodigo.Text = Convert.ToString(oCorteE.codigo);
             this.txtCorte.Text = oCorteE.corte;
-
             this.txtCodigo.Focus();
 
         }
@@ -1687,6 +1689,11 @@ namespace Presentacion.Caja
             if ((txtCodigo.Text.Length == 8 && esDigitoControlCorrectoEAN8(false)) ||
                txtCodigo.Text.Length == 13 && esDigitoControlCorrectoEAN13(false))
             {
+                //si se buscó el codigo en el formCortes y es EAN se forza a ingresar la cantidad
+                //evitando así la carga por error
+                //if (codigoBuscado != 0)
+                //    return;
+
                 // Desplazar el foco a otro control para disparar el evento Leave.
                 this.ActiveControl = null;  // Esto simula que el usuario sale del TextBox.
                 txtCodigo.Focus();
@@ -1737,12 +1744,20 @@ namespace Presentacion.Caja
                     // registrarTemporalLineaVenta();
                 }
             }
+                        
 
             if (esCodBarraEstandar)
             {
+                //Si se llamó formCortes evitar el ingreso automatico de la cantidad
+                if (codigoBuscado != 0 && codigoBuscado == oCorteE.codigo)
+                {
+                    return;
+                }
+                codigoBuscado = 0;
+
                 ///si el CodigoBarra es de un producto pesable, Se lee el codigo, y se lee balanza. El usuario deberá agregar manualmente
                 ///
-                    if (oCorteE.Pesable)
+                if (oCorteE.Pesable)
                 {
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza;
                     btnAgregar.Focus();
@@ -2451,7 +2466,7 @@ namespace Presentacion.Caja
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
             try
-                {
+            {
                 ///Al leer con la pistola se aplica el tab
                 ///entonces aca se valida si es codigo de barra cuando todo el campo codigo está cargado 
                 ///y no surge el problema de cortar un ean13 en 8 digitos
@@ -2467,9 +2482,6 @@ namespace Presentacion.Caja
                 }
 
                 this.txtCodigo.BackColor = enableColor;
-                ///se borra codigo viejo
-                //if ((oCorteE != null && oCorteE.idCorte > 0 && 
-                //    oCorteE.tipo.Equals("Unidad") && checkLeerPeso.Checked) || !FormPrincipal.leerBalanza)
 
                 if ((!string.IsNullOrEmpty(txtCodigo.Text) && oCorteE != null && oCorteE.idCorte > 0 &&
                     !oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && checkLeerPeso.Checked) ||
@@ -2491,7 +2503,7 @@ namespace Presentacion.Caja
 
                 if (cartelPrimerCorteVendedor && !this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
                 {
-                        int cantCajaVenta = 0;
+                    int cantCajaVenta = 0;
                     foreach (Form frm in Application.OpenForms)
                     {
                         if (frm.GetType() == typeof(formVentaCajaConExpendio))

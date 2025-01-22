@@ -807,7 +807,7 @@ namespace wsAFIPvs2008
                        {
                            oFactuElec.RazonSocialAFIP = txtRazonSocial.Text;
                            oFactuElec.DomicilioAFIP = txtDomicilio.Text;
-                           oFactuElec.CondicionIvaAFIP = comboIva.Text;
+                           //oFactuElec.CondicionIvaAFIP = comboIva.Text;
                            oVentaN.addOrEditFactuElec(oFactuElec);
                            //imprimirTicket(oFactuElec.esFacturaA(TiposComprobantesCMB.SelectedValue.ToString()), respuesta);
                            limpiarCampos(service);
