@@ -14,8 +14,10 @@ namespace Presentacion.Caja
     public partial class formIngresoBilletes : Form
     {
         public TextBox txtBoxAcargar;
-        public float total = 0, cien = 0, cincuenta = 0, 
+        public float total = 0, veintemil= 0, diezmil = 0, dosmil= 0, mil= 0, quinientos = 0, doscientos = 0, cien = 0, cincuenta = 0, 
             veinte = 0, diez = 0, cinco = 0, dos = 0, monedas = 0;
+        public string[] cantBilletes = new string[12];
+        public string detalleCantBilletas = "";
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -66,9 +68,40 @@ namespace Presentacion.Caja
 
                 switch (billete)
                 {
+                    case 20000:
+                        veintemil = totalBillete;
+                        txt20000Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[0] = objectKeyDown.Text + " de " + "20M";
+                        break;
+                    case 10000:
+                        diezmil = totalBillete;
+                        txt10000Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[1] = objectKeyDown.Text + " de " + "10M";
+                        break;
+                    case 2000:
+                        dosmil = totalBillete;
+                        txt2000Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[2] = objectKeyDown.Text + " de " + "2M";
+                        break;
+                    case 1000:
+                        mil = totalBillete;
+                        txt1000Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[3] = objectKeyDown.Text + " de " + "1M";
+                        break;
+                    case 500:
+                        quinientos = totalBillete;
+                        txt500Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[4] = objectKeyDown.Text + " de " + "500";
+                        break;
+                    case 200:
+                        doscientos = totalBillete;
+                        txt200Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[5] = objectKeyDown.Text + " de " + "200";
+                        break;
                     case 100:
                         cien = totalBillete;
                         txt100Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[6] = objectKeyDown.Text + " de " + "100";
                         break;
                     case 50:
                         cincuenta = totalBillete;
@@ -82,19 +115,11 @@ namespace Presentacion.Caja
                         diez = totalBillete;
                         txt10Total.Text = totalBillete.ToString("F2");
                         break;
-                    case 5:
-                        cinco = totalBillete;
-                        txt5Total.Text = totalBillete.ToString("F2");
-                        break;
-                    case 2:
-                        dos = totalBillete;
-                        txt2Total.Text = totalBillete.ToString("F2");
-                        break;
                     default:
                         break;
                 }
             }
-            total = cien + cincuenta + veinte + diez + cinco + dos + monedas;
+            total = veintemil + diezmil + dosmil + mil + quinientos + doscientos + cien + cincuenta + veinte + diez + cinco + dos + monedas;
             txtTotalCambio.Text = (total - cien).ToString("F2");
             txtTotal.Text = total.ToString("F2");
         }
@@ -102,6 +127,13 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
+            detalleCantBilletas = "[ Billetes: ";
+            for (int i = 0; i < cantBilletes.Length; i++)
+            {
+                detalleCantBilletas += cantBilletes[i] != null ? cantBilletes[i] : "0";
+                detalleCantBilletas += " | ";
+            }
+            detalleCantBilletas += " ]";
             txtBoxAcargar.Text = txtTotal.Text;
             this.Close();
         }

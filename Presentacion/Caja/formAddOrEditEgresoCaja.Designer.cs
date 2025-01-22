@@ -35,6 +35,8 @@
             this.txtFechaTexto = new System.Windows.Forms.TextBox();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.txtIdEgresoCaja = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.txtTipoEgresoCaja = new System.Windows.Forms.TextBox();
             this.lblDetalle = new System.Windows.Forms.Label();
             this.lblMonto = new System.Windows.Forms.Label();
@@ -60,8 +62,7 @@
             this.txtModifPor = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.txtIdEgresoCaja = new System.Windows.Forms.TextBox();
+            this.btnIngresoBilletes = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -69,8 +70,8 @@
             // 
             // pnlBuscar
             // 
-            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.checkTicket);
             this.pnlBuscar.Controls.Add(this.btnImprimir);
@@ -96,7 +97,7 @@
             this.checkTicket.ForeColor = System.Drawing.Color.Cornsilk;
             this.checkTicket.Location = new System.Drawing.Point(418, 43);
             this.checkTicket.Name = "checkTicket";
-            this.checkTicket.Size = new System.Drawing.Size(64, 20);
+            this.checkTicket.Size = new System.Drawing.Size(63, 20);
             this.checkTicket.TabIndex = 51;
             this.checkTicket.TabStop = false;
             this.checkTicket.Text = "&Ticket";
@@ -143,6 +144,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.btnIngresoBilletes);
             this.groupBox1.Controls.Add(this.txtIdEgresoCaja);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.txtTipoEgresoCaja);
@@ -163,6 +165,29 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Egreso Caja";
             // 
+            // txtIdEgresoCaja
+            // 
+            this.txtIdEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtIdEgresoCaja.Location = new System.Drawing.Point(92, 23);
+            this.txtIdEgresoCaja.Name = "txtIdEgresoCaja";
+            this.txtIdEgresoCaja.ReadOnly = true;
+            this.txtIdEgresoCaja.Size = new System.Drawing.Size(158, 22);
+            this.txtIdEgresoCaja.TabIndex = 53;
+            this.txtIdEgresoCaja.TabStop = false;
+            this.txtIdEgresoCaja.Text = "-";
+            this.txtIdEgresoCaja.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label1.Location = new System.Drawing.Point(65, 26);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(20, 16);
+            this.label1.TabIndex = 51;
+            this.label1.Text = "ID";
+            // 
             // txtTipoEgresoCaja
             // 
             this.txtTipoEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -181,7 +206,7 @@
             this.lblDetalle.ForeColor = System.Drawing.Color.Cornsilk;
             this.lblDetalle.Location = new System.Drawing.Point(35, 136);
             this.lblDetalle.Name = "lblDetalle";
-            this.lblDetalle.Size = new System.Drawing.Size(51, 16);
+            this.lblDetalle.Size = new System.Drawing.Size(50, 16);
             this.lblDetalle.TabIndex = 47;
             this.lblDetalle.Text = "Detalle";
             // 
@@ -192,7 +217,7 @@
             this.lblMonto.ForeColor = System.Drawing.Color.Cornsilk;
             this.lblMonto.Location = new System.Drawing.Point(41, 112);
             this.lblMonto.Name = "lblMonto";
-            this.lblMonto.Size = new System.Drawing.Size(45, 16);
+            this.lblMonto.Size = new System.Drawing.Size(44, 16);
             this.lblMonto.TabIndex = 46;
             this.lblMonto.Text = "Monto";
             // 
@@ -213,7 +238,7 @@
             this.lblDescripcion.ForeColor = System.Drawing.Color.Cornsilk;
             this.lblDescripcion.Location = new System.Drawing.Point(6, 84);
             this.lblDescripcion.Name = "lblDescripcion";
-            this.lblDescripcion.Size = new System.Drawing.Size(80, 16);
+            this.lblDescripcion.Size = new System.Drawing.Size(79, 16);
             this.lblDescripcion.TabIndex = 44;
             this.lblDescripcion.Text = "Descripción";
             // 
@@ -258,7 +283,7 @@
             this.lblTipo.ForeColor = System.Drawing.Color.Cornsilk;
             this.lblTipo.Location = new System.Drawing.Point(50, 56);
             this.lblTipo.Name = "lblTipo";
-            this.lblTipo.Size = new System.Drawing.Size(36, 16);
+            this.lblTipo.Size = new System.Drawing.Size(35, 16);
             this.lblTipo.TabIndex = 41;
             this.lblTipo.Text = "Tipo";
             // 
@@ -291,7 +316,7 @@
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
             this.label4.Location = new System.Drawing.Point(44, 17);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(60, 16);
+            this.label4.Size = new System.Drawing.Size(59, 16);
             this.label4.TabIndex = 8;
             this.label4.Text = "Sucursal";
             // 
@@ -302,7 +327,7 @@
             this.label16.ForeColor = System.Drawing.Color.Cornsilk;
             this.label16.Location = new System.Drawing.Point(49, 42);
             this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(55, 16);
+            this.label16.Size = new System.Drawing.Size(54, 16);
             this.label16.TabIndex = 10;
             this.label16.Text = "Usuario";
             // 
@@ -326,7 +351,7 @@
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
             this.label3.Location = new System.Drawing.Point(269, 16);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(46, 16);
+            this.label3.Size = new System.Drawing.Size(45, 16);
             this.label3.TabIndex = 4;
             this.label3.Text = "Fecha";
             // 
@@ -454,28 +479,17 @@
             this.panel1.Size = new System.Drawing.Size(292, 96);
             this.panel1.TabIndex = 15;
             // 
-            // label1
+            // btnIngresoBilletes
             // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(65, 26);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(21, 16);
-            this.label1.TabIndex = 51;
-            this.label1.Text = "ID";
-            // 
-            // txtIdEgresoCaja
-            // 
-            this.txtIdEgresoCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtIdEgresoCaja.Location = new System.Drawing.Point(92, 23);
-            this.txtIdEgresoCaja.Name = "txtIdEgresoCaja";
-            this.txtIdEgresoCaja.ReadOnly = true;
-            this.txtIdEgresoCaja.Size = new System.Drawing.Size(158, 22);
-            this.txtIdEgresoCaja.TabIndex = 53;
-            this.txtIdEgresoCaja.TabStop = false;
-            this.txtIdEgresoCaja.Text = "-";
-            this.txtIdEgresoCaja.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresoBilletes.ForeColor = System.Drawing.Color.Black;
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(256, 109);
+            this.btnIngresoBilletes.Name = "btnIngresoBilletes";
+            this.btnIngresoBilletes.Size = new System.Drawing.Size(36, 24);
+            this.btnIngresoBilletes.TabIndex = 54;
+            this.btnIngresoBilletes.Text = "...";
+            this.btnIngresoBilletes.UseVisualStyleBackColor = true;
+            this.btnIngresoBilletes.Click += new System.EventHandler(this.btnIngresoBilletes_Click);
             // 
             // formAddOrEditEgresoCaja
             // 
@@ -540,5 +554,6 @@
         protected System.Windows.Forms.Button btnImprimir;
         private System.Windows.Forms.TextBox txtIdEgresoCaja;
         protected System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnIngresoBilletes;
     }
 }

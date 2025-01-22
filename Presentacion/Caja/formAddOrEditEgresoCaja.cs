@@ -8,6 +8,8 @@ using System.Text;
 using System.Windows.Forms;
 using System.Configuration;
 using Utilidades;
+using static Presentacion.Caja.formCerrarCaja;
+using System.Text.RegularExpressions;
 
 namespace Presentacion.Caja
 {
@@ -398,6 +400,33 @@ namespace Presentacion.Caja
         {
             checkTicket.Checked = true;
             imprimirTicket();
+        }
+
+        private void btnIngresoBilletes_Click(object sender, EventArgs e)
+        {
+
+            formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
+            frmIngresoBilletes.txtBoxAcargar = this.txtMonto;
+            frmIngresoBilletes.ShowDialog();
+            if (!frmIngresoBilletes.txtBoxAcargar.Text.Equals("0") )
+            {
+                txtMonto.Text = frmIngresoBilletes.txtBoxAcargar.Text;
+            }
+
+            string textoOriginal = txtDetalle.Text;
+            string delimitadorInicio = "[";
+            string delimitadorFin = "]";
+            string textoReemplazo = frmIngresoBilletes.detalleCantBilletas.ToString();
+
+            // Expresión regular para encontrar texto entre delimitadores
+            string patron = $@"{Regex.Escape(delimitadorInicio)}(.*?){Regex.Escape(delimitadorFin)}";
+
+            // Reemplazar el texto entre delimitadores
+            string resultado = textoOriginal.Contains("[") ?
+                Regex.Replace(textoOriginal, patron, $"{delimitadorInicio}{textoReemplazo}{delimitadorFin}") :
+                textoOriginal + textoReemplazo;
+            resultado = string.IsNullOrEmpty(textoReemplazo) && resultado.Contains("///") ? resultado.Replace("///", "") : resultado;
+            txtDetalle.Text =  resultado;
         }
     }
 }
