@@ -404,7 +404,6 @@ namespace Presentacion.Caja
 
         private void btnIngresoBilletes_Click(object sender, EventArgs e)
         {
-
             formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
             frmIngresoBilletes.txtBoxAcargar = this.txtMonto;
             frmIngresoBilletes.ShowDialog();

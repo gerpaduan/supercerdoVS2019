@@ -1973,7 +1973,7 @@ namespace Presentacion.Caja
             timer1.Enabled = false;
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
-                "F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
+                "F3 = Cálculo Billetes  |F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
                 "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
             comboExpendioEstado.SelectedIndex = 0;
             if (oUsuario != null)
@@ -2084,7 +2084,7 @@ namespace Presentacion.Caja
                     }
                     break;
                 case Keys.F3:
-                        sumarUltimasDosVentas();
+                        calculoBilletes();
                         break;
                 case Keys.F4:
                         if (!estaBloqueado())
@@ -2159,6 +2159,11 @@ namespace Presentacion.Caja
             }
         }
 
+        private void calculoBilletes()
+        {
+            formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
+            frmIngresoBilletes.ShowDialog();
+        }
         private void sumarUltimasDosVentas()
         {
             //try

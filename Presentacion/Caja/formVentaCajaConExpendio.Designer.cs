@@ -143,16 +143,6 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.panelDespliegue = new System.Windows.Forms.Panel();
-            this.label26 = new System.Windows.Forms.Label();
-            this.label25 = new System.Windows.Forms.Label();
-            this.txtMinutosDesde = new System.Windows.Forms.DomainUpDown();
-            this.btnQuitarAsignados = new System.Windows.Forms.Button();
-            this.comboExpendioEstado = new System.Windows.Forms.ComboBox();
-            this.label24 = new System.Windows.Forms.Label();
-            this.label23 = new System.Windows.Forms.Label();
-            this.btnExpandir = new System.Windows.Forms.Button();
-            this.label10 = new System.Windows.Forms.Label();
-            this.txtBuscarExpendio = new System.Windows.Forms.TextBox();
             this.grillaExpendios = new System.Windows.Forms.DataGridView();
             this.btnAgregarExpendio = new System.Windows.Forms.DataGridViewButtonColumn();
             this.hora = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -165,6 +155,16 @@
             this.precio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.total = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.sector = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.label26 = new System.Windows.Forms.Label();
+            this.label25 = new System.Windows.Forms.Label();
+            this.txtMinutosDesde = new System.Windows.Forms.DomainUpDown();
+            this.btnQuitarAsignados = new System.Windows.Forms.Button();
+            this.comboExpendioEstado = new System.Windows.Forms.ComboBox();
+            this.label24 = new System.Windows.Forms.Label();
+            this.label23 = new System.Windows.Forms.Label();
+            this.btnExpandir = new System.Windows.Forms.Button();
+            this.label10 = new System.Windows.Forms.Label();
+            this.txtBuscarExpendio = new System.Windows.Forms.TextBox();
             this.panelExpendioLateral = new System.Windows.Forms.Panel();
             this.btnDespligueLateral = new System.Windows.Forms.Button();
             this.btnBloquear = new System.Windows.Forms.Button();
@@ -1542,132 +1542,6 @@
             this.panelDespliegue.TabIndex = 67;
             this.panelDespliegue.Visible = false;
             // 
-            // label26
-            // 
-            this.label26.AutoSize = true;
-            this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label26.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label26.Location = new System.Drawing.Point(227, 91);
-            this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(36, 18);
-            this.label26.TabIndex = 63;
-            this.label26.Text = "min.";
-            this.label26.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label25
-            // 
-            this.label25.AutoSize = true;
-            this.label25.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label25.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label25.Location = new System.Drawing.Point(14, 92);
-            this.label25.Name = "label25";
-            this.label25.Size = new System.Drawing.Size(150, 18);
-            this.label25.TabIndex = 62;
-            this.label25.Text = "A partir de los últimos";
-            this.label25.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // txtMinutosDesde
-            // 
-            this.txtMinutosDesde.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.txtMinutosDesde.Location = new System.Drawing.Point(169, 89);
-            this.txtMinutosDesde.Margin = new System.Windows.Forms.Padding(2);
-            this.txtMinutosDesde.Name = "txtMinutosDesde";
-            this.txtMinutosDesde.Size = new System.Drawing.Size(54, 26);
-            this.txtMinutosDesde.TabIndex = 61;
-            this.txtMinutosDesde.Text = "300";
-            this.txtMinutosDesde.SelectedItemChanged += new System.EventHandler(this.txtMinutosDesde_SelectedItemChanged);
-            // 
-            // btnQuitarAsignados
-            // 
-            this.btnQuitarAsignados.AutoSize = true;
-            this.btnQuitarAsignados.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.btnQuitarAsignados.Location = new System.Drawing.Point(295, 35);
-            this.btnQuitarAsignados.Margin = new System.Windows.Forms.Padding(2);
-            this.btnQuitarAsignados.Name = "btnQuitarAsignados";
-            this.btnQuitarAsignados.Size = new System.Drawing.Size(111, 34);
-            this.btnQuitarAsignados.TabIndex = 60;
-            this.btnQuitarAsignados.Text = "Quitar Expendios";
-            this.btnQuitarAsignados.UseVisualStyleBackColor = true;
-            this.btnQuitarAsignados.Click += new System.EventHandler(this.btnQuitarAsignados_Click);
-            // 
-            // comboExpendioEstado
-            // 
-            this.comboExpendioEstado.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboExpendioEstado.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
-            this.comboExpendioEstado.FormattingEnabled = true;
-            this.comboExpendioEstado.Items.AddRange(new object[] {
-            "PENDIENTES",
-            "ASIGNADOS"});
-            this.comboExpendioEstado.Location = new System.Drawing.Point(169, 127);
-            this.comboExpendioEstado.Margin = new System.Windows.Forms.Padding(2);
-            this.comboExpendioEstado.Name = "comboExpendioEstado";
-            this.comboExpendioEstado.Size = new System.Drawing.Size(182, 28);
-            this.comboExpendioEstado.TabIndex = 59;
-            this.comboExpendioEstado.SelectedIndexChanged += new System.EventHandler(this.comboExpendioEstado_SelectedIndexChanged);
-            // 
-            // label24
-            // 
-            this.label24.AutoSize = true;
-            this.label24.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label24.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label24.Location = new System.Drawing.Point(109, 131);
-            this.label24.Name = "label24";
-            this.label24.Size = new System.Drawing.Size(55, 18);
-            this.label24.TabIndex = 58;
-            this.label24.Text = "Estado";
-            this.label24.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label23
-            // 
-            this.label23.AutoSize = true;
-            this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
-            this.label23.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label23.Location = new System.Drawing.Point(9, 170);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(154, 18);
-            this.label23.TabIndex = 57;
-            this.label23.Text = "Nro.Exp / Ident.Cliente";
-            this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // btnExpandir
-            // 
-            this.btnExpandir.FlatAppearance.BorderSize = 0;
-            this.btnExpandir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnExpandir.Font = new System.Drawing.Font("Microsoft Sans Serif", 22.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnExpandir.ForeColor = System.Drawing.Color.Cornsilk;
-            this.btnExpandir.Location = new System.Drawing.Point(2, 3);
-            this.btnExpandir.Margin = new System.Windows.Forms.Padding(2);
-            this.btnExpandir.Name = "btnExpandir";
-            this.btnExpandir.Size = new System.Drawing.Size(54, 45);
-            this.btnExpandir.TabIndex = 55;
-            this.btnExpandir.Text = ">";
-            this.btnExpandir.UseVisualStyleBackColor = true;
-            this.btnExpandir.Click += new System.EventHandler(this.btnExpandir_Click);
-            // 
-            // label10
-            // 
-            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(154, 11);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(151, 22);
-            this.label10.TabIndex = 54;
-            this.label10.Text = "E x p e n d i o s";
-            // 
-            // txtBuscarExpendio
-            // 
-            this.txtBuscarExpendio.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBuscarExpendio.Location = new System.Drawing.Point(169, 167);
-            this.txtBuscarExpendio.Name = "txtBuscarExpendio";
-            this.txtBuscarExpendio.Size = new System.Drawing.Size(182, 26);
-            this.txtBuscarExpendio.TabIndex = 56;
-            this.txtBuscarExpendio.TabStop = false;
-            this.txtBuscarExpendio.TextChanged += new System.EventHandler(this.txtBuscarExpendio_TextChanged);
-            this.txtBuscarExpendio.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtBuscarExpendio_KeyPress);
-            // 
             // grillaExpendios
             // 
             this.grillaExpendios.AllowUserToAddRows = false;
@@ -1845,6 +1719,132 @@
             this.sector.ReadOnly = true;
             this.sector.Width = 63;
             // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.label26.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label26.Location = new System.Drawing.Point(227, 91);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(36, 18);
+            this.label26.TabIndex = 63;
+            this.label26.Text = "min.";
+            this.label26.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.label25.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label25.Location = new System.Drawing.Point(14, 92);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(150, 18);
+            this.label25.TabIndex = 62;
+            this.label25.Text = "A partir de los últimos";
+            this.label25.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // txtMinutosDesde
+            // 
+            this.txtMinutosDesde.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.txtMinutosDesde.Location = new System.Drawing.Point(169, 89);
+            this.txtMinutosDesde.Margin = new System.Windows.Forms.Padding(2);
+            this.txtMinutosDesde.Name = "txtMinutosDesde";
+            this.txtMinutosDesde.Size = new System.Drawing.Size(54, 26);
+            this.txtMinutosDesde.TabIndex = 61;
+            this.txtMinutosDesde.Text = "300";
+            this.txtMinutosDesde.SelectedItemChanged += new System.EventHandler(this.txtMinutosDesde_SelectedItemChanged);
+            // 
+            // btnQuitarAsignados
+            // 
+            this.btnQuitarAsignados.AutoSize = true;
+            this.btnQuitarAsignados.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.btnQuitarAsignados.Location = new System.Drawing.Point(295, 35);
+            this.btnQuitarAsignados.Margin = new System.Windows.Forms.Padding(2);
+            this.btnQuitarAsignados.Name = "btnQuitarAsignados";
+            this.btnQuitarAsignados.Size = new System.Drawing.Size(111, 34);
+            this.btnQuitarAsignados.TabIndex = 60;
+            this.btnQuitarAsignados.Text = "Quitar Expendios";
+            this.btnQuitarAsignados.UseVisualStyleBackColor = true;
+            this.btnQuitarAsignados.Click += new System.EventHandler(this.btnQuitarAsignados_Click);
+            // 
+            // comboExpendioEstado
+            // 
+            this.comboExpendioEstado.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboExpendioEstado.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.comboExpendioEstado.FormattingEnabled = true;
+            this.comboExpendioEstado.Items.AddRange(new object[] {
+            "PENDIENTES",
+            "ASIGNADOS"});
+            this.comboExpendioEstado.Location = new System.Drawing.Point(169, 127);
+            this.comboExpendioEstado.Margin = new System.Windows.Forms.Padding(2);
+            this.comboExpendioEstado.Name = "comboExpendioEstado";
+            this.comboExpendioEstado.Size = new System.Drawing.Size(182, 28);
+            this.comboExpendioEstado.TabIndex = 59;
+            this.comboExpendioEstado.SelectedIndexChanged += new System.EventHandler(this.comboExpendioEstado_SelectedIndexChanged);
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.label24.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label24.Location = new System.Drawing.Point(109, 131);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(55, 18);
+            this.label24.TabIndex = 58;
+            this.label24.Text = "Estado";
+            this.label24.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // label23
+            // 
+            this.label23.AutoSize = true;
+            this.label23.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.label23.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label23.Location = new System.Drawing.Point(9, 170);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(154, 18);
+            this.label23.TabIndex = 57;
+            this.label23.Text = "Nro.Exp / Ident.Cliente";
+            this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // btnExpandir
+            // 
+            this.btnExpandir.FlatAppearance.BorderSize = 0;
+            this.btnExpandir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnExpandir.Font = new System.Drawing.Font("Microsoft Sans Serif", 22.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExpandir.ForeColor = System.Drawing.Color.Cornsilk;
+            this.btnExpandir.Location = new System.Drawing.Point(2, 3);
+            this.btnExpandir.Margin = new System.Windows.Forms.Padding(2);
+            this.btnExpandir.Name = "btnExpandir";
+            this.btnExpandir.Size = new System.Drawing.Size(54, 45);
+            this.btnExpandir.TabIndex = 55;
+            this.btnExpandir.Text = ">";
+            this.btnExpandir.UseVisualStyleBackColor = true;
+            this.btnExpandir.Click += new System.EventHandler(this.btnExpandir_Click);
+            // 
+            // label10
+            // 
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(154, 11);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(151, 22);
+            this.label10.TabIndex = 54;
+            this.label10.Text = "E x p e n d i o s";
+            // 
+            // txtBuscarExpendio
+            // 
+            this.txtBuscarExpendio.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtBuscarExpendio.Location = new System.Drawing.Point(169, 167);
+            this.txtBuscarExpendio.Name = "txtBuscarExpendio";
+            this.txtBuscarExpendio.Size = new System.Drawing.Size(182, 26);
+            this.txtBuscarExpendio.TabIndex = 56;
+            this.txtBuscarExpendio.TabStop = false;
+            this.txtBuscarExpendio.TextChanged += new System.EventHandler(this.txtBuscarExpendio_TextChanged);
+            this.txtBuscarExpendio.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtBuscarExpendio_KeyPress);
+            // 
             // panelExpendioLateral
             // 
             this.panelExpendioLateral.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -1876,10 +1876,11 @@
             // btnBloquear
             // 
             this.btnBloquear.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.btnBloquear.Image = global::Presentacion.Properties.Resources._16__Lock_on_;
             this.btnBloquear.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnBloquear.Location = new System.Drawing.Point(1048, 596);
+            this.btnBloquear.Location = new System.Drawing.Point(1050, 596);
             this.btnBloquear.Name = "btnBloquear";
-            this.btnBloquear.Size = new System.Drawing.Size(78, 29);
+            this.btnBloquear.Size = new System.Drawing.Size(76, 32);
             this.btnBloquear.TabIndex = 44;
             this.btnBloquear.TabStop = false;
             this.btnBloquear.Text = "Bl&oquear";
