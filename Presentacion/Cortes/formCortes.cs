@@ -304,7 +304,6 @@ namespace Presentacion
             if (!comboCargado || dtCortes == null)
                 return;
 
-            dtCortesFiltrado.Clear();
             dtCortesFiltrado = dtCortes.Clone();
             // Presuming the DataTable has a column named Date.
             string expresion = !string.IsNullOrEmpty(txtCodigoDesde.Text) ? "codigo >= " + codigoDesde : "true";

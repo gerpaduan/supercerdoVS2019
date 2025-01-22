@@ -31,6 +31,10 @@ namespace Presentacion.Caja
 
         private void formIngresoBilletes_Load(object sender, EventArgs e)
         {
+            if (txtBoxAcargar == null)
+            {
+                txtBoxAcargar = new TextBox();
+            }
             txtBoxAcargar.Text = "0";
         }
 
