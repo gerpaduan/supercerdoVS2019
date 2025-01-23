@@ -263,10 +263,12 @@ namespace Presentacion
             if (logueado)
             {
                 btnCerrarSesion.Visible = true;
+                lblNombreAdmin.Visible = true;
             }
             else
             {
                 btnCerrarSesion.Visible = false;
+                lblNombreAdmin.Visible = false;
             }
         }
 
@@ -280,6 +282,7 @@ namespace Presentacion
             logueado = false;
             btnLogin.Visible = true;
             btnCerrarSesion.Visible = false;
+            lblNombreAdmin.Visible = false;
             checkAutoDesconectar.Visible = false;
             comboConexion.Enabled = false;
             timerInactividadAdmin.Stop();
@@ -422,6 +425,7 @@ namespace Presentacion
             if (!oUsuario.Admin)
             {
                 MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+                return;
             }
 
             logueado = true;
@@ -431,6 +435,8 @@ namespace Presentacion
                 oUserAdmin = oUsuario.User.Equals("admin") ? oUsuario : null;
                 btnLogin.Visible = false;
                 btnCerrarSesion.Visible = true;
+                lblNombreAdmin.Visible = true;
+                lblNombreAdmin.Text = "•" + oUsuario.Nombre;
                 //btnTipoConexioin.Visible = true;
                 //solo muestra cambiar combo conexion si es cuit German Paduan
                 comboConexion.Enabled = true && cuitCliente == "20306210786";
@@ -441,6 +447,7 @@ namespace Presentacion
                 oUserAdmin = null;
                 btnLogin.Visible = true;
                 btnCerrarSesion.Visible = false;
+                lblNombreAdmin.Visible = false;
                 //btnTipoConexioin.Visible = false;
                 comboConexion.Enabled = false;
                 timerInactividadAdmin.Stop();
