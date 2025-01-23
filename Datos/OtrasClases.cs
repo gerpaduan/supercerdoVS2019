@@ -147,8 +147,8 @@ namespace Datos
 
             cmOtrasClases.Connection = conn.conectar();
             cmOtrasClases.Connection.Open();
-            cmOtrasClases.CommandText = "SELECT COUNT(*) FROM VencimientosLicencia WHERE fechaPago = " + DateTime.Now.Date;
-
+            cmOtrasClases.CommandText = "SELECT COUNT(*) FROM VencimientosLicencia WHERE fechaPago = @fechaPago";
+            cmOtrasClases.Parameters.AddWithValue("@fechaPago", DateTime.Today.Date);
             bool resp = Convert.ToBoolean(cmOtrasClases.ExecuteScalar());
             cmOtrasClases.Connection.Close();
 
