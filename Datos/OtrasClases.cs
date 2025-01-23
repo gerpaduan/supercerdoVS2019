@@ -97,15 +97,17 @@ namespace Datos
             return resp;
         }
 
-        public void agregarLicencia(string nroLicencia)
+        public void agregarLicencia(string nroLicencia, string identificacion)
         {
             cmOtrasClases = new SqlCommand();
 
             cmOtrasClases.Connection = conn.conectar();
             cmOtrasClases.Connection.Open();
 
-            cmOtrasClases.CommandText = "Insert into Licencias (NroLicencia) values (@NroLicencia)";
+            cmOtrasClases.CommandText = "Insert into Licencias (NroLicencia, identificacion, creado) values (@NroLicencia, @identificacion, @creado)";
             cmOtrasClases.Parameters.AddWithValue("@NroLicencia", nroLicencia);
+            cmOtrasClases.Parameters.AddWithValue("@identificacion", identificacion);
+            cmOtrasClases.Parameters.AddWithValue("@creado", DateTime.Now);
             cmOtrasClases.ExecuteNonQuery();
             cmOtrasClases.Connection.Close();
         }

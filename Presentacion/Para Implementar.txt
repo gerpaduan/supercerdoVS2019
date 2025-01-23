@@ -175,7 +175,7 @@ LineaExpendio
 Procedimientos agregar de ambos
 
 en tabla Licencia
-agregar columna Sector
+agregar columna sector, identificacion, creado
 
 
 ***

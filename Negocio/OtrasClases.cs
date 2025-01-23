@@ -20,10 +20,10 @@ namespace Negocio
             return oOtrasClasesD.existeLicencia(nroLicencia);
         }
 
-        public void agregarLicencia(string nroLicencia)
+        public void agregarLicencia(string nroLicencia, string identificacion)
         {
             oOtrasClasesD = new Datos.OtrasClases();
-            oOtrasClasesD.agregarLicencia(nroLicencia);
+            oOtrasClasesD.agregarLicencia(nroLicencia, identificacion);
         }
         #endregion
 

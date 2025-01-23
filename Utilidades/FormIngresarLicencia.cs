@@ -14,6 +14,7 @@ namespace Utilidades
     {
         string clave, claveSistema;
         public bool validacion = false;
+        public string identificacion = "";
 
         public string Clave
         {
@@ -35,6 +36,13 @@ namespace Utilidades
 
         private void btnAgregar_Click(object sender, EventArgs e)
         {
+            if (txtIdentificacion.Text == "")
+            {
+                MessageBox.Show("Ingrese una palabra para identificar a la PC");
+                txtIdentificacion.Focus();
+                return;
+            }
+            identificacion = txtIdentificacion.Text;
             this.Close();
         }
 
@@ -56,6 +64,7 @@ namespace Utilidades
                 serialCPU.Text = Utilidades.Util_Form.GetCPUId();
                 //serialHD.Text = Utilidades.Util_Form.GetHDSerial();
                 btnAgregar.Visible = true;
+                txtIdentificacion.Focus();
             }
             else
             {

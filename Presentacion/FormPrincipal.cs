@@ -344,7 +344,7 @@ namespace Presentacion
                     {
                         if (CPU != "")
                         {
-                            otrasClasesN.agregarLicencia(CPU);
+                            otrasClasesN.agregarLicencia(CPU, frmLicencia.identificacion);
                         }
                         //if (HD != "")
                         //{
@@ -360,7 +360,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al validar licencia.\nPosiblemente no haya conexión al Servidor.\n El Sistema se cerrará..\n\n"+ex.Message);
+                MessageBox.Show("Posiblemente no haya conexión al Servidor.\n El Sistema se cerrará..\n\n"+ex.Message);
                 Application.Exit();
             }
 
