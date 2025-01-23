@@ -39,7 +39,11 @@ namespace Negocio
             oOtrasClasesD = new Datos.OtrasClases();
             return oOtrasClasesD.fechaVencimientoLicencia();
         }
-
+        public bool existePagoLicenciaHoy()
+        {
+            oOtrasClasesD = new Datos.OtrasClases();
+            return oOtrasClasesD.existePagoLicenciaHoy();
+        }
         public void agregaVencimientosLicencia(DateTime fechaDesde)
         {
             oOtrasClasesD = new Datos.OtrasClases();

@@ -161,18 +161,27 @@ namespace Presentacion.Licencia
             DateTime fechaVenc = Convert.ToDateTime(txtFechaVencimiento.Text);
             string por7 = ((DateTime.Now.Year + DateTime.Now.Day + DateTime.Now.Month + fechaVenc.Year + fechaVenc.Month + ultimosTresCuit) * 1007).ToString();
 
-            string claveSistema = letraDia + DateTime.Now.Month.ToString() + day + por7; //ConfigurationManager.AppSettings["admin"].ToString();
+            //string claveSistema = letraDia + DateTime.Now.Month.ToString() + day + por7; //ConfigurationManager.AppSettings["admin"].ToString();
 
+            int multiplicarFecha_Div_ultimosCuit = ((DateTime.Now.Year * DateTime.Now.Month * DateTime.Now.Day) / ultimosTresCuit);
+            string claveSistema = letraDia + multiplicarFecha_Div_ultimosCuit;
             string clave = txtClave.Text.Trim();
             if (clave.ToUpper().Equals(claveSistema.ToUpper()))
             {
+                if (otrasClasesN.existePagoLicenciaHoy())
+                {
+                    MessageBox.Show("Sólo puede realizar un solo pago por fecha", "",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                    return;
+                }
+
                 otrasClasesN.agregarPagoCuota(Convert.ToDateTime(txtFechaVencimiento.Text));
                 MessageBox.Show("Código Correcto.");
                 cargarGrilla();
             }
             else
             {
-                MessageBox.Show("Código Incorrecto.\n\nDing-mA-dA-(3lastcuit+y+m+d+yV+mV*1007)\nCuit Cliente:"+ FormPrincipal.cuitCliente);
+                //MessageBox.Show("Código Incorrecto.\n\nDing-mA-dA-(3lastcuit+y+m+d+yV+mV*1007)\nCuit Cliente:"+ FormPrincipal.cuitCliente);
+                MessageBox.Show("Código Incorrecto.\n\nletterday[(y*m*d)/3cuit]\nCuit Cliente:" + FormPrincipal.cuitCliente);
                 txtClave.Focus();
             }
         }

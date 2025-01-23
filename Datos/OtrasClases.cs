@@ -120,8 +120,8 @@ namespace Datos
         {
             DataTable dt = new DataTable();
             daOtrasClases = new SqlDataAdapter("SELECT fechaVencimiento, case WHEN pagado = 1 then 'PAGADO' ELSE 'PENDIENTE' END AS pagado, fechaPago "+
-                "FROM VencimientosLicencia WHERE (pagado = 0 or fechaVencimiento > \'" + fechaDesde.Date +
-                "\') and (fechaVencimiento < DATEADD(MONTH, 2, GETDATE())) order by fechaVencimiento", conn.conectar());
+                "FROM VencimientosLicencia WHERE (pagado = 0 or fechaVencimiento > @fechaDesde) and (fechaVencimiento < DATEADD(MONTH, 2, GETDATE())) order by fechaVencimiento", conn.conectar());
+            daOtrasClases.SelectCommand.Parameters.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
             daOtrasClases.Fill(dt);
 
             return dt;
@@ -136,6 +136,20 @@ namespace Datos
             cmOtrasClases.CommandText = "SELECT TOP 1 fechaVencimiento FROM VencimientosLicencia WHERE (pagado = 0) ORDER BY fechaVencimiento";
 
             DateTime resp = Convert.ToDateTime(cmOtrasClases.ExecuteScalar());
+            cmOtrasClases.Connection.Close();
+
+            return resp;
+        }
+
+        public bool existePagoLicenciaHoy()
+        {
+            cmOtrasClases = new SqlCommand();
+
+            cmOtrasClases.Connection = conn.conectar();
+            cmOtrasClases.Connection.Open();
+            cmOtrasClases.CommandText = "SELECT COUNT(*) FROM VencimientosLicencia WHERE fechaPago = " + DateTime.Now.Date;
+
+            bool resp = Convert.ToBoolean(cmOtrasClases.ExecuteScalar());
             cmOtrasClases.Connection.Close();
 
             return resp;
