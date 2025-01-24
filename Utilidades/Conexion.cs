@@ -26,6 +26,7 @@ namespace Utilidades
         public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
         string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
         public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
+        public static int timeOut = Convert.ToInt32(ConfigurationManager.AppSettings["timeOut"].ToString());
 
         SqlConnection conn;
         public SqlConnection conectar()
@@ -45,6 +46,11 @@ namespace Utilidades
         public void cerraConexion()
         {
             conn.Close();
+        }
+
+        public int TimeOut()
+        {
+            return timeOut;
         }
 
         public static string getConnString()

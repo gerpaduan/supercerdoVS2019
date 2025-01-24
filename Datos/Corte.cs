@@ -20,7 +20,7 @@ namespace Datos
         {
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Select Corte.* from Corte where idCorte = " + id;
             Entidades.Corte oCorteE = new Entidades.Corte();
             try
@@ -77,7 +77,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;            
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();            
             cmCorte.CommandText = "UPDATE Corte SET precioKg = @precioKg WHERE idCorte = "+oCorteE.idCorte;
             cmCorte.Parameters.AddWithValue("@precioKg", oCorteE.precioKg);
 
@@ -94,7 +94,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "addOrEditCorte";
 
             cmCorte.Parameters.AddWithValue("@idCorte", oCorteE.idCorte);
@@ -132,7 +132,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "buscarCorte";
             cmCorte.Parameters.AddWithValue("@texto", txtBusqueda);
 
@@ -152,7 +152,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "buscarCorteSinMaestro";
             cmCorte.Parameters.AddWithValue("@texto", txtBusqueda);
 
@@ -172,7 +172,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "buscarCodigoCorte";
             cmCorte.Parameters.AddWithValue("@codigo", codigo);
 
@@ -190,7 +190,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "EliminarCorte";
 
             cmCorte.Parameters.AddWithValue("@idCorte", oCorteE.idCorte);
@@ -213,7 +213,7 @@ namespace Datos
                 " CorteP.tipo, CorteP.pesable, CorteP.nivel, CorteP.idCorteMaestro, CorteM.corte AS corteMaestro, CorteP.porcentaje, CorteP.porcentajeHueso, CorteP.desvioEstandar, " +
                 " CorteP.independiente, CorteP.promedio, CorteP.idAlicuotaIva, CorteP.alicuotaIva FROM  dbo.Corte AS CorteM RIGHT OUTER JOIN " +
                 " dbo.Corte AS CorteP ON CorteM.idCorte = CorteP.idCorteMaestro";
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = consultaSQL;
 
             daCorte.SelectCommand = cmCorte;
@@ -231,7 +231,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
             string consultaSQL = "SELECT * FROM Corte";
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = consultaSQL;
 
             daCorte.SelectCommand = cmCorte;
@@ -249,7 +249,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "obtenerEmbutidos";
             cmCorte.Parameters.AddWithValue("@texto", txtBusqueda);
 
@@ -271,7 +271,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
             cmCorte.CommandType = CommandType.StoredProcedure; 
-            cmCorte.CommandTimeout = 90;
+            cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "getListaElegirEmbutido";
 
             daCorte.SelectCommand = cmCorte;
@@ -290,7 +290,7 @@ namespace Datos
 
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "buscarEmbutido";
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@texto",texto);
@@ -312,7 +312,7 @@ namespace Datos
 
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "obtenerLineasEmb";
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
             cmCorte.Parameters.AddWithValue("@texto", texto);
@@ -336,7 +336,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "obtenerInfoCorte";
             cmCorte.Parameters.AddWithValue("@idCorte", idCorte);
 
@@ -352,7 +352,7 @@ namespace Datos
         {
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Select Corte.* from Corte where idCorte =" + idCorte;
 
             Entidades.Corte oCorteE = new Entidades.Corte();
@@ -405,7 +405,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "SELECT  "+
                 " dbo.Personas.razonSocial, dbo.CorteProveedor.ultimoPrecio, dbo.CorteProveedor.fechaUltimaCompra"+
                 "  FROM dbo.Corte INNER JOIN dbo.CorteProveedor ON dbo.Corte.idCorte = dbo.CorteProveedor.idCorte INNER JOIN "+"" +
@@ -430,7 +430,7 @@ namespace Datos
 
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
 
             string consulta = "SELECT DISTINCT dbo.Formulas.idFormula, dbo.Corte.codigo, dbo.Corte.corte, dbo.Formulas.creado, dbo.Formulas.actualizado FROM" +
                 " dbo.Corte INNER JOIN  dbo.Formulas ON dbo.Corte.idCorte = dbo.Formulas.idEmbutido " +
@@ -450,7 +450,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Select Formulas.* from Formulas where idFormula =" + idFormula;
 
             SqlDataReader drFormula = cmCorte.ExecuteReader();
@@ -480,7 +480,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "SELECT * FROM CortePorFormula WHERE idFormula = " + oFormula.IdFormula;
 
             List<Entidades.CortePorFormula> listaCortesPorFormula = new List<Entidades.CortePorFormula>();
@@ -571,11 +571,11 @@ namespace Datos
 
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "DELETE FROM  CortePorFormula WHERE idFormula = " + idFormula;
             cmCorte.ExecuteNonQuery();
 
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "DELETE FROM  Formulas WHERE idFormula = " + idFormula;
             cmCorte.ExecuteNonQuery();
 
@@ -610,7 +610,7 @@ namespace Datos
 
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             string consulta = "SELECT  tipo FROM  TiposProducto";
             consulta += mostrarTodos ? " ORDER BY orden, tipo" : " where orden > 0 ORDER BY orden, tipo";
             cmCorte.CommandText = consulta;
@@ -634,7 +634,7 @@ namespace Datos
 
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             string consulta = "Select idIva, iva from AlicuotasIva";
             consulta += mostrarTodos ? " order by orden" : " where mostrar = 1 order by orden";
             cmCorte.CommandText =  consulta;
@@ -651,7 +651,7 @@ namespace Datos
         {
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Select * from AlicuotasIva where idIva =" + idIva;
 
             Entidades.AlicuotaIva oAlicuotaIvaE = new Entidades.AlicuotaIva();
@@ -686,7 +686,7 @@ namespace Datos
         {
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Select Embutidos.* from Embutidos where idEmbutido =" + idEmbutido;
 
             Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
@@ -730,7 +730,7 @@ namespace Datos
         {
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Select CortePorEmbutido.* from CortePorEmbutido where idEmbutido =" + oEmbutidoParam.idEmbutido;
 
             List<Entidades.CortePorEmbutido> cortesEnEmbutido = new List<Entidades.CortePorEmbutido>();
@@ -770,7 +770,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "agregarEmbutido";
             cmCorte.Parameters.AddWithValue("@fechaEmbutido", oEmbutido.fechaEmbutido);
             cmCorte.Parameters.AddWithValue("@idCorte", oEmbutido.corte.idCorte);
@@ -795,7 +795,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "anularEmbutido";
             cmCorte.Parameters.AddWithValue("@idEmbutido", oEmbutidoE.idEmbutido);
             cmCorte.Parameters.AddWithValue("@actualizadoPor", oEmbutidoE.ActualizadoPor.Id);
@@ -815,7 +815,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "obtenerCortesPorEmbutidos";
             cmCorte.Parameters.AddWithValue("@idEmbutido", oEmbutidoE.idEmbutido);
 
@@ -834,7 +834,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "agregarCortePorEmbutido";
 
             cmCorte.Parameters.AddWithValue("@idEmbutido", oCortePorEmbutido.embutido.idEmbutido);
@@ -856,7 +856,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "actualizarStockEmbutido";
 
             cmCorte.Parameters.AddWithValue("@idEmbutido", cortePorEmbutido["idEmbutido"]);
@@ -878,7 +878,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "addOrEditMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", oMovimientoE.IdMovimiento);
             cmCorte.Parameters.AddWithValue("@fechaMovimiento", oMovimientoE.FechaMovimiento);
@@ -913,7 +913,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "modificarMovimiento";
 
             cmCorte.Parameters.AddWithValue("@idMovimiento", oMovimientoE.IdMovimiento);
@@ -934,7 +934,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "eliminarMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", idMovimiento);
             cmCorte.Parameters.AddWithValue("@actualizadoPor", oUsuario.Id);
@@ -951,7 +951,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "agregarCortePorMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", cortePorMovimiento.Movimientos.IdMovimiento);
             cmCorte.Parameters.AddWithValue("@idCorte", cortePorMovimiento.Corte.IdCorte);
@@ -969,7 +969,7 @@ namespace Datos
             cmCorte = new SqlCommand();
             cmCorte.Connection = conn.conectar();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "quitarCortesPorMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", oMovimientoE.IdMovimiento);
 
@@ -987,7 +987,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "obtenerMovimientos";
             cmCorte.Parameters.AddWithValue("@sucOrigen", sucOrigen);
             cmCorte.Parameters.AddWithValue("@sucDestino", sucDestino);
@@ -1008,7 +1008,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "cargarMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", idMovimiento);
 
@@ -1062,7 +1062,7 @@ namespace Datos
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
 
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "cargarCortesPorMovimiento";
             cmCorte.Parameters.AddWithValue("@idMovimiento", idMovimiento);
             cmCorte.Parameters.AddWithValue("@acumulado", acumulado);
@@ -1117,7 +1117,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "obtenerLineasMov";
             cmCorte.Parameters.AddWithValue("@sucOrigen", sucOrigen);
             cmCorte.Parameters.AddWithValue("@sucDestino", sucDestino);
@@ -1137,7 +1137,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "reiniciarStock";
 
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
@@ -1155,7 +1155,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "reiniciarStockTeorico";
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
 
@@ -1174,7 +1174,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "StockTeoricoReal";
             cmCorte.Parameters.AddWithValue("@texto",texto);
             cmCorte.Parameters.AddWithValue("@idSucursal",idSucursal);
@@ -1200,7 +1200,7 @@ namespace Datos
             cmCorte.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
 
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             if (nroCierre==1)
             {
                 //cmCorte.CommandText = "a_InicioCierreStock";
@@ -1245,7 +1245,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "Acum_Ventas";
             cmCorte.Parameters.AddWithValue("@texto", texto);
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
@@ -1273,7 +1273,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "StockIngresoEgreso";
             cmCorte.Parameters.AddWithValue("@texto", texto);
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
@@ -1298,7 +1298,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "TotalPorCortesVendidos";
             cmCorte.Parameters.AddWithValue("@texto", texto);
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);
@@ -1326,7 +1326,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "StockTeoricoReal";
             cmCorte.Parameters.AddWithValue("@texto",texto);
             cmCorte.Parameters.AddWithValue("@idSucursal",idSucursal);
@@ -1351,7 +1351,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             //cmCorte.CommandText = "TotalKgsCortePorCompra";
             cmCorte.CommandText = "a_CierreStock"; // "a_IngresoStock";
             cmCorte.Parameters.AddWithValue("@texto", texto);
@@ -1377,7 +1377,7 @@ namespace Datos
 
             cmCorte.Connection = conn.conectar();
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = 90;
+            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
             cmCorte.CommandText = "TotalMovimientosPorCorte";
             cmCorte.Parameters.AddWithValue("@texto", texto);
             cmCorte.Parameters.AddWithValue("@idSucursal", idSucursal);

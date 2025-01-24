@@ -34,7 +34,7 @@ namespace Datos
             cmCtaCte = new SqlCommand();
             cmCtaCte.Connection = conn.conectar();
             cmCtaCte.Connection.Open();
-            cmCtaCte.CommandType = CommandType.StoredProcedure;
+            cmCtaCte.CommandType = CommandType.StoredProcedure; cmCtaCte.CommandTimeout = conn.TimeOut();
             cmCtaCte.CommandText = "getCtaCteByIdPersona";
             cmCtaCte.Parameters.AddWithValue("@idPersona", idPersona);
             cmCtaCte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
