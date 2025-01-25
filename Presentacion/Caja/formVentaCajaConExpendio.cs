@@ -553,6 +553,7 @@ namespace Presentacion.Caja
             lblClienteConBonif.Visible = false;          
             restablecerFormaDePago();
             checkPagoMixto.Checked = false;
+            pagoMixtoEfectivo = 0;
             comboTipoComprobante.SelectedIndex = 0; //Remito
 
             totalVenta = 0;
@@ -3036,6 +3037,7 @@ namespace Presentacion.Caja
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+            //TODO: 
             if (oCliente.idPersona == Entidades.Parametros.idConsumidorFinal)
             {
                 formVentasVendedor frmVentasVendedor = new formVentasVendedor();
