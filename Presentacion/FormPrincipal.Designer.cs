@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.lblNombreAdmin = new System.Windows.Forms.Label();
             this.btnPuntoExpendio = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
@@ -78,7 +79,8 @@
             this.verBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.lblNombreAdmin = new System.Windows.Forms.Label();
+            this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -128,6 +130,18 @@
             this.splitContainer1.SplitterDistance = 201;
             this.splitContainer1.TabIndex = 0;
             // 
+            // lblNombreAdmin
+            // 
+            this.lblNombreAdmin.AutoSize = true;
+            this.lblNombreAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblNombreAdmin.ForeColor = System.Drawing.Color.White;
+            this.lblNombreAdmin.Location = new System.Drawing.Point(11, 569);
+            this.lblNombreAdmin.Name = "lblNombreAdmin";
+            this.lblNombreAdmin.Size = new System.Drawing.Size(90, 15);
+            this.lblNombreAdmin.TabIndex = 37;
+            this.lblNombreAdmin.Text = "Nombre Admin";
+            this.lblNombreAdmin.Visible = false;
+            // 
             // btnPuntoExpendio
             // 
             this.btnPuntoExpendio.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
@@ -150,7 +164,7 @@
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
             this.pictureBox1.Location = new System.Drawing.Point(-12, 1);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(215, 42);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -454,7 +468,8 @@
             this.cajaToolStripMenuItem,
             this.mantenimientoToolStripMenuItem,
             this.stockToolStripMenuItem,
-            this.probarToolStripMenuItem});
+            this.probarToolStripMenuItem,
+            this.contactoToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
@@ -490,21 +505,21 @@
             // verVentasToolStripMenuItem
             // 
             this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
             // verToolStripMenuItem
             // 
             this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.verToolStripMenuItem.Text = "Temporal Linea Venta";
             this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
             // 
             // lineasVentaToolStripMenuItem
             // 
             this.lineasVentaToolStripMenuItem.Name = "lineasVentaToolStripMenuItem";
-            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.lineasVentaToolStripMenuItem.Text = "Lineas Venta ";
             this.lineasVentaToolStripMenuItem.Click += new System.EventHandler(this.lineasVentaToolStripMenuItem_Click);
             // 
@@ -638,7 +653,7 @@
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -648,7 +663,7 @@
             this.verBalanzaToolStripMenuItem1,
             this.leerPesoToolStripMenuItem1});
             this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
-            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
+            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
             this.balanzaToolStripMenuItem1.Text = "Balanza";
             // 
             // verBalanzaToolStripMenuItem1
@@ -670,17 +685,19 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // lblNombreAdmin
+            // contactoToolStripMenuItem
             // 
-            this.lblNombreAdmin.AutoSize = true;
-            this.lblNombreAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblNombreAdmin.ForeColor = System.Drawing.Color.White;
-            this.lblNombreAdmin.Location = new System.Drawing.Point(11, 569);
-            this.lblNombreAdmin.Name = "lblNombreAdmin";
-            this.lblNombreAdmin.Size = new System.Drawing.Size(90, 15);
-            this.lblNombreAdmin.TabIndex = 37;
-            this.lblNombreAdmin.Text = "Nombre Admin";
-            this.lblNombreAdmin.Visible = false;
+            this.contactoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.celularToolStripMenuItem});
+            this.contactoToolStripMenuItem.Name = "contactoToolStripMenuItem";
+            this.contactoToolStripMenuItem.Size = new System.Drawing.Size(68, 20);
+            this.contactoToolStripMenuItem.Text = "Contacto";
+            // 
+            // celularToolStripMenuItem
+            // 
+            this.celularToolStripMenuItem.Name = "celularToolStripMenuItem";
+            this.celularToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
+            this.celularToolStripMenuItem.Text = "Celular: +54 9 341 339-6372";
             // 
             // FormPrincipal
             // 
@@ -763,6 +780,8 @@
         private System.Windows.Forms.ToolStripMenuItem appConfigToolStripMenuItem;
         private System.Windows.Forms.Button btnPuntoExpendio;
         private System.Windows.Forms.Label lblNombreAdmin;
+        private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
     }
 }
 

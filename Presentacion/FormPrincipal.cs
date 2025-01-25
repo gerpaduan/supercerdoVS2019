@@ -346,7 +346,8 @@ namespace Presentacion
                 string CPU = Utilidades.Util_Form.GetCPUId();
                 //string HD = Utilidades.Util_Form.GetHDSerial();
 
-                if (otrasClasesN.existeLicencia(CPU))
+                //si es Demo no se valida la Licencia CPU
+                if (esVersionDemo || otrasClasesN.existeLicencia(CPU))
                 {
                     //se ingresa al sistema
                 }
