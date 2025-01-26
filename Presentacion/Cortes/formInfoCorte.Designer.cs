@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoCorte));
             this.btnSalir = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
@@ -212,8 +212,8 @@
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
             this.dataGridViewTextBoxColumn3.HeaderText = "Razon Social";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
@@ -223,8 +223,8 @@
             // ultimoPrecio
             // 
             this.ultimoPrecio.DataPropertyName = "ultimoPrecio";
-            dataGridViewCellStyle4.Format = "F2";
-            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Format = "F2";
+            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle2;
             this.ultimoPrecio.HeaderText = "Ultimo Precio";
             this.ultimoPrecio.MinimumWidth = 6;
             this.ultimoPrecio.Name = "ultimoPrecio";
@@ -318,10 +318,10 @@
             // 
             // txtAlicuotaIva
             // 
-            this.txtAlicuotaIva.Location = new System.Drawing.Point(79, 180);
+            this.txtAlicuotaIva.Location = new System.Drawing.Point(79, 181);
             this.txtAlicuotaIva.Name = "txtAlicuotaIva";
             this.txtAlicuotaIva.ReadOnly = true;
-            this.txtAlicuotaIva.Size = new System.Drawing.Size(71, 21);
+            this.txtAlicuotaIva.Size = new System.Drawing.Size(75, 21);
             this.txtAlicuotaIva.TabIndex = 43;
             // 
             // label14
@@ -387,7 +387,7 @@
             this.txtIdCorte.Location = new System.Drawing.Point(79, 21);
             this.txtIdCorte.Name = "txtIdCorte";
             this.txtIdCorte.ReadOnly = true;
-            this.txtIdCorte.Size = new System.Drawing.Size(71, 21);
+            this.txtIdCorte.Size = new System.Drawing.Size(132, 21);
             this.txtIdCorte.TabIndex = 34;
             // 
             // label13
@@ -472,7 +472,7 @@
             this.txtPrecioKg.Location = new System.Drawing.Point(79, 102);
             this.txtPrecioKg.Name = "txtPrecioKg";
             this.txtPrecioKg.ReadOnly = true;
-            this.txtPrecioKg.Size = new System.Drawing.Size(71, 21);
+            this.txtPrecioKg.Size = new System.Drawing.Size(132, 21);
             this.txtPrecioKg.TabIndex = 25;
             this.txtPrecioKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
@@ -492,7 +492,7 @@
             this.txtTipo.Location = new System.Drawing.Point(79, 154);
             this.txtTipo.Name = "txtTipo";
             this.txtTipo.ReadOnly = true;
-            this.txtTipo.Size = new System.Drawing.Size(118, 21);
+            this.txtTipo.Size = new System.Drawing.Size(132, 21);
             this.txtTipo.TabIndex = 22;
             // 
             // label6
@@ -523,7 +523,7 @@
             this.txtCodigo.Location = new System.Drawing.Point(79, 48);
             this.txtCodigo.Name = "txtCodigo";
             this.txtCodigo.ReadOnly = true;
-            this.txtCodigo.Size = new System.Drawing.Size(71, 21);
+            this.txtCodigo.Size = new System.Drawing.Size(132, 21);
             this.txtCodigo.TabIndex = 7;
             // 
             // label1
@@ -624,7 +624,7 @@
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "formInfoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
