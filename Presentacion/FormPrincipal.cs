@@ -29,6 +29,11 @@ namespace Presentacion
     {
         bool cerrarFormPorError = true;
         public static bool logueado = false;
+        char validarPassDemo = '0';
+        // 1: true 0:False x:Cerrar
+
+        public static bool esVersionDemo = ConfigurationManager.AppSettings["version"].ToString().ToUpper().Equals("D") ? true : false;
+        public static string passDemo = ConfigurationManager.AppSettings["passDemo"].ToString();
         public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;
         public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
         public static int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
@@ -293,6 +298,15 @@ namespace Presentacion
         {
             try
             {
+                if (esVersionDemo)
+                {
+                    while (validarPassDemo.Equals('0'))
+                    {
+                        PassParaDemo();
+                    }
+                    if (!validarPassDemo.Equals('1'))
+                        Application.Exit();
+                }
                 Negocio.OtrasClases otrasClasesN = new OtrasClases();
 
                 #region validarLicenciaCuotas
@@ -332,7 +346,8 @@ namespace Presentacion
                 string CPU = Utilidades.Util_Form.GetCPUId();
                 //string HD = Utilidades.Util_Form.GetHDSerial();
 
-                if (otrasClasesN.existeLicencia(CPU))
+                //si es Demo no se valida la Licencia CPU
+                if (esVersionDemo || otrasClasesN.existeLicencia(CPU))
                 {
                     //se ingresa al sistema
                 }
@@ -1147,6 +1162,76 @@ namespace Presentacion
             }
             oUsuario = null;
         }
+
+        // 1: true 0:False x:Cerrar
+        private char PassParaDemo()
+        {
+
+            // Crear un formulario para ingresar el nombre
+            Form dialogo = new Form
+            {
+                Width = 300,
+                Height = 150,
+                Text = "Por favor, ingrese su contraseña:",
+                StartPosition = FormStartPosition.CenterParent
+            };
+
+            Label lblNombre = new Label
+            {
+                Text = "Por favor, ingrese su contraseña:",
+                Top = 10,
+                Left = 10,
+                Width = 260
+            };
+
+            TextBox txtNombre = new TextBox
+            {
+                Top = 40,
+                Left = 10,
+                Width = 260
+            };
+
+            Button btnAceptar = new Button
+            {
+                Text = "Aceptar",
+                Top = 80,
+                Left = 110,
+                DialogResult = DialogResult.OK
+            };
+
+            Button btnCerrar = new Button
+            {
+                Text = "Cerrar",
+                Top = 80,
+                Left = 190,
+                DialogResult = DialogResult.No
+            };
+
+            dialogo.Controls.Add(lblNombre);
+            dialogo.Controls.Add(txtNombre);
+            dialogo.Controls.Add(btnAceptar);
+            dialogo.Controls.Add(btnCerrar);
+            dialogo.AcceptButton = btnAceptar;
+
+            DialogResult resp = dialogo.ShowDialog();
+            if (resp == DialogResult.OK)
+            {
+                if (passDemo.ToUpper().Equals(txtNombre.Text.ToUpper()))
+                {
+                    validarPassDemo = '1';
+                    return validarPassDemo;
+                }
+                MessageBox.Show("Password incorrecto");
+                
+                validarPassDemo = '0';
+            }
+            if (resp == DialogResult.No)
+            {
+                validarPassDemo = 'X';
+            }
+            return validarPassDemo;
+        }
+
 
     }
 }
