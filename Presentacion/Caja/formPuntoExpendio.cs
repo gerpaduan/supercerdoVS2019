@@ -927,10 +927,7 @@ namespace Presentacion.Caja
                     //totalCorte = precioKg * cantKg;
                     totalCorte = precioKg * kgsTotalCalculado;
 
-                    if (Presentacion.FormPrincipal.logueado)
-                    {
-                        txtTotalCorte.Text = totalCorte.ToString();
-                    }
+                    txtTotalCorte.Text = totalCorte.ToString();                   
 
                 }
                 catch (Exception)
@@ -1355,6 +1352,13 @@ namespace Presentacion.Caja
                 txtVendedor.Text = oUsuario.Nombre;
                 this.Text += " | "+oUsuario.Nombre;
 
+                if (sector.Equals("PRESUPUESTO"))
+                {
+                    txtPrecioKg.Enabled = true;
+                    txtPrecioKg.ReadOnly = false;
+                    txtPrecioKg.TabStop = true;
+                }
+
                 //Color colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
                 //    System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129))))) : System.Drawing.Color.FromName(oUsuario.ColorForm);
                 //this.pnlBuscar.BackColor = colorUser;
@@ -1537,6 +1541,26 @@ namespace Presentacion.Caja
                 //e.Handled = true;
                 //SendKeys.Send("{TAB}");
             }
+        }
+
+        private void txtCliente_Enter(object sender, EventArgs e)
+        {
+            txtCliente.BackColor = focusColor;
+        }
+
+        private void txtCliente_Leave(object sender, EventArgs e)
+        {
+            txtCliente.BackColor = enableColor;
+        }
+
+        private void txtPrecioKg_Enter(object sender, EventArgs e)
+        {
+            txtPrecioKg.BackColor = focusColor;
+        }
+
+        private void txtPrecioKg_Leave(object sender, EventArgs e)
+        {
+            txtPrecioKg.BackColor = enableColor;
         }
 
         private void formPuntoExpendio_FormClosing(object sender, FormClosingEventArgs e)

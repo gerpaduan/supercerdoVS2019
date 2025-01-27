@@ -13,8 +13,8 @@ namespace Presentacion.Caja
     public partial class formBonificar : Form
     {
         public Entidades.LineaVenta oLineaVenta;
-        public formVentaCajaConExpendio frmVentaCajaConExp;
-        public formVentaCaja frmVentaCaja;
+        public formVentaCajaConExpendio frmVentaCajaConExpConExp;
+        public formVentaCaja frmVentaCajaConExp;
         float precio, total;
         bool validado = true;
 
@@ -78,7 +78,7 @@ namespace Presentacion.Caja
             {
                 if (checkBonificarTodos.Checked)
                 {
-                    frmVentaCaja.bonificarTodos = checkBonificarTodos.Checked;
+                    frmVentaCajaConExp.bonificarTodos = checkBonificarTodos.Checked;
                     this.Close();
                     return;
                 }
@@ -90,7 +90,7 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    frmVentaCaja.precioBonificado = txtPrecioKg.Text;
+                    frmVentaCajaConExpConExp.precioBonificado = txtPrecioKg.Text;
                     MessageBox.Show("La bonificación se realizó correctamente.");
                     this.Close();
                 }
@@ -125,7 +125,7 @@ namespace Presentacion.Caja
             if (checkBonificarTodos.Checked)
             {
                 txtPorcentaje.Text = "0";
-                frmVentaCaja.porcentajeBonif_String = "0";
+                frmVentaCajaConExp.porcentajeBonif_String = "0";
                 MessageBox.Show("Presione el botón Bonificar para terminar el proceso de la quita de bonificación");
             }
             else
@@ -194,7 +194,7 @@ namespace Presentacion.Caja
                 if (Utilidades.Util_Form.validarCampoNumerico(txtPorcentaje.Text, "Porcentaje"))
                 {
                     float porcentaje = (100 - Utilidades.Util_Form.convertFloat(txtPorcentaje.Text, false)) / 100;
-                    frmVentaCaja.porcentajeBonif_String = txtPorcentaje.Text;
+                    frmVentaCajaConExp.porcentajeBonif_String = txtPorcentaje.Text;
                     if (!checkBonificarTodos.Checked)
                         txtPrecioKg.Text  = (oLineaVenta.Corte.PrecioKg * porcentaje ).ToString("F2");
                     validado = true;

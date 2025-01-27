@@ -93,7 +93,7 @@ namespace Presentacion.Caja
         bool cartelPrimerCorteVendedor = Convert.ToBoolean(ConfigurationManager.AppSettings["cartelPrimerCorteVendedor"].ToString());
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
-        float totalCorte, precioKg, cantKg, cantKgTarjeta, kgsTotalCalculado;
+        float totalCorte, precioKg, precioKgCorteExpendio, cantKg, cantKgTarjeta, kgsTotalCalculado;
         float totalVenta = 0, abona = 0, cambio = 0, ganPesosTotRedondeo = 0, ganKgsTotRedondeo = 0,
             ganPesosRedondeoLinea = 0, ganKgsRedondeoLinea = 0, acumRedondeoKgs = 0, acumRedondeImporte = 0;
 
@@ -736,6 +736,7 @@ namespace Presentacion.Caja
             oLineaVenta.CantKg = cantKg;
             oLineaVenta.KgsTotalCalculado = kgsTotalCalculado;
             oLineaVenta.KgsAjusteTarj = oLineaVenta.KgsTotalCalculado - oLineaVenta.CantKg;
+            precioKg = idExpendioVenta > 0 ? precioKgCorteExpendio : precioKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.PesoBalanza = pesoBalanza;
             oLineaVenta.Bonificacion = (1 - (precioKg / oCorteE.precioKg)) * 100;
@@ -1504,7 +1505,7 @@ namespace Presentacion.Caja
                     //totalCorte = precioKg * cantKg;
                     totalCorte = precioKg * kgsTotalCalculado;
 
-                    if (Presentacion.FormPrincipal.logueado)
+                    if (Presentacion.FormPrincipal.logueado || idExpendioVenta > 0)
                     {
                         txtTotalCorte.Text = totalCorte.ToString();
                     }
@@ -2768,6 +2769,7 @@ namespace Presentacion.Caja
         {
             // Obtener el valor de una celda específica
             txtCodigo.Text = fila.Cells["cod"].Value.ToString();
+            precioKgCorteExpendio = Utilidades.Util_Form.convertFloat(fila.Cells["precio"].Value.ToString(), false); 
             txtCantKgs.Text = fila.Cells["Cant"].Value.ToString();
             //se agrega el expendio a la venta
             idExpendioVenta = Convert.ToInt32(fila.Cells["idExpendio"].Value);
