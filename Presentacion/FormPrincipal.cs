@@ -505,7 +505,7 @@ namespace Presentacion
             e.Cancel = true;
             foreach (Form frm in Application.OpenForms)
             {
-                if (frm.GetType() == typeof(formVentaCaja))
+                if (frm.GetType() == typeof(formVentaCajaConExpendio))
                 {
                     MessageBox.Show("Para salir de la aplicación debe cerrar las ventanas de ventas");
                     permitirCerrar = false;

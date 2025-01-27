@@ -13,8 +13,7 @@ namespace Presentacion.Caja
     public partial class formBonificar : Form
     {
         public Entidades.LineaVenta oLineaVenta;
-        public formVentaCajaConExpendio frmVentaCajaConExpConExp;
-        public formVentaCaja frmVentaCajaConExp;
+        public formVentaCajaConExpendio frmVentaCajaConExp;
         float precio, total;
         bool validado = true;
 
@@ -90,7 +89,7 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    frmVentaCajaConExpConExp.precioBonificado = txtPrecioKg.Text;
+                    frmVentaCajaConExp.precioBonificado = txtPrecioKg.Text;
                     MessageBox.Show("La bonificación se realizó correctamente.");
                     this.Close();
                 }

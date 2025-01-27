@@ -402,7 +402,7 @@ namespace Presentacion.Caja
 
                     foreach (Form frm in Application.OpenForms)
                     {
-                        if (frm.GetType() == typeof(formVentaCaja))
+                        if (frm.GetType() == typeof(formVentaCajaConExpendio))
                         {
                             foreach (Control ctrl in frm.Controls)
                             {
