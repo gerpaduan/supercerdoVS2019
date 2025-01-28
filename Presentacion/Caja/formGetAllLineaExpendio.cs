@@ -158,9 +158,12 @@ namespace Presentacion
                     string filtroCombo = comboExpendioEstado.Text == "PENDIENTES" ? "(idVenta IS NULL OR idVenta = 0)" :
                         comboExpendioEstado.Text == "ASIGNADOS" ? "(idVenta IS NOT NULL AND idVenta > 0)" : "";
                     string filtroVendedor = (comboUsuario.Text == "Todos" ? "" : " Vendedor LIKE '" + comboUsuario.Text + "'");
+                    string filtroSector = (comboSector.Text.ToUpper() == "TODOS" ? "" : " sector LIKE '" + comboSector.Text + "'");
                     string and = !string.IsNullOrEmpty(filtroCombo) && !string.IsNullOrEmpty(filtroVendedor) ? " AND " : "";
                     filtroExpendio += !string.IsNullOrEmpty(filtroExpendio) && !string.IsNullOrEmpty(and) ? " AND " : "";
                     string filtroCompleto = filtroExpendio + filtroCombo + and + filtroVendedor;
+                    filtroCompleto = !string.IsNullOrEmpty(filtroSector) && !string.IsNullOrEmpty(filtroCompleto) ?
+                        filtroCompleto + " AND " + filtroSector : filtroSector;
                     DataRow[] filas = dtExpendios.Select(filtroCompleto);
 
                     // Crear un nuevo DataTable con la misma estructura que el original
@@ -214,6 +217,7 @@ namespace Presentacion
             fechaDesde.Value = fechaHoyConHoraCero;
             cargarSucursal();
             cargarComboVendedor();
+            cargarComboSectores();
             if (!oUsuarioE.Admin)
             {
                 fechaDesde.Enabled = false;
@@ -234,6 +238,14 @@ namespace Presentacion
             comboUsuario.DisplayMember = "nombre";
             comboUsuario.ValueMember = "id";
             comboUsuario.SelectedIndex = 0; 
+        }
+
+        private void cargarComboSectores()
+        {
+            comboSector.DataSource = oVentaN.obtenerSectoresConTodos();
+            comboSector.DisplayMember = "sector";
+            comboSector.ValueMember = "sector";
+            comboSector.SelectedIndex = 0;
         }
 
         private void txtDescripcion_KeyDown(object sender, KeyEventArgs e)
@@ -408,10 +420,11 @@ namespace Presentacion
 
         private void txtBuscarExpendio_TextChanged(object sender, EventArgs e)
         {
-            //para que actualice la grilla cuando se vacia el textBox xq sino cargaba la lista de la BD
-            //if (string.IsNullOrWhiteSpace(txtBuscarExpendio.Text))
-                //changeComboExpendio = true;
+            filtrarExpendio();
+        }
 
+        private void comboSector_TextChanged(object sender, EventArgs e)
+        {
             filtrarExpendio();
         }
     }

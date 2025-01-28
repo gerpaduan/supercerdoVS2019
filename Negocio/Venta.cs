@@ -254,10 +254,29 @@ namespace Negocio
         {
             return oVentaD.obtenerUltimosExpendios(ultimosMinutos, idSucursal);
         }
-            public DataTable obtenerSectores()
+        public DataTable obtenerSectores()
         {
             return oVentaD.obtenerSectores();
         }
+
+        public DataTable obtenerSectoresConTodos()
+        {
+            DataTable dtSectores = obtenerSectores();
+            DataRow drSector = dtSectores.NewRow();
+            drSector["Sector"] = "TODOS";
+            dtSectores.Rows.Add(drSector);
+
+            // Mover 'TODOS' al principio
+            DataRow filaTodos = dtSectores.Rows[dtSectores.Rows.Count - 1];
+            DataRow filaNueva = dtSectores.NewRow();
+            filaNueva.ItemArray = filaTodos.ItemArray;
+
+            dtSectores.Rows.Remove(filaTodos);
+            dtSectores.Rows.InsertAt(filaNueva, 0);
+
+            return dtSectores;
+        }
+
         public string getUltimoSectorSelect(string serialCPU)
         {
             return oVentaD.getUltimoSectorSelect(serialCPU);
