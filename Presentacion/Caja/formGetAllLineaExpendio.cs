@@ -157,13 +157,16 @@ namespace Presentacion
 
                     string filtroCombo = comboExpendioEstado.Text == "PENDIENTES" ? "(idVenta IS NULL OR idVenta = 0)" :
                         comboExpendioEstado.Text == "ASIGNADOS" ? "(idVenta IS NOT NULL AND idVenta > 0)" : "";
-                    string filtroVendedor = (comboUsuario.Text == "Todos" ? "" : " Vendedor LIKE '" + comboUsuario.Text + "'");
+
+                    string filtroVendedor = (comboUsuario.Text.ToUpper() == "TODOS" ? "" : " Vendedor LIKE '" + comboUsuario.Text + "'");
                     string filtroSector = (comboSector.Text.ToUpper() == "TODOS" ? "" : " sector LIKE '" + comboSector.Text + "'");
                     string and = !string.IsNullOrEmpty(filtroCombo) && !string.IsNullOrEmpty(filtroVendedor) ? " AND " : "";
                     filtroExpendio += !string.IsNullOrEmpty(filtroExpendio) && !string.IsNullOrEmpty(and) ? " AND " : "";
-                    string filtroCompleto = filtroExpendio + filtroCombo + and + filtroVendedor;
-                    filtroCompleto = !string.IsNullOrEmpty(filtroSector) && !string.IsNullOrEmpty(filtroCompleto) ?
-                        filtroCompleto + " AND " + filtroSector : filtroSector;
+
+                    string filtroCompleto = filtroExpendio + (!string.IsNullOrEmpty(filtroExpendio) && !string.IsNullOrEmpty(filtroCombo) ? " AND " + filtroCombo : filtroCombo);
+                    filtroCompleto += (!string.IsNullOrEmpty(filtroCompleto) && !string.IsNullOrEmpty(filtroVendedor) ? " AND " + filtroVendedor : filtroVendedor);
+                    filtroCompleto += (!string.IsNullOrEmpty(filtroCompleto) && !string.IsNullOrEmpty(filtroSector) ? " AND " + filtroSector : filtroSector);
+
                     DataRow[] filas = dtExpendios.Select(filtroCompleto);
 
                     // Crear un nuevo DataTable con la misma estructura que el original
@@ -229,7 +232,6 @@ namespace Presentacion
             comboExpendioEstado.SelectedIndex = 0;
             cargar = true;
             cargarGrilla();
-            filtrarExpendio();
         }
 
         private void cargarComboVendedor()
@@ -423,7 +425,12 @@ namespace Presentacion
             filtrarExpendio();
         }
 
-        private void comboSector_TextChanged(object sender, EventArgs e)
+        private void comboExpendioEstado_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            filtrarExpendio();
+        }
+
+        private void comboSector_SelectedIndexChanged(object sender, EventArgs e)
         {
             filtrarExpendio();
         }
