@@ -80,31 +80,6 @@ namespace Utilidades
 
         public static bool validarCampoNumerico(string texto, string nombreTextBox)
         {
-            //bool resp = texto.Length > 0 ? true : false;
-            //int index = 0;
-            //int cantPuntosDecimal = 0;
-
-            //foreach (char letra in texto)
-            //{
-            //    bool esNro = true;
-            //    if (!char.IsNumber(letra))
-            //    {
-            //        esNro = false;
-            //    }
-            //    if ((!esNro && letra != '.' && letra != ',' && !(index==0 && letra == '-')))
-            //    {                    
-            //        resp = false;
-            //    }
-            //    if (resp && (letra.Equals('.') || letra.Equals(',')))
-            // {
-            //        cantPuntosDecimal++;
-            //        if (cantPuntosDecimal > 1)
-            //        {
-            //            resp = false;
-            //        }
-            // }
-            //    index++;
-            //}
             bool resp = texto.Length > 0 ? double.TryParse(texto, out _) : false;
             if (!resp)
             {
@@ -161,6 +136,18 @@ namespace Utilidades
                 }
             }
             return resp;
+        }
+
+        public static bool validarNumeroMayorUnGramo(string texto, string nombreTextBox)
+        {
+            double limit = double.Parse("0,001") ;
+            bool resp = double.TryParse(texto.Replace('.', ','), out double peso) && peso >= limit;
+            if (!resp)
+            {
+                MessageBox.Show("-" + nombreTextBox + " debe ser un número mayor o igual a Un Gramo (mayor o igual 0,001)", "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return resp;
+
         }
 
         public static bool validarFecha(DateTime fecha, string nombreTextBox)

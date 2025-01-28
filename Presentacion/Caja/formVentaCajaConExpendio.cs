@@ -852,7 +852,8 @@ namespace Presentacion.Caja
             else
             {
                 bool esKgsMayorACero = Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
-                bool esPrecioMayorACero =  Utilidades.Util_Form.validarNumeroMayorACero(txtPrecioKg.Text, "Precio");
+                //Si es Corte desde Expendio se permite precio cero
+                bool esPrecioMayorACero = idExpendioVenta > 0 || Utilidades.Util_Form.validarNumeroMayorACero(txtPrecioKg.Text, "Precio");
                 if (!esKgsMayorACero && !checkLeerPeso.Checked)
 	            {
                     txtCantKgs.Focus();
@@ -2808,6 +2809,7 @@ namespace Presentacion.Caja
             listaLineaVenta.RemoveAll(item => item.IdExpendio > 0);
             listaLineaGrilla.RemoveAll(item => item.IdExpendio > 0);
             oVentaE.ListaExpendios.Clear();
+            idExpendioVenta = 0;
             cargarGrilla();
             filtrarExpendio();
         }

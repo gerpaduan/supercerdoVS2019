@@ -150,12 +150,17 @@ namespace Presentacion
             {
                 try
                 {
+                    //para poder filtar identif.Cliente q es string se asigna '0' a filtro de idExpendio
+                    string filtroPorId = int.TryParse(txtBuscarExpendio.Text, out int numero) ? txtBuscarExpendio.Text : "0";
+                    string filtroPorIdentif = "identificacionExpendio LIKE " + (int.TryParse(txtBuscarExpendio.Text, out int numero1) ? "'" + txtBuscarExpendio.Text + "'" : "'%" + txtBuscarExpendio.Text + "%'");
+                    string filtroExpendio = !string.IsNullOrWhiteSpace(txtBuscarExpendio.Text) ? "(idExpendio = " + filtroPorId + " OR " + filtroPorIdentif + " ) " : string.Empty;
 
                     string filtroCombo = comboExpendioEstado.Text == "PENDIENTES" ? "(idVenta IS NULL OR idVenta = 0)" :
                         comboExpendioEstado.Text == "ASIGNADOS" ? "(idVenta IS NOT NULL AND idVenta > 0)" : "";
                     string filtroVendedor = (comboUsuario.Text == "Todos" ? "" : " Vendedor LIKE '" + comboUsuario.Text + "'");
                     string and = !string.IsNullOrEmpty(filtroCombo) && !string.IsNullOrEmpty(filtroVendedor) ? " AND " : "";
-                    string filtroCompleto = filtroCombo + and + filtroVendedor;
+                    filtroExpendio += !string.IsNullOrEmpty(filtroExpendio) && !string.IsNullOrEmpty(and) ? " AND " : "";
+                    string filtroCompleto = filtroExpendio + filtroCombo + and + filtroVendedor;
                     DataRow[] filas = dtExpendios.Select(filtroCompleto);
 
                     // Crear un nuevo DataTable con la misma estructura que el original
@@ -399,6 +404,15 @@ namespace Presentacion
             }
 
             return null;
+        }
+
+        private void txtBuscarExpendio_TextChanged(object sender, EventArgs e)
+        {
+            //para que actualice la grilla cuando se vacia el textBox xq sino cargaba la lista de la BD
+            //if (string.IsNullOrWhiteSpace(txtBuscarExpendio.Text))
+                //changeComboExpendio = true;
+
+            filtrarExpendio();
         }
     }
 }

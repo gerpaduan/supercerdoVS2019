@@ -589,9 +589,9 @@ namespace Presentacion.Caja
             } 
             else
             {
-                bool esKgsMayorACero = Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Kgs.");
+                bool esKgsMayorUnGramo = Utilidades.Util_Form.validarNumeroMayorUnGramo(txtCantKgs.Text, "Kgs.");
                 bool esPrecioMayorACero =  Utilidades.Util_Form.validarNumeroMayorACero(txtPrecioKg.Text, "Precio");
-                if (!esKgsMayorACero && !checkLeerPeso.Checked)
+                if (!esKgsMayorUnGramo && !checkLeerPeso.Checked) //(!esKgsMayorACero && !checkLeerPeso.Checked)
 	            {
                     txtCantKgs.Focus();
                     txtCantKgs.SelectAll();
@@ -609,7 +609,7 @@ namespace Presentacion.Caja
                     txtCantKgs.SelectAll();
                 }
 
-                return esKgsMayorACero && esPrecioMayorACero && esKgsMenorAMil;
+                return esKgsMayorUnGramo && esPrecioMayorACero && esKgsMenorAMil;
             }
         }
 
@@ -1420,13 +1420,13 @@ namespace Presentacion.Caja
                     }
                     break;
                 case Keys.F3:
-                        sumarUltimasDosVentas();
+                        //sumarUltimasDosVentas();
                         break;
                 case Keys.F10:
                     buscarCorte();
                     break;
                 case Keys.F12:
-                    bloquear();
+                    //bloquear();
                     break;
             }
 
@@ -1605,7 +1605,14 @@ namespace Presentacion.Caja
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
             try
+            {
+                //Se valida que precio lista sea distinto a cero para evitar error en bonificar al infinito
+                if (oCorteE != null && oCorteE.precioKg == 0)
                 {
+                    MessageBox.Show("No se permiten ingresar productos con precio de lista $0.00 (cero)", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtCodigo.Focus();
+                    return;
+                }
                 ///Al leer con la pistola se aplica el tab
                 ///entonces aca se valida si es codigo de barra cuando todo el campo codigo está cargado 
                 ///y no surge el problema de cortar un ean13 en 8 digitos
