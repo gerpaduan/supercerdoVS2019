@@ -875,12 +875,14 @@ namespace wsAFIPvs2008
                 //Fecha del Comprobante
                 det.CbteFch = FechaDTP.Value.ToString("yyyyMMdd");
                 //Se calculan los importes a enviar
-                det.ImpNeto = Convert.ToDouble(NetoTX.Text);
-                det.ImpIVA = Convert.ToDouble(ImpIvaTx.Text);
+                det.ImpNeto = esRRII ? Convert.ToDouble(NetoTX.Text) : Convert.ToDouble(TotalTx.Text);
+                det.ImpIVA = esRRII ? Convert.ToDouble(ImpIvaTx.Text) : 0;
                 det.ImpTotal = Convert.ToDouble(TotalTx.Text);
                 det.ImpTotConc = 0;
                 det.ImpOpEx = 0;
                 det.ImpTrib = 0;
+
+
                 //Tipo Moneda 
                 Moneda mon = (Moneda)MonedaCMB.SelectedItem;
                 det.MonId = mon.Id;
@@ -893,29 +895,31 @@ namespace wsAFIPvs2008
                 //alicuota.BaseImp = Convert.ToDouble(NetoTX.Text);
                 //alicuota.Importe = Convert.ToDouble(ImpIvaTx.Text);  
 
-
-                AlicIva[] alicuotaArr = new AlicIva[listaIdAlicuotaConIva.Count];
-                //recorro listaIdAlicuotaConIva y agrego al array
-                oFactuElec.ListaAlicuota = new List<Entidades.AlicuotaIva>();
-                for (int i = 0; i < listaIdAlicuotaConIva.Count; i++)
+                if (esRRII)
                 {
-                    foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
+                    AlicIva[] alicuotaArr = new AlicIva[listaIdAlicuotaConIva.Count];
+                    //recorro listaIdAlicuotaConIva y agrego al array
+                    oFactuElec.ListaAlicuota = new List<Entidades.AlicuotaIva>();
+                    for (int i = 0; i < listaIdAlicuotaConIva.Count; i++)
                     {
-                        if (item.IdIva == listaIdAlicuotaConIva[i])
+                        foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
                         {
-                            AlicIva alicuota = new AlicIva();
-                            alicuota.Id = item.IdIva;
-                            //Redondeo para que queden 2 decimales y no tira error ws afip
-                            alicuota.BaseImp =(double)Math.Round(item.BaseImponible ,2);
-                            alicuota.Importe = (double)Math.Round(item.Importe,2); 
+                            if (item.IdIva == listaIdAlicuotaConIva[i])
+                            {
+                                AlicIva alicuota = new AlicIva();
+                                alicuota.Id = item.IdIva;
+                                //Redondeo para que queden 2 decimales y no tira error ws afip
+                                alicuota.BaseImp = (double)Math.Round(item.BaseImponible, 2);
+                                alicuota.Importe = (double)Math.Round(item.Importe, 2);
 
-                            alicuotaArr[i] = alicuota;
-                            oFactuElec.ListaAlicuota.Add(item);
+                                alicuotaArr[i] = alicuota;
+                                oFactuElec.ListaAlicuota.Add(item);
+                            }
                         }
                     }
-                }
 
-                det.Iva = alicuotaArr;
+                    det.Iva = alicuotaArr;
+                }
                 
                 FECAEDetRequest[] reqArr = new FECAEDetRequest[1];
                 reqArr[0] = det;
