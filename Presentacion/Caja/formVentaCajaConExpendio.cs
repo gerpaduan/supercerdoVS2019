@@ -2073,6 +2073,7 @@ namespace Presentacion.Caja
                 case Keys.Multiply:
                     dejarDeLeerPeso = checkLeerPeso.Checked;
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
+                    txtCodigo.Focus();
                     break;
                 case Keys.Home:
                     txtCodigo.Focus();
