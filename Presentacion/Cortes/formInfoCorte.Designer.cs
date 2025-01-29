@@ -339,6 +339,7 @@
             this.txtAlicuotaIva.ReadOnly = true;
             this.txtAlicuotaIva.Size = new System.Drawing.Size(75, 21);
             this.txtAlicuotaIva.TabIndex = 43;
+            this.txtAlicuotaIva.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label14
             // 
@@ -391,7 +392,7 @@
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(350, 50);
+            this.label15.Location = new System.Drawing.Point(352, 49);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(91, 15);
             this.label15.TabIndex = 38;
@@ -405,6 +406,7 @@
             this.txtIdCorte.ReadOnly = true;
             this.txtIdCorte.Size = new System.Drawing.Size(132, 21);
             this.txtIdCorte.TabIndex = 34;
+            this.txtIdCorte.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label13
             // 
@@ -445,7 +447,7 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(325, 76);
+            this.label9.Location = new System.Drawing.Point(327, 75);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(118, 15);
             this.label9.TabIndex = 30;
@@ -541,6 +543,7 @@
             this.txtCodigo.ReadOnly = true;
             this.txtCodigo.Size = new System.Drawing.Size(132, 21);
             this.txtCodigo.TabIndex = 7;
+            this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label1
             // 
