@@ -1907,6 +1907,95 @@ namespace wsAFIPvs2008
 
         }
 
+        private void NotaCredito_Click(object sender, EventArgs e)
+        {
+            #region NotaCredito Pendiente
+            WSFEHOMO.Service service = getServicio();
+            //**Certificado para loguearse con AFIP**
+            service.ClientCertificates.Add(oLoginClass.certificado);
+
+            DialogResult respuesta;
+            if (oFactuElec != null && oFactuElec.Id > 0 && !string.IsNullOrEmpty(oFactuElec.CAE1))
+            {
+                if (oFactuElec.RazonSocialAFIP.Equals(txtRazonSocial.Text) && oFactuElec.DomicilioAFIP.Equals(txtDomicilio.Text)
+                     && oFactuElec.CondicionIvaAFIP.Equals(comboIva.Text))
+                    MessageBox.Show("La Venta ya ha sido facturada", "Venta Facturada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+                CbteTipo cm = (CbteTipo)TiposComprobantesCMB.SelectedItem;
+                FECAERequest req = new FECAERequest(); ///Request para obtener CAE
+                FECAECabRequest cab = new FECAECabRequest(); ///CABECERA DEL REQUEST
+                FECAEDetRequest det = new FECAEDetRequest(); ///DETALLE(cuerpo) DEL REQUEST
+
+                //Cabecera del Request
+                cab.CantReg = 1;
+                cab.PtoVta = ptoVtaAfip;
+                cab.CbteTipo = cm.Id;
+                req.FeCabReq = cab; ///Asignamos la cabecera al Request 
+
+                                    ///****Detalle del Request***
+                //Concepto = 1-Producto
+                ConceptoTipo concepto = (ConceptoTipo)TipoConcepto.SelectedItem;
+                det.Concepto = concepto.Id;
+                //Tipo y Nro Doc del Cliente
+                // Para consumidortes finales ID=99 Desc= Doc. (Otro)
+                DocTipo doctipo = (DocTipo)TipoDocCMB.SelectedItem;
+                det.DocTipo = doctipo.Id;
+                det.DocNro = !string.IsNullOrEmpty(DocTX.Text) ? long.Parse(DocTX.Text) : 0;
+                //Ultimo CAE autorizado y se le suma 1
+                FERecuperaLastCbteResponse lastRes = service.FECompUltimoAutorizado(authRequest, ptoVtaAfip, cm.Id);
+                int last = lastRes.CbteNro;
+                det.CbteDesde = last + 1;
+                det.CbteHasta = last + 1;
+
+                //Fecha del Comprobante
+                det.CbteFch = FechaDTP.Value.ToString("yyyyMMdd");
+                //Se calculan los importes a enviar
+                det.ImpNeto = Convert.ToDouble(NetoTX.Text);
+                det.ImpIVA = Convert.ToDouble(ImpIvaTx.Text);
+                det.ImpTotal = Convert.ToDouble(TotalTx.Text);
+                det.ImpTotConc = 0;
+                det.ImpOpEx = 0;
+                det.ImpTrib = 0;
+                //Tipo Moneda 
+                Moneda mon = (Moneda)MonedaCMB.SelectedItem;
+                det.MonId = mon.Id;
+                det.MonCotiz = 1;
+
+                AlicIva[] alicuotaArr = new AlicIva[listaIdAlicuotaConIva.Count];
+                //recorro listaIdAlicuotaConIva y agrego al array
+                oFactuElec.ListaAlicuota = new List<Entidades.AlicuotaIva>();
+                for (int i = 0; i < listaIdAlicuotaConIva.Count; i++)
+                {
+                    foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
+                    {
+                        if (item.IdIva == listaIdAlicuotaConIva[i])
+                        {
+                            AlicIva alicuota = new AlicIva();
+                            alicuota.Id = item.IdIva;
+                            //Redondeo para que queden 2 decimales y no tira error ws afip
+                            alicuota.BaseImp = (double)Math.Round(item.BaseImponible, 2);
+                            alicuota.Importe = (double)Math.Round(item.Importe, 2);
+
+                            alicuotaArr[i] = alicuota;
+                            oFactuElec.ListaAlicuota.Add(item);
+                        }
+                    }
+                }
+
+                det.Iva = alicuotaArr;
+
+                FECAEDetRequest[] reqArr = new FECAEDetRequest[1];
+                reqArr[0] = det;
+                req.FeDetReq = reqArr;
+
+                //Solicita el CAE
+                FECAEResponse r = service.FECAESolicitar(authRequest, req);
+
+            }
+            #endregion
+        }
+
         private string ConvertirMontoEnTexto(decimal monto)
         {
             if (monto == 0)

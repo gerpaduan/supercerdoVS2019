@@ -92,6 +92,7 @@
             this.imprimir = new System.Windows.Forms.ToolStripButton();
             this.pdf_Factura = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.NotaCredito = new System.Windows.Forms.ToolStripButton();
             this.panel2 = new System.Windows.Forms.Panel();
             this.btnBuscarCuit = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
@@ -697,7 +698,8 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.imprimir,
             this.pdf_Factura,
-            this.toolStripSeparator});
+            this.toolStripSeparator,
+            this.NotaCredito});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(168, 42);
@@ -730,6 +732,17 @@
             this.toolStripSeparator.Name = "toolStripSeparator";
             this.toolStripSeparator.Size = new System.Drawing.Size(6, 42);
             // 
+            // NotaCredito
+            // 
+            this.NotaCredito.Image = ((System.Drawing.Image)(resources.GetObject("NotaCredito.Image")));
+            this.NotaCredito.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.NotaCredito.Name = "NotaCredito";
+            this.NotaCredito.Size = new System.Drawing.Size(65, 39);
+            this.NotaCredito.Text = "Nota Créd";
+            this.NotaCredito.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.NotaCredito.Visible = false;
+            this.NotaCredito.Click += new System.EventHandler(this.NotaCredito_Click);
+            // 
             // panel2
             // 
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -752,7 +765,7 @@
             // btnBuscarCuit
             // 
             this.btnBuscarCuit.Location = new System.Drawing.Point(264, 34);
-            this.btnBuscarCuit.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnBuscarCuit.Margin = new System.Windows.Forms.Padding(2);
             this.btnBuscarCuit.Name = "btnBuscarCuit";
             this.btnBuscarCuit.Size = new System.Drawing.Size(91, 24);
             this.btnBuscarCuit.TabIndex = 78;
@@ -1201,5 +1214,6 @@
         private System.Windows.Forms.TextBox txtObservaciones;
         internal System.Windows.Forms.Label label25;
         internal System.Windows.Forms.TextBox txtFormaPago;
+        private System.Windows.Forms.ToolStripButton NotaCredito;
     }
 }

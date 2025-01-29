@@ -191,7 +191,7 @@
             this.btnMarca.Location = new System.Drawing.Point(230, 110);
             this.btnMarca.Name = "btnMarca";
             this.btnMarca.Size = new System.Drawing.Size(28, 23);
-            this.btnMarca.TabIndex = 38;
+            this.btnMarca.TabIndex = 3;
             this.btnMarca.UseVisualStyleBackColor = true;
             this.btnMarca.Click += new System.EventHandler(this.btnMarca_Click);
             // 
@@ -667,7 +667,7 @@
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.pnlBuscar);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.MinimizeBox = true;
             this.Name = "formNuevoCorte";
