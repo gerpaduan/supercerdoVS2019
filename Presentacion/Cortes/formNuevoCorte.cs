@@ -18,6 +18,7 @@ namespace Presentacion
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
         Negocio.Corte oCorteN = new Negocio.Corte();
         Entidades.Corte oCorteE=new Entidades.Corte();
+        Entidades.Corte oExisteCorte = new Entidades.Corte();
         public formCortes frmCorte;// = new formCortes();
         public formInfoCorte oFrmInfoCorte;
         Entidades.Persona oMarca;
@@ -93,6 +94,7 @@ namespace Presentacion
             txtPrecioKg.Text = Convert.ToString(oCorteE.precioKg);
             oCorteMaestroE = oCorteE.corteMaestro;
             comboTipo.Text = oCorteE.tipo;
+            checkPesable.Checked = oCorteE.Pesable;
             comboAlicuotaIva.SelectedValue = oCorteE.IdAlicuotaIva;
             txtPromedio.Text = oCorteE.Promedio.ToString("F3");
             txtIndependiente.Checked = oCorteE.independiente == 1;
@@ -252,16 +254,20 @@ namespace Presentacion
 
         private bool existeCodigoCorte()
         {
+            if (string.IsNullOrEmpty(txtCodigo.Text))
+                return true;
             //Si la cantidad de filas es cero en el DataTable el codigo no existe y se la asigna al nuevo corte
             bool existeCodigo = false;
-            DataTable dt = oCorteN.buscarCodigoCorte(oCorteE.codigo);
+            DataTable dt = oCorteN.buscarCodigoCorte(Convert.ToInt64(txtCodigo.Text));
             foreach (DataRow  fila in dt.Rows)
             {
                 if (!fila["idCorte"].ToString().Equals(oCorteE.idCorte.ToString()))
                 {
                     existeCodigo = true;
-                    MessageBox.Show("El código ingresado ya está asignado a un corte. Elija otro código o modifique el código del corte que lo tiene asignado.", "Complete los campos",
+                    MessageBox.Show("El código ingresado ya está asignado a \'"+ fila["corte"].ToString() + "\'. \nElija otro código o modifique el código del corte que lo tiene asignado.", "Complete los campos",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    txtCodigo.Focus();
+                    txtCodigo.SelectAll();
                     break;
                 }
             }
@@ -482,6 +488,7 @@ namespace Presentacion
         {
             Personas.formBuscarPersona frmBuscarPersona = new Personas.formBuscarPersona();
             frmBuscarPersona.ShowDialog(this);
+            comboTipo.Focus();
         }
 
         //comunicación con interface
@@ -506,6 +513,11 @@ namespace Presentacion
         {
             this.txtMarca.Text = oMarca != null ? oMarca.Identificacion : ""; 
             btnBorrarMarca.Visible = string.IsNullOrEmpty(txtMarca.Text) ? false : true;
+        }
+
+        private void txtCodigo_Leave(object sender, EventArgs e)
+        {
+            existeCodigoCorte();
         }
     }
 }

@@ -55,6 +55,7 @@ namespace Presentacion
                 txtPrecioKg.Text = oCorteE.precioKg.ToString("F2"); 
                 txtTipo.Text = oCorteE.tipo;
                 txtMarca.Text = oCorteE.Marca != null ? oCorteE.Marca.Identificacion : "";
+                checkPesable.Checked = oCorteE.Pesable;
                 txtAlicuotaIva.Text = oCorteE.AlicuotaIva.ToString();
                 txtPromedio.Text = oCorteE.Promedio.ToString("F2");
                 txtPuntoStock.Text = oCorteE.PuntoStock.ToString();
