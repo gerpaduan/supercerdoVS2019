@@ -168,7 +168,13 @@ namespace Presentacion.Caja
                 ticket.LineasEnBlanco(1);
                 ticket.TextoIzquierda("Total $: " + txtTotal.Text);
                 ticket.LineasEnBlanco(1);
-                ticket.TextoMuchasLineas("detalle: " + detalleCantBilletes);
+                //limpiar detalle
+                //ticket.TextoMuchasLineas(detalleCantBilletes);
+                string[] partes = detalleCantBilletes.Split('|');
+                foreach (string parte in partes)
+                {
+                    ticket.TextoDerecha(parte);
+                }
                 ticket.LineasEnBlanco(5);
                 ticket.realizarImpresion();
             }
