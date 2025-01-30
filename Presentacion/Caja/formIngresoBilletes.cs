@@ -16,7 +16,7 @@ namespace Presentacion.Caja
         public TextBox txtBoxAcargar;
         public float total = 0, veintemil= 0, diezmil = 0, dosmil= 0, mil= 0, quinientos = 0, doscientos = 0, cien = 0, cincuenta = 0, 
             veinte = 0, diez = 0, cinco = 0, dos = 0, monedas = 0;
-        public string[] cantBilletes = new string[12];
+        public string[] cantBilletes = new string[11];
         public string detalleCantBilletes = "";
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
@@ -59,6 +59,8 @@ namespace Presentacion.Caja
                     return;
                 }
                 monedas = string.IsNullOrEmpty(objectKeyDown.Text) ? 0 : Util_Form.convertFloat(objectKeyDown.Text, true);
+
+                cantBilletes[10] = monedas + " en " + "m$";
             }
             else
             {
@@ -128,7 +130,8 @@ namespace Presentacion.Caja
             }
             total = veintemil + diezmil + dosmil + mil + quinientos + doscientos + cien + cincuenta + veinte + diez + cinco + dos + monedas;
             txtTotalCambio.Text = (total - cien).ToString("F2");
-            txtTotal.Text = total.ToString("F2");
+            
+            txtTotal.Text = total.ToString("N2");
         }
 
 
