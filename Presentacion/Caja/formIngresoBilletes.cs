@@ -17,7 +17,7 @@ namespace Presentacion.Caja
         public float total = 0, veintemil= 0, diezmil = 0, dosmil= 0, mil= 0, quinientos = 0, doscientos = 0, cien = 0, cincuenta = 0, 
             veinte = 0, diez = 0, cinco = 0, dos = 0, monedas = 0;
         public string[] cantBilletes = new string[12];
-        public string detalleCantBilletas = "";
+        public string detalleCantBilletes = "";
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -110,14 +110,17 @@ namespace Presentacion.Caja
                     case 50:
                         cincuenta = totalBillete;
                         txt50Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[7] = objectKeyDown.Text + " de " + "50";
                         break;
                     case 20:
                         veinte = totalBillete;
                         txt20Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[8] = objectKeyDown.Text + " de " + "20";
                         break;
                     case 10:
                         diez = totalBillete;
                         txt10Total.Text = totalBillete.ToString("F2");
+                        cantBilletes[9] = objectKeyDown.Text + " de " + "10";
                         break;
                     default:
                         break;
@@ -131,15 +134,49 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
-            detalleCantBilletas = "[ Billetes: ";
+            detalleCantBilletes = "[ Billetes: ";
             for (int i = 0; i < cantBilletes.Length; i++)
             {
-                detalleCantBilletas += cantBilletes[i] != null ? cantBilletes[i] : "0";
-                detalleCantBilletas += " | ";
+                detalleCantBilletes += cantBilletes[i] != null ? cantBilletes[i] : "0";
+                detalleCantBilletes += " | ";
             }
-            detalleCantBilletas += " ]";
+            detalleCantBilletes += " ]";
             txtBoxAcargar.Text = txtTotal.Text;
+            DialogResult resp = MessageBox.Show("¿Imprimir detalle billetes?",
+                            "Imprimir detalle", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+            if (resp == DialogResult.Yes)
+            {
+                imprimirTicket();
+            }
             this.Close();
+        }
+        private void imprimirTicket()
+        {
+            try
+            {
+                //imprimir ticket
+                Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+                ticket.imprimir = true;
+                ticket.TextoCentro("Detalle billetes");
+                ticket.LineasEnBlanco(1);
+                //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                //ticket.TextoIzquierda("Sucursal: " + o);
+                //ticket.TextoIzquierda("Vendedor: " + oEgresoCajaE.CreadoPorUser.Nombre);
+                ticket.TextoIzquierda("Fecha: " + DateTime.Now.ToString());
+                ticket.LineasGuion();
+                ticket.LineasEnBlanco(1);
+                ticket.TextoIzquierda("Total $: " + txtTotal.Text);
+                ticket.LineasEnBlanco(1);
+                ticket.TextoMuchasLineas("detalle: " + detalleCantBilletes);
+                ticket.LineasEnBlanco(5);
+                ticket.realizarImpresion();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Error al imprimir el Ticket");
+                return;
+            }
         }
 
         private void control_Enter(object sender, EventArgs e)

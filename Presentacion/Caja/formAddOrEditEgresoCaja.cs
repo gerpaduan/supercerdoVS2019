@@ -415,7 +415,7 @@ namespace Presentacion.Caja
             string textoOriginal = txtDetalle.Text;
             string delimitadorInicio = "[";
             string delimitadorFin = "]";
-            string textoReemplazo = frmIngresoBilletes.detalleCantBilletas.ToString();
+            string textoReemplazo = frmIngresoBilletes.detalleCantBilletes.ToString();
 
             // Expresión regular para encontrar texto entre delimitadores
             string patron = $@"{Regex.Escape(delimitadorInicio)}(.*?){Regex.Escape(delimitadorFin)}";
