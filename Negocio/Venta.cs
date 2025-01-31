@@ -166,7 +166,7 @@ namespace Negocio
                 else
                 {
                     formaPagoDetalle = pagoMixtoEfectivo > 0 ? 
-                        "Mixta - "+oVentaConEgresoCaja.FormaPago.ToString()+" $"+(totalS - pagoMixtoEfectivo).ToString("F2")+" | "+"Efvo $"+pagoMixtoEfectivo.ToString("F2") : 
+                        "Mixta - T$"+ totalS.ToString("N2") + " -> " + oVentaConEgresoCaja.FormaPago.ToString()+" $"+(totalS - pagoMixtoEfectivo).ToString("N2")+" | "+"Efvo $"+pagoMixtoEfectivo.ToString("N2") : 
                         oVentaConEgresoCaja.FormaPago.ToString();
                     oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
                     oEgresoCajaE.Descripcion = "Venta " + formaPagoDetalle + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
