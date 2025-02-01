@@ -106,5 +106,41 @@ namespace Utilidades
                 MessageBox.Show("Error al actualizar App.config" + ex.Message);
             }
         }
+
+        private void label16_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnBuscarAfip_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                //string cuitSinGuiones = txtCuit.Text.Replace("-", "");
+                //wsAFIPvs2008.formFacturaElectronica formFactElec = new wsAFIPvs2008.formFacturaElectronica();
+                //formFactElec.loadForm();
+                //formFactElec.ConsultarDatosContribuyente(cuitSinGuiones);
+                //txtRazonSocial.Text = txtIdentificacion.Text = formFactElec.razonSocialAfip;
+                //txtDomicilio.Text = formFactElec.domicilioFiscalAfip;
+                //txtCiudad.Text = formFactElec.localidadAfip + ", " + formFactElec.provinciaAfip;
+                //comboIva.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("No se pudo obtener los datos desde Afip. " + ex.Message);
+            }
+        }
+
+        private void cuitCliente_TextChanged(object sender, EventArgs e)
+        {
+            cuit.Text = cuitCliente.Text;
+            NegocioAgregado4.Text = "CUIT: " + cuitCliente.Text;
+
+        }
+
+        private void cliente_TextChanged(object sender, EventArgs e)
+        {
+            Negocio.Text = cliente.Text;
+        }
     }
 }

@@ -57,7 +57,6 @@ namespace Utilidades
             this.pagoBancoSinFac = new System.Windows.Forms.ComboBox();
             this.cuit = new System.Windows.Forms.TextBox();
             this.ptoVtaAfip = new System.Windows.Forms.TextBox();
-            this.label14 = new System.Windows.Forms.Label();
             this.NegocioAgregado4 = new System.Windows.Forms.TextBox();
             this.NegocioAgregado1 = new System.Windows.Forms.TextBox();
             this.Negocio = new System.Windows.Forms.TextBox();
@@ -79,20 +78,31 @@ namespace Utilidades
             this.label23 = new System.Windows.Forms.Label();
             this.label24 = new System.Windows.Forms.Label();
             this.btnGuardar = new System.Windows.Forms.Button();
-            this.label25 = new System.Windows.Forms.Label();
             this.label26 = new System.Windows.Forms.Label();
             this.cantDigitosProdEnCodBarra = new System.Windows.Forms.ComboBox();
             this.label27 = new System.Windows.Forms.Label();
             this.codBarraPorCantidad = new System.Windows.Forms.ComboBox();
             this.label28 = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnBuscarAfip = new System.Windows.Forms.Button();
+            this.NegocioAgregado2 = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.label29 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // cliente
             // 
             this.cliente.Location = new System.Drawing.Point(125, 44);
             this.cliente.Name = "cliente";
-            this.cliente.Size = new System.Drawing.Size(121, 20);
+            this.cliente.Size = new System.Drawing.Size(165, 20);
             this.cliente.TabIndex = 1;
+            this.cliente.TextChanged += new System.EventHandler(this.cliente_TextChanged);
             // 
             // label2
             // 
@@ -106,7 +116,7 @@ namespace Utilidades
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(28, 76);
+            this.label1.Location = new System.Drawing.Point(91, 73);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(25, 13);
             this.label1.TabIndex = 4;
@@ -114,15 +124,16 @@ namespace Utilidades
             // 
             // cuitCliente
             // 
-            this.cuitCliente.Location = new System.Drawing.Point(125, 84);
+            this.cuitCliente.Location = new System.Drawing.Point(125, 70);
             this.cuitCliente.Name = "cuitCliente";
-            this.cuitCliente.Size = new System.Drawing.Size(121, 20);
+            this.cuitCliente.Size = new System.Drawing.Size(91, 20);
             this.cuitCliente.TabIndex = 3;
+            this.cuitCliente.TextChanged += new System.EventHandler(this.cuitCliente_TextChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(27, 127);
+            this.label3.Location = new System.Drawing.Point(27, 99);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(92, 13);
             this.label3.TabIndex = 6;
@@ -130,15 +141,15 @@ namespace Utilidades
             // 
             // idSucursal
             // 
-            this.idSucursal.Location = new System.Drawing.Point(125, 124);
+            this.idSucursal.Location = new System.Drawing.Point(125, 96);
             this.idSucursal.Name = "idSucursal";
-            this.idSucursal.Size = new System.Drawing.Size(121, 20);
+            this.idSucursal.Size = new System.Drawing.Size(49, 20);
             this.idSucursal.TabIndex = 5;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(28, 174);
+            this.label4.Location = new System.Drawing.Point(28, 129);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(88, 13);
             this.label4.TabIndex = 8;
@@ -146,15 +157,15 @@ namespace Utilidades
             // 
             // nombreSucursal
             // 
-            this.nombreSucursal.Location = new System.Drawing.Point(125, 171);
+            this.nombreSucursal.Location = new System.Drawing.Point(125, 126);
             this.nombreSucursal.Name = "nombreSucursal";
-            this.nombreSucursal.Size = new System.Drawing.Size(121, 20);
+            this.nombreSucursal.Size = new System.Drawing.Size(165, 20);
             this.nombreSucursal.TabIndex = 7;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(28, 224);
+            this.label5.Location = new System.Drawing.Point(29, 22);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(78, 13);
             this.label5.TabIndex = 10;
@@ -163,7 +174,7 @@ namespace Utilidades
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(28, 266);
+            this.label6.Location = new System.Drawing.Point(66, 49);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(38, 13);
             this.label6.TabIndex = 12;
@@ -172,7 +183,7 @@ namespace Utilidades
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(20, 309);
+            this.label7.Location = new System.Drawing.Point(324, 73);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(99, 13);
             this.label7.TabIndex = 14;
@@ -181,7 +192,7 @@ namespace Utilidades
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(33, 346);
+            this.label8.Location = new System.Drawing.Point(340, 103);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(83, 13);
             this.label8.TabIndex = 16;
@@ -190,7 +201,7 @@ namespace Utilidades
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(608, 44);
+            this.label9.Location = new System.Drawing.Point(635, 47);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(134, 13);
             this.label9.TabIndex = 18;
@@ -198,7 +209,7 @@ namespace Utilidades
             // 
             // Impresora
             // 
-            this.Impresora.Location = new System.Drawing.Point(402, 40);
+            this.Impresora.Location = new System.Drawing.Point(429, 44);
             this.Impresora.Name = "Impresora";
             this.Impresora.Size = new System.Drawing.Size(200, 20);
             this.Impresora.TabIndex = 17;
@@ -206,7 +217,7 @@ namespace Utilidades
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(286, 80);
+            this.label10.Location = new System.Drawing.Point(324, 133);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(99, 13);
             this.label10.TabIndex = 20;
@@ -215,16 +226,16 @@ namespace Utilidades
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(301, 120);
+            this.label11.Location = new System.Drawing.Point(304, 158);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(95, 26);
+            this.label11.Size = new System.Drawing.Size(127, 26);
             this.label11.TabIndex = 22;
-            this.label11.Text = "Permitir Pagos\r\nBanco Sin Factura";
+            this.label11.Text = "Permitir Pagos Bancarios \r\nSin Facturar";
             // 
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(304, 164);
+            this.label12.Location = new System.Drawing.Point(327, 188);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(96, 26);
             this.label12.TabIndex = 24;
@@ -232,9 +243,9 @@ namespace Utilidades
             // 
             // timeOut
             // 
-            this.timeOut.Location = new System.Drawing.Point(402, 164);
+            this.timeOut.Location = new System.Drawing.Point(429, 185);
             this.timeOut.Name = "timeOut";
-            this.timeOut.Size = new System.Drawing.Size(179, 20);
+            this.timeOut.Size = new System.Drawing.Size(59, 20);
             this.timeOut.TabIndex = 23;
             // 
             // ticketExpendio
@@ -244,9 +255,9 @@ namespace Utilidades
             this.ticketExpendio.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.ticketExpendio.Location = new System.Drawing.Point(125, 304);
+            this.ticketExpendio.Location = new System.Drawing.Point(429, 70);
             this.ticketExpendio.Name = "ticketExpendio";
-            this.ticketExpendio.Size = new System.Drawing.Size(121, 21);
+            this.ticketExpendio.Size = new System.Drawing.Size(59, 21);
             this.ticketExpendio.TabIndex = 25;
             // 
             // puerto
@@ -262,9 +273,9 @@ namespace Utilidades
             "COM5",
             "COM6",
             "COM7"});
-            this.puerto.Location = new System.Drawing.Point(125, 263);
+            this.puerto.Location = new System.Drawing.Point(113, 46);
             this.puerto.Name = "puerto";
-            this.puerto.Size = new System.Drawing.Size(121, 21);
+            this.puerto.Size = new System.Drawing.Size(81, 21);
             this.puerto.TabIndex = 26;
             // 
             // CondicionIVA
@@ -275,9 +286,9 @@ namespace Utilidades
             "Resp. Inscripto",
             "Monotributista",
             "Exento"});
-            this.CondicionIVA.Location = new System.Drawing.Point(696, 427);
+            this.CondicionIVA.Location = new System.Drawing.Point(115, 101);
             this.CondicionIVA.Name = "CondicionIVA";
-            this.CondicionIVA.Size = new System.Drawing.Size(142, 21);
+            this.CondicionIVA.Size = new System.Drawing.Size(195, 21);
             this.CondicionIVA.TabIndex = 29;
             // 
             // factura
@@ -287,9 +298,9 @@ namespace Utilidades
             this.factura.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.factura.Location = new System.Drawing.Point(402, 77);
+            this.factura.Location = new System.Drawing.Point(429, 129);
             this.factura.Name = "factura";
-            this.factura.Size = new System.Drawing.Size(200, 21);
+            this.factura.Size = new System.Drawing.Size(59, 21);
             this.factura.TabIndex = 30;
             // 
             // ticketForms
@@ -299,15 +310,15 @@ namespace Utilidades
             this.ticketForms.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.ticketForms.Location = new System.Drawing.Point(125, 343);
+            this.ticketForms.Location = new System.Drawing.Point(429, 100);
             this.ticketForms.Name = "ticketForms";
-            this.ticketForms.Size = new System.Drawing.Size(121, 21);
+            this.ticketForms.Size = new System.Drawing.Size(59, 21);
             this.ticketForms.TabIndex = 31;
             // 
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(252, 266);
+            this.label13.Location = new System.Drawing.Point(200, 51);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(78, 13);
             this.label13.TabIndex = 32;
@@ -321,7 +332,7 @@ namespace Utilidades
             "Ninguna",
             "Systel",
             "Kretz"});
-            this.balanza.Location = new System.Drawing.Point(125, 221);
+            this.balanza.Location = new System.Drawing.Point(113, 19);
             this.balanza.Name = "balanza";
             this.balanza.Size = new System.Drawing.Size(121, 21);
             this.balanza.TabIndex = 33;
@@ -333,68 +344,59 @@ namespace Utilidades
             this.pagoBancoSinFac.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.pagoBancoSinFac.Location = new System.Drawing.Point(402, 120);
+            this.pagoBancoSinFac.Location = new System.Drawing.Point(429, 158);
             this.pagoBancoSinFac.Name = "pagoBancoSinFac";
-            this.pagoBancoSinFac.Size = new System.Drawing.Size(200, 21);
+            this.pagoBancoSinFac.Size = new System.Drawing.Size(59, 21);
             this.pagoBancoSinFac.TabIndex = 34;
             // 
             // cuit
             // 
-            this.cuit.Location = new System.Drawing.Point(402, 324);
+            this.cuit.Location = new System.Drawing.Point(115, 73);
             this.cuit.Name = "cuit";
-            this.cuit.Size = new System.Drawing.Size(179, 20);
+            this.cuit.Size = new System.Drawing.Size(89, 20);
             this.cuit.TabIndex = 35;
             // 
             // ptoVtaAfip
             // 
-            this.ptoVtaAfip.Location = new System.Drawing.Point(402, 298);
+            this.ptoVtaAfip.Location = new System.Drawing.Point(115, 22);
             this.ptoVtaAfip.Name = "ptoVtaAfip";
-            this.ptoVtaAfip.Size = new System.Drawing.Size(179, 20);
+            this.ptoVtaAfip.Size = new System.Drawing.Size(46, 20);
             this.ptoVtaAfip.TabIndex = 36;
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(399, 256);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(61, 13);
-            this.label14.TabIndex = 38;
-            this.label14.Text = "Datos AFIP";
             // 
             // NegocioAgregado4
             // 
-            this.NegocioAgregado4.Location = new System.Drawing.Point(402, 402);
+            this.NegocioAgregado4.Location = new System.Drawing.Point(423, 48);
             this.NegocioAgregado4.Name = "NegocioAgregado4";
-            this.NegocioAgregado4.Size = new System.Drawing.Size(179, 20);
+            this.NegocioAgregado4.Size = new System.Drawing.Size(125, 20);
             this.NegocioAgregado4.TabIndex = 39;
             // 
             // NegocioAgregado1
             // 
-            this.NegocioAgregado1.Location = new System.Drawing.Point(402, 376);
+            this.NegocioAgregado1.Location = new System.Drawing.Point(115, 155);
             this.NegocioAgregado1.Name = "NegocioAgregado1";
-            this.NegocioAgregado1.Size = new System.Drawing.Size(179, 20);
+            this.NegocioAgregado1.Size = new System.Drawing.Size(195, 20);
             this.NegocioAgregado1.TabIndex = 40;
             // 
             // Negocio
             // 
-            this.Negocio.Location = new System.Drawing.Point(402, 350);
+            this.Negocio.Location = new System.Drawing.Point(115, 129);
             this.Negocio.Name = "Negocio";
-            this.Negocio.Size = new System.Drawing.Size(179, 20);
+            this.Negocio.Size = new System.Drawing.Size(195, 20);
             this.Negocio.TabIndex = 41;
             // 
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(356, 379);
+            this.label15.Location = new System.Drawing.Point(21, 158);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(40, 13);
+            this.label15.Size = new System.Drawing.Size(88, 13);
             this.label15.TabIndex = 42;
-            this.label15.Text = "Slogan";
+            this.label15.Text = "Slogan en Ticket";
             // 
             // label17
             // 
             this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(309, 357);
+            this.label17.Location = new System.Drawing.Point(21, 132);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(91, 13);
             this.label17.TabIndex = 43;
@@ -403,7 +405,7 @@ namespace Utilidades
             // label18
             // 
             this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(364, 327);
+            this.label18.Location = new System.Drawing.Point(76, 76);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(32, 13);
             this.label18.TabIndex = 44;
@@ -412,23 +414,24 @@ namespace Utilidades
             // label16
             // 
             this.label16.AutoSize = true;
-            this.label16.Location = new System.Drawing.Point(289, 301);
+            this.label16.Location = new System.Drawing.Point(25, 25);
             this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(107, 13);
+            this.label16.Size = new System.Drawing.Size(83, 13);
             this.label16.TabIndex = 45;
-            this.label16.Text = "Punto de Venta AFIP";
+            this.label16.Text = "Pto de Vta AFIP";
+            this.label16.Click += new System.EventHandler(this.label16_Click);
             // 
             // IIBB
             // 
-            this.IIBB.Location = new System.Drawing.Point(402, 428);
+            this.IIBB.Location = new System.Drawing.Point(423, 74);
             this.IIBB.Name = "IIBB";
-            this.IIBB.Size = new System.Drawing.Size(179, 20);
+            this.IIBB.Size = new System.Drawing.Size(125, 20);
             this.IIBB.TabIndex = 46;
             // 
             // lblCuit
             // 
             this.lblCuit.AutoSize = true;
-            this.lblCuit.Location = new System.Drawing.Point(364, 405);
+            this.lblCuit.Location = new System.Drawing.Point(382, 51);
             this.lblCuit.Name = "lblCuit";
             this.lblCuit.Size = new System.Drawing.Size(35, 13);
             this.lblCuit.TabIndex = 47;
@@ -437,7 +440,7 @@ namespace Utilidades
             // lblIIBB
             // 
             this.lblIIBB.AutoSize = true;
-            this.lblIIBB.Location = new System.Drawing.Point(365, 431);
+            this.lblIIBB.Location = new System.Drawing.Point(387, 77);
             this.lblIIBB.Name = "lblIIBB";
             this.lblIIBB.Size = new System.Drawing.Size(30, 13);
             this.lblIIBB.TabIndex = 48;
@@ -446,7 +449,7 @@ namespace Utilidades
             // label19
             // 
             this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(594, 301);
+            this.label19.Location = new System.Drawing.Point(13, 53);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(96, 13);
             this.label19.TabIndex = 50;
@@ -454,29 +457,29 @@ namespace Utilidades
             // 
             // Dueno
             // 
-            this.Dueno.Location = new System.Drawing.Point(696, 296);
+            this.Dueno.Location = new System.Drawing.Point(115, 48);
             this.Dueno.Name = "Dueno";
-            this.Dueno.Size = new System.Drawing.Size(142, 20);
+            this.Dueno.Size = new System.Drawing.Size(195, 20);
             this.Dueno.TabIndex = 49;
             // 
             // Direccion
             // 
-            this.Direccion.Location = new System.Drawing.Point(696, 330);
+            this.Direccion.Location = new System.Drawing.Point(423, 100);
             this.Direccion.Name = "Direccion";
-            this.Direccion.Size = new System.Drawing.Size(142, 20);
+            this.Direccion.Size = new System.Drawing.Size(183, 20);
             this.Direccion.TabIndex = 51;
             // 
             // Localidad
             // 
-            this.Localidad.Location = new System.Drawing.Point(696, 368);
+            this.Localidad.Location = new System.Drawing.Point(423, 126);
             this.Localidad.Name = "Localidad";
-            this.Localidad.Size = new System.Drawing.Size(142, 20);
+            this.Localidad.Size = new System.Drawing.Size(183, 20);
             this.Localidad.TabIndex = 52;
             // 
             // label20
             // 
             this.label20.AutoSize = true;
-            this.label20.Location = new System.Drawing.Point(641, 333);
+            this.label20.Location = new System.Drawing.Point(368, 103);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(49, 13);
             this.label20.TabIndex = 54;
@@ -485,7 +488,7 @@ namespace Utilidades
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(641, 372);
+            this.label21.Location = new System.Drawing.Point(368, 130);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(53, 13);
             this.label21.TabIndex = 55;
@@ -494,7 +497,7 @@ namespace Utilidades
             // label22
             // 
             this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(625, 401);
+            this.label22.Location = new System.Drawing.Point(352, 155);
             this.label22.Name = "label22";
             this.label22.Size = new System.Drawing.Size(65, 13);
             this.label22.TabIndex = 57;
@@ -502,15 +505,15 @@ namespace Utilidades
             // 
             // InicioActividades
             // 
-            this.InicioActividades.Location = new System.Drawing.Point(696, 398);
+            this.InicioActividades.Location = new System.Drawing.Point(423, 152);
             this.InicioActividades.Name = "InicioActividades";
-            this.InicioActividades.Size = new System.Drawing.Size(142, 20);
+            this.InicioActividades.Size = new System.Drawing.Size(183, 20);
             this.InicioActividades.TabIndex = 56;
             // 
             // label23
             // 
             this.label23.AutoSize = true;
-            this.label23.Location = new System.Drawing.Point(638, 431);
+            this.label23.Location = new System.Drawing.Point(57, 105);
             this.label23.Name = "label23";
             this.label23.Size = new System.Drawing.Size(52, 13);
             this.label23.TabIndex = 58;
@@ -519,7 +522,7 @@ namespace Utilidades
             // label24
             // 
             this.label24.AutoSize = true;
-            this.label24.Location = new System.Drawing.Point(332, 42);
+            this.label24.Location = new System.Drawing.Point(370, 47);
             this.label24.Name = "label24";
             this.label24.Size = new System.Drawing.Size(53, 13);
             this.label24.TabIndex = 59;
@@ -532,25 +535,16 @@ namespace Utilidades
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardar.Location = new System.Drawing.Point(0, 0);
             this.btnGuardar.Name = "btnGuardar";
-            this.btnGuardar.Size = new System.Drawing.Size(986, 31);
+            this.btnGuardar.Size = new System.Drawing.Size(978, 31);
             this.btnGuardar.TabIndex = 60;
             this.btnGuardar.Text = "Guardar";
             this.btnGuardar.UseVisualStyleBackColor = false;
             this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
-            // label25
-            // 
-            this.label25.AutoSize = true;
-            this.label25.Location = new System.Drawing.Point(727, 84);
-            this.label25.Name = "label25";
-            this.label25.Size = new System.Drawing.Size(118, 13);
-            this.label25.TabIndex = 61;
-            this.label25.Text = "Codigo de barra Interno";
-            // 
             // label26
             // 
             this.label26.AutoSize = true;
-            this.label26.Location = new System.Drawing.Point(656, 120);
+            this.label26.Location = new System.Drawing.Point(11, 22);
             this.label26.Name = "label26";
             this.label26.Size = new System.Drawing.Size(108, 26);
             this.label26.TabIndex = 63;
@@ -563,7 +557,7 @@ namespace Utilidades
             this.cantDigitosProdEnCodBarra.Items.AddRange(new object[] {
             "4",
             "5"});
-            this.cantDigitosProdEnCodBarra.Location = new System.Drawing.Point(770, 117);
+            this.cantDigitosProdEnCodBarra.Location = new System.Drawing.Point(125, 19);
             this.cantDigitosProdEnCodBarra.Name = "cantDigitosProdEnCodBarra";
             this.cantDigitosProdEnCodBarra.Size = new System.Drawing.Size(102, 21);
             this.cantDigitosProdEnCodBarra.TabIndex = 62;
@@ -571,7 +565,7 @@ namespace Utilidades
             // label27
             // 
             this.label27.AutoSize = true;
-            this.label27.Location = new System.Drawing.Point(693, 178);
+            this.label27.Location = new System.Drawing.Point(48, 78);
             this.label27.Name = "label27";
             this.label27.Size = new System.Drawing.Size(71, 26);
             this.label27.TabIndex = 65;
@@ -584,7 +578,7 @@ namespace Utilidades
             this.codBarraPorCantidad.Items.AddRange(new object[] {
             "0",
             "1"});
-            this.codBarraPorCantidad.Location = new System.Drawing.Point(770, 174);
+            this.codBarraPorCantidad.Location = new System.Drawing.Point(125, 76);
             this.codBarraPorCantidad.Name = "codBarraPorCantidad";
             this.codBarraPorCantidad.Size = new System.Drawing.Size(102, 21);
             this.codBarraPorCantidad.TabIndex = 64;
@@ -592,54 +586,134 @@ namespace Utilidades
             // label28
             // 
             this.label28.AutoSize = true;
-            this.label28.Location = new System.Drawing.Point(767, 158);
+            this.label28.Location = new System.Drawing.Point(128, 60);
             this.label28.Name = "label28";
-            this.label28.Size = new System.Drawing.Size(160, 13);
+            this.label28.Size = new System.Drawing.Size(167, 13);
             this.label28.TabIndex = 66;
-            this.label28.Text = "(0 : Cantidad -- 1: Monto $ Total)";
+            this.label28.Text = "(0 : Cant.(Kgs) -- 1: Monto $ Total)";
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.textBox1);
+            this.groupBox1.Controls.Add(this.label29);
+            this.groupBox1.Controls.Add(this.NegocioAgregado2);
+            this.groupBox1.Controls.Add(this.label14);
+            this.groupBox1.Controls.Add(this.btnBuscarAfip);
+            this.groupBox1.Controls.Add(this.cuit);
+            this.groupBox1.Controls.Add(this.ptoVtaAfip);
+            this.groupBox1.Controls.Add(this.label18);
+            this.groupBox1.Controls.Add(this.label16);
+            this.groupBox1.Controls.Add(this.Negocio);
+            this.groupBox1.Controls.Add(this.NegocioAgregado4);
+            this.groupBox1.Controls.Add(this.NegocioAgregado1);
+            this.groupBox1.Controls.Add(this.label15);
+            this.groupBox1.Controls.Add(this.label17);
+            this.groupBox1.Controls.Add(this.label23);
+            this.groupBox1.Controls.Add(this.IIBB);
+            this.groupBox1.Controls.Add(this.label22);
+            this.groupBox1.Controls.Add(this.lblCuit);
+            this.groupBox1.Controls.Add(this.InicioActividades);
+            this.groupBox1.Controls.Add(this.lblIIBB);
+            this.groupBox1.Controls.Add(this.label21);
+            this.groupBox1.Controls.Add(this.Dueno);
+            this.groupBox1.Controls.Add(this.label20);
+            this.groupBox1.Controls.Add(this.CondicionIVA);
+            this.groupBox1.Controls.Add(this.Localidad);
+            this.groupBox1.Controls.Add(this.label19);
+            this.groupBox1.Controls.Add(this.Direccion);
+            this.groupBox1.Location = new System.Drawing.Point(327, 235);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(635, 280);
+            this.groupBox1.TabIndex = 67;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Datos ARCA (AFIP)";
+            // 
+            // btnBuscarAfip
+            // 
+            this.btnBuscarAfip.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarAfip.Location = new System.Drawing.Point(210, 72);
+            this.btnBuscarAfip.Name = "btnBuscarAfip";
+            this.btnBuscarAfip.Size = new System.Drawing.Size(100, 23);
+            this.btnBuscarAfip.TabIndex = 59;
+            this.btnBuscarAfip.Text = "Buscar Cuit Afip";
+            this.btnBuscarAfip.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.btnBuscarAfip.UseVisualStyleBackColor = true;
+            this.btnBuscarAfip.Visible = false;
+            this.btnBuscarAfip.Click += new System.EventHandler(this.btnBuscarAfip_Click);
+            // 
+            // NegocioAgregado2
+            // 
+            this.NegocioAgregado2.Location = new System.Drawing.Point(115, 181);
+            this.NegocioAgregado2.Name = "NegocioAgregado2";
+            this.NegocioAgregado2.Size = new System.Drawing.Size(195, 20);
+            this.NegocioAgregado2.TabIndex = 60;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(35, 184);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(74, 26);
+            this.label14.TabIndex = 61;
+            this.label14.Text = "Info.Adicional \r\nen Ticket";
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(115, 211);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(195, 20);
+            this.textBox1.TabIndex = 62;
+            // 
+            // label29
+            // 
+            this.label29.AutoSize = true;
+            this.label29.Location = new System.Drawing.Point(29, 214);
+            this.label29.Name = "label29";
+            this.label29.Size = new System.Drawing.Size(80, 26);
+            this.label29.TabIndex = 63;
+            this.label29.Text = "Info.Adicional 2\r\nen Ticket\r\n";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.balanza);
+            this.groupBox2.Controls.Add(this.label5);
+            this.groupBox2.Controls.Add(this.label6);
+            this.groupBox2.Controls.Add(this.puerto);
+            this.groupBox2.Controls.Add(this.label13);
+            this.groupBox2.Location = new System.Drawing.Point(12, 174);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(289, 104);
+            this.groupBox2.TabIndex = 68;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Balanza";
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.cantDigitosProdEnCodBarra);
+            this.groupBox3.Controls.Add(this.label26);
+            this.groupBox3.Controls.Add(this.codBarraPorCantidad);
+            this.groupBox3.Controls.Add(this.label28);
+            this.groupBox3.Controls.Add(this.label27);
+            this.groupBox3.Location = new System.Drawing.Point(638, 81);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(324, 124);
+            this.groupBox3.TabIndex = 69;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Codigo Barra Interno";
             // 
             // formAppConfigTerminal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(986, 501);
-            this.Controls.Add(this.label28);
-            this.Controls.Add(this.label27);
-            this.Controls.Add(this.codBarraPorCantidad);
-            this.Controls.Add(this.label26);
-            this.Controls.Add(this.cantDigitosProdEnCodBarra);
-            this.Controls.Add(this.label25);
+            this.ClientSize = new System.Drawing.Size(978, 525);
+            this.Controls.Add(this.groupBox3);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.label24);
-            this.Controls.Add(this.label23);
-            this.Controls.Add(this.label22);
-            this.Controls.Add(this.InicioActividades);
-            this.Controls.Add(this.label21);
-            this.Controls.Add(this.label20);
-            this.Controls.Add(this.Localidad);
-            this.Controls.Add(this.Direccion);
-            this.Controls.Add(this.label19);
-            this.Controls.Add(this.Dueno);
-            this.Controls.Add(this.lblIIBB);
-            this.Controls.Add(this.lblCuit);
-            this.Controls.Add(this.IIBB);
-            this.Controls.Add(this.label16);
-            this.Controls.Add(this.label18);
-            this.Controls.Add(this.label17);
-            this.Controls.Add(this.label15);
-            this.Controls.Add(this.Negocio);
-            this.Controls.Add(this.NegocioAgregado1);
-            this.Controls.Add(this.NegocioAgregado4);
-            this.Controls.Add(this.label14);
-            this.Controls.Add(this.ptoVtaAfip);
-            this.Controls.Add(this.cuit);
             this.Controls.Add(this.pagoBancoSinFac);
-            this.Controls.Add(this.balanza);
-            this.Controls.Add(this.label13);
             this.Controls.Add(this.ticketForms);
             this.Controls.Add(this.factura);
-            this.Controls.Add(this.CondicionIVA);
-            this.Controls.Add(this.puerto);
             this.Controls.Add(this.ticketExpendio);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.timeOut);
@@ -649,8 +723,6 @@ namespace Utilidades
             this.Controls.Add(this.Impresora);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.nombreSucursal);
             this.Controls.Add(this.label3);
@@ -662,6 +734,12 @@ namespace Utilidades
             this.Name = "formAppConfigTerminal";
             this.Text = "Configuración Parámetros Terminal";
             this.Load += new System.EventHandler(this.formAppConfigTerminal_Load);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -696,7 +774,6 @@ namespace Utilidades
         private System.Windows.Forms.ComboBox pagoBancoSinFac;
         private System.Windows.Forms.TextBox cuit;
         private System.Windows.Forms.TextBox ptoVtaAfip;
-        private System.Windows.Forms.Label label14;
         private System.Windows.Forms.TextBox NegocioAgregado4;
         private System.Windows.Forms.TextBox NegocioAgregado1;
         private System.Windows.Forms.TextBox Negocio;
@@ -718,11 +795,18 @@ namespace Utilidades
         private System.Windows.Forms.Label label23;
         private System.Windows.Forms.Label label24;
         private System.Windows.Forms.Button btnGuardar;
-        private System.Windows.Forms.Label label25;
         private System.Windows.Forms.Label label26;
         private System.Windows.Forms.ComboBox cantDigitosProdEnCodBarra;
         private System.Windows.Forms.Label label27;
         private System.Windows.Forms.ComboBox codBarraPorCantidad;
         private System.Windows.Forms.Label label28;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Button btnBuscarAfip;
+        private System.Windows.Forms.TextBox NegocioAgregado2;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.Label label29;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.GroupBox groupBox3;
     }
 }
