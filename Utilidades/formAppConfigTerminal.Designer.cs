@@ -91,6 +91,9 @@ namespace Utilidades
             this.label29 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.label25 = new System.Windows.Forms.Label();
+            this.ivaCliente = new System.Windows.Forms.ComboBox();
+            this.label30 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -133,7 +136,7 @@ namespace Utilidades
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(27, 99);
+            this.label3.Location = new System.Drawing.Point(27, 142);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(92, 13);
             this.label3.TabIndex = 6;
@@ -141,7 +144,7 @@ namespace Utilidades
             // 
             // idSucursal
             // 
-            this.idSucursal.Location = new System.Drawing.Point(125, 96);
+            this.idSucursal.Location = new System.Drawing.Point(125, 139);
             this.idSucursal.Name = "idSucursal";
             this.idSucursal.Size = new System.Drawing.Size(49, 20);
             this.idSucursal.TabIndex = 5;
@@ -149,7 +152,7 @@ namespace Utilidades
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(28, 129);
+            this.label4.Location = new System.Drawing.Point(28, 168);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(88, 13);
             this.label4.TabIndex = 8;
@@ -157,7 +160,7 @@ namespace Utilidades
             // 
             // nombreSucursal
             // 
-            this.nombreSucursal.Location = new System.Drawing.Point(125, 126);
+            this.nombreSucursal.Location = new System.Drawing.Point(125, 165);
             this.nombreSucursal.Name = "nombreSucursal";
             this.nombreSucursal.Size = new System.Drawing.Size(165, 20);
             this.nombreSucursal.TabIndex = 7;
@@ -680,7 +683,7 @@ namespace Utilidades
             this.groupBox2.Controls.Add(this.label6);
             this.groupBox2.Controls.Add(this.puerto);
             this.groupBox2.Controls.Add(this.label13);
-            this.groupBox2.Location = new System.Drawing.Point(12, 174);
+            this.groupBox2.Location = new System.Drawing.Point(12, 197);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(289, 104);
             this.groupBox2.TabIndex = 68;
@@ -701,12 +704,46 @@ namespace Utilidades
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Codigo Barra Interno";
             // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Location = new System.Drawing.Point(67, 116);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(52, 13);
+            this.label25.TabIndex = 65;
+            this.label25.Text = "Cond.IVA";
+            // 
+            // ivaCliente
+            // 
+            this.ivaCliente.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.ivaCliente.FormattingEnabled = true;
+            this.ivaCliente.Items.AddRange(new object[] {
+            "RRII",
+            "MT",
+            "EXENTO"});
+            this.ivaCliente.Location = new System.Drawing.Point(125, 112);
+            this.ivaCliente.Name = "ivaCliente";
+            this.ivaCliente.Size = new System.Drawing.Size(91, 21);
+            this.ivaCliente.TabIndex = 64;
+            // 
+            // label30
+            // 
+            this.label30.AutoSize = true;
+            this.label30.Location = new System.Drawing.Point(125, 93);
+            this.label30.Name = "label30";
+            this.label30.Size = new System.Drawing.Size(165, 13);
+            this.label30.TabIndex = 70;
+            this.label30.Text = "RRII:resp.Inscr || MT: monotributo\r\n";
+            // 
             // formAppConfigTerminal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(978, 525);
+            this.Controls.Add(this.label30);
+            this.Controls.Add(this.label25);
             this.Controls.Add(this.groupBox3);
+            this.Controls.Add(this.ivaCliente);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnGuardar);
@@ -808,5 +845,8 @@ namespace Utilidades
         private System.Windows.Forms.Label label29;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.Label label25;
+        private System.Windows.Forms.ComboBox ivaCliente;
+        private System.Windows.Forms.Label label30;
     }
 }
