@@ -78,9 +78,10 @@
             this.balanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.verBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.parametrosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -548,7 +549,8 @@
             this.fórmulasToolStripMenuItem,
             this.vencimientosLicenciaToolStripMenuItem,
             this.configuraciónToolStripMenuItem,
-            this.baseDeDatosToolStripMenuItem});
+            this.baseDeDatosToolStripMenuItem,
+            this.parametrosToolStripMenuItem});
             this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
             this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
             this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
@@ -680,11 +682,6 @@
             this.leerPesoToolStripMenuItem1.Text = "Leer Peso";
             this.leerPesoToolStripMenuItem1.Click += new System.EventHandler(this.leerPesoToolStripMenuItem1_Click);
             // 
-            // timerInactividadAdmin
-            // 
-            this.timerInactividadAdmin.Interval = 3000000;
-            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
-            // 
             // contactoToolStripMenuItem
             // 
             this.contactoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -698,6 +695,18 @@
             this.celularToolStripMenuItem.Name = "celularToolStripMenuItem";
             this.celularToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
             this.celularToolStripMenuItem.Text = "Celular: +54 9 341 339-6372";
+            // 
+            // timerInactividadAdmin
+            // 
+            this.timerInactividadAdmin.Interval = 3000000;
+            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
+            // 
+            // parametrosToolStripMenuItem
+            // 
+            this.parametrosToolStripMenuItem.Name = "parametrosToolStripMenuItem";
+            this.parametrosToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.parametrosToolStripMenuItem.Text = "Parametros";
+            this.parametrosToolStripMenuItem.Click += new System.EventHandler(this.parametrosToolStripMenuItem_Click);
             // 
             // FormPrincipal
             // 
@@ -782,6 +791,7 @@
         private System.Windows.Forms.Label lblNombreAdmin;
         private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem parametrosToolStripMenuItem;
     }
 }
 

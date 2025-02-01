@@ -1232,6 +1232,11 @@ namespace Presentacion
             return validarPassDemo;
         }
 
+        private void parametrosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
 
+            Utilidades.formAppConfigTerminal formAppConfig = new Utilidades.formAppConfigTerminal();
+            formAppConfig.Show();
+        }
     }
 }
