@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Compras;
 using Presentacion.Caja;
+using static Entidades.Compra;
 
 namespace Presentacion
 {
@@ -215,14 +216,44 @@ namespace Presentacion
         {
             nuevoStock(Entidades.Compra.tipoCompraEnum.CierreStock);
         }
+        private IEnumerable<Control> GetAllControls(Control parent)
+        {
+            foreach (Control ctrl in parent.Controls)
+            {
+                yield return ctrl;
+                foreach (Control child in GetAllControls(ctrl)) // Llamada recursiva
+                {
+                    yield return child;
+                }
+            }
+        }
 
         private void nuevoStock(Entidades.Compra.tipoCompraEnum tipoCompra)
         {
-            if (Application.OpenForms["formAddOrEditStock"] != null)
+            bool formAbierto = false;
+            string tipoAccion = Entidades.Compra.tipoCompraToString(tipoCompra);
+            foreach (Form frm in Application.OpenForms)
             {
-                Application.OpenForms["formAddOrEditStock"].Activate();
-                Application.OpenForms["formAddOrEditStock"].WindowState = FormWindowState.Normal;
-                MessageBox.Show("Si desea modificar un registro diferente debe cerrar este formulario y volver a seleccionar el que desea modificar");
+                if (frm.GetType() == typeof(formAddOrEditStock))
+                {
+                    foreach (Control ctrl in GetAllControls(frm))
+                    {
+                        if (ctrl is TextBox textBox)
+                        {
+                            if (textBox.Name.Equals("txtTipoAccion") && textBox.Text.Equals(tipoAccion))
+                            {
+                                frm.BringToFront();
+                                formAbierto = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (formAbierto)
+            {
+                MessageBox.Show("Solo puede agregar un "+tipoCompra+" a la vez.");
             }
             else
             {
