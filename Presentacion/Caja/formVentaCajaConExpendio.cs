@@ -111,6 +111,11 @@ namespace Presentacion.Caja
         string codigoEnCodBarra = "", segundoModulo = "";
         public float pagoMixtoEfectivo = 0f;
         long codigoBuscado = 0;//si se llama al form buscar codigo se set codigoBuscado con el codigo del producto
+        /// <summary>
+        /// Cuenta la cantidad de veces que se activa auto el asterisco para desctivar balanza
+        /// </summary>
+        private bool asteriscoPressKey = false;
+        bool valorAnteriorBalanza = false;
         #endregion
 
 
@@ -307,7 +312,8 @@ namespace Presentacion.Caja
                         ticket.TextoCentro("A Cta. Cte.");
                     //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
                     ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
-                    ticket.TextoIzquierda("Forma Pago: " + oVentaE.FormaPago.ToString());
+                    string formaPagoImprimir = oVentaE.PagoMixtoEfectivo > 0 ? oVentaE.FormaPago.ToString() + "|Efvo" : oVentaE.FormaPago.ToString();
+                    ticket.TextoIzquierda("Forma Pago: " + formaPagoImprimir);
                     ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
                     ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
                     //ticket.LineasEnBlanco(0);
@@ -1979,6 +1985,13 @@ namespace Presentacion.Caja
                     timer1.Enabled = false;
                     lblErrorBalanza.Visible = false;
                 }
+
+                //if (asteriscoPressKey && valorAnteriorBalanza == checkLeerPeso.Checked)
+                //{
+                //    asteriscoPressKey = false;
+                //    txtCodigo.Text += "*";
+                //    //checkLeerPeso.Checked = !checkLeerPeso.Checked;
+                //}
             }
             catch (Exception ex)
             {
@@ -2071,7 +2084,8 @@ namespace Presentacion.Caja
             switch (keyData)
             {
                 case Keys.Multiply:
-                    dejarDeLeerPeso = checkLeerPeso.Checked;
+                    asteriscoPressKey = true;
+                    valorAnteriorBalanza = dejarDeLeerPeso = checkLeerPeso.Checked;
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
                     txtCodigo.Focus();
                     break;

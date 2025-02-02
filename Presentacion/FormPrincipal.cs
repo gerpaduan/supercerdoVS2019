@@ -32,7 +32,7 @@ namespace Presentacion
         char validarPassDemo = '0';
         // 1: true 0:False x:Cerrar
 
-        public static bool esVersionDemo = ConfigurationManager.AppSettings["version"].ToString().ToUpper().Equals("D") ? true : false;
+        public static bool esVersionDemo = ConfigurationManager.AppSettings["version"] != null && ConfigurationManager.AppSettings["version"].ToString().ToUpper().Equals("D") ? true : false;
         public static string passDemo = ConfigurationManager.AppSettings["passDemo"].ToString();
         public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;
         public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
@@ -1232,6 +1232,11 @@ namespace Presentacion
             return validarPassDemo;
         }
 
+        private void parametrosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
 
+            Utilidades.formAppConfigTerminal formAppConfig = new Utilidades.formAppConfigTerminal();
+            formAppConfig.Show();
+        }
     }
 }
