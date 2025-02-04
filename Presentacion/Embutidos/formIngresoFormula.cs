@@ -175,6 +175,20 @@ namespace Presentacion
 
                 txtCodCorteEnFormula.Focus();                
             }
+            cargarTotales();
+        }
+
+        private void cargarTotales()
+        {
+            float totalPorcentaje = 0;
+            float totalUnidades = 0;
+            foreach (Entidades.CortePorFormula item in listaCortePorFormula)
+            {
+                totalPorcentaje += item.Porcentaje;
+                totalUnidades = totalPorcentaje / 100;
+            }
+            txtTotalPorcentaje.Text = totalPorcentaje.ToString("F2");
+            txtTotalUnidades.Text = totalUnidades.ToString("F2");
         }
 
         private void quitarCortePorFormula()
@@ -429,6 +443,7 @@ namespace Presentacion
                 txtUsuario.Text = oUsuario.Nombre;
                 btnBuscarEmbutido.Select();
             }
+            cargarTotales();
         }
 
         private void txtCodCorteEnFormula_KeyDown(object sender, KeyEventArgs e)

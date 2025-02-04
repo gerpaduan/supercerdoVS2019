@@ -287,7 +287,7 @@ namespace Presentacion
             if (this.txtCodigo.Text.Equals("") || this.txtDescCorte.Text.Equals("") 
                 || this.comboTipo.Text.Equals("") || this.txtPuntoStock.Text.Equals(""))
             {
-                MessageBox.Show("Debe Completar todos los campos.", "Complete los campos", 
+                MessageBox.Show("Debe Completar todos los campos *.", "Complete los campos", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }

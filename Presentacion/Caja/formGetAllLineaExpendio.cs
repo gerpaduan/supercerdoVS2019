@@ -91,8 +91,8 @@ namespace Presentacion
                         }
                     }
 
-                    cargarTotales();
                     filtrarExpendio();
+                    cargarTotales();
                 } 
             }
             catch (Exception ex)
@@ -105,7 +105,7 @@ namespace Presentacion
         {
             float totalKgs = 0, totalS = 0;
 
-            foreach (DataRow venta in dtExpendios.Rows)
+            foreach (DataRow venta in tablaFiltrada.Rows)
             {
                 totalKgs += float.Parse(venta["cantKg"].ToString());
                 totalS += float.Parse(venta["total"].ToString());
@@ -192,6 +192,7 @@ namespace Presentacion
                 tablaFiltrada = dtExpendios;
             }
             grillaExpendios.DataSource = tablaFiltrada;
+            cargarTotales();
         }
 
 
@@ -433,6 +434,34 @@ namespace Presentacion
         private void comboSector_SelectedIndexChanged(object sender, EventArgs e)
         {
             filtrarExpendio();
+        }
+
+        private void ImprimirTicket_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int idExpendio = Convert.ToInt32(grillaExpendios.CurrentRow.Cells["idExpendio"].Value.ToString());
+                Entidades.Venta oExpendioE = oVentaN.getExpedioById(idExpendio);
+                string textoMensaje = "Imprimir Expendio\n";
+                textoMensaje += "IdExpendio: " + oExpendioE.IdExpendio + "\nIdentif.Cli:" + oExpendioE.IdentificacionExpendio;
+
+                DialogResult respuesta;
+                respuesta = MessageBox.Show(textoMensaje, "Imprimir", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (respuesta == DialogResult.No)
+                {
+                    return;
+                }
+
+                formPuntoExpendio frmPtoExpendio = new formPuntoExpendio();
+                frmPtoExpendio.oVentaE = oExpendioE;
+                frmPtoExpendio.listaLineaVenta = oExpendioE.LineasVenta;
+                frmPtoExpendio.cargarLineasExpendio_Imprimir(false, true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }

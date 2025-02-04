@@ -97,9 +97,10 @@ namespace Presentacion.Cortes
                     txtTipoProducto.Focus();  
                     return;
                 }
-                if (!int.TryParse(txtOrden.Text, out int ord))
+
+                if (!(int.TryParse(txtOrden.Text, out int ord) && (ord > 0)))
                 {
-                    MessageBox.Show("El campo Orden debe ser un numero entero");
+                    MessageBox.Show("El campo Orden debe ser un numero entero mayor a Cero");
                     txtOrden.Focus();
                     return;
                 }

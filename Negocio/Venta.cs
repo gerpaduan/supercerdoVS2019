@@ -281,16 +281,21 @@ namespace Negocio
         {
             return oVentaD.getUltimoSectorSelect(serialCPU);
         }
-            #endregion
+
+        public Entidades.Venta getExpedioById(int idExpendio)
+        { 
+            return oVentaD.getExpedioById((int)idExpendio);
+        }
+        #endregion
 
 
-            #region FACTURA ELECTRONICA
+        #region FACTURA ELECTRONICA
 
-            /// <summary>
-            /// Retorna cero si está pendiente de facturacion (CAE es vacio)
-            /// </summary>
-            /// <param name="idVenta"></param>
-            /// <returns></returns>
+        /// <summary>
+        /// Retorna cero si está pendiente de facturacion (CAE es vacio)
+        /// </summary>
+        /// <param name="idVenta"></param>
+        /// <returns></returns>
             public int esVentaSinFacturar(int idVenta)
         {
             return oVentaD.esVentaSinFacturar(idVenta);

@@ -87,8 +87,9 @@ namespace Entidades
          private float comisionTarjeta;
         private float pagoMixtoEfectivo;
          private string imprimirTipoCbte;//0-SinTicket | 1-Ticket | 2-Factura.
-         private float totalImporte;        
+         private float totalImporte;
         //campos para punto de expendio
+        private int idExpendio;
         private string identificacionExpendio;
         private string sector; 
         private string cantItems;
@@ -315,5 +316,6 @@ namespace Entidades
         public string SerialCPU { get => serialCPU; set => serialCPU = value; }
         public List<Int32> ListaExpendios { get => listaExpendios; set => listaExpendios = value; }
         public float PagoMixtoEfectivo { get => pagoMixtoEfectivo; set => pagoMixtoEfectivo = value; }
+        public int IdExpendio { get => idExpendio; set => idExpendio = value; }
     }
 }

@@ -166,15 +166,19 @@ namespace Presentacion
             {
                 if (!Usuarios.FormValidarPermiso.validarPermiso())
                 {
-                    this.Close();
+                    //this.Close();
                 }
                 else
                 {
+                    MessageBox.Show("El sistema sólo mostrará los productos que aparecen en la grilla para que sus precios sean modificados.\n\n"+
+                        "Cantidad productos en grilla:"+grillaCortes.Rows.Count.ToString(), "Info",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                     List<Entidades.Corte> listCortes = new List<Entidades.Corte>();
 
                     foreach (DataGridViewRow filaCorte in grillaCortes.Rows)
                     {
-                        cargarCorte(filaCorte.Index);
+                        cargarCorte(filaCorte.Index, true);
                         listCortes.Add(oCorteE);
                     }
 
@@ -223,13 +227,19 @@ namespace Presentacion
             }
         }
 
-        private void cargarCorte(int fila)
+        private void cargarCorte(int fila, bool? cargarDesdeGrilla)
         {
             oCorteE = new Entidades.Corte();
             oCorteMaestroE = new Entidades.Corte();
 
             oCorteE.idCorte = Convert.ToInt32(grillaCortes.Rows[fila].Cells["idCorte"].Value.ToString());
-            oCorteE = oCorteN.getCorteById(oCorteE.idCorte, true);
+            if (cargarDesdeGrilla.HasValue && cargarDesdeGrilla.Value) // Verifica que no sea null y sea true
+            {
+                oCorteE.corte = grillaCortes.Rows[fila].Cells["corte"].Value.ToString();
+                oCorteE.precioKg = float.Parse(grillaCortes.Rows[fila].Cells["precioKG"].Value.ToString());
+            }
+            else
+                oCorteE = oCorteN.getCorteById(oCorteE.idCorte, true);
         }        
 
         #endregion

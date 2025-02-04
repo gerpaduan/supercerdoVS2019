@@ -235,11 +235,16 @@ namespace Presentacion.Personas
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
+            //VALIDAR QUE ES ADD OR EDIT
             DialogResult resp = DialogResult.Yes;
-            cargarPersona();
-            if (huboModificaciones())
-                resp = MessageBox.Show("¿Está seguro de salir sin guardar las modificaciones?", "Se perderán las modificaciones",
-                            MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+            if ((oPersonaE == null || oPersonaE.idPersona == 0) || (oPersonaE.idPersona > 0 && !readOnly))
+            {
+                cargarPersona();
+                if (huboModificaciones())
+                    resp = MessageBox.Show("¿Está seguro de salir sin guardar las modificaciones?", "Se perderán las modificaciones",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            }
 
             if (resp.Equals(DialogResult.Yes))
                 this.Close();

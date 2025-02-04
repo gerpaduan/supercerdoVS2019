@@ -99,6 +99,8 @@ namespace Presentacion
             }
             grillaEmbutidos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
+            grillaEmbutidos.Columns["Cod.Emb"].HeaderText = "Cod.Elab";
+            grillaEmbutidos.Columns["Embutido"].HeaderText = "Elaborado";
             grillaEmbutidos.Columns["Kgs"].DefaultCellStyle.Format = "F3";
             //formato para columna de fechas
             grillaEmbutidos.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";

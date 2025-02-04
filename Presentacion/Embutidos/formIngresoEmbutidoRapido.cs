@@ -265,6 +265,12 @@ namespace Presentacion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (e.KeyChar == '*')// (char)(Keys.Multiply))
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 e.Handled = true;
@@ -460,6 +466,12 @@ namespace Presentacion
         {
             switch (keyData)
             {
+
+                case Keys.Multiply:
+                    dejarDeLeerPeso = checkLeerPeso.Checked;
+                    checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
+                    break;
+
                 case Keys.F2:
                     foreach (Form frm in Application.OpenForms)
                     {

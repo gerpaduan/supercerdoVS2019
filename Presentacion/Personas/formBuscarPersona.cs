@@ -50,8 +50,6 @@ namespace Presentacion.Personas
             Entidades.Persona oPersonaE = new Entidades.Persona();
             try
             {
-                //if (!grillaPersonas.CurrentRow.Selected)
-                //    throw new Exception();
                 if (grillaPersonas.Rows.Count == 0)
                     return;
 

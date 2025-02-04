@@ -671,6 +671,98 @@ namespace Datos
             return sector;
         }
 
+        public Entidades.Venta getExpedioById(int idExpendio)
+        {
+            cmVenta = new SqlCommand();
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select Expendios.* from Expendios where idExpendio =" + idExpendio;
+
+            Entidades.Venta oExpendioE = new Entidades.Venta();
+
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drVenta = cmVenta.ExecuteReader();
+
+                using (drVenta)
+                {
+                    while (drVenta.Read())
+                    {
+                        oExpendioE.IdExpendio = Convert.ToInt32(drVenta["idExpendio"]);
+                        oExpendioE.IdVenta = int.TryParse(drVenta["idVenta"].ToString(), out int result) ? result : 0;
+                        Datos.Usuario oUsuarioD = new Usuario();
+                        oExpendioE.Vendedor = oUsuarioD.getUsuarioById(Convert.ToInt32(drVenta["idVendedor"]));
+                        oExpendioE.FechaVenta = Convert.ToDateTime(drVenta["fechaExpendio"]);
+
+                        Datos.Sucursal oSucursalD = new Sucursal();
+                        oExpendioE.Sucursal = oSucursalD.findById(Convert.ToInt32(drVenta["idSucursal"]));
+
+                        oExpendioE.IdentificacionExpendio = Convert.ToString(drVenta["identificacionExpendio"]);
+                        oExpendioE.Sector = Convert.ToString(drVenta["sector"]);
+
+                        oExpendioE.CantItems = Convert.ToString(drVenta["cantItems"]);
+                        oExpendioE.TotalImporte = float.TryParse(drVenta["importe"].ToString(), out float resultImporte) ? resultImporte : 0;
+                        oExpendioE.LineasVenta = obtenerLineasExpendio(oExpendioE.IdExpendio);
+
+                    }
+                    return oExpendioE;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+                oExpendioE = null;
+            }
+        }
+
+        public List<Entidades.LineaVenta> obtenerLineasExpendio(int idExpendio)
+        {
+            daVenta = new SqlDataAdapter();
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text;
+            cmVenta.CommandText = "Select LineaExpendio.* from LineaExpendio where idExpendio =" + idExpendio;
+
+            Datos.Corte oCorteD = new Datos.Corte();
+            //creo lista de Lineas
+            List<Entidades.LineaVenta> listaLineasVenta = new List<Entidades.LineaVenta>();
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drLinea = cmVenta.ExecuteReader();
+                using (drLinea)
+                {
+                    while (drLinea.Read())
+                    {
+                        Entidades.LineaVenta oLinea = new Entidades.LineaVenta();
+
+                        oLinea.IdLineaVenta = Convert.ToInt32(drLinea["idLineaExpendio"]);
+                        oLinea.Corte = oCorteD.getCorteById(Convert.ToInt32(drLinea["idCorte"]), false);
+                        oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
+                        oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
+                        try
+                        {
+                            oLinea.PesoBalanza = Convert.ToBoolean(drLinea["pesoBalanza"]);
+                        }
+                        catch (Exception)
+                        {
+                            oLinea.PesoBalanza = false;
+                        }
+                        listaLineasVenta.Add(oLinea);
+                        oLinea = null;
+                    }
+                    return listaLineasVenta;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+                listaLineasVenta = null;
+            }
+        }
+
         #endregion
 
 

@@ -897,7 +897,7 @@ namespace Presentacion
                             oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
 
-                            txtPrecioActualCorte.Text = fila["precioKg"].ToString();
+                            txtPrecioActualCorte.Text = float.TryParse(fila["precioKg"].ToString(), out float result) ? result.ToString("N2") : fila["precioKg"].ToString();
                         }
 
                         //se cargan los datos del corte

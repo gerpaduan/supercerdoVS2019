@@ -15,6 +15,7 @@ using System.Reflection;
 using Utilidades;
 using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
+using Presentacion.Ticket;
 
 namespace Presentacion.Caja
 {
@@ -43,13 +44,13 @@ namespace Presentacion.Caja
         Entidades.Corte oCorteE;
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
-        Entidades.Venta oVentaE = new Entidades.Venta();
+        public Entidades.Venta oVentaE = new Entidades.Venta();
         Entidades.LineaVenta oLineaVenta;
         Entidades.StockCorteSucursal oStockCorteSucursal;
         Entidades.Venta oUltimaVentaVendedor;
         Entidades.TemporalLineaVenta oTemporalLineaVenta = new Entidades.TemporalLineaVenta();
 
-        List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
+        public List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
@@ -267,45 +268,10 @@ namespace Presentacion.Caja
                 cargarVenta();
 
                 try
-                {        
+                {
                     oVentaE.IdVenta = oVentaN.agregarExpendio(oVentaE);
-                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();                
-                                     
-                    //imprimir si está checked
-                    ticket.imprimir = checkTicket.Checked;
-                    ticket.TextoCentro(oVentaE.Sector);
-                    ticket.LineasEnBlanco(1);
-                    //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
-                    ticket.TextoIzquierda("Nro: " + oVentaE.IdVenta);
-                    ticket.TextoIzquierda("Id.Cliente: " + oVentaE.IdentificacionExpendio);
-                    ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
-                    //ticket.LineasEnBlanco(0);
-                    ticket.LineasGuion();
 
-                    for (int index = 0; index < listaLineaVenta.Count; index++)
-                    {
-                        Entidades.LineaVenta linea = listaLineaVenta[index];
-                        //setear por cada linea cantKg <- KgsTotalCalculado
-                        linea.CantKg = linea.KgsTotalCalculado;
-
-                        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
-                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta : 
-                            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
-
-                        listaLineaVenta[index] = oVentaN.agregarLineaExprendio(linea);
-                        ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                            linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
-                    }
- 
-                    ticket.TextoDerecha("-------");
-                    ticket.AgregaTotales("Total", totalVenta);
-                    ticket.LineasEnBlanco(1);
-                    ticket.TextoIzquierda("Articulos: " + lblCantItems.Text);
-                    ticket.TextoIzquierda("Cajero: " + oUsuario.Id);
-                    ticket.GraciasPorSuCompra();
-                    ticket.LineasEnBlanco(2);
-                    ticket.realizarImpresion();
-
+                    cargarLineasExpendio_Imprimir(true, checkTicket.Checked);
 
                     oVentaE.IdVenta = 0;
                     limpiarListas();
@@ -323,6 +289,53 @@ namespace Presentacion.Caja
                 }
             }
         }
+
+        public void cargarLineasExpendio_Imprimir(bool agregarLineasEnDB, bool imprimir)
+        {
+            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+            //imprimir si está checked
+            ticket.imprimir = imprimir;
+            ticket.TextoCentro(oVentaE.Sector);
+            ticket.LineasEnBlanco(1);
+            //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+            ticket.TextoIzquierda("Nro Expendio: " + oVentaE.IdExpendio);
+            ticket.TextoIzquierda("Id.Cliente: " + oVentaE.IdentificacionExpendio);
+            ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
+            //ticket.LineasEnBlanco(0);
+            ticket.LineasGuion();
+
+            for (int index = 0; index < listaLineaVenta.Count; index++)
+            {
+                Entidades.LineaVenta linea = listaLineaVenta[index];
+
+                if (agregarLineasEnDB)
+                {
+                    //setear por cada linea cantKg <- KgsTotalCalculado
+                    linea.CantKg = linea.KgsTotalCalculado;
+
+                    //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                    linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta :
+                        Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                    listaLineaVenta[index] = oVentaN.agregarLineaExprendio(linea);
+                }
+
+                ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                    linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+
+                totalVenta += linea.PrecioKg * linea.CantKg;
+            }
+
+            ticket.TextoDerecha("-------");
+            ticket.AgregaTotales("Total", totalVenta);
+            ticket.LineasEnBlanco(1);
+            ticket.TextoIzquierda("Articulos: " + listaLineaVenta.Count.ToString());
+            ticket.TextoIzquierda("Cajero: " + (oUsuario != null && oUsuario.Id > 0 ? oUsuario.Id.ToString() : oVentaE.Vendedor.Id.ToString()));
+            ticket.GraciasPorSuCompra();
+            ticket.LineasEnBlanco(2);
+            ticket.realizarImpresion();
+        }
+
         private void limpiarListas()
         {
             Negocio.Persona oPersonaN = new Negocio.Persona();
