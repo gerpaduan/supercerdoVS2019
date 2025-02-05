@@ -6,10 +6,27 @@ using System.Text;
 namespace Entidades
 {
     public class FacturaElectronica
-    {
-        //Tipos Comprobantes
+    {//1: Factura A
+     //2: Nota de Débito A
+     //3: Nota de Crédito A
+     //4: Recibo A
+     //6: Factura B
+     //7: Nota de Débito B
+     //8: Nota de Crédito B
+     //9: Recibo B
+     //11: Factura C
+     //12: Nota de Débito C
+     //13: Nota de Crédito C
+     //15: Recibo C
+
+     //Tipos Comprobantes
         public const int codFacturaA_Afip = 1;
+        public const int codNotaCreditoA_Afip = 3;
         public const int codFacturaB_Afip = 6;
+        public const int codNotaCreditoB_Afip = 8;
+        public const int codFacturaC_Afip = 11;
+        public const int codNotaCreditoC_Afip = 13;
+
 
         //Concepto
         public const int codConceptoProductos_Afip = 1;
@@ -39,11 +56,41 @@ namespace Entidades
                 case codFacturaA_Afip:
                     letraId_TipoCbte = 'A';
                     break;
+                case codNotaCreditoA_Afip:
+                    letraId_TipoCbte = 'A';
+                    break;
                 case codFacturaB_Afip:
                     letraId_TipoCbte = 'B';
                     break;
-	        }
+                case codNotaCreditoB_Afip:
+                    letraId_TipoCbte = 'B';
+                    break;
+                case codFacturaC_Afip:
+                    letraId_TipoCbte = 'C';
+                    break;
+                case codNotaCreditoC_Afip:
+                    letraId_TipoCbte = 'C';
+                    break;
+            }
             return letraId_TipoCbte;
+        }
+
+        public int getCodTipoCbteAFIP_segunLetraFactura(string TipoCbteAFIP, bool esNotaCredito)
+        {
+            int codTipoCbteAFIP=0;
+            switch (TipoCbteAFIP)
+            {
+                case "A":
+                    codTipoCbteAFIP = esNotaCredito ? codNotaCreditoA_Afip : codFacturaA_Afip;
+                    break;
+                case "B":
+                    codTipoCbteAFIP = esNotaCredito ? codNotaCreditoB_Afip : codFacturaB_Afip;
+                    break;
+                case "C":
+                     codTipoCbteAFIP = esNotaCredito ? codNotaCreditoC_Afip : codFacturaC_Afip;
+                    break;
+            }
+            return codTipoCbteAFIP;
         }
 
         int id;

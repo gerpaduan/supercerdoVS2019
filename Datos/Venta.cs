@@ -774,7 +774,7 @@ namespace Datos
         /// </summary>
         /// <param name="idVenta"></param>
         /// <returns></returns>
-        public int esVentaSinFacturar(int idVenta)
+        public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
         {
             int maxDiasParaFacturar = 6;
             int idFactElec = 0;
@@ -783,8 +783,17 @@ namespace Datos
             cmVenta.CommandType = CommandType.Text;
             //cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where fechaEmisionAfip > @fechaEmisionAfip and idVenta = \'" +
             //    idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
-            cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where idVenta = \'" +
-                idVenta.ToString() + "\' and CAE is not null ORDER BY id desc";
+
+            string validarComprobantes = esNotaCredito ? " (codTipoCbteAfip = " + Entidades.FacturaElectronica.codNotaCreditoA_Afip +
+            " OR " + "codTipoCbteAfip = " + Entidades.FacturaElectronica.codNotaCreditoB_Afip + " OR " +
+            "codTipoCbteAfip = " + Entidades.FacturaElectronica.codNotaCreditoC_Afip + ") " :
+                " (codTipoCbteAfip = " + Entidades.FacturaElectronica.codFacturaA_Afip +
+            " OR " + "codTipoCbteAfip = " + Entidades.FacturaElectronica.codFacturaB_Afip + " OR " + 
+            "codTipoCbteAfip = " + Entidades.FacturaElectronica.codFacturaC_Afip + ") ";
+
+        cmVenta.CommandText = "Select TOP(1) id from FacturaElectronica where idVenta = \'" +
+                idVenta.ToString() + "\' and CAE is not null and " +  validarComprobantes + "  ORDER BY id desc";
+
             cmVenta.Parameters.Add("@fechaEmisionAfip", SqlDbType.DateTime2).Value = DateTime.Today.AddDays(-maxDiasParaFacturar);
             try
             {

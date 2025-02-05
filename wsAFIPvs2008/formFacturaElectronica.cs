@@ -21,6 +21,7 @@ using Newtonsoft.Json;
 using System.Windows.Controls;
 using System.Xml.Linq;
 using System.Diagnostics;
+using System.Windows.Documents;
 
 namespace wsAFIPvs2008
 {
@@ -28,11 +29,14 @@ namespace wsAFIPvs2008
     {
         public int idVenta = 0;
         public int idFactuElec = 0;
+        public int idNotaCredito = 0;
         public bool esShowDialog = false;
+        public bool notaCredito = false;
         Entidades.Venta oVentaE; 
         Negocio.Venta oVentaN = new Negocio.Venta();
         Negocio.Persona oPersonaN = new Negocio.Persona();
         Entidades.FacturaElectronica oFactuElec;
+        Entidades.FacturaElectronica oNotaCredito;
         Entidades.Sucursal oSucursalEntidad = new Entidades.Sucursal();
         Entidades.Persona personaPadron = new Entidades.Persona();
         List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
@@ -68,6 +72,7 @@ namespace wsAFIPvs2008
         private string urlLoginPerson;
         private string urlWSPN;
         string servicioAfipPerson = "ws_sr_padron_a13";
+        string errores = "";
 
         LoginClass Login_;
         public LoginClass Login
@@ -217,7 +222,7 @@ namespace wsAFIPvs2008
                 return;
             }
 
-            idFactuElec = oVentaN.esVentaSinFacturar(oVentaE.IdVenta);
+            idFactuElec = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);
             oFactuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
             ///Si la Venta ya fue facturada, se bloquean y habilitan los campos y componentes que no pueden ser modificados
             TiposComprobantesCMB.Enabled = idFactuElec == 0;
@@ -239,7 +244,6 @@ namespace wsAFIPvs2008
             txtRazonSocial.Text = oVentaE.Persona.razonSocial;
             DocTX.Text = oVentaE.Persona.Cuit.Replace("-", "");
             txtDomicilio.Text = oVentaE.Persona.Domicilio + " - " + oVentaE.Persona.Ciudad;
-            //comboIva.SelectedIndex = (oVentaE.Persona.IdIva - 1);
             comboIva.SelectedValue = oVentaE.Persona.IdIva;
             TotalTx.Text = oVentaE.TotalImporte.ToString("F2");
             TotalTx.ForeColor = Color.DarkRed;
@@ -248,9 +252,24 @@ namespace wsAFIPvs2008
             txtVTO.Text = oFactuElec.FecVtoCAE;
             txtObservaciones.Text = oVentaE.Observaciones;
             calcularImportes();
+
+            //Si nota credito
+            if (notaCredito)
+                notaCreditoSeteo();
             RegistrarBtn.Focus();
         }
 
+        private void notaCreditoSeteo()
+        {
+            panelNotaCredito.Visible = true;
+            txtNroFacturaNotaCredito.Text = oFactuElec.DescTipoCbteAfip.ToString() + " " + oFactuElec.PtoVtaAfip.ToString() + "-" + oFactuElec.NroCbteAfip.ToString();
+            idNotaCredito = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, true);
+            oNotaCredito = idNotaCredito > 0 ? oVentaN.getFactuElecById(idNotaCredito) : new Entidades.FacturaElectronica();
+            NroCbteTX.Text = oNotaCredito.NroCbteAfip;
+            txtFormaPago.Text = "Otro";
+            comboIva.Enabled = false;
+            btnBuscarCuit.Visible = false;
+        }
         private void login()
         {
             try
@@ -429,6 +448,7 @@ namespace wsAFIPvs2008
                 puntosventa = service.FEParamGetPtosVenta(authRequest);
                 ptos_venta_cm.DataSource = puntosventa.ResultGet;
                 iniciarPtosVenta(mostrarSeleccionados);
+                errores += puntosventa.Errors != null ? "\nAl cargar combo en puntosventa: " + puntosventa.Errors[0].Msg.ToString() : "";
                 #region codigo para mostrar puntos de venta recuperados desde afip
                 //Resultado.Text = "Puntos de Ventas: ";
                 //if (puntosventa.ResultGet != null)
@@ -452,14 +472,17 @@ namespace wsAFIPvs2008
                 #region Tipos Comprobantes Carga Combo
                 TiposComprobantes = service.FEParamGetTiposCbte(authRequest);
                 TiposComprobantesCMB.DataSource = TiposComprobantes.ResultGet;
-
                 iniciarTipoCbtes(mostrarSeleccionados);
+
+                errores += TiposComprobantes.Errors != null ? "\nAl cargar combo en TiposComprobantes: " + TiposComprobantes.Errors[0].Msg.ToString() : "";
                 #endregion
 
                 //Obtiene Concepto y se inicializa en 1-Producto
                 TipoConceptos = service.FEParamGetTiposConcepto(authRequest);
                 TipoConcepto.DataSource = TipoConceptos.ResultGet;
                 iniciarTipoConcepto(mostrarSeleccionados);
+
+                errores += TipoConceptos.Errors != null ? "\nAl cargar combo en tipo Concepto: " + TipoConceptos.Errors[0].Msg.ToString() : "";
 
                 #region Tipos Documentos Carga Combo
                 //Obtiene tipo Doc e inicializa combo en Id = 99 Desc: Doc.(otro)
@@ -472,9 +495,13 @@ namespace wsAFIPvs2008
                 MonedaCMB.DataSource = Monedas.ResultGet;
                 MonedaCMB.Enabled = !mostrarSeleccionados;
 
+                errores += Monedas.Errors != null ? "\nAl cargar combo en Monedas: " + Monedas.Errors[0].Msg.ToString() : "";
+
                 TiposIVA = service.FEParamGetTiposIva(authRequest);
                 TipoIVACmb.DataSource = TiposIVA.ResultGet;
                 iniciarTipoIva(mostrarSeleccionados);
+
+                errores += TiposIVA.Errors != null ? "\nAl cargar combo en TiposIVA: " + TiposIVA.Errors[0].Msg.ToString() : "";
 
                 var lastCbteObj = service.FECompUltimoAutorizado(authRequest, ptoVtaAfip, (int)TiposComprobantesCMB.SelectedValue);// TiposComprobantes.ResultGet[0].Id); 
                 NroCbteTX.Text = (lastCbteObj.CbteNro + 1).ToString();
@@ -482,7 +509,7 @@ namespace wsAFIPvs2008
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show(ex.Message + "\n\n" + errores);
             }
         }
 
@@ -638,8 +665,11 @@ namespace wsAFIPvs2008
             if (oVentaE == null || oVentaE.IdVenta == 0)
                 return;
 
-            int codTipoCbteAFip = oVentaE.TipoComprobante.ToString() == Entidades.Venta.tipoComprobanteEnum.A.ToString() ? 
-                Entidades.FacturaElectronica.codFacturaA_Afip : Entidades.FacturaElectronica.codFacturaB_Afip;
+            ///obtiene el codigo del tipo de comprobante
+            ///si luego es nota de credito, se setea codigo de nota segun comprobante
+            int codTipoCbteAFip = oFactuElec.getCodTipoCbteAFIP_segunLetraFactura(oVentaE.TipoComprobante.ToString(), notaCredito);
+
+
             for (int index = 0; index < TiposComprobantesCMB.Items.Count; index++)
             {
                 CbteTipo item = (CbteTipo)TiposComprobantesCMB.Items[index];
@@ -765,6 +795,13 @@ namespace wsAFIPvs2008
         private void Button2_Click(object sender, EventArgs e)
         {
             try {
+                ///si es nota de credita se llama el metodo
+                ///
+                if (notaCredito)
+                {
+                    notaCredito_Generar();
+                    return;
+                }
                 bool nuevaPersona = false;
 
                 if (!string.IsNullOrEmpty(DocTX.Text) && !Utilidades.Util_Form.validarCampoNumeroEntero(DocTX.Text, "Doc"))
@@ -998,7 +1035,7 @@ namespace wsAFIPvs2008
                     oFactuElec.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
 
-                    ///***Pendiente: agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
+                    ///***TODO: pendiente -> agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
                     oVentaN.addOrEditFactuElec(oFactuElec);
 
                      DialogResult imprimir = MessageBox.Show("La Factura Electrónica se generó correctamente!.\n\n¿Imprimir ticket?.",
@@ -1007,40 +1044,6 @@ namespace wsAFIPvs2008
                          "\n\n || La Factura se genero correctamente." + "\n || Importe: $ " + TotalTx.Text;
                     #region mostrar datos en AreaText
                     string salto = "\r\n";
-                    //<add key="Negocio" value ="GranPork"/>
-                    //<add key="IIBB" value ="IIBB: 1-1266"/>
-                    //<add key="Dueno" value ="German A. Paduan"/>
-                    //<add key="Direccion" value ="Dir:San Lorenzo 1208"/>
-                    //<add key="Localidad" value ="Reconquista(3560) - Santa Fe"/>
-                    //<add key="InicioActividades" value ="Inicio Act.: 05/05/2018"/>
-                    //<add key="CondicionIVA" value ="Resp. Inscripto"/>
-                    //m += "\n*********\n";
-                    //m += ConfigurationManager.AppSettings["Negocio"].ToString(); 
-                    //m += salto + ConfigurationManager.AppSettings["IIBB"].ToString();
-                    //m += salto + ConfigurationManager.AppSettings["Dueno"].ToString();
-                    //m += salto + ConfigurationManager.AppSettings["Direccion"].ToString();
-                    //m += salto + ConfigurationManager.AppSettings["Localidad"].ToString();
-                    //m += salto + ConfigurationManager.AppSettings["InicioActividades"].ToString();
-                    //m += salto + ConfigurationManager.AppSettings["CondicionIVA"].ToString();
-                    //m += salto + "Fac.Elect." + cm.Desc;
-                    //m += salto + "Nro." + r.FeCabResp.PtoVta.ToString() + "-" + det.CbteDesde.ToString();
-                    //m += salto + "Fecha:" + r.FeDetResp[0].CbteFch;
-                    //string ClienteNombre = det.DocNro == 0 ? "Cons.Final" : 
-                    //    det.DocTipo.ToString() + " " + det.DocNro.ToString();
-                    //m += salto + "A " + ClienteNombre;
-                    //m += salto + "Pago: " + "Eftvo - Deb - Cred";//TODO: forma pago obtener desde BD
-
-                    ////Si Factura A (id = 1)
-                    //if (cm.Id == 1)
-                    //{
-                    //    m += salto + "SubTotal: " + det.ImpNeto.ToString("F2");
-                    //    m += salto + "Iva: " + det.ImpIVA.ToString("F2");
-                    //}
-                    //m += salto + "TOTAL: " + det.ImpTotal.ToString("F2");
-                    //m += salto;
-                    //m += salto + ("CAE: " + r.FeDetResp[0].CAE);
-                    //m += salto + ("Vto: " + r.FeDetResp[0].CAEFchVto);
-
                     #endregion
 
                     imprimirTicket(esFacturaA, imprimir);
@@ -1173,6 +1176,8 @@ namespace wsAFIPvs2008
                 //imprimir si está checked
                 ticket.imprimir = (imprimir == DialogResult.Yes) ? true : false;
 
+                Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
+
                 ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
                 string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
                 string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
@@ -1199,18 +1204,22 @@ namespace wsAFIPvs2008
                 if (esFacturaA)
                     ticket.TextoCentro("Original");
 
-                ticket.TextoIzquierda(oFactuElec.DescTipoCbteAfip + " Electronica");
-                ticket.TextoIzquierda("Nro." + oFactuElec.PtoVtaAfip + "-" + oFactuElec.NroCbteAfip);
-                ticket.TextoIzquierda("Fecha:" + oFactuElec.FechaEmisionAfip);// r.FeDetResp[0].CbteFch);
-                ticket.TextoIzquierda("Pago: " + oFactuElec.FormaPago);
+                ticket.TextoIzquierda(oDocumentoImprimir.DescTipoCbteAfip + " Electronica");
+                ticket.TextoIzquierda("Nro." + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip);
+                ticket.TextoIzquierda("Fecha:" + oDocumentoImprimir.FechaEmisionAfip);// r.FeDetResp[0].CbteFch);
+                if (notaCredito)
+                {
+                    ticket.TextoIzquierda("Cbte Asoc: " + txtNroFacturaNotaCredito.Text.Replace("Factura ","F"));
+                }
+                ticket.TextoIzquierda("Pago: " + oDocumentoImprimir.FormaPago);
                 ticket.LineasGuion();
 
-                ticket.TextoIzquierda(oFactuElec.RazonSocialAFIP);
-                if (!string.IsNullOrEmpty(oFactuElec.NroDocAfip))
+                ticket.TextoIzquierda(oDocumentoImprimir.RazonSocialAFIP);
+                if (!string.IsNullOrEmpty(oDocumentoImprimir.NroDocAfip))
                 {
-                    ticket.TextoIzquierda(oFactuElec.TipoDocAfip + ": " + oFactuElec.NroDocAfip);
-                    ticket.TextoIzquierda(oFactuElec.CondicionIvaAFIP);
-                    ticket.TextoIzquierda(oFactuElec.DomicilioAFIP);
+                    ticket.TextoIzquierda(oDocumentoImprimir.TipoDocAfip + ": " + oDocumentoImprimir.NroDocAfip);
+                    ticket.TextoIzquierda(oDocumentoImprimir.CondicionIvaAFIP);
+                    ticket.TextoIzquierda(oDocumentoImprimir.DomicilioAFIP);
                 }
 
                 ticket.LineasGuion();
@@ -1225,11 +1234,11 @@ namespace wsAFIPvs2008
 
                     oCorteUnico.codigo = 0;
                     oCorteUnico.corte = "Item Unitario";
-                    oCorteUnico.precioKg = oFactuElec.ImporteTotal;
+                    oCorteUnico.precioKg = oDocumentoImprimir.ImporteTotal;
 
                     oLineaUnica.Corte = oCorteUnico;
                     oLineaUnica.CantKg = 1;
-                    oLineaUnica.PrecioKg = oFactuElec.ImporteTotal;
+                    oLineaUnica.PrecioKg = oDocumentoImprimir.ImporteTotal;
 
                     oVentaE.LineasVenta.Add(oLineaUnica);
                 }
@@ -1256,20 +1265,20 @@ namespace wsAFIPvs2008
                 //Si Factura A (id = 1)
                 if (esFacturaA)
                 {
-                    ticket.TextoExtremos("Neto s/iva: ", oFactuElec.ImporteNetoGravado.ToString("F2"));
+                    ticket.TextoExtremos("Neto s/iva: ", oDocumentoImprimir.ImporteNetoGravado.ToString("F2"));
 
                     foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
                         if (item.Importe != 0)
                             ticket.TextoExtremos("Iva " + item.Iva + "%:", item.Importe.ToString("F2"));
                 }
 
-                ticket.TextoExtremos("TOTAL: ", oFactuElec.ImporteTotal.ToString("F2"));
+                ticket.TextoExtremos("TOTAL: ", oDocumentoImprimir.ImporteTotal.ToString("F2"));
                 ticket.LineasEnBlanco(1);
-                ticket.TextoIzquierda("CAE: " + oFactuElec.CAE1);
-                ticket.TextoIzquierda("Vto: " + oFactuElec.FecVtoCAE);
+                ticket.TextoIzquierda("CAE: " + oDocumentoImprimir.CAE1);
+                ticket.TextoIzquierda("Vto: " + oDocumentoImprimir.FecVtoCAE);
                 ticket.LineasEnBlanco(1);
                 //si es transferencia se pide Nombre, DNI y Telefono
-                bool esTransferencia = oFactuElec.FormaPago == Entidades.Pago.formasPago.Transferencia.ToString();
+                bool esTransferencia = oDocumentoImprimir.FormaPago == Entidades.Pago.formasPago.Transferencia.ToString();
                 if (esTransferencia)
                 {
                     ticket.TextoIzquierda("Nombre:");
@@ -1474,7 +1483,7 @@ namespace wsAFIPvs2008
                         oVentaN = new Negocio.Venta();
                         oFactuElec = new Entidades.FacturaElectronica();
 
-                        oFactuElec.Id = oVentaN.esVentaSinFacturar(oVentaE.IdVenta);
+                        oFactuElec.Id = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);
                         //se valida que NO exista FacturaElectronica para el idVenta
                         if (oVentaE.IdVenta > 0 && (oFactuElec == null || oFactuElec.Id == 0))
                         {
@@ -1563,15 +1572,18 @@ namespace wsAFIPvs2008
 
         private void pdf_Factura_Click(object sender, EventArgs e)
         {
-            if (oFactuElec == null || (oFactuElec != null && string.IsNullOrEmpty(oFactuElec.CAE1)))
+            Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
+            string tipoDocumentoDesc = notaCredito ? "Nota Crédito" : "Factura";
+
+            if (oDocumentoImprimir == null || (oDocumentoImprimir != null && string.IsNullOrEmpty(oDocumentoImprimir.CAE1)))
             {
-                MessageBox.Show("No se puede generar PDF porque la factura no ha sido generada");
+                MessageBox.Show("No se puede generar PDF porque la "+ tipoDocumentoDesc + " no ha sido generada");
                 return;
             }
 
             string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
-            string rutaPDF = @ruta + "\\" + oFactuElec.FechaEmisionAfip?.ToString("yyyyMMdd") + " " +
-                oFactuElec.DescTipoCbteAfip + " " + oFactuElec.PtoVtaAfip + "-" + oFactuElec.NroCbteAfip + ".pdf";
+            string rutaPDF = @ruta + "\\" + oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyyMMdd") + " " +
+                oDocumentoImprimir.DescTipoCbteAfip + " " + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip + ".pdf";
 
             // Verificar si la carpeta existe, si no, crearla
             if (!Directory.Exists(@ruta))
@@ -1630,10 +1642,10 @@ namespace wsAFIPvs2008
             celdaTipoFactura.VerticalAlignment = Element.ALIGN_TOP;
 
             Phrase tipoFactura = new Phrase();
-            char letraFactura = oFactuElec.DescTipoCbteAfip[oFactuElec.DescTipoCbteAfip.Length - 1];
+            char letraFactura = oDocumentoImprimir.DescTipoCbteAfip[oDocumentoImprimir.DescTipoCbteAfip.Length - 1];
             string letraFacturaEncabezado = "  " + letraFactura + "  ";
-            String codFactura = "COD." + (oFactuElec.CodTipoCbteAfip < 10 ? ("0"+oFactuElec.CodTipoCbteAfip.ToString()) : oFactuElec.CodTipoCbteAfip.ToString());
-            string descComprobante = oFactuElec.DescTipoCbteAfip.Substring(0, oFactuElec.DescTipoCbteAfip.Length - 1); 
+            String codFactura = "COD." + (oDocumentoImprimir.CodTipoCbteAfip < 10 ? ("0"+oDocumentoImprimir.CodTipoCbteAfip.ToString()) : oDocumentoImprimir.CodTipoCbteAfip.ToString());
+            string descComprobante = oDocumentoImprimir.DescTipoCbteAfip.Substring(0, oDocumentoImprimir.DescTipoCbteAfip.Length - 1); 
             tipoFactura.Add(new Chunk(letraFacturaEncabezado, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 15)));
             tipoFactura.Add(new Chunk(codFactura, FontFactory.GetFont(FontFactory.HELVETICA, 7)));
             celdaTipoFactura.AddElement(tipoFactura);
@@ -1647,8 +1659,8 @@ namespace wsAFIPvs2008
 
             Phrase membreteDerecha = new Phrase();
             membreteDerecha.Add(new Chunk(descComprobante.ToUpper()+"\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12)));
-            membreteDerecha.Add(new Chunk("Punto de Venta: "+oFactuElec.PtoVtaAfip+"   Comp.Nro: "+oFactuElec.NroCbteAfip+"\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk("Fecha de Emisión: "+oFactuElec.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") +"\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
+            membreteDerecha.Add(new Chunk("Punto de Venta: "+oDocumentoImprimir.PtoVtaAfip+"   Comp.Nro: "+oDocumentoImprimir.NroCbteAfip+"\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
+            membreteDerecha.Add(new Chunk("Fecha de Emisión: "+oDocumentoImprimir.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") +"\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteDerecha.Add(new Chunk("CUIT: "+ ConfigurationManager.AppSettings["cuit"].ToString()+"\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteDerecha.Add(new Chunk(ConfigurationManager.AppSettings["IIBB"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteDerecha.Add(new Chunk(ConfigurationManager.AppSettings["InicioActividades"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
@@ -1670,11 +1682,12 @@ namespace wsAFIPvs2008
             clienteTable.WidthPercentage = 100;
             clienteTable.SetWidths(new float[] {1f});
 
-            string datosCliente = "CUIT:   " + oFactuElec.NroDocAfip +
-                "              Apellido y Nombre/Razón Social:   " + oFactuElec.RazonSocialAFIP.ToUpper() +
-                "\n\nCondición frente al IVA:   " + comboIva.Text + //oFactuElec.CondicionIvaAFIP.ToUpper() + 
-                "\n\nDomicilio :   " + oFactuElec.DomicilioAFIP.ToUpper() +
-                "\n\nCondición de venta:   " + txtFormaPago.Text.ToUpper(); //oFactuElec.CondicionVenta.ToUpper();
+            string datosCliente = "CUIT:   " + oDocumentoImprimir.NroDocAfip +
+                "              Apellido y Nombre/Razón Social:   " + oDocumentoImprimir.RazonSocialAFIP.ToUpper() +
+                "\n\nCondición frente al IVA:   " + comboIva.Text + //oDocumentoImprimir.CondicionIvaAFIP.ToUpper() + 
+                "\n\nDomicilio :   " + oDocumentoImprimir.DomicilioAFIP.ToUpper() +
+                "\n\nCondición de venta:   " + txtFormaPago.Text.ToUpper() + 
+                "                                    " + txtNroFacturaNotaCredito.Text; //oDocumentoImprimir.CondicionVenta.ToUpper();
 
             clienteTable.AddCell(new PdfPCell(new Phrase(datosCliente, fontNormal)) { Border = 0 });
             documento.Add(clienteTable);
@@ -1698,7 +1711,7 @@ namespace wsAFIPvs2008
 
             productosTable.AddCell(new PdfPCell(new Phrase("Importe", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
 
-            foreach (Entidades.LineaVenta item in oFactuElec.Venta.LineasVenta)
+            foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
             {
                 productosTable.AddCell(new PdfPCell(new Phrase(item.Corte.codigo.ToString() + " - " + item.Corte.corte, fontNormal)) { Border = 0 });
                 productosTable.AddCell(new PdfPCell(new Phrase(item.CantKg.ToString("F3"), fontNormal)) { Border = 0 });
@@ -1714,9 +1727,9 @@ namespace wsAFIPvs2008
 
             int cantLineasVacias = Convert.ToInt32(ConfigurationManager.AppSettings["cantLineasVacias"].ToString());
             //se le resta la cantidad e alicuota - 1 para evitar que pise el QR
-            cantLineasVacias -= (oFactuElec.Venta.LineasVenta.Count - 1);
+            cantLineasVacias -= (oDocumentoImprimir.Venta.LineasVenta.Count - 1);
             for (int i = 0; i < cantLineasVacias; i++)
-                documento.Add(new Paragraph("\n"));
+                documento.Add(new iTextSharp.text.Paragraph("\n"));
 
             #endregion
 
@@ -1741,7 +1754,7 @@ namespace wsAFIPvs2008
             {
                 //totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 totalTable.AddCell(new PdfPCell(new Phrase("Neto s/iva: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                totalTable.AddCell(new PdfPCell(new Phrase(oFactuElec.ImporteNetoGravado.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteNetoGravado.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
                 foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
                 {
@@ -1757,18 +1770,18 @@ namespace wsAFIPvs2008
             {
                 //totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 totalTable.AddCell(new PdfPCell(new Phrase("Subtotal: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                totalTable.AddCell(new PdfPCell(new Phrase(oFactuElec.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             }
             totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             totalTable.AddCell(new PdfPCell(new Phrase("Total: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-            totalTable.AddCell(new PdfPCell(new Phrase(oFactuElec.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
             documento.Add(totalTable);
 
             // Agregar la línea al documento
             documento.Add(new Chunk(line));
 
-            documento.Add(new Paragraph(" "));
+            documento.Add(new iTextSharp.text.Paragraph(" "));
 
             // Insertar el código QR en el documento PDF
             iTextSharp.text.Image qrImage = iTextSharp.text.Image.GetInstance(GenerateQRCode());
@@ -1784,8 +1797,8 @@ namespace wsAFIPvs2008
             PdfPTable infoCAE = new PdfPTable(1);
             infoCAE.WidthPercentage = 100;
             infoCAE.SetWidths(new float[] {1f });
-            infoCAE.AddCell(new PdfPCell(new Phrase($"CAE: {oFactuElec.CAE1}", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-            infoCAE.AddCell(new PdfPCell(new Phrase($"Fecha de Vencimiento del CAE: {oFactuElec.FecVtoCAE}", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            infoCAE.AddCell(new PdfPCell(new Phrase($"CAE: {oDocumentoImprimir.CAE1}", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            infoCAE.AddCell(new PdfPCell(new Phrase($"Fecha de Vencimiento del CAE: {oDocumentoImprimir.FecVtoCAE}", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
             documento.Add(infoCAE);
             // Cerrar el documento
@@ -1813,22 +1826,23 @@ namespace wsAFIPvs2008
         }
         private string GenerarJSON()
         {
-            string fechaEmision = oFactuElec.FechaEmisionAfip?.ToString("yyyy-MM-dd");
+            Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
+            string fechaEmision = oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyy-MM-dd");
             // Crear la estructura del JSON utilizando la variable
             long _cuitEmisor = long.Parse(cuit);
-            long _nroCmp = long.Parse(oFactuElec.NroCbteAfip);
-            long _nroDocRec = string.IsNullOrEmpty(oFactuElec.NroDocAfip) ? 0 : long.Parse(oFactuElec.NroDocAfip);
-            long _codAut = long.Parse(oFactuElec.CAE1);
-            int _ptoVta = Convert.ToInt32(oFactuElec.PtoVtaAfip);
+            long _nroCmp = long.Parse(oDocumentoImprimir.NroCbteAfip);
+            long _nroDocRec = string.IsNullOrEmpty(oDocumentoImprimir.NroDocAfip) ? 0 : long.Parse(oDocumentoImprimir.NroDocAfip);
+            long _codAut = long.Parse(oDocumentoImprimir.CAE1);
+            int _ptoVta = Convert.ToInt32(oDocumentoImprimir.PtoVtaAfip);
             int _tipoDocRec = Convert.ToInt32(TipoDocCMB.SelectedValue.ToString());
-            decimal _importe = Convert.ToDecimal(oFactuElec.ImporteTotal);
+            decimal _importe = Convert.ToDecimal(oDocumentoImprimir.ImporteTotal);
             var qrData = new
             {
                 ver = 1,
                 fecha = fechaEmision,
                 cuit = _cuitEmisor,
                 ptoVta = _ptoVta,
-                tipoCmp = oFactuElec.CodTipoCbteAfip,
+                tipoCmp = oDocumentoImprimir.CodTipoCbteAfip,
                 nroCmp = _nroCmp,
                 importe = _importe,
                 moneda = "PES",
@@ -1913,28 +1927,67 @@ namespace wsAFIPvs2008
 
         private void NotaCredito_Click(object sender, EventArgs e)
         {
+            notaCredito_Generar();
+        }
+
+        private void notaCredito_Generar()
+        {
             #region NotaCredito Pendiente
-            WSFEHOMO.Service service = getServicio();
-            //**Certificado para loguearse con AFIP**
-            service.ClientCertificates.Add(oLoginClass.certificado);
-
-            DialogResult respuesta;
-            if (oFactuElec != null && oFactuElec.Id > 0 && !string.IsNullOrEmpty(oFactuElec.CAE1))
+            try
             {
-                if (oFactuElec.RazonSocialAFIP.Equals(txtRazonSocial.Text) && oFactuElec.DomicilioAFIP.Equals(txtDomicilio.Text)
-                     && oFactuElec.CondicionIvaAFIP.Equals(comboIva.Text))
-                    MessageBox.Show("La Venta ya ha sido facturada", "Venta Facturada", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                WSFEHOMO.Service service = getServicio();
+                //**Certificado para loguearse con AFIP**
+                service.ClientCertificates.Add(oLoginClass.certificado);
+
+                DialogResult respuesta;
+                if (oNotaCredito != null && oNotaCredito.Id > 0 && !string.IsNullOrEmpty(oNotaCredito.CAE1))
+                {
+                    MessageBox.Show("La Nota de Crédito ya ha sido generada anteriormente", "Nota Crédito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    return;
+                }
+                //else
+
+                if (oFactuElec == null)
+                {
+                    MessageBox.Show("La Factura para cual quiere generar Nota Crédito no existe.\n\nCierre y vuelva a abrir el formulario");
+                    return;                    
+                }
+
+
+                if (!Utilidades.Util_Form.validarCampoNumerico(TotalTx.Text, "Total"))
+                    return;
+
+                respuesta = MessageBox.Show("¿Generar Nota Crédito Electrónica?.\n\nTotal: $ " + TotalTx.Text,
+                    "Nota Crédito", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                if (!(DialogResult.Yes == respuesta))
+                    return;
+
+                ///se cargan los datos de la factura para generar la nota de credito
+                ///setear valores
+                oNotaCredito = oFactuElec;
+
+                string d = "";
+                oNotaCredito.Id = 0;
+                oNotaCredito = null;
+                oNotaCredito = new Entidades.FacturaElectronica();
+
+                //Cambiando . por , para convertir a double
+                ImpIvaTx.Text = ImpIvaTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                NetoTX.Text = NetoTX.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                TotalTx.Text = TotalTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
 
                 CbteTipo cm = (CbteTipo)TiposComprobantesCMB.SelectedItem;
                 FECAERequest req = new FECAERequest(); ///Request para obtener CAE
                 FECAECabRequest cab = new FECAECabRequest(); ///CABECERA DEL REQUEST
                 FECAEDetRequest det = new FECAEDetRequest(); ///DETALLE(cuerpo) DEL REQUEST
-
+                                                             ///
                 //Cabecera del Request
                 cab.CantReg = 1;
                 cab.PtoVta = ptoVtaAfip;
                 cab.CbteTipo = cm.Id;
+
                 req.FeCabReq = cab; ///Asignamos la cabecera al Request 
 
                                     ///****Detalle del Request***
@@ -1955,39 +2008,57 @@ namespace wsAFIPvs2008
                 //Fecha del Comprobante
                 det.CbteFch = FechaDTP.Value.ToString("yyyyMMdd");
                 //Se calculan los importes a enviar
-                det.ImpNeto = Convert.ToDouble(NetoTX.Text);
-                det.ImpIVA = Convert.ToDouble(ImpIvaTx.Text);
+                det.ImpNeto = esRRII ? Convert.ToDouble(NetoTX.Text) : Convert.ToDouble(TotalTx.Text);
+                det.ImpIVA = esRRII ? Convert.ToDouble(ImpIvaTx.Text) : 0;
                 det.ImpTotal = Convert.ToDouble(TotalTx.Text);
                 det.ImpTotConc = 0;
                 det.ImpOpEx = 0;
                 det.ImpTrib = 0;
+
+
                 //Tipo Moneda 
                 Moneda mon = (Moneda)MonedaCMB.SelectedItem;
                 det.MonId = mon.Id;
                 det.MonCotiz = 1;
 
-                AlicIva[] alicuotaArr = new AlicIva[listaIdAlicuotaConIva.Count];
-                //recorro listaIdAlicuotaConIva y agrego al array
-                oFactuElec.ListaAlicuota = new List<Entidades.AlicuotaIva>();
-                for (int i = 0; i < listaIdAlicuotaConIva.Count; i++)
-                {
-                    foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
-                    {
-                        if (item.IdIva == listaIdAlicuotaConIva[i])
-                        {
-                            AlicIva alicuota = new AlicIva();
-                            alicuota.Id = item.IdIva;
-                            //Redondeo para que queden 2 decimales y no tira error ws afip
-                            alicuota.BaseImp = (double)Math.Round(item.BaseImponible, 2);
-                            alicuota.Importe = (double)Math.Round(item.Importe, 2);
+                // COMPROBANTE ASOCIADO
 
-                            alicuotaArr[i] = alicuota;
-                            oFactuElec.ListaAlicuota.Add(item);
+                CbteAsoc[] cbtesAsociadosArr = new CbteAsoc[1];
+
+                CbteAsoc cbteAsoc = new CbteAsoc();
+                cbteAsoc.Tipo = oFactuElec.CodTipoCbteAfip;// Factura A (001), B (006), C (011)
+                cbteAsoc.PtoVta = int.Parse(oFactuElec.PtoVtaAfip);
+                cbteAsoc.Nro = long.Parse(oFactuElec.NroCbteAfip);// Número de factura asociada
+                cbteAsoc.Cuit = oFactuElec.NroDocAfip;// CUIT del receptor
+                cbtesAsociadosArr[0] = cbteAsoc;
+
+                det.CbtesAsoc = cbtesAsociadosArr;
+
+                if (esRRII)
+                {
+                    AlicIva[] alicuotaArr = new AlicIva[listaIdAlicuotaConIva.Count];
+                    //recorro listaIdAlicuotaConIva y agrego al array
+                    oNotaCredito.ListaAlicuota = new List<Entidades.AlicuotaIva>();
+                    for (int i = 0; i < listaIdAlicuotaConIva.Count; i++)
+                    {
+                        foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
+                        {
+                            if (item.IdIva == listaIdAlicuotaConIva[i])
+                            {
+                                AlicIva alicuota = new AlicIva();
+                                alicuota.Id = item.IdIva;
+                                //Redondeo para que queden 2 decimales y no tira error ws afip
+                                alicuota.BaseImp = (double)Math.Round(item.BaseImponible, 2);
+                                alicuota.Importe = (double)Math.Round(item.Importe, 2);
+
+                                alicuotaArr[i] = alicuota;
+                                oNotaCredito.ListaAlicuota.Add(item);
+                            }
                         }
                     }
-                }
 
-                det.Iva = alicuotaArr;
+                    det.Iva = alicuotaArr;
+                }
 
                 FECAEDetRequest[] reqArr = new FECAEDetRequest[1];
                 reqArr[0] = det;
@@ -1996,6 +2067,117 @@ namespace wsAFIPvs2008
                 //Solicita el CAE
                 FECAEResponse r = service.FECAESolicitar(authRequest, req);
 
+                string m = ("Estado: "
+                            + (r.FeCabResp.Resultado + "\r\n"));
+                m += ("Estado Esp: " + r.FeDetResp[0].Resultado);
+                m += "\r\n";
+                m += ("CAE: " + r.FeDetResp[0].CAE);
+                m += "\r\n";
+                m += ("Vto: " + r.FeDetResp[0].CAEFchVto);
+                m += "\r\n";
+                m += ("Desde-Hasta: " + (r.FeDetResp[0].CbteDesde + ("-" + r.FeDetResp[0].CbteHasta)));
+                m += "\r\n";
+
+                string mensajeError = "";
+                if (r.FeDetResp[0].Observaciones != null)
+                    foreach (Obs o in r.FeDetResp[0].Observaciones)
+                    {
+                        m += String.Format("Obs: {0} ({1})", o.Msg, o.Code) + "\r\n";
+
+                        mensajeError += String.Format("Obs: {0} ({1})", o.Msg, o.Code) + "\r\n";
+                    }
+
+                if (r.Errors != null)
+                {
+                    foreach (Err er in r.Errors)
+                    {
+                        m += String.Format("Er: {0}: {1}", er.Code, er.Msg) + "\r\n";
+
+                        mensajeError += String.Format("Er: {0}: {1}", er.Code, er.Msg) + "\r\n";
+                    }
+                }
+
+                if (r.Events != null)
+                {
+                    foreach (Evt ev in r.Events)
+                    {
+                        m += String.Format("Ev: {0}: {1}", ev.Code, ev.Msg) + "\r\n";
+
+                        mensajeError += String.Format("Ev: {0}: {1}", ev.Code, ev.Msg) + "\r\n";
+                    }
+                }
+
+                Resultado.Text = "";
+                if (r.FeCabResp.Resultado.Equals("A"))
+                {
+                    facturaPendiente = false;
+                    txtCAE.Text = r.FeDetResp[0].CAE;
+                    txtVTO.Text = r.FeDetResp[0].CAEFchVto;
+
+                    string ptoVtaFormatoAfip = (ptoVtaAfip + 100000).ToString().Substring(1);
+                    string nroCbteFormatoAfip = (det.CbteDesde + 100000000).ToString().Substring(1);
+                    string formaPago = oVentaE.FormaPago == null ? Entidades.Venta.formaPagoEnum.Debito.ToString() :
+                        (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString())) ?
+                        "Cuenta Corriente" : oVentaE.FormaPago.ToString();
+                    //Si Factura A (id = 1)
+                    bool esFacturaA = oNotaCredito.esFacturaA(cm.Id.ToString());
+
+                    //Cargar Objeto FactuElec
+                    oNotaCredito.PtoVtaAfip = ptoVtaFormatoAfip;
+                    oNotaCredito.FechaEmisionAfip = FechaDTP.Value;
+                    oNotaCredito.DescTipoCbteAfip = cm.Desc;
+                    oNotaCredito.CodTipoCbteAfip = cm.Id;
+                    oNotaCredito.NroCbteAfip = nroCbteFormatoAfip;
+                    oNotaCredito.TipoDocAfip = doctipo.Desc;
+                    oNotaCredito.NroDocAfip = DocTX.Text;
+                    oNotaCredito.RazonSocialAFIP = txtRazonSocial.Text;
+                    oNotaCredito.CondicionIvaAFIP = esFacturaA ? "Responsable Inscripto" : comboIva.SelectedText;
+                    oNotaCredito.DomicilioAFIP = txtDomicilio.Text;
+                    oNotaCredito.CondicionVenta = oVentaE.EnCtaCte ? "Cuenta Corriente" : "Contado";
+                    oNotaCredito.FormaPago = txtFormaPago.Text;
+                    oNotaCredito.CAE1 = txtCAE.Text;
+                    oNotaCredito.FecVtoCAE = txtVTO.Text;
+                    oNotaCredito.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false);
+                    oNotaCredito.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
+                    oNotaCredito.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
+                    oNotaCredito.IdVenta = oVentaE.IdVenta;
+
+                    ///***TODO: pendiente -> agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
+                    oVentaN.addOrEditFactuElec(oNotaCredito);
+
+                    DialogResult imprimir = MessageBox.Show("La Nota de Credito se generó correctamente!.\n\n¿Imprimir ticket?.",
+                       "Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.None, MessageBoxDefaultButton.Button1);
+                    Resultado.Text = "Hora Mensaje: " + DateTime.Now.ToLocalTime() +
+                        "\n\n || La Nota de Credito se genero correctamente." + "\n || Importe: $ " + TotalTx.Text;
+                    #region mostrar datos en AreaText
+                    string salto = "\r\n";
+                    #endregion
+
+                    imprimirTicket(esFacturaA, imprimir);
+                    imprimirTicket(esFacturaA, imprimir);
+
+
+                    if (esShowDialog)
+                        this.Close();
+
+                    this.SendToBack();
+                }
+                else
+                {
+                    ///Si factura electronica es rechazada guarda en la base de datos con el mensaje de error
+                    ///
+                    MessageBox.Show("Hubo un error al generar la factura\n\n" + mensajeError, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Resultado.Text = "Hora Mensaje: " + DateTime.Now.ToLocalTime() + "\n *************** \n Mensaje Error: " + mensajeError;
+                    oNotaCredito.Error = true;
+                    oNotaCredito.MensajeError = mensajeError;
+                    oNotaCredito.FechaError = DateTime.Now;
+                    oVentaN.addOrEditFactuElec(oNotaCredito);
+                }
+                limpiarCampos(service);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
             #endregion
         }

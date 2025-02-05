@@ -296,9 +296,9 @@ namespace Negocio
         /// </summary>
         /// <param name="idVenta"></param>
         /// <returns></returns>
-            public int esVentaSinFacturar(int idVenta)
+            public int esVentaSinFacturar(int idVenta, bool esNotaCredito)
         {
-            return oVentaD.esVentaSinFacturar(idVenta);
+            return oVentaD.esVentaSinFacturar(idVenta, esNotaCredito);
         }
         
         /// <summary>
@@ -317,6 +317,7 @@ namespace Negocio
             oVentaD.addOrEditFactuElec(oFacturaElectronicaE);
 
             char letraId_TipoCbte = oFacturaElectronicaE.getLetraId_TipoCbte(oFacturaElectronicaE.CodTipoCbteAfip);
+
             //actualizar el tipo cbte de la tabla Ventas
             if (!(oFacturaElectronicaE.Venta != null &&
                 oFacturaElectronicaE.Venta.TipoComprobante.Equals(letraId_TipoCbte)))

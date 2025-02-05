@@ -50,7 +50,10 @@ namespace Entidades
         {
             X,
             A,
-            B
+            B,
+            NC_A,
+            NC_B,
+            NC_C
         }
 
         public enum formaPagoEnum //Al cambiar estos datos modificar los valores en formVentaCaja 
