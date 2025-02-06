@@ -129,7 +129,7 @@ namespace Presentacion.Caja
                 }
             }
             total = veintemil + diezmil + dosmil + mil + quinientos + doscientos + cien + cincuenta + veinte + diez + cinco + dos + monedas;
-            txtTotalCambio.Text = (total - cien).ToString("F2");
+            //txtTotalCambio.Text = (total - cien).ToString("F2");
             
             txtTotal.Text = total.ToString("N2");
         }
