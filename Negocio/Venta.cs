@@ -32,8 +32,12 @@ namespace Negocio
             }
             oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
             ///llama al metodo para asinar el idVenta a la tabla Expendios
-            foreach (int item in oVentaE.ListaExpendios)
-                oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+            ///
+            if (oVentaE.ListaExpendios != null)
+            {
+                foreach (int item in oVentaE.ListaExpendios)
+                    oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+            }
 
             return oVentaE.IdVenta;
         }
@@ -140,7 +144,7 @@ namespace Negocio
         }
 
         public void egresoCajaPagoTarjeta(int idVenta, Entidades.Usuario oUsuario, float pagoMixtoEfectivo)
-        {
+    {
             Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
 
             bool esEfectivo = oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());                   

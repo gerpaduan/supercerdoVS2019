@@ -109,6 +109,15 @@ namespace Presentacion.Ventas
 
         private void modificarVenta()
         {
+            if (!oVentaE.TipoComprobante.Equals('X'))
+            {
+                DialogResult respuesta = MessageBox.Show("La Venta tiene una factura asociada, con la modificación perderá datos reales."+
+                    "\n¿Está seguro que desea continuar con la modificación?", "Modificar venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (respuesta == DialogResult.No)
+                    return;
+            }
+
             if (Application.OpenForms["formNuevaVenta"] != null)
             {
                 Application.OpenForms["formNuevaVenta"].Activate();

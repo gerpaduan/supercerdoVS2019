@@ -1947,9 +1947,8 @@ namespace wsAFIPvs2008
 
                     return;
                 }
-                //else
 
-                if (oFactuElec == null)
+                if (oFactuElec == null || oFactuElec.Id == 0)
                 {
                     MessageBox.Show("La Factura para cual quiere generar Nota Crédito no existe.\n\nCierre y vuelva a abrir el formulario");
                     return;                    
@@ -1959,18 +1958,14 @@ namespace wsAFIPvs2008
                 if (!Utilidades.Util_Form.validarCampoNumerico(TotalTx.Text, "Total"))
                     return;
 
-                respuesta = MessageBox.Show("¿Generar Nota Crédito Electrónica?.\n\nTotal: $ " + TotalTx.Text,
+                string anularVentaMensaje = "\n\nNota: Al realizar la nota de crédito, se generará automáticamente una venta " +
+                    " con cantidades en negativo e igual fecha para que quede anulada.";
+                respuesta = MessageBox.Show("¿Generar Nota Crédito Electrónica?.\n\nTotal: $ " + TotalTx.Text + anularVentaMensaje,
                     "Nota Crédito", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
                 if (!(DialogResult.Yes == respuesta))
-                    return;
+                    return;               
+                
 
-                ///se cargan los datos de la factura para generar la nota de credito
-                ///setear valores
-                oNotaCredito = oFactuElec;
-
-                string d = "";
-                oNotaCredito.Id = 0;
-                oNotaCredito = null;
                 oNotaCredito = new Entidades.FacturaElectronica();
 
                 //Cambiando . por , para convertir a double
@@ -2154,8 +2149,38 @@ namespace wsAFIPvs2008
                     #endregion
 
                     imprimirTicket(esFacturaA, imprimir);
-                    imprimirTicket(esFacturaA, imprimir);
 
+
+                    ///crear la Venta para Anular la original por la Nota de Credito
+                    ///
+                    string errorVenta = "\n-Error al registrar la Venta", errorLinea = "\n-Error al registrar las Lineas de Venta",
+                    errorEgresoCaja = "\n-Error al generar el Egreso de caja", errorCtaCte = "\n-Error al generar registro de Cta Cte.";
+                    try
+                    {
+                        Entidades.Venta oVentaAnularPorNotaCredito = oVentaE;
+                        oVentaAnularPorNotaCredito.IdVenta = 0;
+                        oVentaAnularPorNotaCredito.NroRemito += "Nota Credito";
+                        oVentaAnularPorNotaCredito.Observaciones += "**Venta anulada por Nota de Credito**";
+                        oVentaAnularPorNotaCredito.IdVenta = oVentaN.agregarVenta(oVentaAnularPorNotaCredito);
+                        errorVenta = "-La Venta se registró ok.";
+                        for (int i = 0; i < oVentaAnularPorNotaCredito.LineasVenta.Count; i++)
+                        {
+                            oVentaAnularPorNotaCredito.LineasVenta[i].Venta = oVentaAnularPorNotaCredito;
+                            oVentaAnularPorNotaCredito.LineasVenta[i].CantKg *= -1;
+                            oVentaAnularPorNotaCredito.LineasVenta[i].KgsTotalCalculado *= -1;
+                            oVentaN.agregarLineaVenta(oVentaAnularPorNotaCredito.LineasVenta[i]);
+                        }
+                        errorLinea = "-Las lineas de venta se registraron ok.";
+                        oVentaN.egresoCajaPagoTarjeta(oVentaAnularPorNotaCredito.IdVenta, oVentaAnularPorNotaCredito.Vendedor, oVentaAnularPorNotaCredito.PagoMixtoEfectivo);
+                        errorEgresoCaja = "-El egreso de caja se registró ok.";
+                        oVentaN.crearMovCtaCteVenta(oVentaAnularPorNotaCredito);
+                        errorCtaCte = "-El registro de Cta Cte ok.";
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message + "\nMensajes\n" + errorVenta + errorLinea + errorEgresoCaja + errorCtaCte);
+                        return;
+                    }
 
                     if (esShowDialog)
                         this.Close();
