@@ -1758,7 +1758,7 @@ namespace Presentacion.Caja
             if (esCodBarraEstandar)
             {
                 //Si se llamó formCortes evitar el ingreso automatico de la cantidad
-                if (codigoBuscado != 0 && codigoBuscado == oCorteE.codigo)
+                if (codigoBuscado != 0 && oCorteE != null && codigoBuscado == oCorteE.codigo)
                 {
                     return;
                 }
@@ -1766,7 +1766,7 @@ namespace Presentacion.Caja
 
                 ///si el CodigoBarra es de un producto pesable, Se lee el codigo, y se lee balanza. El usuario deberá agregar manualmente
                 ///
-                if (oCorteE.Pesable)
+                if (oCorteE != null && oCorteE.Pesable)
                 {
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza;
                     btnAgregar.Focus();
