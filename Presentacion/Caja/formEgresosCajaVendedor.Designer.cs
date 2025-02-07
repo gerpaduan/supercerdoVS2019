@@ -58,9 +58,9 @@
             // 
             this.grillaEgresosCaja.AllowUserToAddRows = false;
             this.grillaEgresosCaja.AllowUserToDeleteRows = false;
-            this.grillaEgresosCaja.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaEgresosCaja.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaEgresosCaja.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
@@ -93,7 +93,7 @@
             this.grillaEgresosCaja.RowHeadersVisible = false;
             this.grillaEgresosCaja.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             this.grillaEgresosCaja.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaEgresosCaja.Size = new System.Drawing.Size(649, 248);
+            this.grillaEgresosCaja.Size = new System.Drawing.Size(779, 248);
             this.grillaEgresosCaja.TabIndex = 44;
             this.grillaEgresosCaja.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaEgresosCaja_CellClick);
             this.grillaEgresosCaja.SelectionChanged += new System.EventHandler(this.grillaEgresosCaja_SelectionChanged);
@@ -102,7 +102,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(538, 478);
+            this.btnCancelar.Location = new System.Drawing.Point(668, 478);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(102, 26);
             this.btnCancelar.TabIndex = 45;
@@ -118,7 +118,7 @@
             this.txtDetalle.Name = "txtDetalle";
             this.txtDetalle.ReadOnly = true;
             this.txtDetalle.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtDetalle.Size = new System.Drawing.Size(426, 58);
+            this.txtDetalle.Size = new System.Drawing.Size(556, 58);
             this.txtDetalle.TabIndex = 46;
             this.txtDetalle.TabStop = false;
             // 
@@ -164,7 +164,7 @@
             this.txtDescripcion.Location = new System.Drawing.Point(103, 50);
             this.txtDescripcion.Name = "txtDescripcion";
             this.txtDescripcion.ReadOnly = true;
-            this.txtDescripcion.Size = new System.Drawing.Size(259, 22);
+            this.txtDescripcion.Size = new System.Drawing.Size(341, 22);
             this.txtDescripcion.TabIndex = 47;
             this.txtDescripcion.TabStop = false;
             // 
@@ -203,7 +203,7 @@
             // txtFechaTexto
             // 
             this.txtFechaTexto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFechaTexto.Location = new System.Drawing.Point(368, 22);
+            this.txtFechaTexto.Location = new System.Drawing.Point(498, 23);
             this.txtFechaTexto.Name = "txtFechaTexto";
             this.txtFechaTexto.ReadOnly = true;
             this.txtFechaTexto.Size = new System.Drawing.Size(161, 22);
@@ -215,7 +215,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(316, 24);
+            this.label3.Location = new System.Drawing.Point(446, 25);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(46, 16);
             this.label3.TabIndex = 54;
@@ -223,14 +223,14 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.groupBox1.Location = new System.Drawing.Point(12, 465);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(625, 7);
+            this.groupBox1.Size = new System.Drawing.Size(755, 7);
             this.groupBox1.TabIndex = 56;
             this.groupBox1.TabStop = false;
             // 
@@ -238,7 +238,7 @@
             // 
             this.txtTotalS.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTotalS.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalS.Location = new System.Drawing.Point(538, 448);
+            this.txtTotalS.Location = new System.Drawing.Point(668, 448);
             this.txtTotalS.Name = "txtTotalS";
             this.txtTotalS.ReadOnly = true;
             this.txtTotalS.Size = new System.Drawing.Size(102, 21);
@@ -251,7 +251,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(493, 450);
+            this.label1.Location = new System.Drawing.Point(623, 450);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(39, 16);
             this.label1.TabIndex = 58;
@@ -261,7 +261,7 @@
             // 
             this.btnNuevoGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnNuevoGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnNuevoGasto.Location = new System.Drawing.Point(543, 138);
+            this.btnNuevoGasto.Location = new System.Drawing.Point(673, 138);
             this.btnNuevoGasto.Name = "btnNuevoGasto";
             this.btnNuevoGasto.Size = new System.Drawing.Size(94, 26);
             this.btnNuevoGasto.TabIndex = 59;
@@ -273,7 +273,7 @@
             // 
             this.btnVerGasto.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnVerGasto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnVerGasto.Location = new System.Drawing.Point(543, 106);
+            this.btnVerGasto.Location = new System.Drawing.Point(673, 106);
             this.btnVerGasto.Name = "btnVerGasto";
             this.btnVerGasto.Size = new System.Drawing.Size(94, 26);
             this.btnVerGasto.TabIndex = 60;
@@ -293,7 +293,7 @@
             "Tarjeta",
             "CtaCte",
             "Egresos"});
-            this.comboFiltro.Location = new System.Drawing.Point(535, 22);
+            this.comboFiltro.Location = new System.Drawing.Point(665, 22);
             this.comboFiltro.Name = "comboFiltro";
             this.comboFiltro.Size = new System.Drawing.Size(105, 24);
             this.comboFiltro.TabIndex = 61;
@@ -306,7 +306,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(493, 429);
+            this.label2.Location = new System.Drawing.Point(623, 429);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(40, 16);
             this.label2.TabIndex = 63;
@@ -316,7 +316,7 @@
             // 
             this.txtItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.txtItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtItems.Location = new System.Drawing.Point(538, 426);
+            this.txtItems.Location = new System.Drawing.Point(668, 426);
             this.txtItems.Name = "txtItems";
             this.txtItems.ReadOnly = true;
             this.txtItems.Size = new System.Drawing.Size(102, 21);
@@ -328,7 +328,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.ClientSize = new System.Drawing.Size(649, 508);
+            this.ClientSize = new System.Drawing.Size(779, 508);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtItems);
             this.Controls.Add(this.comboFiltro);
@@ -353,8 +353,8 @@
             this.Name = "formEgresosCajaVendedor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Egresos Caja Vendedor";
-            this.Load += new System.EventHandler(this.formEgresosCajaVendedor_Load);
             this.Activated += new System.EventHandler(this.formEgresosCajaVendedor_Activated);
+            this.Load += new System.EventHandler(this.formEgresosCajaVendedor_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaEgresosCaja)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

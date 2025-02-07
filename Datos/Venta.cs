@@ -702,7 +702,7 @@ namespace Datos
                         oExpendioE.Sector = Convert.ToString(drVenta["sector"]);
 
                         oExpendioE.CantItems = Convert.ToString(drVenta["cantItems"]);
-                        oExpendioE.TotalImporte = float.TryParse(drVenta["importe"].ToString(), out float resultImporte) ? resultImporte : 0;
+                        oExpendioE.TotalImporte = float.TryParse(drVenta["importe"].ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float resultImporte) ? resultImporte : 0;
                         oExpendioE.LineasVenta = obtenerLineasExpendio(oExpendioE.IdExpendio);
 
                     }

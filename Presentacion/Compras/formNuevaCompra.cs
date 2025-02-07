@@ -897,7 +897,7 @@ namespace Presentacion
                             oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
 
-                            txtPrecioActualCorte.Text = float.TryParse(fila["precioKg"].ToString(), out float result) ? result.ToString("N2") : fila["precioKg"].ToString();
+                            txtPrecioActualCorte.Text = float.TryParse(fila["precioKg"].ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result) ? result.ToString("N2") : fila["precioKg"].ToString();
                         }
 
                         //se cargan los datos del corte
@@ -1319,8 +1319,8 @@ namespace Presentacion
                 return;
 
             // Validar que ambos TextBox contengan valores numéricos
-            if (float.TryParse(txtPrecioKg.Text, out float precioKg) &&
-                float.TryParse(txtPrecioFinalVenta.Text, out float precioFinalVenta))
+            if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
+                float.TryParse(txtPrecioFinalVenta.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioFinalVenta))
             {
                 // Realizar la multiplicación
                 float margenGan = ((precioFinalVenta / precioKg) - 1) * 100;
@@ -1347,8 +1347,8 @@ namespace Presentacion
                 return;
 
             // Validar que ambos TextBox contengan valores numéricos
-            if (float.TryParse(txtPrecioKg.Text, out float precioKg) &&
-                float.TryParse(txtMargenGan.Text, out float margenGan))
+            if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
+                float.TryParse(txtMargenGan.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float margenGan))
             {
                 // Realizar la multiplicación
                 float precioFinalVenta = precioKg * (1 + (margenGan / 100));

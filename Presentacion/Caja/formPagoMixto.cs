@@ -18,6 +18,7 @@ namespace Presentacion.Caja
         public formVentaCajaConExpendio formVentaCajaConExpendio;
         public formUltimaVenta formUltimaVenta;
         bool exito = false;
+        bool cargaEfectivo = true;
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -28,7 +29,7 @@ namespace Presentacion.Caja
         private void btnIngresar_Click(object sender, EventArgs e)
         {
             exito = false;
-            if (float.TryParse(txtImporteEfectivo.Text, out pagoMixtoEfectivo) && pagoMixtoEfectivo > 0 && importe2 > 0)
+            if (float.TryParse(txtImporteEfectivo.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo) && pagoMixtoEfectivo > 0 && importe2 > 0)
             {
                 //si es Cero el efectivo informar - si cierra ventana mandar cero
                 if (formVentaCajaConExpendio != null)
@@ -64,6 +65,7 @@ namespace Presentacion.Caja
 
         private void txtImporteEfectivo_Enter(object sender, EventArgs e)
         {
+            cargaEfectivo = true;
             txtImporteEfectivo.BackColor = focusColor;
         }
 
@@ -82,26 +84,61 @@ namespace Presentacion.Caja
             btnIngresar.BackColor = enableColor;
         }
 
+        private void txtImporte2_TextChanged(object sender, EventArgs e)
+        {
+            TextBox txtBox = sender as TextBox;
+            if (string.IsNullOrEmpty(txtBox.Text))
+                importe2 = 0;
+
+            if (cargaEfectivo)
+                return;
+
+            if (float.TryParse(txtImporte2.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out importe2))
+            {
+                pagoMixtoEfectivo = totalPesos - importe2;
+                txtImporteEfectivo.Text = pagoMixtoEfectivo.ToString("N2");
+            }
+        }
+
+        private void txtImporte2_Enter(object sender, EventArgs e)
+        {
+            cargaEfectivo = false;
+            txtImporte2.BackColor = focusColor;
+        }
+
+        private void txtImporte2_Leave(object sender, EventArgs e)
+        {
+            txtImporte2.BackColor = enableColor;
+        }
+
         private void formPagoMixto_Load(object sender, EventArgs e)
         {
-            txtTotalS.Text = totalPesos.ToString("F2");
+            txtTotalS.Text = totalPesos.ToString("N2");
             lblFormaPagoTicket.Text = formaPago;
             // Ajustar posición para que crezca hacia la izquierda
             Size textSize = TextRenderer.MeasureText(formaPago, lblFormaPagoTicket.Font);
             lblFormaPagoTicket.Location = new Point(177 - textSize.Width, 146);
-            txtImporteEfectivo.Text = pagoMixtoEfectivo > 0 ? pagoMixtoEfectivo.ToString("F2") : "";
+            txtImporteEfectivo.Text = pagoMixtoEfectivo > 0 ? pagoMixtoEfectivo.ToString("N2") : "";
             txtImporteEfectivo.Focus();
 
         }
 
         private void txtImporte1_TextChanged(object sender, EventArgs e)
         {
-            if (float.TryParse(txtImporteEfectivo.Text, out pagoMixtoEfectivo))
+            TextBox txtBox = sender as TextBox;
+            if (string.IsNullOrEmpty(txtBox.Text))
+                pagoMixtoEfectivo = 0;
+
+            if (!cargaEfectivo)
+                return;
+
+            if (float.TryParse(txtBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo))
             {
                 importe2 = totalPesos - pagoMixtoEfectivo;
                 txtImporte2.Text = importe2.ToString("N2");
             }
         }
+
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {

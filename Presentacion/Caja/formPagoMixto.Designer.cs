@@ -83,12 +83,14 @@
             this.txtImporte2.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtImporte2.Location = new System.Drawing.Point(185, 141);
             this.txtImporte2.Name = "txtImporte2";
-            this.txtImporte2.ReadOnly = true;
             this.txtImporte2.Size = new System.Drawing.Size(162, 32);
-            this.txtImporte2.TabIndex = 20;
-            this.txtImporte2.TabStop = false;
+            this.txtImporte2.TabIndex = 2;
             this.txtImporte2.Text = "0,00";
             this.txtImporte2.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtImporte2.TextChanged += new System.EventHandler(this.txtImporte2_TextChanged);
+            this.txtImporte2.Enter += new System.EventHandler(this.txtImporte2_Enter);
+            this.txtImporte2.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtImporte2.Leave += new System.EventHandler(this.txtImporte2_Leave);
             // 
             // label9
             // 
