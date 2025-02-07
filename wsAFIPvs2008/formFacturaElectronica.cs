@@ -667,7 +667,7 @@ namespace wsAFIPvs2008
 
             ///obtiene el codigo del tipo de comprobante
             ///si luego es nota de credito, se setea codigo de nota segun comprobante
-            int codTipoCbteAFip = oFactuElec.getCodTipoCbteAFIP_segunLetraFactura(oVentaE.TipoComprobante.ToString(), notaCredito);
+            int codTipoCbteAFip = oFactuElec.getCodTipoCbteAFIP_segunLetraFactura(oVentaE.TipoComprobante.ToString(), esRRII, notaCredito);
 
 
             for (int index = 0; index < TiposComprobantesCMB.Items.Count; index++)

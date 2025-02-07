@@ -75,7 +75,7 @@ namespace Entidades
             return letraId_TipoCbte;
         }
 
-        public int getCodTipoCbteAFIP_segunLetraFactura(string TipoCbteAFIP, bool esNotaCredito)
+        public int getCodTipoCbteAFIP_segunLetraFactura(string TipoCbteAFIP, bool esRRII, bool esNotaCredito)
         {
             int codTipoCbteAFIP=0;
             switch (TipoCbteAFIP)
@@ -89,6 +89,9 @@ namespace Entidades
                 case "C":
                      codTipoCbteAFIP = esNotaCredito ? codNotaCreditoC_Afip : codFacturaC_Afip;
                     break;
+                default:
+                    codTipoCbteAFIP = esRRII ? codFacturaB_Afip : codFacturaC_Afip;
+                    break ;
             }
             return codTipoCbteAFIP;
         }
