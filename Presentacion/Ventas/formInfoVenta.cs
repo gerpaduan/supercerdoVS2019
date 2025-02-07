@@ -103,7 +103,7 @@ namespace Presentacion.Ventas
             txtObservaciones.Text = oVentaE.Observaciones;
             txtCreado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Creado);
             txtActualizado.Text = Utilidades.Util_Form.fechaFormato24Horas(oVentaE.Actualizado);
-            txtFormaPago.Text = oVentaE.FormaPago;
+            txtFormaPago.Text = oVentaE.FormaPago + (oVentaE.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
             cargarListaGrilla();
         }
 
@@ -269,57 +269,6 @@ namespace Presentacion.Ventas
             formFactElecNotaCredito.logueado = FormPrincipal.logueado;
             formFactElecNotaCredito.esShowDialog = true;
             formFactElecNotaCredito.ShowDialog();
-
-            //bool formFactuElec_Abierto = false;
-            //foreach (Form frm in Application.OpenForms)
-            //{
-            //    if (frm.GetType() == typeof(wsAFIPvs2008.formFacturaElectronica))
-            //    {
-            //        formFactElec = (wsAFIPvs2008.formFacturaElectronica)frm;
-            //        if (formFactElec.idVenta > 0 && formFactElec.facturaPendiente)
-            //        {
-            //            foreach (Control ctrl in frm.Controls)
-            //            {
-            //                if (ctrl.Name.Equals("txtIdVenta") && ctrl.Text.Equals(oVentaE.IdVenta.ToString()))
-            //                {
-            //                    formFactuElec_Abierto = true;
-            //                    frm.BringToFront();
-            //                    frm.Visible = false;
-            //                    frm.ShowDialog();
-            //                    break;
-            //                }
-            //            }
-
-            //            ///Si Form de Factura no está abierto para el idVenta se informa y se abre otro form
-            //            if (!formFactuElec_Abierto)
-            //            {
-            //                MessageBox.Show("Hay una factura pendiende de registrar. Se abrirá otra ventana de facturacion");
-            //            }
-            //            break;
-            //        }
-
-            //        if (oVentaE.IdVenta > 0)//Solo se pasa el idVenta si es nuevo
-            //        {
-            //            formFactElec.idVenta = oVentaE.IdVenta;
-            //            formFactElec.cargarDatosAfip = false;
-            //            formFactElec.cargarVenta();
-            //        }
-            //        frm.BringToFront();
-            //        formFactuElec_Abierto = true;
-            //        formFactElec.logueado = FormPrincipal.logueado;
-            //        this.Visible = false;
-            //        break;
-            //    }
-            //}
-
-            //if (!formFactuElec_Abierto)
-            //{
-            //    formFactElec = new wsAFIPvs2008.formFacturaElectronica();
-            //    formFactElec.idVenta = oVentaE.IdVenta;
-            //    formFactElec.logueado = FormPrincipal.logueado;
-            //    formFactElec.esShowDialog = true;
-            //    formFactElec.ShowDialog();
-            //}
         }
     }
 }

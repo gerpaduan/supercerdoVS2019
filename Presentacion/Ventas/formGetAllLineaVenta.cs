@@ -28,6 +28,7 @@ namespace Presentacion
         public bool verUltimasVentasClientes = false;
         public int idPersona; //cliente
         public int idSucursal;
+        public bool desdeCajaVenta = false;
 
         public DataTable dtSucursales;
 
@@ -133,6 +134,14 @@ namespace Presentacion
             try
             {
                 int idVenta = Convert.ToInt32(grillaVentas.CurrentRow.Cells["idVenta"].Value.ToString());
+
+                if (desdeCajaVenta)
+                {
+                    Caja.formUltimaVenta frmUltimaVenta = new Caja.formUltimaVenta();
+                    frmUltimaVenta.oUltimaVenta = oVentaN.getVentaById(idVenta);
+                    frmUltimaVenta.ShowDialog();
+                    return;
+                }
 
                 bool formAbierto = false;
                 foreach (Form frm in Application.OpenForms)

@@ -820,7 +820,7 @@ namespace Datos
             cmVenta = new SqlCommand();
             cmVenta.Connection = conn.conectar();
             cmVenta.CommandType = CommandType.Text;
-            cmVenta.CommandText = "Select id from FacturaElectronica where and idVenta = " + idVenta;
+            cmVenta.CommandText = "Select id from FacturaElectronica where CAE <> '' and idVenta = " + idVenta;
             try
             {
                 cmVenta.Connection.Open();

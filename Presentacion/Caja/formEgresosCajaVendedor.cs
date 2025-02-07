@@ -142,9 +142,11 @@ namespace Presentacion.Caja
                     }
 
                     idVentaSelected = Convert.ToInt32(resultString);
-                    Ventas.formInfoVenta frmInfoVenta = new Ventas.formInfoVenta();
-                    frmInfoVenta.idVenta = idVentaSelected;
-                    frmInfoVenta.ShowDialog();
+                    Caja.formUltimaVenta frmUltimaVenta = new Caja.formUltimaVenta();
+                    Negocio.Venta oVentaN = new Negocio.Venta();
+                    frmUltimaVenta.oUltimaVenta = oVentaN.getVentaById(idVentaSelected);
+                    frmUltimaVenta.ShowDialog();
+
                     return;
                 }
 

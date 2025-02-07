@@ -245,7 +245,7 @@ namespace wsAFIPvs2008
             DocTX.Text = oVentaE.Persona.Cuit.Replace("-", "");
             txtDomicilio.Text = oVentaE.Persona.Domicilio + " - " + oVentaE.Persona.Ciudad;
             comboIva.SelectedValue = oVentaE.Persona.IdIva;
-            TotalTx.Text = oVentaE.TotalImporte.ToString("F2");
+            TotalTx.Text = oVentaE.TotalImporte.ToString("N2");
             TotalTx.ForeColor = Color.DarkRed;
             NroCbteTX.Text = oFactuElec.NroCbteAfip != null ? oFactuElec.NroCbteAfip : NroCbteTX.Text;
             txtCAE.Text = oFactuElec.CAE1;
@@ -398,22 +398,22 @@ namespace wsAFIPvs2008
                 switch (item.IdIva)
                 {
                     case 3:
-                        txtIva0.Text = item.Importe.ToString();
+                        txtIva0.Text = item.Importe.ToString("N2");
                         break;
                     case 4:
-                        txtIva10_5.Text = item.Importe.ToString();
+                        txtIva10_5.Text = item.Importe.ToString("N2");
                         break;
                     case 5:
-                        txtIva21.Text = item.Importe.ToString();
+                        txtIva21.Text = item.Importe.ToString("N2");
                         break;
                     case 6:
-                        txtIva27.Text = item.Importe.ToString();
+                        txtIva27.Text = item.Importe.ToString("N2");
                         break;
                     case 8:
-                        txtIva5.Text = item.Importe.ToString();
+                        txtIva5.Text = item.Importe.ToString("N2");
                         break;
                     case 9:
-                        txtIva2_5.Text = item.Importe.ToString();
+                        txtIva2_5.Text = item.Importe.ToString("N2");
                         break;
                 }
             }
@@ -771,19 +771,8 @@ namespace wsAFIPvs2008
                 float totalImporte = float.Parse(TotalTx.Text);
                 float neto = importeNeto;// (total / iva_a_multiplicar);
                 float imp_iva = importeIva;
-                ImpIvaTx.Text = Math.Round(imp_iva, 2).ToString();
-                NetoTX.Text = Math.Round(neto, 2).ToString();
-
-                ///Comentando codigo viejo
-                ///.
-                //float total = Utilidades.Util_Form.convertFloat(TotalTx.Text, false);
-                //float totalImporte = float.Parse(TotalTx.Text);
-                //iva_a_multiplicar = (1
-                //            + (ivaval / 100));
-                //float neto = (total / iva_a_multiplicar);
-                //float imp_iva = (total - neto);                 
-                //ImpIvaTx.Text = Math.Round(imp_iva, 2).ToString();
-                //NetoTX.Text = Math.Round(neto, 2).ToString();                
+                ImpIvaTx.Text = Math.Round(imp_iva, 2).ToString("N2");
+                NetoTX.Text = Math.Round(neto, 2).ToString("N2");
             }
             catch (Exception ex)
             {

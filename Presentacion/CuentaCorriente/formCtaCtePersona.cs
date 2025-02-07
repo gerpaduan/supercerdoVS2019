@@ -106,7 +106,10 @@ namespace Presentacion.CuentaCorriente
                 grillaMovCtaCte.Columns["importe"].DefaultCellStyle.Format = "F2";
                 grillaMovCtaCte.Columns["Saldo"].DefaultCellStyle.Format = "F2";
 
-                grillaMovCtaCte.Rows[0].Selected =false;
+                if (grillaMovCtaCte.Rows.Count > 0)
+                {
+                    grillaMovCtaCte.Rows[0].Selected = false;
+                }
 
                 lblActualizar.Visible = false;
             }

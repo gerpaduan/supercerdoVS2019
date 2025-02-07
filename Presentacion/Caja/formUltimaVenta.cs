@@ -72,7 +72,7 @@ namespace Presentacion.Caja
                 default:
                     break;
             }
-
+            notaCredito.Enabled = oVentaN.existeFactuElectParaVenta(oUltimaVenta.IdVenta) > 0;
             huboModificaciones = false;
             formCargado = true;
         }
@@ -708,6 +708,16 @@ namespace Presentacion.Caja
                 checkEfectivo.Checked = false;
                 checkCtaCte.Checked = false;
             }
+        }
+
+        private void notaCredito_Click(object sender, EventArgs e)
+        {
+            wsAFIPvs2008.formFacturaElectronica formFactElecNotaCredito = new wsAFIPvs2008.formFacturaElectronica();
+            formFactElecNotaCredito.idVenta = oUltimaVenta.IdVenta;
+            formFactElecNotaCredito.notaCredito = true;
+            formFactElecNotaCredito.logueado = FormPrincipal.logueado;
+            formFactElecNotaCredito.esShowDialog = true;
+            formFactElecNotaCredito.ShowDialog();
         }
     }
 }
