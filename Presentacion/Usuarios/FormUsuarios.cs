@@ -161,9 +161,9 @@ namespace Presentacion.Usuario
                 MessageBox.Show("Debe iniciar sesion con un usuario administrador.", "Inicie sesión");
                 return;
             }
-                FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
+            FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
             formNuevoUsuario1.ShowDialog();
-            cargarCombo();
+            //cargarCombo();
         }
 
         private void FormUsuarios_Activated(object sender, EventArgs e)
