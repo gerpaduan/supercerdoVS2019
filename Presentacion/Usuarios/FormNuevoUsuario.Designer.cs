@@ -46,10 +46,9 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(63, 31);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(47, 25);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(67, 20);
+            this.label1.Size = new System.Drawing.Size(55, 16);
             this.label1.TabIndex = 0;
             this.label1.Text = "Usuario";
             // 
@@ -65,11 +64,9 @@
             this.groupCambiarDatos.Controls.Add(this.txtClave);
             this.groupCambiarDatos.Controls.Add(this.txtNombre);
             this.groupCambiarDatos.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupCambiarDatos.Location = new System.Drawing.Point(13, 13);
-            this.groupCambiarDatos.Margin = new System.Windows.Forms.Padding(4);
+            this.groupCambiarDatos.Location = new System.Drawing.Point(10, 11);
             this.groupCambiarDatos.Name = "groupCambiarDatos";
-            this.groupCambiarDatos.Padding = new System.Windows.Forms.Padding(4);
-            this.groupCambiarDatos.Size = new System.Drawing.Size(363, 277);
+            this.groupCambiarDatos.Size = new System.Drawing.Size(272, 225);
             this.groupCambiarDatos.TabIndex = 11;
             this.groupCambiarDatos.TabStop = false;
             this.groupCambiarDatos.Text = "Datos Usuario";
@@ -77,10 +74,9 @@
             // txtUsuario
             // 
             this.txtUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUsuario.Location = new System.Drawing.Point(147, 28);
-            this.txtUsuario.Margin = new System.Windows.Forms.Padding(4);
+            this.txtUsuario.Location = new System.Drawing.Point(110, 23);
             this.txtUsuario.Name = "txtUsuario";
-            this.txtUsuario.Size = new System.Drawing.Size(187, 26);
+            this.txtUsuario.Size = new System.Drawing.Size(141, 22);
             this.txtUsuario.TabIndex = 1;
             // 
             // checkActivo
@@ -90,10 +86,9 @@
             this.checkActivo.Enabled = false;
             this.checkActivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.checkActivo.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkActivo.Location = new System.Drawing.Point(85, 133);
-            this.checkActivo.Margin = new System.Windows.Forms.Padding(4);
+            this.checkActivo.Location = new System.Drawing.Point(60, 108);
             this.checkActivo.Name = "checkActivo";
-            this.checkActivo.Size = new System.Drawing.Size(77, 24);
+            this.checkActivo.Size = new System.Drawing.Size(64, 20);
             this.checkActivo.TabIndex = 4;
             this.checkActivo.Text = "Activo";
             this.checkActivo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -104,10 +99,9 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(37, 168);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Location = new System.Drawing.Point(28, 136);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(95, 20);
+            this.label2.Size = new System.Drawing.Size(77, 16);
             this.label2.TabIndex = 1;
             this.label2.Text = "Contraseña";
             // 
@@ -118,10 +112,9 @@
             this.checkAdmin.Enabled = false;
             this.checkAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.checkAdmin.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkAdmin.Location = new System.Drawing.Point(27, 101);
-            this.checkAdmin.Margin = new System.Windows.Forms.Padding(4);
+            this.checkAdmin.Location = new System.Drawing.Point(14, 82);
             this.checkAdmin.Name = "checkAdmin";
-            this.checkAdmin.Size = new System.Drawing.Size(135, 24);
+            this.checkAdmin.Size = new System.Drawing.Size(110, 20);
             this.checkAdmin.TabIndex = 3;
             this.checkAdmin.Text = "Administrador";
             this.checkAdmin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -132,10 +125,9 @@
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label5.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label5.Location = new System.Drawing.Point(63, 66);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Location = new System.Drawing.Point(47, 54);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(68, 20);
+            this.label5.Size = new System.Drawing.Size(57, 16);
             this.label5.TabIndex = 1;
             this.label5.Text = "Nombre";
             // 
@@ -144,10 +136,9 @@
             this.btnGuardarDatos.Enabled = false;
             this.btnGuardarDatos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardarDatos.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.btnGuardarDatos.Location = new System.Drawing.Point(146, 223);
-            this.btnGuardarDatos.Margin = new System.Windows.Forms.Padding(4);
+            this.btnGuardarDatos.Location = new System.Drawing.Point(110, 181);
             this.btnGuardarDatos.Name = "btnGuardarDatos";
-            this.btnGuardarDatos.Size = new System.Drawing.Size(188, 33);
+            this.btnGuardarDatos.Size = new System.Drawing.Size(141, 27);
             this.btnGuardarDatos.TabIndex = 6;
             this.btnGuardarDatos.Text = "Guardar &Datos";
             this.btnGuardarDatos.UseVisualStyleBackColor = true;
@@ -156,31 +147,28 @@
             // txtClave
             // 
             this.txtClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtClave.Location = new System.Drawing.Point(147, 165);
-            this.txtClave.Margin = new System.Windows.Forms.Padding(4);
+            this.txtClave.Location = new System.Drawing.Point(110, 134);
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
-            this.txtClave.Size = new System.Drawing.Size(187, 26);
+            this.txtClave.Size = new System.Drawing.Size(141, 22);
             this.txtClave.TabIndex = 5;
             // 
             // txtNombre
             // 
             this.txtNombre.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtNombre.Location = new System.Drawing.Point(147, 63);
-            this.txtNombre.Margin = new System.Windows.Forms.Padding(4);
+            this.txtNombre.Location = new System.Drawing.Point(110, 51);
             this.txtNombre.Name = "txtNombre";
-            this.txtNombre.Size = new System.Drawing.Size(187, 26);
+            this.txtNombre.Size = new System.Drawing.Size(141, 22);
             this.txtNombre.TabIndex = 2;
             // 
             // FormNuevoUsuario
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.ClientSize = new System.Drawing.Size(402, 303);
+            this.ClientSize = new System.Drawing.Size(302, 246);
             this.Controls.Add(this.groupCambiarDatos);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "FormNuevoUsuario";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nuevo Usuario";

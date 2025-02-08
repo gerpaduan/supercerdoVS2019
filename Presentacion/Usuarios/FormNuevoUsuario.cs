@@ -68,7 +68,8 @@ namespace Presentacion.Usuario
             try
             {
                 oUsuarioN.addOrEditUser(oUsuarioE);
-                MessageBox.Show("Los datos se guardaron correctamente!", "Datos guardados");
+                MessageBox.Show("Los datos se guardaron correctamente!\n\n"+
+                    "Para actualizar el combo usuarios, cierre y vuelva a abrir el formulario Usuarios.", "Datos guardados");
                 this.Close();
             }
             catch (Exception ex)
