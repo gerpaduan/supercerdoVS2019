@@ -796,13 +796,21 @@ namespace Presentacion
 
         private void txtCantUnidad_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (e.KeyChar == '+')// (char)(Keys.Multiply))
+            {
+                e.Handled = true;
+                //btnAgregar.Focus();
+                //checkPermitirIngreso.Checked = !checkPermitirIngreso.Checked;
+                return;
+            }
+
             if (e.KeyChar == (char)(Keys.Enter))
             {
                 if (Util_Form.validarCampoNumeroEntero(txtCantUnidad.Text, "Cant. Un."))
                 {
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
-                    }
+                }
                 else
                 {
                     txtCantUnidad.Text = "";
@@ -942,6 +950,10 @@ namespace Presentacion
         {
             switch (keyData)
             {
+                case Keys.Add:
+                    btnAgregar.Focus();
+                    checkPermitirIngreso.Checked = !checkPermitirIngreso.Checked;
+                break;
                 case Keys.Multiply:
                     dejarDeLeerPeso = checkLeerPeso.Checked;
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
