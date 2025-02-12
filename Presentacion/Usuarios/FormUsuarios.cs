@@ -31,7 +31,7 @@ namespace Presentacion.Usuario
             txtNombre.Enabled = FormPrincipal.logueado;
             checkAdmin.Enabled = FormPrincipal.logueado;
             checkActivo.Enabled = FormPrincipal.logueado;
-            btnNuevoUsuario.Enabled = FormPrincipal.logueado;
+            //btnNuevoUsuario.Enabled = FormPrincipal.logueado;
             btnGuardarDatos.Enabled = FormPrincipal.logueado;
             checkOlvidoClave.Enabled = FormPrincipal.logueado;
         }
@@ -158,7 +158,7 @@ namespace Presentacion.Usuario
         {
             if (!FormPrincipal.logueado)
             {
-                MessageBox.Show("Debe iniciar sesion con un usuario administrador.", "Inicie sesión");
+                MessageBox.Show("Debe iniciar sesion con un usuario administrador para crear nuevos usuarios.", "Inicie sesión");
                 return;
             }
             FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
