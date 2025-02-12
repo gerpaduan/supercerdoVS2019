@@ -1576,6 +1576,12 @@ namespace Presentacion.Caja
             txtPrecioKg.BackColor = enableColor;
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Utilidades.GenerarCodigoBarra codBarra = new GenerarCodigoBarra();
+            codBarra.Main();
+        }
+
         private void formPuntoExpendio_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = salir();
