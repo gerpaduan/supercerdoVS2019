@@ -69,6 +69,12 @@ namespace Utilidades
             ///Systel
             if (balanza == "Systel")
             {
+                ///Si texto tiene más de 10 caracteres se hace un return
+                ///esto evita errores en el formateo del peso de Systel
+                ///
+                if (texto.Length > 10)
+                    return;
+
                 string peso = "";
                 char[] nuevoPeso;
                 int contar = 0; //cuenta los dígitos usables

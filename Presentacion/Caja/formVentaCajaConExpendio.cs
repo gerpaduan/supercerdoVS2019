@@ -2003,9 +2003,9 @@ namespace Presentacion.Caja
         {
             timer1.Enabled = false;
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
-                "F3 = Cálculo Billetes  |F4 = Bonificación  |  F5 = Nueva Compra  |  F6 = Mis Egresos Caja  |  F7 = Egresos Caja  |\n  F8 = Facturacion | F9 = Buscar Cliente  |  " +
-                "F10 = Buscar Corte  |  F11 = Observaciones  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
+            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  Insert = Forma Pago  |  Supr = Quitar Línea  | F2 = Pant.Principal  |   " +
+                "F3 = Cálculo Billetes  | F4 = Bonificación  |  F5 = Nueva Compra  |  \n F6 = Mis Egresos Caja  |  F7 = Egresos Caja  | F8 = Facturacion | F9 = Buscar Cliente  |  " +
+                "F10 = Buscar Corte  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
             comboExpendioEstado.SelectedIndex = 0;
             if (oUsuario != null)
             {
@@ -2105,6 +2105,9 @@ namespace Presentacion.Caja
                 case Keys.Insert:
                     oVentaE.FormaPago = null;
                     ingresarFormaPago();
+                    break;
+                case Keys.Delete:
+                    quitarLinea();
                     break;
                 case Keys.F2:
                     foreach (Form frm in Application.OpenForms)

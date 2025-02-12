@@ -642,18 +642,18 @@ namespace Presentacion.Caja
                 return false;
             }
 
-            if (txtCliente.Text.Trim() == "")
-            {
-                if (txtCliente.Text.Trim() == "")
-                {
-                    mensaje += "\n" + "-Cliente";
-                }
+            //if (txtCliente.Text.Trim() == "")
+            //{
+            //    if (txtCliente.Text.Trim() == "")
+            //    {
+            //        mensaje += "\n" + "-Cliente";
+            //    }
 
-                MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                txtCliente.Focus();
-                txtCliente.SelectAll();
-                return false;
-            }
+            //    MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //    txtCliente.Focus();
+            //    txtCliente.SelectAll();
+            //    return false;
+            //}
 
             return true;
         }

@@ -152,10 +152,10 @@
             this.checkPermitirIngreso.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkPermitirIngreso.Location = new System.Drawing.Point(354, 88);
             this.checkPermitirIngreso.Name = "checkPermitirIngreso";
-            this.checkPermitirIngreso.Size = new System.Drawing.Size(129, 19);
+            this.checkPermitirIngreso.Size = new System.Drawing.Size(151, 19);
             this.checkPermitirIngreso.TabIndex = 25;
             this.checkPermitirIngreso.TabStop = false;
-            this.checkPermitirIngreso.Text = "Permitir Ingreso";
+            this.checkPermitirIngreso.Text = "Permitir Ingreso (+)";
             this.checkPermitirIngreso.UseVisualStyleBackColor = false;
             this.checkPermitirIngreso.Visible = false;
             // 
@@ -189,7 +189,7 @@
             this.label16.ForeColor = System.Drawing.Color.Cornsilk;
             this.label16.Location = new System.Drawing.Point(432, 15);
             this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(55, 16);
+            this.label16.Size = new System.Drawing.Size(54, 16);
             this.label16.TabIndex = 17;
             this.label16.Text = "Usuario";
             // 
@@ -824,7 +824,7 @@
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.btnCancelar);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.MinimizeBox = true;
             this.Name = "formNuevoMovimiento";
