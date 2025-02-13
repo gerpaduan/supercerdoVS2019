@@ -1588,11 +1588,19 @@ namespace Presentacion.Caja
 
             ticket.imprimir = true;
 
-            ticket.realizarImpresionCodigoBarra("5");
+            //ticket.realizarImpresionCodigoBarra("5");
+
+
+            string printerName = @"\\OficinaSM\Xprinter";
+            // Imprimir texto
+            ESC_POS_Printer.SendToPrinter(printerName, "Este es un ejemplo de texto para impresión");
+
+            // Imprimir código de barras
+            //ESC_POS_Printer.PrintBarcode(printerName, "1234567890");
 
             ticket = null;
-            Utilidades.GenerarCodigoBarra codBarra = new GenerarCodigoBarra();
-            codBarra.Main();
+            //Utilidades.GenerarCodigoBarra codBarra = new GenerarCodigoBarra();
+            //codBarra.Main();
         }
 
         private void formPuntoExpendio_FormClosing(object sender, FormClosingEventArgs e)

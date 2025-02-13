@@ -227,10 +227,67 @@ namespace Presentacion.Ticket
         {
             RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
         }
+        static void PrintBarcode(string printerName, string barcodeData)
+        {
+            byte[] init = new byte[] { 0x1B, 0x40 }; // Inicializar impresora
+            byte[] setHRI = new byte[] { 0x1D, 0x48, 0x02 }; // Mostrar caracteres debajo del código de barras
+            byte[] setHeight = new byte[] { 0x1D, 0x68, 0x60 }; // Altura del código de barras (96)
+            byte[] setWidth = new byte[] { 0x1D, 0x77, 0x03 }; // Ancho del código de barras
+            byte[] selectBarcodeType = new byte[] { 0x1D, 0x6B, 0x49 }; // Código de barras tipo CODE128
+            byte[] barcodeLength = new byte[] { (byte)(barcodeData.Length + 2) }; // Longitud del código de barras
+            //byte[] startCode128 = new byte[] { 0x7B, 0x42 }; // Código de inicio para CODE128
+            byte[] startCode128 = new byte[] { 0x1D, 0x6B, 0x04 }; // Cambia a CODE39
+            byte[] barcodeBytes = Encoding.ASCII.GetBytes(barcodeData);
+            byte[] lineFeed = new byte[] { 0x0A }; // Salto de línea
+
+            byte[] command = Combine(init, setHRI, setHeight, setWidth, selectBarcodeType, barcodeLength, startCode128, barcodeBytes, lineFeed);
+
+            if (RawPrinterHelper.SendBytesToPrintCodeBar(printerName, command, barcodeData))
+                Console.WriteLine("Código de barras enviado a la impresora.");
+            else
+                Console.WriteLine("Error al enviar el código de barras.");
+        }
+        static byte[] Combine(params byte[][] arrays)
+        {
+            int length = 0;
+            foreach (byte[] arr in arrays) length += arr.Length;
+            byte[] result = new byte[length];
+            int offset = 0;
+            foreach (byte[] arr in arrays)
+            {
+                Buffer.BlockCopy(arr, 0, result, offset, arr.Length);
+                offset += arr.Length;
+            }
+            return result;
+        }
+        static void TestPrint(string printerName)
+        {
+            string prueba = "Hola, esto es una prueba.\n\n";
+            byte[] testMessage = Encoding.ASCII.GetBytes(prueba);
+
+
+            if (RawPrinterHelper.SendBytesToPrintCodeBar(printerName, testMessage, prueba))
+                Console.WriteLine("Mensaje enviado a la impresora.");
+            else
+                Console.WriteLine("Error al enviar mensaje a la impresora.");
+
+            printerName = @"\\OficinaSM\Xprinter";
+            string barcode = "123456789012";  // Código de barras de ejemplo
+
+            // Enviar el código de barras a la impresora
+            bool result = RawPrinterHelper.SendBarcodeToPrinter(printerName, barcode, true);
+        }
 
         public void realizarImpresionCodigoBarra(string szString)
         {
-            string szPrinterName = impresora;
+            string szPrinterName = @"\\OficinaSM\Xprinter";// impresora;
+            string printerName = "XPrinter"; // Cambia al nombre real de la impresora
+            string barcodeData = "123456789012"; // Código de barras a imprimir
+
+            //RawPrinterHelper.SendStringToPrinter(szPrinterName, barcodeData+"\n\n\n", imprimir);
+
+            TestPrint(szPrinterName);
+            //PrintBarcode(szPrinterName, barcodeData);
 
             //byte[] testMessage = Encoding.ASCII.GetBytes("Prueba de impresión\n\n");
 

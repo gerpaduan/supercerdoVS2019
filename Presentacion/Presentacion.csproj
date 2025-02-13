@@ -607,6 +607,7 @@
       <DependentUpon>FormVerPorcCortes.cs</DependentUpon>
     </Compile>
     <Compile Include="Ticket\CrearTicket.cs" />
+    <Compile Include="Ticket\ESC_POS_Printer.cs" />
     <Compile Include="Ticket\formTipoTicket.cs">
       <SubType>Form</SubType>
     </Compile>
