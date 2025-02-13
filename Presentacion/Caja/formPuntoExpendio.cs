@@ -294,6 +294,7 @@ namespace Presentacion.Caja
         {
             Ticket.CreaTicket ticket = new Ticket.CreaTicket();
             //imprimir si está checked
+            
             ticket.imprimir = imprimir;
             ticket.TextoCentro(oVentaE.Sector);
             ticket.LineasEnBlanco(1);
@@ -334,6 +335,10 @@ namespace Presentacion.Caja
             ticket.GraciasPorSuCompra();
             ticket.LineasEnBlanco(2);
             ticket.realizarImpresion();
+
+            ticket.realizarImpresionCodigoBarra("5");
+
+
         }
 
         private void limpiarListas()
@@ -1578,6 +1583,14 @@ namespace Presentacion.Caja
 
         private void button1_Click(object sender, EventArgs e)
         {
+            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+            //imprimir si está checked
+
+            ticket.imprimir = true;
+
+            ticket.realizarImpresionCodigoBarra("5");
+
+            ticket = null;
             Utilidades.GenerarCodigoBarra codBarra = new GenerarCodigoBarra();
             codBarra.Main();
         }

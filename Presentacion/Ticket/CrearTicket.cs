@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Configuration;
+using System.Runtime.InteropServices;
+using Org.BouncyCastle.Utilities;
 
 namespace Presentacion.Ticket
 {
@@ -225,6 +227,121 @@ namespace Presentacion.Ticket
         {
             RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
         }
+
+        public void realizarImpresionCodigoBarra(string szString)
+        {
+            string szPrinterName = impresora;
+
+            //byte[] testMessage = Encoding.ASCII.GetBytes("Prueba de impresión\n\n");
+
+            //IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(testMessage.Length);
+            //Marshal.Copy(testMessage, 0, pUnmanagedBytes, testMessage.Length);
+
+            //bool exito = RawPrinterHelper.SendBytesToPrinter(szPrinterName, pUnmanagedBytes, testMessage.Length);
+
+            //Marshal.FreeCoTaskMem(pUnmanagedBytes);
+
+            //return;
+
+            //// Configurar el tipo de código de barras (CODE128)
+            //byte[] selectBarcodeType = new byte[] { 0x1D, 0x6B, 0x02 }; // GS k (08 = CODE128)
+
+            //// Datos del código de barras (PE156 en formato CODE128)
+            //byte[] barcodeData = Encoding.ASCII.GetBytes("PE156");
+
+            //// Longitud del código de barras (requerido para CODE128 en algunas impresoras)
+            //byte[] barcodeLength = new byte[] { (byte)barcodeData.Length };
+
+            //// Salto de línea después del código de barras
+            //byte[] newLine = new byte[] { 0x0A };
+
+            //// Concatenar los datos en un solo array
+            //byte[] printData = new byte[selectBarcodeType.Length + barcodeLength.Length + barcodeData.Length + newLine.Length];
+            //selectBarcodeType.CopyTo(printData, 0);
+            //barcodeLength.CopyTo(printData, selectBarcodeType.Length);
+            //barcodeData.CopyTo(printData, selectBarcodeType.Length + barcodeLength.Length);
+            //newLine.CopyTo(printData, selectBarcodeType.Length + barcodeLength.Length + barcodeData.Length);
+
+            //// Convertir a puntero
+            //IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(printData.Length);
+            //Marshal.Copy(printData, 0, pUnmanagedBytes, printData.Length);
+
+            //// Enviar a la impresora
+            //bool exito = RawPrinterHelper.SendBytesToPrinter(szPrinterName, pUnmanagedBytes, printData.Length);
+
+            //// Liberar memoria
+            //Marshal.FreeCoTaskMem(pUnmanagedBytes);
+
+
+            //// Comando ESC/POS para imprimir un código de barras CODE128
+            //byte[] datos = new byte[]
+            //{
+            //0x1D, 0x6B, 0x49, // ESC k - Seleccionar código de barras tipo CODE128
+            //0x0C,             // Longitud del código
+            //(byte)'1', (byte)'2', // Código de barras
+            //0x0A              // Salto de línea
+            //};
+
+            //// Convertir el array de bytes a un puntero en memoria
+            //IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(datos.Length);
+            //Marshal.Copy(datos, 0, pUnmanagedBytes, datos.Length);
+
+            //// Llamar a la función con los parámetros correctos
+            //bool exito = RawPrinterHelper.SendBytesToPrinter(szPrinterName, pUnmanagedBytes, datos.Length);
+            //// Liberar la memoria asignada
+            //Marshal.FreeCoTaskMem(pUnmanagedBytes);
+            //return;
+
+
+            ////Comando ESC/ POS para imprimir código de barras "PE156" en formato CODE128
+            //byte[] barcodeCommand = new byte[]
+            //{
+            //0x1D, 0x6B, 0x49, 6,   // (GS k) Comando para CODE128, longitud del código de barras (6 caracteres)
+            //(byte)'P', (byte)'E', (byte)'1', (byte)'5', (byte)'6' // Datos del código de barras
+            //};
+
+            //// Línea nueva después del código de barras
+            //byte[] newLine = new byte[] { 0x0A };
+
+            //// Unir los arrays de bytes (código de barras + salto de línea)
+            //byte[] printData = new byte[barcodeCommand.Length + newLine.Length];
+            //barcodeCommand.CopyTo(printData, 0);
+            //newLine.CopyTo(printData, barcodeCommand.Length);
+
+            //// Convertir el array de bytes a un puntero en memoria
+            //IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(printData.Length);
+            //Marshal.Copy(printData, 0, pUnmanagedBytes, printData.Length);
+
+            //// Enviar datos a la impresora
+            //bool exito = RawPrinterHelper.SendBytesToPrinter(szPrinterName, pUnmanagedBytes, printData.Length);
+
+            //// Liberar la memoria asignada
+            //Marshal.FreeCoTaskMem(pUnmanagedBytes);
+
+            //return;
+            // Send the converted ANSI string to the printer.
+            //RawPrinterHelper.SendBytesToPrinter(szPrinterName, pBytes, dwCount);
+
+            //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
+            //public static bool SendStringToPrinter()
+            //{
+            //if (true)//imprimir)
+            //    {
+            //        IntPtr pBytes;
+            //        Int32 dwCount;
+            //        // How many characters are in the string?
+            //        dwCount = szString.Length;
+            //        // Assume that the printer is expecting ANSI text, and then convert
+            //        // the string to ANSI text.
+            //        pBytes = Marshal.AllocCoTaskMem(datos.Length);// Marshal.StringToCoTaskMemAnsi(szString);
+            //        // Send the converted ANSI string to the printer.
+            //        RawPrinterHelper.SendBytesToPrinter(szPrinterName, pBytes, dwCount);
+            //        Marshal.FreeCoTaskMem(pBytes);
+            //    }
+            //    return true;
+            //}
+        }
+
         public void CortaTicket()
         {
             string corte = "\x1B" + "m";                  // caracteres de corte

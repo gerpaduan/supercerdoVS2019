@@ -7,6 +7,7 @@ using System.Drawing.Printing;
 using ZXing;
 using ZXing.Common;
 using ZXing.Rendering;
+using System.Windows.Forms;
 
 namespace Utilidades
 {
@@ -15,9 +16,10 @@ namespace Utilidades
         public void Main()
         {
             PrintDocument printDoc = new PrintDocument();
+            PrintPreviewDialog printPreviewDialog = new PrintPreviewDialog(); ;
 
             // Ajusta con el nombre exacto de tu impresora térmica o de etiquetas
-            printDoc.PrinterSettings.PrinterName = @"\\ServidorSM\Xprinter";
+            printDoc.PrinterSettings.PrinterName = @"\\DESKTOP-69ORC98\Quo";
             //printDoc.PrinterSettings.PrinterName = @"\\OficinaSM\QuoPrint_Systel";
             
             // Verificar si la impresora está disponible
@@ -29,53 +31,57 @@ namespace Utilidades
 
             // Evento de impresión
             printDoc.PrintPage += new PrintPageEventHandler(PrintLabel);
-            printDoc.Print();
+
+            printPreviewDialog.Document = printDoc;
+            printPreviewDialog.ShowDialog();
+            //printDoc.Print();
         }
 
         static void PrintLabel(object sender, PrintPageEventArgs e)
         {
-                string code39Code = "CODE39";  // Texto para el código de barras Code 39
+             string code39Code = "PE12597";  // Texto para el código de barras Code 39
             string productName = "Café Premium"; // Nombre del producto
             string price = "$10.99";            // Precio
             string weight = "1.0 kg";           // Peso
 
             // Fuente para el código de barras (asegúrate de tener una fuente de Code 39 instalada)
-            Font barcodeFont = new Font("IDAutomationHC39M", 36, FontStyle.Regular);  // Fuente de código de barras
+            //Font barcodeFont = new Font("IDAutomationHC39M", 36, FontStyle.Regular);  // Fuente de código de barras
 
-            // Dibujar el código de barras como texto
-            e.Graphics.DrawString("*" + code39Code + "*", barcodeFont, Brushes.Black, 10, 10);
+            //// Dibujar el código de barras como texto
+            //e.Graphics.DrawString("*" + code39Code + "*", barcodeFont, Brushes.Black, 10, 10);
 
-            // Agregar nombre del producto debajo del código de barras
-            Font font = new Font("Arial", 8, FontStyle.Bold);
-            e.Graphics.DrawString(productName, font, Brushes.Black, 10, 50);
+            //// Agregar nombre del producto debajo del código de barras
+            //Font font = new Font("Arial", 8, FontStyle.Bold);
+            //e.Graphics.DrawString(productName, font, Brushes.Black, 10, 50);
 
-            // Agregar precio
-            e.Graphics.DrawString("Precio: " + price, font, Brushes.Black, 10, 65);
+            //// Agregar precio
+            //e.Graphics.DrawString("Precio: " + price, font, Brushes.Black, 10, 65);
 
-            // Agregar peso
-            e.Graphics.DrawString("Peso: " + weight, font, Brushes.Black, 10, 80);
+            //// Agregar peso
+            //e.Graphics.DrawString("Peso: " + weight, font, Brushes.Black, 10, 80);
 
             //string code39Code = "CODE39";  // Texto para el código de barras Code 39
             //string productName = "Café Premium"; // Nombre del producto
             //string price = "$10.99";            // Precio
             //string weight = "1.0 kg";           // Peso
 
-            //// Crear el escritor de código de barras (usando ZXing.Net)
-            //BarcodeWriter barcodeWriter = new BarcodeWriter
-            //{
-            //    Format = BarcodeFormat.CODE_39,
-            //    Options = new ZXing.Common.EncodingOptions
-            //    {
-            //        Width = 200,   // Ancho del código de barras
-            //        Height = 100,  // Alto del código de barras
-            //    }
-            //};
+            // Crear el escritor de código de barras (usando ZXing.Net)
+            BarcodeWriter barcodeWriter = new BarcodeWriter
+            {
+                //Format = BarcodeFormat.CODE_39,
+                Format = BarcodeFormat.CODE_128,
+                Options = new ZXing.Common.EncodingOptions
+                {
+                    Width = 200,   // Ancho del código de barras
+                    Height = 100,  // Alto del código de barras
+                }
+            };
 
-            //// Generar la imagen del código de barras
-            //Bitmap barcodeBitmap = barcodeWriter.Write(code39Code);
+            // Generar la imagen del código de barras
+            Bitmap barcodeBitmap = barcodeWriter.Write(code39Code);
 
-            //// Dibujar el código de barras
-            //e.Graphics.DrawImage(barcodeBitmap, 10, 10);
+            // Dibujar el código de barras
+            e.Graphics.DrawImage(barcodeBitmap, 10, 10);
 
             //// Agregar nombre del producto debajo del código de barras
             //Font font = new Font("Arial", 8, FontStyle.Bold);
