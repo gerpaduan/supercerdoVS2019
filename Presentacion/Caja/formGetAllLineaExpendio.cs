@@ -456,7 +456,7 @@ namespace Presentacion
                 formPuntoExpendio frmPtoExpendio = new formPuntoExpendio();
                 frmPtoExpendio.oVentaE = oExpendioE;
                 frmPtoExpendio.listaLineaVenta = oExpendioE.LineasVenta;
-                frmPtoExpendio.cargarLineasExpendio_Imprimir(false, true);
+                frmPtoExpendio.cargarLineasExpendio_Imprimir(false, true, true);
             }
             catch (Exception ex)
             {

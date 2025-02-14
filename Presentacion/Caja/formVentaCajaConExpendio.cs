@@ -1687,6 +1687,26 @@ namespace Presentacion.Caja
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
         {
+            ///Si las dos primeras letras son igual a "PE" significa q es un numero de expendio
+            ///tomar el numero y cargar el expendio
+            ///
+            int longCodigo = txtCodigo.Text.Length;
+            string text = txtCodigo.Text;
+            bool validarNroExpendio = (longCodigo == 1 && !char.IsDigit(text[0]) && text[0] == 'P') || (longCodigo == 2 && !char.IsDigit(text[1]) && text == "PE") ||
+                (longCodigo > 3 && char.IsDigit(text[2]));
+            if (validarNroExpendio)
+            {
+                ///buscarExpendio
+                ///el Nro Expendio estará entre PE y F que indica el fin del numero
+                ///
+                if (text[longCodigo-1] == 'F')
+                {
+
+                }
+                return;
+            }
+
+
             if (grillaLineasVenta.Rows.Count.Equals(0))
             {
                 //al iniciar la venta se actualizan los cortes cargándose el dtCortes

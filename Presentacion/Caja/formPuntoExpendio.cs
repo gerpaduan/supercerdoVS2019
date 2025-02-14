@@ -269,9 +269,9 @@ namespace Presentacion.Caja
 
                 try
                 {
-                    oVentaE.IdVenta = oVentaN.agregarExpendio(oVentaE);
+                    oVentaE.IdVenta = oVentaE.IdExpendio = oVentaN.agregarExpendio(oVentaE);
 
-                    cargarLineasExpendio_Imprimir(true, checkTicket.Checked);
+                    cargarLineasExpendio_Imprimir(true, checkTicket.Checked, false);
 
                     oVentaE.IdVenta = 0;
                     limpiarListas();
@@ -290,8 +290,11 @@ namespace Presentacion.Caja
             }
         }
 
-        public void cargarLineasExpendio_Imprimir(bool agregarLineasEnDB, bool imprimir)
+        public void cargarLineasExpendio_Imprimir(bool agregarLineasEnDB, bool imprimir, bool desactivarBalanza)
         {
+            if (desactivarBalanza)
+                checkLeerPeso.Checked = false;
+
             Ticket.CreaTicket ticket = new Ticket.CreaTicket();
             //imprimir si está checked
             
@@ -299,7 +302,7 @@ namespace Presentacion.Caja
             ticket.TextoCentro(oVentaE.Sector);
             ticket.LineasEnBlanco(1);
             //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
-            ticket.TextoIzquierda("Nro Expendio: " + oVentaE.IdExpendio);
+            ticket.TextoIzquierda("Nro Expendio: " + oVentaE.IdExpendio);//IdExpendio
             ticket.TextoIzquierda("Id.Cliente: " + oVentaE.IdentificacionExpendio);
             ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
             //ticket.LineasEnBlanco(0);
@@ -333,12 +336,10 @@ namespace Presentacion.Caja
             ticket.TextoIzquierda("Articulos: " + listaLineaVenta.Count.ToString());
             ticket.TextoIzquierda("Cajero: " + (oUsuario != null && oUsuario.Id > 0 ? oUsuario.Id.ToString() : oVentaE.Vendedor.Id.ToString()));
             ticket.GraciasPorSuCompra();
-            ticket.LineasEnBlanco(2);
+            //ticket.LineasEnBlanco(2);
             ticket.realizarImpresion();
 
-            ticket.realizarImpresionCodigoBarra("5");
-
-
+            ticket.realizarImpresionCodigoBarra("PE"+oVentaE.IdExpendio+"F");
         }
 
         private void limpiarListas()
@@ -1588,12 +1589,12 @@ namespace Presentacion.Caja
 
             ticket.imprimir = true;
 
-            //ticket.realizarImpresionCodigoBarra("5");
+            ticket.realizarImpresionCodigoBarra("5");
 
 
-            string printerName = @"\\OficinaSM\Xprinter";
+            string printerName = @"\\notebook-ger\Xprinter";
             // Imprimir texto
-            ESC_POS_Printer.SendToPrinter(printerName, "Este es un ejemplo de texto para impresión");
+            //ESC_POS_Printer.SendToPrinter(printerName, "Este es un ejemplo de texto para impresión");
 
             // Imprimir código de barras
             //ESC_POS_Printer.PrintBarcode(printerName, "1234567890");

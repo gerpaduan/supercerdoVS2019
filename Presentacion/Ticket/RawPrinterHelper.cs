@@ -81,136 +81,36 @@ namespace Presentacion.Ticket
             }
             return bSuccess;
         }
-        /// <summary>
-        ///Para codigo de barras
-        /// </summary>
-        /// <param name="szPrinterName"></param>
-        /// <param name="szString"></param>
-        /// <param name="imprimir"></param>
-        /// <returns></returns>
-        public static bool SendBytesToPrintCodeBar(string printerName, byte[] bytes, string szString)
-        {
-            IntPtr hPrinter = IntPtr.Zero;
-            int dwWritten = 0;
-            bool success = false;
 
-            // Abre la impresora
+        public static bool SendBytesToPrinter(string printerName, byte[] bytes)
+        {
+            IntPtr hPrinter;
+
+            DOCINFOA di = new DOCINFOA();
+
+            di.pDocName = "My C#.NET RAW Document";
+            di.pDataType = "RAW";
+
             if (OpenPrinter(printerName, out hPrinter, IntPtr.Zero))
             {
-                // Crea un puntero a los bytes
-                IntPtr pBytes = Marshal.UnsafeAddrOfPinnedArrayElement(bytes, 0);
-
-                // Envia los bytes a la impresora
-                success = WritePrinter(hPrinter, pBytes, bytes.Length, out dwWritten);
-
-                // Cierra la impresora
+                if (StartDocPrinter(hPrinter, 1, di))
+                {
+                    if (StartPagePrinter(hPrinter))
+                    {
+                        IntPtr unmanagedBytes = Marshal.AllocHGlobal(bytes.Length);
+                        Marshal.Copy(bytes, 0, unmanagedBytes, bytes.Length);
+                        bool success = WritePrinter(hPrinter, unmanagedBytes, bytes.Length, out _);
+                        Marshal.FreeHGlobal(unmanagedBytes);
+                        EndPagePrinter(hPrinter);
+                        EndDocPrinter(hPrinter);
+                        ClosePrinter(hPrinter);
+                        return success;
+                    }
+                }
                 ClosePrinter(hPrinter);
-                if (!success)
-                {
-                    Console.WriteLine($"Error en WritePrinter. Código: {Marshal.GetLastWin32Error()}");
-                    string dd2 = $"Error al escribir en la impresora. Código: {Marshal.GetLastWin32Error()}";
-                }
-                else if (dwWritten != bytes.Length)
-                {
-                    Console.WriteLine($"Advertencia: Se enviaron {dwWritten} bytes de {bytes.Length} esperados.");
-                }
-                else
-                {
-                    Console.WriteLine("Impresión enviada correctamente.");
-                }
-            }
-
-            return success;
-
-
-            //IntPtr hPrinter;
-            //if (!OpenPrinter(printerName.Normalize(), out hPrinter, IntPtr.Zero))
-            //{
-            //    string d = $"Error al abrir la impresora {printerName}. Código: {Marshal.GetLastWin32Error()}";// Console.WriteLine("No se pudo abrir la impresora.");
-            //    return false;
-            //}
-
-            //int dwWritten;
-            //Int32 dwCount;
-            //// How many characters are in the string?
-            //dwCount = szString.Length;
-            //IntPtr pBytes = Marshal.AllocHGlobal(bytes.Length);
-            //Marshal.Copy(bytes, 0, pBytes, bytes.Length);
-            //bool success = WritePrinter(hPrinter, pBytes, bytes.Length, out dwWritten);
-            //Marshal.FreeHGlobal(pBytes);
-            //if (!success)
-            //{
-            //    Console.WriteLine($"Error en WritePrinter. Código: {Marshal.GetLastWin32Error()}");
-            //    string dd2 = $"Error al escribir en la impresora. Código: {Marshal.GetLastWin32Error()}";
-            //}
-            //else if (dwWritten != bytes.Length)
-            //{
-            //    Console.WriteLine($"Advertencia: Se enviaron {dwWritten} bytes de {bytes.Length} esperados.");
-            //}
-            //else
-            //{
-            //    Console.WriteLine("Impresión enviada correctamente.");
-            //}
-
-            //ClosePrinter(hPrinter);
-            //string dd = $"Error al escribir en la impresora. Código: {Marshal.GetLastWin32Error()}";
-
-            //return success;
-        }
-        // Función para generar y enviar un código de barras a la impresora
-        public static bool SendBarcodeToPrinter(string szPrinterName, string barcode, bool imprimir)
-        {
-            if (imprimir)
-            {
-                // Comando ESC/POS para reiniciar la impresora
-                byte[] escPosCommand = new byte[]
-                {
-                0x1B, 0x40,                  // Resetear impresora
-                0x1D, 0x6B,                 // Comando para imprimir código de barras
-                0x04,                       // Tipo de código de barras (Code 128 en este caso)
-                (byte)barcode.Length,       // Longitud del código de barras
-                };
-                // Convertir el código de barras en bytes (ANSI)
-                byte[] barcodeBytes = Encoding.ASCII.GetBytes(barcode);
-
-                // Combinamos el comando ESC/POS con el código de barras
-                byte[] fullCommand = new byte[escPosCommand.Length + barcodeBytes.Length];
-                escPosCommand.CopyTo(fullCommand, 0);
-                barcodeBytes.CopyTo(fullCommand, escPosCommand.Length);
-
-                // Convertir el arreglo de bytes en un IntPtr
-                IntPtr pBytes = Marshal.AllocCoTaskMem(fullCommand.Length);
-                Marshal.Copy(fullCommand, 0, pBytes, fullCommand.Length);
-
-                // Enviar los bytes a la impresora
-                bool result = SendBytesToPrinter(szPrinterName, pBytes, fullCommand.Length);
-                result = SendBytesToPrinter1(szPrinterName, pBytes, fullCommand.Length);
-
-                // Liberar la memoria
-                Marshal.FreeCoTaskMem(pBytes);
-
-                return result;
             }
 
             return false;
-        }
-        public static bool SendBytesToPrinter1(string szPrinterName, IntPtr pBytes, int dwCount)
-        {
-            IntPtr hPrinter = IntPtr.Zero;
-            int dwWritten = 0;
-            bool success = false;
-
-            // Abre la impresora
-            if (OpenPrinter(szPrinterName, out hPrinter, IntPtr.Zero))
-            {
-                // Envia los bytes a la impresora
-                success = WritePrinter(hPrinter, pBytes, dwCount, out dwWritten);
-
-                // Cierra la impresora
-                ClosePrinter(hPrinter);
-            }
-
-            return success;
         }
 
         public static bool SendStringToPrinter(string szPrinterName, string szString, bool imprimir)
