@@ -1404,6 +1404,12 @@ namespace Presentacion.Caja
             switch (keyData)
             {
                 case Keys.Multiply:
+                    if (btnAgregar.Focused)
+                    {
+                        KeyPressEventArgs e = new KeyPressEventArgs('*'); // Simula que se presiona '*'
+                        TxtPruebaENTER_KeyPress(txtCodigo, e);
+                        break;
+                    }
                     dejarDeLeerPeso = checkLeerPeso.Checked;
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
                     break;
@@ -1584,22 +1590,22 @@ namespace Presentacion.Caja
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
-            //imprimir si está checked
+            //Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+            ////imprimir si está checked
 
-            ticket.imprimir = true;
+            //ticket.imprimir = true;
 
-            ticket.realizarImpresionCodigoBarra("5");
+            ////ticket.realizarImpresionCodigoBarra("29");
 
 
-            string printerName = @"\\notebook-ger\Xprinter";
-            // Imprimir texto
-            //ESC_POS_Printer.SendToPrinter(printerName, "Este es un ejemplo de texto para impresión");
+            ////string printerName = @"\\notebook-ger\Xprinter";
+            //// Imprimir texto
+            ////ESC_POS_Printer.SendToPrinter(printerName, "Este es un ejemplo de texto para impresión");
 
-            // Imprimir código de barras
-            //ESC_POS_Printer.PrintBarcode(printerName, "1234567890");
+            //// Imprimir código de barras
+            ////ESC_POS_Printer.PrintBarcode(printerName, "1234567890");
 
-            ticket = null;
+            //ticket = null;
             //Utilidades.GenerarCodigoBarra codBarra = new GenerarCodigoBarra();
             //codBarra.Main();
         }
@@ -1648,7 +1654,7 @@ namespace Presentacion.Caja
             try
             {
                 //Se valida que precio lista sea distinto a cero para evitar error en bonificar al infinito
-                if (oCorteE != null && oCorteE.precioKg == 0)
+                if (oCorteE != null && oCorteE.idCorte > 0 && oCorteE.precioKg == 0)
                 {
                     MessageBox.Show("No se permiten ingresar productos con precio de lista $0.00 (cero)", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     txtCodigo.Focus();

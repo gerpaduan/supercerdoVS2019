@@ -40,6 +40,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.button1 = new System.Windows.Forms.Button();
             this.lblPuntoExpendio = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.duplicarVentana = new System.Windows.Forms.LinkLabel();
@@ -92,7 +93,6 @@
             this.lblTotalS = new System.Windows.Forms.Label();
             this.lblCantItems = new System.Windows.Forms.Label();
             this.lblCantKgs = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
@@ -122,6 +122,22 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(826, 221);
             this.pnlBuscar.TabIndex = 4;
+            // 
+            // button1
+            // 
+            this.button1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.button1.BackColor = System.Drawing.SystemColors.HotTrack;
+            this.button1.FlatAppearance.BorderColor = System.Drawing.Color.White;
+            this.button1.FlatAppearance.BorderSize = 3;
+            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button1.ForeColor = System.Drawing.Color.AliceBlue;
+            this.button1.Location = new System.Drawing.Point(566, 10);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(194, 38);
+            this.button1.TabIndex = 76;
+            this.button1.Text = "&Imprimir Etiqueta";
+            this.button1.UseVisualStyleBackColor = false;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // lblPuntoExpendio
             // 
@@ -831,22 +847,6 @@
             this.lblCantKgs.Size = new System.Drawing.Size(67, 18);
             this.lblCantKgs.TabIndex = 72;
             this.lblCantKgs.Text = "000,000";
-            // 
-            // button1
-            // 
-            this.button1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.button1.BackColor = System.Drawing.SystemColors.HotTrack;
-            this.button1.FlatAppearance.BorderColor = System.Drawing.Color.White;
-            this.button1.FlatAppearance.BorderSize = 3;
-            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.ForeColor = System.Drawing.Color.AliceBlue;
-            this.button1.Location = new System.Drawing.Point(566, 10);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(194, 38);
-            this.button1.TabIndex = 76;
-            this.button1.Text = "&Imprimir Etiqueta";
-            this.button1.UseVisualStyleBackColor = false;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // formPuntoExpendio
             // 

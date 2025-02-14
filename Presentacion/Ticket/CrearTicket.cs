@@ -280,7 +280,7 @@ namespace Presentacion.Ticket
             byte[] barcodeCommand = new byte[4 + barcodeData.Length];
             barcodeCommand[0] = 0x1D; // Comando GS
             barcodeCommand[1] = 0x6B; // Comando para código de barras
-            barcodeCommand[2] = 73; // Tipo CODE128
+            barcodeCommand[2] = 73; // 73 CODE128 | 4 CODE39 | 2 EAN13
             barcodeCommand[3] = (byte)barcodeData.Length; // Longitud del código
 
             for (int i = 0; i < barcodeData.Length; i++)

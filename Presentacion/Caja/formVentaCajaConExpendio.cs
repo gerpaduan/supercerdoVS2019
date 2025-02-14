@@ -2110,6 +2110,13 @@ namespace Presentacion.Caja
             switch (keyData)
             {
                 case Keys.Multiply:
+                    if (btnAgregar.Focused)
+                    {
+                        KeyPressEventArgs e = new KeyPressEventArgs('*'); // Simula que se presiona '*'
+                        TxtPruebaENTER_KeyPress(txtCodigo, e);
+                        checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;
+                        break;
+                    }
                     asteriscoPressKey = true;
                     valorAnteriorBalanza = dejarDeLeerPeso = checkLeerPeso.Checked;
                     checkLeerPeso.Checked = FormPrincipal.leerBalanza ? !checkLeerPeso.Checked : checkLeerPeso.Checked;

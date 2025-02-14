@@ -15,29 +15,62 @@ namespace Utilidades
     {
         public void Main()
         {
-            PrintDocument printDoc = new PrintDocument();
+            PrintDocument pd = new PrintDocument();
+            pd.PrinterSettings.PrinterName = @"\\OficinaSM\quo";
+
+            pd.PrintPage += (sender, e) =>
+            {
+                using (Font font = new Font("Arial", 10))
+                using (Pen pen = new Pen(Color.Black, 2))
+                {
+                    e.Graphics.DrawString("Producto X", font, Brushes.Black, 10, 10);
+
+                    using (Bitmap bmp = GenerateBarcode("123456789012"))
+                    {
+                        e.Graphics.DrawImage(bmp, 10, 30);
+                    }
+                }
+            };
+
             PrintPreviewDialog printPreviewDialog = new PrintPreviewDialog(); ;
-            printDoc.PrinterSettings.PrinterName = @"\\OficinaSM\Xprinter";
-
-            // Crear un tamaño personalizado de página para un rollo de 57 mm de ancho
-            PaperSize customPaperSize = new PaperSize("Rollo 57mm", 264, 3000); // Ancho = 224 décimas de pulgada (57 mm), Alto = 3000 décimas (p. ej., 300 mm)
-            printDoc.DefaultPageSettings.PaperSize = customPaperSize;
-
-            // Establecer márgenes si es necesario
-            printDoc.DefaultPageSettings.Margins = new Margins(10, 10, 10, 10); // Márgenes de 10 píxeles
-
-            // Configurar la orientación si es necesario
-            printDoc.DefaultPageSettings.Landscape = false; // Si la orientación es vertical
-
-            // Configurar el evento de impresión
-            printDoc.PrintPage += new PrintPageEventHandler(PrintPage);
-
-            printPreviewDialog.Document = printDoc;
+            printPreviewDialog.Document = pd;
             printPreviewDialog.ShowDialog();
             // Imprimir el documento
-            printDoc.Print();
+            pd.Print();
+
+            pd.Print();
+
+
+           // PrintDocument printDoc = new PrintDocument();
+           // PrintPreviewDialog printPreviewDialog = new PrintPreviewDialog(); ;
+           // printDoc.PrinterSettings.PrinterName = @"\\OficinaSM\Xprinter";
+           // printDoc.PrinterSettings.PrinterName = @"\\OficinaSM\quo";
+
+           // //Crear un tamaño personalizado de página para un rollo de 57 mm de ancho
+           //PaperSize customPaperSize = new PaperSize("Rollo 57mm", 264, 3000); // Ancho = 224 décimas de pulgada (57 mm), Alto = 3000 décimas (p. ej., 300 mm)
+           // printDoc.DefaultPageSettings.PaperSize = customPaperSize;
+
+           // //Establecer márgenes si es necesario
+           // printDoc.DefaultPageSettings.Margins = new Margins(10, 10, 10, 10); // Márgenes de 10 píxeles
+
+           // // Configurar la orientación si es necesario
+           // printDoc.DefaultPageSettings.Landscape = false; // Si la orientación es vertical
+
+           // // Configurar el evento de impresión
+           // printDoc.PrintPage += new PrintPageEventHandler(PrintPage);
+
+           // printPreviewDialog.Document = printDoc;
+           // printPreviewDialog.ShowDialog();
+           // // Imprimir el documento
+           // printDoc.Print();
 
         }
+        static Bitmap GenerateBarcode(string data)
+        {
+            Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;
+            return new Bitmap(barcode.Draw(data, 50));
+        }
+
         // Método para manejar la impresión
         private void PrintPage(object sender, PrintPageEventArgs e)
         {
@@ -57,7 +90,7 @@ namespace Utilidades
             BarcodeWriter barcodeWriter = new BarcodeWriter
             {
                 //Format = BarcodeFormat.CODE_39,
-                Format = BarcodeFormat.UPC_E,
+                Format = BarcodeFormat.EAN_13,
                 Options = new ZXing.Common.EncodingOptions
                 {
                     Width = 200,   // Ancho del código de barras
