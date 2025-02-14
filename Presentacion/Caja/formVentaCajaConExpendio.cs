@@ -1693,7 +1693,7 @@ namespace Presentacion.Caja
             int longCodigo = txtCodigo.Text.Length;
             string text = txtCodigo.Text;
             bool validarNroExpendio = (longCodigo == 1 && !char.IsDigit(text[0]) && text[0] == 'P') || (longCodigo == 2 && !char.IsDigit(text[1]) && text == "PE") ||
-                (longCodigo > 3 && char.IsDigit(text[2]));
+                (longCodigo >= 3 && char.IsDigit(text[2]));
             if (validarNroExpendio)
             {
                 ///buscarExpendio
@@ -1701,6 +1701,8 @@ namespace Presentacion.Caja
                 ///
                 if (text[longCodigo-1] == 'F')
                 {
+                    ///
+                    int idExpendio = Convert.ToInt32(text.Replace("PE", "").Replace("F", ""));
 
                 }
                 return;
