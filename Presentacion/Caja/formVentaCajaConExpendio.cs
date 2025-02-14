@@ -79,7 +79,7 @@ namespace Presentacion.Caja
         float centavosRedondeo = 0.93f;
 
         int nroErrorBalanza = 0;
-
+        bool expendioDesdeCodigoBarra = false;
         public int SucAnterior
         {
             get { return sucAnterior; }
@@ -1693,7 +1693,7 @@ namespace Presentacion.Caja
             int longCodigo = txtCodigo.Text.Length;
             string text = txtCodigo.Text;
             bool validarNroExpendio = (longCodigo == 1 && !char.IsDigit(text[0]) && text[0] == 'P') || (longCodigo == 2 && !char.IsDigit(text[1]) && text == "PE") ||
-                (longCodigo >= 3 && char.IsDigit(text[2]));
+                (longCodigo >= 3 && char.IsDigit(text[2]) && text[0] == 'P' && text[1] == 'E');
             if (validarNroExpendio)
             {
                 ///buscarExpendio
@@ -1701,8 +1701,12 @@ namespace Presentacion.Caja
                 ///
                 if (text[longCodigo-1] == 'F')
                 {
-                    ///
-                    int idExpendio = Convert.ToInt32(text.Replace("PE", "").Replace("F", ""));
+                    expendioDesdeCodigoBarra = true;
+                    expendirExpendios();
+                    txtBuscarExpendio.Text = text.Replace("PE", "").Replace("F", "");
+                    txtBuscarExpendio_KeyPress(txtBuscarExpendio, new KeyPressEventArgs((char)Keys.Enter));
+                    //expendirExpendios();
+                    //txtBuscarExpendio.Text = "";
 
                 }
                 return;
@@ -2775,7 +2779,7 @@ namespace Presentacion.Caja
                                 var valorComparado = grillaExpendios.Rows[j].Cells["identificacionExpendio"].Value?.ToString();
 
                                 // Verificar si el valor comparado es diferente
-                                if (valorComparado != valorReferencia)
+                                if (valorComparado != valorReferencia && !expendioDesdeCodigoBarra)
                                 {
                                     MessageBox.Show($"Los valores en las filas {i + 1} y {j + 1} de 'Identif. Cliente' no coinciden.\n"+
                                         "Para evitar error clique el botón sobre la fila de Nro.Expendio.",
@@ -2797,6 +2801,26 @@ namespace Presentacion.Caja
                             agregarExpendio(fila);
                         }
                     }
+
+                    if (grillaExpendios.Rows.Count == 0)
+                    {
+                        MessageBox.Show($"No se encontró el Nro Expendio: {txtBuscarExpendio.Text}\nPuede que no exista o ya haya sido asignado a una venta\n"+
+                            "Realice una busqueda manual incrementando la cantidad de minutos",
+                                                "Error en Expendio",
+                                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+
+                    //si se agregó desde Codigo se verifica que exista el expendio
+                    if (expendioDesdeCodigoBarra)
+                    {
+                        expendioDesdeCodigoBarra = false;
+                        txtCodigo.Text = "";
+                        expendirExpendios();
+                        txtBuscarExpendio.Text = "";
+                        expendioDesdeCodigoBarra = false;
+                        return;
+                    }
+
                     filtrarExpendio();
                 }
             }
