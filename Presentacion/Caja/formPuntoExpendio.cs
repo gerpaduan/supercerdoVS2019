@@ -97,6 +97,16 @@ namespace Presentacion.Caja
         bool esAjustePorcTarj = false;
         int idConsumidorFinal;
 
+        ///Codigo de Barra
+        ///            
+        //****Prefijo Cod.Barra Interno (20 a 29) ***
+        int prefijoCodBarraInterno = Convert.ToInt32(ConfigurationManager.AppSettings["cantDigitosProdEnCodBarra"].ToString());
+
+        //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
+        int cantDigitosProdEnCodBarra = Convert.ToInt32(ConfigurationManager.AppSettings["cantDigitosProdEnCodBarra"].ToString());
+        //****2do modulo del Cod.Barra(0 : Cantidad -- 1: Monto Total) ***
+        int codBarraPorCantidad = Convert.ToInt32(ConfigurationManager.AppSettings["codBarraPorCantidad"].ToString());
+
         /// <summary>
         /// Variable Para manejar los codigos de barra internos
         /// </summary>
@@ -345,17 +355,40 @@ namespace Presentacion.Caja
             for (int index = 0; index < listaLineaVenta.Count; index++)
             {
                 Entidades.LineaVenta linea = listaLineaVenta[index];
-                string codBarraProducto = GenerateEAN13(linea.Corte.codigo.ToString(), linea.CantKg);
+
+                //Verifica la long del codigo
+
+                //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
+                if (linea.Corte.codigo.ToString().Length > cantDigitosProdEnCodBarra)
+                {
+                    string mensaje = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido "+ 
+                        cantDigitosProdEnCodBarra.ToString() + "\n";
+                    mensaje += "\nCodigo: " + linea.Corte.codigo.ToString();
+                    mensaje += "\nProd: " + linea.Corte.corte.ToString();
+                    MessageBox.Show(mensaje,"Error",MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
+                }
+
+                string primerModulo
+                //****2do modulo del Cod.Barra(0 : Cantidad -- 1: Monto Total) ***
+                string SegundoModuloBarra = codBarraPorCantidad == 0 ? linea.CantKg.ToString("F3") : (linea.PrecioKg * linea.CantKg).ToString("F2");
+
+                string codBarraProducto = GenerateEAN13(prefijoCodBarraInterno, linea.Corte.codigo.ToString(), SegundoModuloBarra.Replace(".", "").Replace(",", ""), cantDigitosProdEnCodBarra, codBarraPorCantidad);
                     //linea.Corte.corte.ToString() + "\n$ " + (linea.PrecioKg * linea.CantKg).ToString("F2");// + (linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
                   // linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                 ticket.realizarImpresionCodigoBarra(linea.Corte.corte.ToString() + "\n$ " + (linea.PrecioKg * linea.CantKg).ToString("F2"), codBarraProducto);
             }
         }
 
-        public static string GenerateEAN13(string productCode, float weightInKg)
+        public static string GenerateEAN13(int prefijoCodBarra, string productCode, string segundoModuloBarra, int cantDigitosProdEnCodBarra, int codBarraPorCantidad)
         {
-            if (productCode.Length != 4)
-                throw new ArgumentException("El código de producto debe tener exactamente 4 dígitos.");
+            //if (productCode.Length != 4)
+            //    throw new ArgumentException("El código de producto debe tener exactamente 4 dígitos.");
+
+            productCode = productCode.PadLeft(cantDigitosProdEnCodBarra, '0');
+
+            int cantDigito2doModulo = 10 - cantDigitosProdEnCodBarra;
+
 
             int weightInGrams = (int)(weightInKg * 1000); // Convertir a gramos
             string weightString = weightInGrams.ToString().PadLeft(7, '0'); // Asegurar 7 dígitos
