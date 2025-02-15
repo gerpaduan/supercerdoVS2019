@@ -339,7 +339,42 @@ namespace Presentacion.Caja
             //ticket.LineasEnBlanco(2);
             ticket.realizarImpresion();
 
-            ticket.realizarImpresionCodigoBarra("PE"+oVentaE.IdExpendio+"F");
+            ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\n$ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F");
+
+
+            for (int index = 0; index < listaLineaVenta.Count; index++)
+            {
+                Entidades.LineaVenta linea = listaLineaVenta[index];
+                string codBarraProducto = GenerateEAN13(linea.Corte.codigo.ToString(), linea.CantKg);
+                    //linea.Corte.corte.ToString() + "\n$ " + (linea.PrecioKg * linea.CantKg).ToString("F2");// + (linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                  // linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+                ticket.realizarImpresionCodigoBarra(linea.Corte.corte.ToString() + "\n$ " + (linea.PrecioKg * linea.CantKg).ToString("F2"), codBarraProducto);
+            }
+        }
+
+        public static string GenerateEAN13(string productCode, float weightInKg)
+        {
+            if (productCode.Length != 4)
+                throw new ArgumentException("El código de producto debe tener exactamente 4 dígitos.");
+
+            int weightInGrams = (int)(weightInKg * 1000); // Convertir a gramos
+            string weightString = weightInGrams.ToString().PadLeft(7, '0'); // Asegurar 7 dígitos
+
+            string baseCode = "20" + productCode + weightString; // 12 dígitos sin el dígito de control
+            int checkDigit = CalculateCheckDigit(baseCode); // Calcular dígito de control
+
+            return baseCode + checkDigit; // Retornar los 13 dígitos completos
+        }
+
+        public static int CalculateCheckDigit(string code)
+        {
+            int sum = 0;
+            for (int i = 0; i < code.Length; i++)
+            {
+                int digit = code[i] - '0';
+                sum += (i % 2 == 0) ? digit : digit * 3;
+            }
+            return (10 - (sum % 10)) % 10; // Cálculo del dígito de control EAN-13
         }
 
         private void limpiarListas()
@@ -1590,13 +1625,13 @@ namespace Presentacion.Caja
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //Ticket.CreaTicket ticket = new Ticket.CreaTicket();
+            Ticket.CreaTicket ticket = new Ticket.CreaTicket();
             ////imprimir si está checked
 
-            //ticket.imprimir = true;
+            ticket.imprimir = true;
 
-            ////ticket.realizarImpresionCodigoBarra("29");
-
+            //ticket.realizarImpresionCodigoBarra("29");
+           // ticket.realizarImpresionQR("https://serviciosweb.afip.gob.ar/clavefiscal/qr/publicInfoD.aspx?qr=20306210786");
 
             ////string printerName = @"\\notebook-ger\Xprinter";
             //// Imprimir texto

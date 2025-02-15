@@ -81,6 +81,36 @@ namespace wsAFIPvs2008.Ticket
             return bSuccess;
         }
 
+        public static bool SendBytesToPrinter(string printerName, byte[] bytes)
+        {
+            IntPtr hPrinter;
+
+            DOCINFOA di = new DOCINFOA();
+
+            di.pDocName = "My C#.NET RAW Document";
+            di.pDataType = "RAW";
+
+            if (OpenPrinter(printerName, out hPrinter, IntPtr.Zero))
+            {
+                if (StartDocPrinter(hPrinter, 1, di))
+                {
+                    if (StartPagePrinter(hPrinter))
+                    {
+                        IntPtr unmanagedBytes = Marshal.AllocHGlobal(bytes.Length);
+                        Marshal.Copy(bytes, 0, unmanagedBytes, bytes.Length);
+                        bool success = WritePrinter(hPrinter, unmanagedBytes, bytes.Length, out _);
+                        Marshal.FreeHGlobal(unmanagedBytes);
+                        EndPagePrinter(hPrinter);
+                        EndDocPrinter(hPrinter);
+                        ClosePrinter(hPrinter);
+                        return success;
+                    }
+                }
+                ClosePrinter(hPrinter);
+            }
+
+            return false;
+        }
         public static bool SendStringToPrinter(string szPrinterName, string szString, bool imprimir)
         {
             if (imprimir)

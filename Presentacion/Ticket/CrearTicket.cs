@@ -34,7 +34,7 @@ namespace Presentacion.Ticket
         string parte1, parte2;
         string impresora = ConfigurationManager.AppSettings["impresora"].ToString();//"Epson Stylus COLOR 670 ESC/P 2 (Copiar 1)";//"\\\\FARMACIA-PVENTA\\Generic / Text Only"; // nombre exacto de la impresora como esta en el panel de control
         int max, cort;
-        int cantMaxChar = 32;
+        int cantMaxChar = Convert.ToInt32(ConfigurationManager.AppSettings["CantCaracteresTicket"].ToString());
         public void LineasEnBlanco(int cantLineas)
         {
             ticket += "\n";
@@ -109,7 +109,7 @@ namespace Presentacion.Ticket
                 ticket += " ";                          // agrega espacios para alinear a la derecha
             }
             ticket += parte1 + "\n";                    //Agrega el texto
-            
+
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void TextoCentro(string par1)
@@ -152,8 +152,8 @@ namespace Presentacion.Ticket
             {
                 ticket += " ";                            // Agrega espacios para poner par2 al final
             }                                             // **********
-            ticket += parte2+"\n";                     // agrega el segundo parametro al final
-            
+            ticket += parte2 + "\n";                     // agrega el segundo parametro al final
+
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
 
@@ -192,32 +192,32 @@ namespace Presentacion.Ticket
             {
                 ticket += " ";                           // Agrega espacios
             }
-            ticket += parte2+"\n";
+            ticket += parte2 + "\n";
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime texto
         }
         public void AgregaArticulo(string producto, double cant, double precio, double total)
         {
             string cantidad = cant.ToString("F3") + " x " + precio.ToString("F2");
-            ticket += cantidad+"\n";
+            ticket += cantidad + "\n";
 
             int longProd = producto.Length;
             int maxCharProd = 22;
-            if (longProd > maxCharProd)                                 
+            if (longProd > maxCharProd)
             {
                 cort = longProd - maxCharProd;
                 producto = producto.Remove(maxCharProd, cort);
                 longProd = producto.Length;
             }
             ticket += producto;
-            
+
 
             int longTotal = total.ToString("F2").Length;
             int espacios = cantMaxChar - longTotal;
 
-            for (int i = longProd; i < espacios; i++)                
+            for (int i = longProd; i < espacios; i++)
             {
-                ticket += " ";                           
-            }                                            
+                ticket += " ";
+            }
             ticket += total.ToString("F2") + "\n";
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
 
@@ -246,7 +246,7 @@ namespace Presentacion.Ticket
             return result;
         }
 
-        public void realizarImpresionCodigoBarra(string szString)
+        public void realizarImpresionCodigoBarra(string encabezado, string szString)
         {
             string printerName = impresora; // Asegúrate de que este sea el nombre correcto de la impresora
 
@@ -257,7 +257,7 @@ namespace Presentacion.Ticket
             byte[] centerAlign = new byte[] { 0x1B, 0x61, 1 };
 
             // Texto de prueba antes del código de barras
-            byte[] printText = Encoding.ASCII.GetBytes("\n");
+            byte[] printText = Encoding.ASCII.GetBytes(encabezado+"\n\n");
 
             // Configurar la altura del código de barras
             byte[] setBarcodeHeight = new byte[] { 0x1D, 0x68, 100 };
@@ -304,6 +304,60 @@ namespace Presentacion.Ticket
             {
                 Console.WriteLine("Error al imprimir.");
             }
+        }
+
+
+        public void realizarImpresionQR(string szString)
+        {
+            string printerName = @"\\servidorsm\Xprinter"; // Nombre de la impresora en red
+            string qrData = szString; // Texto o URL del código QR
+
+            try
+            {
+                // Generar el comando ESC/POS para el QR
+                byte[] qrCommand = GenerateQRCommand(qrData);
+
+                // Enviar a la impresora usando RawPrinterHelper
+                bool result = RawPrinterHelper.SendBytesToPrinter(printerName, qrCommand);
+
+                if (result)
+                    Console.WriteLine("Código QR enviado a la impresora.");
+                else
+                    Console.WriteLine("Error al imprimir el código QR.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+        }
+
+
+        static byte[] GenerateQRCommand(string qrData)
+        {
+            byte size = 6;    // Tamaño del QR (1-16)
+            byte errorCorrection = 48; // Nivel de corrección: 48 = L, 49 = M, 50 = Q, 51 = H
+
+            byte[] sizeQR = { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, size };
+            byte[] errorQR = { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, errorCorrection };
+            byte[] storeQR = { 0x1D, 0x28, 0x6B, (byte)(qrData.Length + 3), 0x00, 0x31, 0x50, 0x30 };
+            byte[] printQR = { 0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30 };
+
+            byte[] qrDataBytes = Encoding.ASCII.GetBytes(qrData);
+
+            byte[] qrCommand = new byte[sizeQR.Length + errorQR.Length + storeQR.Length + qrDataBytes.Length + printQR.Length];
+            int offset = 0;
+
+            Array.Copy(sizeQR, 0, qrCommand, offset, sizeQR.Length);
+            offset += sizeQR.Length;
+            Array.Copy(errorQR, 0, qrCommand, offset, errorQR.Length);
+            offset += errorQR.Length;
+            Array.Copy(storeQR, 0, qrCommand, offset, storeQR.Length);
+            offset += storeQR.Length;
+            Array.Copy(qrDataBytes, 0, qrCommand, offset, qrDataBytes.Length);
+            offset += qrDataBytes.Length;
+            Array.Copy(printQR, 0, qrCommand, offset, printQR.Length);
+
+            return qrCommand;
         }
 
         public void CortaTicket()

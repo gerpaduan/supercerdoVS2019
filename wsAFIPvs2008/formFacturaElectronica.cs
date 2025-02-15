@@ -1280,6 +1280,12 @@ namespace wsAFIPvs2008
                     ticket.LineasEnBlanco(3);
                 }
                 ticket.realizarImpresion();
+
+                ///Imprimir QR
+                ///
+                //string urlBase = "https://www.afip.gob.ar/fe/qr/";
+                //string data = urlBase + "?p=" + GenerarJSON();
+                //ticket.realizarImpresionQR(urlBase);
                 //si es transferencia preguntar si imprimir copia para el cliente
                 if (esTransferencia)
                 {
