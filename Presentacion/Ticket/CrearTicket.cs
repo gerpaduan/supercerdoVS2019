@@ -260,10 +260,14 @@ namespace Presentacion.Ticket
             byte[] printText = Encoding.ASCII.GetBytes(encabezado+"\n\n");
 
             // Configurar la altura del código de barras
-            byte[] setBarcodeHeight = new byte[] { 0x1D, 0x68, 100 };
+            //byte[] setBarcodeHeight = new byte[] { 0x1D, 0x68, 100 }; //por de
+            byte[] setBarcodeHeight = new byte[] { 0x1D, 0x68, 90 };  // Reducir la altura (puedes probar valores más bajos)
+
+
 
             // Configurar el ancho del código de barras
-            byte[] setBarcodeWidth = new byte[] { 0x1D, 0x77, 3 };
+            //byte[] setBarcodeWidth = new byte[] { 0x1D, 0x77, 3 };
+            byte[] setBarcodeWidth = new byte[] { 0x1D, 0x77, 2 };  // Ancho mínimo
 
             // Configurar para mostrar el texto debajo del código de barras
             byte[] showText = new byte[] { 0x1D, 0x48, 2 };

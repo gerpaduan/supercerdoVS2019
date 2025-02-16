@@ -80,6 +80,11 @@ namespace Presentacion.Caja
 
         int nroErrorBalanza = 0;
         bool expendioDesdeCodigoBarra = false;
+        /// <summary>
+        /// Para Evitar el Leave cuando se carga un Codigo Barra EAN13 desde Expendios
+        /// porque generaba un error 
+        /// </summary>
+        bool cargandoExpendios = false;
         public int SucAnterior
         {
             get { return sucAnterior; }
@@ -1721,7 +1726,11 @@ namespace Presentacion.Caja
             }
             cargarCorte();
 
-            if ((txtCodigo.Text.Length == 8 && esDigitoControlCorrectoEAN8(false)) ||
+            int primerosDos = txtCodigo.Text.Length == 8 ?
+                int.Parse(txtCodigo.Text.Substring(0, 2)) : 0;
+            bool esEAN8 = primerosDos < 20 && primerosDos > 29;
+
+            if ((txtCodigo.Text.Length == 8 && esEAN8 && esDigitoControlCorrectoEAN8(false)) ||
                txtCodigo.Text.Length == 13 && esDigitoControlCorrectoEAN13(false))
             {
                 //si se buscó el codigo en el formCortes y es EAN se forza a ingresar la cantidad
@@ -1729,6 +1738,8 @@ namespace Presentacion.Caja
                 //if (codigoBuscado != 0)
                 //    return;
 
+                if (cargandoExpendios)
+                    return;
                 // Desplazar el foco a otro control para disparar el evento Leave.
                 this.ActiveControl = null;  // Esto simula que el usuario sale del TextBox.
                 txtCodigo.Focus();
@@ -2887,36 +2898,47 @@ namespace Presentacion.Caja
 
         private void grillaExpendios_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // Ignore clicks that are not on button cells.  
-            if (e.RowIndex < 0 || e.ColumnIndex !=
-                grillaExpendios.Columns["btnAgregarExpendio"].Index) return;
-            ///Si combo es "ASIGNADOS" 
-            if (!comboExpendioEstado.Text.Equals("PENDIENTES"))
+            try
             {
-                MessageBox.Show($"Los Expendios seleccionados ya han sido asignados a ésta u otra venta.",
-                                "Error de Validación",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
 
-            // Obtener el valor de la columna "identificacionExpendio" de la fila seleccionada
-            var valorSeleccionado = grillaExpendios.CurrentRow.Cells["idExpendio"].Value?.ToString();
-            // Recorrer todas las filas del DataGridView
-            foreach (DataGridViewRow fila in grillaExpendios.Rows)
-            {
-                // Ignorar filas vacías o nuevas
-                if (fila.IsNewRow) continue;
-
-                // Obtener el valor actual de la columna "identificacionExpendio"
-                var valorActual = fila.Cells["idExpendio"].Value?.ToString();
-
-                // Comparar si coincide con el valor seleccionado
-                if (valorActual == valorSeleccionado)
+                // Ignore clicks that are not on button cells.  
+                if (e.RowIndex < 0 || e.ColumnIndex !=
+                    grillaExpendios.Columns["btnAgregarExpendio"].Index) return;
+                ///Si combo es "ASIGNADOS" 
+                if (!comboExpendioEstado.Text.Equals("PENDIENTES"))
                 {
-                    agregarExpendio(fila);
+                    MessageBox.Show($"Los Expendios seleccionados ya han sido asignados a ésta u otra venta.",
+                                    "Error de Validación",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
+
+                // Obtener el valor de la columna "identificacionExpendio" de la fila seleccionada
+                var valorSeleccionado = grillaExpendios.CurrentRow.Cells["idExpendio"].Value?.ToString();
+                // Recorrer todas las filas del DataGridView
+                foreach (DataGridViewRow fila in grillaExpendios.Rows)
+                {
+                    // Ignorar filas vacías o nuevas
+                    if (fila.IsNewRow) continue;
+
+                    // Obtener el valor actual de la columna "identificacionExpendio"
+                    var valorActual = fila.Cells["idExpendio"].Value?.ToString();
+
+                    cargandoExpendios = true;
+                    // Comparar si coincide con el valor seleccionado
+                    if (valorActual == valorSeleccionado)
+                    {
+                        agregarExpendio(fila);
+                    }
+                }
+                cargandoExpendios = false;
+                filtrarExpendio();
             }
-            filtrarExpendio();
+            catch (Exception)
+            {
+                cargandoExpendios = false;
+                throw;
+            }
         }
 
         private void txtMinutosDesde_SelectedItemChanged(object sender, EventArgs e)

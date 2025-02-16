@@ -100,7 +100,7 @@ namespace Presentacion.Caja
         ///Codigo de Barra
         ///            
         //****Prefijo Cod.Barra Interno (20 a 29) ***
-        int prefijoCodBarraInterno = Convert.ToInt32(ConfigurationManager.AppSettings["cantDigitosProdEnCodBarra"].ToString());
+        int prefijoCodBarraInterno = Convert.ToInt32(ConfigurationManager.AppSettings["prefijoCodBarraInterno"].ToString());
 
         //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
         int cantDigitosProdEnCodBarra = Convert.ToInt32(ConfigurationManager.AppSettings["cantDigitosProdEnCodBarra"].ToString());
@@ -349,9 +349,16 @@ namespace Presentacion.Caja
             //ticket.LineasEnBlanco(2);
             ticket.realizarImpresion();
 
-            ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\n$ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F");
+            //ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\n$ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F");
 
+            //string cod = "12345678";
+            //for (int i = 9; i < 14; i++)
+            //{
+            //    cod += i.ToString();
+            //    ticket.realizarImpresionCodigoBarra(cod.Length.ToString()+"\n", cod);
+            //}
 
+            //TODO: parametros para eleccion del tipo de ticket o etiqueta a imprimir
             for (int index = 0; index < listaLineaVenta.Count; index++)
             {
                 Entidades.LineaVenta linea = listaLineaVenta[index];
@@ -361,26 +368,32 @@ namespace Presentacion.Caja
                 //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
                 if (linea.Corte.codigo.ToString().Length > cantDigitosProdEnCodBarra)
                 {
-                    string mensaje = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido "+ 
+                    string mensaje = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido " +
                         cantDigitosProdEnCodBarra.ToString() + "\n";
                     mensaje += "\nCodigo: " + linea.Corte.codigo.ToString();
                     mensaje += "\nProd: " + linea.Corte.corte.ToString();
-                    MessageBox.Show(mensaje,"Error",MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    break;
+                    MessageBox.Show(mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    //break;
                 }
-
-                string primerModulo
-                //****2do modulo del Cod.Barra(0 : Cantidad -- 1: Monto Total) ***
-                string SegundoModuloBarra = codBarraPorCantidad == 0 ? linea.CantKg.ToString("F3") : (linea.PrecioKg * linea.CantKg).ToString("F2");
-
-                string codBarraProducto = GenerateEAN13(prefijoCodBarraInterno, linea.Corte.codigo.ToString(), SegundoModuloBarra.Replace(".", "").Replace(",", ""), cantDigitosProdEnCodBarra, codBarraPorCantidad);
-                    //linea.Corte.corte.ToString() + "\n$ " + (linea.PrecioKg * linea.CantKg).ToString("F2");// + (linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                  // linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
-                ticket.realizarImpresionCodigoBarra(linea.Corte.corte.ToString() + "\n$ " + (linea.PrecioKg * linea.CantKg).ToString("F2"), codBarraProducto);
+                else
+                {
+                    string primerModuloCodBarra = linea.Corte.codigo.ToString().PadLeft(cantDigitosProdEnCodBarra, '0');
+                    //****2do modulo del Cod.Barra(0 : Cantidad -- 1: Monto Total) ***
+                    string SegundoModuloBarra = codBarraPorCantidad == 0 ? linea.CantKg.ToString("F3") : (linea.PrecioKg * linea.CantKg).ToString("F2");
+                    int cantDigito2doModulo = 10 - cantDigitosProdEnCodBarra;
+                    SegundoModuloBarra = SegundoModuloBarra.Replace(".", "").Replace(",", "").PadLeft(cantDigito2doModulo, '0');
+                    string baseCode = prefijoCodBarraInterno + primerModuloCodBarra + SegundoModuloBarra; // 12 dígitos sin el dígito de control
+                    int checkDigit = CalculateCheckDigit(baseCode); // Calcular dígito de control
+                    string codBarraProducto = baseCode + checkDigit; // Retornar los 13 dígitos completos //GenerateEAN13(prefijoCodBarraInterno, linea.Corte.codigo.ToString(), SegundoModuloBarra.Replace(".", "").Replace(",", ""), cantDigitosProdEnCodBarra, codBarraPorCantidad);
+                    string encabezadoEtiquetaCodBarra = linea.Corte.corte.ToString() +
+                        "\n" + linea.CantKg.ToString("F3") + "x" + linea.PrecioKg.ToString("N2") +
+                        "\nTotal $ " + (linea.PrecioKg * linea.CantKg).ToString("N2") + "\n";
+                    ticket.realizarImpresionCodigoBarra(encabezadoEtiquetaCodBarra, codBarraProducto);
+                }
             }
         }
 
-        public static string GenerateEAN13(int prefijoCodBarra, string productCode, string segundoModuloBarra, int cantDigitosProdEnCodBarra, int codBarraPorCantidad)
+        public static string GenerateEAN13(int prefijoCodBarra, string productCode, decimal weightInKg, int cantDigitosProdEnCodBarra, int codBarraPorCantidad)
         {
             //if (productCode.Length != 4)
             //    throw new ArgumentException("El código de producto debe tener exactamente 4 dígitos.");
