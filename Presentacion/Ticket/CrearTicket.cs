@@ -33,6 +33,7 @@ namespace Presentacion.Ticket
         string ticket = "";
         string parte1, parte2;
         string impresora = ConfigurationManager.AppSettings["impresora"].ToString();//"Epson Stylus COLOR 670 ESC/P 2 (Copiar 1)";//"\\\\FARMACIA-PVENTA\\Generic / Text Only"; // nombre exacto de la impresora como esta en el panel de control
+        string impresoraEtiqueta = ConfigurationManager.AppSettings["impresoraEtiqueta"].ToString();//"Epson Stylus COLOR 670 ESC/P 2 (Copiar 1)";//"\\\\FARMACIA-PVENTA\\Generic / Text Only"; // nombre exacto de la impresora como esta en el panel de control
         int max, cort;
         int cantMaxChar = Convert.ToInt32(ConfigurationManager.AppSettings["CantCaracteresTicket"].ToString());
         public void LineasEnBlanco(int cantLineas)
@@ -246,9 +247,9 @@ namespace Presentacion.Ticket
             return result;
         }
 
-        public void realizarImpresionCodigoBarra(string encabezado, string szString)
+        public void realizarImpresionCodigoBarra(string encabezado, string szString, bool esEtiqueta)
         {
-            string printerName = impresora; // Asegúrate de que este sea el nombre correcto de la impresora
+            string printerName = esEtiqueta ? impresoraEtiqueta : impresora; // Asegúrate de que este sea el nombre correcto de la impresora
 
             // Reset de la impresora
             byte[] init = new byte[] { 0x1B, 0x40 };
@@ -313,7 +314,7 @@ namespace Presentacion.Ticket
 
         public void realizarImpresionQR(string szString)
         {
-            string printerName = @"\\servidorsm\Xprinter"; // Nombre de la impresora en red
+            string printerName = impresora; // Nombre de la impresora en red
             string qrData = szString; // Texto o URL del código QR
 
             try

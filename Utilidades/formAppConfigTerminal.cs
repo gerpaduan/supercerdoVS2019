@@ -158,6 +158,7 @@ namespace Utilidades
             string nombreEquipo = Environment.MachineName;
 
             Impresora.Text = "\\\\" + nombreEquipo + "\\" + cbImpresoras.Text;
+            ImpresoraEtiqueta.Text = "\\\\" + nombreEquipo + "\\" + cbImpresoras.Text;
         }
     }
 }

@@ -105,9 +105,15 @@ namespace Utilidades
             this.label35 = new System.Windows.Forms.Label();
             this.cbImpresoras = new System.Windows.Forms.ComboBox();
             this.label36 = new System.Windows.Forms.Label();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.label37 = new System.Windows.Forms.Label();
+            this.CantCaracteresEtiqueta = new System.Windows.Forms.TextBox();
+            this.label38 = new System.Windows.Forms.Label();
+            this.ImpresoraEtiqueta = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.SuspendLayout();
             // 
             // cliente
@@ -197,7 +203,7 @@ namespace Utilidades
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(326, 132);
+            this.label7.Location = new System.Drawing.Point(326, 202);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(99, 13);
             this.label7.TabIndex = 14;
@@ -206,7 +212,7 @@ namespace Utilidades
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(342, 216);
+            this.label8.Location = new System.Drawing.Point(342, 286);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(83, 13);
             this.label8.TabIndex = 16;
@@ -231,7 +237,7 @@ namespace Utilidades
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(326, 246);
+            this.label10.Location = new System.Drawing.Point(326, 316);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(99, 13);
             this.label10.TabIndex = 20;
@@ -240,7 +246,7 @@ namespace Utilidades
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(306, 271);
+            this.label11.Location = new System.Drawing.Point(306, 341);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(127, 26);
             this.label11.TabIndex = 22;
@@ -269,7 +275,7 @@ namespace Utilidades
             this.ticketExpendio.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.ticketExpendio.Location = new System.Drawing.Point(431, 129);
+            this.ticketExpendio.Location = new System.Drawing.Point(431, 199);
             this.ticketExpendio.Name = "ticketExpendio";
             this.ticketExpendio.Size = new System.Drawing.Size(59, 21);
             this.ticketExpendio.TabIndex = 25;
@@ -300,7 +306,7 @@ namespace Utilidades
             "Resp. Inscripto",
             "Monotributista",
             "Exento"});
-            this.CondicionIVA.Location = new System.Drawing.Point(105, 114);
+            this.CondicionIVA.Location = new System.Drawing.Point(105, 105);
             this.CondicionIVA.Name = "CondicionIVA";
             this.CondicionIVA.Size = new System.Drawing.Size(195, 21);
             this.CondicionIVA.TabIndex = 29;
@@ -312,7 +318,7 @@ namespace Utilidades
             this.factura.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.factura.Location = new System.Drawing.Point(431, 242);
+            this.factura.Location = new System.Drawing.Point(431, 312);
             this.factura.Name = "factura";
             this.factura.Size = new System.Drawing.Size(59, 21);
             this.factura.TabIndex = 30;
@@ -324,7 +330,7 @@ namespace Utilidades
             this.ticketForms.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.ticketForms.Location = new System.Drawing.Point(431, 213);
+            this.ticketForms.Location = new System.Drawing.Point(431, 283);
             this.ticketForms.Name = "ticketForms";
             this.ticketForms.Size = new System.Drawing.Size(59, 21);
             this.ticketForms.TabIndex = 31;
@@ -358,42 +364,42 @@ namespace Utilidades
             this.pagoBancoSinFac.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.pagoBancoSinFac.Location = new System.Drawing.Point(431, 271);
+            this.pagoBancoSinFac.Location = new System.Drawing.Point(431, 341);
             this.pagoBancoSinFac.Name = "pagoBancoSinFac";
             this.pagoBancoSinFac.Size = new System.Drawing.Size(59, 21);
             this.pagoBancoSinFac.TabIndex = 34;
             // 
             // cuit
             // 
-            this.cuit.Location = new System.Drawing.Point(105, 86);
+            this.cuit.Location = new System.Drawing.Point(105, 77);
             this.cuit.Name = "cuit";
             this.cuit.Size = new System.Drawing.Size(89, 20);
             this.cuit.TabIndex = 35;
             // 
             // ptoVtaAfip
             // 
-            this.ptoVtaAfip.Location = new System.Drawing.Point(105, 35);
+            this.ptoVtaAfip.Location = new System.Drawing.Point(105, 26);
             this.ptoVtaAfip.Name = "ptoVtaAfip";
             this.ptoVtaAfip.Size = new System.Drawing.Size(46, 20);
             this.ptoVtaAfip.TabIndex = 36;
             // 
             // NegocioAgregado4
             // 
-            this.NegocioAgregado4.Location = new System.Drawing.Point(413, 61);
+            this.NegocioAgregado4.Location = new System.Drawing.Point(413, 52);
             this.NegocioAgregado4.Name = "NegocioAgregado4";
             this.NegocioAgregado4.Size = new System.Drawing.Size(125, 20);
             this.NegocioAgregado4.TabIndex = 39;
             // 
             // NegocioAgregado1
             // 
-            this.NegocioAgregado1.Location = new System.Drawing.Point(105, 168);
+            this.NegocioAgregado1.Location = new System.Drawing.Point(105, 159);
             this.NegocioAgregado1.Name = "NegocioAgregado1";
             this.NegocioAgregado1.Size = new System.Drawing.Size(195, 20);
             this.NegocioAgregado1.TabIndex = 40;
             // 
             // Negocio
             // 
-            this.Negocio.Location = new System.Drawing.Point(105, 142);
+            this.Negocio.Location = new System.Drawing.Point(105, 133);
             this.Negocio.Name = "Negocio";
             this.Negocio.Size = new System.Drawing.Size(195, 20);
             this.Negocio.TabIndex = 41;
@@ -401,7 +407,7 @@ namespace Utilidades
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(11, 171);
+            this.label15.Location = new System.Drawing.Point(11, 162);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(88, 13);
             this.label15.TabIndex = 42;
@@ -410,7 +416,7 @@ namespace Utilidades
             // label17
             // 
             this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(11, 145);
+            this.label17.Location = new System.Drawing.Point(11, 136);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(91, 13);
             this.label17.TabIndex = 43;
@@ -419,7 +425,7 @@ namespace Utilidades
             // label18
             // 
             this.label18.AutoSize = true;
-            this.label18.Location = new System.Drawing.Point(66, 89);
+            this.label18.Location = new System.Drawing.Point(66, 80);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(32, 13);
             this.label18.TabIndex = 44;
@@ -428,7 +434,7 @@ namespace Utilidades
             // label16
             // 
             this.label16.AutoSize = true;
-            this.label16.Location = new System.Drawing.Point(15, 38);
+            this.label16.Location = new System.Drawing.Point(15, 29);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(83, 13);
             this.label16.TabIndex = 45;
@@ -437,7 +443,7 @@ namespace Utilidades
             // 
             // IIBB
             // 
-            this.IIBB.Location = new System.Drawing.Point(413, 87);
+            this.IIBB.Location = new System.Drawing.Point(413, 78);
             this.IIBB.Name = "IIBB";
             this.IIBB.Size = new System.Drawing.Size(125, 20);
             this.IIBB.TabIndex = 46;
@@ -445,7 +451,7 @@ namespace Utilidades
             // lblCuit
             // 
             this.lblCuit.AutoSize = true;
-            this.lblCuit.Location = new System.Drawing.Point(372, 64);
+            this.lblCuit.Location = new System.Drawing.Point(372, 55);
             this.lblCuit.Name = "lblCuit";
             this.lblCuit.Size = new System.Drawing.Size(35, 13);
             this.lblCuit.TabIndex = 47;
@@ -454,7 +460,7 @@ namespace Utilidades
             // lblIIBB
             // 
             this.lblIIBB.AutoSize = true;
-            this.lblIIBB.Location = new System.Drawing.Point(377, 90);
+            this.lblIIBB.Location = new System.Drawing.Point(377, 81);
             this.lblIIBB.Name = "lblIIBB";
             this.lblIIBB.Size = new System.Drawing.Size(30, 13);
             this.lblIIBB.TabIndex = 48;
@@ -463,7 +469,7 @@ namespace Utilidades
             // label19
             // 
             this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(3, 66);
+            this.label19.Location = new System.Drawing.Point(3, 57);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(96, 13);
             this.label19.TabIndex = 50;
@@ -471,21 +477,21 @@ namespace Utilidades
             // 
             // Dueno
             // 
-            this.Dueno.Location = new System.Drawing.Point(105, 61);
+            this.Dueno.Location = new System.Drawing.Point(105, 52);
             this.Dueno.Name = "Dueno";
             this.Dueno.Size = new System.Drawing.Size(195, 20);
             this.Dueno.TabIndex = 49;
             // 
             // Direccion
             // 
-            this.Direccion.Location = new System.Drawing.Point(413, 113);
+            this.Direccion.Location = new System.Drawing.Point(413, 104);
             this.Direccion.Name = "Direccion";
             this.Direccion.Size = new System.Drawing.Size(183, 20);
             this.Direccion.TabIndex = 51;
             // 
             // Localidad
             // 
-            this.Localidad.Location = new System.Drawing.Point(413, 139);
+            this.Localidad.Location = new System.Drawing.Point(413, 130);
             this.Localidad.Name = "Localidad";
             this.Localidad.Size = new System.Drawing.Size(183, 20);
             this.Localidad.TabIndex = 52;
@@ -493,7 +499,7 @@ namespace Utilidades
             // label20
             // 
             this.label20.AutoSize = true;
-            this.label20.Location = new System.Drawing.Point(358, 116);
+            this.label20.Location = new System.Drawing.Point(358, 107);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(49, 13);
             this.label20.TabIndex = 54;
@@ -502,7 +508,7 @@ namespace Utilidades
             // label21
             // 
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(358, 143);
+            this.label21.Location = new System.Drawing.Point(358, 134);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(53, 13);
             this.label21.TabIndex = 55;
@@ -511,7 +517,7 @@ namespace Utilidades
             // label22
             // 
             this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(342, 168);
+            this.label22.Location = new System.Drawing.Point(342, 159);
             this.label22.Name = "label22";
             this.label22.Size = new System.Drawing.Size(65, 13);
             this.label22.TabIndex = 57;
@@ -519,7 +525,7 @@ namespace Utilidades
             // 
             // InicioActividades
             // 
-            this.InicioActividades.Location = new System.Drawing.Point(413, 165);
+            this.InicioActividades.Location = new System.Drawing.Point(413, 156);
             this.InicioActividades.Name = "InicioActividades";
             this.InicioActividades.Size = new System.Drawing.Size(183, 20);
             this.InicioActividades.TabIndex = 56;
@@ -527,7 +533,7 @@ namespace Utilidades
             // label23
             // 
             this.label23.AutoSize = true;
-            this.label23.Location = new System.Drawing.Point(47, 118);
+            this.label23.Location = new System.Drawing.Point(47, 109);
             this.label23.Name = "label23";
             this.label23.Size = new System.Drawing.Size(52, 13);
             this.label23.TabIndex = 58;
@@ -635,16 +641,16 @@ namespace Utilidades
             this.groupBox1.Controls.Add(this.Localidad);
             this.groupBox1.Controls.Add(this.label19);
             this.groupBox1.Controls.Add(this.Direccion);
-            this.groupBox1.Location = new System.Drawing.Point(329, 307);
+            this.groupBox1.Location = new System.Drawing.Point(329, 374);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(635, 267);
+            this.groupBox1.Size = new System.Drawing.Size(635, 253);
             this.groupBox1.TabIndex = 67;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Datos ARCA (AFIP)";
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(105, 224);
+            this.textBox1.Location = new System.Drawing.Point(105, 211);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(195, 20);
             this.textBox1.TabIndex = 62;
@@ -652,7 +658,7 @@ namespace Utilidades
             // label29
             // 
             this.label29.AutoSize = true;
-            this.label29.Location = new System.Drawing.Point(19, 227);
+            this.label29.Location = new System.Drawing.Point(19, 214);
             this.label29.Name = "label29";
             this.label29.Size = new System.Drawing.Size(80, 26);
             this.label29.TabIndex = 63;
@@ -660,7 +666,7 @@ namespace Utilidades
             // 
             // NegocioAgregado2
             // 
-            this.NegocioAgregado2.Location = new System.Drawing.Point(105, 194);
+            this.NegocioAgregado2.Location = new System.Drawing.Point(105, 185);
             this.NegocioAgregado2.Name = "NegocioAgregado2";
             this.NegocioAgregado2.Size = new System.Drawing.Size(195, 20);
             this.NegocioAgregado2.TabIndex = 60;
@@ -668,7 +674,7 @@ namespace Utilidades
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(25, 197);
+            this.label14.Location = new System.Drawing.Point(25, 188);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(74, 26);
             this.label14.TabIndex = 61;
@@ -677,7 +683,7 @@ namespace Utilidades
             // btnBuscarAfip
             // 
             this.btnBuscarAfip.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarAfip.Location = new System.Drawing.Point(200, 85);
+            this.btnBuscarAfip.Location = new System.Drawing.Point(200, 76);
             this.btnBuscarAfip.Name = "btnBuscarAfip";
             this.btnBuscarAfip.Size = new System.Drawing.Size(100, 23);
             this.btnBuscarAfip.TabIndex = 59;
@@ -711,7 +717,7 @@ namespace Utilidades
             this.groupBox3.Controls.Add(this.codBarraPorCantidad);
             this.groupBox3.Controls.Add(this.label28);
             this.groupBox3.Controls.Add(this.label27);
-            this.groupBox3.Location = new System.Drawing.Point(640, 107);
+            this.groupBox3.Location = new System.Drawing.Point(640, 126);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(324, 156);
             this.groupBox3.TabIndex = 69;
@@ -773,7 +779,7 @@ namespace Utilidades
             "TICKET",
             "ETIQUETA_EXPENDIO",
             "ETIQUETA_PRODUCTO"});
-            this.tipoTicketExpendio.Location = new System.Drawing.Point(431, 156);
+            this.tipoTicketExpendio.Location = new System.Drawing.Point(431, 226);
             this.tipoTicketExpendio.Name = "tipoTicketExpendio";
             this.tipoTicketExpendio.Size = new System.Drawing.Size(163, 21);
             this.tipoTicketExpendio.TabIndex = 74;
@@ -781,7 +787,7 @@ namespace Utilidades
             // label32
             // 
             this.label32.AutoSize = true;
-            this.label32.Location = new System.Drawing.Point(326, 159);
+            this.label32.Location = new System.Drawing.Point(326, 229);
             this.label32.Name = "label32";
             this.label32.Size = new System.Drawing.Size(100, 13);
             this.label32.TabIndex = 73;
@@ -819,7 +825,7 @@ namespace Utilidades
             this.pausarEtiqueta.Items.AddRange(new object[] {
             "SI",
             "NO"});
-            this.pausarEtiqueta.Location = new System.Drawing.Point(431, 183);
+            this.pausarEtiqueta.Location = new System.Drawing.Point(431, 253);
             this.pausarEtiqueta.Name = "pausarEtiqueta";
             this.pausarEtiqueta.Size = new System.Drawing.Size(59, 21);
             this.pausarEtiqueta.TabIndex = 76;
@@ -827,7 +833,7 @@ namespace Utilidades
             // label35
             // 
             this.label35.AutoSize = true;
-            this.label35.Location = new System.Drawing.Point(343, 186);
+            this.label35.Location = new System.Drawing.Point(343, 256);
             this.label35.Name = "label35";
             this.label35.Size = new System.Drawing.Size(82, 13);
             this.label35.TabIndex = 75;
@@ -844,7 +850,7 @@ namespace Utilidades
             this.cbImpresoras.Name = "cbImpresoras";
             this.cbImpresoras.Size = new System.Drawing.Size(200, 21);
             this.cbImpresoras.TabIndex = 78;
-            this.cbImpresoras.SelectedIndexChanged += new System.EventHandler(this.cbImpresoras_SelectedIndexChanged);
+            this.cbImpresoras.SelectedIndexChanged += new System.EventHandler(this.formAppConfigTerminal_Load);
             // 
             // label36
             // 
@@ -855,11 +861,57 @@ namespace Utilidades
             this.label36.TabIndex = 79;
             this.label36.Text = "Impresoras disponibles";
             // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.label37);
+            this.groupBox4.Controls.Add(this.ImpresoraEtiqueta);
+            this.groupBox4.Controls.Add(this.CantCaracteresEtiqueta);
+            this.groupBox4.Controls.Add(this.label38);
+            this.groupBox4.Location = new System.Drawing.Point(309, 126);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(320, 67);
+            this.groupBox4.TabIndex = 69;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Impresora Etiquetas";
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Location = new System.Drawing.Point(6, 46);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(111, 13);
+            this.label37.TabIndex = 83;
+            this.label37.Text = "Cant. Caract. Etiqueta";
+            // 
+            // CantCaracteresEtiqueta
+            // 
+            this.CantCaracteresEtiqueta.Location = new System.Drawing.Point(122, 42);
+            this.CantCaracteresEtiqueta.Name = "CantCaracteresEtiqueta";
+            this.CantCaracteresEtiqueta.Size = new System.Drawing.Size(59, 20);
+            this.CantCaracteresEtiqueta.TabIndex = 82;
+            // 
+            // label38
+            // 
+            this.label38.AutoSize = true;
+            this.label38.Location = new System.Drawing.Point(63, 20);
+            this.label38.Name = "label38";
+            this.label38.Size = new System.Drawing.Size(53, 13);
+            this.label38.TabIndex = 81;
+            this.label38.Text = "Impresora";
+            // 
+            // ImpresoraEtiqueta
+            // 
+            this.ImpresoraEtiqueta.Location = new System.Drawing.Point(122, 16);
+            this.ImpresoraEtiqueta.Name = "ImpresoraEtiqueta";
+            this.ImpresoraEtiqueta.Size = new System.Drawing.Size(192, 20);
+            this.ImpresoraEtiqueta.TabIndex = 80;
+            // 
             // formAppConfigTerminal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(978, 577);
+            this.ClientSize = new System.Drawing.Size(978, 635);
+            this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.label36);
             this.Controls.Add(this.cbImpresoras);
             this.Controls.Add(this.pausarEtiqueta);
@@ -905,6 +957,8 @@ namespace Utilidades
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -987,5 +1041,10 @@ namespace Utilidades
         private System.Windows.Forms.Label label35;
         private System.Windows.Forms.ComboBox cbImpresoras;
         private System.Windows.Forms.Label label36;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Label label37;
+        private System.Windows.Forms.TextBox ImpresoraEtiqueta;
+        private System.Windows.Forms.TextBox CantCaracteresEtiqueta;
+        private System.Windows.Forms.Label label38;
     }
 }

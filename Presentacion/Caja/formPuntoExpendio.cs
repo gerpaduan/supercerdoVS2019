@@ -361,7 +361,7 @@ namespace Presentacion.Caja
                 ticket.realizarImpresion();
 
             if (tipoTicketExpendio.Equals(tipoTicket.TICKET.ToString()) || tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_EXPENDIO.ToString()))
-                ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\nTOTAL $ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F");
+                ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\nTOTAL $ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F", tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_EXPENDIO.ToString()));
 
 
             if (tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()))
@@ -380,7 +380,7 @@ namespace Presentacion.Caja
                     string encabezadoEtiquetaCodBarra = linea.Corte.corte.ToString() +
                         "\n" + linea.CantKg.ToString("F3") + "x" + linea.PrecioKg.ToString("N2") +
                         "\nTOTAL $ " + (linea.PrecioKg * linea.CantKg).ToString("N2") + "\n";
-                    ticket.realizarImpresionCodigoBarra(encabezadoEtiquetaCodBarra, codBarraProducto);
+                    ticket.realizarImpresionCodigoBarra(encabezadoEtiquetaCodBarra, codBarraProducto, tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_EXPENDIO.ToString()));
 
                     if (pausarEtiqueta && listaLineaVenta.Count > 1 && index < listaLineaVenta.Count - 1)
                         MessageBox.Show("Imprimir Siguiente...", "Imprimir etiqueta", MessageBoxButtons.OK, MessageBoxIcon.Question);
