@@ -866,11 +866,11 @@ namespace wsAFIPvs2008
                     }
                 }
 
-                //Cambiando . por , para convertir a double
-                ImpIvaTx.Text = ImpIvaTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
-                NetoTX.Text = NetoTX.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
-                TotalTx.Text = TotalTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
-                
+                ////Cambiando . por , para convertir a double
+                //ImpIvaTx.Text = ImpIvaTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                //NetoTX.Text = NetoTX.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                //TotalTx.Text = TotalTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                //return;
                 CbteTipo cm = (CbteTipo) TiposComprobantesCMB.SelectedItem;
                 FECAERequest req = new FECAERequest(); ///Request para obtener CAE
                 FECAECabRequest cab = new FECAECabRequest(); ///CABECERA DEL REQUEST

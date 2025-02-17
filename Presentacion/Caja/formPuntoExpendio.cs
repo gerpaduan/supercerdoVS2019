@@ -16,6 +16,7 @@ using Utilidades;
 using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
 using Presentacion.Ticket;
+using System.Web.Services.Description;
 
 namespace Presentacion.Caja
 {
@@ -114,7 +115,15 @@ namespace Presentacion.Caja
         bool esCodBarraInterno , esCodBarraEstandar = false;
         string codigoEnCodBarra = "", segundoModulo = "";
         public string sector = "";
-        
+
+        string tipoTicketExpendio = ConfigurationManager.AppSettings["tipoTicketExpendio"].ToString();
+        bool pausarEtiqueta = Convert.ToBoolean(ConfigurationManager.AppSettings["pausarEtiqueta"].ToString());
+        public enum tipoTicket
+        {
+            TICKET,
+            ETIQUETA_EXPENDIO,
+            ETIQUETA_PRODUCTO
+        }
         #endregion
 
 
@@ -347,36 +356,19 @@ namespace Presentacion.Caja
             ticket.TextoIzquierda("Cajero: " + (oUsuario != null && oUsuario.Id > 0 ? oUsuario.Id.ToString() : oVentaE.Vendedor.Id.ToString()));
             ticket.GraciasPorSuCompra();
             //ticket.LineasEnBlanco(2);
-            ticket.realizarImpresion();
 
-            //ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\n$ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F");
+            if (tipoTicketExpendio.Equals(tipoTicket.TICKET.ToString()))
+                ticket.realizarImpresion();
 
-            //string cod = "12345678";
-            //for (int i = 9; i < 14; i++)
-            //{
-            //    cod += i.ToString();
-            //    ticket.realizarImpresionCodigoBarra(cod.Length.ToString()+"\n", cod);
-            //}
+            if (tipoTicketExpendio.Equals(tipoTicket.TICKET.ToString()) || tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_EXPENDIO.ToString()))
+                ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\nTOTAL $ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F");
 
-            //TODO: parametros para eleccion del tipo de ticket o etiqueta a imprimir
-            for (int index = 0; index < listaLineaVenta.Count; index++)
+
+            if (tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()))
             {
-                Entidades.LineaVenta linea = listaLineaVenta[index];
-
-                //Verifica la long del codigo
-
-                //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
-                if (linea.Corte.codigo.ToString().Length > cantDigitosProdEnCodBarra)
+                for (int index = 0; index < listaLineaVenta.Count; index++)
                 {
-                    string mensaje = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido " +
-                        cantDigitosProdEnCodBarra.ToString() + "\n";
-                    mensaje += "\nCodigo: " + linea.Corte.codigo.ToString();
-                    mensaje += "\nProd: " + linea.Corte.corte.ToString();
-                    MessageBox.Show(mensaje, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    //break;
-                }
-                else
-                {
+                    Entidades.LineaVenta linea = listaLineaVenta[index];
                     string primerModuloCodBarra = linea.Corte.codigo.ToString().PadLeft(cantDigitosProdEnCodBarra, '0');
                     //****2do modulo del Cod.Barra(0 : Cantidad -- 1: Monto Total) ***
                     string SegundoModuloBarra = codBarraPorCantidad == 0 ? linea.CantKg.ToString("F3") : (linea.PrecioKg * linea.CantKg).ToString("F2");
@@ -387,8 +379,11 @@ namespace Presentacion.Caja
                     string codBarraProducto = baseCode + checkDigit; // Retornar los 13 dígitos completos //GenerateEAN13(prefijoCodBarraInterno, linea.Corte.codigo.ToString(), SegundoModuloBarra.Replace(".", "").Replace(",", ""), cantDigitosProdEnCodBarra, codBarraPorCantidad);
                     string encabezadoEtiquetaCodBarra = linea.Corte.corte.ToString() +
                         "\n" + linea.CantKg.ToString("F3") + "x" + linea.PrecioKg.ToString("N2") +
-                        "\nTotal $ " + (linea.PrecioKg * linea.CantKg).ToString("N2") + "\n";
+                        "\nTOTAL $ " + (linea.PrecioKg * linea.CantKg).ToString("N2") + "\n";
                     ticket.realizarImpresionCodigoBarra(encabezadoEtiquetaCodBarra, codBarraProducto);
+
+                    if (pausarEtiqueta && listaLineaVenta.Count > 1 && index < listaLineaVenta.Count - 1)
+                        MessageBox.Show("Imprimir Siguiente...", "Imprimir etiqueta", MessageBoxButtons.OK, MessageBoxIcon.Question);
                 }
             }
         }
@@ -632,6 +627,19 @@ namespace Presentacion.Caja
             if (oCorteE != null && !oCorteE.Habilitado)
             {
                 MessageBox.Show("- \'" + oCorteE.CorteDesc +"\' no está habilitado para la venta", "Corte No Habilitado",MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                txtCodigo.Focus();
+                return false;
+            }
+
+            //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
+            if (tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()) && oCorteE.codigo.ToString().Length > cantDigitosProdEnCodBarra)
+            {
+                string mensaje1 = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido " +
+                    cantDigitosProdEnCodBarra.ToString() + "\n";
+                mensaje1 += "\nCodigo: " + oCorteE.codigo.ToString();
+                mensaje1 += "\nProd: " + oCorteE.corte.ToString();
+                MessageBox.Show(mensaje1, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                 txtCodigo.Focus();
                 return false;
             }
@@ -1427,6 +1435,7 @@ namespace Presentacion.Caja
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
                 "" +
                 "F10 = Buscar Corte  |  AvPág = Cambiar Vendedor";
+            labelTipoImpresion.Text = "Tipo Impresion: " + tipoTicketExpendio;
             if (oUsuario != null)
             {
                 //se vuelve a validar que el usuario no sea nulo(sucede cuando no quiere abrir caja)
@@ -1480,7 +1489,7 @@ namespace Presentacion.Caja
             this.sector = sector;
         }
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, Keys keyData)
         {
             switch (keyData)
             {
@@ -1501,8 +1510,8 @@ namespace Presentacion.Caja
                     txtCodigo.Focus();
                     break;
                 case Keys.End:
-                    //si el campo cliente está vacio se hace foco
-                    if (string.IsNullOrEmpty(txtCliente.Text))
+                    //si el campo cliente está vacio se hace foco y si txtCliente ya tiene el foco pasa a aceptar
+                    if (string.IsNullOrEmpty(txtCliente.Text) && !txtCliente.Focused)
                     {
                         txtCliente.Focus();
                         txtCliente.Select();
@@ -1824,6 +1833,7 @@ namespace Presentacion.Caja
 
         private void checkTicket_CheckedChanged(object sender, EventArgs e)
         {
+            labelTipoImpresion.Visible = checkTicket.Checked;
             checkTicket.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkTicket.Checked);
             txtCodigo.Focus();
         }

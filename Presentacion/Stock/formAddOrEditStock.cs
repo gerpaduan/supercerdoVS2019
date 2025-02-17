@@ -1097,7 +1097,12 @@ namespace Presentacion
                         }
                     }
                 }
-                grillaSinStock.DataSource = dtCortesSinStock;
+
+                // Ordenar por "codigo" ascendente antes de asignar a la grilla
+                DataView dv = dtCortesSinStock.DefaultView;
+                dv.Sort = "codigo ASC";
+
+                grillaSinStock.DataSource = dv.ToTable();
             }
         }
 

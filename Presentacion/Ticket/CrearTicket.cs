@@ -267,7 +267,7 @@ namespace Presentacion.Ticket
 
             // Configurar el ancho del código de barras
             //byte[] setBarcodeWidth = new byte[] { 0x1D, 0x77, 3 };
-            byte[] setBarcodeWidth = new byte[] { 0x1D, 0x77, 2 };  // Ancho mínimo
+            byte[] setBarcodeWidth = new byte[] { 0x1D, 0x77, 2 };  //1 Ancho mínimo
 
             // Configurar para mostrar el texto debajo del código de barras
             byte[] showText = new byte[] { 0x1D, 0x48, 2 };

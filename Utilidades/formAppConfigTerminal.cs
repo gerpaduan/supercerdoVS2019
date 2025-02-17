@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Configuration;
+using System.Drawing.Printing;
 
 
 namespace Utilidades
@@ -25,6 +26,15 @@ namespace Utilidades
 
         private void formAppConfigTerminal_Load(object sender, EventArgs e)
         {
+            foreach (string printer in PrinterSettings.InstalledPrinters)
+            {
+                cbImpresoras.Items.Add(printer);
+            }
+
+            // Seleccionar la impresora predeterminada por defecto
+            cbImpresoras.SelectedIndex = cbImpresoras.Items.IndexOf(new PrintDocument().PrinterSettings.PrinterName);
+
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             Configuration config =
                 ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
@@ -141,6 +151,13 @@ namespace Utilidades
         private void cliente_TextChanged(object sender, EventArgs e)
         {
             Negocio.Text = cliente.Text;
+        }
+
+        private void cbImpresoras_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string nombreEquipo = Environment.MachineName;
+
+            Impresora.Text = "\\\\" + nombreEquipo + "\\" + cbImpresoras.Text;
         }
     }
 }
