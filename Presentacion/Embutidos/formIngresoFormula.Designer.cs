@@ -44,6 +44,9 @@
             this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.agregarAuto = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.groupPasos = new System.Windows.Forms.GroupBox();
+            this.txtReceta = new System.Windows.Forms.TextBox();
+            this.btnReceta = new System.Windows.Forms.Button();
             this.txtUsuario = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -80,6 +83,7 @@
             this.txtTotalUnidades = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
+            this.groupPasos.SuspendLayout();
             this.groupBoxCortesFormula.SuspendLayout();
             this.groupBoxFormula.SuspendLayout();
             this.SuspendLayout();
@@ -220,6 +224,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pnlBuscar.Controls.Add(this.groupPasos);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
             this.pnlBuscar.Controls.Add(this.label7);
             this.pnlBuscar.Controls.Add(this.groupBox3);
@@ -229,6 +234,45 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(562, 249);
             this.pnlBuscar.TabIndex = 14;
+            // 
+            // groupPasos
+            // 
+            this.groupPasos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupPasos.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupPasos.Controls.Add(this.txtReceta);
+            this.groupPasos.Controls.Add(this.btnReceta);
+            this.groupPasos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupPasos.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupPasos.Location = new System.Drawing.Point(366, 52);
+            this.groupPasos.Name = "groupPasos";
+            this.groupPasos.Size = new System.Drawing.Size(186, 85);
+            this.groupPasos.TabIndex = 54;
+            this.groupPasos.TabStop = false;
+            this.groupPasos.Text = "Receta";
+            // 
+            // txtReceta
+            // 
+            this.txtReceta.Location = new System.Drawing.Point(6, 16);
+            this.txtReceta.Multiline = true;
+            this.txtReceta.Name = "txtReceta";
+            this.txtReceta.ReadOnly = true;
+            this.txtReceta.Size = new System.Drawing.Size(142, 63);
+            this.txtReceta.TabIndex = 29;
+            // 
+            // btnReceta
+            // 
+            this.btnReceta.AccessibleDescription = "";
+            this.btnReceta.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnReceta.ForeColor = System.Drawing.Color.Black;
+            this.btnReceta.Image = ((System.Drawing.Image)(resources.GetObject("btnReceta.Image")));
+            this.btnReceta.Location = new System.Drawing.Point(152, 16);
+            this.btnReceta.Name = "btnReceta";
+            this.btnReceta.Size = new System.Drawing.Size(28, 24);
+            this.btnReceta.TabIndex = 1;
+            this.btnReceta.TabStop = false;
+            this.btnReceta.UseVisualStyleBackColor = true;
+            this.btnReceta.Click += new System.EventHandler(this.btnReceta_Click);
             // 
             // txtUsuario
             // 
@@ -375,9 +419,9 @@
             this.btnBuscarCorte.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCorte.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorte.Image")));
-            this.btnBuscarCorte.Location = new System.Drawing.Point(170, 22);
+            this.btnBuscarCorte.Location = new System.Drawing.Point(168, 24);
             this.btnBuscarCorte.Name = "btnBuscarCorte";
-            this.btnBuscarCorte.Size = new System.Drawing.Size(28, 24);
+            this.btnBuscarCorte.Size = new System.Drawing.Size(28, 23);
             this.btnBuscarCorte.TabIndex = 2;
             this.btnBuscarCorte.TabStop = false;
             this.btnBuscarCorte.UseVisualStyleBackColor = true;
@@ -486,9 +530,9 @@
             this.btnBuscarEmbutido.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnBuscarEmbutido.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarEmbutido.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarEmbutido.Image")));
-            this.btnBuscarEmbutido.Location = new System.Drawing.Point(170, 21);
+            this.btnBuscarEmbutido.Location = new System.Drawing.Point(168, 22);
             this.btnBuscarEmbutido.Name = "btnBuscarEmbutido";
-            this.btnBuscarEmbutido.Size = new System.Drawing.Size(28, 24);
+            this.btnBuscarEmbutido.Size = new System.Drawing.Size(28, 23);
             this.btnBuscarEmbutido.TabIndex = 1;
             this.btnBuscarEmbutido.TabStop = false;
             this.btnBuscarEmbutido.UseVisualStyleBackColor = true;
@@ -668,7 +712,7 @@
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.grillaCortesPorEmbutido);
             this.Controls.Add(this.pnlBuscar);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "formIngresoFormula";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -678,6 +722,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).EndInit();
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
+            this.groupPasos.ResumeLayout(false);
+            this.groupPasos.PerformLayout();
             this.groupBoxCortesFormula.ResumeLayout(false);
             this.groupBoxCortesFormula.PerformLayout();
             this.groupBoxFormula.ResumeLayout(false);
@@ -732,5 +778,8 @@
         private System.Windows.Forms.TextBox txtTotalPorcentaje;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox txtTotalUnidades;
+        protected System.Windows.Forms.GroupBox groupPasos;
+        private System.Windows.Forms.TextBox txtReceta;
+        protected internal System.Windows.Forms.Button btnReceta;
     }
 }

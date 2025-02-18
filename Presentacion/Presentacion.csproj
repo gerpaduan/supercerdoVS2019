@@ -370,6 +370,12 @@
     <Compile Include="Embutidos\formLineasEmb.Designer.cs">
       <DependentUpon>formLineasEmb.cs</DependentUpon>
     </Compile>
+    <Compile Include="Embutidos\formReceta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Embutidos\formReceta.Designer.cs">
+      <DependentUpon>formReceta.cs</DependentUpon>
+    </Compile>
     <Compile Include="formFacturaElectronica.cs" />
     <Compile Include="Licencia\formVencimientoCuotas.cs">
       <SubType>Form</SubType>
@@ -805,6 +811,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Embutidos\formInfoEmbutido.resx">
       <DependentUpon>formInfoEmbutido.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Embutidos\formReceta.resx">
+      <DependentUpon>formReceta.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="formBackUp.resx">
       <DependentUpon>formBackUp.cs</DependentUpon>

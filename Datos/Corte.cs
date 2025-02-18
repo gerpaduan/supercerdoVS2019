@@ -443,7 +443,13 @@ namespace Datos
 
             return dtFormulas;
         }
-        public Entidades.Formula findFormulaByID(int idFormula)
+        /// <summary>
+        /// Busca formula segun el ID por parámetro
+        /// </summary>
+        /// <param name="idFormula"></param>
+        /// <param name="idEmbutido"></param>
+        /// <returns></returns>
+        public Entidades.Formula findFormulaByID(int idFormula, int idEmbutido)
         {
             cmCorte = new SqlCommand();
 
@@ -451,7 +457,10 @@ namespace Datos
             cmCorte.Connection.Open();
 
             cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
-            cmCorte.CommandText = "Select Formulas.* from Formulas where idFormula =" + idFormula;
+
+            cmCorte.CommandText = idFormula > 0 ?
+                "Select Formulas.* from Formulas where idFormula =" + idFormula :
+                "Select Formulas.* from Formulas where idEmbutido =" + idEmbutido;
 
             SqlDataReader drFormula = cmCorte.ExecuteReader();
 
@@ -460,7 +469,9 @@ namespace Datos
             {
                 oFormula.IdFormula = Convert.ToInt32(drFormula["idFormula"].ToString());
                 oFormula.Embutido = findCorteById(Convert.ToInt32(drFormula["idEmbutido"].ToString()), false);
-                
+                oFormula.Receta = drFormula["receta"].ToString();
+
+
                 oFormula.Creado = Convert.ToDateTime(drFormula["creado"]);
                 oFormula.Actualizado = drFormula["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drFormula["actualizado"]);
 
@@ -540,6 +551,7 @@ namespace Datos
             cmCorte.CommandText = "addOrEditFormula";
             cmCorte.Parameters.AddWithValue("@idFormula", oFormula.IdFormula);
             cmCorte.Parameters.AddWithValue("@idEmbutido", oFormula.Embutido.idCorte); 
+            cmCorte.Parameters.AddWithValue("@receta", oFormula.Receta);
             cmCorte.Parameters.AddWithValue("@creadoPor", oFormula.CreadoPor.Id);
             cmCorte.Parameters.AddWithValue("@actualizadoPor", oFormula.ActualizadoPor!=null ? oFormula.ActualizadoPor.Id : 0);
 

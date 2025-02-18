@@ -247,9 +247,15 @@ namespace Negocio
         {
             return oCorteD.buscarFormula(texto);
         }
-        public Entidades.Formula findFormulaByID(int idFormula)
+        /// <summary>
+        /// Busca formula segun el ID por parámetro
+        /// </summary>
+        /// <param name="idFormula"></param>
+        /// <param name="idEmbutido"></param>
+        /// <returns></returns>
+        public Entidades.Formula findFormulaByID(int idFormula, int idEmbutido)
         {
-            return oCorteD.findFormulaByID(idFormula);
+            return oCorteD.findFormulaByID(idFormula, idEmbutido);
         }
         public bool existeFormula(int idEmbutido)
         { 

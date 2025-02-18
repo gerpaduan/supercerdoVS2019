@@ -9,6 +9,7 @@ namespace Entidades
     {
         int idFormula;
         Corte embutido;
+        string receta;
         private DateTime? creado;
         private DateTime? actualizado;
         private Usuario creadoPor;
@@ -22,5 +23,6 @@ namespace Entidades
         public Usuario CreadoPor { get => creadoPor; set => creadoPor = value; }
         public Usuario ActualizadoPor { get => actualizadoPor; set => actualizadoPor = value; }
         public List<CortePorFormula> ListaCortesEnFormula { get => listaCortesEnFormula; set => listaCortesEnFormula = value; }
+        public string Receta { get => receta; set => receta = value; }
     }
 }

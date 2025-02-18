@@ -87,6 +87,7 @@ namespace Presentacion
                         oFormulaE.ActualizadoPor = oUsuario;
                     }
 
+                    oFormulaE.Receta = txtReceta.Text;
                     cargarCorteEnFormula();
                     oFormulaE.IdFormula = oCorteN.addOrEditFormula(oFormulaE, listaCortePorFormula);
 
@@ -325,7 +326,7 @@ namespace Presentacion
             {
                 this.Text = "Modificar fórmula";
                 btnGuardar.Text = "&Guardar";
-                groupBoxFormula.Enabled = groupBoxCortesFormula.Enabled = true;
+                groupBoxFormula.Enabled = groupBoxCortesFormula.Enabled = btnReceta.Enabled = true;
                 return;
             }
             agregarFormula();
@@ -404,8 +405,7 @@ namespace Presentacion
         }
 
         private void formIngresoFormula_Load(object sender, EventArgs e)
-        {
-            
+        {         
             
             this.Text += Utilidades.Conexion.getSucursalConexion();
             if (oUsuario == null)
@@ -419,14 +419,14 @@ namespace Presentacion
                 {
                     this.Text = "Info fórmula";
                     btnGuardar.Text = "&Modificar";
-                    groupBoxFormula.Enabled = groupBoxCortesFormula.Enabled = false;
+                    groupBoxFormula.Enabled = groupBoxCortesFormula.Enabled = btnReceta.Enabled = false;
 
                     cargandoDatos = true;
-                    oFormulaE = oCorteN.findFormulaByID(idFormula);
+                    oFormulaE = oCorteN.findFormulaByID(idFormula, 0);
 
                     txtCodigoEmbutido.Text = oFormulaE.Embutido.codigo.ToString();
                     txtEmbutido.Text = oFormulaE.Embutido.corte;
-
+                    txtReceta.Text = oFormulaE.Receta;
                     txtCreado.Text = oFormulaE.Creado.ToString();
                     txtCreadoPor.Text = oFormulaE.CreadoPor.User;
                     txtActualizado.Text = oFormulaE.Actualizado.ToString();
@@ -586,6 +586,16 @@ namespace Presentacion
         private void btnBuscarEmbutido_Click(object sender, EventArgs e)
         {
             buscarEmbutido();
+        }
+
+        private void btnReceta_Click(object sender, EventArgs e)
+        {
+            formReceta frmReceta = new formReceta(txtReceta.Text); // Pasar el texto actual
+            frmReceta.editar = true;
+            if (frmReceta.ShowDialog() == DialogResult.OK)
+            {
+                txtReceta.Text = frmReceta.recetaEditada; // Recibir el texto editado
+            }
         }
     }
 }
