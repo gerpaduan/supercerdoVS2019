@@ -105,8 +105,6 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
-            ///TODO: hacer prueba exhuastiva en cargar miles de Cortes
-            ///
             if (!comboCargado)
                 return;
 

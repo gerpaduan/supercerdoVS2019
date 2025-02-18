@@ -269,6 +269,14 @@ namespace wsAFIPvs2008
             txtFormaPago.Text = "Otro";
             comboIva.Enabled = false;
             btnBuscarCuit.Visible = false;
+            //3: Nota de Crédito A
+            //8: Nota de Crédito B
+            ////13: Nota de Crédito C
+            //switch (switch_on)
+            //{
+            //    default:
+            //}
+            //TiposComprobantesCMB.SelectedIndex = oFactuElec.esFacturaA(oFactuElec.CodTipoCbteAfip.ToString()) ?;
         }
         private void login()
         {
@@ -784,6 +792,19 @@ namespace wsAFIPvs2008
         private void Button2_Click(object sender, EventArgs e)
         {
             try {
+
+                //List<Entidades.AlicuotaIva> listaali = new List<Entidades.AlicuotaIva> ();
+                //foreach (Entidades.LineaVenta item in oVentaE.LineasVenta)
+                //{
+                //    Entidades.AlicuotaIva ali = new Entidades.AlicuotaIva();
+                //    ali.IdIva = item.Corte.IdAlicuotaIva;
+                //    ali.BaseImponible = item.AlicuotaIva;
+                //    ali.Importe = (item.AlicuotaIva * (item.CantKg * item.PrecioKg)) / 100;
+                //    listaali.Add( ali );    
+                //}
+                //oFactuElec.ListaAlicuota = listaali;
+                //oVentaN.addOrEditFactuElec(oFactuElec);
+
                 ///si es nota de credita se llama el metodo
                 ///
                 if (notaCredito)
@@ -1436,7 +1457,7 @@ namespace wsAFIPvs2008
         private void TipoIVACmb_SelectedIndexChanged(object sender, EventArgs e)
         {
             //se deberia agregar un metodo CalcularTotal al cambiar el combo
-            label_iva.Text = "IVA " + TipoIVACmb.Text;
+           // label_iva.Text = "IVA " + TipoIVACmb.Text; se comento el 17/02/2025 xq borraba el 27% de iva
         }
 
         private void TotalRB_CheckedChanged(object sender, EventArgs e)
@@ -1535,7 +1556,7 @@ namespace wsAFIPvs2008
                 case 2:
                     TipoDocCMB.SelectedValue = 80;
                     if (esRRII)
-                        TiposComprobantesCMB.SelectedValue = 1; //1: Factura A
+                        TiposComprobantesCMB.SelectedValue = notaCredito ? 3 : 1; //1: Factura A
                     break;
                 case 3:
                     TipoDocCMB.SelectedValue = 80;
@@ -2132,7 +2153,7 @@ namespace wsAFIPvs2008
                     oNotaCredito.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oNotaCredito.IdVenta = oVentaE.IdVenta;
 
-                    ///***TODO: pendiente -> agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
+                    ///TODO: pendiente -> agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
                     oVentaN.addOrEditFactuElec(oNotaCredito);
 
                     DialogResult imprimir = MessageBox.Show("La Nota de Credito se generó correctamente!.\n\n¿Imprimir ticket?.",

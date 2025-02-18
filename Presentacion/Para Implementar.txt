@@ -15,5 +15,29 @@
 ##
 
 
+////Alicuota por factura
+
+USE [CarniSys0]
+GO
+
+/****** Object:  Table [dbo].[AlicuotaIvaPorFactura]    Script Date: 17/2/2025 21:36:03 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[AlicuotaIvaPorFactura](
+	[idAlicuotaIvaFactura] [int] IDENTITY(1,1) NOT NULL,
+	[idFacturaElectronica] [int] NOT NULL,
+	[idIva] [int] NOT NULL,
+	[baseImponible] [float] NULL,
+	[importe] [float] NULL,
+ CONSTRAINT [PK_AlicuotaIvaPorFactura] PRIMARY KEY CLUSTERED 
+(
+	[idAlicuotaIvaFactura] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 
 

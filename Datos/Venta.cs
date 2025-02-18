@@ -870,10 +870,30 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@idVenta", oFacturaElectronicaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@error", oFacturaElectronicaE.Error);
             cmVenta.Parameters.AddWithValue("@mensajeError", oFacturaElectronicaE.MensajeError);
-            cmVenta.Parameters.AddWithValue("@fechaError", oFacturaElectronicaE.FechaError.Equals(null) || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100) ? 
+            cmVenta.Parameters.AddWithValue("@fechaError", oFacturaElectronicaE.FechaError.Equals(null) || oFacturaElectronicaE.FechaError < DateTime.Today.AddYears(-100) ?
                 (DateTime?)null : oFacturaElectronicaE.FechaError);
 
-            cmVenta.ExecuteNonQuery();
+            //cmVenta.ExecuteNonQuery();
+            oFacturaElectronicaE.Id = Convert.ToInt32(cmVenta.ExecuteScalar());
+
+            if (oFacturaElectronicaE.ListaAlicuota != null && oFacturaElectronicaE.ListaAlicuota.Count > 0)
+            {
+                cmVenta.CommandType = CommandType.Text;
+                cmVenta.CommandText = "INSERT INTO AlicuotaIvaPorFactura (idFacturaElectronica, idIva, baseImponible, importe) VALUES " +
+                                      "(@idFacturaElectronica, @idIva, @baseImponible, @importe)";
+
+                foreach (Entidades.AlicuotaIva alicuotaIva in oFacturaElectronicaE.ListaAlicuota)
+                {
+                    cmVenta.Parameters.Clear();  // Evita acumulación de parámetros
+
+                    cmVenta.Parameters.Add("@idFacturaElectronica", SqlDbType.Int).Value = oFacturaElectronicaE.Id;
+                    cmVenta.Parameters.Add("@idIva", SqlDbType.Int).Value = alicuotaIva.IdIva;
+                    cmVenta.Parameters.Add("@baseImponible", SqlDbType.Float).Value = alicuotaIva.BaseImponible;
+                    cmVenta.Parameters.Add("@importe", SqlDbType.Float).Value = alicuotaIva.Importe;
+
+                    cmVenta.ExecuteNonQuery();
+                }
+            }
             cmVenta.Connection.Close();
         }
 
@@ -917,8 +937,10 @@ namespace Datos
                         oFacturaElectronicaE.Error = Convert.ToBoolean(drFactuElec["error"]);
                         oFacturaElectronicaE.MensajeError = Convert.ToString(drFactuElec["mensajeError"]);
                         oFacturaElectronicaE.FechaError = drFactuElec["fechaError"].Equals(DBNull.Value) ? null : (DateTime?)(drFactuElec["actualizado"]);
-                    
+                        
+                        oFacturaElectronicaE.ListaAlicuota = getAlicuotaIvaFactura(oFacturaElectronicaE.Id);
                         oFacturaElectronicaE.Venta = getVentaById(oFacturaElectronicaE.IdVenta);
+
                     }
                     return oFacturaElectronicaE;
                 }
@@ -929,6 +951,46 @@ namespace Datos
                 oFacturaElectronicaE = null;
             }
         }
+
+        public List<Entidades.AlicuotaIva> getAlicuotaIvaFactura(int idFacturaElectronica)
+        {
+            daVenta = new SqlDataAdapter();
+            cmVenta = new SqlCommand();
+
+            cmVenta.Connection = conn.conectar();
+            cmVenta.CommandType = CommandType.Text; cmVenta.CommandTimeout = conn.TimeOut();
+            cmVenta.CommandText = "SELECT idFacturaElectronica, idIva, baseImponible, importe FROM AlicuotaIvaPorFactura WHERE  idFacturaElectronica = @idFacturaElectronica";
+            cmVenta.Parameters.AddWithValue("@idFacturaElectronica", idFacturaElectronica);
+
+            //creo lista de Lineas
+            List<Entidades.AlicuotaIva> listaAlicuotaIvaFactura = new List<Entidades.AlicuotaIva>();
+            try
+            {
+                cmVenta.Connection.Open();
+                SqlDataReader drLinea = cmVenta.ExecuteReader();
+                using (drLinea)
+                {
+                    while (drLinea.Read())
+                    {
+                        Entidades.AlicuotaIva oLinea = new Entidades.AlicuotaIva();
+
+                        oLinea.IdIva = Convert.ToInt32(drLinea["idIva"]);
+                        oLinea.BaseImponible = float.Parse(drLinea["baseImponible"].ToString());
+                        oLinea.Importe = float.Parse(drLinea["importe"].ToString());
+
+                        listaAlicuotaIvaFactura.Add(oLinea);
+                        oLinea = null;
+                    }
+                    return listaAlicuotaIvaFactura;
+                }
+            }
+            finally
+            {
+                cmVenta.Connection.Close();
+                listaAlicuotaIvaFactura = null;
+            }
+        }
+
         #endregion
     }
 }
