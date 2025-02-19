@@ -329,6 +329,8 @@ namespace Presentacion
             txtPorcHueso.Text = "0";
             txtDesvioEstandar.Text = "0";
             huboModificacion = false;
+            oMarca = null;
+            cargarMarca();
         }
 
         #endregion
