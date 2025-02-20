@@ -233,6 +233,7 @@ namespace Presentacion
             oCorteE.idCorte = Convert.ToInt32(grillaCortes.Rows[fila].Cells["idCorte"].Value.ToString());
             if (cargarDesdeGrilla.HasValue && cargarDesdeGrilla.Value) // Verifica que no sea null y sea true
             {
+                oCorteE.codigo = Convert.ToInt64(grillaCortes.Rows[fila].Cells["codigo"].Value);
                 oCorteE.corte = grillaCortes.Rows[fila].Cells["corte"].Value.ToString();
                 oCorteE.precioKg = float.Parse(grillaCortes.Rows[fila].Cells["precioKG"].Value.ToString());
             }
