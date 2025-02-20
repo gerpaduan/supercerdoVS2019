@@ -50,6 +50,7 @@ namespace Presentacion
         Color ultimoColor = Color.Green;
 
         float totalKg = 0;//totalPesoEmbutidos
+        private Formula oFormulaE;
 
         public formIngresoEmbutidoRapido()
         {
@@ -297,6 +298,9 @@ namespace Presentacion
 
                 txtCodigoEmbutido.Text = oCorteEmbutidoE.codigo.ToString();
                 txtEmbutido.Text = oCorteEmbutidoE.CorteDesc;
+                oFormulaE = oCorteN.findFormulaByID(0, oCorteEmbutidoE.idCorte);
+                txtReceta.Text = oFormulaE.Receta;
+                txtCantKgs.Focus();
 
                 tipoDeCorte();
             }
@@ -504,6 +508,12 @@ namespace Presentacion
         private void txtCantKgs_TextChanged(object sender, EventArgs e)
         {
             calcularFormula();
+        }
+
+        private void btnReceta_Click(object sender, EventArgs e)
+        {
+            formReceta frmReceta = new formReceta(txtReceta.Text); // Pasar el texto actual
+            frmReceta.editar = false;
         }
     }
 }

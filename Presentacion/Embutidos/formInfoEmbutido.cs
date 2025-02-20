@@ -9,6 +9,7 @@ using System.Windows.Forms;
 
 using System.Configuration;
 using Presentacion.Caja;
+using Entidades;
 
 namespace Presentacion.Embutidos
 {
@@ -23,7 +24,7 @@ namespace Presentacion.Embutidos
         Negocio.Corte oCorteN = new Negocio.Corte();
 
         DataTable dtCortesPorEmbutido = new DataTable();
-
+        private Formula oFormulaE;
 
         public formInfoEmbutido()
         {
@@ -95,6 +96,8 @@ namespace Presentacion.Embutidos
             txtCodigoEmbutido.Text =Convert.ToString( oEmbutidoE.corte.codigo);
             txtEmbutido.Text = oEmbutidoE.corte.corte;
             txtObservaciones.Text = oEmbutidoE.observaciones;
+            oFormulaE = oCorteN.findFormulaByID(0, oEmbutidoE.corte.idCorte);
+            txtReceta.Text = oFormulaE.Receta;
 
             if (oEmbutidoE.estado=="Anulado")
             {
@@ -154,5 +157,10 @@ namespace Presentacion.Embutidos
             oUsuario = usuario;
         }
 
+        private void btnReceta_Click(object sender, EventArgs e)
+        {
+            formReceta frmReceta = new formReceta(txtReceta.Text); // Pasar el texto actual
+            frmReceta.editar = false;
+        }
     }
 }

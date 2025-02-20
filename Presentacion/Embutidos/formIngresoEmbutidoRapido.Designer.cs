@@ -29,14 +29,18 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formIngresoEmbutidoRapido));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.groupReceta = new System.Windows.Forms.GroupBox();
+            this.txtReceta = new System.Windows.Forms.TextBox();
+            this.btnReceta = new System.Windows.Forms.Button();
             this.btnLimpiar = new System.Windows.Forms.Button();
             this.txtCodigoEmbutido = new System.Windows.Forms.TextBox();
             this.lblErrorBalanza = new System.Windows.Forms.Label();
@@ -74,6 +78,7 @@
             this.agregarAuto = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.porcentaje = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pnlBuscar.SuspendLayout();
+            this.groupReceta.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaFormula)).BeginInit();
             this.SuspendLayout();
             // 
@@ -110,6 +115,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pnlBuscar.Controls.Add(this.groupReceta);
             this.pnlBuscar.Controls.Add(this.btnLimpiar);
             this.pnlBuscar.Controls.Add(this.txtCodigoEmbutido);
             this.pnlBuscar.Controls.Add(this.lblErrorBalanza);
@@ -132,6 +138,46 @@
             this.pnlBuscar.Size = new System.Drawing.Size(482, 268);
             this.pnlBuscar.TabIndex = 14;
             // 
+            // groupReceta
+            // 
+            this.groupReceta.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupReceta.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupReceta.Controls.Add(this.txtReceta);
+            this.groupReceta.Controls.Add(this.btnReceta);
+            this.groupReceta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupReceta.ForeColor = System.Drawing.Color.Cornsilk;
+            this.groupReceta.Location = new System.Drawing.Point(343, 128);
+            this.groupReceta.Name = "groupReceta";
+            this.groupReceta.Size = new System.Drawing.Size(126, 85);
+            this.groupReceta.TabIndex = 56;
+            this.groupReceta.TabStop = false;
+            this.groupReceta.Text = "Receta";
+            // 
+            // txtReceta
+            // 
+            this.txtReceta.Location = new System.Drawing.Point(6, 16);
+            this.txtReceta.Multiline = true;
+            this.txtReceta.Name = "txtReceta";
+            this.txtReceta.ReadOnly = true;
+            this.txtReceta.Size = new System.Drawing.Size(73, 63);
+            this.txtReceta.TabIndex = 29;
+            this.txtReceta.TabStop = false;
+            // 
+            // btnReceta
+            // 
+            this.btnReceta.AccessibleDescription = "";
+            this.btnReceta.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.btnReceta.ForeColor = System.Drawing.Color.Black;
+            this.btnReceta.Image = ((System.Drawing.Image)(resources.GetObject("btnReceta.Image")));
+            this.btnReceta.Location = new System.Drawing.Point(85, 17);
+            this.btnReceta.Name = "btnReceta";
+            this.btnReceta.Size = new System.Drawing.Size(28, 24);
+            this.btnReceta.TabIndex = 1;
+            this.btnReceta.TabStop = false;
+            this.btnReceta.UseVisualStyleBackColor = true;
+            this.btnReceta.Click += new System.EventHandler(this.btnReceta_Click);
+            // 
             // btnLimpiar
             // 
             this.btnLimpiar.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Tomato;
@@ -153,7 +199,7 @@
             this.txtCodigoEmbutido.Location = new System.Drawing.Point(108, 131);
             this.txtCodigoEmbutido.Name = "txtCodigoEmbutido";
             this.txtCodigoEmbutido.ReadOnly = true;
-            this.txtCodigoEmbutido.Size = new System.Drawing.Size(104, 31);
+            this.txtCodigoEmbutido.Size = new System.Drawing.Size(166, 31);
             this.txtCodigoEmbutido.TabIndex = 11;
             this.txtCodigoEmbutido.TabStop = false;
             this.txtCodigoEmbutido.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -164,7 +210,7 @@
             this.lblErrorBalanza.BackColor = System.Drawing.Color.SandyBrown;
             this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
-            this.lblErrorBalanza.Location = new System.Drawing.Point(340, 138);
+            this.lblErrorBalanza.Location = new System.Drawing.Point(372, 213);
             this.lblErrorBalanza.Name = "lblErrorBalanza";
             this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
             this.lblErrorBalanza.TabIndex = 49;
@@ -192,7 +238,7 @@
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkLeerPeso.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkLeerPeso.Location = new System.Drawing.Point(365, 172);
+            this.checkLeerPeso.Location = new System.Drawing.Point(369, 229);
             this.checkLeerPeso.Name = "checkLeerPeso";
             this.checkLeerPeso.Size = new System.Drawing.Size(101, 34);
             this.checkLeerPeso.TabIndex = 23;
@@ -504,14 +550,14 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaFormula.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaFormula.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaFormula.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.grillaFormula.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaFormula.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.dataGridViewTextBoxColumn1,
@@ -520,27 +566,27 @@
             this.kgs,
             this.agregarAuto,
             this.porcentaje});
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaFormula.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaFormula.DefaultCellStyle = dataGridViewCellStyle4;
             this.grillaFormula.Location = new System.Drawing.Point(280, 279);
             this.grillaFormula.MultiSelect = false;
             this.grillaFormula.Name = "grillaFormula";
             this.grillaFormula.ReadOnly = true;
             this.grillaFormula.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaFormula.RowHeadersDefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaFormula.RowHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.grillaFormula.RowHeadersVisible = false;
             this.grillaFormula.RowHeadersWidth = 51;
             this.grillaFormula.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
@@ -562,8 +608,8 @@
             // 
             this.dataGridViewTextBoxColumn2.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
             this.dataGridViewTextBoxColumn2.DataPropertyName = "codigo";
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn2.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn2.DefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridViewTextBoxColumn2.FillWeight = 80F;
             this.dataGridViewTextBoxColumn2.HeaderText = "Codigo";
             this.dataGridViewTextBoxColumn2.MinimumWidth = 6;
@@ -585,8 +631,8 @@
             // 
             this.kgs.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.kgs.DataPropertyName = "kgs";
-            dataGridViewCellStyle8.Format = "N3";
-            this.kgs.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle3.Format = "N3";
+            this.kgs.DefaultCellStyle = dataGridViewCellStyle3;
             this.kgs.FillWeight = 88.16828F;
             this.kgs.HeaderText = "Kgs";
             this.kgs.MinimumWidth = 6;
@@ -636,7 +682,7 @@
             this.Controls.Add(this.btnGuardar);
             this.Controls.Add(this.btnCancelar);
             this.Controls.Add(this.pnlBuscar);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "formIngresoEmbutidoRapido";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -645,6 +691,8 @@
             this.Load += new System.EventHandler(this.formIngresoEmbutidoRapido_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
+            this.groupReceta.ResumeLayout(false);
+            this.groupReceta.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaFormula)).EndInit();
             this.ResumeLayout(false);
 
@@ -691,5 +739,8 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn kgs;
         private System.Windows.Forms.DataGridViewCheckBoxColumn agregarAuto;
         private System.Windows.Forms.DataGridViewTextBoxColumn porcentaje;
+        protected System.Windows.Forms.GroupBox groupReceta;
+        private System.Windows.Forms.TextBox txtReceta;
+        protected internal System.Windows.Forms.Button btnReceta;
     }
 }

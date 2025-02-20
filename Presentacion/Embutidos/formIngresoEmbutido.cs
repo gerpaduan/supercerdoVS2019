@@ -338,9 +338,9 @@ namespace Presentacion
             txtCodigoEmbutido.Text = Convert.ToString(oCorteEmbutidoE.codigo);
             txtEmbutido.Text = oCorteEmbutidoE.corte;
             //calcularFormula();
-            txtCodCorteEnEmbutido.Focus();
             oFormulaE = oCorteN.findFormulaByID(0, oCorteEmbutidoE.idCorte);
             txtReceta.Text = oFormulaE.Receta;
+            txtCodCorteEnEmbutido.Focus();
             calcularFormula();
         }
 
