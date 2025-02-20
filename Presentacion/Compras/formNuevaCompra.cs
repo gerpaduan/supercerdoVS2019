@@ -977,14 +977,17 @@ namespace Presentacion
                     radioCorte.TabStop = false;
                 }
                 //si txtBoxPrecio es vacio se mueve el foco a éste
-                    if ((txtKgMedia.Focused || txtCantKgs.Focused) && txtPrecioKg.Text.Equals(""))
+                if ((txtKgMedia.Focused || txtCantKgs.Focused) && txtPrecioKg.Text.Equals("") && 
+                    ((checkCalcularPrecio.Checked && !string.IsNullOrEmpty(txtBoxPrecioNeto.Text)) ||
+                    (!checkCalcularPrecio.Checked)) )
                 {
+
                     txtPrecioKg.Focus();
                     return;
                 }
                 e.Handled = true;
 
-                    SendKeys.Send("{TAB}");
+                SendKeys.Send("{TAB}");
             }
         }
 
@@ -1361,6 +1364,14 @@ namespace Presentacion
                 // Mostrar mensaje de error o limpiar el TextBox de resultado
                 //MessageBox.Show("Ingrese valores numéricos válidos en ambos campos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 txtPrecioFinalVenta.Text = string.Empty;
+            }
+        }
+
+        private void txtBox_Enter(object sender, EventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                textBox.SelectAll();
             }
         }
     }

@@ -426,6 +426,7 @@
             this.txtIva.Text = "0";
             this.txtIva.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtIva.TextChanged += new System.EventHandler(this.txtBoxPrecioNeto_TextChanged);
+            this.txtIva.Enter += new System.EventHandler(this.txtBox_Enter);
             this.txtIva.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // label21
@@ -448,6 +449,7 @@
             this.txtBoxDescuento.Text = "0";
             this.txtBoxDescuento.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtBoxDescuento.TextChanged += new System.EventHandler(this.txtBoxPrecioNeto_TextChanged);
+            this.txtBoxDescuento.Enter += new System.EventHandler(this.txtBox_Enter);
             this.txtBoxDescuento.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // label20
