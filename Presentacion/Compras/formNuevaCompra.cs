@@ -693,7 +693,10 @@ namespace Presentacion
                  (txtCorteNuevaCompra.Text.Equals("") || txtCantKgs.Text.Equals(""))))
                 {
                     MessageBox.Show("Debe Completar todos los campos.", "Complete los campos vacíos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    if (txtPrecioKg.Text.Equals("")) txtPrecioKg.Focus();
+                    if (txtPrecioKg.Text.Equals("") && !checkCalcularPrecio.Checked)
+                        txtPrecioKg.Focus();
+                    else
+                        txtBoxPrecioNeto.Focus();
 
                     if (txtCantKgs.Text.Equals("") && tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes))) txtCantKgs.Focus();
                     if (txtKgMedia.Text.Equals("") && tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))) txtKgMedia.Focus();
@@ -1261,6 +1264,7 @@ namespace Presentacion
         private void checkAplicarDescIva_CheckedChanged(object sender, EventArgs e)
         {
             panelCalcularPrecio.Enabled = checkCalcularPrecio.Checked;
+            txtPrecioKg.ReadOnly = checkCalcularPrecio.Checked;
             if (checkCalcularPrecio.Checked)
             {
                 txtBoxPrecioNeto.Focus();
@@ -1287,8 +1291,14 @@ namespace Presentacion
 
         private void txtBoxPrecioNeto_TextChanged(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtBoxPrecioNeto.Text))
+            if (string.IsNullOrEmpty(txtBoxPrecioNeto.Text) ||
+                (txtBoxDescuento.Text.Length == 1 && txtBoxDescuento.Text.Equals("-")))
                 return;
+            if (string.IsNullOrEmpty(txtBoxDescuento.Text) || string.IsNullOrEmpty(txtBoxDescuento.Text))
+            {
+                txtPrecioKg.Text = "";
+                return;
+            }
 
             calcularPrecioFinal();
         }
