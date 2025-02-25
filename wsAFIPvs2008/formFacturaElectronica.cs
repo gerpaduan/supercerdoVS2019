@@ -59,6 +59,7 @@ namespace wsAFIPvs2008
         string cuit = ConfigurationManager.AppSettings["cuit"].ToString();
         string certificado = Directory.GetCurrentDirectory() + ConfigurationManager.AppSettings["rutaCertificado"].ToString();
         string servidor_0test_1prod = ConfigurationManager.AppSettings["tipoServidor"].ToString();
+        string qrTicketFactura = ConfigurationManager.AppSettings["qrTicketFactura"].ToString();
         string servicioAfip = "wsfe";
         string clave = "";
         string idIvaAliAfip = ConfigurationManager.AppSettings["idIvaAliAfip"].ToString();
@@ -793,6 +794,8 @@ namespace wsAFIPvs2008
         {
             try {
 
+                //DialogResult imprimir1 = MostrarMensaje();
+
                 //List<Entidades.AlicuotaIva> listaali = new List<Entidades.AlicuotaIva> ();
                 //foreach (Entidades.LineaVenta item in oVentaE.LineasVenta)
                 //{
@@ -1045,12 +1048,13 @@ namespace wsAFIPvs2008
                     oFactuElec.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
 
-                    ///***TODO: pendiente -> agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
                     oVentaN.addOrEditFactuElec(oFactuElec);
 
-                     DialogResult imprimir = MessageBox.Show("La Factura Electrónica se generó correctamente!.\n\n¿Imprimir ticket?.",
-                        "Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.None, MessageBoxDefaultButton.Button1);
-                     Resultado.Text = "Hora Mensaje: " + DateTime.Now.ToLocalTime() +
+                    DialogResult imprimir = MostrarMensaje();
+                        //MessageBox.Show("La Factura Electrónica se generó correctamente!.\n\n¿Imprimir ticket?.",
+                        //"Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.None, MessageBoxDefaultButton.Button1);
+                     
+                    Resultado.Text = "Hora Mensaje: " + DateTime.Now.ToLocalTime() +
                          "\n\n || La Factura se genero correctamente." + "\n || Importe: $ " + TotalTx.Text;
                     #region mostrar datos en AreaText
                     string salto = "\r\n";
@@ -1304,9 +1308,16 @@ namespace wsAFIPvs2008
 
                 ///Imprimir QR
                 ///
-                //string urlBase = "https://www.afip.gob.ar/fe/qr/";
-                //string data = urlBase + "?p=" + GenerarJSON();
-                //ticket.realizarImpresionQR(urlBase);
+                if (qrTicketFactura != null && !qrTicketFactura.Equals("NO"))
+                {
+                    string urlBase = "https://www.afip.gob.ar/fe/qr/";
+                    string data = urlBase + "?p=" + (qrTicketFactura.Equals("INFO_FACTURA") ? GenerarJSON() : GenerarJSON_Contribuyente());
+                    ticket.realizarImpresionQR(data);
+                }
+                //ticket = null;
+                //ticket.LineasEnBlanco(3);
+                //ticket.realizarImpresion();
+
                 //si es transferencia preguntar si imprimir copia para el cliente
                 if (esTransferencia)
                 {
@@ -1588,12 +1599,17 @@ namespace wsAFIPvs2008
 
         private void pdf_Factura_Click(object sender, EventArgs e)
         {
+            pdf_FacturaMetodo();
+        }
+
+        private void pdf_FacturaMetodo()
+        {
             Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
             string tipoDocumentoDesc = notaCredito ? "Nota Crédito" : "Factura";
 
             if (oDocumentoImprimir == null || (oDocumentoImprimir != null && string.IsNullOrEmpty(oDocumentoImprimir.CAE1)))
             {
-                MessageBox.Show("No se puede generar PDF porque la "+ tipoDocumentoDesc + " no ha sido generada");
+                MessageBox.Show("No se puede generar PDF porque la " + tipoDocumentoDesc + " no ha sido generada");
                 return;
             }
 
@@ -1643,7 +1659,7 @@ namespace wsAFIPvs2008
             celdamembreteIzquierda.VerticalAlignment = Element.ALIGN_CENTER;
 
             Phrase membreteIzquierda = new Phrase();
-            membreteIzquierda.Add(new Chunk("\n"+ConfigurationManager.AppSettings["Negocio"].ToString() + "\n\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20)));
+            membreteIzquierda.Add(new Chunk("\n" + ConfigurationManager.AppSettings["Negocio"].ToString() + "\n\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20)));
             membreteIzquierda.Add(new Chunk("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteIzquierda.Add(new Chunk(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteIzquierda.Add(new Chunk("Condición frente al IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
@@ -1660,8 +1676,8 @@ namespace wsAFIPvs2008
             Phrase tipoFactura = new Phrase();
             char letraFactura = oDocumentoImprimir.DescTipoCbteAfip[oDocumentoImprimir.DescTipoCbteAfip.Length - 1];
             string letraFacturaEncabezado = "  " + letraFactura + "  ";
-            String codFactura = "COD." + (oDocumentoImprimir.CodTipoCbteAfip < 10 ? ("0"+oDocumentoImprimir.CodTipoCbteAfip.ToString()) : oDocumentoImprimir.CodTipoCbteAfip.ToString());
-            string descComprobante = oDocumentoImprimir.DescTipoCbteAfip.Substring(0, oDocumentoImprimir.DescTipoCbteAfip.Length - 1); 
+            String codFactura = "COD." + (oDocumentoImprimir.CodTipoCbteAfip < 10 ? ("0" + oDocumentoImprimir.CodTipoCbteAfip.ToString()) : oDocumentoImprimir.CodTipoCbteAfip.ToString());
+            string descComprobante = oDocumentoImprimir.DescTipoCbteAfip.Substring(0, oDocumentoImprimir.DescTipoCbteAfip.Length - 1);
             tipoFactura.Add(new Chunk(letraFacturaEncabezado, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 15)));
             tipoFactura.Add(new Chunk(codFactura, FontFactory.GetFont(FontFactory.HELVETICA, 7)));
             celdaTipoFactura.AddElement(tipoFactura);
@@ -1674,10 +1690,10 @@ namespace wsAFIPvs2008
             celdamembreteDerecha.HorizontalAlignment = Element.ALIGN_CENTER;
 
             Phrase membreteDerecha = new Phrase();
-            membreteDerecha.Add(new Chunk(descComprobante.ToUpper()+"\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12)));
-            membreteDerecha.Add(new Chunk("Punto de Venta: "+oDocumentoImprimir.PtoVtaAfip+"   Comp.Nro: "+oDocumentoImprimir.NroCbteAfip+"\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk("Fecha de Emisión: "+oDocumentoImprimir.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") +"\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk("CUIT: "+ ConfigurationManager.AppSettings["cuit"].ToString()+"\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
+            membreteDerecha.Add(new Chunk(descComprobante.ToUpper() + "\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12)));
+            membreteDerecha.Add(new Chunk("Punto de Venta: " + oDocumentoImprimir.PtoVtaAfip + "   Comp.Nro: " + oDocumentoImprimir.NroCbteAfip + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
+            membreteDerecha.Add(new Chunk("Fecha de Emisión: " + oDocumentoImprimir.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") + "\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
+            membreteDerecha.Add(new Chunk("CUIT: " + ConfigurationManager.AppSettings["cuit"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteDerecha.Add(new Chunk(ConfigurationManager.AppSettings["IIBB"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             membreteDerecha.Add(new Chunk(ConfigurationManager.AppSettings["InicioActividades"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
             celdamembreteDerecha.AddElement(membreteDerecha);
@@ -1696,13 +1712,13 @@ namespace wsAFIPvs2008
             //// Información del Cliente
             PdfPTable clienteTable = new PdfPTable(1);
             clienteTable.WidthPercentage = 100;
-            clienteTable.SetWidths(new float[] {1f});
+            clienteTable.SetWidths(new float[] { 1f });
 
             string datosCliente = "CUIT:   " + oDocumentoImprimir.NroDocAfip +
                 "              Apellido y Nombre/Razón Social:   " + oDocumentoImprimir.RazonSocialAFIP.ToUpper() +
                 "\n\nCondición frente al IVA:   " + comboIva.Text + //oDocumentoImprimir.CondicionIvaAFIP.ToUpper() + 
                 "\n\nDomicilio :   " + oDocumentoImprimir.DomicilioAFIP.ToUpper() +
-                "\n\nCondición de venta:   " + txtFormaPago.Text.ToUpper() + 
+                "\n\nCondición de venta:   " + txtFormaPago.Text.ToUpper() +
                 "                                    " + txtNroFacturaNotaCredito.Text; //oDocumentoImprimir.CondicionVenta.ToUpper();
 
             clienteTable.AddCell(new PdfPCell(new Phrase(datosCliente, fontNormal)) { Border = 0 });
@@ -1717,7 +1733,7 @@ namespace wsAFIPvs2008
             if (letraFactura == 'A')
                 productosTable.SetWidths(new float[] { 6f, 2f, 2f, 2f, 2f });
             else
-                productosTable.SetWidths(new float[] { 6f, 2f, 2f, 2f});
+                productosTable.SetWidths(new float[] { 6f, 2f, 2f, 2f });
 
             productosTable.AddCell(new PdfPCell(new Phrase("Descripción", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
             productosTable.AddCell(new PdfPCell(new Phrase("Cantidad", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
@@ -1803,7 +1819,7 @@ namespace wsAFIPvs2008
             iTextSharp.text.Image qrImage = iTextSharp.text.Image.GetInstance(GenerateQRCode());
             // Configurar la posición del QR en la esquina inferior izquierda
             float xPosition = documento.LeftMargin; // Considera el margen izquierdo
-            float yPosition = documento.BottomMargin + (100 / 2) ; // Considera el margen inferior
+            float yPosition = documento.BottomMargin + (100 / 2); // Considera el margen inferior
             qrImage.SetAbsolutePosition(xPosition, yPosition); // Esquina inferior izquierda
             qrImage.ScaleAbsolute(100, 100); // Ajustar el tamaño del QR
 
@@ -1812,7 +1828,7 @@ namespace wsAFIPvs2008
             // Totales
             PdfPTable infoCAE = new PdfPTable(1);
             infoCAE.WidthPercentage = 100;
-            infoCAE.SetWidths(new float[] {1f });
+            infoCAE.SetWidths(new float[] { 1f });
             infoCAE.AddCell(new PdfPCell(new Phrase($"CAE: {oDocumentoImprimir.CAE1}", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             infoCAE.AddCell(new PdfPCell(new Phrase($"Fecha de Vencimiento del CAE: {oDocumentoImprimir.FecVtoCAE}", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
@@ -1824,6 +1840,7 @@ namespace wsAFIPvs2008
             Process.Start(new ProcessStartInfo(rutaPDF) { UseShellExecute = true });
             #endregion
         }
+
         public byte[] GenerateQRCode()
         {
             //string data = GenerarJSON();
@@ -1867,6 +1884,43 @@ namespace wsAFIPvs2008
                 nroDocRec = _nroDocRec,
                 tipoCodAut = "E",
                 codAut = _codAut
+            };
+
+            // Serializar el objeto a JSON
+            string jsonData = JsonConvert.SerializeObject(qrData, Formatting.Indented);
+            //Codificar el JSON en Base64
+            string jsonDataBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(jsonData));
+
+            return jsonDataBase64;
+        }
+
+        private string GenerarJSON_Contribuyente()
+        {
+            Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
+            string fechaEmision = oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyy-MM-dd");
+            // Crear la estructura del JSON utilizando la variable
+            long _cuitEmisor = long.Parse(cuit);
+            long _nroCmp = long.Parse(oDocumentoImprimir.NroCbteAfip);
+            long _nroDocRec = string.IsNullOrEmpty(oDocumentoImprimir.NroDocAfip) ? 0 : long.Parse(oDocumentoImprimir.NroDocAfip);
+            long _codAut = long.Parse(oDocumentoImprimir.CAE1);
+            int _ptoVta = Convert.ToInt32(oDocumentoImprimir.PtoVtaAfip);
+            int _tipoDocRec = Convert.ToInt32(TipoDocCMB.SelectedValue.ToString());
+            decimal _importe = Convert.ToDecimal(oDocumentoImprimir.ImporteTotal);
+            var qrData = new
+            {
+                ver = 1,
+                fecha = fechaEmision,
+                cuit = _cuitEmisor//,
+                //ptoVta = _ptoVta,
+                //tipoCmp = oDocumentoImprimir.CodTipoCbteAfip,
+                //nroCmp = _nroCmp,
+                //importe = _importe,
+                //moneda = "PES",
+                //ctz = 1,
+                //tipoDocRec = _tipoDocRec,
+                //nroDocRec = _nroDocRec,
+                //tipoCodAut = "E",
+                //codAut = _codAut
             };
 
             // Serializar el objeto a JSON
@@ -2292,6 +2346,125 @@ namespace wsAFIPvs2008
             }
 
             return texto.Trim();
+        }
+
+        ///
+        /// Crea formulario llamador
+        ///
+        private DialogResult MostrarMensaje()
+        {
+            // Crear Formulario Dinámico
+            // Crear Formulario Dinámico
+            System.Windows.Forms.Form msgBox = new System.Windows.Forms.Form()
+            {
+                Text = "Confirmación",
+                Size = new Size(350, 200), // Asegurar un tamaño adecuado
+                StartPosition = FormStartPosition.CenterScreen,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                KeyPreview = true, // Permite capturar teclas antes de que lleguen a los controles
+                Icon = SystemIcons.Question, // Icono de pregunta
+                AutoSize = false, // Desactivar AutoSize
+                Padding = new Padding(10) // Agregar un poco de espacio interior
+            };
+
+            // Panel para alinear el icono y el texto
+            System.Windows.Forms.FlowLayoutPanel panelTexto = new System.Windows.Forms.FlowLayoutPanel()
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                Dock = DockStyle.Top, // Ubicación en la parte superior
+                Padding = new Padding(10),
+                Height = 60 // Ajustamos un tamaño fijo para el panel de texto
+            };
+
+            // Icono de pregunta
+            System.Windows.Forms.PictureBox pictureBox = new System.Windows.Forms.PictureBox()
+            {
+                Image = SystemIcons.Question.ToBitmap(),
+                SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize,
+                Margin = new Padding(0, 0, 5, 0) // Separación entre el icono y el texto
+            };
+
+            // Texto
+            System.Windows.Forms.Label label = new System.Windows.Forms.Label()
+            {
+                Text = "La Factura Electrónica se generó correctamente!.\n\n¿Imprimir ..?",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Arial", 11, FontStyle.Regular) // Aumentar el tamaño del text
+            };
+            // Agregar el icono y el texto al contenedor
+            panelTexto.Controls.Add(pictureBox);
+            panelTexto.Controls.Add(label);
+
+            // Contenedor para alinear los botones
+            System.Windows.Forms.FlowLayoutPanel panelBotones = new System.Windows.Forms.FlowLayoutPanel()
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Dock = DockStyle.Bottom, // Ubicación en la parte inferior
+                Padding = new Padding(10),
+                Height = 60, // Ajustamos un tamaño fijo para los botones
+                AutoSize = true,
+                WrapContents = false, // Evitar que los botones se envuelvan
+            };
+
+            // Botones con separación de 3 mm (3 píxeles)
+            System.Windows.Forms.Button btnNo = new System.Windows.Forms.Button() { Text = "No", Width = 80, Margin = new Padding(3) };
+            System.Windows.Forms.Button btnTicket = new System.Windows.Forms.Button() { Text = "Ticket", Width = 80, Margin = new Padding(3) };
+            System.Windows.Forms.Button btnPDF = new System.Windows.Forms.Button() { Text = "PDF", Width = 80, Margin = new Padding(3) };
+
+            // Seleccionar por defecto el botón "No"
+            msgBox.AcceptButton = btnNo;
+            btnNo.Select();
+
+            string resultado = "No"; // Valor predeterminado
+
+            btnNo.Click += (s, e) => { resultado = "No"; msgBox.DialogResult = DialogResult.Cancel; msgBox.Close(); };
+            btnTicket.Click += (s, e) => { resultado = "Ticket"; msgBox.DialogResult = DialogResult.OK; msgBox.Close(); };
+            btnPDF.Click += (s, e) => { resultado = "PDF"; msgBox.DialogResult = DialogResult.OK; msgBox.Close(); };
+
+            // Manejar la tecla Enter globalmente
+            msgBox.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    btnNo.PerformClick();
+                    e.SuppressKeyPress = true;
+                }
+            };
+
+            // Alinear los botones en el centro
+            panelBotones.Controls.Add(btnNo);
+            panelBotones.Controls.Add(btnTicket);
+            panelBotones.Controls.Add(btnPDF);
+
+            // Agregar controles al formulario
+            msgBox.Controls.Add(panelTexto);
+            msgBox.Controls.Add(panelBotones);
+
+            // Mostrar el formulario como modal
+            msgBox.ShowDialog();
+
+
+            DialogResult resp = DialogResult.No;
+            // Acciones según la selección
+            switch (resultado)
+            {
+                case "Ticket":
+                    resp = DialogResult.Yes;
+                    break;
+                case "PDF":
+                    //TODO: al generar pdf hay un error en la carga de las lineas
+                    //posiblemente haya que generar pdf luego, en ultima instancia
+                    pdf_FacturaMetodo();
+                    break;
+                case "No":
+                    // No hacer nada
+                    break;
+            }
+            return resp;
         }
     }
 }

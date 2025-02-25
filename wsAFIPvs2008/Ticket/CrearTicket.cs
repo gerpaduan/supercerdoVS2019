@@ -241,7 +241,8 @@ namespace wsAFIPvs2008.Ticket
                 bool result = RawPrinterHelper.SendBytesToPrinter(printerName, qrCommand);
 
                 if (result)
-                    Console.WriteLine("Código QR enviado a la impresora.");
+                    RawPrinterHelper.SendStringToPrinter(impresora, "\n\n\n", true);
+                //Console.WriteLine("Código QR enviado a la impresora.");<
                 else
                     Console.WriteLine("Error al imprimir el código QR.");
             }

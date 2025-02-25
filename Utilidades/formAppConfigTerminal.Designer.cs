@@ -91,6 +91,9 @@ namespace Utilidades
             this.btnBuscarAfip = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.label34 = new System.Windows.Forms.Label();
+            this.label33 = new System.Windows.Forms.Label();
+            this.prefijoCodBarraInterno = new System.Windows.Forms.TextBox();
             this.label25 = new System.Windows.Forms.Label();
             this.ivaCliente = new System.Windows.Forms.ComboBox();
             this.label30 = new System.Windows.Forms.Label();
@@ -98,18 +101,17 @@ namespace Utilidades
             this.CantCaracteresTicket = new System.Windows.Forms.TextBox();
             this.tipoTicketExpendio = new System.Windows.Forms.ComboBox();
             this.label32 = new System.Windows.Forms.Label();
-            this.label33 = new System.Windows.Forms.Label();
-            this.prefijoCodBarraInterno = new System.Windows.Forms.TextBox();
-            this.label34 = new System.Windows.Forms.Label();
             this.pausarEtiqueta = new System.Windows.Forms.ComboBox();
             this.label35 = new System.Windows.Forms.Label();
             this.cbImpresoras = new System.Windows.Forms.ComboBox();
             this.label36 = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.label37 = new System.Windows.Forms.Label();
+            this.ImpresoraEtiqueta = new System.Windows.Forms.TextBox();
             this.CantCaracteresEtiqueta = new System.Windows.Forms.TextBox();
             this.label38 = new System.Windows.Forms.Label();
-            this.ImpresoraEtiqueta = new System.Windows.Forms.TextBox();
+            this.qrTicketFactura = new System.Windows.Forms.ComboBox();
+            this.label39 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -724,6 +726,31 @@ namespace Utilidades
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Codigo Barra Interno";
             // 
+            // label34
+            // 
+            this.label34.AutoSize = true;
+            this.label34.Location = new System.Drawing.Point(190, 25);
+            this.label34.Name = "label34";
+            this.label34.Size = new System.Drawing.Size(49, 13);
+            this.label34.TabIndex = 77;
+            this.label34.Text = "(20 a 29)";
+            // 
+            // label33
+            // 
+            this.label33.AutoSize = true;
+            this.label33.Location = new System.Drawing.Point(31, 25);
+            this.label33.Name = "label33";
+            this.label33.Size = new System.Drawing.Size(86, 13);
+            this.label33.TabIndex = 76;
+            this.label33.Text = "Prefijo Cod.Barra";
+            // 
+            // prefijoCodBarraInterno
+            // 
+            this.prefijoCodBarraInterno.Location = new System.Drawing.Point(125, 22);
+            this.prefijoCodBarraInterno.Name = "prefijoCodBarraInterno";
+            this.prefijoCodBarraInterno.Size = new System.Drawing.Size(59, 20);
+            this.prefijoCodBarraInterno.TabIndex = 75;
+            // 
             // label25
             // 
             this.label25.AutoSize = true;
@@ -793,31 +820,6 @@ namespace Utilidades
             this.label32.TabIndex = 73;
             this.label32.Text = "Tipo Ticket en Exp.";
             // 
-            // label33
-            // 
-            this.label33.AutoSize = true;
-            this.label33.Location = new System.Drawing.Point(31, 25);
-            this.label33.Name = "label33";
-            this.label33.Size = new System.Drawing.Size(86, 13);
-            this.label33.TabIndex = 76;
-            this.label33.Text = "Prefijo Cod.Barra";
-            // 
-            // prefijoCodBarraInterno
-            // 
-            this.prefijoCodBarraInterno.Location = new System.Drawing.Point(125, 22);
-            this.prefijoCodBarraInterno.Name = "prefijoCodBarraInterno";
-            this.prefijoCodBarraInterno.Size = new System.Drawing.Size(59, 20);
-            this.prefijoCodBarraInterno.TabIndex = 75;
-            // 
-            // label34
-            // 
-            this.label34.AutoSize = true;
-            this.label34.Location = new System.Drawing.Point(190, 25);
-            this.label34.Name = "label34";
-            this.label34.Size = new System.Drawing.Size(49, 13);
-            this.label34.TabIndex = 77;
-            this.label34.Text = "(20 a 29)";
-            // 
             // pausarEtiqueta
             // 
             this.pausarEtiqueta.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -883,6 +885,13 @@ namespace Utilidades
             this.label37.TabIndex = 83;
             this.label37.Text = "Cant. Caract. Etiqueta";
             // 
+            // ImpresoraEtiqueta
+            // 
+            this.ImpresoraEtiqueta.Location = new System.Drawing.Point(122, 16);
+            this.ImpresoraEtiqueta.Name = "ImpresoraEtiqueta";
+            this.ImpresoraEtiqueta.Size = new System.Drawing.Size(192, 20);
+            this.ImpresoraEtiqueta.TabIndex = 80;
+            // 
             // CantCaracteresEtiqueta
             // 
             this.CantCaracteresEtiqueta.Location = new System.Drawing.Point(122, 42);
@@ -899,18 +908,35 @@ namespace Utilidades
             this.label38.TabIndex = 81;
             this.label38.Text = "Impresora";
             // 
-            // ImpresoraEtiqueta
+            // qrTicketFactura
             // 
-            this.ImpresoraEtiqueta.Location = new System.Drawing.Point(122, 16);
-            this.ImpresoraEtiqueta.Name = "ImpresoraEtiqueta";
-            this.ImpresoraEtiqueta.Size = new System.Drawing.Size(192, 20);
-            this.ImpresoraEtiqueta.TabIndex = 80;
+            this.qrTicketFactura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.qrTicketFactura.FormattingEnabled = true;
+            this.qrTicketFactura.Items.AddRange(new object[] {
+            "NO",
+            "INFO_FACTURA",
+            "INFO_CONTRIBUYENTE"});
+            this.qrTicketFactura.Location = new System.Drawing.Point(607, 313);
+            this.qrTicketFactura.Name = "qrTicketFactura";
+            this.qrTicketFactura.Size = new System.Drawing.Size(150, 21);
+            this.qrTicketFactura.TabIndex = 81;
+            // 
+            // label39
+            // 
+            this.label39.AutoSize = true;
+            this.label39.Location = new System.Drawing.Point(496, 316);
+            this.label39.Name = "label39";
+            this.label39.Size = new System.Drawing.Size(105, 13);
+            this.label39.TabIndex = 80;
+            this.label39.Text = "Qr en Ticket Factura";
             // 
             // formAppConfigTerminal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(978, 635);
+            this.Controls.Add(this.qrTicketFactura);
+            this.Controls.Add(this.label39);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.label36);
             this.Controls.Add(this.cbImpresoras);
@@ -1046,5 +1072,7 @@ namespace Utilidades
         private System.Windows.Forms.TextBox ImpresoraEtiqueta;
         private System.Windows.Forms.TextBox CantCaracteresEtiqueta;
         private System.Windows.Forms.Label label38;
+        private System.Windows.Forms.ComboBox qrTicketFactura;
+        private System.Windows.Forms.Label label39;
     }
 }
