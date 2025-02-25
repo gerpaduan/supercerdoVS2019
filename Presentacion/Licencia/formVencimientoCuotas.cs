@@ -157,14 +157,15 @@ namespace Presentacion.Licencia
             string nombreDia = DateTime.Now.DayOfWeek.ToString();
             string letraDia = nombreDia[0].ToString();
             int ultimosTresCuit = Convert.ToInt32(FormPrincipal.cuitCliente.Substring(FormPrincipal.cuitCliente.Length - 3));
+            int ultimosDosCuit = Convert.ToInt32(FormPrincipal.cuitCliente.Substring(FormPrincipal.cuitCliente.Length - 2));
             string day = DateTime.Now.Day > 9 ? DateTime.Now.Day.ToString() : "0" + DateTime.Now.Day.ToString();
             DateTime fechaVenc = Convert.ToDateTime(txtFechaVencimiento.Text);
             string por7 = ((DateTime.Now.Year + DateTime.Now.Day + DateTime.Now.Month + fechaVenc.Year + fechaVenc.Month + ultimosTresCuit) * 1007).ToString();
 
             //string claveSistema = letraDia + DateTime.Now.Month.ToString() + day + por7; //ConfigurationManager.AppSettings["admin"].ToString();
 
-            int multiplicarFecha_Div_ultimosCuit = ((DateTime.Now.Year * DateTime.Now.Month * DateTime.Now.Day) / ultimosTresCuit);
-            string claveSistema = letraDia + multiplicarFecha_Div_ultimosCuit;
+            int multiplicarFecha_Div_ultimosCuit = ((DateTime.Now.Year * DateTime.Now.Month * DateTime.Now.Day) / ultimosDosCuit);
+            string claveSistema = letraDia + multiplicarFecha_Div_ultimosCuit + DateTime.Now.Day.ToString();
             string clave = txtClave.Text.Trim();
             if (clave.ToUpper().Equals(claveSistema.ToUpper()))
             {
@@ -181,7 +182,7 @@ namespace Presentacion.Licencia
             else
             {
                 //MessageBox.Show("Código Incorrecto.\n\nDing-mA-dA-(3lastcuit+y+m+d+yV+mV*1007)\nCuit Cliente:"+ FormPrincipal.cuitCliente);
-                MessageBox.Show("Código Incorrecto.\n\nletterday[(y*m*d)/3cuit]\nCuit Cliente:" + FormPrincipal.cuitCliente);
+                MessageBox.Show("Código Incorrecto.\n\nletterday[trun((y*m*d)/2cuit)]d\nCuit Cliente:" + FormPrincipal.cuitCliente);
                 txtClave.Focus();
             }
         }
