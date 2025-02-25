@@ -118,6 +118,7 @@ namespace Presentacion
                 formVentaCajaConExpendio frmVentaCaja = new formVentaCajaConExpendio();
                 frmVentaCaja.oUsuario = oUsuario;
                 frmVentaCaja.Show();
+                frmVentaCaja.BringToFront();
             }
             oUsuario = null;
         }

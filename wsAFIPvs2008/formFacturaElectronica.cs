@@ -22,6 +22,7 @@ using System.Windows.Controls;
 using System.Xml.Linq;
 using System.Diagnostics;
 using System.Windows.Documents;
+using System.Threading;
 
 namespace wsAFIPvs2008
 {
@@ -51,6 +52,7 @@ namespace wsAFIPvs2008
         public string localidadAfip;
         public string provinciaAfip;
         bool mostrarSeleccionados;
+        bool generarPDF = false;
 
         private LoginClass oLoginClass;
         private string urlLogin;
@@ -1062,6 +1064,9 @@ namespace wsAFIPvs2008
 
                     imprimirTicket(esFacturaA, imprimir);
 
+                    if (generarPDF)
+                        pdf_FacturaMetodo();
+
                     #region imprimir desde campos
                     ////Imprimir
                     //Ticket.CreaTicket ticket = new Ticket.CreaTicket();
@@ -1743,6 +1748,8 @@ namespace wsAFIPvs2008
 
             productosTable.AddCell(new PdfPCell(new Phrase("Importe", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
 
+            oDocumentoImprimir.Venta = oDocumentoImprimir.Venta == null ? oVentaE : oDocumentoImprimir.Venta;
+
             foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
             {
                 productosTable.AddCell(new PdfPCell(new Phrase(item.Corte.codigo.ToString() + " - " + item.Corte.corte, fontNormal)) { Border = 0 });
@@ -1835,6 +1842,14 @@ namespace wsAFIPvs2008
             documento.Add(infoCAE);
             // Cerrar el documento
             documento.Close();
+
+            if (MessageBox.Show("¿Abrir ubicación del archivo?",
+                    "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
+            {
+                //Abre ubicacion
+                Process.Start("explorer.exe", @ruta);
+                Thread.Sleep(1500); // Pausa por 3000 milisegundos (3 segundos)
+            }
 
             // Usar Process.Start para abrir el PDF
             Process.Start(new ProcessStartInfo(rutaPDF) { UseShellExecute = true });
@@ -2354,7 +2369,6 @@ namespace wsAFIPvs2008
         private DialogResult MostrarMensaje()
         {
             // Crear Formulario Dinámico
-            // Crear Formulario Dinámico
             System.Windows.Forms.Form msgBox = new System.Windows.Forms.Form()
             {
                 Text = "Confirmación",
@@ -2364,9 +2378,9 @@ namespace wsAFIPvs2008
                 MaximizeBox = false,
                 MinimizeBox = false,
                 KeyPreview = true, // Permite capturar teclas antes de que lleguen a los controles
-                Icon = SystemIcons.Question, // Icono de pregunta
+               // Icon = SystemIcons.Question, // Icono de pregunta
                 AutoSize = false, // Desactivar AutoSize
-                Padding = new Padding(10) // Agregar un poco de espacio interior
+                Padding = new Padding(9) // Agregar un poco de espacio interior
             };
 
             // Panel para alinear el icono y el texto
@@ -2393,10 +2407,10 @@ namespace wsAFIPvs2008
                 Text = "La Factura Electrónica se generó correctamente!.\n\n¿Imprimir ..?",
                 AutoSize = true,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Arial", 11, FontStyle.Regular) // Aumentar el tamaño del text
+                Font = new Font("Arial", 9, FontStyle.Regular) // Aumentar el tamaño del text
             };
             // Agregar el icono y el texto al contenedor
-            panelTexto.Controls.Add(pictureBox);
+            //panelTexto.Controls.Add(pictureBox);
             panelTexto.Controls.Add(label);
 
             // Contenedor para alinear los botones
@@ -2456,9 +2470,7 @@ namespace wsAFIPvs2008
                     resp = DialogResult.Yes;
                     break;
                 case "PDF":
-                    //TODO: al generar pdf hay un error en la carga de las lineas
-                    //posiblemente haya que generar pdf luego, en ultima instancia
-                    pdf_FacturaMetodo();
+                    generarPDF = true;
                     break;
                 case "No":
                     // No hacer nada
