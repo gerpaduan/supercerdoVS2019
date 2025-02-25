@@ -1235,6 +1235,8 @@ namespace Presentacion
 
         private void parametrosToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+
             Utilidades.formAppConfigTerminal formAppConfig = new Utilidades.formAppConfigTerminal();
             formAppConfig.Show();
         }
