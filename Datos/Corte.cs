@@ -1502,7 +1502,8 @@ namespace Datos
 
             string query = esInsert ?
                 $"INSERT INTO TiposProducto (tipo, orden, reservadoSistema, creado) VALUES (@tipo, @orden, @reservadoSistema, @creado)" :
-                $"UPDATE TiposProducto SET tipo = @tipo, orden = @orden, actualizado = @actualizado WHERE  tipo like @tipoToUpdate";
+                $"UPDATE TiposProducto SET tipo = @tipo, orden = @orden, actualizado = @actualizado WHERE  tipo like @tipoToUpdate;" +
+                $"UPDATE Corte SET tipo = @tipo WHERE  tipo like @tipoToUpdate;";
 
             cmCorte.CommandType = CommandType.Text;
             cmCorte.CommandText = query;
