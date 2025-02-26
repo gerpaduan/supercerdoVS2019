@@ -531,7 +531,20 @@ namespace Negocio
             oCorteD = new Datos.Corte();
             return oCorteD.eliminarTipoProducto(tiposProducto);
         }
+
+
+        /// <summary>
+        /// Sugiere el menor codigo libre segun el tipo de producto
+        /// </summary>
+        /// <param name="tipo"></param>
+        /// <returns></returns>
+        public long sugerirCodigo(string tipo)
+        {
+            oCorteD = new Datos.Corte();
+            return oCorteD.sugerirCodigo(tipo);
+        }
         #endregion
+
         public int obtenerNivelCorte(int idCorteMaestro)
         {
             oCorteD = new Datos.Corte();

@@ -1560,6 +1560,41 @@ namespace Datos
 
             return mensaje;
         }
+
+        /// <summary>
+        /// Sugiere el menor codigo libre segun el tipo de producto
+        /// </summary>
+        /// <param name="tipo"></param>
+        /// <returns></returns>
+        public long sugerirCodigo(string tipo)
+        {
+            cmCorte = new SqlCommand();
+            long codigoDisponible = -1; // Valor por defecto si la tabla está vacía
+
+            cmCorte.Connection = conn.conectar();
+            cmCorte.Connection.Open();
+
+            string query = @"SELECT MIN(Codigo + 1) AS CodigoDisponible
+                            FROM Corte 
+                            WHERE Tipo = @tipo
+                            AND NOT EXISTS (
+                                SELECT 1 FROM Corte c2 WHERE c2.Codigo = Corte.Codigo + 1 AND c2.Tipo = @tipo
+                            );";
+
+            cmCorte.CommandType = CommandType.Text;
+            cmCorte.CommandText = query;
+            cmCorte.Parameters.AddWithValue("@tipo", tipo);
+
+            object result = cmCorte.ExecuteScalar();
+            if (result != DBNull.Value && result != null)
+            {
+                codigoDisponible = Convert.ToInt64(result);
+            }
+
+
+            return codigoDisponible;
+        }
+
         #endregion
         public int obtenerNivelCorte(int idCorteMaestro)
         {

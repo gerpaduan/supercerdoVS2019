@@ -6,7 +6,9 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.util;
+using System.Windows;
 using System.Windows.Forms;
+using iTextSharp.text.html;
 using Presentacion.Cortes;
 
 
@@ -361,6 +363,7 @@ namespace Presentacion
                 checkMayuscula.Checked = Entidades.Parametros.mayuscula;
                 txtCodigo.Focus();
 
+                checkSugerirCodigo.Visible = !(idCorte > 0);//solo visible para altas de productos
                 if (idCorte > 0)
                 {
                     oCorteE = oCorteN.getCorteById(idCorte, true);
@@ -416,6 +419,7 @@ namespace Presentacion
 
         private void comboTipo_SelectedIndexChanged(object sender, EventArgs e)
         {
+            getCodigoSugerido();
             //Corte
             //Embutido
             //Unidad
@@ -520,6 +524,37 @@ namespace Presentacion
         private void txtCodigo_Leave(object sender, EventArgs e)
         {
             existeCodigoCorte();
+        }
+
+        private void checkSegerirCodigo_CheckedChanged(object sender, EventArgs e)
+        {
+            checkSugerirCodigo.BackColor = checkSugerirCodigo.Checked ? System.Drawing.Color.LimeGreen : SystemColors.ControlDark;
+            if (checkSugerirCodigo.Checked)
+            {
+                MessageBox.Show("Ha activado la sugerencia para códigos de productos\n\n"+
+                    "Al seleccionar el Tipo de Producto el sistema sugerirá el menor Código disponible para ese tipo.",
+                    "Sugerir código", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!(string.IsNullOrEmpty(comboTipo.Text) && string.IsNullOrEmpty(txtCodigo.Text)))
+                {
+                    getCodigoSugerido();
+                }
+            }
+        }
+
+        private void getCodigoSugerido()
+        {
+            if (!(checkSugerirCodigo.Checked && string.IsNullOrEmpty(txtCodigo.Text)))
+                return;
+
+            long codigoSugerido = oCorteN.sugerirCodigo(comboTipo.Text);
+            if (codigoSugerido < 0 && !string.IsNullOrEmpty(comboTipo.Text))
+            {
+                MessageBox.Show("El tipo seleccionado aún no tiene asignado ningún producto\n\n" +
+                    "Deberá asignar el codigo manualmente.",
+                    "Sugerir código", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            txtCodigo.Text = (codigoSugerido < 0) ? "" : codigoSugerido.ToString();
         }
     }
 }
