@@ -1313,7 +1313,7 @@ namespace wsAFIPvs2008
 
                 ///Imprimir QR
                 ///
-                if (qrTicketFactura != null && !qrTicketFactura.Equals("NO"))
+                if (ticket.imprimir && qrTicketFactura != null && !qrTicketFactura.ToUpper().Equals("NO"))
                 {
                     string urlBase = "https://www.afip.gob.ar/fe/qr/";
                     string data = urlBase + "?p=" + (qrTicketFactura.Equals("INFO_FACTURA") ? GenerarJSON() : GenerarJSON_Contribuyente());
