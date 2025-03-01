@@ -1329,7 +1329,17 @@ namespace wsAFIPvs2008
                     DialogResult imprimirCopia = MessageBox.Show("¿Imprimir copia?.",
                         "Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (DialogResult.Yes == imprimirCopia)
+                    {
                         ticket.realizarImpresion();
+                        ///Imprimir QR
+                        ///
+                        if (ticket.imprimir && qrTicketFactura != null && !qrTicketFactura.ToUpper().Equals("NO"))
+                        {
+                            string urlBase = "https://www.afip.gob.ar/fe/qr/";
+                            string data = urlBase + "?p=" + (qrTicketFactura.Equals("INFO_FACTURA") ? GenerarJSON() : GenerarJSON_Contribuyente());
+                            ticket.realizarImpresionQR(data);
+                        }
+                    }                        
                 }
             }
             catch (Exception)
@@ -1593,6 +1603,7 @@ namespace wsAFIPvs2008
 
         private void imprimir_Click(object sender, EventArgs e)
         {
+            
             if (oFactuElec == null || (oFactuElec != null && string.IsNullOrEmpty(oFactuElec.CAE1)))
             {
                 MessageBox.Show("No se puede imprimir ticket porque la factura no ha sido generada");
