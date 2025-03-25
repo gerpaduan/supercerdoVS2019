@@ -43,6 +43,7 @@ namespace Presentacion
         bool saveChanges = false;
         bool dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+        int nroErrorBalanza = 0;
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -366,6 +367,15 @@ namespace Presentacion
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
+
+                nroErrorBalanza++;
+                //si tira error mas de 5 veces se desactiva balanza automaticamente y se pone contador en serio
+                if (nroErrorBalanza > 20)
+                {
+                    timer1.Stop();
+                    nroErrorBalanza = 0;
+                    MessageBox.Show("Balanza desactivada automaticamente");
+                }
             }
         }
 

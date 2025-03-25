@@ -44,6 +44,7 @@ namespace Presentacion
         bool saveChanges = false;
         bool dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+        int nroErrorBalanza = 0;
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -342,6 +343,22 @@ namespace Presentacion
             txtReceta.Text = oFormulaE.Receta;
             txtCodCorteEnEmbutido.Focus();
             calcularFormula();
+
+            //si es ingreso rapido, sugerir abrir el form correspondiente
+            if (oCorteEmbutidoE.IngresoRapidoEmbutido)
+            {
+                DialogResult respuesta = MessageBox.Show("Se sugiere que el producto a elaborar se lo cargue desde el formulario Ingreso Rápido.\n\n"+
+                    "-Presione Si para que el Sistema lo redirija automáticamente.\n-Presione No para permanecer en este formulario. ", "Producto de ingreso rápido", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                if ((respuesta == DialogResult.Yes))
+                {
+                    formIngresoEmbutidoRapido frmIngresarEmbutidoRapido = new formIngresoEmbutidoRapido();
+                    frmIngresarEmbutidoRapido.oUsuario = oUsuario;
+                    frmIngresarEmbutidoRapido.oCorteEmbutidoE = oCorteEmbutidoE;
+                    frmIngresarEmbutidoRapido.frmEmbutidos = this.frmEmbutidos;
+                    this.Close();
+                    frmIngresarEmbutidoRapido.ShowDialog();
+                }
+            }
         }
 
         private void calcularFormula()
@@ -358,7 +375,7 @@ namespace Presentacion
                 //recorre datatable de ingredientes en formula y si existe NO SUMA KGS para el calculo
                 for (int i = 0; i < dtFormula.Rows.Count; i++)
                 {
-                    esFormula = oCortePorEmb.corte.codigo.Equals(dtFormula.Rows[i]["codigo"]);
+                    esFormula = oCortePorEmb.corte.codigo.Equals(dtFormula.Rows[i]["codigo"]) && Convert.ToBoolean(dtFormula.Rows[i]["agregarAuto"]);
                 }
                 totalKgSinCond += !esFormula ? oCortePorEmb.kgUtilizado : 0;
             }
@@ -586,6 +603,15 @@ namespace Presentacion
                 txtCantKgs.Text = "Error balanza";
                 lblErrorBalanza.Text = ex.Message;
                 lblErrorBalanza.Visible = true;
+
+                nroErrorBalanza++;
+                //si tira error mas de 5 veces se desactiva balanza automaticamente y se pone contador en serio
+                if (nroErrorBalanza > 20)
+                {
+                    timer1.Stop();
+                    nroErrorBalanza = 0;
+                    MessageBox.Show("Balanza desactivada automaticamente");
+                }
             }
         }
 
@@ -760,8 +786,17 @@ namespace Presentacion
 
         private void btnReceta_Click(object sender, EventArgs e)
         {
-            formReceta frmReceta = new formReceta(txtReceta.Text); // Pasar el texto actual
-            frmReceta.editar = false;
+            if (Application.OpenForms["formReceta"] != null)
+            {
+                Application.OpenForms["formReceta"].Activate();
+                Application.OpenForms["formReceta"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formReceta frmReceta = new formReceta(txtReceta.Text); // Pasar el texto actual
+                frmReceta.editar = false;
+                frmReceta.Show();
+            }
         }
     }
 }

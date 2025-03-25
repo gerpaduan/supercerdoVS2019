@@ -27,6 +27,11 @@ namespace Presentacion
 {
     public partial class FormPrincipal : Form, InterfaceUsuario
     {
+        /// <summary>
+        /// Version del programa dia.mes.año
+        /// </summary>
+        string version_nro = "v25.03.25";
+
         bool cerrarFormPorError = true;
         public static bool logueado = false;
         char validarPassDemo = '0';
@@ -384,7 +389,7 @@ namespace Presentacion
             }
 
 
-            this.Text = textForm;
+            this.Text = textForm + " " + version_nro;
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
 
             //si no soy yo vacio items de comboConexion
