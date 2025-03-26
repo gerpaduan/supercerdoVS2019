@@ -201,24 +201,26 @@ namespace Negocio
         public void cargaExhaustiva(Entidades.Venta oVentaE, List<Entidades.LineaVenta> listaLineaVenta)
         {
 
-            DateTime dateTime = DateTime.Now.AddDays(-365);
+            DateTime dateTime = DateTime.Now.AddDays(-1000);
             for (int i = 0; i < 365; i++)
             {
                 dateTime = dateTime.AddDays(i);
                 for (int j = 0; j < 300; j++)
                 {
-                    if (dateTime.Year > 2024 && dateTime.Month > 1)
+                    if (dateTime.Year > 2025 && dateTime.Month > 2)
                     {
                         string d = "2";
-                        return;
+                        dateTime = dateTime.AddYears(2025 - dateTime.Year);
+                        dateTime = dateTime.AddMonths(3 - dateTime.Month);
+                        //return;
                     }
                     oVentaE.FechaVenta = dateTime;
                     oVentaE.Sucursal.idSucursal = 2;
                     oVentaE.IdVenta = agregarVenta(oVentaE);
 
                     Random random = new Random();
-                    int min = 473; // Límite inferior
-                    int max = 490; // Límite superior
+                    int min = 6594; // Límite inferior
+                    int max = 6829; // Límite superior
 
                     int idCorte_Random = random.Next(min, max + 1); // Incluye el límite superior
 

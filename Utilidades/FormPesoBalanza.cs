@@ -52,13 +52,6 @@ namespace Utilidades
                 //BalanzaCom.Write(miBuffer, 0, miBuffer.Length);
                 txtPesoBalanza.Text = BalanzaCom.ReadExisting();
 
-                //si peso contiene 000 and e se hace una pausa porque Systel Genera error con peso redonde. Ej: 5.000 kgs
-                if (txtPesoBalanza.Text.Contains("000e"))
-                {
-                    //Thread.Sleep(500); // Pausa por 3000 milisegundos (3 segundos)
-                    txtPesoBalanza.Text = BalanzaCom.ReadExisting();
-                }
-
                 formatearPeso(txtPesoBalanza.Text);
             }
             catch (Exception ex)
