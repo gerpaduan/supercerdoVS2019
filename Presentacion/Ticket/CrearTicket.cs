@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Configuration;
 using System.Runtime.InteropServices;
-using Org.BouncyCastle.Utilities;
 
 namespace Presentacion.Ticket
 {
