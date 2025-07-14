@@ -176,13 +176,13 @@ namespace Presentacion.Licencia
                 }
 
                 otrasClasesN.agregarPagoCuota(Convert.ToDateTime(txtFechaVencimiento.Text));
-                MessageBox.Show("Código Correcto.");
+                MessageBox.Show("Pago registrado.");
                 cargarGrilla();
             }
             else
             {
                 //MessageBox.Show("Código Incorrecto.\n\nDing-mA-dA-(3lastcuit+y+m+d+yV+mV*1007)\nCuit Cliente:"+ FormPrincipal.cuitCliente);
-                MessageBox.Show("Código Incorrecto.\n\nletterday[trun((y*m*d)/2cuit)]d\nCuit Cliente:" + FormPrincipal.cuitCliente);
+                MessageBox.Show("Código Incorrecto.\n\nletterday_concat_[trun((y*m*d)/2cuit)]_concat_d\nCuit Cliente:" + FormPrincipal.cuitCliente);
                 txtClave.Focus();
             }
         }
