@@ -55,7 +55,8 @@ namespace Presentacion.Caja
                 total = total + Convert.ToDecimal(row.Cells["monto"].Value.ToString());
             }
             txtItems.Text = items.ToString();
-            txtTotalS.Text = total.ToString("F2");
+            //Solo mostrar total monetario de egresos si es Cierre de Caja o el vendedor es administrador
+            txtTotalS.Text = oCierreE.FechaHoraCierre != null || oCierreE.UsuarioInicio.Admin  ? total.ToString("F2") : "-";
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
