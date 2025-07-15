@@ -49,6 +49,7 @@ namespace Presentacion
        bool dejarDeLeerPeso = false;
        bool asignarStockActual = false;
        bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
+        int nroFilaBorrada = 0;
 
        Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
        Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -372,6 +373,7 @@ namespace Presentacion
             {
                 quitarCorte();
                 cargarGrilla();
+                nroFilaBorrada = 0;
                 capturarPantalla();
             }
         }
@@ -383,9 +385,9 @@ namespace Presentacion
                 if (grillaCortePorCompra.SelectedRows.Count > 0 || grillaCortePorCompra.CurrentRow != null)
                 {
                     huboModificaciones = true;
-                    int nroFila = grillaCortePorCompra.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
-                    listaCortePorCompra.RemoveAt(nroFila);//elimina objetos de las listas
-                    listaCortesEnGrilla.RemoveAt(nroFila);
+                    nroFilaBorrada = grillaCortePorCompra.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
+                    listaCortePorCompra.RemoveAt(nroFilaBorrada);//elimina objetos de las listas
+                    listaCortesEnGrilla.RemoveAt(nroFilaBorrada);
                 }
                 else
                 {
@@ -610,8 +612,10 @@ namespace Presentacion
 
                 if (listaCortesEnGrilla.Count > 0)
                 {
-                    grillaCortePorCompra.Rows[listaCortesEnGrilla.Count - 1].Selected = true;
-                    grillaCortePorCompra.FirstDisplayedScrollingRowIndex = listaCortesEnGrilla.Count - 1;
+                    //si se ha borrado una fila: Se vuelve a selccionar la misma ubicacion
+                    int nroFilaSelected = nroFilaBorrada > 0 && (nroFilaBorrada + 1 < listaCortesEnGrilla.Count) ? (nroFilaBorrada + 1) : listaCortesEnGrilla.Count;
+                    grillaCortePorCompra.Rows[nroFilaSelected - 1].Selected = true;
+                    grillaCortePorCompra.FirstDisplayedScrollingRowIndex = nroFilaSelected - 1;
                 }
 
                 cargarTotales();
@@ -1205,6 +1209,9 @@ namespace Presentacion
                     break;
                 case Keys.F10:
                     buscarCorte();
+                    break;
+                case Keys.Delete:
+                    quitarLinea();
                     break;
                 case Keys.F11:
                     txtObservaciones.Focus();

@@ -29,7 +29,9 @@ namespace Presentacion.Caja
         private void btnIngresar_Click(object sender, EventArgs e)
         {
             exito = false;
-            if (float.TryParse(txtImporteEfectivo.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo) && pagoMixtoEfectivo > 0 && importe2 > 0)
+            // Normalización: quitamos puntos (miles) y cambiamos la coma por punto (decimal)
+            string textoNormalizado = txtImporteEfectivo.Text.Replace(".", "").Replace(",", ".");
+            if (float.TryParse(textoNormalizado, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo) && pagoMixtoEfectivo > 0 && importe2 > 0)
             {
                 //si es Cero el efectivo informar - si cierra ventana mandar cero
                 if (formVentaCajaConExpendio != null)
