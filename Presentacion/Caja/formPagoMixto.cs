@@ -46,6 +46,7 @@ namespace Presentacion.Caja
             {
                 MessageBox.Show("El pago en efectivo debe ser mayor a cero y menor al monto total de la venta",
                     "Error pago efectivo", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtImporteEfectivo.Focus();
             }
         }
 
@@ -95,10 +96,15 @@ namespace Presentacion.Caja
             if (cargaEfectivo)
                 return;
 
-            if (float.TryParse(txtImporte2.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out importe2))
+            if (string.IsNullOrEmpty(txtBox.Text) || float.TryParse(txtImporte2.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out importe2))
             {
                 pagoMixtoEfectivo = totalPesos - importe2;
                 txtImporteEfectivo.Text = pagoMixtoEfectivo.ToString("N2");
+            }
+            else
+            {
+                MessageBox.Show("Importe Inválido");
+                txtBox.Text = "";
             }
         }
 
@@ -134,10 +140,15 @@ namespace Presentacion.Caja
             if (!cargaEfectivo)
                 return;
 
-            if (float.TryParse(txtBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo))
+            if (string.IsNullOrEmpty(txtBox.Text) || float.TryParse(txtBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo))
             {
                 importe2 = totalPesos - pagoMixtoEfectivo;
                 txtImporte2.Text = importe2.ToString("N2");
+            }
+            else
+            {
+                MessageBox.Show("Importe Inválido");
+                txtBox.Text = "";
             }
         }
 

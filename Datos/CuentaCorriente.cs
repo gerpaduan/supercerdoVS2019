@@ -135,6 +135,20 @@ namespace Datos
 
         #region Pagos
 
+        public int getUltimoIdPago()
+        {
+            cmCtaCte = new SqlCommand();
+            cmCtaCte.Connection = conn.conectar();
+            cmCtaCte.CommandType = CommandType.Text;
+            cmCtaCte.CommandText = "Select top 1 id from Pagos order by id desc";
+
+            cmCtaCte.Connection.Open();
+            int idPago = (int)cmCtaCte.ExecuteScalar();
+            cmCtaCte.Connection.Close();
+
+            return idPago;
+        }
+
         public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE)
         {
             cmCtaCte = new SqlCommand();
@@ -198,9 +212,13 @@ namespace Datos
                 " FROM  dbo.Pagos INNER JOIN dbo.Personas ON dbo.Pagos.idPersona = dbo.Personas.idPersona LEFT OUTER JOIN " +
                 " dbo.Usuarios AS ActualizadoPor ON dbo.Pagos.creadoPor = ActualizadoPor.id LEFT OUTER JOIN " +
                 " dbo.Usuarios AS CreadoPor ON dbo.Pagos.actualizadoPor = CreadoPor.id " +
-                " WHERE dbo.Pagos.fecha between '" + fechaDesde + "' and '" + fechaHasta.AddDays(1) + "'" +
+               // " WHERE dbo.Pagos.fecha between '" + fechaDesde + "' and '" + fechaHasta.AddDays(1) + "'" +
+                " WHERE dbo.Pagos.fecha between @fechaDesde and @fechaHasta" +
                 " and (dbo.Personas.razonSocial like '%" + texto + "%' or dbo.Pagos.nroRecibo like '%" + texto + "%')"+
                 " ORDER BY dbo.Pagos.fecha DESC";
+
+            cmCtaCte.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+            cmCtaCte.Parameters.AddWithValue("@fechaHasta", fechaHasta.AddDays(1));
 
             daCtaCte.SelectCommand = cmCtaCte;
             daCtaCte.Fill(dtPagos);

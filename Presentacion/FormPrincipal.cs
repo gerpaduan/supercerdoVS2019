@@ -30,7 +30,7 @@ namespace Presentacion
         /// <summary>
         /// Version del programa dia.mes.año
         /// </summary>
-        string version_nro = "v14.07.25";
+        string version_nro = "v16.07.25";
 
         bool cerrarFormPorError = true;
         public static bool logueado = false;
@@ -1244,6 +1244,16 @@ namespace Presentacion
 
             Utilidades.formAppConfigTerminal formAppConfig = new Utilidades.formAppConfigTerminal();
             formAppConfig.Show();
+        }
+
+        private void ctasCtesToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            ctasCtesToolStripMenuItem_Click(sender, e);   
+        }
+
+        private void pagosToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            pagosToolStripMenuItem_Click(sender, e);  
         }
     }
 }

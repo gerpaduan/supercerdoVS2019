@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using Entidades;
 
 namespace Negocio
 {
@@ -115,6 +116,11 @@ namespace Negocio
         }
 
         #region Pagos
+
+        public int getUltimoIdPago()
+        {
+            return oCtaCteD.getUltimoIdPago();
+        }
 
         public Entidades.Pago getPagoById(int idPago)
         {

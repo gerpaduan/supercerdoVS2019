@@ -323,7 +323,7 @@ namespace Presentacion.Caja
                     ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
                     //ticket.LineasEnBlanco(0);
                     ticket.LineasGuion();
-
+ 
                     for (int index = 0; index < listaLineaVenta.Count; index++)
                     {
                         Entidades.LineaVenta linea = listaLineaVenta[index];

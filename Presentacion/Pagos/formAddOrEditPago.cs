@@ -56,6 +56,10 @@ namespace Presentacion.Pagos
                         setearPropiedadesForm();
                         idPagoLabel.Text = idPago.ToString();//asigno id para identificar el formulario al llamar
                     }
+                    else
+                    {
+                        setearNroRecibo();
+                    }
 
                     txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
                     txtPersona.Text = oPersonaE != null ? oPersonaE.razonSocial : "";
@@ -71,6 +75,23 @@ namespace Presentacion.Pagos
             catch (Exception ex)
             {
                 MessageBox.Show("Error en evento Load()\n" + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Si es un Pago, se obtiene el Ultimo IdPago y se le suma 1 para generar el nro de Recibo
+        /// 
+        /// </summary>
+        private void setearNroRecibo()
+        {
+            try
+            {
+                txtNroRecibo.Text = oPagoE.Id > 0 ? txtNroRecibo.Text : (oCtaCteN.getUltimoIdPago() + 1).ToString();
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
         }
 
@@ -341,6 +362,7 @@ namespace Presentacion.Pagos
             if (readOnly) 
                 return;
 
+            setearNroRecibo();
             if (checkAProveedor.Checked)
             {
                 checkAProveedor.Text = "Pagar a ...";
