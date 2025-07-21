@@ -70,6 +70,9 @@
             this.appConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.baseDeDatosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.parametrosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.finanzasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ctasCtesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pagosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.stockActualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -80,9 +83,7 @@
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.finanzasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.ctasCtesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pagosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.chequesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -537,7 +538,7 @@
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -621,6 +622,30 @@
             this.parametrosToolStripMenuItem.Text = "Parametros";
             this.parametrosToolStripMenuItem.Click += new System.EventHandler(this.parametrosToolStripMenuItem_Click);
             // 
+            // finanzasToolStripMenuItem
+            // 
+            this.finanzasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ctasCtesToolStripMenuItem,
+            this.pagosToolStripMenuItem,
+            this.chequesToolStripMenuItem});
+            this.finanzasToolStripMenuItem.Name = "finanzasToolStripMenuItem";
+            this.finanzasToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
+            this.finanzasToolStripMenuItem.Text = "Finanzas";
+            // 
+            // ctasCtesToolStripMenuItem
+            // 
+            this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
+            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
+            this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click_1);
+            // 
+            // pagosToolStripMenuItem
+            // 
+            this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
+            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.pagosToolStripMenuItem.Text = "Pagos";
+            this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click_1);
+            // 
             // stockToolStripMenuItem
             // 
             this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -632,7 +657,7 @@
             // stockActualToolStripMenuItem
             // 
             this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
             this.stockActualToolStripMenuItem.Text = "Stock Actual";
             this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
             // 
@@ -648,7 +673,7 @@
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -658,7 +683,7 @@
             this.verBalanzaToolStripMenuItem1,
             this.leerPesoToolStripMenuItem1});
             this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
-            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
             this.balanzaToolStripMenuItem1.Text = "Balanza";
             // 
             // verBalanzaToolStripMenuItem1
@@ -694,28 +719,12 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // finanzasToolStripMenuItem
+            // chequesToolStripMenuItem
             // 
-            this.finanzasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.ctasCtesToolStripMenuItem,
-            this.pagosToolStripMenuItem});
-            this.finanzasToolStripMenuItem.Name = "finanzasToolStripMenuItem";
-            this.finanzasToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
-            this.finanzasToolStripMenuItem.Text = "Finanzas";
-            // 
-            // ctasCtesToolStripMenuItem
-            // 
-            this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
-            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
-            this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click_1);
-            // 
-            // pagosToolStripMenuItem
-            // 
-            this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
-            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.pagosToolStripMenuItem.Text = "Pagos";
-            this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click_1);
+            this.chequesToolStripMenuItem.Name = "chequesToolStripMenuItem";
+            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.chequesToolStripMenuItem.Text = "Cheques";
+            this.chequesToolStripMenuItem.Click += new System.EventHandler(this.chequesToolStripMenuItem_Click);
             // 
             // FormPrincipal
             // 
@@ -802,6 +811,7 @@
         private System.Windows.Forms.ToolStripMenuItem finanzasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ctasCtesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pagosToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem chequesToolStripMenuItem;
     }
 }
 

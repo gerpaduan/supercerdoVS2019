@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using Entidades;
+using System.Data.SqlClient;
 
 namespace Negocio
 {
@@ -114,6 +115,29 @@ namespace Negocio
 
             oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
         }
+
+        #region Cheques
+
+        public DataTable obtenerCheques(string texto, DateTime fechaDesde, DateTime fechaHasta, bool soloPropios, string estado)
+        {
+            return oCtaCteD.obtenerCheques(texto, fechaDesde, fechaHasta, soloPropios, estado);
+        }
+
+        public Cheque getChequePorId(int id)
+        {
+            return oCtaCteD.getChequePorId(id);
+        }
+
+        public bool AddOrEditCheque(Cheque oCheque)
+        {
+            return oCtaCteD.AddOrEditCheque(oCheque);
+        }
+        public bool EliminarCheque(int id)
+        {
+            return oCtaCteD.EliminarCheque(id);
+        }
+
+        #endregion
 
         #region Pagos
 

@@ -21,6 +21,7 @@ using System.IO;
 using wsAFIPvs2008;
 using Negocio;
 using Presentacion.Licencia;
+using Presentacion.Cheques;
 
 
 namespace Presentacion
@@ -53,6 +54,7 @@ namespace Presentacion
 
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
+        Entidades.Usuario oUserAdminEmpresa;
         public static Entidades.Usuario oUserAdmin;
 
         string ultimaConnSelect;
@@ -291,6 +293,7 @@ namespace Presentacion
         private void cerrarSesion()
         {
             logueado = false;
+            oUserAdminEmpresa = null;
             btnLogin.Visible = true;
             btnCerrarSesion.Visible = false;
             lblNombreAdmin.Visible = false;
@@ -454,6 +457,7 @@ namespace Presentacion
             if (logueado)
             {
                 oUserAdmin = oUsuario.User.Equals("admin") ? oUsuario : null;
+                oUserAdminEmpresa = oUsuario;
                 btnLogin.Visible = false;
                 btnCerrarSesion.Visible = true;
                 lblNombreAdmin.Visible = true;
@@ -1254,6 +1258,29 @@ namespace Presentacion
         private void pagosToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
             pagosToolStripMenuItem_Click(sender, e);  
+        }
+
+        private void chequesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (logueado)
+            {
+                if (Application.OpenForms["formCheques"] != null)
+                {
+                    Application.OpenForms["formCheques"].Activate();
+                    Application.OpenForms["formCheques"].WindowState = FormWindowState.Normal;
+
+                }
+                else
+                {
+                    formCheques frmCheques = new formCheques();
+                    frmCheques.oUsuario = oUserAdminEmpresa;
+                    frmCheques.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("No está logueado");
+            }
         }
     }
 }

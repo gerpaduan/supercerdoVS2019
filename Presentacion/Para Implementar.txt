@@ -15,101 +15,42 @@
 ##
 
 
-////Alicuota por factura
-
-USE [CarniSys0]
-GO
-
-/****** Object:  Table [dbo].[AlicuotaIvaPorFactura]    Script Date: 17/2/2025 21:36:03 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE TABLE [dbo].[AlicuotaIvaPorFactura](
-	[idAlicuotaIvaFactura] [int] IDENTITY(1,1) NOT NULL,
-	[idFacturaElectronica] [int] NOT NULL,
-	[idIva] [int] NOT NULL,
-	[baseImponible] [float] NULL,
-	[importe] [float] NULL,
- CONSTRAINT [PK_AlicuotaIvaPorFactura] PRIMARY KEY CLUSTERED 
-(
-	[idAlicuotaIvaFactura] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-
-
-//// receta en formula
-
-ALTER TABLE Formulas
-ADD receta NVARCHAR(MAX);
-
-/////////
-
-USE [CarniSys0]
-GO
-/****** Object:  StoredProcedure [dbo].[addOrEditFormula]    Script Date: 18/02/2025 13:03:58 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
--- =============================================
--- Author:		Name
--- Create date: 
--- Description:	
--- =============================================
-ALTER PROCEDURE [dbo].[addOrEditFormula] 
-	
-	@idFormula int = null,
-	@idEmbutido int,
-	@receta nvarchar(max),
-	@creadoPor int = null,
-	@actualizadoPor int = null
-	
-	
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-     
-	 -- Insert statements for procedure here
-	IF @idFormula = 0
-		BEGIN
-			INSERT INTO [Formulas]
-           ([idEmbutido]
-		   ,[receta]
-           ,[creado]
-           ,[creadoPor])
-     VALUES
-            (@idEmbutido
-			,@receta
-           ,SYSDATETIME()
-           ,@creadoPor)
-           
-			set @idFormula = SCOPE_IDENTITY() 		
-		END
-	ELSE
-		BEGIN
-		UPDATE [Formulas]
-		   SET [idEmbutido] = @idEmbutido
-			  ,[receta] = @receta
-			  ,[actualizado] = SYSDATETIME()
-			  ,[actualizadoPor] = @actualizadoPor
-		 WHERE idFormula = @idFormula
-		 
-		 --Se eliminan todo los Cortes en Formula Para volver a cargarlos
-		 delete from CortePorFormula where idFormula=@idFormula
-		  
-		END
-	
-	select @idFormula	
-	
-END
-
-
 ////
+Fecha 16/07/2025
+
+creacion de tabla Cheques
+
+USE [CarniSys0]
+GO
+
+/****** Object:  Table [dbo].[Cheques]    Script Date: 16/7/2025 20:43:10 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[Cheques](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[nroCheque] [nvarchar](50) NULL,
+	[banco] [nvarchar](50) NULL,
+	[propio] [tinyint] NULL,
+	[fechaEmision] [nvarchar](50) NULL,
+	[fechaPago] [date] NULL,
+	[importe] [float] NULL,
+	[estado] [nvarchar](50) NULL,
+	[titular] [nvarchar](max) NULL,
+	[observaciones] [nvarchar](max) NULL,
+	[recibidoDe] [int] NULL,
+	[entregadoA] [int] NULL,
+	[creado] [datetime] NULL,
+	[creadoPor] [int] NULL,
+	[actualizado] [datetime] NULL,
+	[actualizadoPor] [int] NULL,
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+
+///////
+
 

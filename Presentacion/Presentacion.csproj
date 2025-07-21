@@ -375,6 +375,12 @@
     <Compile Include="Movimientos\formLineasMov.Designer.cs">
       <DependentUpon>formLineasMov.cs</DependentUpon>
     </Compile>
+    <Compile Include="Pagos\formCheques.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Pagos\formCheques.Designer.cs">
+      <DependentUpon>formCheques.cs</DependentUpon>
+    </Compile>
     <Compile Include="Stock\formStockActual.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -821,6 +827,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Pagos\formAddOrEditPago.resx">
       <DependentUpon>formAddOrEditPago.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Pagos\formCheques.resx">
+      <DependentUpon>formCheques.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pagos\formPagos.resx">
       <DependentUpon>formPagos.cs</DependentUpon>

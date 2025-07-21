@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlicuotaIva.cs" />
+    <Compile Include="Cheque.cs" />
     <Compile Include="CierreCaja.cs" />
     <Compile Include="CortePorFormula.cs" />
     <Compile Include="Formula.cs" />
