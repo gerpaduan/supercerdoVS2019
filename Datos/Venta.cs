@@ -320,7 +320,7 @@ namespace Datos
             cmVenta.CommandType = CommandType.StoredProcedure; cmVenta.CommandTimeout = conn.TimeOut();
             cmVenta.CommandText = "obtenerLineasVenta";
             cmVenta.Parameters.AddWithValue("@idVenta", idVenta);
-
+                
             Datos.Corte oCorteD = new Datos.Corte();    
             //creo lista de Lineas
             List<Entidades.LineaVenta> listaLineasVenta = new List<Entidades.LineaVenta>();

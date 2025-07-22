@@ -51,6 +51,79 @@ CREATE TABLE [dbo].[Cheques](
 GO
 
 
-///////
+/////////////////////////
+
+se agrega campo efectivo en Pagos
+
+ALTER TABLE Pagos
+ADD efectivo FLOAT NOT NULL DEFAULT 0;
+
+////////////////////////////////
+
+USE [CarniSys0]
+GO
+
+/****** Object:  StoredProcedure [dbo].[addOrEditPago]    Script Date: 22/7/2025 11:11:01 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[addOrEditPago]
+--ALTER PROCEDURE addOrEditPago
+	-- Add the parameters for the stored procedure here
+
+		@id int = null,
+		@nroRecibo nvarchar(50) = null,
+		@fecha datetime = null,
+		@idPersona int = null,
+		@aProveedor tinyint = null,
+		@formaPago nvarchar(50) = null,
+		@banco nvarchar(50) = null,
+		@nroCheque nvarchar(50) = null,
+		@titularCheque nvarchar(50) = null,
+		@importe float = null,
+		@efectivo float = null,
+		@observaciones nvarchar(MAX) = null,
+		@idSucursal int = null,
+		@creado datetime = null,
+		@creadoPor int = null,
+		@actualizado datetime = null,
+		@actualizadoPor int = null
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+	
+		IF @id = 0 
+			BEGIN 
+				INSERT INTO dbo.Pagos (nroRecibo, fecha, idPersona, aProveedor, formaPago, 
+				banco, nroCheque, titularCheque, importe, efectivo, observaciones, idSucursal, creado, 
+				creadoPor) 
+				 VALUES (@nroRecibo, @fecha, @idPersona, @aProveedor, @formaPago, @banco, @nroCheque, 
+				 @titularCheque, @importe, @efectivo, @observaciones, @idSucursal, SYSDATETIME(), @creadoPor) 
+			set @id = SCOPE_IDENTITY()
+			END 
+		ELSE 
+		BEGIN 
+			UPDATE dbo.Pagos set nroRecibo = @nroRecibo, fecha = @fecha, idPersona = @idPersona, 
+			aProveedor = @aProveedor, formaPago = @formaPago, banco = @banco, nroCheque = @nroCheque, 		
+			titularCheque = @titularCheque, importe = @importe, efectivo = @efectivo, observaciones = @observaciones,
+			idSucursal =  @idSucursal, actualizado =  SYSDATETIME(), actualizadoPor =  @actualizadoPor
+			WHERE id = @id		
+		END 
+	select @id 
+END
+GO
+
+
+//////////////////////////////////////
 
 

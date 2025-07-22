@@ -93,6 +93,8 @@ namespace Presentacion.Pagos
                 dtPagos = oCtaCteN.obtenerPagos(descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date);
                 grillaPagos.DataSource = null;
                 grillaPagos.DataSource = dtPagos;
+                grillaPagos.Columns["importe"].DefaultCellStyle.Format = "N2";
+                grillaPagos.Columns["efectivo"].DefaultCellStyle.Format = "N2";
             }
         }
 

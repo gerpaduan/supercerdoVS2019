@@ -7,6 +7,15 @@ namespace Entidades
 {
     public class Cheque
     {
+        public enum EstadoEnum
+        {
+            PENDIENTE,
+            ENTREGADO,
+            DEPOSITADO,
+            ACREDITADO,
+            RECHAZADO,
+        }
+
         /// TODO: seguir con la creacion de la clase y el alta de cheque
         public int Id { get; set; }
         public string NroCheque { get; set; }

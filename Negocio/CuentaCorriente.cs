@@ -123,9 +123,9 @@ namespace Negocio
             return oCtaCteD.obtenerCheques(texto, fechaDesde, fechaHasta, soloPropios, estado);
         }
 
-        public Cheque getChequePorId(int id)
+        public Cheque getChequePorIDorNro(int id, string nroCheque)
         {
-            return oCtaCteD.getChequePorId(id);
+            return oCtaCteD.getChequePorIDorNro(id, nroCheque);
         }
 
         public bool AddOrEditCheque(Cheque oCheque)
@@ -153,6 +153,17 @@ namespace Negocio
 
         public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE)
         {
+            ///obtener los cheques del pago antes de modificar y comparo si se eliminar cheques del pago, los receteo
+            ///
+            List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id);
+            foreach (Cheque cheque in listaCheques)
+            {
+                bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
+
+                if (!yaExiste)
+                    oCtaCteD.resetearChequesAsignados(oPagoE.Id);
+            }
+
             return oCtaCteD.addOrEditPago(oPagoE);
         }
 

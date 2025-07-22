@@ -87,6 +87,15 @@ namespace Entidades
             get { return importe; }
             set { importe = value; }
         }
+
+        private float efectivo;
+        public float Efectivo
+        {
+            get { return efectivo; }
+            set { efectivo = value; }
+        }
+
+        List<Entidades.Cheque> cheques;
         private string observaciones;
 
         public string Observaciones
@@ -128,7 +137,8 @@ namespace Entidades
         {
             get { return actualizadoPor; }
             set { actualizadoPor = value; }
-        }        
-        
+        }
+
+        public List<Cheque> Cheques { get => cheques; set => cheques = value; }
     }
 }

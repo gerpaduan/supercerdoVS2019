@@ -26,6 +26,10 @@ namespace Presentacion.Cheques
         DataGridViewRow fila;
         string tramite;
         bool cargar = false;
+        public bool llamadoDesdePago = false;
+        public string nroChequeDesdePago = "";
+        
+
 
         public formCheques()
         {
@@ -63,6 +67,9 @@ namespace Presentacion.Cheques
                 dtCheques = oCtaCteN.obtenerCheques(descripcion, txtFechaDesde.Value.Date, txtFechaHasta.Value.Date, checkPropioFiltro.Checked, estado);
                 grilla.DataSource = null;
                 grilla.DataSource = dtCheques;
+                grilla.Columns["importe"].DefaultCellStyle.Format = "N2";
+                grilla.Columns["recibidoDe"].Visible = false;
+                grilla.Columns["entregadoA"].Visible = false;
             }
         }
 
@@ -193,10 +200,21 @@ namespace Presentacion.Cheques
 
         private void btnNuevo_Click(object sender, EventArgs e)
         {
+            NuevoCheque();
+        }
+
+        public void NuevoCheque()
+        {
             groupCheque.Enabled = true;
             oCheque = new Cheque();
-            LimpiarTextBoxes(this); 
+            LimpiarTextBoxes(this);
             comboEstado.SelectedIndex = 0;
+
+            if (llamadoDesdePago)
+            {
+                txtNroCheque.Text = nroChequeDesdePago;
+                comboBanco.Focus();
+            }
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -254,6 +272,13 @@ namespace Presentacion.Cheques
                 oCtaCteN.AddOrEditCheque(oCheque);
 
                 MessageBox.Show("El Cheque se ha guardado correctamente.", "Guardar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (llamadoDesdePago)
+                {
+                    this.Close();
+                    return;
+                }
+
                 oCheque = null;
                 LimpiarTextBoxes(this.groupCheque);
                 cargarGrilla();
@@ -297,7 +322,7 @@ namespace Presentacion.Cheques
                     int idCheque = Convert.ToInt32(grilla.CurrentRow.Cells["id"].Value);
 
                     // Llamar a función que busca el cheque y carga los datos
-                    oCheque = oCtaCteN.getChequePorId(idCheque);
+                    oCheque = oCtaCteN.getChequePorIDorNro(idCheque, "");
                     CargarCheque();
                 }
 
@@ -343,9 +368,9 @@ namespace Presentacion.Cheques
             {
                 if ((oCheque.PagoA != null && oCheque.PagoA.Id > 0) || (oCheque.PagoDe != null && oCheque.PagoDe.Id > 0))
                 {
-                    string detallePagos = oCheque.PagoA.Id > 0 ? "Pago realizado a: " + oCheque.PagoA.Persona.Identificacion + " - Fecha: " + oCheque.PagoA.Fecha.ToString() + "\n" : "";
-                    detallePagos += oCheque.PagoDe.Id > 0 ? "Pago recibido de: " + oCheque.PagoDe.Persona.Identificacion + " - Fecha: " + oCheque.PagoDe.Fecha.ToString() : "";
-                    MessageBox.Show("El Cheque seleccionado no puede eliminarse porque ha sido asígnado a los siguientes Pagos:\n" + detallePagos);
+                    string detallePagos = oCheque.PagoA != null && oCheque.PagoA.Id > 0 ? "Pago realizado a: " + oCheque.PagoA.Persona.Identificacion + " - Fecha: " + oCheque.PagoA.Fecha.ToString() + "\n" : "";
+                    detallePagos += oCheque.PagoDe != null && oCheque.PagoDe.Id > 0 ? "Pago recibido de: " + oCheque.PagoDe.Persona.Identificacion + " - Fecha: " + oCheque.PagoDe.Fecha.ToString() : "";
+                    MessageBox.Show("El Cheque seleccionado no puede eliminarse porque ha sido asígnado a los siguientes Pagos:\n\n" + detallePagos);
 
                     return;
                 }

@@ -146,7 +146,7 @@ namespace Datos
             cmCtaCte.CommandType = CommandType.Text;
             cmCtaCte.CommandText = "SELECT dbo.Cheques.id, dbo.Cheques.nroCheque, dbo.Cheques.banco, dbo.Cheques.propio, " +
                 " dbo.Cheques.fechaEmision, dbo.Cheques.fechaPago, dbo.Cheques.importe, dbo.Cheques.estado, dbo.Cheques.recibidoDe, " +
-                " RecibidoPor.identificacion AS RecibidoPor, dbo.Cheques.entregadoA, EntregadoPor.identificacion AS EntregadoPor,  " +
+                " RecibidoPor.identificacion AS Recibido_De, dbo.Cheques.entregadoA, EntregadoPor.identificacion AS Entregado_A,  " +
                 " dbo.Cheques.creado, CreadoPor.nombre AS CreadoPor, dbo.Cheques.actualizado,  ActualizadoPor.nombre AS ActualizadoPor " +
                 " FROM     dbo.Pagos AS PagoEntregado INNER JOIN " +
                 "  dbo.Personas AS EntregadoPor ON PagoEntregado.idPersona = EntregadoPor.idPersona RIGHT OUTER JOIN " +
@@ -170,17 +170,24 @@ namespace Datos
 
             return dtCheques;
         }
-        public Cheque getChequePorId(int id)
+        public Cheque getChequePorIDorNro(int id, string nroCheque)
         {
             Cheque cheque = null;
 
             // Conexión a la base de datos
             using (SqlConnection connection = conn.conectar())
             {
+
                 string query = "SELECT * FROM Cheques WHERE id = @id";
+
+                if (!string.IsNullOrEmpty(nroCheque))
+                    //se obtiene el ultimo cheque cargado, en caso q haya dos nros de cheques iguales
+                    query = "SELECT TOP 1 * FROM Cheques WHERE nroCheque = @nroCheque order by id desc";
+
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@nroCheque", nroCheque);
                     connection.Open();
 
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -215,6 +222,58 @@ namespace Datos
             }
 
             return cheque;
+        }
+
+
+        public List<Entidades.Cheque> getChequesPorPago(int idPago)
+        {
+            Cheque cheque = null;
+            List<Cheque> listCheques = new List<Cheque>();
+            // Conexión a la base de datos
+            using (SqlConnection connection = conn.conectar())
+            {
+
+                string query = "SELECT * FROM Cheques WHERE recibidoDe = @idPago OR entregadoA = @idPago";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@idPago", idPago);
+                    connection.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Datos.Usuario oUserD = new Usuario();
+                            cheque = new Cheque
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("id")),
+                                NroCheque = reader["nroCheque"].ToString(),
+                                Banco = reader["banco"].ToString(),
+                                Propio = Convert.ToBoolean(reader["propio"]),
+                                FechaEmision = reader["fechaEmision"].ToString(),
+                                FechaPago = Convert.ToDateTime(reader["fechaPago"]),
+                                Importe = Convert.ToDouble(reader["importe"]),
+                                Estado = reader["estado"].ToString(),
+                                Titular = reader["titular"].ToString(),
+                                Observaciones = reader["observaciones"].ToString(),
+                                RecibidoDe = Convert.ToInt32(reader["recibidoDe"]),
+                                EntregadoA = Convert.ToInt32(reader["entregadoA"]),
+                                ///se comenta estas lineas xq sino entre en bucle
+                                //PagoDe = Convert.ToInt32(reader["recibidoDe"]) > 0 ? getPagoById(Convert.ToInt32(reader["recibidoDe"])) : null,
+                                //PagoA = Convert.ToInt32(reader["entregadoA"]) > 0 ? getPagoById(Convert.ToInt32(reader["entregadoA"])) : null,
+                                Creado = Convert.ToDateTime(reader["creado"]),
+                                CreadoPor = Convert.ToInt32(reader["creadoPor"]) > 0 ? oUserD.getUsuarioById(Convert.ToInt32(reader["creadoPor"])) : null,
+                                Actualizado = reader["actualizado"] != DBNull.Value ? Convert.ToDateTime(reader["actualizado"]) : (DateTime?)null,
+                                ActualizadoPor = Convert.ToInt32(reader["actualizadoPor"]) > 0 ? oUserD.getUsuarioById(Convert.ToInt32(reader["creadoPor"])) : null,
+                            };
+                            listCheques.Add(cheque);
+                        }
+                    }
+                }
+            }
+
+            return listCheques;
         }
 
         public bool AddOrEditCheque(Cheque oCheque)
@@ -285,6 +344,7 @@ namespace Datos
                 }
             }
         }
+
         public bool EliminarCheque(int id)
         {
             using (SqlConnection connection = conn.conectar())
@@ -293,6 +353,24 @@ namespace Datos
                 using (SqlCommand cmd = new SqlCommand(query, connection))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
+                    connection.Open();
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
+        }
+
+        public bool resetearChequesAsignados(int idPago)
+        {
+            using (SqlConnection connection = conn.conectar())
+            {
+                string query = "UPDATE Cheques SET recibidoDe = 0 FROM Cheques WHERE recibidoDe = @idPago;"+
+                     "UPDATE Cheques SET entregadoA = 0, estado = @estadoReset FROM Cheques WHERE entregadoA = @idPago;";
+                // "(UPDATE Cheques SET recibidoDe = 0, entregadoA = 0, estado = PENDIENTE FROM Cheques WHERE recibidoDe = @idPago OR entregadoA = @idPago)" ;
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@idPago", idPago);
+                    cmd.Parameters.AddWithValue("@estadoReset", "PENDIENTE");// Entidades.Cheque.EstadoEnum.PENDIENTE.ToString());
                     connection.Open();
                     int rowsAffected = cmd.ExecuteNonQuery();
                     return rowsAffected > 0;
@@ -335,6 +413,7 @@ namespace Datos
             cmCtaCte.Parameters.AddWithValue("@nroCheque", oPagoE.NroCheque);
             cmCtaCte.Parameters.AddWithValue("@titularCheque", oPagoE.TitularCheque);
             cmCtaCte.Parameters.AddWithValue("@importe", oPagoE.Importe);
+            cmCtaCte.Parameters.AddWithValue("@efectivo", oPagoE.Efectivo);
             cmCtaCte.Parameters.AddWithValue("@observaciones", oPagoE.Observaciones);
             cmCtaCte.Parameters.AddWithValue("@idSucursal", oPagoE.Sucursal.idSucursal);
             cmCtaCte.Parameters.AddWithValue("@creadoPor", oPagoE.CreadoPor.Id);
@@ -343,6 +422,22 @@ namespace Datos
             cmCtaCte.Connection.Open();
             oPagoE.Id = (int)cmCtaCte.ExecuteScalar();
             cmCtaCte.Connection.Close();
+
+            ///Asigno el pago a los cheques,
+
+            foreach (Entidades.Cheque item in oPagoE.Cheques)
+            {
+                //si se entregó el cheque
+                if (oPagoE.AProveedor)
+                {
+                    item.EntregadoA = oPagoE.Id;
+                    item.Estado = Entidades.Cheque.EstadoEnum.ENTREGADO.ToString();
+                }
+                else //de quien se recibió
+                    item.RecibidoDe = oPagoE.Id;
+
+                AddOrEditCheque(item);
+            }
 
             return oPagoE;
         }
@@ -375,8 +470,7 @@ namespace Datos
             cmCtaCte.Connection = conn.conectar();
             cmCtaCte.CommandType = CommandType.Text;
             cmCtaCte.CommandText = "SELECT     dbo.Pagos.id, dbo.Pagos.fecha, dbo.Personas.razonSocial, " +
-                " dbo.Pagos.nroRecibo, dbo.Pagos.importe, dbo.Pagos.aProveedor, dbo.Pagos.formaPago, dbo.Pagos.banco, dbo.Pagos.nroCheque, " +
-                " dbo.Pagos.titularCheque, dbo.Pagos.observaciones, dbo.Pagos.creado, CreadoPor.nombre AS CreadoPor, " +
+                " dbo.Pagos.nroRecibo, dbo.Pagos.importe,dbo.Pagos.aProveedor, dbo.Pagos.formaPago, dbo.Pagos.efectivo, dbo.Pagos.observaciones, dbo.Pagos.creado, CreadoPor.nombre AS CreadoPor, " +
                 " dbo.Pagos.actualizado, ActualizadoPor.nombre AS ActualizadoPor " +
                 " FROM  dbo.Pagos INNER JOIN dbo.Personas ON dbo.Pagos.idPersona = dbo.Personas.idPersona LEFT OUTER JOIN " +
                 " dbo.Usuarios AS ActualizadoPor ON dbo.Pagos.creadoPor = ActualizadoPor.id LEFT OUTER JOIN " +
@@ -425,7 +519,9 @@ namespace Datos
                         oPagoE.NroCheque = Convert.ToString(drPago["nroCheque"]);
                         oPagoE.TitularCheque = Convert.ToString(drPago["titularCheque"]);
                         oPagoE.Importe = float.Parse(drPago["importe"].ToString());
+                        oPagoE.Efectivo = float.Parse(drPago["efectivo"].ToString());
                         oPagoE.Observaciones = Convert.ToString(drPago["observaciones"]);
+                        oPagoE.Cheques = getChequesPorPago(oPagoE.Id);
 
                         Datos.Sucursal oSucursalD = new Sucursal();
                         oPagoE.Sucursal = oSucursalD.findById(Convert.ToInt32(drPago["idSucursal"]));

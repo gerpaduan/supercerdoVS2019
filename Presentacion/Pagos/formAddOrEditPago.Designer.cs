@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditPago));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.txtUsuario = new System.Windows.Forms.TextBox();
@@ -39,12 +41,15 @@
             this.txtIdPago = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.panelCheque = new System.Windows.Forms.Panel();
-            this.txtTitular = new System.Windows.Forms.TextBox();
-            this.label10 = new System.Windows.Forms.Label();
+            this.panelEfectivo = new System.Windows.Forms.Panel();
+            this.txtEfectivo = new System.Windows.Forms.TextBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.txtTotalCheques = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.btnBuscarCheque = new System.Windows.Forms.Button();
+            this.grilla = new System.Windows.Forms.DataGridView();
             this.txtNroCheque = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
-            this.txtBanco = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
             this.txtModifPor = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.txtModificado = new System.Windows.Forms.TextBox();
@@ -72,6 +77,8 @@
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panelCheque.SuspendLayout();
+            this.panelEfectivo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grilla)).BeginInit();
             this.SuspendLayout();
             // 
             // pnlBuscar
@@ -206,77 +213,143 @@
             // 
             // panelCheque
             // 
-            this.panelCheque.Controls.Add(this.txtTitular);
-            this.panelCheque.Controls.Add(this.label10);
+            this.panelCheque.Controls.Add(this.panelEfectivo);
+            this.panelCheque.Controls.Add(this.txtTotalCheques);
+            this.panelCheque.Controls.Add(this.label15);
+            this.panelCheque.Controls.Add(this.btnBuscarCheque);
+            this.panelCheque.Controls.Add(this.grilla);
             this.panelCheque.Controls.Add(this.txtNroCheque);
             this.panelCheque.Controls.Add(this.label8);
-            this.panelCheque.Controls.Add(this.txtBanco);
-            this.panelCheque.Controls.Add(this.label7);
-            this.panelCheque.Location = new System.Drawing.Point(6, 170);
+            this.panelCheque.Location = new System.Drawing.Point(2, 170);
             this.panelCheque.Name = "panelCheque";
-            this.panelCheque.Size = new System.Drawing.Size(532, 195);
+            this.panelCheque.Size = new System.Drawing.Size(539, 195);
             this.panelCheque.TabIndex = 60;
             this.panelCheque.Visible = false;
             // 
-            // txtTitular
+            // panelEfectivo
             // 
-            this.txtTitular.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTitular.Location = new System.Drawing.Point(92, 31);
-            this.txtTitular.Name = "txtTitular";
-            this.txtTitular.Size = new System.Drawing.Size(154, 22);
-            this.txtTitular.TabIndex = 33;
-            this.txtTitular.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.panelEfectivo.Controls.Add(this.txtEfectivo);
+            this.panelEfectivo.Controls.Add(this.label14);
+            this.panelEfectivo.Location = new System.Drawing.Point(306, 167);
+            this.panelEfectivo.Name = "panelEfectivo";
+            this.panelEfectivo.Size = new System.Drawing.Size(233, 25);
+            this.panelEfectivo.TabIndex = 41;
             // 
-            // label10
+            // txtEfectivo
             // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label10.Location = new System.Drawing.Point(38, 34);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(44, 16);
-            this.label10.TabIndex = 34;
-            this.label10.Text = "Titular";
+            this.txtEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtEfectivo.Location = new System.Drawing.Point(81, 3);
+            this.txtEfectivo.Name = "txtEfectivo";
+            this.txtEfectivo.Size = new System.Drawing.Size(149, 22);
+            this.txtEfectivo.TabIndex = 39;
+            this.txtEfectivo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtEfectivo.TextChanged += new System.EventHandler(this.txtEfectivo_TextChanged);
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label14.Location = new System.Drawing.Point(11, 6);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(65, 16);
+            this.label14.TabIndex = 40;
+            this.label14.Text = "Efectivo $";
+            // 
+            // txtTotalCheques
+            // 
+            this.txtTotalCheques.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalCheques.Location = new System.Drawing.Point(387, 145);
+            this.txtTotalCheques.Name = "txtTotalCheques";
+            this.txtTotalCheques.ReadOnly = true;
+            this.txtTotalCheques.Size = new System.Drawing.Size(149, 22);
+            this.txtTotalCheques.TabIndex = 39;
+            this.txtTotalCheques.TabStop = false;
+            this.txtTotalCheques.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtTotalCheques.TextChanged += new System.EventHandler(this.txtTotalCheques_TextChanged);
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label15.Location = new System.Drawing.Point(310, 148);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(71, 16);
+            this.label15.TabIndex = 40;
+            this.label15.Text = "Cheques $";
+            // 
+            // btnBuscarCheque
+            // 
+            this.btnBuscarCheque.AccessibleDescription = "";
+            this.btnBuscarCheque.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBuscarCheque.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarCheque.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCheque.Image")));
+            this.btnBuscarCheque.Location = new System.Drawing.Point(256, 5);
+            this.btnBuscarCheque.Name = "btnBuscarCheque";
+            this.btnBuscarCheque.Size = new System.Drawing.Size(24, 21);
+            this.btnBuscarCheque.TabIndex = 38;
+            this.btnBuscarCheque.TabStop = false;
+            this.btnBuscarCheque.UseVisualStyleBackColor = true;
+            this.btnBuscarCheque.Click += new System.EventHandler(this.btnBuscarCheque_Click);
+            // 
+            // grilla
+            // 
+            this.grilla.AllowUserToAddRows = false;
+            this.grilla.AllowUserToOrderColumns = true;
+            this.grilla.AllowUserToResizeRows = false;
+            this.grilla.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.grilla.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.MenuText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            this.grilla.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.NullValue = null;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grilla.DefaultCellStyle = dataGridViewCellStyle2;
+            this.grilla.Location = new System.Drawing.Point(3, 32);
+            this.grilla.Name = "grilla";
+            this.grilla.ReadOnly = true;
+            this.grilla.RowHeadersVisible = false;
+            this.grilla.RowHeadersWidth = 51;
+            this.grilla.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.grilla.Size = new System.Drawing.Size(534, 107);
+            this.grilla.TabIndex = 35;
+            this.grilla.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grilla_CellClick);
             // 
             // txtNroCheque
             // 
             this.txtNroCheque.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtNroCheque.Location = new System.Drawing.Point(383, 3);
+            this.txtNroCheque.Location = new System.Drawing.Point(97, 4);
             this.txtNroCheque.Name = "txtNroCheque";
-            this.txtNroCheque.Size = new System.Drawing.Size(147, 22);
+            this.txtNroCheque.Size = new System.Drawing.Size(153, 22);
             this.txtNroCheque.TabIndex = 31;
             this.txtNroCheque.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtNroCheque.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtNroCheque_KeyPress);
             // 
             // label8
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(312, 6);
+            this.label8.Location = new System.Drawing.Point(22, 7);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(68, 16);
             this.label8.TabIndex = 32;
             this.label8.Text = "N°Cheque";
-            // 
-            // txtBanco
-            // 
-            this.txtBanco.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBanco.Location = new System.Drawing.Point(92, 3);
-            this.txtBanco.Name = "txtBanco";
-            this.txtBanco.Size = new System.Drawing.Size(154, 22);
-            this.txtBanco.TabIndex = 29;
-            this.txtBanco.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label7.Location = new System.Drawing.Point(38, 6);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(46, 16);
-            this.label7.TabIndex = 30;
-            this.label7.Text = "Banco";
             // 
             // txtModifPor
             // 
@@ -425,9 +498,9 @@
             this.btnBuscarProv.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarProv.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarProv.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProv.Image")));
-            this.btnBuscarProv.Location = new System.Drawing.Point(258, 57);
+            this.btnBuscarProv.Location = new System.Drawing.Point(258, 59);
             this.btnBuscarProv.Name = "btnBuscarProv";
-            this.btnBuscarProv.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscarProv.Size = new System.Drawing.Size(24, 21);
             this.btnBuscarProv.TabIndex = 24;
             this.btnBuscarProv.TabStop = false;
             this.btnBuscarProv.UseVisualStyleBackColor = true;
@@ -586,6 +659,9 @@
             this.groupBox1.PerformLayout();
             this.panelCheque.ResumeLayout(false);
             this.panelCheque.PerformLayout();
+            this.panelEfectivo.ResumeLayout(false);
+            this.panelEfectivo.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.grilla)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -619,12 +695,8 @@
         private System.Windows.Forms.Label label6;
         protected System.Windows.Forms.TextBox txtCreadoPor;
         private System.Windows.Forms.Panel panelCheque;
-        private System.Windows.Forms.TextBox txtTitular;
-        protected System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox txtNroCheque;
         protected System.Windows.Forms.Label label8;
-        private System.Windows.Forms.TextBox txtBanco;
-        protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox txtIdPago;
         protected System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox txtSucursal;
@@ -633,5 +705,12 @@
         protected System.Windows.Forms.Label label13;
         protected System.Windows.Forms.Label label16;
         private System.Windows.Forms.Label idPagoLabel;
+        private System.Windows.Forms.DataGridView grilla;
+        private System.Windows.Forms.Button btnBuscarCheque;
+        private System.Windows.Forms.TextBox txtEfectivo;
+        protected System.Windows.Forms.Label label14;
+        private System.Windows.Forms.TextBox txtTotalCheques;
+        protected System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Panel panelEfectivo;
     }
 }

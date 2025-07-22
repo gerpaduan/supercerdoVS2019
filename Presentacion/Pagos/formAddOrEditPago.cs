@@ -9,6 +9,8 @@ using System.Windows.Forms;
 using Presentacion.Personas;
 using Utilidades;
 using Presentacion.Caja;
+using Presentacion.Cheques;
+using System.Web.Services.Description;
 
 namespace Presentacion.Pagos
 {
@@ -29,7 +31,7 @@ namespace Presentacion.Pagos
         bool modificar = false;
         bool readOnly = false;
         bool ultimaValidacion = true;//valida que los ingresos estén correctos antes de ingresar datos al DB
-
+        string ultimaFormaPagoSelected = ""; //guarda la ultima forma de pago seleccionada
         public formAddOrEditPago()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -46,12 +48,14 @@ namespace Presentacion.Pagos
                 if (!closeForm)
                 {
                     cargarSucursal();
+                    oPagoE.Cheques = new List<Entidades.Cheque>();
                     if (idPago > 0)
                     {
                         oPagoE = oCtaCteN.getPagoById(idPago);
                         oPersonaE = oPagoE.Persona;
                         oPagoSinMod = oCtaCteN.getPagoById(idPago);
                         cargarCampos();
+                        ultimaFormaPagoSelected = oPagoE.FormaPago;
                         readOnly = true;
                         setearPropiedadesForm();
                         idPagoLabel.Text = idPago.ToString();//asigno id para identificar el formulario al llamar
@@ -103,6 +107,7 @@ namespace Presentacion.Pagos
             comboSucursal.Visible = !txtSucursal.Visible;
             txtSucursal.Text = comboSucursal.Text;
             btnBuscarProv.Visible = !readOnly;
+            btnBuscarCheque.Visible = !readOnly;
             txtFechaPago.Enabled = !readOnly;
             comboTipoPago.Enabled = !readOnly;
             //txtTipoEgresoCaja.Visible = readOnly;
@@ -110,9 +115,9 @@ namespace Presentacion.Pagos
             comboTipoPago.Enabled = !readOnly;
             txtNroRecibo.ReadOnly = readOnly;
             txtImporte.ReadOnly = readOnly;
-            txtBanco.ReadOnly = readOnly;
+            //txtBanco.ReadOnly = readOnly;
             txtNroCheque.ReadOnly = readOnly;
-            txtTitular.ReadOnly = readOnly;
+            //txtTitular.ReadOnly = readOnly;
             txtObservaciones.ReadOnly = readOnly;
         }
 
@@ -160,7 +165,7 @@ namespace Presentacion.Pagos
             this.Close();
         }
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
             {
@@ -180,10 +185,14 @@ namespace Presentacion.Pagos
             txtFechaPago.Value = oPagoE.Fecha.Year > 1000 ? oPagoE.Fecha : DateTime.Now;
             comboTipoPago.Text = oPagoE.FormaPago != null ? oPagoE.FormaPago : "";
             txtImporte.Text = oPagoE.Importe.ToString("F2");
-            txtBanco.Text = oPagoE.Banco;
-            txtNroCheque.Text = oPagoE.NroCheque;
-            txtTitular.Text = oPagoE.TitularCheque;
-            txtObservaciones.Text = oPagoE.Observaciones;
+            txtEfectivo.Text = oPagoE.Efectivo.ToString("F2");
+            CargarGrillaCheques();
+            ///los datos de los campo que ya no se usan se agregan a observaciones
+            ///
+            string info = string.IsNullOrEmpty(oPagoE.Banco) ? "" : "Banco: " + oPagoE.Banco;
+            info +=  string.IsNullOrEmpty(oPagoE.NroCheque) ? "" : "\nN°Cheque: " + oPagoE.NroCheque;
+            info += string.IsNullOrEmpty(oPagoE.TitularCheque) ? "" : "\nTitular Cheque: " + oPagoE.TitularCheque;
+            txtObservaciones.Text = info + oPagoE.Observaciones;
 
             txtCreado.Text = oPagoE.Creado != null ? oPagoE.Creado.ToString() : "";
             txtCreadoPor.Text = oPagoE.CreadoPor != null ? oPagoE.CreadoPor.Nombre : ""; 
@@ -216,7 +225,6 @@ namespace Presentacion.Pagos
                         setearPropiedadesForm();
                         return;
                     }
-                    //
 
                     cargarPago();
 
@@ -269,6 +277,7 @@ namespace Presentacion.Pagos
                 oPagoE.Fecha = txtFechaPago.Value;
                 oPagoE.AProveedor = checkAProveedor.Checked;
                 oPagoE.Importe = Utilidades.Util_Form.convertFloat(txtImporte.Text, false);
+                oPagoE.Efectivo = !string.IsNullOrEmpty(txtEfectivo.Text) ? Utilidades.Util_Form.convertFloat(txtEfectivo.Text, false) : 0;
 
                 if (comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Efectivo.ToString()) ||
                     comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Otro.ToString()))
@@ -279,9 +288,9 @@ namespace Presentacion.Pagos
                 }
                 else
                 {
-                    oPagoE.Banco = txtBanco.Text;
-                    oPagoE.NroCheque = txtNroCheque.Text;
-                    oPagoE.TitularCheque = txtTitular.Text;
+                    oPagoE.Banco = "";// txtBanco.Text;
+                    oPagoE.NroCheque = "";// txtNroCheque.Text;
+                    oPagoE.TitularCheque = "";// txtTitular.Text;
                 }
 
                 oPagoE.Observaciones = txtObservaciones.Text.Trim();
@@ -352,6 +361,7 @@ namespace Presentacion.Pagos
                 
                 MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+
             return respuesta;        
         }
 
@@ -379,15 +389,35 @@ namespace Presentacion.Pagos
         {
             if (!comboTipoPago.Text.Equals(""))
             {
-                if (comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Efectivo.ToString()) || 
-                    comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Otro.ToString()))
+                if (comboTipoPago.Text.Contains(Entidades.Pago.formasPago.Cheque.ToString()))
                 {
-                    panelCheque.Visible = false;
+                    txtImporte.ReadOnly = true;
+                    panelCheque.Visible = true;
+                    if (comboTipoPago.Text.Contains("Eftvo"))
+                    {
+                        panelEfectivo.Visible = true;
+                    }
+                    else
+                    {
+                        panelEfectivo.Visible = false;
+                        txtEfectivo.Text = "";
+                    }
                 }
                 else
                 {
-                    panelCheque.Visible = true;
+                    if (ultimaFormaPagoSelected.Contains(Entidades.Pago.formasPago.Cheque.ToString()) && oPagoE.Cheques.Count > 0)
+                    {
+
+                        MessageBox.Show("Para cambiar la forma de pago primero debe quitar los Cheque asignados","");
+                        comboTipoPago.Text = ultimaFormaPagoSelected;
+                        return;
+                    }
+                    panelCheque.Visible = false;
+                    txtImporte.ReadOnly = false;
+                    txtEfectivo.Text = "";
                 }
+
+                ultimaFormaPagoSelected = comboTipoPago.Text;
             }
         }
 
@@ -406,5 +436,175 @@ namespace Presentacion.Pagos
             }
         }
 
+        private void txtEfectivo_TextChanged(object sender, EventArgs e)
+        {
+
+            if (!Utilidades.Util_Form.validarCampoNumerico(txtEfectivo.Text, "Importe Efectivo"))
+            {
+                txtImporte.Text = "";
+                return;
+            }
+
+
+            CalcularImporte();
+        }
+
+        private void CalcularImporte()
+        {
+            try
+            {
+                // Intentamos convertir ambos campos a float
+                float efectivo = 0;
+                float totalCheques = 0;
+
+                efectivo = !string.IsNullOrEmpty(txtEfectivo.Text) ? Util_Form.convertFloat(txtEfectivo.Text, false) : 0;
+                float.TryParse(txtTotalCheques.Text, out totalCheques);
+
+                float total = efectivo + totalCheques;
+
+                txtImporte.Text = total.ToString("0.00"); // Con dos decimales
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        private void txtNroCheque_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == Convert.ToChar(Keys.Enter))
+            {
+                CargarCheque();
+            }
+        }
+
+        private void CargarCheque()
+        {
+            Entidades.Cheque oCheque = oCtaCteN.getChequePorIDorNro(0, txtNroCheque.Text);
+            if (oCheque != null)
+            {
+                if (oPagoE.Cheques.Any(c => c.NroCheque == oCheque.NroCheque))
+                {
+                    MessageBox.Show("El Cheque ya ha sido asignado al Pago actual");
+                    return;
+                }
+                //se verifica que el mismo cheque no se asignado a dos pagos diferentes
+                if (checkAProveedor.Checked && oCheque.PagoA != null && oCheque.PagoA.Id > 0 && oCheque.PagoA.Id != oPagoE.Id)
+                {
+                    MessageBox.Show("El Cheque ya ha sido asigando al siguiente Pago \nID: " + oCheque.PagoA.Id + "\n" + oCheque.PagoA.Persona.Identificacion);
+                    return;
+                }
+
+                if (!checkAProveedor.Checked && oCheque.PagoDe != null && oCheque.PagoDe.Id > 0 && oCheque.PagoDe.Id != oPagoE.Id)
+                {
+                    MessageBox.Show("El Cheque ya ha sido asigando al siguiente Pago \nID: " + oCheque.PagoDe.Id + "\n" + oCheque.PagoDe.Persona.Identificacion);
+                    return;
+                }
+
+                oPagoE.Cheques.Add(oCheque);
+                CargarGrillaCheques();
+                txtNroCheque.Text = "";
+            }
+            else
+            {
+                DialogResult resp = MessageBox.Show("El Cheque N°: " + txtNroCheque.Text + " no existe.\n¿Desea agregarlo?", "",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (resp.Equals(DialogResult.No))
+                    return;
+
+                formCheques frmCheques = new formCheques();
+                frmCheques.llamadoDesdePago = true;
+                frmCheques.oUsuario = oUsuario;
+                frmCheques.nroChequeDesdePago = txtNroCheque.Text;
+                frmCheques.NuevoCheque();
+                frmCheques.ShowDialog();
+
+                CargarCheque();
+            }
+        }
+
+        private void CargarGrillaCheques()
+        {
+            if (oPagoE.Cheques == null || oPagoE.Cheques.Count == 0)
+                return;
+
+
+            grilla.DataSource = null;
+            grilla.Columns.Clear(); // Eliminar columnas anteriores
+
+            //cargar lista de cheques a pago y cargar grilla
+            var chequesReducidos = oPagoE.Cheques
+                                .Select(c => new
+                                {
+                                    Id = c.Id,
+                                    NroCheque = c.NroCheque,
+                                    Banco = c.Banco,
+                                    FechaPago = c.FechaPago.ToShortDateString(), // o sin ToShortDateString si querés el DateTime completo
+                                    Importe = c.Importe.ToString("F2"),
+                                })
+                                .ToList();
+
+            grilla.DataSource = chequesReducidos;
+
+            // Ocultar columna Id si no querés mostrarla
+            if (grilla.Columns.Contains("Id"))
+                grilla.Columns["Id"].Visible = false;
+
+            // Agregar columna de botón "Quitar"
+            DataGridViewButtonColumn btnQuitar = new DataGridViewButtonColumn();
+            btnQuitar.Name = "btnQuitar";
+            btnQuitar.HeaderText = "";
+            btnQuitar.Text = "Quitar";
+            btnQuitar.UseColumnTextForButtonValue = true;
+            btnQuitar.Width = 60;
+            grilla.Columns.Add(btnQuitar);
+
+            ///subTotalCheques
+            ///double totalImporte = 0;
+
+            float totalImporte = 0.00f;
+            foreach (DataGridViewRow row in grilla.Rows)
+            {
+                if (row.Cells["Importe"].Value != null)
+                {
+                    if (float.TryParse(row.Cells["Importe"].Value.ToString(), out float importe))
+                    {
+                        totalImporte += importe;
+                    }
+                }
+            }
+            txtTotalCheques.DataBindings.Clear();
+            txtTotalCheques.Text = totalImporte.ToString("F2");
+        }
+
+        private void txtTotalCheques_TextChanged(object sender, EventArgs e)
+        {
+            CalcularImporte();
+        }
+
+        private void grilla_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && grilla.Columns[e.ColumnIndex].Name == "btnQuitar")
+            {
+                int idCheque = Convert.ToInt32(grilla.Rows[e.RowIndex].Cells["Id"].Value);
+
+                var chequeAEliminar = oPagoE.Cheques.FirstOrDefault(c => c.Id == idCheque);
+                if (chequeAEliminar != null)
+                {
+                    oPagoE.Cheques.Remove(chequeAEliminar);
+                    CargarGrillaCheques(); // Volver a cargar grilla con columnas actualizadas
+                }
+            }
+        }
+
+        private void btnBuscarCheque_Click(object sender, EventArgs e)
+        {
+            formCheques frmCheques = new formCheques();
+            frmCheques.llamadoDesdePago = true;
+            frmCheques.oUsuario = oUsuario;
+            frmCheques.ShowDialog();
+        }
     }
 }
