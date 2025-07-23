@@ -41,6 +41,8 @@
             this.txtIdPago = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.panelCheque = new System.Windows.Forms.Panel();
+            this.lblCantCheques = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
             this.panelEfectivo = new System.Windows.Forms.Panel();
             this.txtEfectivo = new System.Windows.Forms.TextBox();
             this.label14 = new System.Windows.Forms.Label();
@@ -74,6 +76,7 @@
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.idPagoLabel = new System.Windows.Forms.Label();
+            this.btnImprimir = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panelCheque.SuspendLayout();
@@ -94,7 +97,7 @@
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Location = new System.Drawing.Point(-2, 0);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(569, 486);
+            this.pnlBuscar.Size = new System.Drawing.Size(569, 502);
             this.pnlBuscar.TabIndex = 24;
             // 
             // txtSucursal
@@ -183,7 +186,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(11, 38);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(544, 445);
+            this.groupBox1.Size = new System.Drawing.Size(544, 448);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Recibo";
@@ -213,6 +216,8 @@
             // 
             // panelCheque
             // 
+            this.panelCheque.Controls.Add(this.lblCantCheques);
+            this.panelCheque.Controls.Add(this.label7);
             this.panelCheque.Controls.Add(this.panelEfectivo);
             this.panelCheque.Controls.Add(this.txtTotalCheques);
             this.panelCheque.Controls.Add(this.label15);
@@ -222,15 +227,37 @@
             this.panelCheque.Controls.Add(this.label8);
             this.panelCheque.Location = new System.Drawing.Point(2, 170);
             this.panelCheque.Name = "panelCheque";
-            this.panelCheque.Size = new System.Drawing.Size(539, 195);
+            this.panelCheque.Size = new System.Drawing.Size(539, 209);
             this.panelCheque.TabIndex = 60;
             this.panelCheque.Visible = false;
+            // 
+            // lblCantCheques
+            // 
+            this.lblCantCheques.AutoSize = true;
+            this.lblCantCheques.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lblCantCheques.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblCantCheques.Location = new System.Drawing.Point(86, 156);
+            this.lblCantCheques.Name = "lblCantCheques";
+            this.lblCantCheques.Size = new System.Drawing.Size(14, 15);
+            this.lblCantCheques.TabIndex = 43;
+            this.lblCantCheques.Text = "0";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(4, 156);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(87, 15);
+            this.label7.TabIndex = 42;
+            this.label7.Text = "Cant.Cheques:";
             // 
             // panelEfectivo
             // 
             this.panelEfectivo.Controls.Add(this.txtEfectivo);
             this.panelEfectivo.Controls.Add(this.label14);
-            this.panelEfectivo.Location = new System.Drawing.Point(306, 167);
+            this.panelEfectivo.Location = new System.Drawing.Point(306, 181);
             this.panelEfectivo.Name = "panelEfectivo";
             this.panelEfectivo.Size = new System.Drawing.Size(233, 25);
             this.panelEfectivo.TabIndex = 41;
@@ -259,7 +286,7 @@
             // txtTotalCheques
             // 
             this.txtTotalCheques.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalCheques.Location = new System.Drawing.Point(387, 145);
+            this.txtTotalCheques.Location = new System.Drawing.Point(387, 159);
             this.txtTotalCheques.Name = "txtTotalCheques";
             this.txtTotalCheques.ReadOnly = true;
             this.txtTotalCheques.Size = new System.Drawing.Size(149, 22);
@@ -273,7 +300,7 @@
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label15.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label15.Location = new System.Drawing.Point(310, 148);
+            this.label15.Location = new System.Drawing.Point(310, 162);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(71, 16);
             this.label15.TabIndex = 40;
@@ -326,7 +353,7 @@
             this.grilla.RowHeadersVisible = false;
             this.grilla.RowHeadersWidth = 51;
             this.grilla.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grilla.Size = new System.Drawing.Size(534, 107);
+            this.grilla.Size = new System.Drawing.Size(534, 121);
             this.grilla.TabIndex = 35;
             this.grilla.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grilla_CellClick);
             // 
@@ -356,7 +383,7 @@
             this.txtModifPor.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtModifPor.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtModifPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtModifPor.Location = new System.Drawing.Point(419, 410);
+            this.txtModifPor.Location = new System.Drawing.Point(419, 421);
             this.txtModifPor.Name = "txtModifPor";
             this.txtModifPor.ReadOnly = true;
             this.txtModifPor.Size = new System.Drawing.Size(115, 21);
@@ -368,7 +395,7 @@
             this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(282, 374);
+            this.label5.Location = new System.Drawing.Point(282, 384);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(47, 15);
             this.label5.TabIndex = 54;
@@ -379,7 +406,7 @@
             this.txtModificado.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtModificado.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtModificado.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtModificado.Location = new System.Drawing.Point(419, 389);
+            this.txtModificado.Location = new System.Drawing.Point(419, 400);
             this.txtModificado.Name = "txtModificado";
             this.txtModificado.ReadOnly = true;
             this.txtModificado.Size = new System.Drawing.Size(115, 21);
@@ -391,7 +418,7 @@
             this.txtCreado.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtCreado.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtCreado.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCreado.Location = new System.Drawing.Point(285, 389);
+            this.txtCreado.Location = new System.Drawing.Point(285, 400);
             this.txtCreado.Name = "txtCreado";
             this.txtCreado.ReadOnly = true;
             this.txtCreado.Size = new System.Drawing.Size(115, 21);
@@ -403,7 +430,7 @@
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(416, 374);
+            this.label6.Location = new System.Drawing.Point(416, 384);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(68, 15);
             this.label6.TabIndex = 56;
@@ -414,7 +441,7 @@
             this.txtCreadoPor.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Suggest;
             this.txtCreadoPor.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             this.txtCreadoPor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCreadoPor.Location = new System.Drawing.Point(285, 410);
+            this.txtCreadoPor.Location = new System.Drawing.Point(285, 421);
             this.txtCreadoPor.Name = "txtCreadoPor";
             this.txtCreadoPor.ReadOnly = true;
             this.txtCreadoPor.Size = new System.Drawing.Size(115, 21);
@@ -445,7 +472,7 @@
             this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(16, 360);
+            this.groupBox2.Location = new System.Drawing.Point(16, 373);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(518, 7);
             this.groupBox2.TabIndex = 47;
@@ -455,7 +482,7 @@
             // 
             this.label11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(14, 370);
+            this.label11.Location = new System.Drawing.Point(14, 383);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(99, 16);
             this.label11.TabIndex = 26;
@@ -473,7 +500,7 @@
             // txtObservaciones
             // 
             this.txtObservaciones.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.txtObservaciones.Location = new System.Drawing.Point(16, 389);
+            this.txtObservaciones.Location = new System.Drawing.Point(16, 400);
             this.txtObservaciones.Multiline = true;
             this.txtObservaciones.Name = "txtObservaciones";
             this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
@@ -605,7 +632,7 @@
             // 
             this.btnGuardar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGuardar.Location = new System.Drawing.Point(312, 492);
+            this.btnGuardar.Location = new System.Drawing.Point(312, 508);
             this.btnGuardar.Name = "btnGuardar";
             this.btnGuardar.Size = new System.Drawing.Size(115, 27);
             this.btnGuardar.TabIndex = 4;
@@ -618,7 +645,7 @@
             // 
             this.btnCancelar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancelar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCancelar.Location = new System.Drawing.Point(439, 492);
+            this.btnCancelar.Location = new System.Drawing.Point(439, 508);
             this.btnCancelar.Name = "btnCancelar";
             this.btnCancelar.Size = new System.Drawing.Size(111, 27);
             this.btnCancelar.TabIndex = 5;
@@ -630,19 +657,37 @@
             // idPagoLabel
             // 
             this.idPagoLabel.AutoSize = true;
-            this.idPagoLabel.Location = new System.Drawing.Point(9, 499);
+            this.idPagoLabel.Location = new System.Drawing.Point(104, 513);
             this.idPagoLabel.Name = "idPagoLabel";
             this.idPagoLabel.Size = new System.Drawing.Size(66, 13);
             this.idPagoLabel.TabIndex = 25;
             this.idPagoLabel.Text = "idPagoLabel";
             this.idPagoLabel.Visible = false;
             // 
+            // btnImprimir
+            // 
+            this.btnImprimir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnImprimir.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
+            this.btnImprimir.Image = ((System.Drawing.Image)(resources.GetObject("btnImprimir.Image")));
+            this.btnImprimir.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnImprimir.Location = new System.Drawing.Point(11, 507);
+            this.btnImprimir.Name = "btnImprimir";
+            this.btnImprimir.Size = new System.Drawing.Size(82, 27);
+            this.btnImprimir.TabIndex = 63;
+            this.btnImprimir.TabStop = false;
+            this.btnImprimir.Text = "&Imprimir";
+            this.btnImprimir.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.btnImprimir.UseVisualStyleBackColor = true;
+            this.btnImprimir.Visible = false;
+            this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
+            // 
             // formAddOrEditPago
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
-            this.ClientSize = new System.Drawing.Size(565, 522);
+            this.ClientSize = new System.Drawing.Size(565, 538);
+            this.Controls.Add(this.btnImprimir);
             this.Controls.Add(this.idPagoLabel);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.btnGuardar);
@@ -712,5 +757,8 @@
         private System.Windows.Forms.TextBox txtTotalCheques;
         protected System.Windows.Forms.Label label15;
         private System.Windows.Forms.Panel panelEfectivo;
+        protected System.Windows.Forms.Label lblCantCheques;
+        protected System.Windows.Forms.Label label7;
+        protected System.Windows.Forms.Button btnImprimir;
     }
 }

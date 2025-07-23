@@ -11,6 +11,13 @@ using Utilidades;
 using Presentacion.Caja;
 using Presentacion.Cheques;
 using System.Web.Services.Description;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using System.IO;
+using Entidades;
+using Microsoft.Win32;
+using System.Configuration;
+using System.Globalization;
 
 namespace Presentacion.Pagos
 {
@@ -54,9 +61,9 @@ namespace Presentacion.Pagos
                         oPagoE = oCtaCteN.getPagoById(idPago);
                         oPersonaE = oPagoE.Persona;
                         oPagoSinMod = oCtaCteN.getPagoById(idPago);
+                        readOnly = true;
                         cargarCampos();
                         ultimaFormaPagoSelected = oPagoE.FormaPago;
-                        readOnly = true;
                         setearPropiedadesForm();
                         idPagoLabel.Text = idPago.ToString();//asigno id para identificar el formulario al llamar
                     }
@@ -64,6 +71,8 @@ namespace Presentacion.Pagos
                     {
                         setearNroRecibo();
                     }
+
+                    btnImprimir.Visible = oPagoE.Id > 0;
 
                     txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
                     txtPersona.Text = oPersonaE != null ? oPersonaE.razonSocial : "";
@@ -119,6 +128,7 @@ namespace Presentacion.Pagos
             txtNroCheque.ReadOnly = readOnly;
             //txtTitular.ReadOnly = readOnly;
             txtObservaciones.ReadOnly = readOnly;
+            btnImprimir.Visible = readOnly;
         }
 
         private void cargarSucursal()
@@ -206,7 +216,6 @@ namespace Presentacion.Pagos
             {                
                 try
                 {
-                    //
                     if (oUsuario == null)
                     {
                         FormLoginVendedor frmLogin = new FormLoginVendedor();
@@ -245,17 +254,24 @@ namespace Presentacion.Pagos
                         MessageBox.Show("Error al guardar Mov en Cta Cte. \n-El Pago se registró correctamente." + "\n\n" + ex.Source);
                     }
 
-                    MessageBox.Show("El Pago de registró correctamente.");
+                    //MessageBox.Show("El Pago de registró correctamente.");
 
-                    if(frmPagos != null) 
+                    DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
+                                    MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                    if (resp.Equals(DialogResult.Yes))
+                        imprimirRecibo();
+
+
+                    if (frmPagos != null) 
                         frmPagos.cargarGrilla();
 
                     oPagoE = new Entidades.Pago();
                     oPagoSinMod = new Entidades.Pago();
                     cargarCampos();
 
-                    if (esModificacion) 
-                        this.Close();
+                    //if (esModificacion) 
+                    this.Close();
                 }
                 catch (Exception ex)
                 {
@@ -373,6 +389,31 @@ namespace Presentacion.Pagos
                 return;
 
             setearNroRecibo();
+
+            if (oPagoE.Cheques != null && oPagoE.Cheques.Count > 0)
+            {
+                //Validar Cheques de Pago y Cobro
+                bool errorIconsistencia = false;
+                string cobro_pago = checkAProveedor.Checked ? "Pago (Entregado)" : "Cobro (Recibido)";
+                string mensajeDeInconsistencia = "Los siguientes cheques ya fueron registrados como " + cobro_pago + "\n";
+                foreach (Entidades.Cheque oCheque in oPagoE.Cheques)
+                {
+                    if (checkAProveedor.Checked && oCheque.PagoA != null && oCheque.PagoA.Id > 0 && oCheque.PagoA.Id != oPagoE.Id)
+                    {
+                        mensajeDeInconsistencia += "\nID Pago: " + oCheque.PagoA.Id + " - " + oCheque.PagoA.Persona.Identificacion;
+                        errorIconsistencia = true;
+                    }
+                    if (!checkAProveedor.Checked && oCheque.PagoDe != null && oCheque.PagoDe.Id > 0 && oCheque.PagoDe.Id != oPagoE.Id)
+                    {
+                        mensajeDeInconsistencia += "\nID Pago: " + oCheque.PagoDe.Id + " - " + oCheque.PagoDe.Persona.Identificacion;
+                        errorIconsistencia = true;
+                    }
+                }
+                mensajeDeInconsistencia += "\n\nSi continua con la modificación se perderán los datos originales del " + cobro_pago;
+                if (errorIconsistencia)
+                    MessageBox.Show(mensajeDeInconsistencia, "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
             if (checkAProveedor.Checked)
             {
                 checkAProveedor.Text = "Pagar a ...";
@@ -438,13 +479,14 @@ namespace Presentacion.Pagos
 
         private void txtEfectivo_TextChanged(object sender, EventArgs e)
         {
+            if (readOnly)
+                return;
 
             if (!Utilidades.Util_Form.validarCampoNumerico(txtEfectivo.Text, "Importe Efectivo"))
             {
                 txtImporte.Text = "";
                 return;
             }
-
 
             CalcularImporte();
         }
@@ -475,12 +517,15 @@ namespace Presentacion.Pagos
         {
             if (e.KeyChar == Convert.ToChar(Keys.Enter))
             {
-                CargarCheque();
+                CargarCheque(null);
             }
         }
 
-        private void CargarCheque()
+        public void CargarCheque(string nroCheque)
         {
+            if (!string.IsNullOrEmpty(nroCheque))
+                txtNroCheque.Text = nroCheque;
+
             Entidades.Cheque oCheque = oCtaCteN.getChequePorIDorNro(0, txtNroCheque.Text);
             if (oCheque != null)
             {
@@ -492,18 +537,19 @@ namespace Presentacion.Pagos
                 //se verifica que el mismo cheque no se asignado a dos pagos diferentes
                 if (checkAProveedor.Checked && oCheque.PagoA != null && oCheque.PagoA.Id > 0 && oCheque.PagoA.Id != oPagoE.Id)
                 {
-                    MessageBox.Show("El Cheque ya ha sido asigando al siguiente Pago \nID: " + oCheque.PagoA.Id + "\n" + oCheque.PagoA.Persona.Identificacion);
+                    MessageBox.Show("El Cheque ya ha sido asigando al siguiente Pago \n\nID Pago: " + oCheque.PagoA.Id + " - " + oCheque.PagoA.Persona.Identificacion);
                     return;
                 }
 
                 if (!checkAProveedor.Checked && oCheque.PagoDe != null && oCheque.PagoDe.Id > 0 && oCheque.PagoDe.Id != oPagoE.Id)
                 {
-                    MessageBox.Show("El Cheque ya ha sido asigando al siguiente Pago \nID: " + oCheque.PagoDe.Id + "\n" + oCheque.PagoDe.Persona.Identificacion);
+                    MessageBox.Show("El Cheque ya ha sido asigando al siguiente Pago \n\nID Pago: " + oCheque.PagoDe.Id + " - " + oCheque.PagoDe.Persona.Identificacion);
                     return;
                 }
 
                 oPagoE.Cheques.Add(oCheque);
                 CargarGrillaCheques();
+                lblCantCheques.Text = oPagoE.Cheques.Count.ToString();
                 txtNroCheque.Text = "";
             }
             else
@@ -521,7 +567,7 @@ namespace Presentacion.Pagos
                 frmCheques.NuevoCheque();
                 frmCheques.ShowDialog();
 
-                CargarCheque();
+                CargarCheque(null);
             }
         }
 
@@ -577,6 +623,7 @@ namespace Presentacion.Pagos
             }
             txtTotalCheques.DataBindings.Clear();
             txtTotalCheques.Text = totalImporte.ToString("F2");
+            lblCantCheques.Text = oPagoE.Cheques.Count.ToString();
         }
 
         private void txtTotalCheques_TextChanged(object sender, EventArgs e)
@@ -604,7 +651,164 @@ namespace Presentacion.Pagos
             formCheques frmCheques = new formCheques();
             frmCheques.llamadoDesdePago = true;
             frmCheques.oUsuario = oUsuario;
+            frmCheques.OnChequeDobleClick = CargarCheque;
             frmCheques.ShowDialog();
+        }
+
+        #region imprimirRecibo
+        public void GenerarPDFRecibo(Pago datos, string rutaArchivo)
+        {
+            string rutaPDF = rutaArchivo + "\\" + DateTime.Today.ToString("yyyyMMdd") + " - Recibo de Pago - ID "+oPagoE.Id.ToString()+".pdf";
+
+            // Verificar si la carpeta existe, si no, crearla
+            if (!Directory.Exists(rutaArchivo))
+                Directory.CreateDirectory(rutaArchivo);
+
+            Document doc = new Document(PageSize.A4, 40, 40, 40, 40);
+            PdfWriter.GetInstance(doc, new FileStream(rutaPDF, FileMode.Create));
+            doc.Open();
+
+            var negrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
+            var normal = FontFactory.GetFont(FontFactory.HELVETICA, 11);
+
+            // Fuentes y estilos
+            var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
+            var fontSubTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
+            var fontNormal = FontFactory.GetFont(FontFactory.HELVETICA, 10);
+            var fontComments = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+            var fontNormalBold = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+
+            // Título
+            var titulo = new Paragraph("RECIBO DE PAGO", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16));
+            titulo.Alignment = Element.ALIGN_CENTER;
+            doc.Add(titulo); 
+            var noValidoComoFactura = new Paragraph("-No válido como factura-", fontComments);
+            noValidoComoFactura.Alignment = Element.ALIGN_CENTER;
+            doc.Add(noValidoComoFactura);
+            doc.Add(new Paragraph(" "));
+
+            //// Datos del recibo
+            //doc.Add(new Paragraph($"Fecha: {datos.Fecha:dd/MM/yyyy}", normal));
+            //doc.Add(new Paragraph($"Cliente: {datos.Persona.razonSocial}", normal));
+            //doc.Add(new Paragraph($"ID Pago: {datos.Id}", normal));
+            //if (!string.IsNullOrEmpty(datos.NroRecibo))
+            //    doc.Add(new Paragraph($"N° Recibo: {datos.NroRecibo}", normal));
+
+            //doc.Add(new Paragraph(" "));
+
+            // Tabla para fecha y número de recibo alineados a la derecha
+            PdfPTable tablaCabecera = new PdfPTable(2);
+            tablaCabecera.WidthPercentage = 100;
+            tablaCabecera.SetWidths(new float[] { 3f, 1.5f });
+
+            // Columna izquierda vacía
+            string datosPagador = oPagoE.AProveedor ? ConfigurationManager.AppSettings["Dueno"].ToString() : datos.Persona.razonSocial;
+            PdfPCell celdaIzquierda = new PdfPCell(new Phrase($"RECIBO DE: {datosPagador.ToUpper()}", fontNormalBold));
+            celdaIzquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            tablaCabecera.AddCell(celdaIzquierda);
+
+            // Columna derecha con fecha y número de recibo
+            string textoDerecha = $"Fecha: {datos.Fecha:dd/MM/yyyy}";
+            textoDerecha += $"\nID Pago {datos.Id}";
+            textoDerecha += $"\nN° Recibo: {datos.NroRecibo}";
+
+            PdfPCell celdaDerecha = new PdfPCell(new Phrase(textoDerecha, normal));
+            celdaDerecha.HorizontalAlignment = Element.ALIGN_RIGHT;
+            celdaDerecha.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            tablaCabecera.AddCell(celdaDerecha);
+
+            doc.Add(tablaCabecera);
+
+            // forma pago
+            var formaPago = new Paragraph($"Forma Pago: {oPagoE.FormaPago}", fontNormalBold);
+            formaPago.Alignment = Element.ALIGN_LEFT;
+            doc.Add(formaPago);
+            doc.Add(new Paragraph(" "));
+
+            if (oPagoE.FormaPago.Contains(Entidades.Pago.formasPago.Cheque.ToString()))
+            {
+                // forma pago
+                var detalle = new Paragraph($"Detalle", fontNormalBold);
+                detalle.Alignment = Element.ALIGN_LEFT;
+                doc.Add(detalle);
+                doc.Add(new Paragraph(" "));
+
+                // Tabla de cheques
+                PdfPTable tabla = new PdfPTable(4);
+                tabla.WidthPercentage = 100;
+                tabla.SetWidths(new float[] { 2f, 2f, 2f, 1.5f });
+
+                tabla.AddCell(new Phrase("Nro Cheque", fontNormalBold));
+                tabla.AddCell(new Phrase("Banco", fontNormalBold));
+                tabla.AddCell(new Phrase("Fecha de Pago", fontNormalBold));
+                tabla.AddCell(new Phrase("Importe", fontNormalBold));
+
+                foreach (var cheque in datos.Cheques)
+                {
+                    tabla.AddCell(new Phrase(cheque.NroCheque, fontNormal));
+                    tabla.AddCell(new Phrase(cheque.Banco, fontNormal));
+                    tabla.AddCell(new Phrase(cheque.FechaPago.ToShortDateString(), fontNormal));
+                    tabla.AddCell(new Phrase(cheque.Importe.ToString("F2"), fontNormal));
+                }
+
+                if (oPagoE.FormaPago.Contains("Eftvo"))
+                {
+                    //var importeEfectivo = new Paragraph($"Efectivo $: {oPagoE.Efectivo:F2}", fontNormal);
+                    //importeEfectivo.Alignment = Element.ALIGN_RIGHT;
+                    //doc.Add(importeEfectivo);
+
+                    tabla.AddCell(new Phrase("//////", fontNormalBold));
+                    tabla.AddCell(new Phrase("//////", fontNormalBold));
+                    tabla.AddCell(new Phrase("//////", fontNormalBold));
+                    tabla.AddCell(new Phrase("//////", fontNormalBold));
+
+                    tabla.AddCell(new Phrase(" ", fontNormalBold));
+                    tabla.AddCell(new Phrase(" ", fontNormalBold));
+                    tabla.AddCell(new Phrase("EFECTIVO", fontNormalBold));
+                    tabla.AddCell(new Phrase(oPagoE.Efectivo.ToString("F2"), fontNormalBold));
+                }
+                doc.Add(tabla);
+                //doc.Add(new Paragraph(" "));
+            }
+
+            // Total
+            var importe = float.TryParse(txtImporte.Text, out float val) ? val : 0f;
+            var formatoImporte = val.ToString("N2", new CultureInfo("es-AR"));
+            var totalParrafo = new Paragraph($"TOTAL RECIBIDO: $ {formatoImporte}", negrita);
+
+            //var totalParrafo = new Paragraph($"TOTAL RECIBIDO: ${txtImporte.Text:F2}", negrita);
+            totalParrafo.Alignment = Element.ALIGN_RIGHT;
+            doc.Add(totalParrafo);
+            doc.Add(new Paragraph(" "));
+
+            // Observaciones
+            string obs = string.IsNullOrEmpty(oPagoE.Observaciones) ? "-" : oPagoE.Observaciones;
+            var observaciones = new Paragraph($"Observaciones: {obs}", fontComments);
+            totalParrafo.Alignment = Element.ALIGN_LEFT;
+            doc.Add(observaciones);
+            doc.Add(new Paragraph(" "));
+
+
+            // Firma
+            doc.Add(new Paragraph(" "));
+            doc.Add(new Paragraph("Firma: ____________________________", normal));
+            doc.Add(new Paragraph(" "));
+
+            doc.Close();
+        }
+        #endregion
+
+        private void btnImprimir_Click(object sender, EventArgs e)
+        {
+            imprimirRecibo();
+        }
+
+        private void imprimirRecibo()
+        {
+            string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+            ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), ruta);// "ReciboCheques.pdf");
+            GenerarPDFRecibo(oPagoE, ruta);
+            System.Diagnostics.Process.Start(ruta);
         }
     }
 }

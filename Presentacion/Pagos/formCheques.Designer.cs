@@ -125,6 +125,7 @@
             this.grilla.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grilla.Size = new System.Drawing.Size(905, 329);
             this.grilla.TabIndex = 21;
+            this.grilla.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grilla_CellDoubleClick);
             // 
             // pnlBuscar
             // 

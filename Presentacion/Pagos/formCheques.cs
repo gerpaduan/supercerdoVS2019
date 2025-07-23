@@ -28,7 +28,8 @@ namespace Presentacion.Cheques
         bool cargar = false;
         public bool llamadoDesdePago = false;
         public string nroChequeDesdePago = "";
-        
+        public Action<string> OnChequeDobleClick { get; set; }
+
 
 
         public formCheques()
@@ -407,6 +408,20 @@ namespace Presentacion.Cheques
         private void checkPropioFiltro_CheckedChanged(object sender, EventArgs e)
         {
             cargarGrilla();
+        }
+
+        private void grilla_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && llamadoDesdePago)
+            {
+                string nroCheque = grilla.Rows[e.RowIndex].Cells["nroCheque"].Value.ToString();
+
+                // Llamar al método externo si está asignado
+                OnChequeDobleClick?.Invoke(nroCheque);
+
+                // Cerrar el form si es necesario
+                this.Close();
+            }
         }
     }
 }
