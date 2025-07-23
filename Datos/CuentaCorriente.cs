@@ -145,6 +145,7 @@ namespace Datos
             cmCtaCte.Connection = conn.conectar();
             cmCtaCte.CommandType = CommandType.Text;
             cmCtaCte.CommandText = "SELECT dbo.Cheques.id, dbo.Cheques.nroCheque, dbo.Cheques.banco, dbo.Cheques.propio, " +
+                " CASE dbo.Cheques.propio WHEN 1 THEN 'Propio' WHEN 0 THEN '3ro' END AS Origen, "+
                 " dbo.Cheques.fechaEmision, dbo.Cheques.fechaPago, dbo.Cheques.importe, dbo.Cheques.estado, dbo.Cheques.recibidoDe, " +
                 " RecibidoPor.identificacion AS Recibido_De, dbo.Cheques.entregadoA, EntregadoPor.identificacion AS Entregado_A,  " +
                 " dbo.Cheques.creado, CreadoPor.nombre AS CreadoPor, dbo.Cheques.actualizado,  ActualizadoPor.nombre AS ActualizadoPor " +

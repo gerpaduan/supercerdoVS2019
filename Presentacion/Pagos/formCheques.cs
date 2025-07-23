@@ -69,6 +69,7 @@ namespace Presentacion.Cheques
                 grilla.DataSource = null;
                 grilla.DataSource = dtCheques;
                 grilla.Columns["importe"].DefaultCellStyle.Format = "N2";
+                grilla.Columns["propio"].Visible = false;
                 grilla.Columns["recibidoDe"].Visible = false;
                 grilla.Columns["entregadoA"].Visible = false;
             }
@@ -422,6 +423,25 @@ namespace Presentacion.Cheques
                 // Cerrar el form si es necesario
                 this.Close();
             }
+        }
+
+        private void grilla_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (grilla.Columns[e.ColumnIndex].Name == "fechaPago")
+            {
+                if (e.Value != null && DateTime.TryParse(e.Value.ToString(), out DateTime fecha))
+                {
+                    // Obtener el valor de la columna "estado" de la misma fila
+                    var estado = grilla.Rows[e.RowIndex].Cells["estado"].Value?.ToString();
+
+                    if (fecha.Date < DateTime.Today && estado == Entidades.Cheque.EstadoEnum.PENDIENTE.ToString())
+                    {
+                        e.CellStyle.ForeColor = Color.OrangeRed;
+                        e.CellStyle.Font = new Font(grilla.Font, FontStyle.Bold);
+                    }
+                }
+            }
+
         }
     }
 }

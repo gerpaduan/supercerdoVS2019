@@ -571,6 +571,15 @@ namespace Presentacion.Pagos
                     return;
                 }
 
+                if (oCheque.FechaPago < DateTime.Today)
+                {
+                    DialogResult resp = MessageBox.Show("El Cheque N°: " + txtNroCheque.Text + " está vencido (Fecha Pago: "+ oCheque.FechaPago.ToShortDateString() + " ).\n¿Desea agregarlo igualmente?", "",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                    if (resp.Equals(DialogResult.No))
+                        return;
+                }
+
                 oPagoE.Cheques.Add(oCheque);
                 CargarGrillaCheques();
                 lblCantCheques.Text = oPagoE.Cheques.Count.ToString();
