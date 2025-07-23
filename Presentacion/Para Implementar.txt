@@ -18,6 +18,11 @@
 ////
 Fecha 16/07/2025
 
+-SL
+-SM
+-Norte
+-Default
+
 creacion de tabla Cheques
 
 USE [CarniSys0]
