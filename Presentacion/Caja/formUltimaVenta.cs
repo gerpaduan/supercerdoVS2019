@@ -381,7 +381,11 @@ namespace Presentacion.Caja
                 ticket.TextoCentro("x");
                 ticket.NoValidoComoFactura();
                 ticket.LineasEnBlanco(1);
+                if (oUltimaVenta.EnCtaCte && oUltimaVenta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+                    ticket.TextoCentro("A Cta. Cte.");
                 ticket.TextoIzquierda("A " + oUltimaVenta.Persona.razonSocial);
+                string formaPagoImprimir = oUltimaVenta.PagoMixtoEfectivo > 0 ? oUltimaVenta.FormaPago.ToString() + "|Efvo" : oUltimaVenta.FormaPago.ToString();
+                ticket.TextoIzquierda("Forma Pago: " + formaPagoImprimir);
                 ticket.TextoIzquierda("Nro. T. " + oUltimaVenta.IdVenta.ToString());
                 ticket.TextoExtremos("Fecha: " + oUltimaVenta.FechaVenta.Date.ToString(), "Hora: " + oUltimaVenta.FechaVenta.TimeOfDay.ToString());
                 ticket.LineasGuion();
