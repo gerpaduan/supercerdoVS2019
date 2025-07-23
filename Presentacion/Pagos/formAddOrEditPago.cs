@@ -18,6 +18,7 @@ using Entidades;
 using Microsoft.Win32;
 using System.Configuration;
 using System.Globalization;
+using Presentacion.Embutidos;
 
 namespace Presentacion.Pagos
 {
@@ -872,5 +873,20 @@ namespace Presentacion.Pagos
         {
             //setearNroRecibo();
         }
+
+        private void btnObservaciones_Click(object sender, EventArgs e)
+        {
+
+            formReceta frmReceta = new formReceta(txtObservaciones.Text); // Pasar el texto actual
+            frmReceta.editar = !readOnly;
+            frmReceta.observaciones = true;
+            frmReceta.OnObservaciones = CargarObservaciones;
+            frmReceta.ShowDialog();
+        }
+
+        public void CargarObservaciones(string obs)
+        {
+            txtObservaciones.Text = obs;
+        }    
     }
 }

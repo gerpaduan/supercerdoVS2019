@@ -30,7 +30,7 @@ namespace Presentacion.Embutidos
         private void InitializeComponent()
         {
             this.txtReceta = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblEtiqueta = new System.Windows.Forms.Label();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
@@ -46,15 +46,15 @@ namespace Presentacion.Embutidos
             this.txtReceta.Size = new System.Drawing.Size(341, 311);
             this.txtReceta.TabIndex = 0;
             // 
-            // label1
+            // lblEtiqueta
             // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(9, 9);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(96, 15);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Instrucciones:";
+            this.lblEtiqueta.AutoSize = true;
+            this.lblEtiqueta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblEtiqueta.Location = new System.Drawing.Point(9, 9);
+            this.lblEtiqueta.Name = "lblEtiqueta";
+            this.lblEtiqueta.Size = new System.Drawing.Size(96, 15);
+            this.lblEtiqueta.TabIndex = 1;
+            this.lblEtiqueta.Text = "Instrucciones:";
             // 
             // btnGuardar
             // 
@@ -77,7 +77,7 @@ namespace Presentacion.Embutidos
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(365, 381);
             this.Controls.Add(this.btnGuardar);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblEtiqueta);
             this.Controls.Add(this.txtReceta);
             this.Name = "formReceta";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -91,7 +91,7 @@ namespace Presentacion.Embutidos
         #endregion
 
         private System.Windows.Forms.TextBox txtReceta;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblEtiqueta;
         protected System.Windows.Forms.Button btnGuardar;
     }
 }

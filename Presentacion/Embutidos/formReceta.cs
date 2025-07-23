@@ -15,6 +15,8 @@ namespace Presentacion.Embutidos
 
         public string recetaEditada { get; private set; }
         public bool editar = false;
+        public bool observaciones= false;
+        public Action<string> OnObservaciones { get; set; }
         public formReceta(string textoReceta)
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -23,6 +25,13 @@ namespace Presentacion.Embutidos
 
         private void formReceta_Load(object sender, EventArgs e)
         {
+            if (observaciones)
+            {
+                this.Text = "Observación";
+                lblEtiqueta.Text = "Observación";
+                btnGuardar.Text = "Cargar";
+            }
+
             txtReceta.ReadOnly = !editar;
             if (!editar)
                 btnGuardar.Text = "Cerrar";
@@ -33,7 +42,12 @@ namespace Presentacion.Embutidos
         private void btnGuardar_Click(object sender, EventArgs e)
         {
             if (editar)
+            {
+
                 recetaEditada = txtReceta.Text; // Guardar cambios
+                // Llamar al método externo si está asignado
+                OnObservaciones?.Invoke(txtReceta.Text);
+            }
 
             this.DialogResult = DialogResult.OK;
             this.Close();

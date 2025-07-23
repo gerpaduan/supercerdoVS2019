@@ -148,6 +148,7 @@ namespace Datos
                 " CASE dbo.Cheques.propio WHEN 1 THEN 'Propio' WHEN 0 THEN '3ro' END AS Origen, "+
                 " dbo.Cheques.fechaEmision, dbo.Cheques.fechaPago, dbo.Cheques.importe, dbo.Cheques.estado, dbo.Cheques.recibidoDe, " +
                 " RecibidoPor.identificacion AS Recibido_De, dbo.Cheques.entregadoA, EntregadoPor.identificacion AS Entregado_A,  " +
+                " CASE WHEN LEN(dbo.Cheques.observaciones) > 30  THEN LEFT(dbo.Cheques.observaciones, 30) + '...' ELSE dbo.Cheques.observaciones  END AS 'obs.'," +
                 " dbo.Cheques.creado, CreadoPor.nombre AS CreadoPor, dbo.Cheques.actualizado,  ActualizadoPor.nombre AS ActualizadoPor " +
                 " FROM     dbo.Pagos AS PagoEntregado INNER JOIN " +
                 "  dbo.Personas AS EntregadoPor ON PagoEntregado.idPersona = EntregadoPor.idPersona RIGHT OUTER JOIN " +

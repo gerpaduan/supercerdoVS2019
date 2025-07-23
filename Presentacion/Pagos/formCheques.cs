@@ -10,6 +10,8 @@ using System.Windows.Forms;
 
 using System.Configuration;
 using Entidades;
+using Presentacion.Embutidos;
+using System.Web.UI.WebControls;
 
 namespace Presentacion.Cheques
 {
@@ -167,6 +169,7 @@ namespace Presentacion.Cheques
             comboEstadosFiltro.SelectedIndex = 0;
             txtFechaHasta.Value = DateTime.Now.AddDays(30); 
             txtUsuario.Text = oUsuario.Nombre;
+            groupChequeEstado(false);
             
             string rutaArchivo = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "bancos.txt");
 
@@ -207,7 +210,9 @@ namespace Presentacion.Cheques
 
         public void NuevoCheque()
         {
-            groupCheque.Enabled = true;
+            //groupCheque.Enabled = true;
+            groupChequeEstado(true);
+
             oCheque = new Cheque();
             LimpiarTextBoxes(this);
             comboEstado.SelectedIndex = 0;
@@ -284,7 +289,7 @@ namespace Presentacion.Cheques
                 oCheque = null;
                 LimpiarTextBoxes(this.groupCheque);
                 cargarGrilla();
-                groupCheque.Enabled = false;
+                groupChequeEstado(false);
             }
             catch (Exception)
             {
@@ -302,7 +307,7 @@ namespace Presentacion.Cheques
             txtFechaPago.Value = DateTime.Now;
             foreach (Control control in parent.Controls)
             {
-                if (control is TextBox txt)
+                if (control is System.Windows.Forms.TextBox txt)
                     txt.Text = "";
                 else if (control.HasChildren)
                     LimpiarTextBoxes(control); // Recorre niveles anidados
@@ -312,7 +317,19 @@ namespace Presentacion.Cheques
         private void btnModificar_Click(object sender, EventArgs e)
         {
             CargarChequeSeleccionado();
-            groupCheque.Enabled = true;
+            //groupCheque.Enabled = true;
+            groupChequeEstado(true);
+        }
+
+        private void groupChequeEstado(bool estado)
+        {
+            foreach (Control c in groupCheque.Controls)
+            {
+                if (c != btnObservaciones)
+                {
+                    c.Enabled = estado;
+                }
+            }
         }
 
         private void CargarChequeSeleccionado()
@@ -360,7 +377,8 @@ namespace Presentacion.Cheques
         private void btnCancelar_Click_1(object sender, EventArgs e)
         {
             LimpiarTextBoxes(this);
-            groupCheque.Enabled = false;    
+            //groupCheque.Enabled = false;
+            groupChequeEstado(false);
         }
 
         private void btnEliminar_Click(object sender, EventArgs e)
@@ -413,15 +431,22 @@ namespace Presentacion.Cheques
 
         private void grilla_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && llamadoDesdePago)
+            if (e.RowIndex >= 0)
             {
-                string nroCheque = grilla.Rows[e.RowIndex].Cells["nroCheque"].Value.ToString();
+                if (llamadoDesdePago)
+                {
+                    string nroCheque = grilla.Rows[e.RowIndex].Cells["nroCheque"].Value.ToString();
 
-                // Llamar al método externo si está asignado
-                OnChequeDobleClick?.Invoke(nroCheque);
+                    // Llamar al método externo si está asignado
+                    OnChequeDobleClick?.Invoke(nroCheque);
 
-                // Cerrar el form si es necesario
-                this.Close();
+                    // Cerrar el form si es necesario
+                    this.Close();
+                }
+                else
+                {
+                    CargarChequeSeleccionado();
+                }
             }
         }
 
@@ -442,6 +467,20 @@ namespace Presentacion.Cheques
                 }
             }
 
+        }
+
+        private void btnObservaciones_Click(object sender, EventArgs e)
+        {
+            formReceta frmReceta = new formReceta(txtObservaciones.Text); // Pasar el texto actual
+            frmReceta.editar = txtObservaciones.Enabled;
+            frmReceta.observaciones = true;
+            frmReceta.OnObservaciones = CargarObservaciones;
+            frmReceta.ShowDialog();
+        }
+
+        public void CargarObservaciones(string obs)
+        { 
+            txtObservaciones.Text = obs;
         }
     }
 }
