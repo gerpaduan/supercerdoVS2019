@@ -492,6 +492,7 @@ namespace Presentacion.Pagos
                 if (comboSucursalCargada)
                 {
                     oSucursalE = oSucursalN.findById(Convert.ToInt32(comboSucursal.SelectedValue));
+                    setearNroRecibo();
                 }
             }
             catch (Exception ex)
