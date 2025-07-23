@@ -470,7 +470,8 @@ namespace Datos
             cmCtaCte.Connection = conn.conectar();
             cmCtaCte.CommandType = CommandType.Text;
             cmCtaCte.CommandText = "SELECT     dbo.Pagos.id, dbo.Pagos.fecha, dbo.Personas.razonSocial, " +
-                " dbo.Pagos.nroRecibo, dbo.Pagos.importe,dbo.Pagos.aProveedor, dbo.Pagos.formaPago, dbo.Pagos.efectivo, dbo.Pagos.observaciones, dbo.Pagos.creado, CreadoPor.nombre AS CreadoPor, " +
+                " dbo.Pagos.nroRecibo, dbo.Pagos.importe,dbo.Pagos.aProveedor, CASE dbo.Pagos.aProveedor WHEN 0 THEN 'Cobro' WHEN 1 THEN 'Pago' END AS Operacion, "+
+                "dbo.Pagos.formaPago, dbo.Pagos.efectivo, dbo.Pagos.observaciones, dbo.Pagos.creado, CreadoPor.nombre AS CreadoPor, " +
                 " dbo.Pagos.actualizado, ActualizadoPor.nombre AS ActualizadoPor " +
                 " FROM  dbo.Pagos INNER JOIN dbo.Personas ON dbo.Pagos.idPersona = dbo.Personas.idPersona LEFT OUTER JOIN " +
                 " dbo.Usuarios AS ActualizadoPor ON dbo.Pagos.creadoPor = ActualizadoPor.id LEFT OUTER JOIN " +

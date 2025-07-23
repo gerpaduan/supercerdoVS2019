@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditPago));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.txtUsuario = new System.Windows.Forms.TextBox();
@@ -38,6 +38,7 @@
             this.label13 = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkNroRecibo = new System.Windows.Forms.CheckBox();
             this.txtIdPago = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.panelCheque = new System.Windows.Forms.Panel();
@@ -158,6 +159,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.checkNroRecibo);
             this.groupBox1.Controls.Add(this.txtIdPago);
             this.groupBox1.Controls.Add(this.label12);
             this.groupBox1.Controls.Add(this.panelCheque);
@@ -190,6 +192,20 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Recibo";
+            // 
+            // checkNroRecibo
+            // 
+            this.checkNroRecibo.AutoSize = true;
+            this.checkNroRecibo.Checked = true;
+            this.checkNroRecibo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkNroRecibo.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
+            this.checkNroRecibo.Location = new System.Drawing.Point(258, 90);
+            this.checkNroRecibo.Name = "checkNroRecibo";
+            this.checkNroRecibo.Size = new System.Drawing.Size(124, 17);
+            this.checkNroRecibo.TabIndex = 63;
+            this.checkNroRecibo.Text = "N°Recibo Automático\r\n";
+            this.checkNroRecibo.UseVisualStyleBackColor = true;
+            this.checkNroRecibo.CheckedChanged += new System.EventHandler(this.checkNroRecibo_CheckedChanged);
             // 
             // txtIdPago
             // 
@@ -225,11 +241,11 @@
             this.panelCheque.Controls.Add(this.grilla);
             this.panelCheque.Controls.Add(this.txtNroCheque);
             this.panelCheque.Controls.Add(this.label8);
+            this.panelCheque.Enabled = false;
             this.panelCheque.Location = new System.Drawing.Point(2, 170);
             this.panelCheque.Name = "panelCheque";
             this.panelCheque.Size = new System.Drawing.Size(539, 209);
             this.panelCheque.TabIndex = 60;
-            this.panelCheque.Visible = false;
             // 
             // lblCantCheques
             // 
@@ -329,24 +345,24 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grilla.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.MenuText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.MenuText;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
             this.grilla.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.NullValue = null;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grilla.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle8.ForeColor = System.Drawing.Color.Cornsilk;
+            dataGridViewCellStyle8.NullValue = null;
+            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grilla.DefaultCellStyle = dataGridViewCellStyle8;
             this.grilla.Location = new System.Drawing.Point(3, 32);
             this.grilla.Name = "grilla";
             this.grilla.ReadOnly = true;
@@ -559,6 +575,7 @@
             this.txtNroRecibo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtNroRecibo.Location = new System.Drawing.Point(99, 85);
             this.txtNroRecibo.Name = "txtNroRecibo";
+            this.txtNroRecibo.ReadOnly = true;
             this.txtNroRecibo.Size = new System.Drawing.Size(153, 22);
             this.txtNroRecibo.TabIndex = 1;
             this.txtNroRecibo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -697,6 +714,7 @@
             this.Name = "formAddOrEditPago";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Nuevo Pago";
+            this.Activated += new System.EventHandler(this.formAddOrEditPago_Activated);
             this.Load += new System.EventHandler(this.formNuevoPago_Load);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
@@ -760,5 +778,6 @@
         protected System.Windows.Forms.Label lblCantCheques;
         protected System.Windows.Forms.Label label7;
         protected System.Windows.Forms.Button btnImprimir;
+        private System.Windows.Forms.CheckBox checkNroRecibo;
     }
 }

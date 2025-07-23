@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="btnBuscarCheque.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+  <data name="btnBuscarProv.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
         vAAADrwBlbxySQAAASNJREFUOE/N0E9LwnAYwHFfTLduEb2AblG3Dh3qFEHgLTpkb6CitMlMcxYz1mz+
@@ -129,7 +129,7 @@
         2vKf9QmPJLoBX0nHSQAAAABJRU5ErkJggg==
 </value>
   </data>
-  <data name="btnBuscarProv.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+  <data name="btnBuscarCheque.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
         vAAADrwBlbxySQAAASNJREFUOE/N0E9LwnAYwHFfTLduEb2AblG3Dh3qFEHgLTpkb6CitMlMcxYz1mz+
@@ -143,7 +143,7 @@
   <data name="btnImprimir.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAO
-        vwAADr8BOAVTJAAAAehJREFUOE+Nk0Fr2nAYxvNZxJMfQvCy4QYF2cGjbgwGgic9CBMmE2Fs0otz4NGL
+        vAAADrwBlbxySQAAAehJREFUOE+Nk0Fr2nAYxvNZxJMfQvCy4QYF2cGjbgwGgic9CBMmE2Fs0otz4NGL
         RTcKAwcyiqO2VjulBympdGV2jnZp6baSWU3atM94XjF06roFfpDkff6/vO8/iaJMHY+LKhZeNIV7i5vC
         3WfrSC/vYTo7czB4oo/wY2DiRDdsdg51xN/28Sjz6WaJL93A6cDA1lcL7f4FmvsmVvcMGBeX2DqwkHzX
         R3Jp+++ShecbtoA09s9F0DsaSGdHP89w68nqvwWdAwvqt0vpgpL36hnK27+k5k2uzRekUinZLM6/o12J

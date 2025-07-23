@@ -62,6 +62,8 @@ namespace Presentacion.Pagos
                         oPersonaE = oPagoE.Persona;
                         oPagoSinMod = oCtaCteN.getPagoById(idPago);
                         readOnly = true;
+                        checkNroRecibo.Text = "Editar N°Recibo"; //solo cuando es un nuevo recibo se formatea su numero
+                        checkNroRecibo.Checked = false;
                         cargarCampos();
                         ultimaFormaPagoSelected = oPagoE.FormaPago;
                         setearPropiedadesForm();
@@ -73,12 +75,12 @@ namespace Presentacion.Pagos
                     }
 
                     btnImprimir.Visible = oPagoE.Id > 0;
-
                     txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
                     txtPersona.Text = oPersonaE != null ? oPersonaE.razonSocial : "";
                     //se valida que sea Admin para cambiar de sucursal
                     comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
                     txtSucursal.Visible = !comboSucursal.Visible;
+                    btnBuscarProv.Focus();
                 }
                 else
                 {
@@ -96,10 +98,28 @@ namespace Presentacion.Pagos
         /// 
         /// </summary>
         private void setearNroRecibo()
-        {
+        {            
             try
             {
-                txtNroRecibo.Text = oPagoE.Id > 0 ? txtNroRecibo.Text : (oCtaCteN.getUltimoIdPago() + 1).ToString();
+                ///Si Edicion Pago
+                if (oPagoE.Id > 0)
+                {
+                    txtNroRecibo.ReadOnly = !checkNroRecibo.Checked;
+                    txtNroRecibo.Text = !checkNroRecibo.Checked ? oPagoE.NroRecibo : txtNroRecibo.Text;
+                    txtNroRecibo.Focus();
+                    return;
+                }
+
+                ///Si Nuevo Pago
+                if (!checkNroRecibo.Checked)
+                {
+                    txtNroRecibo.ReadOnly = false;
+                    txtNroRecibo.Focus();
+                    return;
+                }
+                string nroRemitoFormateado = oSucursalE.idSucursal.ToString("D3") + "-" + (oCtaCteN.getUltimoIdPago() + 1).ToString("D8");
+
+                txtNroRecibo.Text = oPagoE.Id > 0 ? txtNroRecibo.Text : nroRemitoFormateado;// (oCtaCteN.getUltimoIdPago() + 1).ToString();
             }
             catch (Exception)
             {
@@ -122,13 +142,16 @@ namespace Presentacion.Pagos
             //txtTipoEgresoCaja.Visible = readOnly;
             //txtTipoEgresoCaja.Text = comboTipoEgresoCaja.Text;
             comboTipoPago.Enabled = !readOnly;
-            txtNroRecibo.ReadOnly = readOnly;
+            checkNroRecibo.Enabled = !readOnly;
+            txtNroRecibo.ReadOnly = true;// readOnly && checkNroRecibo.Enabled && !checkNroRecibo.Checked;
             txtImporte.ReadOnly = readOnly;
             //txtBanco.ReadOnly = readOnly;
             txtNroCheque.ReadOnly = readOnly;
             //txtTitular.ReadOnly = readOnly;
             txtObservaciones.ReadOnly = readOnly;
             btnImprimir.Visible = readOnly;
+            if (grilla.Rows.Count > 0)
+                grilla.Columns["btnQuitar"].Visible = !readOnly;
         }
 
         private void cargarSucursal()
@@ -255,7 +278,6 @@ namespace Presentacion.Pagos
                     }
 
                     //MessageBox.Show("El Pago de registró correctamente.");
-
                     DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
                                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
@@ -287,6 +309,7 @@ namespace Presentacion.Pagos
                 ultimaValidacion = true;
 
                 oPagoE.Sucursal = oSucursalE;
+                setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
                 oPagoE.NroRecibo = txtNroRecibo.Text.Trim();
                 oPagoE.Persona = oPersonaE;
                 oPagoE.FormaPago = comboTipoPago.Text.Trim();
@@ -433,7 +456,7 @@ namespace Presentacion.Pagos
                 if (comboTipoPago.Text.Contains(Entidades.Pago.formasPago.Cheque.ToString()))
                 {
                     txtImporte.ReadOnly = true;
-                    panelCheque.Visible = true;
+                    panelCheque.Enabled = true;
                     if (comboTipoPago.Text.Contains("Eftvo"))
                     {
                         panelEfectivo.Visible = true;
@@ -453,7 +476,7 @@ namespace Presentacion.Pagos
                         comboTipoPago.Text = ultimaFormaPagoSelected;
                         return;
                     }
-                    panelCheque.Visible = false;
+                    panelCheque.Enabled = false;
                     txtImporte.ReadOnly = false;
                     txtEfectivo.Text = "";
                 }
@@ -607,8 +630,7 @@ namespace Presentacion.Pagos
             btnQuitar.Width = 60;
             grilla.Columns.Add(btnQuitar);
 
-            ///subTotalCheques
-            ///double totalImporte = 0;
+            grilla.DefaultCellStyle.ForeColor = Color.Black;
 
             float totalImporte = 0.00f;
             foreach (DataGridViewRow row in grilla.Rows)
@@ -668,14 +690,16 @@ namespace Presentacion.Pagos
             PdfWriter.GetInstance(doc, new FileStream(rutaPDF, FileMode.Create));
             doc.Open();
 
-            var negrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
-            var normal = FontFactory.GetFont(FontFactory.HELVETICA, 11);
+            var negrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+            var normal = FontFactory.GetFont(FontFactory.HELVETICA, 10);
 
             // Fuentes y estilos
             var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
             var fontSubTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
             var fontNormal = FontFactory.GetFont(FontFactory.HELVETICA, 10);
             var fontComments = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+            var fontInfoUser = FontFactory.GetFont(FontFactory.HELVETICA, 6);
+            var fontSaltoLineaMinimo = FontFactory.GetFont(FontFactory.HELVETICA, 3);
             var fontNormalBold = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
 
             // Título
@@ -686,15 +710,6 @@ namespace Presentacion.Pagos
             noValidoComoFactura.Alignment = Element.ALIGN_CENTER;
             doc.Add(noValidoComoFactura);
             doc.Add(new Paragraph(" "));
-
-            //// Datos del recibo
-            //doc.Add(new Paragraph($"Fecha: {datos.Fecha:dd/MM/yyyy}", normal));
-            //doc.Add(new Paragraph($"Cliente: {datos.Persona.razonSocial}", normal));
-            //doc.Add(new Paragraph($"ID Pago: {datos.Id}", normal));
-            //if (!string.IsNullOrEmpty(datos.NroRecibo))
-            //    doc.Add(new Paragraph($"N° Recibo: {datos.NroRecibo}", normal));
-
-            //doc.Add(new Paragraph(" "));
 
             // Tabla para fecha y número de recibo alineados a la derecha
             PdfPTable tablaCabecera = new PdfPTable(2);
@@ -709,7 +724,7 @@ namespace Presentacion.Pagos
 
             // Columna derecha con fecha y número de recibo
             string textoDerecha = $"Fecha: {datos.Fecha:dd/MM/yyyy}";
-            textoDerecha += $"\nID Pago {datos.Id}";
+            //textoDerecha += $"\nID Pago {datos.Id}";
             textoDerecha += $"\nN° Recibo: {datos.NroRecibo}";
 
             PdfPCell celdaDerecha = new PdfPCell(new Phrase(textoDerecha, normal));
@@ -731,7 +746,11 @@ namespace Presentacion.Pagos
                 var detalle = new Paragraph($"Detalle", fontNormalBold);
                 detalle.Alignment = Element.ALIGN_LEFT;
                 doc.Add(detalle);
-                doc.Add(new Paragraph(" "));
+
+                var saltoLinea = new Paragraph($" ", fontSaltoLineaMinimo);
+                detalle.Alignment = Element.ALIGN_LEFT;
+                doc.Add(saltoLinea);
+                //doc.Add(new Paragraph(" "));
 
                 // Tabla de cheques
                 PdfPTable tabla = new PdfPTable(4);
@@ -757,15 +776,15 @@ namespace Presentacion.Pagos
                     //importeEfectivo.Alignment = Element.ALIGN_RIGHT;
                     //doc.Add(importeEfectivo);
 
-                    tabla.AddCell(new Phrase("//////", fontNormalBold));
-                    tabla.AddCell(new Phrase("//////", fontNormalBold));
-                    tabla.AddCell(new Phrase("//////", fontNormalBold));
-                    tabla.AddCell(new Phrase("//////", fontNormalBold));
+                    tabla.AddCell(new Phrase("//////", fontNormal));
+                    tabla.AddCell(new Phrase("//////", fontNormal));
+                    tabla.AddCell(new Phrase("//////", fontNormal));
+                    tabla.AddCell(new Phrase("//////", fontNormal));
 
-                    tabla.AddCell(new Phrase(" ", fontNormalBold));
-                    tabla.AddCell(new Phrase(" ", fontNormalBold));
-                    tabla.AddCell(new Phrase("EFECTIVO", fontNormalBold));
-                    tabla.AddCell(new Phrase(oPagoE.Efectivo.ToString("F2"), fontNormalBold));
+                    tabla.AddCell(new Phrase(" ", fontNormal));
+                    tabla.AddCell(new Phrase(" ", fontNormal));
+                    tabla.AddCell(new Phrase("EFECTIVO", fontNormal));
+                    tabla.AddCell(new Phrase(oPagoE.Efectivo.ToString("F2"), fontNormal));
                 }
                 doc.Add(tabla);
                 //doc.Add(new Paragraph(" "));
@@ -776,23 +795,45 @@ namespace Presentacion.Pagos
             var formatoImporte = val.ToString("N2", new CultureInfo("es-AR"));
             var totalParrafo = new Paragraph($"TOTAL RECIBIDO: $ {formatoImporte}", negrita);
 
-            //var totalParrafo = new Paragraph($"TOTAL RECIBIDO: ${txtImporte.Text:F2}", negrita);
             totalParrafo.Alignment = Element.ALIGN_RIGHT;
             doc.Add(totalParrafo);
             doc.Add(new Paragraph(" "));
 
-            // Observaciones
-            string obs = string.IsNullOrEmpty(oPagoE.Observaciones) ? "-" : oPagoE.Observaciones;
-            var observaciones = new Paragraph($"Observaciones: {obs}", fontComments);
-            totalParrafo.Alignment = Element.ALIGN_LEFT;
-            doc.Add(observaciones);
+            //// Observaciones
+            string obs = string.IsNullOrEmpty(oPagoE.Observaciones) ? "-" : oPagoE.Observaciones;         
+            //obs += $"\n\n\nID Pago {datos.Id}" + " | creado por:" + oPagoE.CreadoPor.User + " | modif.por: " + (oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.User : "-");
+
+            // Tabla para fecha y número de recibo alineados a la derecha
+            PdfPTable tablaPiePagina = new PdfPTable(2);
+            tablaPiePagina.WidthPercentage = 100;
+            tablaPiePagina.SetWidths(new float[] { 2.5f, 2f });
+
+            // Columna izquierda vacía
+            celdaIzquierda = new PdfPCell(new Phrase($"Observaciones: {obs}", fontComments));
+            celdaIzquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            tablaPiePagina.AddCell(celdaIzquierda);
+
+            // Columna derecha con fecha y número de recibo
+            textoDerecha = $"\n";
+            textoDerecha += $"Firma: ____________________________";
+            textoDerecha += $"\n\n";
+            textoDerecha += $"\nAclaración:____________________________";
+
+             celdaDerecha = new PdfPCell(new Phrase(textoDerecha, normal));
+            celdaDerecha.HorizontalAlignment = Element.ALIGN_RIGHT;
+            celdaDerecha.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            tablaPiePagina.AddCell(celdaDerecha);
+
+            doc.Add(tablaPiePagina);
+
+            // forma pago
+            string info = $"ID Pago: {datos.Id}" + " | suc:" + oPagoE.Sucursal.sucursal +" | creado por:" + oPagoE.CreadoPor.User + " | modif.por: " + (oPagoE.ActualizadoPor != null ? oPagoE.ActualizadoPor.User : "-");
+
+            var infoUser = new Paragraph(info, fontInfoUser);
+            infoUser.Alignment = Element.ALIGN_LEFT;
+            doc.Add(infoUser);
             doc.Add(new Paragraph(" "));
 
-
-            // Firma
-            doc.Add(new Paragraph(" "));
-            doc.Add(new Paragraph("Firma: ____________________________", normal));
-            doc.Add(new Paragraph(" "));
 
             doc.Close();
         }
@@ -809,6 +850,17 @@ namespace Presentacion.Pagos
             ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), ruta);// "ReciboCheques.pdf");
             GenerarPDFRecibo(oPagoE, ruta);
             System.Diagnostics.Process.Start(ruta);
+        }
+
+        private void checkNroRecibo_CheckedChanged(object sender, EventArgs e)
+        {
+            //txtNroRecibo.ReadOnly = checkNroRecibo.Checked && oPagoE.Id > 0;
+            setearNroRecibo();
+        }
+
+        private void formAddOrEditPago_Activated(object sender, EventArgs e)
+        {
+            //setearNroRecibo();
         }
     }
 }

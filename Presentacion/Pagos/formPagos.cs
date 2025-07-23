@@ -95,6 +95,7 @@ namespace Presentacion.Pagos
                 grillaPagos.DataSource = dtPagos;
                 grillaPagos.Columns["importe"].DefaultCellStyle.Format = "N2";
                 grillaPagos.Columns["efectivo"].DefaultCellStyle.Format = "N2";
+                grillaPagos.Columns["aProveedor"].Visible = false;
             }
         }
 
