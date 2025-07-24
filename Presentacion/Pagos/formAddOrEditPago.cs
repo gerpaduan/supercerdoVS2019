@@ -38,6 +38,7 @@ namespace Presentacion.Pagos
         bool huboModif = true;
         bool modificar = false;
         bool readOnly = false;
+        bool cargandoForm = true;
         bool ultimaValidacion = true;//valida que los ingresos estén correctos antes de ingresar datos al DB
         string ultimaFormaPagoSelected = ""; //guarda la ultima forma de pago seleccionada
         public formAddOrEditPago()
@@ -82,6 +83,7 @@ namespace Presentacion.Pagos
                     comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
                     txtSucursal.Visible = !comboSucursal.Visible;
                     btnBuscarProv.Focus();
+                    cargandoForm = false;
                 }
                 else
                 {
@@ -409,33 +411,36 @@ namespace Presentacion.Pagos
 
         private void checkAProveedor_CheckedChanged(object sender, EventArgs e)
         {
-            if (readOnly) 
-                return;
-
-            setearNroRecibo();
-
-            if (oPagoE.Cheques != null && oPagoE.Cheques.Count > 0)
+            if (!cargandoForm)//para evitar que no cambie de color el checkbox
             {
-                //Validar Cheques de Pago y Cobro
-                bool errorIconsistencia = false;
-                string cobro_pago = checkAProveedor.Checked ? "Pago (Entregado)" : "Cobro (Recibido)";
-                string mensajeDeInconsistencia = "Los siguientes cheques ya fueron registrados como " + cobro_pago + "\n";
-                foreach (Entidades.Cheque oCheque in oPagoE.Cheques)
+                if (readOnly)
+                    return;
+
+                setearNroRecibo();
+
+                if (oPagoE.Cheques != null && oPagoE.Cheques.Count > 0)
                 {
-                    if (checkAProveedor.Checked && oCheque.PagoA != null && oCheque.PagoA.Id > 0 && oCheque.PagoA.Id != oPagoE.Id)
+                    //Validar Cheques de Pago y Cobro
+                    bool errorIconsistencia = false;
+                    string cobro_pago = checkAProveedor.Checked ? "Pago (Entregado)" : "Cobro (Recibido)";
+                    string mensajeDeInconsistencia = "Los siguientes cheques ya fueron registrados como " + cobro_pago + "\n";
+                    foreach (Entidades.Cheque oCheque in oPagoE.Cheques)
                     {
-                        mensajeDeInconsistencia += "\nID Pago: " + oCheque.PagoA.Id + " - " + oCheque.PagoA.Persona.Identificacion;
-                        errorIconsistencia = true;
+                        if (checkAProveedor.Checked && oCheque.PagoA != null && oCheque.PagoA.Id > 0 && oCheque.PagoA.Id != oPagoE.Id)
+                        {
+                            mensajeDeInconsistencia += "\nID Pago: " + oCheque.PagoA.Id + " - " + oCheque.PagoA.Persona.Identificacion;
+                            errorIconsistencia = true;
+                        }
+                        if (!checkAProveedor.Checked && oCheque.PagoDe != null && oCheque.PagoDe.Id > 0 && oCheque.PagoDe.Id != oPagoE.Id)
+                        {
+                            mensajeDeInconsistencia += "\nID Pago: " + oCheque.PagoDe.Id + " - " + oCheque.PagoDe.Persona.Identificacion;
+                            errorIconsistencia = true;
+                        }
                     }
-                    if (!checkAProveedor.Checked && oCheque.PagoDe != null && oCheque.PagoDe.Id > 0 && oCheque.PagoDe.Id != oPagoE.Id)
-                    {
-                        mensajeDeInconsistencia += "\nID Pago: " + oCheque.PagoDe.Id + " - " + oCheque.PagoDe.Persona.Identificacion;
-                        errorIconsistencia = true;
-                    }
+                    mensajeDeInconsistencia += "\n\nSi continua con la modificación se perderán los datos originales del " + cobro_pago;
+                    if (errorIconsistencia)
+                        MessageBox.Show(mensajeDeInconsistencia, "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-                mensajeDeInconsistencia += "\n\nSi continua con la modificación se perderán los datos originales del " + cobro_pago;
-                if (errorIconsistencia)
-                    MessageBox.Show(mensajeDeInconsistencia, "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
             if (checkAProveedor.Checked)
