@@ -937,11 +937,6 @@ namespace Presentacion.Pagos
             setearNroRecibo();
         }
 
-        private void formAddOrEditPago_Activated(object sender, EventArgs e)
-        {
-            //setearNroRecibo();
-        }
-
         private void btnObservaciones_Click(object sender, EventArgs e)
         {
 
