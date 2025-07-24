@@ -166,25 +166,15 @@ namespace Presentacion.Cheques
         private void formCheques_Load(object sender, EventArgs e)
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
+            txtTitular.CharacterCasing = CharacterCasing.Upper;
             comboEstadosFiltro.SelectedIndex = 0;
             txtFechaHasta.Value = DateTime.Now.AddDays(30); 
             txtUsuario.Text = oUsuario.Nombre;
-            groupChequeEstado(false);
-            
-            string rutaArchivo = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "bancos.txt");
+            groupChequeEstado(false || llamadoDesdePago);
 
-            if (File.Exists(rutaArchivo))
-            {
-                string[] bancos = File.ReadAllLines(rutaArchivo)
-                 .Select(b => b.Trim())
-                 .ToArray(); 
-                comboBanco.Items.Clear();
-                comboBanco.Items.AddRange(bancos);
-            }
-            else
-            {
-                MessageBox.Show("No se encontró el archivo de bancos en Templates.");
-            }
+            // Limpia y carga el combo igual que antes
+            comboBanco.Items.Clear();
+            comboBanco.Items.AddRange(oCtaCteN.getBancos().ToArray());
 
             cargar = true;
             cargarGrilla();

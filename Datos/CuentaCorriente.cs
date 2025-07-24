@@ -380,6 +380,26 @@ namespace Datos
             }
         }
 
+        public List<string> getBancos()
+        {
+            List<string> bancos = new List<string>();
+            using (SqlConnection connection = conn.conectar())
+            {
+                string query = "SELECT banco FROM Bancos";
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    connection.Open();
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
+                    {
+                        bancos.Add(reader["banco"].ToString().Trim());
+                    }
+                }
+            }
+            return bancos;
+        }
+
         #endregion
 
         #region Pagos

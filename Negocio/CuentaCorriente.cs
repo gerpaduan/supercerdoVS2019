@@ -137,6 +137,11 @@ namespace Negocio
             return oCtaCteD.EliminarCheque(id);
         }
 
+        public List<string> getBancos()
+        {            
+            return oCtaCteD.getBancos();
+        }
+
         #endregion
 
         #region Pagos

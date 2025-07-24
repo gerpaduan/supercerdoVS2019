@@ -638,6 +638,16 @@ namespace Presentacion.Pagos
                 grilla.Columns["Id"].Visible = false;
 
             // Agregar columna de botón "Quitar"
+            DataGridViewButtonColumn btnVer = new DataGridViewButtonColumn();
+            btnVer.Name = "btnVer";
+            btnVer.HeaderText = "";
+            btnVer.Text = "Ver";
+            btnVer.UseColumnTextForButtonValue = true;
+            // Ajustar ancho automáticamente para que entre "Ver" y nada más
+            btnVer.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            grilla.Columns.Add(btnVer);
+
+            // Agregar columna de botón "Quitar"
             DataGridViewButtonColumn btnQuitar = new DataGridViewButtonColumn();
             btnQuitar.Name = "btnQuitar";
             btnQuitar.HeaderText = "";
@@ -681,6 +691,59 @@ namespace Presentacion.Pagos
                     oPagoE.Cheques.Remove(chequeAEliminar);
                     CargarGrillaCheques(); // Volver a cargar grilla con columnas actualizadas
                 }
+            }
+
+            // Verifica que el clic fue en la columna del botón y en una fila válida
+            if (e.RowIndex >= 0 && grilla.Columns[e.ColumnIndex].Name == "btnVer")
+            {
+                int idCheque = Convert.ToInt32(grilla.Rows[e.RowIndex].Cells["Id"].Value);
+
+                var chequeInfo = oPagoE.Cheques.FirstOrDefault(c => c.Id == idCheque);
+                if (chequeInfo != null)
+                {
+                    var propiedades = chequeInfo.GetType().GetProperties();
+                    StringBuilder sb = new StringBuilder();
+
+                    foreach (var prop in propiedades)
+                    {
+                        var nombre = prop.Name;
+                        var valor = prop.GetValue(chequeInfo, null) ?? "null";
+                        string valorFormateado;
+                        switch (nombre)
+                        {
+                            case "Propio":
+                                valorFormateado = (bool)valor?.Equals(true) ? "Propio" : "Tercero";
+                                break;
+
+                            case "RecibidoDe":
+                                valorFormateado = chequeInfo.PagoDe != null ? chequeInfo.PagoDe.Persona.Identificacion : "-";
+                                break;
+
+                            case "EntregadoA":
+                                valorFormateado = chequeInfo.PagoA != null ? chequeInfo.PagoA.Persona.Identificacion : "-";
+                                break;
+
+                            case "CreadoPor":
+                                valorFormateado = chequeInfo.CreadoPor != null ? chequeInfo.CreadoPor.Nombre : "-";
+                                break;
+
+                            case "ActualizadoPor":
+                                valorFormateado = chequeInfo.ActualizadoPor != null ? chequeInfo.ActualizadoPor.Nombre : "-";
+                                break;
+
+                            default:
+                                valorFormateado = valor?.ToString() ?? "null";
+                                break;
+                        }
+
+                        if (!nombre.Equals("PagoDe") && !nombre.Equals("PagoA"))
+                            sb.AppendLine($"{nombre}: {valorFormateado}");
+                    }
+
+                    string resultado = sb.ToString();
+                    MessageBox.Show("Info Cheque: \n\n"+resultado); 
+                }
+                // Aquí podés abrir un formulario, mostrar detalles, etc.
             }
         }
 

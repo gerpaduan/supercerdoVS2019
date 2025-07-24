@@ -164,7 +164,8 @@ namespace Presentacion.Licencia
 
             //string claveSistema = letraDia + DateTime.Now.Month.ToString() + day + por7; //ConfigurationManager.AppSettings["admin"].ToString();
 
-            int multiplicarFecha_Div_ultimosCuit = ((DateTime.Now.Year * DateTime.Now.Month * DateTime.Now.Day) / ultimosDosCuit);
+            //int multiplicarFecha_Div_ultimosCuit = ((DateTime.Now.Year * DateTime.Now.Month * DateTime.Now.Day) / ultimosDosCuit);
+            int multiplicarFecha_Div_ultimosCuit = ((DateTime.Now.Month * DateTime.Now.Day) * ultimosDosCuit);
             string claveSistema = letraDia + multiplicarFecha_Div_ultimosCuit + DateTime.Now.Day.ToString();
             string clave = txtClave.Text.Trim();
             if (clave.ToUpper().Equals(claveSistema.ToUpper()))
@@ -181,8 +182,8 @@ namespace Presentacion.Licencia
             }
             else
             {
-                //MessageBox.Show("Código Incorrecto.\n\nDing-mA-dA-(3lastcuit+y+m+d+yV+mV*1007)\nCuit Cliente:"+ FormPrincipal.cuitCliente);
-                MessageBox.Show("Código Incorrecto.\n\nletterday_concat_[trun((y*m*d)/2cuit)]_concat_d\nCuit Cliente:" + FormPrincipal.cuitCliente);
+                //MessageBox.Show("Código Incorrecto.\n\nletterday_concat_[trun((y*m*d)/2cuit)]_concat_d\nCuit Cliente:" + FormPrincipal.cuitCliente);
+                MessageBox.Show("Código Incorrecto.\n\nletterday (concat) [(m*d)*2cuit)] (concat) d\nCuit Cliente:" + FormPrincipal.cuitCliente);
                 txtClave.Focus();
             }
         }
