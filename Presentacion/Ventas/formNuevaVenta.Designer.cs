@@ -160,7 +160,7 @@
             this.grupoCortes.Size = new System.Drawing.Size(748, 66);
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
-            this.grupoCortes.Text = "Corte";
+            this.grupoCortes.Text = "Prod.";
             // 
             // button1
             // 
@@ -186,7 +186,7 @@
             this.checkSumarIgualCorte.Size = new System.Drawing.Size(125, 19);
             this.checkSumarIgualCorte.TabIndex = 47;
             this.checkSumarIgualCorte.TabStop = false;
-            this.checkSumarIgualCorte.Text = "Sumar Igual Corte";
+            this.checkSumarIgualCorte.Text = "Sumar Igual Prod.";
             this.checkSumarIgualCorte.UseVisualStyleBackColor = true;
             // 
             // checkFijarPrecio
@@ -392,7 +392,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(36, 15);
             this.label14.TabIndex = 35;
-            this.label14.Text = "Corte";
+            this.label14.Text = "Prod.";
             // 
             // groupBox1
             // 
@@ -954,7 +954,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "idCorte";
+            this.idCorte.HeaderText = "idProd.";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -971,7 +971,7 @@
             // corte
             // 
             this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;

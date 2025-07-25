@@ -134,7 +134,7 @@ namespace Presentacion
             }
             else
             {
-                MessageBox.Show("No ingresó ningún corte a la formula.", "No existe cortes en la grilla", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No ingresó ningún Producto a la formula.", "No existe Productos en la grilla", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
         }
@@ -395,7 +395,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error en método cargarCorteEnFormula().\n\n"+ex.Message);
+                MessageBox.Show("Error en método cargarProductoEnFormula().\n\n"+ex.Message);
             }
         }
 

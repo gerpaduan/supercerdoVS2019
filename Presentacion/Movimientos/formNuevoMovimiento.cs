@@ -78,7 +78,7 @@ namespace Presentacion
 
             if (dtCorte.Rows.Count == 0)
             {
-                MessageBox.Show("No se pudieron cargar los cortes.");
+                MessageBox.Show("No se pudieron cargar los Productos.");
             }
         }
 
@@ -151,7 +151,7 @@ namespace Presentacion
 
             if (oCorteE != null && oCorteE.idCorte > 0)
             {
-                MessageBox.Show("No se puede guardar el movimiento porque hay un corte seleccionado");
+                MessageBox.Show("No se puede guardar el movimiento porque hay un Producto seleccionado");
                 txtCodigo.Focus();
                 return;
             }
@@ -290,7 +290,7 @@ namespace Presentacion
             if (txtCorte.Text.Trim() == "")
             {
                 txtCodigo.Focus();
-                MessageBox.Show("No se hay ingresado ningún corte.", "Completar Campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No se hay ingresado ningún Producto.", "Completar Campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 resp = false;
             }
@@ -381,7 +381,7 @@ namespace Presentacion
                     if (!(limitInferior < peso && peso < limitSuperior))
                     {
                         checkPermitirIngreso.Visible = true;
-                        MessageBox.Show("La Cant.Unidad ingresada no se corresponde con la Cant.Kgs del Corte\n\n"+
+                        MessageBox.Show("La Cant.Unidad ingresada no se corresponde con la Cant.Kgs del Producto\n\n"+
                             "Corrobore la Cant.Unidades ingresada y tilde 'Permitir ingreso' si está correcto.","No hay consistencia",
                              MessageBoxButtons.OK,MessageBoxIcon.Error);
                         resp = false;
@@ -621,7 +621,7 @@ namespace Presentacion
             }
             catch (Exception)
             {
-                MessageBox.Show("Hubo un error al cargar los cortes.");
+                MessageBox.Show("Hubo un error al cargar los Productos.");
             }
         }
 
@@ -942,7 +942,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n" + ex.Message + "\n" + ex.StackTrace);
+                MessageBox.Show("Hubo un error al verificar el tipo del Producto.\n\n" + ex.Message + "\n" + ex.StackTrace);
             }
         }
 

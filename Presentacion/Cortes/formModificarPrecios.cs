@@ -91,7 +91,7 @@ namespace Presentacion
                 if (!Utilidades.Util_Form.validarCampoNumerico(txtPorcentaje.Text, "%"))
                     return;
                 
-                DialogResult resp = MessageBox.Show("Esta acción modificará los precios de toda la lista de cortes que se muestra en el formulario y no tiene vuelta atrás. ¿Deseas continuar?",
+                DialogResult resp = MessageBox.Show("Esta acción modificará los precios de toda la lista de Productos que se muestra en el formulario y no tiene vuelta atrás. ¿Deseas continuar?",
                     "Advertencia", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
                 if (resp == DialogResult.No)
                     return;

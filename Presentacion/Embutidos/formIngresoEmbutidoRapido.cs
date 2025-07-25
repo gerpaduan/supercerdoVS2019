@@ -472,7 +472,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n"+ ex.Message + "\n" + ex.StackTrace);
+                MessageBox.Show("Hubo un error al verificar el tipo del Producto.\n\n"+ ex.Message + "\n" + ex.StackTrace);
             }
         }
 

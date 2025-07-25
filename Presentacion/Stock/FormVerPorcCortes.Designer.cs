@@ -142,7 +142,7 @@
             this.Controls.Add(this.grillaPorcCortes);
             this.Name = "FormVerPorcCortes";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Ver Porcentaje Cortes";
+            this.Text = "Ver Porcentaje Prods.";
             this.Load += new System.EventHandler(this.FormVerPorcCortes_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaPorcCortes)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPromMedias)).EndInit();

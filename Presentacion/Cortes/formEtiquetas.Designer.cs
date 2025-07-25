@@ -95,7 +95,7 @@
             this.idCorte.DataPropertyName = "idCorte";
             dataGridViewCellStyle16.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             this.idCorte.DefaultCellStyle = dataGridViewCellStyle16;
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -128,7 +128,7 @@
             this.corte.DataPropertyName = "corte";
             dataGridViewCellStyle18.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.corte.DefaultCellStyle = dataGridViewCellStyle18;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;

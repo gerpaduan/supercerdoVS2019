@@ -248,7 +248,7 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    MessageBox.Show("No se ha cargado ningún corte en la venta. ", "No hay cortes cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("No se ha cargado ningún Producto en la venta. ", "No hay Productos cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                 }
             }
@@ -804,7 +804,7 @@ namespace Presentacion.Caja
             //Se valida que no sea media res
             if (oCorteE != null && !oCorteE.Habilitado)
             {
-                MessageBox.Show("- \'" + oCorteE.CorteDesc +"\' no está habilitado para la venta", "Corte No Habilitado",MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                MessageBox.Show("- \'" + oCorteE.CorteDesc +"\' no está habilitado para la venta", "Producto No Habilitado",MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 txtCodigo.Focus();
                 return false;
             }
@@ -825,7 +825,7 @@ namespace Presentacion.Caja
                 {
                     if (oCorteE == null)
                     {
-                        MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("El código ingresado no pertenece a ningún Producto.", "El Producto no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         txtCodigo.Focus();
                         txtCodigo.SelectAll();
                     }
@@ -1124,7 +1124,7 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    MessageBox.Show("El corte seleccionado ya ha sido anulado.", "Anular corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("El Producto seleccionado ya ha sido anulado.", "Anular Producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else
@@ -1204,7 +1204,7 @@ namespace Presentacion.Caja
                     if (ex.Message.Contains("Valor demasiado grande o demasiado pequeño para Int32."))
                         return;
                     
-                    MessageBox.Show("Error al cargar corte\n\n" + ex.Message);
+                    MessageBox.Show("Error al cargar Producto\n\n" + ex.Message);
                     limpiarCamposCorte();
                 }
             }
@@ -2277,7 +2277,7 @@ namespace Presentacion.Caja
                     if (oLineaVentaSelect.IndexAnulado >= 0 || (oLineaVentaSelect.Corte.codigo == linea.Corte.codigo &&
                         linea.IndexAnulado == nroFila))
                     {
-                        MessageBox.Show("No se pueden bonificar cortes anulados");
+                        MessageBox.Show("No se pueden bonificar Productos anulados");
                         return;
                     }
                 }
@@ -2585,7 +2585,7 @@ namespace Presentacion.Caja
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Hubo un error al cargar el corte.\nMetodo: txtCodigo_Leave().\n\n" + ex.Message);
+                MessageBox.Show("Hubo un error al cargar el Producto.\nMetodo: txtCodigo_Leave().\n\n" + ex.Message);
             }
         }
 
@@ -2749,7 +2749,7 @@ namespace Presentacion.Caja
                     if (ex.Message.Contains("Valor demasiado grande o demasiado pequeño para Int32."))
                         return;
 
-                    MessageBox.Show("Error al cargar corte\n\n" + ex.Message);
+                    MessageBox.Show("Error al cargar Producto\n\n" + ex.Message);
                 }
             }
             else

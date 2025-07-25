@@ -158,7 +158,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
             this.idCorte.Visible = false;
@@ -175,7 +175,7 @@
             // 
             this.corte.DataPropertyName = "corte";
             this.corte.FillWeight = 110.7926F;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
             // 
@@ -192,7 +192,7 @@
             this.MaximizeBox = false;
             this.Name = "formBuscarCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Buscar Corte";
+            this.Text = "Buscar Prod.";
             this.Load += new System.EventHandler(this.formBuscarCorte_Load);
             this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             this.panel1.ResumeLayout(false);

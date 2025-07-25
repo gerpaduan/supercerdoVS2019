@@ -448,7 +448,7 @@ namespace Presentacion.Caja
                 }
                 else
                 {
-                    MessageBox.Show("El corte seleccionado ya ha sido anulado.", "Anular corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("El Producto seleccionado ya ha sido anulado.", "Anular Producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else

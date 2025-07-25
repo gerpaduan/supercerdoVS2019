@@ -125,7 +125,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
             this.idCorte.Visible = false;
@@ -141,7 +141,7 @@
             // corte
             // 
             this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
             this.corte.Width = 150;

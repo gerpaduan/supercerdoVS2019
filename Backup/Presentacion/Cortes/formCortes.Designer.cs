@@ -364,7 +364,7 @@
             this.idCorte.DataPropertyName = "idCorte";
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             this.idCorte.DefaultCellStyle = dataGridViewCellStyle1;
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
             this.idCorte.Visible = false;
@@ -386,7 +386,7 @@
             this.corte.DataPropertyName = "corte";
             dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.corte.DefaultCellStyle = dataGridViewCellStyle3;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
             this.corte.Width = 150;
@@ -473,7 +473,7 @@
             // 
             this.corteMaestro.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.corteMaestro.DataPropertyName = "corteMaestro";
-            this.corteMaestro.HeaderText = "Corte Maestro";
+            this.corteMaestro.HeaderText = "Prod. Maestro";
             this.corteMaestro.Name = "corteMaestro";
             this.corteMaestro.ReadOnly = true;
             this.corteMaestro.Width = 98;
@@ -629,7 +629,7 @@
             this.MinimizeBox = true;
             this.Name = "formCortes";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Cortes";
+            this.Text = "Prods.";
             this.Load += new System.EventHandler(this.formCortes_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formCortes_KeyDown);
             this.barraControl.ResumeLayout(false);

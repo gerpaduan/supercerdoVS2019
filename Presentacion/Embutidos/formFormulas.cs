@@ -220,7 +220,7 @@ namespace Presentacion
         {
             try
             {
-                DialogResult respuesta = MessageBox.Show("¿Está seguro que desea eliminar la formula de "+ grilla.CurrentRow.Cells["Corte"].Value.ToString().ToUpper()+"?. ", "Eliminar Formula", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                DialogResult respuesta = MessageBox.Show("¿Está seguro que desea eliminar la formula de "+ grilla.CurrentRow.Cells["Producto"].Value.ToString().ToUpper()+"?. ", "Eliminar Formula", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                 if (respuesta == System.Windows.Forms.DialogResult.Yes)
                 {

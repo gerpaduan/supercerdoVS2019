@@ -200,7 +200,7 @@
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(36, 15);
             this.label4.TabIndex = 2;
-            this.label4.Text = "Corte";
+            this.label4.Text = "Prod.";
             // 
             // label6
             // 
@@ -247,7 +247,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(84, 15);
             this.label3.TabIndex = 4;
-            this.label3.Text = "Corte Maestro";
+            this.label3.Text = "Prod. Maestro";
             this.label3.Visible = false;
             // 
             // btnBuscarCorteM
@@ -271,7 +271,7 @@
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(81, 15);
             this.label2.TabIndex = 15;
-            this.label2.Text = "% en Corte M";
+            this.label2.Text = "% en Prod. M";
             this.label2.Visible = false;
             // 
             // label8
@@ -283,7 +283,7 @@
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(118, 15);
             this.label8.TabIndex = 26;
-            this.label8.Text = "Corte Independiente";
+            this.label8.Text = "Prod. Independiente";
             this.label8.Visible = false;
             // 
             // btnCancelar

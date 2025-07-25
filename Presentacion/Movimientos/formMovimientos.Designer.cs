@@ -353,7 +353,7 @@
             // corte
             // 
             this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -401,7 +401,7 @@
             // kgCorte
             // 
             this.kgCorte.DataPropertyName = "kgCorte";
-            this.kgCorte.HeaderText = "Kgs. Corte";
+            this.kgCorte.HeaderText = "Kgs. Prod.";
             this.kgCorte.MinimumWidth = 6;
             this.kgCorte.Name = "kgCorte";
             this.kgCorte.ReadOnly = true;

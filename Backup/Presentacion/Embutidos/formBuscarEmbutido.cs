@@ -39,7 +39,7 @@ namespace Presentacion.Embutidos
 
                 if (oCorte == null || oCorte.idCorte == 0)
                 {
-                    MessageBox.Show("No se seleccionó ningún corte");
+                    MessageBox.Show("No se seleccionó ningún Producto");
                     return;
                 }
                 if (formInterface != null)

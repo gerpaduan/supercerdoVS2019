@@ -185,7 +185,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -207,7 +207,7 @@
             // corte
             // 
             this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -363,7 +363,7 @@
             // dataGridViewTextBoxColumn1
             // 
             this.dataGridViewTextBoxColumn1.DataPropertyName = "idCorte";
-            this.dataGridViewTextBoxColumn1.HeaderText = "ID Corte";
+            this.dataGridViewTextBoxColumn1.HeaderText = "ID Prod.";
             this.dataGridViewTextBoxColumn1.MinimumWidth = 6;
             this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
             this.dataGridViewTextBoxColumn1.ReadOnly = true;
@@ -387,7 +387,7 @@
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "corte";
             this.dataGridViewTextBoxColumn3.FillWeight = 160.5497F;
-            this.dataGridViewTextBoxColumn3.HeaderText = "Corte";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Prod.";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
             this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
             this.dataGridViewTextBoxColumn3.ReadOnly = true;
@@ -527,7 +527,7 @@
             this.groupBox2.Size = new System.Drawing.Size(455, 86);
             this.groupBox2.TabIndex = 10;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Ingreso Cortes ";
+            this.groupBox2.Text = "Ingreso Prods. ";
             // 
             // label18
             // 

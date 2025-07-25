@@ -83,7 +83,7 @@
             this.MaximizeBox = false;
             this.Name = "formPorcentajeCortesCompra";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Porcentaje de Cortes por Compra";
+            this.Text = "Porcentaje de Prods. por Compra";
             ((System.ComponentModel.ISupportInitialize)(this.grillaPorcentajePorCorte)).EndInit();
             this.ResumeLayout(false);
 

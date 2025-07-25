@@ -173,7 +173,7 @@
             this.groupBox1.Size = new System.Drawing.Size(576, 498);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Corte";
+            this.groupBox1.Text = "Prod.";
             // 
             // label20
             // 
@@ -554,7 +554,7 @@
             this.groupMaestro.Size = new System.Drawing.Size(310, 128);
             this.groupMaestro.TabIndex = 29;
             this.groupMaestro.TabStop = false;
-            this.groupMaestro.Text = "Corte Maestro";
+            this.groupMaestro.Text = "Prod. Maestro";
             // 
             // txtDesvioEstandar
             // 
@@ -618,7 +618,7 @@
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(81, 15);
             this.label2.TabIndex = 35;
-            this.label2.Text = "% en Corte M";
+            this.label2.Text = "% en Prod. M";
             // 
             // btnBuscarCorteM
             // 
@@ -650,7 +650,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(36, 15);
             this.label3.TabIndex = 31;
-            this.label3.Text = "Corte";
+            this.label3.Text = "Prod.";
             // 
             // txtIndependiente
             // 
@@ -663,7 +663,7 @@
             this.txtIndependiente.Name = "txtIndependiente";
             this.txtIndependiente.Size = new System.Drawing.Size(137, 19);
             this.txtIndependiente.TabIndex = 11;
-            this.txtIndependiente.Text = "Corte Independiente";
+            this.txtIndependiente.Text = "Prod. Independiente";
             this.txtIndependiente.UseVisualStyleBackColor = true;
             this.txtIndependiente.CheckedChanged += new System.EventHandler(this.txtIndependiente_CheckedChanged);
             // 
@@ -751,7 +751,7 @@
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(36, 15);
             this.label4.TabIndex = 2;
-            this.label4.Text = "Corte";
+            this.label4.Text = "Prod.";
             // 
             // checkSugerirCodigo
             // 
@@ -783,7 +783,7 @@
             this.MinimizeBox = true;
             this.Name = "formNuevoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Nuevo Corte";
+            this.Text = "Nuevo Prod.";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.formNuevoCorte_FormClosed);
             this.Load += new System.EventHandler(this.formNuevoCorte_Load);
             this.pnlBuscar.ResumeLayout(false);

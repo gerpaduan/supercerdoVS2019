@@ -150,7 +150,7 @@
             this.groupBox1.Size = new System.Drawing.Size(476, 209);
             this.groupBox1.TabIndex = 14;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Corte";
+            this.groupBox1.Text = "Prod.";
             // 
             // txtPromedio
             // 
@@ -233,7 +233,7 @@
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(49, 15);
             this.label13.TabIndex = 33;
-            this.label13.Text = "Id Corte";
+            this.label13.Text = "Id Prod.";
             // 
             // txtDesvioEstandar
             // 
@@ -264,7 +264,7 @@
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(118, 15);
             this.label9.TabIndex = 30;
-            this.label9.Text = "Corte Independiente";
+            this.label9.Text = "Prod. Independiente";
             // 
             // txtIndependiente
             // 
@@ -353,7 +353,7 @@
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(81, 15);
             this.label2.TabIndex = 15;
-            this.label2.Text = "% en Corte M";
+            this.label2.Text = "% en Prod. M";
             // 
             // txtCodigo
             // 
@@ -391,7 +391,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(84, 15);
             this.label3.TabIndex = 4;
-            this.label3.Text = "Corte Maestro";
+            this.label3.Text = "Prod. Maestro";
             // 
             // txtDescCorte
             // 
@@ -410,7 +410,7 @@
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(36, 15);
             this.label4.TabIndex = 2;
-            this.label4.Text = "Corte";
+            this.label4.Text = "Prod.";
             // 
             // btnSalir
             // 
@@ -532,7 +532,7 @@
             this.MaximizeBox = false;
             this.Name = "formInfoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Información Corte";
+            this.Text = "Información Prod.";
             this.Load += new System.EventHandler(this.formInfoCorte_Load);
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();

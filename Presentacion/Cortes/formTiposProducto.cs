@@ -204,7 +204,7 @@ namespace Presentacion.Cortes
         private void formTiposProducto_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (posibleModificaciones)
-                MessageBox.Show("Si realizó modificaciones en los tipos de productos.\nPara una correcta visualización se recomienda cerrar y volver a abrir el formulario Cortes");
+                MessageBox.Show("Si realizó modificaciones en los tipos de productos.\nPara una correcta visualización se recomienda cerrar y volver a abrir el formulario Productos");
         }
     }
 }

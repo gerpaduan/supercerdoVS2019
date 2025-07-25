@@ -187,7 +187,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
             this.idCorte.Visible = false;
@@ -204,7 +204,7 @@
             // 
             this.Corte.DataPropertyName = "Corte";
             this.Corte.FillWeight = 120F;
-            this.Corte.HeaderText = "Corte";
+            this.Corte.HeaderText = "Prod.";
             this.Corte.Name = "Corte";
             this.Corte.ReadOnly = true;
             // 
@@ -436,7 +436,7 @@
             this.radioCorte.Name = "radioCorte";
             this.radioCorte.Size = new System.Drawing.Size(60, 19);
             this.radioCorte.TabIndex = 100;
-            this.radioCorte.Text = "Cortes";
+            this.radioCorte.Text = "Prods.";
             this.radioCorte.UseVisualStyleBackColor = true;
             // 
             // radioMediaRes
@@ -718,7 +718,7 @@
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(36, 15);
             this.label18.TabIndex = 43;
-            this.label18.Text = "Corte";
+            this.label18.Text = "Prod.";
             // 
             // txtCorteNuevaCompra
             // 
@@ -980,7 +980,7 @@
             this.PorcentajesCorte.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.PorcentajesCorte.Name = "PorcentajesCorte";
             this.PorcentajesCorte.Size = new System.Drawing.Size(58, 35);
-            this.PorcentajesCorte.Text = "% Cortes";
+            this.PorcentajesCorte.Text = "% Prods.";
             this.PorcentajesCorte.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.PorcentajesCorte.Click += new System.EventHandler(this.PorcentajesCorte_Click);
             // 

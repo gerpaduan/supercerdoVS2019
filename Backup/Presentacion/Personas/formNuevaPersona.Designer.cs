@@ -79,7 +79,7 @@
             this.groupCortes.Size = new System.Drawing.Size(451, 144);
             this.groupCortes.TabIndex = 1;
             this.groupCortes.TabStop = false;
-            this.groupCortes.Text = "Promo Cortes";
+            this.groupCortes.Text = "Promo Prods.";
             // 
             // groupBox1
             // 

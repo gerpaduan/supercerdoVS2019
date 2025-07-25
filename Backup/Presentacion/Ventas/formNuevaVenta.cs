@@ -181,7 +181,7 @@ namespace Presentacion.Ventas
                     }
                     else
                     {
-                        MessageBox.Show("No se ha cargado ningún corte en la venta. ", "No hay cortes cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("No se ha cargado ningún Producto en la venta. ", "No hay Productos cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
 
@@ -439,7 +439,7 @@ namespace Presentacion.Ventas
                 }
                 else
                 {
-                    respuesta = MessageBox.Show("El corte ingresado ya existe.\n\n¿Desea sumar los Kg al corte ya ingresado?", "El corte ya existe", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    respuesta = MessageBox.Show("El corte ingresado ya existe.\n\n¿Desea sumar los Kg al Producto ya ingresado?", "El Producto ya existe", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 }
 
                 if (respuesta==DialogResult.Yes)
@@ -535,7 +535,7 @@ namespace Presentacion.Ventas
             {
                 if (oCorteE == null || txtCodigo.Text.Trim() == "")
                 {
-                    MessageBox.Show("El código ingresado no pertenece a ningún corte.", "El Corte no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("El código ingresado no pertenece a ningún Producto.", "El Producto no existe", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                 }
                 else
@@ -841,7 +841,7 @@ namespace Presentacion.Ventas
 
         private void btnQuitar_Click(object sender, EventArgs e)
         {
-            DialogResult respuesta = MessageBox.Show("¿Está seguro de quitar el corte seleccionado?. ", "Quitar Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            DialogResult respuesta = MessageBox.Show("¿Está seguro de quitar el Producto seleccionado?. ", "Quitar Producto", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             if (respuesta == System.Windows.Forms.DialogResult.Yes)
             {
                 quitarLinea();

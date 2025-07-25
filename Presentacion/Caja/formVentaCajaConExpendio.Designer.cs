@@ -558,7 +558,7 @@
             this.grupoCortes.Size = new System.Drawing.Size(1114, 75);
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
-            this.grupoCortes.Text = "Corte";
+            this.grupoCortes.Text = "Prod.";
             // 
             // checkLeerPeso
             // 
@@ -693,7 +693,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(48, 20);
             this.label14.TabIndex = 35;
-            this.label14.Text = "Corte";
+            this.label14.Text = "Prod.";
             // 
             // label7
             // 
@@ -1123,7 +1123,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "idCorte";
+            this.idCorte.HeaderText = "idProd.";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -1145,7 +1145,7 @@
             this.corte.DataPropertyName = "corte";
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.BottomLeft;
             this.corte.DefaultCellStyle = dataGridViewCellStyle3;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;

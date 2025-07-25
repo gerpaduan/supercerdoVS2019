@@ -194,7 +194,7 @@
             this.tipos.Image = ((System.Drawing.Image)(resources.GetObject("tipos.Image")));
             this.tipos.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tipos.Name = "tipos";
-            this.tipos.Size = new System.Drawing.Size(52, 46);
+            this.tipos.Size = new System.Drawing.Size(51, 46);
             this.tipos.Text = "  &Tipos  ";
             this.tipos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tipos.Click += new System.EventHandler(this.tipos_Click);
@@ -320,7 +320,7 @@
             this.idCorte.DataPropertyName = "idCorte";
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             this.idCorte.DefaultCellStyle = dataGridViewCellStyle1;
-            this.idCorte.HeaderText = "ID Corte";
+            this.idCorte.HeaderText = "ID Prod.";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -344,7 +344,7 @@
             this.corte.DataPropertyName = "corte";
             dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.corte.DefaultCellStyle = dataGridViewCellStyle3;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
@@ -522,7 +522,7 @@
             // 
             this.corteMaestro.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.corteMaestro.DataPropertyName = "corteMaestro";
-            this.corteMaestro.HeaderText = "Corte Maestro";
+            this.corteMaestro.HeaderText = "Prod. Maestro";
             this.corteMaestro.MinimumWidth = 6;
             this.corteMaestro.Name = "corteMaestro";
             this.corteMaestro.ReadOnly = true;
@@ -821,7 +821,7 @@
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(84, 15);
             this.label4.TabIndex = 57;
-            this.label4.Text = "Corte Maestro";
+            this.label4.Text = "Prod. Maestro";
             // 
             // comboTipo
             // 
@@ -857,7 +857,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(308, 77);
+            this.lblActualizar.Location = new System.Drawing.Point(308, 80);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(69, 15);
             this.lblActualizar.TabIndex = 53;
@@ -952,14 +952,14 @@
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(36, 15);
             this.label9.TabIndex = 2;
-            this.label9.Text = "Corte";
+            this.label9.Text = "Prod.";
             // 
             // btnBuscar
             // 
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscar.Location = new System.Drawing.Point(235, 72);
+            this.btnBuscar.Location = new System.Drawing.Point(235, 78);
             this.btnBuscar.Name = "btnBuscar";
-            this.btnBuscar.Size = new System.Drawing.Size(67, 25);
+            this.btnBuscar.Size = new System.Drawing.Size(67, 21);
             this.btnBuscar.TabIndex = 1;
             this.btnBuscar.Text = "Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
@@ -981,7 +981,7 @@
             this.MinimizeBox = true;
             this.Name = "formCortes";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Cortes";
+            this.Text = "Prods.";
             this.Load += new System.EventHandler(this.formCortes_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formCortes_KeyDown);
             this.barraControl.ResumeLayout(false);

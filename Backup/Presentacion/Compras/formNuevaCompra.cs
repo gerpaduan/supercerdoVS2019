@@ -485,7 +485,7 @@ namespace Presentacion
 
                 if (corte.corte.idCorte == oCorteNuevaCompra.idCorte && corte.sucursal.IdSucursal == Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
                 {
-                    DialogResult resp = MessageBox.Show("Ya se ha cargado el corte en la sucursal seleccionada.\nDesea sumarlo al Corte ya ingresado?.", "Corte ya cargado en la sucursal", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    DialogResult resp = MessageBox.Show("Ya se ha cargado el corte en la sucursal seleccionada.\nDesea sumarlo al Producto ya ingresado?.", "Producto ya cargado en la sucursal", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                     if (resp == DialogResult.Yes)
                     {
@@ -662,7 +662,7 @@ namespace Presentacion
                 //validacion para que sólo salte el cartel al presionar el boton -
                 if (radioCorte.Checked && (oCorteNuevaCompra == null || oCorteNuevaCompra.idCorte == 0))
                 {
-                    MessageBox.Show("No existe el corte", "No existe el corte", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("No existe el Producto", "No existe el Producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                     return false;
                 }

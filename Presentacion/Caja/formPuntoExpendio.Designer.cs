@@ -249,7 +249,7 @@
             this.grupoCortes.Size = new System.Drawing.Size(797, 98);
             this.grupoCortes.TabIndex = 19;
             this.grupoCortes.TabStop = false;
-            this.grupoCortes.Text = "Corte";
+            this.grupoCortes.Text = "Prod.";
             // 
             // labelTipoImpresion
             // 
@@ -665,7 +665,7 @@
             // idCorte
             // 
             this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "idCorte";
+            this.idCorte.HeaderText = "idProd.";
             this.idCorte.MinimumWidth = 6;
             this.idCorte.Name = "idCorte";
             this.idCorte.ReadOnly = true;
@@ -687,7 +687,7 @@
             this.corte.DataPropertyName = "corte";
             dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.BottomLeft;
             this.corte.DefaultCellStyle = dataGridViewCellStyle12;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.MinimumWidth = 6;
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;

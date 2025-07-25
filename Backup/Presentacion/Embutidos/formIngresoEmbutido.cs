@@ -125,7 +125,7 @@ namespace Presentacion
             }
             else
             {
-                MessageBox.Show("No ingresó ningún corte correspondiente al embutido.", "No existe cortes en la grilla", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No ingresó ningún Producto correspondiente al embutido.", "No existe Productos en la grilla", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
         }
@@ -564,7 +564,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error en método cargarCorteEnEmbutido().\n\n"+ex.Message);
+                MessageBox.Show("Error en método cargarProductoEnEmbutido().\n\n"+ex.Message);
             }
         }
 
@@ -787,7 +787,7 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Hubo un error al verificar el tipo del corte.\n\n"+ ex.Message + "\n" + ex.StackTrace);
+                MessageBox.Show("Hubo un error al verificar el tipo del Producto.\n\n"+ ex.Message + "\n" + ex.StackTrace);
             }
         }
 

@@ -62,7 +62,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(48, 20);
             this.label14.TabIndex = 50;
-            this.label14.Text = "Corte";
+            this.label14.Text = "Prod.";
             // 
             // label7
             // 

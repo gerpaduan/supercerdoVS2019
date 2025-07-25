@@ -313,7 +313,7 @@
             this.lblCortesAnulados.Name = "lblCortesAnulados";
             this.lblCortesAnulados.Size = new System.Drawing.Size(141, 13);
             this.lblCortesAnulados.TabIndex = 36;
-            this.lblCortesAnulados.Text = "Existen cortes anulados";
+            this.lblCortesAnulados.Text = "Existen Prods. anulados";
             this.lblCortesAnulados.Visible = false;
             // 
             // lblDiferenciaEntreCaja

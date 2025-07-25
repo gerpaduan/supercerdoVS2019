@@ -177,7 +177,7 @@ namespace Presentacion.Stock
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Hubo un error al cargar el corte.\n\nMensaje de exception: " + ex.Message);
+                MessageBox.Show("Hubo un error al cargar el Producto.\n\nMensaje de exception: " + ex.Message);
             }
         }
 

@@ -94,7 +94,7 @@ namespace Presentacion
 
         private void eliminarCorte()
         {
-            DialogResult resp = MessageBox.Show("Está seguro que desea eliminar el Corte?.", "Eliminar Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+            DialogResult resp = MessageBox.Show("Está seguro que desea eliminar el Producto?.", "Eliminar Producto", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
             if (resp == DialogResult.Yes)
             {
                 oCorteN.eliminarCorte(oCorteE);

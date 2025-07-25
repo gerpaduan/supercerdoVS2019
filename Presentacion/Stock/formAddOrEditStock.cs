@@ -72,7 +72,7 @@ namespace Presentacion
 
             if (dtCorte.Rows.Count == 0)
             {
-                MessageBox.Show("No se pudieron cargar los cortes.");
+                MessageBox.Show("No se pudieron cargar los Productos.");
             }
             if (accion.Equals(Entidades.Compra.accion.Agregar))
             {
@@ -513,7 +513,7 @@ namespace Presentacion
 	        }
 	        catch (Exception ex)
 	        {
-                MessageBox.Show("Hubo un error al cargar el corte.\n\nMensaje de exception: " + ex.Message);
+                MessageBox.Show("Hubo un error al cargar el Producto.\n\nMensaje de exception: " + ex.Message);
 	        }
         }
 
@@ -541,7 +541,7 @@ namespace Presentacion
         {
             if (txtCorteNuevaCompra.Text.Equals(""))
             {
-                MessageBox.Show("El corte ingresado no existe.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El Producto ingresado no existe.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtCodigo.Focus();
                 return false;
             }

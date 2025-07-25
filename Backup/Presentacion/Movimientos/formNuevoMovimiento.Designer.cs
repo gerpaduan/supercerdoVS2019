@@ -231,7 +231,7 @@
             this.groupBox2.Size = new System.Drawing.Size(640, 86);
             this.groupBox2.TabIndex = 14;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Corte";
+            this.groupBox2.Text = "Prod.";
             // 
             // checkSinBalanza
             // 
@@ -566,7 +566,7 @@
             this.idCorteMovimientodo.DataPropertyName = "idCorteMovimiento";
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopRight;
             this.idCorteMovimientodo.DefaultCellStyle = dataGridViewCellStyle1;
-            this.idCorteMovimientodo.HeaderText = "Id Corte Mov.";
+            this.idCorteMovimientodo.HeaderText = "Id Prod. Mov.";
             this.idCorteMovimientodo.MinimumWidth = 70;
             this.idCorteMovimientodo.Name = "idCorteMovimientodo";
             this.idCorteMovimientodo.ReadOnly = true;
@@ -589,7 +589,7 @@
             // 
             this.corte.DataPropertyName = "corte";
             this.corte.FillWeight = 89.0863F;
-            this.corte.HeaderText = "Corte";
+            this.corte.HeaderText = "Prod.";
             this.corte.Name = "corte";
             this.corte.ReadOnly = true;
             // 

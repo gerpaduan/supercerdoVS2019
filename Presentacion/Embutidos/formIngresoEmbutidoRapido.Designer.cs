@@ -598,7 +598,7 @@
             // dataGridViewTextBoxColumn1
             // 
             this.dataGridViewTextBoxColumn1.DataPropertyName = "idCorte";
-            this.dataGridViewTextBoxColumn1.HeaderText = "ID Corte";
+            this.dataGridViewTextBoxColumn1.HeaderText = "ID Prod.";
             this.dataGridViewTextBoxColumn1.MinimumWidth = 6;
             this.dataGridViewTextBoxColumn1.Name = "dataGridViewTextBoxColumn1";
             this.dataGridViewTextBoxColumn1.ReadOnly = true;
@@ -622,7 +622,7 @@
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "corte";
             this.dataGridViewTextBoxColumn3.FillWeight = 160.5497F;
-            this.dataGridViewTextBoxColumn3.HeaderText = "Corte";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Prod.";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
             this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
             this.dataGridViewTextBoxColumn3.ReadOnly = true;

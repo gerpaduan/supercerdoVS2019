@@ -399,7 +399,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(36, 15);
             this.label14.TabIndex = 24;
-            this.label14.Text = "Corte";
+            this.label14.Text = "Prod.";
             // 
             // btnAgregar
             // 
@@ -833,7 +833,7 @@
             // idSucursal
             // 
             this.idSucursal.DataPropertyName = "Corte";
-            this.idSucursal.HeaderText = "Corte";
+            this.idSucursal.HeaderText = "Prod.";
             this.idSucursal.Name = "idSucursal";
             this.idSucursal.ReadOnly = true;
             // 

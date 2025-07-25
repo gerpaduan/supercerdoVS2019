@@ -191,7 +191,7 @@ namespace Presentacion.Movimientos
             //string titulo = "Movimiento";
             //FormReportes frmReportes;
 
-            //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Corte?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
+            //DialogResult resp = MessageBox.Show("¿Emitir Reporte con el Total Acumulado por cada Producto?","",MessageBoxButtons.YesNoCancel,MessageBoxIcon.Question,MessageBoxDefaultButton.Button3);
 
             //if (resp != DialogResult.Cancel)
             //{

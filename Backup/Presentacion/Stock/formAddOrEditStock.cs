@@ -69,7 +69,7 @@ namespace Presentacion
 
             if (dtCorte.Rows.Count == 0)
             {
-                MessageBox.Show("No se pudieron cargar los cortes.");
+                MessageBox.Show("No se pudieron cargar los Productos.");
             }
             if (accion.Equals(Entidades.Compra.accion.Agregar))
             {
@@ -445,7 +445,7 @@ namespace Presentacion
 
                     if (resp == DialogResult.Yes)
                     {
-                        MessageBox.Show("Se sumaron correctamente los " + oCortePorCompra.CantKgs.ToString() + " Kgs a "+ corte.corte.corte);
+                        MessageBox.Show("Se sumaron correctamente los " + oProductoPorCompra.CantKgs.ToString() + " Kgs a "+ corte.corte.corte);
                         nroFila = listaCortePorCompra.IndexOf(corte);//se envía el index de la lista para sumar los kg al corte ya ingresado
                     }
                     else
@@ -504,7 +504,7 @@ namespace Presentacion
 	        }
 	        catch (Exception ex)
 	        {
-                MessageBox.Show("Hubo un error al cargar el corte.\n\nMensaje de exception: " + ex.Message);
+                MessageBox.Show("Hubo un error al cargar el Producto.\n\nMensaje de exception: " + ex.Message);
 	        }
         }
 
@@ -531,7 +531,7 @@ namespace Presentacion
         {
             if (txtCorteNuevaCompra.Text.Equals(""))
             {
-                MessageBox.Show("El corte ingresado no existe.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("El Producto ingresado no existe.", "Ingrese un producto", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtCodigo.Focus();
                 return false;
             }

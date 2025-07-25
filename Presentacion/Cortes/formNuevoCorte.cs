@@ -163,7 +163,7 @@ namespace Presentacion
                     }
                     else
                     {
-                        MessageBox.Show("El porcentaje del Corte Maestro y Porcentaje en Hueso debe estar entre 0 y 100%.", "Error en ingreso de porcentaje",
+                        MessageBox.Show("El porcentaje del Producto Maestro y Porcentaje en Hueso debe estar entre 0 y 100%.", "Error en ingreso de porcentaje",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
@@ -266,7 +266,7 @@ namespace Presentacion
                 if (!fila["idCorte"].ToString().Equals(oCorteE.idCorte.ToString()))
                 {
                     existeCodigo = true;
-                    MessageBox.Show("El código ingresado ya está asignado a \'"+ fila["corte"].ToString() + "\'. \nElija otro código o modifique el código del corte que lo tiene asignado.", "Complete los campos",
+                    MessageBox.Show("El código ingresado ya está asignado a \'"+ fila["Producto"].ToString() + "\'. \nElija otro código o modifique el código del Producto que lo tiene asignado.", "Complete los campos",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                     txtCodigo.SelectAll();
@@ -281,7 +281,7 @@ namespace Presentacion
             //validar Corte Maestro
             if (checkAsignarMaestro.Checked && (oCorteMaestroE == null || oCorteMaestroE.idCorte == 0))
             {
-                MessageBox.Show("Debe ingresar el corte maestro", "Ingrese Corte Maestro",
+                MessageBox.Show("Debe ingresar el Producto maestro", "Ingrese Producto Maestro",
                       MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
@@ -297,7 +297,7 @@ namespace Presentacion
             {
                 if (checkAsignarMaestro.Checked && this.txtPorcentajeCorteM.Text.Equals("0"))
                 {
-                    MessageBox.Show("% en Corte M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Corte Maestro", "Complete los campos",
+                    MessageBox.Show("% en Producto M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Producto Maestro", "Complete los campos",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
                 } 
@@ -388,7 +388,7 @@ namespace Presentacion
             //si cambia a unChecked y tiene corteMaestro se informa
             if (!checkAsignarMaestro.Checked && oCorteMaestroE != null && oCorteMaestroE.idCorte > 0)
             {
-                DialogResult resp = MessageBox.Show("Si quita la asignación se borrará el Corte Maestro.\n\n¿Desea quitar el corte maestro?"
+                DialogResult resp = MessageBox.Show("Si quita la asignación se borrará el Producto Maestro.\n\n¿Desea quitar el Producto maestro?"
                     , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                 if (resp.Equals(DialogResult.Yes))
                 {

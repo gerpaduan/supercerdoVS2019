@@ -58,7 +58,7 @@ namespace Presentacion.Cortes
             }
             catch (Exception)
             {
-                MessageBox.Show("La descripción ingresada no corresponde a ningún corte.","El corte no existe",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                MessageBox.Show("La descripción ingresada no corresponde a ningún Producto.","El Producto no existe",MessageBoxButtons.OK,MessageBoxIcon.Error);
             }
         }
 

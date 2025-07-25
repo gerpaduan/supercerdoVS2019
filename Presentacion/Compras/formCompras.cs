@@ -73,7 +73,7 @@ namespace Presentacion
                 dtCompras = null;
                 dtCompras = oCompraN.obtenerCompras(idSucCombo, comboTipoCompra.Text, txtDescripcion.Text.Trim(), fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaCompras.DataSource = dtCompras;
-
+                grillaCompras.Columns["tipoCompra"].Visible = FormPrincipal.soyYo;
                 cargarTotales();
                 oCompraN = null;
             }

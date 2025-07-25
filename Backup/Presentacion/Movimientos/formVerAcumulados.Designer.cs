@@ -45,7 +45,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(146, 17);
             this.label1.TabIndex = 0;
-            this.label1.Text = "Cortes acumulados";
+            this.label1.Text = "Prods. acumulados";
             // 
             // grillaAcum
             // 
@@ -87,7 +87,7 @@
             this.MaximizeBox = false;
             this.Name = "formVerAcumulados";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Cortes acumulados en Movimiento";
+            this.Text = "Prods. acumulados en Movimiento";
             this.Load += new System.EventHandler(this.formVerAcumulados_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaAcum)).EndInit();
             this.ResumeLayout(false);

@@ -380,7 +380,7 @@
             this.groupBox1.Size = new System.Drawing.Size(532, 73);
             this.groupBox1.TabIndex = 47;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Corte";
+            this.groupBox1.Text = "Prod.";
             // 
             // btnBuscaCorte
             // 
@@ -502,7 +502,7 @@
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(39, 16);
             this.label14.TabIndex = 24;
-            this.label14.Text = "Corte";
+            this.label14.Text = "Prod.";
             // 
             // txtCodigo
             // 
@@ -725,7 +725,7 @@
             dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
             this.Corte.DefaultCellStyle = dataGridViewCellStyle4;
             this.Corte.FillWeight = 113.0288F;
-            this.Corte.HeaderText = "Corte";
+            this.Corte.HeaderText = "Prod.";
             this.Corte.MinimumWidth = 6;
             this.Corte.Name = "Corte";
             this.Corte.ReadOnly = true;
@@ -965,7 +965,7 @@
             dataGridViewCellStyle12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
             this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle12;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
-            this.dataGridViewTextBoxColumn3.HeaderText = "Corte";
+            this.dataGridViewTextBoxColumn3.HeaderText = "Prod.";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
             this.dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
             this.dataGridViewTextBoxColumn3.ReadOnly = true;
@@ -1031,7 +1031,7 @@
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(185, 22);
             this.label6.TabIndex = 54;
-            this.label6.Text = "Cortes no cargados";
+            this.label6.Text = "Prods. no cargados";
             // 
             // formAddOrEditStock
             // 
