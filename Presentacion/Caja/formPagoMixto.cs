@@ -30,7 +30,7 @@ namespace Presentacion.Caja
         {
             exito = false;
             // Normalización: quitamos puntos (miles) y cambiamos la coma por punto (decimal)
-            string textoNormalizado = txtImporteEfectivo.Text.Replace(".", "").Replace(",", ".");
+            string textoNormalizado = txtImporteEfectivo.Text.Contains(",") && txtImporteEfectivo.Text.Contains(".") ? txtImporteEfectivo.Text.Replace(".", "").Replace(",", ".") : txtImporteEfectivo.Text;
             if (float.TryParse(textoNormalizado, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo) && pagoMixtoEfectivo > 0 && importe2 > 0)
             {
                 //si es Cero el efectivo informar - si cierra ventana mandar cero
