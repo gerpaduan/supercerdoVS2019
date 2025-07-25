@@ -982,12 +982,12 @@ namespace Presentacion.Caja
                     }                  
                 }
 
-                //valido que no haya ningún corte seleccionado al finalizar venta
+                //valido que no haya ningún Producto seleccionado al finalizar venta
                 if (txtCodigo.Text.Length > 0)
                 {
-                    mensaje = "No se puede finalizar la venta si existe un corte seleccionado.\n" +
+                    mensaje = "No se puede finalizar la venta si existe un producto seleccionado.\n" +
                         "Borre el código e inténtelo nuevamente";
-                    MessageBox.Show(mensaje, "Existe un corte seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(mensaje, "Existe un producto seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                     txtCodigo.SelectAll();
                     return false;
@@ -1092,11 +1092,11 @@ namespace Presentacion.Caja
 
                 if (oLineaVentaSelect.Estado == 0 && !existeAnulado)
                 {
-                    string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " +
+                    string datosLinea = "\n\n Datos del Producto \n-----------------------------------------\n " +
                         oLineaVentaSelect.Corte.corte +
                         "    |   Cantidad:  " + oLineaVentaSelect.CantKg + 
                         "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.PrecioKg;
-                    string mensaje = "¿Está seguro de anular el corte seleccionado?" + datosLinea;
+                    string mensaje = "¿Está seguro de anular el Producto seleccionado?" + datosLinea;
                     DialogResult respuesta = MessageBox.Show(mensaje, "Anular Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (respuesta == System.Windows.Forms.DialogResult.Yes)
                     {
@@ -2042,7 +2042,7 @@ namespace Presentacion.Caja
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  Insert = Forma Pago  |  Supr = Quitar Línea  | F2 = Pant.Principal  |   " +
                 "F3 = Cálculo Billetes  | F4 = Bonificación  |  F5 = Nueva Compra  |  \n F6 = Mis Egresos Caja  |  F7 = Egresos Caja  | F8 = Facturacion | F9 = Buscar Cliente  |  " +
-                "F10 = Buscar Corte  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
+                "F10 = Buscar Producto  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
             comboExpendioEstado.SelectedIndex = 0;
             if (oUsuario != null)
             {

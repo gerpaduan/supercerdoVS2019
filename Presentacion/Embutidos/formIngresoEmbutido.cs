@@ -287,7 +287,7 @@ namespace Presentacion
                 }
                 if (oCorteE==null)
                 {
-                    mensaje += "\n" + "- Corte en Elaborado";
+                    mensaje += "\n" + "- Producto en Elaborado";
                     txtCodCorteEnEmbutido.Focus();
                 }
                 if (txtCantKgs.Text.Trim()=="")

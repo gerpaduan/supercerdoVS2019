@@ -29,12 +29,13 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkSugerirCodigo = new System.Windows.Forms.CheckBox();
             this.label20 = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
             this.label18 = new System.Windows.Forms.Label();
@@ -84,7 +85,6 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.checkSugerirCodigo = new System.Windows.Forms.CheckBox();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupProveedores.SuspendLayout();
@@ -174,6 +174,23 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Prod.";
+            // 
+            // checkSugerirCodigo
+            // 
+            this.checkSugerirCodigo.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkSugerirCodigo.AutoSize = true;
+            this.checkSugerirCodigo.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.checkSugerirCodigo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkSugerirCodigo.FlatAppearance.CheckedBackColor = System.Drawing.Color.LimeGreen;
+            this.checkSugerirCodigo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.checkSugerirCodigo.Location = new System.Drawing.Point(243, 27);
+            this.checkSugerirCodigo.Name = "checkSugerirCodigo";
+            this.checkSugerirCodigo.Size = new System.Drawing.Size(57, 25);
+            this.checkSugerirCodigo.TabIndex = 66;
+            this.checkSugerirCodigo.TabStop = false;
+            this.checkSugerirCodigo.Text = "&Sugerir";
+            this.checkSugerirCodigo.UseVisualStyleBackColor = false;
+            this.checkSugerirCodigo.CheckedChanged += new System.EventHandler(this.checkSegerirCodigo_CheckedChanged);
             // 
             // label20
             // 
@@ -327,8 +344,8 @@
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
             this.dataGridViewTextBoxColumn3.HeaderText = "Razon Social";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
@@ -338,8 +355,8 @@
             // ultimoPrecio
             // 
             this.ultimoPrecio.DataPropertyName = "ultimoPrecio";
-            dataGridViewCellStyle4.Format = "F2";
-            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Format = "F2";
+            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle2;
             this.ultimoPrecio.HeaderText = "Ultimo Precio";
             this.ultimoPrecio.MinimumWidth = 6;
             this.ultimoPrecio.Name = "ultimoPrecio";
@@ -504,7 +521,7 @@
             this.checkEnCierreStock.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkEnCierreStock.Checked = true;
             this.checkEnCierreStock.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkEnCierreStock.Location = new System.Drawing.Point(382, 83);
+            this.checkEnCierreStock.Location = new System.Drawing.Point(382, 81);
             this.checkEnCierreStock.Name = "checkEnCierreStock";
             this.checkEnCierreStock.Size = new System.Drawing.Size(110, 19);
             this.checkEnCierreStock.TabIndex = 10;
@@ -752,23 +769,6 @@
             this.label4.Size = new System.Drawing.Size(36, 15);
             this.label4.TabIndex = 2;
             this.label4.Text = "Prod.";
-            // 
-            // checkSugerirCodigo
-            // 
-            this.checkSugerirCodigo.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkSugerirCodigo.AutoSize = true;
-            this.checkSugerirCodigo.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.checkSugerirCodigo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkSugerirCodigo.FlatAppearance.CheckedBackColor = System.Drawing.Color.LimeGreen;
-            this.checkSugerirCodigo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.checkSugerirCodigo.Location = new System.Drawing.Point(243, 27);
-            this.checkSugerirCodigo.Name = "checkSugerirCodigo";
-            this.checkSugerirCodigo.Size = new System.Drawing.Size(57, 25);
-            this.checkSugerirCodigo.TabIndex = 66;
-            this.checkSugerirCodigo.TabStop = false;
-            this.checkSugerirCodigo.Text = "&Sugerir";
-            this.checkSugerirCodigo.UseVisualStyleBackColor = false;
-            this.checkSugerirCodigo.CheckedChanged += new System.EventHandler(this.checkSegerirCodigo_CheckedChanged);
             // 
             // formNuevoCorte
             // 

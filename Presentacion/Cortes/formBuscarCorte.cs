@@ -108,7 +108,7 @@ namespace Presentacion.Cortes
 
             cargarGrilla();
 
-            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando cortes", "Cargando...");
+            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando productos", "Cargando...");
             barraProgreso.ShowDialog();
 
             txtBuscarCorte.Select();

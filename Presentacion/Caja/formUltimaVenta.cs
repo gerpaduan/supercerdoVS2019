@@ -435,7 +435,7 @@ namespace Presentacion.Caja
                     string datosLinea = "\n\n Datos del Corte \n-----------------------------------------\n " +
                         oLineaVentaSelect.Corte.corte +
                         "    |   Cantidad:  " + oLineaVentaSelect.CantKg + "    |    Total:  $ " + oLineaVentaSelect.CantKg * oLineaVentaSelect.PrecioKg;
-                    string mensaje = "¿Está seguro de anular el corte seleccionado?" + datosLinea;
+                    string mensaje = "¿Está seguro de anular el Producto seleccionado?" + datosLinea;
                     DialogResult respuesta = MessageBox.Show(mensaje, "Anular Corte", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (respuesta == System.Windows.Forms.DialogResult.Yes)
                     {

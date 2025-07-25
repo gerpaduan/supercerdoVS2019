@@ -266,7 +266,7 @@ namespace Presentacion
                 if (!fila["idCorte"].ToString().Equals(oCorteE.idCorte.ToString()))
                 {
                     existeCodigo = true;
-                    MessageBox.Show("El código ingresado ya está asignado a \'"+ fila["Producto"].ToString() + "\'. \nElija otro código o modifique el código del Producto que lo tiene asignado.", "Complete los campos",
+                    MessageBox.Show("El código ingresado ya está asignado a \'"+ fila["corte"].ToString() + "\'. \nElija otro código o modifique el código del Producto que lo tiene asignado.", "Complete los campos",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCodigo.Focus();
                     txtCodigo.SelectAll();

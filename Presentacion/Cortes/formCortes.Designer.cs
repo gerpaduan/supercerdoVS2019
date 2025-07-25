@@ -981,7 +981,7 @@
             this.MinimizeBox = true;
             this.Name = "formCortes";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Prods.";
+            this.Text = "Productos";
             this.Load += new System.EventHandler(this.formCortes_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formCortes_KeyDown);
             this.barraControl.ResumeLayout(false);

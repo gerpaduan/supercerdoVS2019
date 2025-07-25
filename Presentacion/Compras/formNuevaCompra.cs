@@ -497,13 +497,13 @@ namespace Presentacion
 
         private int validarCorteEnGrilla()
         {
-            int nroFila = -1;//si corte no está cargado
+            int nroFila = -1;//si Producto no está cargado
             foreach (Entidades.CortePorCompra corte in listaCortePorCompra)
             {
 
                 if (corte.corte.idCorte == oCorteNuevaCompra.idCorte && corte.sucursal.IdSucursal == Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
                 {
-                    DialogResult resp = MessageBox.Show("Ya se ha cargado el corte en la sucursal seleccionada.\nDesea sumarlo al Producto ya ingresado?.", "Producto ya cargado en la sucursal", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    DialogResult resp = MessageBox.Show("Ya se ha cargado el Producto en la sucursal seleccionada.\nDesea sumarlo al Producto ya ingresado?.", "Producto ya cargado en la sucursal", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                     if (resp == DialogResult.Yes)
                     {

@@ -449,7 +449,7 @@ namespace Presentacion
                 if (corte.corte.idCorte == oCorteNuevaCompra.idCorte)
                 {
                     string mensaje = "Ya se han cargado " + corte.CantKgs.ToString() + "Kgs a " + corte.corte.corte + "\n\n¿Desea sumar los " + oCortePorCompra.CantKgs.ToString() + " Kgs ingresados?";
-                    DialogResult resp = MessageBox.Show(mensaje, "Corte ya cargado", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+                    DialogResult resp = MessageBox.Show(mensaje, "Producto  ya cargado", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
 
                     if (resp == DialogResult.Yes)
                     {

@@ -729,9 +729,9 @@ namespace Presentacion.Caja
             //valido que no haya ningún corte seleccionado al finalizar venta
             if (txtCodigo.Text.Length > 0)
             {
-                mensaje = "No se puede finalizar la venta si existe un corte seleccionado.\n" +
+                mensaje = "No se puede finalizar la venta si existe un Producto seleccionado.\n" +
                     "Borre el código e inténtelo nuevamente";
-                MessageBox.Show(mensaje, "Existe un corte seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(mensaje, "Existe un Producto seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtCodigo.Focus();
                 txtCodigo.SelectAll();
                 return false;
@@ -1434,7 +1434,7 @@ namespace Presentacion.Caja
             this.Text += Utilidades.Conexion.getSucursalConexion();
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  F2 = Pant.Principal  |   " +
                 "" +
-                "F10 = Buscar Corte  |  AvPág = Cambiar Vendedor";
+                "F10 = Buscar Producto  |  AvPág = Cambiar Vendedor";
             labelTipoImpresion.Text = "Tipo Impresion: " + tipoTicketExpendio;
             if (oUsuario != null)
             {
