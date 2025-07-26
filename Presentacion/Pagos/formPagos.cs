@@ -31,15 +31,23 @@ namespace Presentacion.Pagos
 
         private void nuevo_Click(object sender, EventArgs e)
         {
-            if (Application.OpenForms["formAddOrEditPago"] != null)
+            bool formAbierto = false;
+            foreach (Form frm in Application.OpenForms)
             {
-
-                Application.OpenForms["formAddOrEditPago"].Activate();
-                Application.OpenForms["formAddOrEditPago"].WindowState = FormWindowState.Normal;
-
-
+                if (frm.GetType() == typeof(formAddOrEditPago))
+                {
+                    foreach (Control ctrl in frm.Controls)
+                    {
+                        if (ctrl.Name.Equals("idPagoLabel") && ctrl.Text.Equals("0"))
+                        {
+                            frm.BringToFront();
+                            formAbierto = true;
+                            break;
+                        }
+                    }
+                }
             }
-            else
+            if (!formAbierto)
             {
                 this.BringToFront();
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();

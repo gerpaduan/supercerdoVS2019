@@ -79,6 +79,8 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.idPagoLabel = new System.Windows.Forms.Label();
             this.btnImprimir = new System.Windows.Forms.Button();
+            this.txtSaldo = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panelCheque.SuspendLayout();
@@ -142,7 +144,7 @@
             this.label13.ForeColor = System.Drawing.Color.Cornsilk;
             this.label13.Location = new System.Drawing.Point(15, 12);
             this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(60, 16);
+            this.label13.Size = new System.Drawing.Size(59, 16);
             this.label13.TabIndex = 54;
             this.label13.Text = "Sucursal";
             // 
@@ -153,13 +155,15 @@
             this.label16.ForeColor = System.Drawing.Color.Cornsilk;
             this.label16.Location = new System.Drawing.Point(341, 11);
             this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(55, 16);
+            this.label16.Size = new System.Drawing.Size(54, 16);
             this.label16.TabIndex = 55;
             this.label16.Text = "Usuario";
             // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.txtSaldo);
+            this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.btnObservaciones);
             this.groupBox1.Controls.Add(this.checkNroRecibo);
             this.groupBox1.Controls.Add(this.txtIdPago);
@@ -213,7 +217,7 @@
             this.checkNroRecibo.Checked = true;
             this.checkNroRecibo.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkNroRecibo.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F);
-            this.checkNroRecibo.Location = new System.Drawing.Point(258, 90);
+            this.checkNroRecibo.Location = new System.Drawing.Point(99, 112);
             this.checkNroRecibo.Name = "checkNroRecibo";
             this.checkNroRecibo.Size = new System.Drawing.Size(124, 17);
             this.checkNroRecibo.TabIndex = 63;
@@ -224,7 +228,7 @@
             // txtIdPago
             // 
             this.txtIdPago.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtIdPago.Location = new System.Drawing.Point(386, 26);
+            this.txtIdPago.Location = new System.Drawing.Point(389, 26);
             this.txtIdPago.Name = "txtIdPago";
             this.txtIdPago.ReadOnly = true;
             this.txtIdPago.Size = new System.Drawing.Size(149, 22);
@@ -238,9 +242,9 @@
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label12.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label12.Location = new System.Drawing.Point(356, 29);
+            this.label12.Location = new System.Drawing.Point(359, 29);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(21, 16);
+            this.label12.Size = new System.Drawing.Size(20, 16);
             this.label12.TabIndex = 61;
             this.label12.Text = "ID";
             // 
@@ -297,6 +301,7 @@
             this.txtEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtEfectivo.Location = new System.Drawing.Point(81, 3);
             this.txtEfectivo.Name = "txtEfectivo";
+            this.txtEfectivo.ReadOnly = true;
             this.txtEfectivo.Size = new System.Drawing.Size(149, 22);
             this.txtEfectivo.TabIndex = 39;
             this.txtEfectivo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -309,7 +314,7 @@
             this.label14.ForeColor = System.Drawing.Color.Cornsilk;
             this.label14.Location = new System.Drawing.Point(11, 6);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(66, 16);
+            this.label14.Size = new System.Drawing.Size(65, 16);
             this.label14.TabIndex = 40;
             this.label14.Text = "Efectivo $";
             // 
@@ -332,7 +337,7 @@
             this.label15.ForeColor = System.Drawing.Color.Cornsilk;
             this.label15.Location = new System.Drawing.Point(310, 162);
             this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(72, 16);
+            this.label15.Size = new System.Drawing.Size(71, 16);
             this.label15.TabIndex = 40;
             this.label15.Text = "Cheques $";
             // 
@@ -404,7 +409,7 @@
             this.label8.ForeColor = System.Drawing.Color.Cornsilk;
             this.label8.Location = new System.Drawing.Point(22, 7);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(69, 16);
+            this.label8.Size = new System.Drawing.Size(68, 16);
             this.label8.TabIndex = 32;
             this.label8.Text = "N°Cheque";
             // 
@@ -490,7 +495,7 @@
             this.checkAProveedor.ForeColor = System.Drawing.Color.Cornsilk;
             this.checkAProveedor.Location = new System.Drawing.Point(98, 24);
             this.checkAProveedor.Name = "checkAProveedor";
-            this.checkAProveedor.Size = new System.Drawing.Size(78, 26);
+            this.checkAProveedor.Size = new System.Drawing.Size(77, 26);
             this.checkAProveedor.TabIndex = 53;
             this.checkAProveedor.TabStop = false;
             this.checkAProveedor.Text = "Pagar a ...";
@@ -514,7 +519,7 @@
             this.label11.AutoSize = true;
             this.label11.Location = new System.Drawing.Point(14, 383);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(100, 16);
+            this.label11.Size = new System.Drawing.Size(99, 16);
             this.label11.TabIndex = 26;
             this.label11.Text = "Observaciones";
             // 
@@ -545,7 +550,7 @@
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
             this.label4.Location = new System.Drawing.Point(334, 143);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(53, 16);
+            this.label4.Size = new System.Drawing.Size(52, 16);
             this.label4.TabIndex = 32;
             this.label4.Text = "Importe";
             // 
@@ -580,7 +585,7 @@
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
             this.label1.Location = new System.Drawing.Point(30, 61);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(59, 16);
+            this.label1.Size = new System.Drawing.Size(58, 16);
             this.label1.TabIndex = 29;
             this.label1.Text = "Persona";
             // 
@@ -601,7 +606,7 @@
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
             this.label2.Location = new System.Drawing.Point(15, 88);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(77, 16);
+            this.label2.Size = new System.Drawing.Size(76, 16);
             this.label2.TabIndex = 28;
             this.label2.Text = "Nro Recibo";
             // 
@@ -611,7 +616,7 @@
             this.txtFechaPago.CustomFormat = "dd/MM/yy  HH:mm";
             this.txtFechaPago.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaPago.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaPago.Location = new System.Drawing.Point(387, 58);
+            this.txtFechaPago.Location = new System.Drawing.Point(390, 58);
             this.txtFechaPago.Name = "txtFechaPago";
             this.txtFechaPago.Size = new System.Drawing.Size(148, 22);
             this.txtFechaPago.TabIndex = 25;
@@ -622,9 +627,9 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(338, 61);
+            this.label3.Location = new System.Drawing.Point(341, 61);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(46, 16);
+            this.label3.Size = new System.Drawing.Size(45, 16);
             this.label3.TabIndex = 27;
             this.label3.Text = "Fecha";
             // 
@@ -655,7 +660,7 @@
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
             this.label9.Location = new System.Drawing.Point(9, 143);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(83, 16);
+            this.label9.Size = new System.Drawing.Size(82, 16);
             this.label9.TabIndex = 23;
             this.label9.Text = "Forma Pago";
             // 
@@ -711,6 +716,27 @@
             this.btnImprimir.UseVisualStyleBackColor = true;
             this.btnImprimir.Visible = false;
             this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
+            // 
+            // txtSaldo
+            // 
+            this.txtSaldo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSaldo.Location = new System.Drawing.Point(389, 86);
+            this.txtSaldo.Name = "txtSaldo";
+            this.txtSaldo.ReadOnly = true;
+            this.txtSaldo.Size = new System.Drawing.Size(149, 22);
+            this.txtSaldo.TabIndex = 79;
+            this.txtSaldo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label10.Location = new System.Drawing.Point(341, 89);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(43, 16);
+            this.label10.TabIndex = 80;
+            this.label10.Text = "Saldo";
             // 
             // formAddOrEditPago
             // 
@@ -793,5 +819,7 @@
         protected System.Windows.Forms.Button btnImprimir;
         private System.Windows.Forms.CheckBox checkNroRecibo;
         private System.Windows.Forms.Button btnObservaciones;
+        private System.Windows.Forms.TextBox txtSaldo;
+        protected System.Windows.Forms.Label label10;
     }
 }

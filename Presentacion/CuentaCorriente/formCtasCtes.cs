@@ -29,7 +29,7 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
-                grillaCtasCtes.DataSource = oCtaCteN.obtenerCtasCtes(txtDescripcion.Text);
+                grillaCtasCtes.DataSource = oCtaCteN.obtenerCtasCtes(txtDescripcion.Text,null);
                 grillaCtasCtes.AutoGenerateColumns = false;
                 grillaCtasCtes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 

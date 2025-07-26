@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCheques));
             this.grilla = new System.Windows.Forms.DataGridView();
             this.pnlBuscar = new System.Windows.Forms.Panel();
@@ -41,6 +41,7 @@
             this.comboEstadosFiltro = new System.Windows.Forms.ComboBox();
             this.label8 = new System.Windows.Forms.Label();
             this.groupCheque = new System.Windows.Forms.GroupBox();
+            this.btnObservaciones = new System.Windows.Forms.Button();
             this.label18 = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.btnCancelar = new System.Windows.Forms.Button();
@@ -77,7 +78,7 @@
             this.txtFechaHasta = new System.Windows.Forms.DateTimePicker();
             this.btnNuevo = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
-            this.btnObservaciones = new System.Windows.Forms.Button();
+            this.lblChequeVence = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grilla)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupCheque.SuspendLayout();
@@ -92,35 +93,35 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grilla.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle13.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle13.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle13.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle13.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle13.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle13.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle13;
             this.grilla.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle8.NullValue = null;
-            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grilla.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle14.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle14.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle14.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle14.NullValue = null;
+            dataGridViewCellStyle14.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle14.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle14.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grilla.DefaultCellStyle = dataGridViewCellStyle14;
             this.grilla.Location = new System.Drawing.Point(8, 245);
             this.grilla.Name = "grilla";
             this.grilla.ReadOnly = true;
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grilla.RowHeadersDefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle15.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle15.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle15.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle15.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle15.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle15.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grilla.RowHeadersDefaultCellStyle = dataGridViewCellStyle15;
             this.grilla.RowHeadersVisible = false;
             this.grilla.RowHeadersWidth = 51;
             this.grilla.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
@@ -134,6 +135,7 @@
             this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pnlBuscar.Controls.Add(this.lblChequeVence);
             this.pnlBuscar.Controls.Add(this.checkPropioFiltro);
             this.pnlBuscar.Controls.Add(this.btnBuscar);
             this.pnlBuscar.Controls.Add(this.txtUsuario);
@@ -217,7 +219,8 @@
             "ENTREGADO",
             "DEPOSITADO",
             "ACREDITADO",
-            "RECHAZADO"});
+            "RECHAZADO",
+            "VENCIDO"});
             this.comboEstadosFiltro.Location = new System.Drawing.Point(100, 9);
             this.comboEstadosFiltro.Name = "comboEstadosFiltro";
             this.comboEstadosFiltro.Size = new System.Drawing.Size(141, 21);
@@ -274,6 +277,18 @@
             this.groupCheque.TabIndex = 48;
             this.groupCheque.TabStop = false;
             this.groupCheque.Text = "Datos Cheque";
+            // 
+            // btnObservaciones
+            // 
+            this.btnObservaciones.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnObservaciones.ForeColor = System.Drawing.Color.Black;
+            this.btnObservaciones.Location = new System.Drawing.Point(445, 124);
+            this.btnObservaciones.Name = "btnObservaciones";
+            this.btnObservaciones.Size = new System.Drawing.Size(17, 30);
+            this.btnObservaciones.TabIndex = 77;
+            this.btnObservaciones.Text = ">";
+            this.btnObservaciones.UseVisualStyleBackColor = true;
+            this.btnObservaciones.Click += new System.EventHandler(this.btnObservaciones_Click);
             // 
             // label18
             // 
@@ -332,7 +347,8 @@
             "ENTREGADO",
             "DEPOSITADO",
             "ACREDITADO",
-            "RECHAZADO"});
+            "RECHAZADO",
+            "VENCIDO"});
             this.comboEstado.Location = new System.Drawing.Point(470, 91);
             this.comboEstado.Name = "comboEstado";
             this.comboEstado.Size = new System.Drawing.Size(141, 23);
@@ -686,17 +702,17 @@
             this.label4.TabIndex = 6;
             this.label4.Text = "Hasta";
             // 
-            // btnObservaciones
+            // lblChequeVence
             // 
-            this.btnObservaciones.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnObservaciones.ForeColor = System.Drawing.Color.Black;
-            this.btnObservaciones.Location = new System.Drawing.Point(445, 124);
-            this.btnObservaciones.Name = "btnObservaciones";
-            this.btnObservaciones.Size = new System.Drawing.Size(17, 30);
-            this.btnObservaciones.TabIndex = 77;
-            this.btnObservaciones.Text = ">";
-            this.btnObservaciones.UseVisualStyleBackColor = true;
-            this.btnObservaciones.Click += new System.EventHandler(this.btnObservaciones_Click);
+            this.lblChequeVence.AutoSize = true;
+            this.lblChequeVence.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.lblChequeVence.ForeColor = System.Drawing.Color.DarkSalmon;
+            this.lblChequeVence.Location = new System.Drawing.Point(335, 62);
+            this.lblChequeVence.Name = "lblChequeVence";
+            this.lblChequeVence.Size = new System.Drawing.Size(284, 15);
+            this.lblChequeVence.TabIndex = 78;
+            this.lblChequeVence.Text = "Hay Cheques Vencidos(rojo) | Por Vencer (naranja)";
+            this.lblChequeVence.Visible = false;
             // 
             // formCheques
             // 
@@ -767,5 +783,6 @@
         protected System.Windows.Forms.Label label17;
         protected internal System.Windows.Forms.Button btnBuscar;
         private System.Windows.Forms.Button btnObservaciones;
+        protected System.Windows.Forms.Label lblChequeVence;
     }
 }

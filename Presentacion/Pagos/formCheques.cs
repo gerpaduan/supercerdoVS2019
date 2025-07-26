@@ -12,6 +12,7 @@ using System.Configuration;
 using Entidades;
 using Presentacion.Embutidos;
 using System.Web.UI.WebControls;
+using System.Windows;
 
 namespace Presentacion.Cheques
 {
@@ -30,6 +31,8 @@ namespace Presentacion.Cheques
         bool cargar = false;
         public bool llamadoDesdePago = false;
         public string nroChequeDesdePago = "";
+        bool chequesVencidos = false;
+        bool chequesPorVencer = false;
         public Action<string> OnChequeDobleClick { get; set; }
 
 
@@ -74,6 +77,9 @@ namespace Presentacion.Cheques
                 grilla.Columns["propio"].Visible = false;
                 grilla.Columns["recibidoDe"].Visible = false;
                 grilla.Columns["entregadoA"].Visible = false;
+
+
+                lblChequeVence.Visible = chequesVencidos || chequesPorVencer;
             }
         }
 
@@ -442,6 +448,7 @@ namespace Presentacion.Cheques
 
         private void grilla_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
+
             if (grilla.Columns[e.ColumnIndex].Name == "fechaPago")
             {
                 if (e.Value != null && DateTime.TryParse(e.Value.ToString(), out DateTime fecha))
@@ -449,14 +456,23 @@ namespace Presentacion.Cheques
                     // Obtener el valor de la columna "estado" de la misma fila
                     var estado = grilla.Rows[e.RowIndex].Cells["estado"].Value?.ToString();
 
-                    if (fecha.Date < DateTime.Today && estado == Entidades.Cheque.EstadoEnum.PENDIENTE.ToString())
+                    //Si fecha pago + 23 dias es a hoy, entonces pinta en rojo por vencido
+                    if (fecha.Date.AddDays(23) < DateTime.Today && estado == Entidades.Cheque.EstadoEnum.PENDIENTE.ToString())
+                    {
+                        e.CellStyle.ForeColor = Color.Orange;
+                        e.CellStyle.Font = new Font(grilla.Font, System.Drawing.FontStyle.Bold);
+                        chequesPorVencer = true;
+                    }
+                    //Si fecha pago + 30 dias es a hoy, entonces pinta en rojo por vencido
+                    if (fecha.Date.AddDays(30) < DateTime.Today && estado == Entidades.Cheque.EstadoEnum.PENDIENTE.ToString())
                     {
                         e.CellStyle.ForeColor = Color.OrangeRed;
-                        e.CellStyle.Font = new Font(grilla.Font, FontStyle.Bold);
+                        e.CellStyle.Font = new Font(grilla.Font, System.Drawing.FontStyle.Bold);
+                        chequesVencidos = true;
+                        
                     }
                 }
             }
-
         }
 
         private void btnObservaciones_Click(object sender, EventArgs e)
