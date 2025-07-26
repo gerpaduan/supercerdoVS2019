@@ -12,9 +12,9 @@ namespace Negocio
     {
         Datos.CuentaCorriente oCtaCteD = new Datos.CuentaCorriente();
 
-        public DataTable obtenerCtasCtes(string txtBusqueda)
+        public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona)
         {
-            return oCtaCteD.obtenerCtasCtes(txtBusqueda);
+            return oCtaCteD.obtenerCtasCtes(txtBusqueda, idPersona);
         }
 
         public DataTable getCtaCteByIdPersona(int idPersona, DateTime fechaDesde)
