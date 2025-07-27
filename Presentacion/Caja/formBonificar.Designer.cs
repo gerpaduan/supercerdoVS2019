@@ -124,7 +124,7 @@
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(40, 20);
             this.label13.TabIndex = 53;
-            this.label13.Text = "Kgs.";
+            this.label13.Text = "Cant";
             // 
             // txtCantKgs
             // 

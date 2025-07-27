@@ -340,7 +340,7 @@
             // kgCorte
             // 
             this.kgCorte.DataPropertyName = "kgCorte";
-            this.kgCorte.HeaderText = "Kgs. Prod.";
+            this.kgCorte.HeaderText = "Cant Prod.";
             this.kgCorte.Name = "kgCorte";
             this.kgCorte.ReadOnly = true;
             this.kgCorte.Width = 70;

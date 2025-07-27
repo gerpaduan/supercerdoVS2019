@@ -32,22 +32,17 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formIngresoEmbutido));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.grillaCortesPorEmbutido = new System.Windows.Forms.DataGridView();
-            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupReceta = new System.Windows.Forms.GroupBox();
             this.txtReceta = new System.Windows.Forms.TextBox();
@@ -94,6 +89,11 @@
             this.label11 = new System.Windows.Forms.Label();
             this.txtObservaciones = new System.Windows.Forms.TextBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.kgUtilizados = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Balanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortesPorEmbutido)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupReceta.SuspendLayout();
@@ -181,55 +181,6 @@
             this.grillaCortesPorEmbutido.StandardTab = true;
             this.grillaCortesPorEmbutido.TabIndex = 15;
             this.grillaCortesPorEmbutido.TabStop = false;
-            // 
-            // idCorte
-            // 
-            this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Prod.";
-            this.idCorte.MinimumWidth = 6;
-            this.idCorte.Name = "idCorte";
-            this.idCorte.ReadOnly = true;
-            this.idCorte.Visible = false;
-            // 
-            // codigo
-            // 
-            this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            this.codigo.DataPropertyName = "codigo";
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
-            this.codigo.FillWeight = 80F;
-            this.codigo.HeaderText = "Codigo";
-            this.codigo.MinimumWidth = 6;
-            this.codigo.Name = "codigo";
-            this.codigo.ReadOnly = true;
-            this.codigo.Width = 80;
-            // 
-            // corte
-            // 
-            this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "Prod.";
-            this.corte.MinimumWidth = 6;
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            // 
-            // kgUtilizados
-            // 
-            this.kgUtilizados.DataPropertyName = "kgUtilizado";
-            dataGridViewCellStyle3.Format = "N3";
-            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle3;
-            this.kgUtilizados.HeaderText = "Kgs. Utilizados";
-            this.kgUtilizados.MinimumWidth = 6;
-            this.kgUtilizados.Name = "kgUtilizados";
-            this.kgUtilizados.ReadOnly = true;
-            // 
-            // Balanza
-            // 
-            this.Balanza.DataPropertyName = "pesoBalanza";
-            this.Balanza.FillWeight = 50F;
-            this.Balanza.HeaderText = "Balanza";
-            this.Balanza.MinimumWidth = 6;
-            this.Balanza.Name = "Balanza";
-            this.Balanza.ReadOnly = true;
             // 
             // pnlBuscar
             // 
@@ -399,11 +350,11 @@
             dataGridViewCellStyle8.Format = "N3";
             this.kgs.DefaultCellStyle = dataGridViewCellStyle8;
             this.kgs.FillWeight = 88.16828F;
-            this.kgs.HeaderText = "Kgs";
+            this.kgs.HeaderText = "Cant";
             this.kgs.MinimumWidth = 6;
             this.kgs.Name = "kgs";
             this.kgs.ReadOnly = true;
-            this.kgs.Width = 50;
+            this.kgs.Width = 54;
             // 
             // agregarAuto
             // 
@@ -527,7 +478,7 @@
             this.groupBox2.Size = new System.Drawing.Size(455, 86);
             this.groupBox2.TabIndex = 10;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Ingreso Prods. ";
+            this.groupBox2.Text = "Ingrediente";
             // 
             // label18
             // 
@@ -552,7 +503,7 @@
             this.checkLeerPeso.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkLeerPeso.Location = new System.Drawing.Point(321, 20);
             this.checkLeerPeso.Name = "checkLeerPeso";
-            this.checkLeerPeso.Size = new System.Drawing.Size(75, 26);
+            this.checkLeerPeso.Size = new System.Drawing.Size(74, 26);
             this.checkLeerPeso.TabIndex = 23;
             this.checkLeerPeso.TabStop = false;
             this.checkLeerPeso.Text = "Balanza &*";
@@ -608,11 +559,11 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(245, 56);
+            this.label1.Location = new System.Drawing.Point(269, 56);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(59, 15);
+            this.label1.Size = new System.Drawing.Size(35, 15);
             this.label1.TabIndex = 16;
-            this.label1.Text = "Cant. Kgs";
+            this.label1.Text = "Cant.";
             // 
             // btnBuscarCorte
             // 
@@ -664,7 +615,7 @@
             this.txtCorteEnEmbutido.Location = new System.Drawing.Point(95, 53);
             this.txtCorteEnEmbutido.Name = "txtCorteEnEmbutido";
             this.txtCorteEnEmbutido.ReadOnly = true;
-            this.txtCorteEnEmbutido.Size = new System.Drawing.Size(145, 22);
+            this.txtCorteEnEmbutido.Size = new System.Drawing.Size(168, 22);
             this.txtCorteEnEmbutido.TabIndex = 9;
             this.txtCorteEnEmbutido.TabStop = false;
             // 
@@ -830,9 +781,9 @@
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.Location = new System.Drawing.Point(470, 274);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(60, 15);
+            this.label8.Size = new System.Drawing.Size(103, 15);
             this.label8.TabIndex = 18;
-            this.label8.Text = "Total Kg";
+            this.label8.Text = "Total (Un./Kgs)";
             // 
             // label11
             // 
@@ -860,6 +811,55 @@
             this.timer1.Enabled = true;
             this.timer1.Interval = 50;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // idCorte
+            // 
+            this.idCorte.DataPropertyName = "idCorte";
+            this.idCorte.HeaderText = "ID Prod.";
+            this.idCorte.MinimumWidth = 6;
+            this.idCorte.Name = "idCorte";
+            this.idCorte.ReadOnly = true;
+            this.idCorte.Visible = false;
+            // 
+            // codigo
+            // 
+            this.codigo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            this.codigo.DataPropertyName = "codigo";
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.codigo.DefaultCellStyle = dataGridViewCellStyle2;
+            this.codigo.FillWeight = 80F;
+            this.codigo.HeaderText = "Codigo";
+            this.codigo.MinimumWidth = 6;
+            this.codigo.Name = "codigo";
+            this.codigo.ReadOnly = true;
+            this.codigo.Width = 80;
+            // 
+            // corte
+            // 
+            this.corte.DataPropertyName = "corte";
+            this.corte.HeaderText = "Prod.(Ingrediente)";
+            this.corte.MinimumWidth = 6;
+            this.corte.Name = "corte";
+            this.corte.ReadOnly = true;
+            // 
+            // kgUtilizados
+            // 
+            this.kgUtilizados.DataPropertyName = "kgUtilizado";
+            dataGridViewCellStyle3.Format = "N3";
+            this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle3;
+            this.kgUtilizados.HeaderText = "Cant.Utilizada";
+            this.kgUtilizados.MinimumWidth = 6;
+            this.kgUtilizados.Name = "kgUtilizados";
+            this.kgUtilizados.ReadOnly = true;
+            // 
+            // Balanza
+            // 
+            this.Balanza.DataPropertyName = "pesoBalanza";
+            this.Balanza.FillWeight = 50F;
+            this.Balanza.HeaderText = "Balanza";
+            this.Balanza.MinimumWidth = 6;
+            this.Balanza.Name = "Balanza";
+            this.Balanza.ReadOnly = true;
             // 
             // formIngresoEmbutido
             // 
@@ -933,11 +933,6 @@
         protected System.Windows.Forms.TextBox txtUsuario;
         protected System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btnNuevo;
-        private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
-        private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
-        private System.Windows.Forms.DataGridViewTextBoxColumn corte;
-        private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
         protected System.Windows.Forms.Label lblErrorBalanza;
         protected System.Windows.Forms.Label label18;
         protected System.Windows.Forms.Label label17;
@@ -952,5 +947,10 @@
         protected System.Windows.Forms.GroupBox groupReceta;
         private System.Windows.Forms.TextBox txtReceta;
         protected internal System.Windows.Forms.Button btnReceta;
+        private System.Windows.Forms.DataGridViewTextBoxColumn idCorte;
+        private System.Windows.Forms.DataGridViewTextBoxColumn codigo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn corte;
+        private System.Windows.Forms.DataGridViewTextBoxColumn kgUtilizados;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn Balanza;
     }
 }

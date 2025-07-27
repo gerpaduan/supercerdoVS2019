@@ -733,7 +733,7 @@ namespace Presentacion.Ventas
 
                     if (oCorteE != null)
                     {
-                        if (Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$/Kg"))
+                        if (Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$"))
                             precioKg = Utilidades.Util_Form.convertFloat(txtPrecioKg.Text, true);
                     }
                     ///si está logueado
@@ -1070,7 +1070,7 @@ namespace Presentacion.Ventas
             {
                 if (checkFijarPrecio.Checked)
                 {
-                    if (!txtPrecioKg.Text.Equals("") && Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$/Kg"))
+                    if (!txtPrecioKg.Text.Equals("") && Utilidades.Util_Form.validarCampoNumerico(txtPrecioKg.Text, "$"))
                     {
                         try
                         {

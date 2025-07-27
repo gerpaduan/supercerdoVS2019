@@ -91,6 +91,7 @@ namespace Presentacion
             grillaLineasCompras.Columns["idSucursal"].Visible = false;
 
             grillaLineasCompras.Columns["cantKg"].DefaultCellStyle.Format = "F3";
+            grillaLineasCompras.Columns["cantKg"].HeaderText = "Cantidad";
             grillaLineasCompras.Columns["precioKg"].DefaultCellStyle.Format = "F2";
             grillaLineasCompras.Columns["totalS"].DefaultCellStyle.Format = "F2";
             //formato para columna de fechas

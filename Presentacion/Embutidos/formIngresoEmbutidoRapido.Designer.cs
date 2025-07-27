@@ -634,7 +634,7 @@
             dataGridViewCellStyle3.Format = "N3";
             this.kgs.DefaultCellStyle = dataGridViewCellStyle3;
             this.kgs.FillWeight = 88.16828F;
-            this.kgs.HeaderText = "Kgs";
+            this.kgs.HeaderText = "Cant";
             this.kgs.MinimumWidth = 6;
             this.kgs.Name = "kgs";
             this.kgs.ReadOnly = true;

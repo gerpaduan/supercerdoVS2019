@@ -542,6 +542,8 @@ namespace Presentacion
                 {
                     try
                     {
+                        oCortePorCompra.Desc_recargo = float.Parse(txtBoxDescuento.Text.Trim());
+                        oCortePorCompra.Iva_compra = float.Parse(txtIva.Text.Trim());
                         oCortePorCompra.cantKgs = float.Parse(txtCantKgs.Text.Trim());
                         oCortePorCompra.precioKg = float.Parse(txtPrecioKg.Text.Trim());
                     }
@@ -579,6 +581,8 @@ namespace Presentacion
 
                     cortesPorCompra.codigo = oCortePorCompra.corte.codigo;
                     cortesPorCompra.corte = oCortePorCompra.corte.corte;
+                    cortesPorCompra.Desc_recargo = oCortePorCompra.Desc_recargo;
+                    cortesPorCompra.Iva_compra = oCortePorCompra.Iva_compra;
                     cortesPorCompra.cantKgs = oCortePorCompra.cantKgs;
                     cortesPorCompra.precioKg = oCortePorCompra.precioKg;
                     cortesPorCompra.totalS = oCortePorCompra.precioKg * cortesPorCompra.cantKgs;
@@ -1310,6 +1314,8 @@ namespace Presentacion
             txtPrecioFinalVenta.TabStop = checkManualPrecio.Checked;
             txtPrecioFinalVenta.ReadOnly = !checkManualPrecio.Checked;
             txtPrecioFinalVenta.Text = txtMargenGan.Text = "";
+            txtPrecioFinalVenta.Focus();
+            txtPrecioFinalVenta.SelectAll();
         }
 
         private void checkMargen_CheckedChanged(object sender, EventArgs e)
@@ -1319,6 +1325,8 @@ namespace Presentacion
             txtMargenGan.TabStop = checkMargen.Checked;
             txtMargenGan.ReadOnly = !checkMargen.Checked;
             txtPrecioFinalVenta.Text = txtMargenGan.Text = "";
+            txtMargenGan.Focus();
+            txtMargenGan.SelectAll();  
         }
 
         private void txtPrecioFinalVenta_TextChanged(object sender, EventArgs e)
@@ -1356,24 +1364,38 @@ namespace Presentacion
         }
         private void CalcularPrecioFinal()
         {
-            if (!(checkMargen.Checked && (txtPrecioKg.Focused || txtMargenGan.Focused)))
-                return;
-
-            // Validar que ambos TextBox contengan valores numéricos
-            if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
-                float.TryParse(txtMargenGan.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float margenGan))
+            //Calcular el total del producto Cant * precioFinal
+            try
             {
-                // Realizar la multiplicación
-                float precioFinalVenta = precioKg * (1 + (margenGan / 100));
+                float.TryParse(txtCantKgs.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cant);
+                float precioKgIncluido = Util_Form.convertFloat(txtPrecioKg.Text, false);
+                txtTotalProd.Text = (precioKgIncluido * cant).ToString("0.00");
 
-                // Mostrar el resultado en txtPrecioFinalVenta
-                txtPrecioFinalVenta.Text = precioFinalVenta.ToString("0.00"); // Formato con 2 decimales
+                if (!(checkMargen.Checked && (txtPrecioKg.Focused || txtMargenGan.Focused)))
+                    return;
+
+                // Validar que ambos TextBox contengan valores numéricos
+                if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
+                    float.TryParse(txtMargenGan.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float margenGan))
+                {
+                    // Realizar la multiplicación
+                    float precioFinalVenta = precioKg * (1 + (margenGan / 100));
+
+                    // Mostrar el resultado en txtPrecioFinalVenta
+                    txtPrecioFinalVenta.Text = precioFinalVenta.ToString("0.00"); // Formato con 2 decimales
+                    txtTotalProd.Text = (precioFinalVenta * cant).ToString("0.00");                
+                }
+                else
+                {
+                    // Mostrar mensaje de error o limpiar el TextBox de resultado
+                    //MessageBox.Show("Ingrese valores numéricos válidos en ambos campos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtPrecioFinalVenta.Text = string.Empty;
+                }
+
             }
-            else
+            catch (Exception)
             {
-                // Mostrar mensaje de error o limpiar el TextBox de resultado
-                //MessageBox.Show("Ingrese valores numéricos válidos en ambos campos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txtPrecioFinalVenta.Text = string.Empty;
+                txtTotalProd.Text = "-";
             }
         }
 

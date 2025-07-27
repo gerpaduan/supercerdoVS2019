@@ -28,11 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCompras));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formCompras));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboSucursal = new System.Windows.Forms.ComboBox();
@@ -48,6 +48,9 @@
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.barraControl = new System.Windows.Forms.ToolStrip();
+            this.nuevo = new System.Windows.Forms.ToolStripButton();
+            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
+            this.LineasCompras = new System.Windows.Forms.ToolStripButton();
             this.btnSeleccionar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.txtTotalS = new System.Windows.Forms.TextBox();
@@ -56,6 +59,8 @@
             this.label5 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.grillaCompras = new System.Windows.Forms.DataGridView();
+            this.txtCantMedias = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.idCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaCompra = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.nroRemito = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -71,11 +76,6 @@
             this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.creado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.actualizado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.txtCantMedias = new System.Windows.Forms.TextBox();
-            this.label8 = new System.Windows.Forms.Label();
-            this.nuevo = new System.Windows.Forms.ToolStripButton();
-            this.menuDuplicar = new System.Windows.Forms.ToolStripButton();
-            this.LineasCompras = new System.Windows.Forms.ToolStripButton();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCompras)).BeginInit();
@@ -83,8 +83,8 @@
             // 
             // pnlBuscar
             // 
-            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.pnlBuscar.Controls.Add(this.groupBox1);
             this.pnlBuscar.Controls.Add(this.comboSucursal);
@@ -264,6 +264,40 @@
             this.barraControl.TabStop = true;
             this.barraControl.Text = "toolStrip1";
             // 
+            // nuevo
+            // 
+            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
+            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.nuevo.Name = "nuevo";
+            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.nuevo.Size = new System.Drawing.Size(48, 42);
+            this.nuevo.Text = "&Nuevo";
+            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
+            // 
+            // menuDuplicar
+            // 
+            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
+            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
+            this.menuDuplicar.Name = "menuDuplicar";
+            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
+            this.menuDuplicar.Text = "Duplicar";
+            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
+            // 
+            // LineasCompras
+            // 
+            this.LineasCompras.Image = ((System.Drawing.Image)(resources.GetObject("LineasCompras.Image")));
+            this.LineasCompras.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.LineasCompras.Name = "LineasCompras";
+            this.LineasCompras.Size = new System.Drawing.Size(74, 42);
+            this.LineasCompras.Text = "Lineas Cprs.";
+            this.LineasCompras.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.LineasCompras.Click += new System.EventHandler(this.LineasCompras_Click);
+            // 
             // btnSeleccionar
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -334,8 +368,8 @@
             // 
             // panel1
             // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(10, 535);
@@ -349,9 +383,9 @@
             this.grillaCompras.AllowUserToAddRows = false;
             this.grillaCompras.AllowUserToDeleteRows = false;
             this.grillaCompras.AllowUserToResizeRows = false;
-            this.grillaCompras.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaCompras.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaCompras.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.DisplayedCells;
             this.grillaCompras.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             this.grillaCompras.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -380,6 +414,28 @@
             this.grillaCompras.Size = new System.Drawing.Size(817, 321);
             this.grillaCompras.TabIndex = 8;
             this.grillaCompras.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaCompras_CellDoubleClick);
+            // 
+            // txtCantMedias
+            // 
+            this.txtCantMedias.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCantMedias.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantMedias.Location = new System.Drawing.Point(708, 462);
+            this.txtCantMedias.Name = "txtCantMedias";
+            this.txtCantMedias.ReadOnly = true;
+            this.txtCantMedias.Size = new System.Drawing.Size(123, 21);
+            this.txtCantMedias.TabIndex = 27;
+            this.txtCantMedias.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label8
+            // 
+            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(611, 465);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(91, 15);
+            this.label8.TabIndex = 26;
+            this.label8.Text = "Cant. Medias";
             // 
             // idCompra
             // 
@@ -446,10 +502,10 @@
             dataGridViewCellStyle2.NullValue = null;
             this.cantKg.DefaultCellStyle = dataGridViewCellStyle2;
             this.cantKg.FillWeight = 42.98663F;
-            this.cantKg.HeaderText = "Cant. Kgs";
+            this.cantKg.HeaderText = "Cantidad";
             this.cantKg.Name = "cantKg";
             this.cantKg.ReadOnly = true;
-            this.cantKg.Width = 78;
+            this.cantKg.Width = 74;
             // 
             // totalS
             // 
@@ -530,62 +586,6 @@
             this.actualizado.ReadOnly = true;
             this.actualizado.Width = 87;
             // 
-            // txtCantMedias
-            // 
-            this.txtCantMedias.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCantMedias.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantMedias.Location = new System.Drawing.Point(708, 462);
-            this.txtCantMedias.Name = "txtCantMedias";
-            this.txtCantMedias.ReadOnly = true;
-            this.txtCantMedias.Size = new System.Drawing.Size(123, 21);
-            this.txtCantMedias.TabIndex = 27;
-            this.txtCantMedias.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label8
-            // 
-            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(611, 465);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(91, 15);
-            this.label8.TabIndex = 26;
-            this.label8.Text = "Cant. Medias";
-            // 
-            // nuevo
-            // 
-            this.nuevo.Image = ((System.Drawing.Image)(resources.GetObject("nuevo.Image")));
-            this.nuevo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.nuevo.Name = "nuevo";
-            this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(48, 42);
-            this.nuevo.Text = "&Nuevo";
-            this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
-            // 
-            // menuDuplicar
-            // 
-            this.menuDuplicar.Image = ((System.Drawing.Image)(resources.GetObject("menuDuplicar.Image")));
-            this.menuDuplicar.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
-            this.menuDuplicar.Name = "menuDuplicar";
-            this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.menuDuplicar.Size = new System.Drawing.Size(57, 42);
-            this.menuDuplicar.Text = "Duplicar";
-            this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
-            // 
-            // LineasCompras
-            // 
-            this.LineasCompras.Image = ((System.Drawing.Image)(resources.GetObject("LineasCompras.Image")));
-            this.LineasCompras.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.LineasCompras.Name = "LineasCompras";
-            this.LineasCompras.Size = new System.Drawing.Size(74, 42);
-            this.LineasCompras.Text = "Lineas Cprs.";
-            this.LineasCompras.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.LineasCompras.Click += new System.EventHandler(this.LineasCompras_Click);
-            // 
             // formCompras
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -652,6 +652,10 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.DataGridView grillaCompras;
+        private System.Windows.Forms.TextBox txtCantMedias;
+        private System.Windows.Forms.Label label8;
+        protected System.Windows.Forms.ToolStripButton menuDuplicar;
+        private System.Windows.Forms.ToolStripButton LineasCompras;
         private System.Windows.Forms.DataGridViewTextBoxColumn idCompra;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaCompra;
         private System.Windows.Forms.DataGridViewTextBoxColumn nroRemito;
@@ -667,10 +671,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
         private System.Windows.Forms.DataGridViewTextBoxColumn creado;
         private System.Windows.Forms.DataGridViewTextBoxColumn actualizado;
-        private System.Windows.Forms.TextBox txtCantMedias;
-        private System.Windows.Forms.Label label8;
-        protected System.Windows.Forms.ToolStripButton menuDuplicar;
-        private System.Windows.Forms.ToolStripButton LineasCompras;
-
     }
 }

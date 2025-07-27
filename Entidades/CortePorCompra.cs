@@ -26,6 +26,9 @@ namespace Entidades
             set { idCortePorCompra = value; }
         }
 
+        private float desc_recargo;
+        private float iva_compra;
+
         public Compra Compra
         {
             get
@@ -101,5 +104,7 @@ namespace Entidades
         public bool Balanza { get => balanza; set => balanza = value; }
         public float Margen { get => margen; set => margen = value; }
         public float PrecioVenta { get => precioVenta; set => precioVenta = value; }
+        public float Desc_recargo { get => desc_recargo; set => desc_recargo = value; }
+        public float Iva_compra { get => iva_compra; set => iva_compra = value; }
     }
 }

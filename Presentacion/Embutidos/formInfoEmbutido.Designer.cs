@@ -185,7 +185,7 @@
             dataGridViewCellStyle1.NullValue = null;
             this.kgUtilizados.DefaultCellStyle = dataGridViewCellStyle1;
             this.kgUtilizados.FillWeight = 82.81686F;
-            this.kgUtilizados.HeaderText = "Kgs. Utilizados";
+            this.kgUtilizados.HeaderText = "Cant.Utilizada";
             this.kgUtilizados.MinimumWidth = 6;
             this.kgUtilizados.Name = "kgUtilizados";
             this.kgUtilizados.ReadOnly = true;

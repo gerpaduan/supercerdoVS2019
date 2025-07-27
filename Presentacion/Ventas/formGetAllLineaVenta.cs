@@ -63,7 +63,9 @@ namespace Presentacion
                     grillaVentas.Columns["fechaVenta"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
                     grillaVentas.Columns["fechaVenta"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
                     grillaVentas.Columns["cantKg"].DefaultCellStyle.Format = "F3";
+                    grillaVentas.Columns["cantKg"].HeaderText = "cantidad";
                     grillaVentas.Columns["precioKg"].DefaultCellStyle.Format = "F2";
+                    grillaVentas.Columns["totalCorte"].HeaderText = "Tot.Prod.";
                     grillaVentas.Columns["bonificacion"].DefaultCellStyle.Format = "F2";
                     grillaVentas.Columns["totalCorte"].DefaultCellStyle.Format = "F2";
 

@@ -102,6 +102,8 @@ namespace Presentacion
             grillaEmbutidos.Columns["Cod.Emb"].HeaderText = "Cod.Elab";
             grillaEmbutidos.Columns["Embutido"].HeaderText = "Elaborado";
             grillaEmbutidos.Columns["Kgs"].DefaultCellStyle.Format = "F3";
+            grillaEmbutidos.Columns["Kgs"].HeaderText = "Cant";
+            grillaEmbutidos.Columns["Corte"].HeaderText = "Ingrediente";
             //formato para columna de fechas
             grillaEmbutidos.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEmbutidos.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";

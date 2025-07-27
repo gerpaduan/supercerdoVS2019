@@ -788,7 +788,7 @@
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(28, 15);
             this.label17.TabIndex = 44;
-            this.label17.Text = "Kgs";
+            this.label17.Text = "Cant";
             // 
             // label6
             // 

@@ -74,6 +74,18 @@
             this.txtDescripcion = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.grillaVentas = new System.Windows.Forms.DataGridView();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtTotalKgs = new System.Windows.Forms.TextBox();
+            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.label9 = new System.Windows.Forms.Label();
+            this.txtCantItems = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txtKgsAj = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.txtTotalSAj = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
+            this.txtTotComisionTarj = new System.Windows.Forms.TextBox();
+            this.panelDetalleTotales = new System.Windows.Forms.Panel();
             this.idVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.fechaVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.idVendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -98,18 +110,6 @@
             this.turno = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.diaFestivo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.label6 = new System.Windows.Forms.Label();
-            this.txtTotalKgs = new System.Windows.Forms.TextBox();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.label9 = new System.Windows.Forms.Label();
-            this.txtCantItems = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.txtKgsAj = new System.Windows.Forms.TextBox();
-            this.label10 = new System.Windows.Forms.Label();
-            this.txtTotalSAj = new System.Windows.Forms.TextBox();
-            this.label15 = new System.Windows.Forms.Label();
-            this.txtTotComisionTarj = new System.Windows.Forms.TextBox();
-            this.panelDetalleTotales = new System.Windows.Forms.Panel();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
@@ -597,6 +597,138 @@
             this.grillaVentas.TabIndex = 3;
             this.grillaVentas.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaVentas_CellDoubleClick);
             // 
+            // label6
+            // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(-2, 134);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(101, 15);
+            this.label6.TabIndex = 36;
+            this.label6.Text = "Total Kgs Real";
+            // 
+            // txtTotalKgs
+            // 
+            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalKgs.Location = new System.Drawing.Point(1, 153);
+            this.txtTotalKgs.Name = "txtTotalKgs";
+            this.txtTotalKgs.ReadOnly = true;
+            this.txtTotalKgs.Size = new System.Drawing.Size(113, 21);
+            this.txtTotalKgs.TabIndex = 35;
+            this.txtTotalKgs.TabStop = false;
+            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label9
+            // 
+            this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.Location = new System.Drawing.Point(901, 173);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(79, 15);
+            this.label9.TabIndex = 39;
+            this.label9.Text = "Cant. Ítems";
+            // 
+            // txtCantItems
+            // 
+            this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantItems.Location = new System.Drawing.Point(903, 191);
+            this.txtCantItems.Name = "txtCantItems";
+            this.txtCantItems.ReadOnly = true;
+            this.txtCantItems.Size = new System.Drawing.Size(113, 21);
+            this.txtCantItems.TabIndex = 38;
+            this.txtCantItems.TabStop = false;
+            this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(-2, 93);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(87, 15);
+            this.label1.TabIndex = 53;
+            this.label1.Text = "Total Kgs Aj.";
+            // 
+            // txtKgsAj
+            // 
+            this.txtKgsAj.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtKgsAj.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtKgsAj.Location = new System.Drawing.Point(1, 110);
+            this.txtKgsAj.Name = "txtKgsAj";
+            this.txtKgsAj.ReadOnly = true;
+            this.txtKgsAj.Size = new System.Drawing.Size(113, 21);
+            this.txtKgsAj.TabIndex = 52;
+            this.txtKgsAj.TabStop = false;
+            this.txtKgsAj.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label10
+            // 
+            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(-2, 50);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(71, 15);
+            this.label10.TabIndex = 55;
+            this.label10.Text = "Total $ Aj.";
+            // 
+            // txtTotalSAj
+            // 
+            this.txtTotalSAj.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotalSAj.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalSAj.Location = new System.Drawing.Point(1, 68);
+            this.txtTotalSAj.Name = "txtTotalSAj";
+            this.txtTotalSAj.ReadOnly = true;
+            this.txtTotalSAj.Size = new System.Drawing.Size(113, 21);
+            this.txtTotalSAj.TabIndex = 54;
+            this.txtTotalSAj.TabStop = false;
+            this.txtTotalSAj.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label15
+            // 
+            this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(-3, 8);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(109, 15);
+            this.label15.TabIndex = 57;
+            this.label15.Text = "Total Com. Tarj.";
+            // 
+            // txtTotComisionTarj
+            // 
+            this.txtTotComisionTarj.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtTotComisionTarj.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotComisionTarj.Location = new System.Drawing.Point(0, 26);
+            this.txtTotComisionTarj.Name = "txtTotComisionTarj";
+            this.txtTotComisionTarj.ReadOnly = true;
+            this.txtTotComisionTarj.Size = new System.Drawing.Size(113, 21);
+            this.txtTotComisionTarj.TabIndex = 56;
+            this.txtTotComisionTarj.TabStop = false;
+            this.txtTotComisionTarj.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // panelDetalleTotales
+            // 
+            this.panelDetalleTotales.Controls.Add(this.label15);
+            this.panelDetalleTotales.Controls.Add(this.txtTotComisionTarj);
+            this.panelDetalleTotales.Controls.Add(this.txtTotalKgs);
+            this.panelDetalleTotales.Controls.Add(this.label10);
+            this.panelDetalleTotales.Controls.Add(this.label6);
+            this.panelDetalleTotales.Controls.Add(this.txtTotalSAj);
+            this.panelDetalleTotales.Controls.Add(this.txtKgsAj);
+            this.panelDetalleTotales.Controls.Add(this.label1);
+            this.panelDetalleTotales.Location = new System.Drawing.Point(903, 315);
+            this.panelDetalleTotales.Margin = new System.Windows.Forms.Padding(2);
+            this.panelDetalleTotales.Name = "panelDetalleTotales";
+            this.panelDetalleTotales.Size = new System.Drawing.Size(112, 172);
+            this.panelDetalleTotales.TabIndex = 58;
+            this.panelDetalleTotales.Visible = false;
+            // 
             // idVenta
             // 
             this.idVenta.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
@@ -716,7 +848,7 @@
             dataGridViewCellStyle2.Format = "N3";
             dataGridViewCellStyle2.NullValue = null;
             this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
-            this.totalKg.HeaderText = "Total Kg";
+            this.totalKg.HeaderText = "Cantidad";
             this.totalKg.MinimumWidth = 6;
             this.totalKg.Name = "totalKg";
             this.totalKg.ReadOnly = true;
@@ -851,138 +983,6 @@
             this.estado.ReadOnly = true;
             this.estado.Width = 125;
             // 
-            // label6
-            // 
-            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(-2, 134);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(101, 15);
-            this.label6.TabIndex = 36;
-            this.label6.Text = "Total Kgs Real";
-            // 
-            // txtTotalKgs
-            // 
-            this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalKgs.Location = new System.Drawing.Point(1, 153);
-            this.txtTotalKgs.Name = "txtTotalKgs";
-            this.txtTotalKgs.ReadOnly = true;
-            this.txtTotalKgs.Size = new System.Drawing.Size(113, 21);
-            this.txtTotalKgs.TabIndex = 35;
-            this.txtTotalKgs.TabStop = false;
-            this.txtTotalKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label9
-            // 
-            this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label9.AutoSize = true;
-            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(901, 173);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(79, 15);
-            this.label9.TabIndex = 39;
-            this.label9.Text = "Cant. Ítems";
-            // 
-            // txtCantItems
-            // 
-            this.txtCantItems.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCantItems.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantItems.Location = new System.Drawing.Point(903, 191);
-            this.txtCantItems.Name = "txtCantItems";
-            this.txtCantItems.ReadOnly = true;
-            this.txtCantItems.Size = new System.Drawing.Size(113, 21);
-            this.txtCantItems.TabIndex = 38;
-            this.txtCantItems.TabStop = false;
-            this.txtCantItems.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(-2, 93);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(87, 15);
-            this.label1.TabIndex = 53;
-            this.label1.Text = "Total Kgs Aj.";
-            // 
-            // txtKgsAj
-            // 
-            this.txtKgsAj.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtKgsAj.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtKgsAj.Location = new System.Drawing.Point(1, 110);
-            this.txtKgsAj.Name = "txtKgsAj";
-            this.txtKgsAj.ReadOnly = true;
-            this.txtKgsAj.Size = new System.Drawing.Size(113, 21);
-            this.txtKgsAj.TabIndex = 52;
-            this.txtKgsAj.TabStop = false;
-            this.txtKgsAj.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label10
-            // 
-            this.label10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(-2, 50);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(71, 15);
-            this.label10.TabIndex = 55;
-            this.label10.Text = "Total $ Aj.";
-            // 
-            // txtTotalSAj
-            // 
-            this.txtTotalSAj.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotalSAj.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalSAj.Location = new System.Drawing.Point(1, 68);
-            this.txtTotalSAj.Name = "txtTotalSAj";
-            this.txtTotalSAj.ReadOnly = true;
-            this.txtTotalSAj.Size = new System.Drawing.Size(113, 21);
-            this.txtTotalSAj.TabIndex = 54;
-            this.txtTotalSAj.TabStop = false;
-            this.txtTotalSAj.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label15
-            // 
-            this.label15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(-3, 8);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(109, 15);
-            this.label15.TabIndex = 57;
-            this.label15.Text = "Total Com. Tarj.";
-            // 
-            // txtTotComisionTarj
-            // 
-            this.txtTotComisionTarj.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTotComisionTarj.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotComisionTarj.Location = new System.Drawing.Point(0, 26);
-            this.txtTotComisionTarj.Name = "txtTotComisionTarj";
-            this.txtTotComisionTarj.ReadOnly = true;
-            this.txtTotComisionTarj.Size = new System.Drawing.Size(113, 21);
-            this.txtTotComisionTarj.TabIndex = 56;
-            this.txtTotComisionTarj.TabStop = false;
-            this.txtTotComisionTarj.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // panelDetalleTotales
-            // 
-            this.panelDetalleTotales.Controls.Add(this.label15);
-            this.panelDetalleTotales.Controls.Add(this.txtTotComisionTarj);
-            this.panelDetalleTotales.Controls.Add(this.txtTotalKgs);
-            this.panelDetalleTotales.Controls.Add(this.label10);
-            this.panelDetalleTotales.Controls.Add(this.label6);
-            this.panelDetalleTotales.Controls.Add(this.txtTotalSAj);
-            this.panelDetalleTotales.Controls.Add(this.txtKgsAj);
-            this.panelDetalleTotales.Controls.Add(this.label1);
-            this.panelDetalleTotales.Location = new System.Drawing.Point(903, 315);
-            this.panelDetalleTotales.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.panelDetalleTotales.Name = "panelDetalleTotales";
-            this.panelDetalleTotales.Size = new System.Drawing.Size(112, 172);
-            this.panelDetalleTotales.TabIndex = 58;
-            this.panelDetalleTotales.Visible = false;
-            // 
             // formVentas
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1062,6 +1062,10 @@
         protected System.Windows.Forms.Label label14;
         private System.Windows.Forms.Button btnBuscarCliente;
         private System.Windows.Forms.Button btnLimpiar;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.TextBox txtTotComisionTarj;
+        private System.Windows.Forms.Panel panelDetalleTotales;
+        private System.Windows.Forms.ToolStripButton exportExcel;
         private System.Windows.Forms.DataGridViewTextBoxColumn idVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn fechaVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn idVendedor;
@@ -1086,9 +1090,5 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn turno;
         private System.Windows.Forms.DataGridViewTextBoxColumn diaFestivo;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
-        private System.Windows.Forms.Label label15;
-        private System.Windows.Forms.TextBox txtTotComisionTarj;
-        private System.Windows.Forms.Panel panelDetalleTotales;
-        private System.Windows.Forms.ToolStripButton exportExcel;
     }
 }

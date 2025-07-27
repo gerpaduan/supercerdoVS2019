@@ -73,6 +73,7 @@ namespace Presentacion
             grillaEmbutidos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
             grillaEmbutidos.Columns["Kgs"].DefaultCellStyle.Format = "F3";
+            grillaEmbutidos.Columns["Kgs"].HeaderText = "Cant.";
             //formato para columna de fechas
             grillaEmbutidos.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEmbutidos.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
