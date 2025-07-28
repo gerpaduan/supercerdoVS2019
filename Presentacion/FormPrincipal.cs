@@ -730,7 +730,13 @@ namespace Presentacion
 
         private void btnCajaVentas_Click(object sender, EventArgs e)
         {
-            cajaVentas();
+            formPOS fr = new formPOS();
+            Entidades.Usuario usuario = new Entidades.Usuario();
+            usuario.Id = 1;
+            fr.oUsuario = usuario;
+            fr.Show(); 
+
+            //cajaVentas();
         }
 
         private void btnAbrirCaja_Click(object sender, EventArgs e)

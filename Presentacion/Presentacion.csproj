@@ -202,6 +202,12 @@
     <Compile Include="Caja\formGetAllLineaExpendio.Designer.cs">
       <DependentUpon>formGetAllLineaExpendio.cs</DependentUpon>
     </Compile>
+    <Compile Include="Caja\formPOS.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caja\formPOS.Designer.cs">
+      <DependentUpon>formPOS.cs</DependentUpon>
+    </Compile>
     <Compile Include="Caja\FormSelectPuntoExpendio.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -713,6 +719,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formGetAllLineaExpendio.resx">
       <DependentUpon>formGetAllLineaExpendio.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Caja\formPOS.resx">
+      <DependentUpon>formPOS.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\FormSelectPuntoExpendio.resx">
       <DependentUpon>FormSelectPuntoExpendio.cs</DependentUpon>
