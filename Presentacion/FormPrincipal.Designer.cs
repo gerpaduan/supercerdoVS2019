@@ -393,7 +393,7 @@
             this.btnCajaVentas.Size = new System.Drawing.Size(210, 41);
             this.btnCajaVentas.TabIndex = 15;
             this.btnCajaVentas.TabStop = false;
-            this.btnCajaVentas.Text = "&Caja Ventas";
+            this.btnCajaVentas.Text = "Punto de &Venta";
             this.btnCajaVentas.UseVisualStyleBackColor = false;
             this.btnCajaVentas.Click += new System.EventHandler(this.btnCajaVentas_Click);
             // 
@@ -492,7 +492,7 @@
             // verComprasToolStripMenuItem
             // 
             this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
-            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
             this.verComprasToolStripMenuItem.Text = "Ver Compras";
             this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
             // 
@@ -635,21 +635,21 @@
             // ctasCtesToolStripMenuItem
             // 
             this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
-            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
             this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click_1);
             // 
             // pagosToolStripMenuItem
             // 
             this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
-            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.pagosToolStripMenuItem.Text = "Pagos";
             this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click_1);
             // 
             // chequesToolStripMenuItem
             // 
             this.chequesToolStripMenuItem.Name = "chequesToolStripMenuItem";
-            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.chequesToolStripMenuItem.Text = "Cheques";
             this.chequesToolStripMenuItem.Click += new System.EventHandler(this.chequesToolStripMenuItem_Click);
             // 
@@ -664,7 +664,7 @@
             // stockActualToolStripMenuItem
             // 
             this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
             this.stockActualToolStripMenuItem.Text = "Stock Actual";
             this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
             // 
@@ -680,7 +680,7 @@
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -690,7 +690,7 @@
             this.verBalanzaToolStripMenuItem1,
             this.leerPesoToolStripMenuItem1});
             this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
-            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
             this.balanzaToolStripMenuItem1.Text = "Balanza";
             // 
             // verBalanzaToolStripMenuItem1

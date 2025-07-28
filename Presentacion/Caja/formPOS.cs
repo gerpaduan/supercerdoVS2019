@@ -126,7 +126,8 @@ namespace Presentacion.Caja
 
         public formPOS()
         {
-            InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
+            InitializeComponent();
+            this.Icon = Properties.Resources.CarniSys_ICONO;
 
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;
@@ -148,6 +149,7 @@ namespace Presentacion.Caja
             if (!fecha.Equals(""))
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();
+                txtFecVenta.Text = DateTime.Now.ToString("dddd-dd MMMM, yyyy HH:mm", new System.Globalization.CultureInfo("es-ES"));
             }
             checkCtaCte_CheckedChanged(null,null);
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
@@ -2044,6 +2046,7 @@ namespace Presentacion.Caja
                 "F3 = Cálculo Billetes  | F4 = Bonificación  |  F5 = Nueva Compra  |  \n F6 = Mis Egresos Caja  |  F7 = Egresos Caja  | F8 = Facturacion | F9 = Buscar Cliente  |  " +
                 "F10 = Buscar Producto  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
             comboExpendioEstado.SelectedIndex = 0;
+            comboFormaPago.SelectedIndex = 0;
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -2065,8 +2068,8 @@ namespace Presentacion.Caja
                 colorUser = System.Drawing.SystemColors.InactiveBorder;
                 this.pnlBuscar.BackColor = colorUser;
                 this.grupoCortes.BackColor = colorUser;
-                comboColors.Text = colorUser.ToString();
-                grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
+                //comboColors.Text = colorUser.ToString();
+                //grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
                 timerBloquearCaja.Start();
                 ultimaVentaVendedor();
                 restablecerFormaDePago();
@@ -2487,12 +2490,12 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Enter(object sender, EventArgs e)
         {
-            btnAceptar.BackColor = Color.FromName("LimeGreen");
+            //btnAceptar.BackColor = Color.FromName("LimeGreen");
         }
 
         private void btnAceptar_Leave(object sender, EventArgs e)
         {
-            btnAceptar.BackColor = Color.FromName("HotTrack");
+            //btnAceptar.BackColor = Color.FromName("HotTrack");
         }
 
         private void btnAbonar_Click(object sender, EventArgs e)
@@ -3067,22 +3070,7 @@ namespace Presentacion.Caja
         private void comboColors_DrawItem(object sender, DrawItemEventArgs e)
         {
             try
-            {
-                if (comboColors.Items.Count < 13)
-                {
-                    comboColors.Items.Add(Color.SteelBlue);
-                    comboColors.Items.Add(Color.DarkCyan);
-                    comboColors.Items.Add(Color.DarkOrchid);
-                    comboColors.Items.Add(Color.SeaGreen);
-                    comboColors.Items.Add(Color.DarkCyan);
-                    comboColors.Items.Add(Color.Black);
-                    comboColors.Items.Add(Color.Red);
-                    comboColors.Items.Add(Color.Green);
-                    comboColors.Items.Add(Color.Firebrick);
-                    comboColors.Items.Add(Color.Teal);
-                    comboColors.Items.Add(Color.DarkSlateBlue);
-                    comboColors.Items.Add(Color.DimGray);
-                }
+            {                
 
                 ComboBox cmb = sender as ComboBox;
                 if (cmb == null) return;
@@ -3119,17 +3107,17 @@ namespace Presentacion.Caja
             }
         }
 
-        private void comboColors_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            try
-            {
-                this.pnlBuscar.BackColor = (Color)comboColors.SelectedItem;
-                this.grupoCortes.BackColor = (Color)comboColors.SelectedItem;
-            }
-            catch (Exception)
-            {
-            }
-        }
+        //private void comboColors_SelectedIndexChanged(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        this.pnlBuscar.BackColor = (Color)comboColors.SelectedItem;
+        //        this.grupoCortes.BackColor = (Color)comboColors.SelectedItem;
+        //    }
+        //    catch (Exception)
+        //    {
+        //    }
+        //}
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
