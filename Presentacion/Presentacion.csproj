@@ -1013,7 +1013,9 @@
     <None Include="Resources\Barra Lateral Expendio Min.png" />
     <None Include="Resources\Barra Lateral Expendio Min1.png" />
     <None Include="Resources\Barra Lateral Expendio Min2.png" />
+    <None Include="Resources\balanza 16 px.png" />
     <Content Include="Resources\CarniSys_ICONO.ico" />
+    <None Include="Resources\scale.png" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <ItemGroup>

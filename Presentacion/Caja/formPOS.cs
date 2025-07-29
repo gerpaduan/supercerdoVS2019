@@ -1673,21 +1673,27 @@ namespace Presentacion.Caja
             {
                 case Entidades.Venta.formaPagoEnum.Efectivo:
                     checkEfectivo.Checked = true;
+                    comboFormaPago.SelectedIndex = 1;
                     break;
                 case Entidades.Venta.formaPagoEnum.Debito:
                     checkDebito.Checked = true;
+                    comboFormaPago.SelectedIndex = 2;
                     break;
                 case Entidades.Venta.formaPagoEnum.Credito:
                     checkCredito.Checked = true;
+                    comboFormaPago.SelectedIndex = 3;
                     break;
                 case Entidades.Venta.formaPagoEnum.CtaCte:
                     checkCtaCtePago.Checked = true;
+                    comboFormaPago.SelectedIndex = 6;
                     break;
                 case Entidades.Venta.formaPagoEnum.Qr:
                     checkQr.Checked = true;
+                    comboFormaPago.SelectedIndex = 4;
                     break;
                 case Entidades.Venta.formaPagoEnum.Transferencia:
                     checkTransf.Checked = true;
+                    comboFormaPago.SelectedIndex = 5;
                     break;
             }                    
         }
@@ -1984,13 +1990,13 @@ namespace Presentacion.Caja
             catch (Exception ex)
             {
                 txtCantKgs.Text = "Error balanza";
-                lblErrorBalanza.Text = ex.Message;
+                lblErrorBalanza.Text = "Presione * (asterisco) para desctivar la balanza+\n" + ex.Message;
                 lblErrorBalanza.Visible = true;
                 txtCodigo.Focus();
 
                 nroErrorBalanza++;
                 //si tira error mas de 5 veces se desactiva balanza automaticamente y se pone contador en serio
-                if (nroErrorBalanza > 20)
+                if (nroErrorBalanza > 10)
                 {
                     timer1.Stop();
                     nroErrorBalanza = 0;
@@ -2047,6 +2053,8 @@ namespace Presentacion.Caja
                 "F10 = Buscar Producto  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
             comboExpendioEstado.SelectedIndex = 0;
             comboFormaPago.SelectedIndex = 0;
+            AplicarPlaceholder();
+
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -2085,6 +2093,55 @@ namespace Presentacion.Caja
             {
                 this.Close();
             }
+        }
+
+        private void AplicarPlaceholder()
+        {
+            txtClave.ForeColor = Color.Gray;
+            txtClave.Text = "Contraseña";
+            txtClave.PasswordChar = '\0'; // Quitar ocultamiento mientras se ve el placeholder
+
+            txtClave.GotFocus += (s, e) =>
+            {
+                if (txtClave.Text == "Contraseña")
+                {
+                    txtClave.Text = "";
+                    txtClave.ForeColor = Color.Black;
+                    txtClave.PasswordChar = '*'; // Restaurar ocultamiento
+                }
+            };
+
+            txtClave.LostFocus += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtClave.Text))
+                {
+                    txtClave.ForeColor = Color.Gray;
+                    txtClave.Text = "Contraseña";
+                    txtClave.PasswordChar = '\0'; // Mostrar texto plano
+                }
+            };
+
+            //observaciones
+            txtObservaciones.ForeColor = Color.Gray;
+            txtObservaciones.Text = "Observaciones";
+
+            txtObservaciones.GotFocus += (s, e) =>
+            {
+                if (txtObservaciones.Text == "Observaciones")
+                {
+                    txtObservaciones.Text = "";
+                    txtObservaciones.ForeColor = Color.Black;
+                }
+            };
+
+            txtObservaciones.LostFocus += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtClave.Text))
+                {
+                    txtObservaciones.ForeColor = Color.Gray;
+                    txtClave.Text = "Observaciones";
+                }
+            };
         }
 
         private void validarAperturaCaja()
@@ -2954,6 +3011,37 @@ namespace Presentacion.Caja
             expendirExpendios();
         }
 
+        private void comboFormaPago_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //FORMA PAGO
+            //EFECTIVO
+            //DEBITO
+            //CREDITO
+            //QR
+            //TRANSFERENCIA
+            //CTA.CTE
+
+            string formaPago = comboFormaPago.SelectedItem?.ToString().ToUpper();            
+
+            foreach (Control ctrl in groupFormaPago.Controls)
+            {
+                if (ctrl is CheckBox chk)
+                {
+                    if (string.IsNullOrEmpty(formaPago) || formaPago.Equals("FORMA PAGO"))
+                        chk.Checked = false;
+                    else
+                    {
+                        string textReplace = chk.Text.Replace(" ", "").ToUpper();
+                        if (formaPago.Contains(textReplace))
+                        {
+                            chk.Checked = true;
+                            break; // si solo querés marcar uno
+                        }
+                    }
+                }
+            }
+        }
+
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
         {
             validarPagoMixto();
@@ -3022,9 +3110,8 @@ namespace Presentacion.Caja
                 {
                     totalUltimaVenta += linea.PrecioKg * linea.CantKg;
                 }
-                lblHoraUltimaVenta.Text = oUltimaVentaVendedor.IdVenta.ToString() +
-                    "\n " + oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
-                    "\n " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
+                lblHoraUltimaVenta.Text = oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
+                    " " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
                     "\n$ " + totalUltimaVenta.ToString("F2");
             }
             catch (Exception)
@@ -3121,7 +3208,6 @@ namespace Presentacion.Caja
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            //TODO: 
             if (oCliente.idPersona == Entidades.Parametros.idConsumidorFinal)
             {
                 formVentasVendedor frmVentasVendedor = new formVentasVendedor();

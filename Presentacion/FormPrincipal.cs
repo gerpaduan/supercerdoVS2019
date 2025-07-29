@@ -107,7 +107,7 @@ namespace Presentacion
             frmLogin.ShowDialog(this);
             foreach (Form frm in Application.OpenForms)
             {
-                if (frm.GetType() == typeof(formVentaCajaConExpendio))
+                if (frm.GetType() == typeof(formPOS))
                 {
                     foreach (Control ctrl in frm.Controls)
                     {
@@ -122,7 +122,7 @@ namespace Presentacion
             }
             if (!formAbierto)
             {
-                formVentaCajaConExpendio frmVentaCaja = new formVentaCajaConExpendio();
+                formPOS frmVentaCaja = new formPOS();
                 frmVentaCaja.oUsuario = oUsuario;
                 frmVentaCaja.Show();
                 frmVentaCaja.BringToFront();
@@ -730,13 +730,7 @@ namespace Presentacion
 
         private void btnCajaVentas_Click(object sender, EventArgs e)
         {
-            formPOS fr = new formPOS();
-            Entidades.Usuario usuario = new Entidades.Usuario();
-            usuario.Id = 1;
-            fr.oUsuario = usuario;
-            fr.Show(); 
-
-            //cajaVentas();
+            cajaVentas();
         }
 
         private void btnAbrirCaja_Click(object sender, EventArgs e)

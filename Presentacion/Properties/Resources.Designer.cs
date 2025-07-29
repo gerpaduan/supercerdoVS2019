@@ -113,6 +113,16 @@ namespace Presentacion.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap balanza_16_px {
+            get {
+                object obj = ResourceManager.GetObject("balanza 16 px", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Barra_Lateral_Expendio_Min {
             get {
                 object obj = ResourceManager.GetObject("Barra Lateral Expendio Min", resourceCulture);
@@ -166,6 +176,16 @@ namespace Presentacion.Properties {
         internal static System.Drawing.Bitmap lock_32x32_32 {
             get {
                 object obj = ResourceManager.GetObject("lock_32x32-32", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap scale {
+            get {
+                object obj = ResourceManager.GetObject("scale", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
