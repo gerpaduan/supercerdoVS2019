@@ -17,6 +17,7 @@ using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
 using System.Drawing.Text;
 using System.Windows;
+using System.Globalization;
 
 namespace Presentacion.Caja
 {
@@ -146,6 +147,7 @@ namespace Presentacion.Caja
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtFecVenta.Text = DateTime.Now.ToString();
+            txtFecVenta.Text = DateTime.Now.ToString("ddd dd MMM yyyy · HH:mm", new CultureInfo("es-AR"));
             if (!fecha.Equals(""))
             {
                 txtFecVenta.Text = DateTime.Parse(fecha).ToString();

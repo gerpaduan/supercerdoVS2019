@@ -129,8 +129,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.comboConexion);
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
-            this.splitContainer1.Size = new System.Drawing.Size(997, 615);
-            this.splitContainer1.SplitterDistance = 201;
+            this.splitContainer1.Size = new System.Drawing.Size(1089, 712);
+            this.splitContainer1.SplitterDistance = 219;
             this.splitContainer1.TabIndex = 0;
             // 
             // lblNombreAdmin
@@ -138,7 +138,7 @@
             this.lblNombreAdmin.AutoSize = true;
             this.lblNombreAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblNombreAdmin.ForeColor = System.Drawing.Color.White;
-            this.lblNombreAdmin.Location = new System.Drawing.Point(11, 569);
+            this.lblNombreAdmin.Location = new System.Drawing.Point(11, 665);
             this.lblNombreAdmin.Name = "lblNombreAdmin";
             this.lblNombreAdmin.Size = new System.Drawing.Size(90, 15);
             this.lblNombreAdmin.TabIndex = 37;
@@ -154,22 +154,26 @@
             this.btnPuntoExpendio.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPuntoExpendio.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnPuntoExpendio.ForeColor = System.Drawing.Color.White;
-            this.btnPuntoExpendio.Location = new System.Drawing.Point(-5, 358);
+            this.btnPuntoExpendio.Image = global::Presentacion.Properties.Resources.cashier;
+            this.btnPuntoExpendio.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnPuntoExpendio.Location = new System.Drawing.Point(-5, 419);
             this.btnPuntoExpendio.Name = "btnPuntoExpendio";
-            this.btnPuntoExpendio.Size = new System.Drawing.Size(210, 41);
+            this.btnPuntoExpendio.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnPuntoExpendio.Size = new System.Drawing.Size(229, 48);
             this.btnPuntoExpendio.TabIndex = 35;
             this.btnPuntoExpendio.TabStop = false;
-            this.btnPuntoExpendio.Text = "Punto E&xpendio";
+            this.btnPuntoExpendio.Text = "   Punto E&xpendio";
+            this.btnPuntoExpendio.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnPuntoExpendio.UseVisualStyleBackColor = false;
             this.btnPuntoExpendio.Click += new System.EventHandler(this.btnPuntoExpendio_Click);
             // 
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(-12, 1);
+            this.pictureBox1.Location = new System.Drawing.Point(-5, 1);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(215, 42);
+            this.pictureBox1.Size = new System.Drawing.Size(229, 42);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 34;
             this.pictureBox1.TabStop = false;
@@ -180,7 +184,7 @@
             this.checkAutoDesconectar.Checked = true;
             this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkAutoDesconectar.Location = new System.Drawing.Point(92, 593);
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(92, 689);
             this.checkAutoDesconectar.Name = "checkAutoDesconectar";
             this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
             this.checkAutoDesconectar.TabIndex = 31;
@@ -194,7 +198,7 @@
             this.btnLogin.FlatAppearance.BorderSize = 0;
             this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLogin.ForeColor = System.Drawing.Color.White;
-            this.btnLogin.Location = new System.Drawing.Point(11, 589);
+            this.btnLogin.Location = new System.Drawing.Point(11, 685);
             this.btnLogin.Name = "btnLogin";
             this.btnLogin.Size = new System.Drawing.Size(79, 23);
             this.btnLogin.TabIndex = 32;
@@ -208,7 +212,7 @@
             this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
             this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarSesion.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarSesion.Location = new System.Drawing.Point(10, 589);
+            this.btnCerrarSesion.Location = new System.Drawing.Point(10, 685);
             this.btnCerrarSesion.Name = "btnCerrarSesion";
             this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
             this.btnCerrarSesion.TabIndex = 33;
@@ -226,12 +230,16 @@
             this.btnEgresosCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEgresosCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEgresosCaja.ForeColor = System.Drawing.Color.White;
-            this.btnEgresosCaja.Location = new System.Drawing.Point(-5, 202);
+            this.btnEgresosCaja.Image = global::Presentacion.Properties.Resources.money;
+            this.btnEgresosCaja.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnEgresosCaja.Location = new System.Drawing.Point(-5, 231);
             this.btnEgresosCaja.Name = "btnEgresosCaja";
-            this.btnEgresosCaja.Size = new System.Drawing.Size(210, 41);
+            this.btnEgresosCaja.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnEgresosCaja.Size = new System.Drawing.Size(229, 48);
             this.btnEgresosCaja.TabIndex = 30;
             this.btnEgresosCaja.TabStop = false;
-            this.btnEgresosCaja.Text = "E&gresos Caja";
+            this.btnEgresosCaja.Text = "   E&gresos Caja";
+            this.btnEgresosCaja.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnEgresosCaja.UseVisualStyleBackColor = false;
             this.btnEgresosCaja.Click += new System.EventHandler(this.btnEgresosCaja_Click);
             // 
@@ -244,12 +252,16 @@
             this.btnUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnUsuarios.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnUsuarios.ForeColor = System.Drawing.Color.White;
-            this.btnUsuarios.Location = new System.Drawing.Point(-4, 474);
+            this.btnUsuarios.Image = global::Presentacion.Properties.Resources.programmer;
+            this.btnUsuarios.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnUsuarios.Location = new System.Drawing.Point(-5, 560);
             this.btnUsuarios.Name = "btnUsuarios";
-            this.btnUsuarios.Size = new System.Drawing.Size(210, 41);
+            this.btnUsuarios.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnUsuarios.Size = new System.Drawing.Size(229, 48);
             this.btnUsuarios.TabIndex = 28;
             this.btnUsuarios.TabStop = false;
-            this.btnUsuarios.Text = "&Usuarios";
+            this.btnUsuarios.Text = "   &Usuarios";
+            this.btnUsuarios.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnUsuarios.UseVisualStyleBackColor = false;
             this.btnUsuarios.Click += new System.EventHandler(this.btnUsuarios_Click);
             // 
@@ -262,12 +274,16 @@
             this.btnReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnReportes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnReportes.ForeColor = System.Drawing.Color.White;
-            this.btnReportes.Location = new System.Drawing.Point(-4, 512);
+            this.btnReportes.Image = global::Presentacion.Properties.Resources.data_analytics;
+            this.btnReportes.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnReportes.Location = new System.Drawing.Point(-5, 607);
             this.btnReportes.Name = "btnReportes";
-            this.btnReportes.Size = new System.Drawing.Size(209, 41);
+            this.btnReportes.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnReportes.Size = new System.Drawing.Size(229, 48);
             this.btnReportes.TabIndex = 27;
             this.btnReportes.TabStop = false;
-            this.btnReportes.Text = "Reportes";
+            this.btnReportes.Text = "   Reportes";
+            this.btnReportes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnReportes.UseVisualStyleBackColor = false;
             this.btnReportes.Click += new System.EventHandler(this.btnReportes_Click);
             // 
@@ -280,12 +296,16 @@
             this.btnPersonas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPersonas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnPersonas.ForeColor = System.Drawing.Color.White;
-            this.btnPersonas.Location = new System.Drawing.Point(-4, 435);
+            this.btnPersonas.Image = global::Presentacion.Properties.Resources.group;
+            this.btnPersonas.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnPersonas.Location = new System.Drawing.Point(-5, 513);
             this.btnPersonas.Name = "btnPersonas";
-            this.btnPersonas.Size = new System.Drawing.Size(209, 41);
+            this.btnPersonas.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnPersonas.Size = new System.Drawing.Size(229, 48);
             this.btnPersonas.TabIndex = 25;
             this.btnPersonas.TabStop = false;
-            this.btnPersonas.Text = "&Personas";
+            this.btnPersonas.Text = "   &Personas";
+            this.btnPersonas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnPersonas.UseVisualStyleBackColor = false;
             this.btnPersonas.Click += new System.EventHandler(this.btnPersonas_Click);
             // 
@@ -298,12 +318,16 @@
             this.btnCortes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCortes.ForeColor = System.Drawing.Color.White;
-            this.btnCortes.Location = new System.Drawing.Point(-5, 396);
+            this.btnCortes.Image = global::Presentacion.Properties.Resources.quality_control;
+            this.btnCortes.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCortes.Location = new System.Drawing.Point(-5, 466);
             this.btnCortes.Name = "btnCortes";
-            this.btnCortes.Size = new System.Drawing.Size(209, 41);
+            this.btnCortes.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnCortes.Size = new System.Drawing.Size(229, 48);
             this.btnCortes.TabIndex = 24;
             this.btnCortes.TabStop = false;
-            this.btnCortes.Text = "Pro&ductos";
+            this.btnCortes.Text = "   Pro&ductos";
+            this.btnCortes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnCortes.UseVisualStyleBackColor = false;
             this.btnCortes.Click += new System.EventHandler(this.btnCortes_Click);
             // 
@@ -316,12 +340,16 @@
             this.btnEmbutidos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEmbutidos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnEmbutidos.ForeColor = System.Drawing.Color.White;
-            this.btnEmbutidos.Location = new System.Drawing.Point(-5, 281);
+            this.btnEmbutidos.Image = global::Presentacion.Properties.Resources.ham;
+            this.btnEmbutidos.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnEmbutidos.Location = new System.Drawing.Point(-5, 325);
             this.btnEmbutidos.Name = "btnEmbutidos";
-            this.btnEmbutidos.Size = new System.Drawing.Size(210, 41);
+            this.btnEmbutidos.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnEmbutidos.Size = new System.Drawing.Size(229, 48);
             this.btnEmbutidos.TabIndex = 22;
             this.btnEmbutidos.TabStop = false;
-            this.btnEmbutidos.Text = "&Elaboración";
+            this.btnEmbutidos.Text = "   &Elaboración";
+            this.btnEmbutidos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnEmbutidos.UseVisualStyleBackColor = false;
             this.btnEmbutidos.Click += new System.EventHandler(this.btnEmbutidos_Click);
             // 
@@ -334,12 +362,16 @@
             this.btnStock.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnStock.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnStock.ForeColor = System.Drawing.Color.White;
-            this.btnStock.Location = new System.Drawing.Point(-5, 318);
+            this.btnStock.Image = global::Presentacion.Properties.Resources.asset__2_;
+            this.btnStock.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnStock.Location = new System.Drawing.Point(-5, 372);
             this.btnStock.Name = "btnStock";
-            this.btnStock.Size = new System.Drawing.Size(210, 41);
+            this.btnStock.Padding = new System.Windows.Forms.Padding(22, 0, 0, 0);
+            this.btnStock.Size = new System.Drawing.Size(229, 48);
             this.btnStock.TabIndex = 21;
             this.btnStock.TabStop = false;
-            this.btnStock.Text = "&Stock";
+            this.btnStock.Text = "   &Stock";
+            this.btnStock.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnStock.UseVisualStyleBackColor = false;
             this.btnStock.Click += new System.EventHandler(this.btnStock_Click);
             // 
@@ -352,12 +384,16 @@
             this.btnMovimientos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnMovimientos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnMovimientos.ForeColor = System.Drawing.Color.White;
-            this.btnMovimientos.Location = new System.Drawing.Point(-5, 241);
+            this.btnMovimientos.Image = global::Presentacion.Properties.Resources.delivery_truck__1_1;
+            this.btnMovimientos.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnMovimientos.Location = new System.Drawing.Point(-5, 278);
             this.btnMovimientos.Name = "btnMovimientos";
-            this.btnMovimientos.Size = new System.Drawing.Size(209, 41);
+            this.btnMovimientos.Padding = new System.Windows.Forms.Padding(22, 0, 0, 0);
+            this.btnMovimientos.Size = new System.Drawing.Size(229, 48);
             this.btnMovimientos.TabIndex = 19;
             this.btnMovimientos.TabStop = false;
-            this.btnMovimientos.Text = "&Movimientos";
+            this.btnMovimientos.Text = "   &Movimientos";
+            this.btnMovimientos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnMovimientos.UseVisualStyleBackColor = false;
             this.btnMovimientos.Click += new System.EventHandler(this.btnMovimientos_Click);
             // 
@@ -370,12 +406,16 @@
             this.btnCerrarCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarCaja.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCerrarCaja.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarCaja.Location = new System.Drawing.Point(-5, 162);
+            this.btnCerrarCaja.Image = global::Presentacion.Properties.Resources.accounting__1_;
+            this.btnCerrarCaja.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCerrarCaja.Location = new System.Drawing.Point(-5, 184);
             this.btnCerrarCaja.Name = "btnCerrarCaja";
-            this.btnCerrarCaja.Size = new System.Drawing.Size(210, 41);
+            this.btnCerrarCaja.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnCerrarCaja.Size = new System.Drawing.Size(229, 48);
             this.btnCerrarCaja.TabIndex = 17;
             this.btnCerrarCaja.TabStop = false;
-            this.btnCerrarCaja.Text = "Ce&rrar Caja";
+            this.btnCerrarCaja.Text = "   Ce&rrar Caja";
+            this.btnCerrarCaja.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnCerrarCaja.UseVisualStyleBackColor = false;
             this.btnCerrarCaja.Click += new System.EventHandler(this.btnCerrarCaja_Click);
             // 
@@ -388,12 +428,16 @@
             this.btnCajaVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCajaVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCajaVentas.ForeColor = System.Drawing.Color.White;
-            this.btnCajaVentas.Location = new System.Drawing.Point(-5, 123);
+            this.btnCajaVentas.Image = global::Presentacion.Properties.Resources.shopping_cart2;
+            this.btnCajaVentas.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCajaVentas.Location = new System.Drawing.Point(-5, 137);
             this.btnCajaVentas.Name = "btnCajaVentas";
-            this.btnCajaVentas.Size = new System.Drawing.Size(210, 41);
+            this.btnCajaVentas.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnCajaVentas.Size = new System.Drawing.Size(229, 48);
             this.btnCajaVentas.TabIndex = 15;
             this.btnCajaVentas.TabStop = false;
-            this.btnCajaVentas.Text = "Punto de &Venta";
+            this.btnCajaVentas.Text = "   Punto de &Venta";
+            this.btnCajaVentas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnCajaVentas.UseVisualStyleBackColor = false;
             this.btnCajaVentas.Click += new System.EventHandler(this.btnCajaVentas_Click);
             // 
@@ -406,12 +450,16 @@
             this.btnCompras.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCompras.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnCompras.ForeColor = System.Drawing.Color.White;
+            this.btnCompras.Image = global::Presentacion.Properties.Resources.shopping_cart;
+            this.btnCompras.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnCompras.Location = new System.Drawing.Point(-5, 43);
             this.btnCompras.Name = "btnCompras";
-            this.btnCompras.Size = new System.Drawing.Size(210, 41);
+            this.btnCompras.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnCompras.Size = new System.Drawing.Size(229, 48);
             this.btnCompras.TabIndex = 14;
             this.btnCompras.TabStop = false;
-            this.btnCompras.Text = "C&ompras";
+            this.btnCompras.Text = "   C&ompras";
+            this.btnCompras.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnCompras.UseVisualStyleBackColor = false;
             this.btnCompras.Click += new System.EventHandler(this.btnCompras_Click);
             // 
@@ -424,12 +472,16 @@
             this.btnVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnVentas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.btnVentas.ForeColor = System.Drawing.Color.White;
-            this.btnVentas.Location = new System.Drawing.Point(-5, 83);
+            this.btnVentas.Image = global::Presentacion.Properties.Resources.sales;
+            this.btnVentas.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnVentas.Location = new System.Drawing.Point(-5, 90);
             this.btnVentas.Name = "btnVentas";
-            this.btnVentas.Size = new System.Drawing.Size(210, 41);
+            this.btnVentas.Padding = new System.Windows.Forms.Padding(30, 0, 0, 0);
+            this.btnVentas.Size = new System.Drawing.Size(229, 48);
             this.btnVentas.TabIndex = 3;
             this.btnVentas.TabStop = false;
-            this.btnVentas.Text = "Ve&ntas";
+            this.btnVentas.Text = "   Ve&ntas";
+            this.btnVentas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnVentas.UseVisualStyleBackColor = false;
             this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
             // 
@@ -477,7 +529,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(792, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(866, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -509,21 +561,21 @@
             // verVentasToolStripMenuItem
             // 
             this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
             // verToolStripMenuItem
             // 
             this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.verToolStripMenuItem.Text = "Temporal Linea Venta";
             this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
             // 
             // lineasVentaToolStripMenuItem
             // 
             this.lineasVentaToolStripMenuItem.Name = "lineasVentaToolStripMenuItem";
-            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.lineasVentaToolStripMenuItem.Text = "Lineas Venta ";
             this.lineasVentaToolStripMenuItem.Click += new System.EventHandler(this.lineasVentaToolStripMenuItem_Click);
             // 
@@ -680,7 +732,7 @@
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -690,7 +742,7 @@
             this.verBalanzaToolStripMenuItem1,
             this.leerPesoToolStripMenuItem1});
             this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
-            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
+            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
             this.balanzaToolStripMenuItem1.Text = "Balanza";
             // 
             // verBalanzaToolStripMenuItem1
@@ -731,7 +783,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(997, 615);
+            this.ClientSize = new System.Drawing.Size(1089, 712);
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));

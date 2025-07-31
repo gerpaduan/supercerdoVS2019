@@ -1014,8 +1014,32 @@
     <None Include="Resources\Barra Lateral Expendio Min1.png" />
     <None Include="Resources\Barra Lateral Expendio Min2.png" />
     <None Include="Resources\balanza 16 px.png" />
+    <None Include="Resources\accounting.png" />
+    <None Include="Resources\accounting %281%29.png" />
+    <None Include="Resources\asset.png" />
+    <None Include="Resources\asset %282%29.png" />
     <Content Include="Resources\CarniSys_ICONO.ico" />
     <None Include="Resources\scale.png" />
+    <None Include="Resources\Compras_carrito.png" />
+    <None Include="Resources\shopping-cart.png" />
+    <None Include="Resources\shopping-cart1.png" />
+    <None Include="Resources\point-of-sale 16.png" />
+    <None Include="Resources\shopping-cart2.png" />
+    <None Include="Resources\sales.png" />
+    <None Include="Resources\mobile-payment.png" />
+    <None Include="Resources\money.png" />
+    <None Include="Resources\delivery-truck.png" />
+    <None Include="Resources\delivery-truck %281%29.png" />
+    <None Include="Resources\shipped.png" />
+    <None Include="Resources\delivery-truck %281%291.png" />
+    <None Include="Resources\meat-grinder.png" />
+    <None Include="Resources\ham.png" />
+    <None Include="Resources\stock-rotation.png" />
+    <None Include="Resources\cashier.png" />
+    <None Include="Resources\quality-control.png" />
+    <None Include="Resources\group.png" />
+    <None Include="Resources\data-analytics.png" />
+    <None Include="Resources\programmer.png" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <ItemGroup>
