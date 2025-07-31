@@ -436,7 +436,13 @@ namespace Presentacion.Caja
 
             if (!formFactuElec_Abierto)
             {
-                formFactElec = new wsAFIPvs2008.formFacturaElectronica();
+                formFactElec = new wsAFIPvs2008.formFacturaElectronica(() =>
+                {
+                    // Esto se ejecuta al cerrarse FormC
+                    this.WindowState = FormWindowState.Normal;
+                    this.Show();
+                    this.Activate(); // o BringToFront()
+                });
                 formFactElec.idVenta = oVentaE.IdVenta;
                 formFactElec.logueado = FormPrincipal.logueado;
                 formFactElec.Show();
@@ -568,6 +574,7 @@ namespace Presentacion.Caja
             checkPagoMixto.Checked = false;
             pagoMixtoEfectivo = 0;
             comboTipoComprobante.SelectedIndex = 0; //Remito
+            comboFormaPago.SelectedIndex = 0;
 
             totalVenta = 0;
             abona = 0;
@@ -1641,7 +1648,7 @@ namespace Presentacion.Caja
 
             linkVerCtaCte.Visible = oUsuario.Admin;// !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) ?
-                "Ver ventas anteriores" : "Ver ultimas 5 ventas";
+                "mis ventas" : "Ver ultimas 5 ventas";
 
             ////Ocultar Ultimas Ventas Para Cocinas y Furlana
             if ((FormPrincipal.soyYo && !oUsuario.Admin) &&

@@ -53,6 +53,8 @@ namespace wsAFIPvs2008
         public string provinciaAfip;
         bool mostrarSeleccionados;
         bool generarPDF = false;
+        //variable porque que formPOS tome el foco al cerrar el form
+        private readonly Action onCloseCallback;
 
         private LoginClass oLoginClass;
         private string urlLogin;
@@ -151,9 +153,10 @@ namespace wsAFIPvs2008
         /// <summary>
         /// *** Pasar idVenta para obtener el objeto ***
         /// </summary>
-        public formFacturaElectronica()
+        public formFacturaElectronica(Action onClose = null)
         {
             InitializeComponent();
+            onCloseCallback = onClose;
         }
 
         private void formFacturaElectronica_Load(object sender, EventArgs e)
@@ -1047,7 +1050,7 @@ namespace wsAFIPvs2008
                     oFactuElec.FecVtoCAE = txtVTO.Text;
                     oFactuElec.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false);
                     oFactuElec.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
-                    oFactuElec.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
+                    oFactuElec.ImporteTotal = Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
 
                     oVentaN.addOrEditFactuElec(oFactuElec);
@@ -1553,6 +1556,7 @@ namespace wsAFIPvs2008
         private void formFacturaElectronica_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = salir();
+                
         }
 
         private void comboIva_SelectedIndexChanged(object sender, EventArgs e)
@@ -2337,6 +2341,12 @@ namespace wsAFIPvs2008
                 resultado += " con " + ConvertirCentena(centavos, unidades, decenas, especiales, centenas) + " centavos";
 
             return resultado.Trim();
+        }
+
+        private void formFacturaElectronica_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (onCloseCallback != null)
+                onCloseCallback();
         }
 
         private string ConvertirCentena(int numero, string[] unidades, string[] decenas, string[] especiales, string[] centenas)

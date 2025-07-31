@@ -1151,6 +1151,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Factura Electronica";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formFacturaElectronica_FormClosing);
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.formFacturaElectronica_FormClosed);
             this.Load += new System.EventHandler(this.formFacturaElectronica_Load);
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).EndInit();
             this.panel1.ResumeLayout(false);
