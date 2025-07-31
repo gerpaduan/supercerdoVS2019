@@ -1082,6 +1082,9 @@ namespace Presentacion.Caja
 
         private void quitarLinea()
         {
+            if (!grillaLineasVenta.ContainsFocus)
+                return;
+
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
@@ -3056,6 +3059,11 @@ namespace Presentacion.Caja
                 e.Handled = true;
                 e.SuppressKeyPress = true; // evita que el control reciba la tecla
             }
+        }
+
+        private void grillaLineasVenta_KeyDown(object sender, KeyEventArgs e)
+        {
+
         }
 
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)

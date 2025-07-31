@@ -1127,6 +1127,7 @@
             this.grillaLineasVenta.Size = new System.Drawing.Size(820, 415);
             this.grillaLineasVenta.TabIndex = 39;
             this.grillaLineasVenta.TabStop = false;
+            this.grillaLineasVenta.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grillaLineasVenta_KeyDown);
             // 
             // idCorte
             // 
