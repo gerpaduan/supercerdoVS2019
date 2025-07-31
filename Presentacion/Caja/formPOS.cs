@@ -140,7 +140,7 @@ namespace Presentacion.Caja
             int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
-            this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
+            //this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
             Negocio.Persona oPersonaN = new Negocio.Persona();
             idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
@@ -195,7 +195,7 @@ namespace Presentacion.Caja
         private void cargarCamposVenta()
         {
             txtCliente.Text = oVentaE.Persona.razonSocial;
-            txtSucursal.Text = oVentaE.Sucursal.sucursal;
+            //txtSucursal.Text = oVentaE.Sucursal.sucursal;
             txtFechaVenta.Value = oVentaE.FechaVenta;
             txtNroRemito.Text = oVentaE.NroRemito;
             txtObservaciones.Text = oVentaE.Observaciones;
@@ -2057,7 +2057,7 @@ namespace Presentacion.Caja
         private void formPOS_Load(object sender, EventArgs e)
         {
             timer1.Enabled = false;
-            this.Text += Utilidades.Conexion.getSucursalConexion();
+            this.Text = FormPrincipal.textForm;
             lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  Insert = Forma Pago  |  Supr = Quitar Línea  | F2 = Pant.Principal  |   " +
                 "F3 = Cálculo Billetes  | F4 = Bonificación  |  F5 = Nueva Compra  |  \n F6 = Mis Egresos Caja  |  F7 = Egresos Caja  | F8 = Facturacion | F9 = Buscar Cliente  |  " +
                 "F10 = Buscar Producto  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
@@ -2077,7 +2077,7 @@ namespace Presentacion.Caja
                 oVentaE.ImprimirTipoCbte = Entidades.Venta.imprimirCbteEnum.Nulo.ToString();
                 usuario.Text = oUsuario.User;
                 txtVendedor.Text = oUsuario.Nombre;
-                this.Text = oUsuario.Nombre;
+                //this.Text = oUsuario.Nombre;
 
                 ///TODO:cambiar color
                 Color colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
