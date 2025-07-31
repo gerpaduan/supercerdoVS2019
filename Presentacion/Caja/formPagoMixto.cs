@@ -15,7 +15,7 @@ namespace Presentacion.Caja
     {
         public float totalPesos, pagoMixtoEfectivo, importe2; 
         public string formaPago, formaPago2;
-        public formVentaCajaConExpendio formVentaCajaConExpendio;
+        public formPOS formPOS;
         public formUltimaVenta formUltimaVenta;
         bool exito = false;
         bool cargaEfectivo = true;
@@ -34,8 +34,8 @@ namespace Presentacion.Caja
             if (float.TryParse(textoNormalizado, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out pagoMixtoEfectivo) && pagoMixtoEfectivo > 0 && importe2 > 0)
             {
                 //si es Cero el efectivo informar - si cierra ventana mandar cero
-                if (formVentaCajaConExpendio != null)
-                    formVentaCajaConExpendio.pagoMixtoEfectivo = pagoMixtoEfectivo;
+                if (formPOS != null)
+                    formPOS.pagoMixtoEfectivo = pagoMixtoEfectivo;
                 if (formUltimaVenta != null)
                     formUltimaVenta.pagoMixtoEfectivo = pagoMixtoEfectivo;
 
@@ -54,8 +54,8 @@ namespace Presentacion.Caja
         {
             if (!exito)
             {
-                if (formVentaCajaConExpendio != null)
-                    formVentaCajaConExpendio.pagoMixtoEfectivo = 0;
+                if (formPOS != null)
+                    formPOS.pagoMixtoEfectivo = 0;
                 if (formUltimaVenta != null)
                     formUltimaVenta.pagoMixtoEfectivo = 0;
             }

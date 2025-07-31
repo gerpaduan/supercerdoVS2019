@@ -274,7 +274,7 @@ namespace Presentacion.Caja
                             oVentaN.agregarLineaVenta(lineaNuevoAnulado);
                         }
 
-                        formVentaCajaConExpendio fVtaCaja = new formVentaCajaConExpendio();
+                        formPOS fVtaCaja = new formPOS();
                         //se genera el egreso de caja si no es Efectivo
                         fVtaCaja.egresoCajaPagoTarjeta(oUltimaVenta);
 

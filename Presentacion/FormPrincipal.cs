@@ -515,7 +515,7 @@ namespace Presentacion
             e.Cancel = true;
             foreach (Form frm in Application.OpenForms)
             {
-                if (frm.GetType() == typeof(formVentaCajaConExpendio))
+                if (frm.GetType() == typeof(formPOS))
                 {
                     MessageBox.Show("Para salir de la aplicación debe cerrar las ventanas de ventas");
                     permitirCerrar = false;
@@ -585,7 +585,7 @@ namespace Presentacion
                     formAbierto = false;
                     foreach (Form frm in Application.OpenForms)
                     {
-                        if (frm.GetType() == typeof(formVentaCajaConExpendio))
+                        if (frm.GetType() == typeof(formPOS))
                         {
                             frm.BringToFront();
                             formAbierto = true;
@@ -594,7 +594,7 @@ namespace Presentacion
                     }
                     if (!formAbierto)
                     {
-                        formVentaCajaConExpendio frmVentaCaja = new formVentaCajaConExpendio();
+                        formPOS frmVentaCaja = new formPOS();
                         frmVentaCaja.Show();
                     }
                     break;

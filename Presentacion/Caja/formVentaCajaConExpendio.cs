@@ -906,7 +906,7 @@ namespace Presentacion.Caja
                 formPagoMixto formPagoMixto = new formPagoMixto();
                 formPagoMixto.totalPesos = totalVenta;
                 formPagoMixto.formaPago = oVentaE.FormaPago;
-                formPagoMixto.formVentaCajaConExpendio = this;
+                //formPagoMixto.formVentaCajaConExpendio = this;
                 formPagoMixto.ShowDialog();
                 //si le dio al boton ingresar en form pago mixto continuar sino return false
                 if (!(pagoMixtoEfectivo > 0))
@@ -2304,7 +2304,7 @@ namespace Presentacion.Caja
 
                 formBonificar frmBonificar = new formBonificar();
                 frmBonificar.oLineaVenta = oLineaVentaSelect;
-                frmBonificar.frmVentaCajaConExp = this;
+                //frmBonificar.frmVentaCajaConExp = this;
                 frmBonificar.ShowDialog();
 
                 //si es Bonificar todos se recorre toda la lista y se la actualiza
