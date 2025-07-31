@@ -1168,6 +1168,7 @@ namespace wsAFIPvs2008
                         this.Close();
 
                     this.SendToBack();
+                    focoEnFormPOS();
                 }                
                 else
                 {
@@ -2344,6 +2345,11 @@ namespace wsAFIPvs2008
         }
 
         private void formFacturaElectronica_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            focoEnFormPOS();
+        }
+
+        private void focoEnFormPOS()
         {
             if (onCloseCallback != null)
                 onCloseCallback();
