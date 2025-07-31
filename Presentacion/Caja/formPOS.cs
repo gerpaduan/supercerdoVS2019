@@ -3049,6 +3049,15 @@ namespace Presentacion.Caja
             }
         }
 
+        private void comboFormaPago_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.End)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true; // evita que el control reciba la tecla
+            }
+        }
+
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
         {
             validarPagoMixto();

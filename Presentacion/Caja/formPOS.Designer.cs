@@ -57,7 +57,6 @@
             this.txtFechaVenta = new System.Windows.Forms.DateTimePicker();
             this.linkVerCtaCte = new System.Windows.Forms.LinkLabel();
             this.usuario = new System.Windows.Forms.Label();
-            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
             this.groupFormaPago = new System.Windows.Forms.GroupBox();
             this.checkCtaCtePago = new System.Windows.Forms.CheckBox();
             this.checkTransf = new System.Windows.Forms.CheckBox();
@@ -74,6 +73,7 @@
             this.btnBuscarCliente = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.txtCliente = new System.Windows.Forms.TextBox();
+            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
             this.lblClienteConBonif = new System.Windows.Forms.Label();
             this.grupoCortes = new System.Windows.Forms.GroupBox();
             this.checkLeerPeso = new System.Windows.Forms.CheckBox();
@@ -300,11 +300,12 @@
             "QR",
             "TRANSFERENCIA",
             "CTA.CTE"});
-            this.comboFormaPago.Location = new System.Drawing.Point(838, 218);
+            this.comboFormaPago.Location = new System.Drawing.Point(838, 152);
             this.comboFormaPago.Name = "comboFormaPago";
             this.comboFormaPago.Size = new System.Drawing.Size(217, 32);
             this.comboFormaPago.TabIndex = 69;
             this.comboFormaPago.SelectedIndexChanged += new System.EventHandler(this.comboFormaPago_SelectedIndexChanged);
+            this.comboFormaPago.KeyDown += new System.Windows.Forms.KeyEventHandler(this.comboFormaPago_KeyDown);
             // 
             // checkPagoMixto
             // 
@@ -313,7 +314,7 @@
             this.checkPagoMixto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.checkPagoMixto.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkPagoMixto.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.checkPagoMixto.Location = new System.Drawing.Point(1068, 211);
+            this.checkPagoMixto.Location = new System.Drawing.Point(1068, 145);
             this.checkPagoMixto.Margin = new System.Windows.Forms.Padding(2);
             this.checkPagoMixto.Name = "checkPagoMixto";
             this.checkPagoMixto.Size = new System.Drawing.Size(60, 40);
@@ -341,7 +342,7 @@
             this.linkVerCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkVerCtaCte.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.linkVerCtaCte.LinkColor = System.Drawing.SystemColors.HotTrack;
-            this.linkVerCtaCte.Location = new System.Drawing.Point(902, 82);
+            this.linkVerCtaCte.Location = new System.Drawing.Point(902, 39);
             this.linkVerCtaCte.Name = "linkVerCtaCte";
             this.linkVerCtaCte.Size = new System.Drawing.Size(78, 16);
             this.linkVerCtaCte.TabIndex = 67;
@@ -360,31 +361,6 @@
             this.usuario.TabIndex = 48;
             this.usuario.Text = "nombre usuario";
             this.usuario.Visible = false;
-            // 
-            // comboTipoComprobante
-            // 
-            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.comboTipoComprobante.DisplayMember = "R";
-            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipoComprobante.Enabled = false;
-            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboTipoComprobante.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.comboTipoComprobante.FormattingEnabled = true;
-            this.comboTipoComprobante.Items.AddRange(new object[] {
-            "X",
-            "A",
-            "B"});
-            this.comboTipoComprobante.Location = new System.Drawing.Point(771, 7);
-            this.comboTipoComprobante.Name = "comboTipoComprobante";
-            this.comboTipoComprobante.Size = new System.Drawing.Size(52, 33);
-            this.comboTipoComprobante.TabIndex = 64;
-            this.comboTipoComprobante.TabStop = false;
-            this.comboTipoComprobante.ValueMember = "R";
-            this.comboTipoComprobante.Visible = false;
-            this.comboTipoComprobante.SelectedIndexChanged += new System.EventHandler(this.comboTipoComprobante_SelectedIndexChanged);
             // 
             // groupFormaPago
             // 
@@ -523,7 +499,7 @@
             this.txtDomicilio.BackColor = System.Drawing.SystemColors.InactiveBorder;
             this.txtDomicilio.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtDomicilio.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.txtDomicilio.Location = new System.Drawing.Point(838, 159);
+            this.txtDomicilio.Location = new System.Drawing.Point(838, 116);
             this.txtDomicilio.Name = "txtDomicilio";
             this.txtDomicilio.ReadOnly = true;
             this.txtDomicilio.Size = new System.Drawing.Size(285, 26);
@@ -535,7 +511,7 @@
             this.txtCuit.BackColor = System.Drawing.SystemColors.InactiveBorder;
             this.txtCuit.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCuit.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.txtCuit.Location = new System.Drawing.Point(838, 102);
+            this.txtCuit.Location = new System.Drawing.Point(838, 59);
             this.txtCuit.Name = "txtCuit";
             this.txtCuit.ReadOnly = true;
             this.txtCuit.Size = new System.Drawing.Size(209, 26);
@@ -548,7 +524,7 @@
             this.linkUltimasVentasCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.linkUltimasVentasCliente.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.linkUltimasVentasCliente.LinkColor = System.Drawing.SystemColors.HotTrack;
-            this.linkUltimasVentasCliente.Location = new System.Drawing.Point(981, 82);
+            this.linkUltimasVentasCliente.Location = new System.Drawing.Point(981, 39);
             this.linkUltimasVentasCliente.Name = "linkUltimasVentasCliente";
             this.linkUltimasVentasCliente.Size = new System.Drawing.Size(72, 16);
             this.linkUltimasVentasCliente.TabIndex = 52;
@@ -566,6 +542,7 @@
             this.txtNroRemito.Size = new System.Drawing.Size(197, 26);
             this.txtNroRemito.TabIndex = 23;
             this.txtNroRemito.TabStop = false;
+            this.txtNroRemito.Visible = false;
             // 
             // label8
             // 
@@ -578,6 +555,7 @@
             this.label8.Size = new System.Drawing.Size(85, 18);
             this.label8.TabIndex = 24;
             this.label8.Text = "Nro Remito";
+            this.label8.Visible = false;
             // 
             // btnBuscarCliente
             // 
@@ -585,7 +563,7 @@
             this.btnBuscarCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarCliente.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.btnBuscarCliente.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCliente.Image")));
-            this.btnBuscarCliente.Location = new System.Drawing.Point(1052, 101);
+            this.btnBuscarCliente.Location = new System.Drawing.Point(1052, 58);
             this.btnBuscarCliente.Name = "btnBuscarCliente";
             this.btnBuscarCliente.Size = new System.Drawing.Size(70, 27);
             this.btnBuscarCliente.TabIndex = 12;
@@ -600,7 +578,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.label1.Location = new System.Drawing.Point(838, 79);
+            this.label1.Location = new System.Drawing.Point(838, 36);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(58, 20);
             this.label1.TabIndex = 16;
@@ -611,12 +589,37 @@
             this.txtCliente.BackColor = System.Drawing.SystemColors.InactiveBorder;
             this.txtCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCliente.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.txtCliente.Location = new System.Drawing.Point(838, 130);
+            this.txtCliente.Location = new System.Drawing.Point(838, 87);
             this.txtCliente.Name = "txtCliente";
             this.txtCliente.ReadOnly = true;
             this.txtCliente.Size = new System.Drawing.Size(285, 26);
             this.txtCliente.TabIndex = 18;
             this.txtCliente.TabStop = false;
+            // 
+            // comboTipoComprobante
+            // 
+            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.comboTipoComprobante.DisplayMember = "R";
+            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipoComprobante.Enabled = false;
+            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboTipoComprobante.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.comboTipoComprobante.FormattingEnabled = true;
+            this.comboTipoComprobante.Items.AddRange(new object[] {
+            "X",
+            "A",
+            "B"});
+            this.comboTipoComprobante.Location = new System.Drawing.Point(771, 7);
+            this.comboTipoComprobante.Name = "comboTipoComprobante";
+            this.comboTipoComprobante.Size = new System.Drawing.Size(52, 33);
+            this.comboTipoComprobante.TabIndex = 64;
+            this.comboTipoComprobante.TabStop = false;
+            this.comboTipoComprobante.ValueMember = "R";
+            this.comboTipoComprobante.Visible = false;
+            this.comboTipoComprobante.SelectedIndexChanged += new System.EventHandler(this.comboTipoComprobante_SelectedIndexChanged);
             // 
             // lblClienteConBonif
             // 
