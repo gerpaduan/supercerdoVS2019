@@ -124,7 +124,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
-            this.splitContainer1.Panel2.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("splitContainer1.Panel2.BackgroundImage")));
+            this.splitContainer1.Panel2.BackgroundImage = global::Presentacion.Properties.Resources.CarniSys_Pantalla_Principal__tu_aliado_en_el_comercio_de_pesables__1;
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.splitContainer1.Panel2.Controls.Add(this.comboConexion);
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
@@ -497,7 +497,7 @@
             "sanMartinRemoto",
             "sanLorenzo",
             "sanLorenzoRemoto"});
-            this.comboConexion.Location = new System.Drawing.Point(630, 1);
+            this.comboConexion.Location = new System.Drawing.Point(697, 1);
             this.comboConexion.Name = "comboConexion";
             this.comboConexion.Size = new System.Drawing.Size(157, 23);
             this.comboConexion.TabIndex = 103;
@@ -506,7 +506,7 @@
             // lblConectadoA
             // 
             this.lblConectadoA.AutoSize = true;
-            this.lblConectadoA.Location = new System.Drawing.Point(548, 5);
+            this.lblConectadoA.Location = new System.Drawing.Point(615, 5);
             this.lblConectadoA.Name = "lblConectadoA";
             this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
             this.lblConectadoA.TabIndex = 102;

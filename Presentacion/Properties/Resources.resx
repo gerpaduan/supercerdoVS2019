@@ -127,6 +127,9 @@
   <data name="shopping-cart2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shopping-cart2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="programmer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\programmer.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="shipped" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shipped.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -223,10 +226,13 @@
   <data name="application_side_contract" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\application_side_contract.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="CarniSys Pantalla Principal -v21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -v21.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="balanza 16 px" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\balanza 16 px.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="programmer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\programmer.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

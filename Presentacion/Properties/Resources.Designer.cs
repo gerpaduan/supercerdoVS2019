@@ -213,6 +213,26 @@ namespace Presentacion.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__tu_aliado_en_el_comercio_de_pesables__1 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__v21 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -v21", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap cashier {
             get {
                 object obj = ResourceManager.GetObject("cashier", resourceCulture);

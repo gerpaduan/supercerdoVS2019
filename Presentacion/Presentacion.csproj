@@ -1018,6 +1018,8 @@
     <None Include="Resources\accounting %281%29.png" />
     <None Include="Resources\asset.png" />
     <None Include="Resources\asset %282%29.png" />
+    <None Include="Resources\CarniSys Pantalla Principal -v21.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1.jpg" />
     <Content Include="Resources\CarniSys_ICONO.ico" />
     <None Include="Resources\scale.png" />
     <None Include="Resources\Compras_carrito.png" />

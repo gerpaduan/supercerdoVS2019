@@ -146,12 +146,11 @@ namespace Presentacion.Caja
             idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
-            txtFecVenta.Text = DateTime.Now.ToString();
+            //txtFecVenta.Text = DateTime.Now.ToString();
             txtFecVenta.Text = DateTime.Now.ToString("ddd dd MMM yyyy · HH:mm", new CultureInfo("es-AR"));
             if (!fecha.Equals(""))
             {
-                txtFecVenta.Text = DateTime.Parse(fecha).ToString();
-                txtFecVenta.Text = DateTime.Now.ToString("dddd-dd MMMM, yyyy HH:mm", new System.Globalization.CultureInfo("es-ES"));
+                txtFecVenta.Text = DateTime.Now.ToString("ddd dd MMM yyyy · HH:mm", new CultureInfo("es-AR"));
             }
             checkCtaCte_CheckedChanged(null,null);
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
