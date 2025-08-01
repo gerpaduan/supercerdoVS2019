@@ -59,7 +59,7 @@ namespace Presentacion.Pagos
 
                 //inicio form con id 0 y se setea si es edicion
                 idPagoLabel.Text = "0";
-
+                txtEfectivo.ReadOnly = false;
                 if (!closeForm)
                 {
                     cargarSucursal();
