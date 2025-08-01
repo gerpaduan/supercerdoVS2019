@@ -3247,6 +3247,7 @@ namespace Presentacion.Caja
                 formGetAllLineaVenta frmGetAllLV = new formGetAllLineaVenta();
                 frmGetAllLV.verUltimasVentasClientes = true;
                 frmGetAllLV.desdeCajaVenta = true;
+                frmGetAllLV.oCierreE = oCierreE;
                 frmGetAllLV.idPersona = oCliente.idPersona;
                 frmGetAllLV.idSucursal = oSucursalE.idSucursal;
                 frmGetAllLV.ShowDialog();

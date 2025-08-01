@@ -35,6 +35,7 @@ namespace Presentacion
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         public Negocio.Venta oVentaN = new Negocio.Venta();
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        public Entidades.CierreCaja oCierreE;
 
         public DataTable dtVentas;
 
@@ -140,6 +141,7 @@ namespace Presentacion
                 if (desdeCajaVenta)
                 {
                     Caja.formUltimaVenta frmUltimaVenta = new Caja.formUltimaVenta();
+                    frmUltimaVenta.oCierreE = oCierreE;
                     frmUltimaVenta.oUltimaVenta = oVentaN.getVentaById(idVenta);
                     frmUltimaVenta.ShowDialog();
                     return;

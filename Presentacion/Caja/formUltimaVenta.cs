@@ -17,6 +17,7 @@ namespace Presentacion.Caja
         List<Entidades.LineaVenta> lineaNuevosAnulados = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
         Entidades.Usuario oVendedorNuevo;
+        public Entidades.CierreCaja oCierreE;
 
         Negocio.Venta oVentaN = new Negocio.Venta();
         Entidades.LineaVenta oLineaVenta;
@@ -210,11 +211,12 @@ namespace Presentacion.Caja
                 int diffMinutos = diffMinutosTime.Minutes;
 
                 //si no está loguedo, si fecha venta es distinta a hoy y pasaron minino de minutos para el acceso
-                if (!oUltimaVenta.Vendedor.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
+                if (!oCierreE.UsuarioInicio.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
                     (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
                 {
                     MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.",
                         "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    huboModificaciones = false;
                     return;
                 }
 
