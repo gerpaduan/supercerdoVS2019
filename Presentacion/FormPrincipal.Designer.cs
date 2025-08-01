@@ -49,9 +49,7 @@
             this.btnCajaVentas = new System.Windows.Forms.Button();
             this.btnCompras = new System.Windows.Forms.Button();
             this.btnVentas = new System.Windows.Forms.Button();
-            this.comboConexion = new System.Windows.Forms.ComboBox();
-            this.lblConectadoA = new System.Windows.Forms.Label();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
             this.comprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verComprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ventasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -83,13 +81,17 @@
             this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.lblConectadoA = new System.Windows.Forms.Label();
+            this.comboConexion = new System.Windows.Forms.ComboBox();
+            this.panel1 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.menuStrip1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -102,12 +104,8 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.splitContainer1.Panel1.Controls.Add(this.lblNombreAdmin);
             this.splitContainer1.Panel1.Controls.Add(this.btnPuntoExpendio);
             this.splitContainer1.Panel1.Controls.Add(this.pictureBox1);
-            this.splitContainer1.Panel1.Controls.Add(this.checkAutoDesconectar);
-            this.splitContainer1.Panel1.Controls.Add(this.btnLogin);
-            this.splitContainer1.Panel1.Controls.Add(this.btnCerrarSesion);
             this.splitContainer1.Panel1.Controls.Add(this.btnEgresosCaja);
             this.splitContainer1.Panel1.Controls.Add(this.btnUsuarios);
             this.splitContainer1.Panel1.Controls.Add(this.btnReportes);
@@ -126,10 +124,11 @@
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
             this.splitContainer1.Panel2.BackgroundImage = global::Presentacion.Properties.Resources.CarniSys_Pantalla_Principal__actual_achicado9;
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.splitContainer1.Panel2.Controls.Add(this.panel1);
             this.splitContainer1.Panel2.Controls.Add(this.comboConexion);
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);
             this.splitContainer1.Panel2.Controls.Add(this.menuStrip1);
-            this.splitContainer1.Size = new System.Drawing.Size(1089, 712);
+            this.splitContainer1.Size = new System.Drawing.Size(1089, 682);
             this.splitContainer1.SplitterDistance = 219;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -138,7 +137,7 @@
             this.lblNombreAdmin.AutoSize = true;
             this.lblNombreAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblNombreAdmin.ForeColor = System.Drawing.Color.White;
-            this.lblNombreAdmin.Location = new System.Drawing.Point(11, 665);
+            this.lblNombreAdmin.Location = new System.Drawing.Point(668, 2);
             this.lblNombreAdmin.Name = "lblNombreAdmin";
             this.lblNombreAdmin.Size = new System.Drawing.Size(90, 15);
             this.lblNombreAdmin.TabIndex = 37;
@@ -169,6 +168,7 @@
             // 
             // pictureBox1
             // 
+            this.pictureBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(96)))), ((int)(((byte)(176)))), ((int)(((byte)(244)))));
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
             this.pictureBox1.Location = new System.Drawing.Point(-5, 1);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
@@ -184,7 +184,8 @@
             this.checkAutoDesconectar.Checked = true;
             this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkAutoDesconectar.Location = new System.Drawing.Point(92, 689);
+            this.checkAutoDesconectar.ForeColor = System.Drawing.SystemColors.Window;
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(562, 2);
             this.checkAutoDesconectar.Name = "checkAutoDesconectar";
             this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
             this.checkAutoDesconectar.TabIndex = 31;
@@ -198,7 +199,7 @@
             this.btnLogin.FlatAppearance.BorderSize = 0;
             this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLogin.ForeColor = System.Drawing.Color.White;
-            this.btnLogin.Location = new System.Drawing.Point(11, 685);
+            this.btnLogin.Location = new System.Drawing.Point(775, -1);
             this.btnLogin.Name = "btnLogin";
             this.btnLogin.Size = new System.Drawing.Size(79, 23);
             this.btnLogin.TabIndex = 32;
@@ -212,7 +213,7 @@
             this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
             this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarSesion.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarSesion.Location = new System.Drawing.Point(10, 685);
+            this.btnCerrarSesion.Location = new System.Drawing.Point(776, -1);
             this.btnCerrarSesion.Name = "btnCerrarSesion";
             this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
             this.btnCerrarSesion.TabIndex = 33;
@@ -485,58 +486,16 @@
             this.btnVentas.UseVisualStyleBackColor = false;
             this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
             // 
-            // comboConexion
+            // timerInactividadAdmin
             // 
-            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboConexion.Enabled = false;
-            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboConexion.FormattingEnabled = true;
-            this.comboConexion.Items.AddRange(new object[] {
-            "local",
-            "sanMartin",
-            "sanMartinRemoto",
-            "sanLorenzo",
-            "sanLorenzoRemoto"});
-            this.comboConexion.Location = new System.Drawing.Point(697, 1);
-            this.comboConexion.Name = "comboConexion";
-            this.comboConexion.Size = new System.Drawing.Size(157, 23);
-            this.comboConexion.TabIndex = 103;
-            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
-            // 
-            // lblConectadoA
-            // 
-            this.lblConectadoA.AutoSize = true;
-            this.lblConectadoA.Location = new System.Drawing.Point(615, 5);
-            this.lblConectadoA.Name = "lblConectadoA";
-            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
-            this.lblConectadoA.TabIndex = 102;
-            this.lblConectadoA.Text = "|  Conectado a";
-            // 
-            // menuStrip1
-            // 
-            this.menuStrip1.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.comprasToolStripMenuItem,
-            this.ventasToolStripMenuItem,
-            this.cajaToolStripMenuItem,
-            this.mantenimientoToolStripMenuItem,
-            this.finanzasToolStripMenuItem,
-            this.stockToolStripMenuItem,
-            this.probarToolStripMenuItem,
-            this.contactoToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(866, 24);
-            this.menuStrip1.TabIndex = 0;
-            this.menuStrip1.Text = "menuStrip1";
+            this.timerInactividadAdmin.Interval = 3000000;
+            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
             // comprasToolStripMenuItem
             // 
             this.comprasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.verComprasToolStripMenuItem});
+            this.comprasToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.comprasToolStripMenuItem.Name = "comprasToolStripMenuItem";
             this.comprasToolStripMenuItem.Size = new System.Drawing.Size(67, 20);
             this.comprasToolStripMenuItem.Text = "Compras";
@@ -544,7 +503,7 @@
             // verComprasToolStripMenuItem
             // 
             this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
-            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
+            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.verComprasToolStripMenuItem.Text = "Ver Compras";
             this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
             // 
@@ -554,6 +513,7 @@
             this.verVentasToolStripMenuItem,
             this.verToolStripMenuItem,
             this.lineasVentaToolStripMenuItem});
+            this.ventasToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.ventasToolStripMenuItem.Name = "ventasToolStripMenuItem";
             this.ventasToolStripMenuItem.Size = new System.Drawing.Size(53, 20);
             this.ventasToolStripMenuItem.Text = "Ventas";
@@ -561,21 +521,21 @@
             // verVentasToolStripMenuItem
             // 
             this.verVentasToolStripMenuItem.Name = "verVentasToolStripMenuItem";
-            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.verVentasToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.verVentasToolStripMenuItem.Text = "Ver Ventas";
             this.verVentasToolStripMenuItem.Click += new System.EventHandler(this.verVentasToolStripMenuItem_Click);
             // 
             // verToolStripMenuItem
             // 
             this.verToolStripMenuItem.Name = "verToolStripMenuItem";
-            this.verToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.verToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.verToolStripMenuItem.Text = "Temporal Linea Venta";
             this.verToolStripMenuItem.Click += new System.EventHandler(this.verToolStripMenuItem_Click);
             // 
             // lineasVentaToolStripMenuItem
             // 
             this.lineasVentaToolStripMenuItem.Name = "lineasVentaToolStripMenuItem";
-            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.lineasVentaToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
             this.lineasVentaToolStripMenuItem.Text = "Lineas Venta ";
             this.lineasVentaToolStripMenuItem.Click += new System.EventHandler(this.lineasVentaToolStripMenuItem_Click);
             // 
@@ -583,6 +543,7 @@
             // 
             this.cajaToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cierresCajaToolStripMenuItem});
+            this.cajaToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.cajaToolStripMenuItem.Name = "cajaToolStripMenuItem";
             this.cajaToolStripMenuItem.Size = new System.Drawing.Size(42, 20);
             this.cajaToolStripMenuItem.Text = "Caja";
@@ -590,7 +551,7 @@
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -604,6 +565,7 @@
             this.configuraciónToolStripMenuItem,
             this.baseDeDatosToolStripMenuItem,
             this.parametrosToolStripMenuItem});
+            this.mantenimientoToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.mantenimientoToolStripMenuItem.Name = "mantenimientoToolStripMenuItem";
             this.mantenimientoToolStripMenuItem.Size = new System.Drawing.Size(101, 20);
             this.mantenimientoToolStripMenuItem.Text = "Mantenimiento";
@@ -680,6 +642,7 @@
             this.ctasCtesToolStripMenuItem,
             this.pagosToolStripMenuItem,
             this.chequesToolStripMenuItem});
+            this.finanzasToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.finanzasToolStripMenuItem.Name = "finanzasToolStripMenuItem";
             this.finanzasToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
             this.finanzasToolStripMenuItem.Text = "Finanzas";
@@ -687,21 +650,21 @@
             // ctasCtesToolStripMenuItem
             // 
             this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
-            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
+            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
             this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click_1);
             // 
             // pagosToolStripMenuItem
             // 
             this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
-            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
+            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.pagosToolStripMenuItem.Text = "Pagos";
             this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click_1);
             // 
             // chequesToolStripMenuItem
             // 
             this.chequesToolStripMenuItem.Name = "chequesToolStripMenuItem";
-            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
+            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.chequesToolStripMenuItem.Text = "Cheques";
             this.chequesToolStripMenuItem.Click += new System.EventHandler(this.chequesToolStripMenuItem_Click);
             // 
@@ -709,6 +672,7 @@
             // 
             this.stockToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.stockActualToolStripMenuItem});
+            this.stockToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.stockToolStripMenuItem.Name = "stockToolStripMenuItem";
             this.stockToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.stockToolStripMenuItem.Text = "Stock";
@@ -716,7 +680,7 @@
             // stockActualToolStripMenuItem
             // 
             this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.stockActualToolStripMenuItem.Text = "Stock Actual";
             this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
             // 
@@ -725,6 +689,7 @@
             this.probarToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.imprimirTicketToolStripMenuItem,
             this.balanzaToolStripMenuItem1});
+            this.probarToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.probarToolStripMenuItem.Name = "probarToolStripMenuItem";
             this.probarToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.probarToolStripMenuItem.Text = "Probar";
@@ -732,7 +697,7 @@
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
@@ -742,7 +707,7 @@
             this.verBalanzaToolStripMenuItem1,
             this.leerPesoToolStripMenuItem1});
             this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
-            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(155, 22);
+            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
             this.balanzaToolStripMenuItem1.Text = "Balanza";
             // 
             // verBalanzaToolStripMenuItem1
@@ -763,6 +728,7 @@
             // 
             this.contactoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.celularToolStripMenuItem});
+            this.contactoToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.contactoToolStripMenuItem.Name = "contactoToolStripMenuItem";
             this.contactoToolStripMenuItem.Size = new System.Drawing.Size(68, 20);
             this.contactoToolStripMenuItem.Text = "Contacto";
@@ -773,17 +739,75 @@
             this.celularToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
             this.celularToolStripMenuItem.Text = "Celular: +54 9 341 339-6372";
             // 
-            // timerInactividadAdmin
+            // menuStrip1
             // 
-            this.timerInactividadAdmin.Interval = 3000000;
-            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
+            this.menuStrip1.BackColor = System.Drawing.SystemColors.MenuBar;
+            this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.comprasToolStripMenuItem,
+            this.ventasToolStripMenuItem,
+            this.cajaToolStripMenuItem,
+            this.mantenimientoToolStripMenuItem,
+            this.finanzasToolStripMenuItem,
+            this.stockToolStripMenuItem,
+            this.probarToolStripMenuItem,
+            this.contactoToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
+            this.menuStrip1.Size = new System.Drawing.Size(866, 24);
+            this.menuStrip1.TabIndex = 0;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // lblConectadoA
+            // 
+            this.lblConectadoA.AutoSize = true;
+            this.lblConectadoA.BackColor = System.Drawing.SystemColors.MenuBar;
+            this.lblConectadoA.ForeColor = System.Drawing.SystemColors.MenuText;
+            this.lblConectadoA.Location = new System.Drawing.Point(615, 5);
+            this.lblConectadoA.Name = "lblConectadoA";
+            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
+            this.lblConectadoA.TabIndex = 102;
+            this.lblConectadoA.Text = "|  Conectado a";
+            // 
+            // comboConexion
+            // 
+            this.comboConexion.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboConexion.Enabled = false;
+            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboConexion.FormattingEnabled = true;
+            this.comboConexion.Items.AddRange(new object[] {
+            "local",
+            "sanMartin",
+            "sanMartinRemoto",
+            "sanLorenzo",
+            "sanLorenzoRemoto"});
+            this.comboConexion.Location = new System.Drawing.Point(697, 1);
+            this.comboConexion.Name = "comboConexion";
+            this.comboConexion.Size = new System.Drawing.Size(157, 23);
+            this.comboConexion.TabIndex = 103;
+            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.lblNombreAdmin);
+            this.panel1.Controls.Add(this.btnLogin);
+            this.panel1.Controls.Add(this.checkAutoDesconectar);
+            this.panel1.Controls.Add(this.btnCerrarSesion);
+            this.panel1.Location = new System.Drawing.Point(0, 21);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(866, 22);
+            this.panel1.TabIndex = 104;
             // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(1089, 712);
+            this.ClientSize = new System.Drawing.Size(1089, 682);
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -796,7 +820,6 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormPrincipal_FormClosing);
             this.Load += new System.EventHandler(this.FormPrincipal_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -804,6 +827,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -811,15 +836,6 @@
         #endregion
 
         private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem comprasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem verComprasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem ventasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem verVentasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem mantenimientoToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem cortesToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem personasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
         private System.Windows.Forms.Button btnVentas;
         private System.Windows.Forms.Button btnCerrarCaja;
         private System.Windows.Forms.Button btnCajaVentas;
@@ -831,39 +847,49 @@
         private System.Windows.Forms.Button btnPersonas;
         private System.Windows.Forms.Button btnCortes;
         private System.Windows.Forms.Button btnUsuarios;
-        private System.Windows.Forms.ToolStripMenuItem cajaToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem cierresCajaToolStripMenuItem;
         private System.Windows.Forms.Button btnEgresosCaja;
-        private System.Windows.Forms.ToolStripMenuItem probarToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem imprimirTicketToolStripMenuItem;
-        private System.Windows.Forms.Label lblConectadoA;
-        private System.Windows.Forms.ComboBox comboConexion;
-        private System.Windows.Forms.ToolStripMenuItem verToolStripMenuItem;
         private System.Windows.Forms.Timer timerInactividadAdmin;
         private System.Windows.Forms.CheckBox checkAutoDesconectar;
-        private System.Windows.Forms.ToolStripMenuItem configuraciónToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem lineasVentaToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem stockToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem stockActualToolStripMenuItem;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Button btnCerrarSesion;
         private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem verBalanzaToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem fórmulasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem vencimientosLicenciaToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem encriptarToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem appConfigToolStripMenuItem;
         private System.Windows.Forms.Button btnPuntoExpendio;
         private System.Windows.Forms.Label lblNombreAdmin;
-        private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.ComboBox comboConexion;
+        private System.Windows.Forms.Label lblConectadoA;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem comprasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem verComprasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem ventasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem verVentasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem verToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem lineasVentaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cajaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cierresCajaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mantenimientoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cortesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem personasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fórmulasToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem vencimientosLicenciaToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem configuraciónToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem encriptarToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem appConfigToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem baseDeDatosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem parametrosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem finanzasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ctasCtesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pagosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem chequesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem stockToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem stockActualToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem probarToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem imprimirTicketToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem verBalanzaToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
     }
 }
 
