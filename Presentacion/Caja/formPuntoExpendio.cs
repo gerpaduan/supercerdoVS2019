@@ -364,7 +364,7 @@ namespace Presentacion.Caja
                 ticket.realizarImpresionCodigoBarra(oVentaE.Sector+"\nTOTAL $ "+ totalVenta.ToString("F2"), "PE"+oVentaE.IdExpendio+"F", tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_EXPENDIO.ToString()));
 
 
-            if (tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()))
+            if (imprimir && tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()))
             {
                 for (int index = 0; index < listaLineaVenta.Count; index++)
                 {
@@ -623,28 +623,6 @@ namespace Presentacion.Caja
 
         private bool validarLinea()
         {
-            //Se valida que no sea media res
-            if (oCorteE != null && !oCorteE.Habilitado)
-            {
-                MessageBox.Show("- \'" + oCorteE.CorteDesc +"\' no está habilitado para la venta", "Producto No Habilitado",MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                txtCodigo.Focus();
-                return false;
-            }
-
-            //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
-            if (tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()) && oCorteE.codigo.ToString().Length > cantDigitosProdEnCodBarra)
-            {
-                string mensaje1 = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido " +
-                    cantDigitosProdEnCodBarra.ToString() + "\n";
-                mensaje1 += "\nCodigo: " + oCorteE.codigo.ToString();
-                mensaje1 += "\nProd: " + oCorteE.corte.ToString();
-                MessageBox.Show(mensaje1, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-                txtCodigo.Focus();
-                return false;
-            }
-
-
             string mensaje = "Complete los siguientes campos: ";
             if (txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")
             {
@@ -677,12 +655,35 @@ namespace Presentacion.Caja
                         }
 
                         MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        if(!checkLeerPeso.Checked) txtCantKgs.Focus();
+                        if (!checkLeerPeso.Checked) txtCantKgs.Focus();
                     }
 
                 }
                 return false;
             }
+
+            //Se valida que no sea media res
+            if (oCorteE != null && !oCorteE.Habilitado)
+            {
+                MessageBox.Show("- \'" + oCorteE.CorteDesc +"\' no está habilitado para la venta", "Producto No Habilitado",MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                txtCodigo.Focus();
+                return false;
+            }
+
+            //****Cant.Digito PLU en Cod.Barra (4 | 5) ***" 
+            if (tipoTicketExpendio.Equals(tipoTicket.ETIQUETA_PRODUCTO.ToString()) && oCorteE.codigo.ToString().Length > cantDigitosProdEnCodBarra)
+            {
+                string mensaje1 = "El producto no puede emitir etiqueta porque la longitud del codigo excede el limite permitido " +
+                    cantDigitosProdEnCodBarra.ToString() + "\n";
+                mensaje1 += "\nCodigo: " + oCorteE.codigo.ToString();
+                mensaje1 += "\nProd: " + oCorteE.corte.ToString();
+                MessageBox.Show(mensaje1, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                txtCodigo.Focus();
+                return false;
+            }
+
+            
             if (!Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs."))
             {
                 if (checkLeerPeso.Checked)
