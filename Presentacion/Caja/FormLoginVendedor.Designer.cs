@@ -38,39 +38,43 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(57, 25);
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.label1.Location = new System.Drawing.Point(75, 30);
+            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(55, 16);
+            this.label1.Size = new System.Drawing.Size(60, 18);
             this.label1.TabIndex = 0;
             this.label1.Text = "Usuario";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(35, 63);
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.label2.Location = new System.Drawing.Point(48, 66);
+            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(77, 16);
+            this.label2.Size = new System.Drawing.Size(85, 18);
             this.label2.TabIndex = 1;
             this.label2.Text = "Contraseña";
             // 
             // txtClave
             // 
-            this.txtClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtClave.Location = new System.Drawing.Point(118, 60);
+            this.txtClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
+            this.txtClave.Location = new System.Drawing.Point(141, 63);
+            this.txtClave.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
-            this.txtClave.Size = new System.Drawing.Size(141, 22);
+            this.txtClave.Size = new System.Drawing.Size(187, 24);
             this.txtClave.TabIndex = 3;
             this.txtClave.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtClave_KeyPress);
             // 
             // btnIngresar
             // 
-            this.btnIngresar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnIngresar.Location = new System.Drawing.Point(151, 102);
+            this.btnIngresar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.btnIngresar.Location = new System.Drawing.Point(51, 97);
+            this.btnIngresar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnIngresar.Name = "btnIngresar";
-            this.btnIngresar.Size = new System.Drawing.Size(108, 27);
+            this.btnIngresar.Size = new System.Drawing.Size(277, 39);
             this.btnIngresar.TabIndex = 4;
             this.btnIngresar.Text = "Ingresar";
             this.btnIngresar.UseVisualStyleBackColor = true;
@@ -78,23 +82,27 @@
             // 
             // comboUsuario
             // 
+            this.comboUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
             this.comboUsuario.FormattingEnabled = true;
-            this.comboUsuario.Location = new System.Drawing.Point(119, 25);
+            this.comboUsuario.Location = new System.Drawing.Point(143, 27);
+            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboUsuario.Name = "comboUsuario";
-            this.comboUsuario.Size = new System.Drawing.Size(140, 21);
+            this.comboUsuario.Size = new System.Drawing.Size(185, 26);
             this.comboUsuario.TabIndex = 2;
             // 
             // FormLoginVendedor
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(290, 141);
+            this.ClientSize = new System.Drawing.Size(379, 162);
             this.Controls.Add(this.comboUsuario);
             this.Controls.Add(this.btnIngresar);
             this.Controls.Add(this.txtClave);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
+            this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "FormLoginVendedor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Login";
