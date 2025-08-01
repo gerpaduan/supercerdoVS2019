@@ -1083,7 +1083,8 @@ namespace Presentacion.Caja
 
         private void quitarLinea()
         {
-            if (!grillaLineasVenta.ContainsFocus)
+            //si estos controles tienen el foco no se borra linea
+            if (txtAbona.ContainsFocus || txtObservaciones.ContainsFocus || txtCodigo.ContainsFocus || txtCantKgs.ContainsFocus)
                 return;
 
             if (grillaLineasVenta.SelectedRows.Count > 0)
