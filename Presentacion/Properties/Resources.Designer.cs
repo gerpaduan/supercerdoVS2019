@@ -213,6 +213,106 @@ namespace Presentacion.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado1 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado2 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado2", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado3 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado3", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado4 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado4", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado5 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado5", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado6 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado6", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado7 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado7", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado8 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado8", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__actual_achicado9 {
+            get {
+                object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -actual achicado9", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap CarniSys_Pantalla_Principal__tu_aliado_en_el_comercio_de_pesables__1 {
             get {
                 object obj = ResourceManager.GetObject("CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1", resourceCulture);

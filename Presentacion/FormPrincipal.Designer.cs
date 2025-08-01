@@ -124,7 +124,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.BackColor = System.Drawing.SystemColors.Window;
-            this.splitContainer1.Panel2.BackgroundImage = global::Presentacion.Properties.Resources.CarniSys_Pantalla_Principal__tu_aliado_en_el_comercio_de_pesables__1;
+            this.splitContainer1.Panel2.BackgroundImage = global::Presentacion.Properties.Resources.CarniSys_Pantalla_Principal__actual_achicado9;
             this.splitContainer1.Panel2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.splitContainer1.Panel2.Controls.Add(this.comboConexion);
             this.splitContainer1.Panel2.Controls.Add(this.lblConectadoA);

@@ -118,6 +118,9 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="delivery-truck (1)" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\delivery-truck (1).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="mobile-payment" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\mobile-payment.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -133,11 +136,17 @@
   <data name="shipped" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shipped.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="data-analytics" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\data-analytics.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="meat-grinder" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\meat-grinder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CarniSys Pantalla Principal -actual achicado2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado2.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="group" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\group.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -157,6 +166,9 @@
   <data name="sales" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\sales.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="CarniSys Pantalla Principal -actual achicado8" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado8.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="money" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\money.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -165,6 +177,9 @@
   </data>
   <data name="delivery-truck" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\delivery-truck.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CarniSys Pantalla Principal -actual achicado" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="16 (Database remove)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\16 (Database remove).ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -184,20 +199,29 @@
   <data name="Barra Lateral Expendio1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Barra Lateral Expendio1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="delivery-truck (1)" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\delivery-truck (1).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CarniSys Pantalla Principal -actual achicado1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado1.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="CarniSys_ICONO" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\CarniSys_ICONO.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="stock-rotation" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\stock-rotation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CarniSys Pantalla Principal -actual achicado5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado5.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CarniSys Pantalla Principal -actual achicado3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado3.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="point-of-sale 16" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\point-of-sale 16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="stock-rotation" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stock-rotation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="shopping-cart" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shopping-cart.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CarniSys Pantalla Principal -actual achicado7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado7.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="lock_32x32-32" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\lock_32x32-32.ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -208,14 +232,17 @@
   <data name="Barra Lateral Expendio Min2" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Barra Lateral Expendio Min2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="16 (Lock off)" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\16 (Lock off).ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CarniSys Pantalla Principal -actual achicado4" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado4.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="quality-control" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\quality-control.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Barra Lateral Expendio Min" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Barra Lateral Expendio Min.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="CarniSys Pantalla Principal -actual achicado6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado6.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ham" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ham.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -229,10 +256,13 @@
   <data name="CarniSys Pantalla Principal -v21" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\CarniSys Pantalla Principal -v21.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="16 (Lock off)" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\16 (Lock off).ico;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="balanza 16 px" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\balanza 16 px.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="CarniSys Pantalla Principal -actual achicado9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CarniSys Pantalla Principal -actual achicado9.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

@@ -1020,6 +1020,16 @@
     <None Include="Resources\asset %282%29.png" />
     <None Include="Resources\CarniSys Pantalla Principal -v21.jpg" />
     <None Include="Resources\CarniSys Pantalla Principal -tu aliado en el comercio de pesables- 1.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado1.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado2.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado3.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado4.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado5.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado6.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado7.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado8.jpg" />
+    <None Include="Resources\CarniSys Pantalla Principal -actual achicado9.jpg" />
     <Content Include="Resources\CarniSys_ICONO.ico" />
     <None Include="Resources\scale.png" />
     <None Include="Resources\Compras_carrito.png" />
