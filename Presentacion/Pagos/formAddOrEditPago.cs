@@ -803,7 +803,7 @@ namespace Presentacion.Pagos
         #region imprimirRecibo
         public void GenerarReciboPDF(string rutaDestino)
         {
-            rutaDestino = rutaDestino + "\\" + DateTime.Today.ToString("yyyyMMdd") + " - Recibo de Pago - ID " + oPagoE.Id.ToString() + ".pdf";
+            rutaDestino = rutaDestino + "\\" + oPagoE.Fecha.ToString("yyyyMMdd") + " - Recibo de Pago - ID " + oPagoE.Id.ToString() + ".pdf";
 
             Document doc = new Document(PageSize.A4, 30, 30, 20, 20);
             PdfWriter.GetInstance(doc, new FileStream(rutaDestino, FileMode.Create));
