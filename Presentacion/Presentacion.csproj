@@ -1052,6 +1052,8 @@
     <None Include="Resources\group.png" />
     <None Include="Resources\data-analytics.png" />
     <None Include="Resources\programmer.png" />
+    <None Include="Resources\profile.png" />
+    <None Include="Resources\profile %281%29.png" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <ItemGroup>

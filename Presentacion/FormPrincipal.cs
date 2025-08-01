@@ -276,12 +276,12 @@ namespace Presentacion
             if (logueado)
             {
                 btnCerrarSesion.Visible = true;
-                lblNombreAdmin.Visible = true;
+                lblNombreAdmin.Visible = pictureBoxUser.Visible = true;
             }
             else
             {
                 btnCerrarSesion.Visible = false;
-                lblNombreAdmin.Visible = false;
+                lblNombreAdmin.Visible = pictureBoxUser.Visible = false;
             }
         }
 
@@ -296,7 +296,7 @@ namespace Presentacion
             oUserAdminEmpresa = null;
             btnLogin.Visible = true;
             btnCerrarSesion.Visible = false;
-            lblNombreAdmin.Visible = false;
+            lblNombreAdmin.Visible = pictureBoxUser.Visible = false;
             checkAutoDesconectar.Visible = false;
             comboConexion.Enabled = false;
             timerInactividadAdmin.Stop();
@@ -460,8 +460,9 @@ namespace Presentacion
                 oUserAdminEmpresa = oUsuario;
                 btnLogin.Visible = false;
                 btnCerrarSesion.Visible = true;
-                lblNombreAdmin.Visible = true;
-                lblNombreAdmin.Text = "•" + oUsuario.Nombre;
+                lblNombreAdmin.Visible = pictureBoxUser.Visible = true;
+                
+                lblNombreAdmin.Text = oUsuario.Nombre;
                 //btnTipoConexioin.Visible = true;
                 //solo muestra cambiar combo conexion si es cuit German Paduan
                 comboConexion.Enabled = true && cuitCliente == "20306210786";
@@ -472,7 +473,7 @@ namespace Presentacion
                 oUserAdmin = null;
                 btnLogin.Visible = true;
                 btnCerrarSesion.Visible = false;
-                lblNombreAdmin.Visible = false;
+                lblNombreAdmin.Visible = pictureBoxUser.Visible = false;
                 //btnTipoConexioin.Visible = false;
                 comboConexion.Enabled = false;
                 timerInactividadAdmin.Stop();

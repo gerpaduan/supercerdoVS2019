@@ -31,12 +31,8 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormPrincipal));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.lblNombreAdmin = new System.Windows.Forms.Label();
             this.btnPuntoExpendio = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
-            this.btnLogin = new System.Windows.Forms.Button();
-            this.btnCerrarSesion = new System.Windows.Forms.Button();
             this.btnEgresosCaja = new System.Windows.Forms.Button();
             this.btnUsuarios = new System.Windows.Forms.Button();
             this.btnReportes = new System.Windows.Forms.Button();
@@ -49,7 +45,14 @@
             this.btnCajaVentas = new System.Windows.Forms.Button();
             this.btnCompras = new System.Windows.Forms.Button();
             this.btnVentas = new System.Windows.Forms.Button();
-            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.lblNombreAdmin = new System.Windows.Forms.Label();
+            this.btnLogin = new System.Windows.Forms.Button();
+            this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
+            this.btnCerrarSesion = new System.Windows.Forms.Button();
+            this.comboConexion = new System.Windows.Forms.ComboBox();
+            this.lblConectadoA = new System.Windows.Forms.Label();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.comprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.verComprasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ventasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -81,17 +84,16 @@
             this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.lblConectadoA = new System.Windows.Forms.Label();
-            this.comboConexion = new System.Windows.Forms.ComboBox();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.pictureBoxUser = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.menuStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
+            this.menuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxUser)).BeginInit();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -132,18 +134,6 @@
             this.splitContainer1.SplitterDistance = 219;
             this.splitContainer1.TabIndex = 0;
             // 
-            // lblNombreAdmin
-            // 
-            this.lblNombreAdmin.AutoSize = true;
-            this.lblNombreAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblNombreAdmin.ForeColor = System.Drawing.Color.White;
-            this.lblNombreAdmin.Location = new System.Drawing.Point(668, 2);
-            this.lblNombreAdmin.Name = "lblNombreAdmin";
-            this.lblNombreAdmin.Size = new System.Drawing.Size(90, 15);
-            this.lblNombreAdmin.TabIndex = 37;
-            this.lblNombreAdmin.Text = "Nombre Admin";
-            this.lblNombreAdmin.Visible = false;
-            // 
             // btnPuntoExpendio
             // 
             this.btnPuntoExpendio.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
@@ -177,50 +167,6 @@
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 34;
             this.pictureBox1.TabStop = false;
-            // 
-            // checkAutoDesconectar
-            // 
-            this.checkAutoDesconectar.AutoSize = true;
-            this.checkAutoDesconectar.Checked = true;
-            this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.checkAutoDesconectar.ForeColor = System.Drawing.SystemColors.Window;
-            this.checkAutoDesconectar.Location = new System.Drawing.Point(562, 2);
-            this.checkAutoDesconectar.Name = "checkAutoDesconectar";
-            this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
-            this.checkAutoDesconectar.TabIndex = 31;
-            this.checkAutoDesconectar.TabStop = false;
-            this.checkAutoDesconectar.Text = "Auto-Desconec.";
-            this.checkAutoDesconectar.UseVisualStyleBackColor = true;
-            this.checkAutoDesconectar.Visible = false;
-            // 
-            // btnLogin
-            // 
-            this.btnLogin.FlatAppearance.BorderSize = 0;
-            this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnLogin.ForeColor = System.Drawing.Color.White;
-            this.btnLogin.Location = new System.Drawing.Point(775, -1);
-            this.btnLogin.Name = "btnLogin";
-            this.btnLogin.Size = new System.Drawing.Size(79, 23);
-            this.btnLogin.TabIndex = 32;
-            this.btnLogin.TabStop = false;
-            this.btnLogin.Text = "&Iniciar Sesión";
-            this.btnLogin.UseVisualStyleBackColor = true;
-            this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
-            // 
-            // btnCerrarSesion
-            // 
-            this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
-            this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCerrarSesion.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarSesion.Location = new System.Drawing.Point(776, -1);
-            this.btnCerrarSesion.Name = "btnCerrarSesion";
-            this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
-            this.btnCerrarSesion.TabIndex = 33;
-            this.btnCerrarSesion.TabStop = false;
-            this.btnCerrarSesion.Text = "&Cerrar Ses&ión";
-            this.btnCerrarSesion.UseVisualStyleBackColor = true;
-            this.btnCerrarSesion.Click += new System.EventHandler(this.btnCerrarSesion_Click);
             // 
             // btnEgresosCaja
             // 
@@ -486,10 +432,125 @@
             this.btnVentas.UseVisualStyleBackColor = false;
             this.btnVentas.Click += new System.EventHandler(this.btnVentas_Click);
             // 
-            // timerInactividadAdmin
+            // panel1
             // 
-            this.timerInactividadAdmin.Interval = 3000000;
-            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.pictureBoxUser);
+            this.panel1.Controls.Add(this.lblNombreAdmin);
+            this.panel1.Controls.Add(this.btnLogin);
+            this.panel1.Controls.Add(this.checkAutoDesconectar);
+            this.panel1.Controls.Add(this.btnCerrarSesion);
+            this.panel1.Location = new System.Drawing.Point(0, 21);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(866, 22);
+            this.panel1.TabIndex = 104;
+            // 
+            // lblNombreAdmin
+            // 
+            this.lblNombreAdmin.AutoSize = true;
+            this.lblNombreAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblNombreAdmin.ForeColor = System.Drawing.Color.White;
+            this.lblNombreAdmin.Location = new System.Drawing.Point(660, 3);
+            this.lblNombreAdmin.Name = "lblNombreAdmin";
+            this.lblNombreAdmin.Size = new System.Drawing.Size(90, 15);
+            this.lblNombreAdmin.TabIndex = 37;
+            this.lblNombreAdmin.Text = "Nombre Admin";
+            this.lblNombreAdmin.Visible = false;
+            // 
+            // btnLogin
+            // 
+            this.btnLogin.FlatAppearance.BorderSize = 0;
+            this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnLogin.ForeColor = System.Drawing.Color.White;
+            this.btnLogin.Location = new System.Drawing.Point(775, -1);
+            this.btnLogin.Name = "btnLogin";
+            this.btnLogin.Size = new System.Drawing.Size(79, 23);
+            this.btnLogin.TabIndex = 32;
+            this.btnLogin.TabStop = false;
+            this.btnLogin.Text = "&Iniciar Sesión";
+            this.btnLogin.UseVisualStyleBackColor = true;
+            this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
+            // 
+            // checkAutoDesconectar
+            // 
+            this.checkAutoDesconectar.AutoSize = true;
+            this.checkAutoDesconectar.Checked = true;
+            this.checkAutoDesconectar.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkAutoDesconectar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.checkAutoDesconectar.ForeColor = System.Drawing.SystemColors.Window;
+            this.checkAutoDesconectar.Location = new System.Drawing.Point(533, 3);
+            this.checkAutoDesconectar.Name = "checkAutoDesconectar";
+            this.checkAutoDesconectar.Size = new System.Drawing.Size(100, 17);
+            this.checkAutoDesconectar.TabIndex = 31;
+            this.checkAutoDesconectar.TabStop = false;
+            this.checkAutoDesconectar.Text = "Auto-Desconec.";
+            this.checkAutoDesconectar.UseVisualStyleBackColor = true;
+            this.checkAutoDesconectar.Visible = false;
+            // 
+            // btnCerrarSesion
+            // 
+            this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
+            this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCerrarSesion.ForeColor = System.Drawing.Color.White;
+            this.btnCerrarSesion.Location = new System.Drawing.Point(776, -1);
+            this.btnCerrarSesion.Name = "btnCerrarSesion";
+            this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
+            this.btnCerrarSesion.TabIndex = 33;
+            this.btnCerrarSesion.TabStop = false;
+            this.btnCerrarSesion.Text = "&Cerrar Ses&ión";
+            this.btnCerrarSesion.UseVisualStyleBackColor = true;
+            this.btnCerrarSesion.Click += new System.EventHandler(this.btnCerrarSesion_Click);
+            // 
+            // comboConexion
+            // 
+            this.comboConexion.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboConexion.Enabled = false;
+            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboConexion.FormattingEnabled = true;
+            this.comboConexion.Items.AddRange(new object[] {
+            "local",
+            "sanMartin",
+            "sanMartinRemoto",
+            "sanLorenzo",
+            "sanLorenzoRemoto"});
+            this.comboConexion.Location = new System.Drawing.Point(697, 1);
+            this.comboConexion.Name = "comboConexion";
+            this.comboConexion.Size = new System.Drawing.Size(157, 23);
+            this.comboConexion.TabIndex = 103;
+            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
+            // 
+            // lblConectadoA
+            // 
+            this.lblConectadoA.AutoSize = true;
+            this.lblConectadoA.BackColor = System.Drawing.SystemColors.MenuBar;
+            this.lblConectadoA.ForeColor = System.Drawing.SystemColors.MenuText;
+            this.lblConectadoA.Location = new System.Drawing.Point(615, 5);
+            this.lblConectadoA.Name = "lblConectadoA";
+            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
+            this.lblConectadoA.TabIndex = 102;
+            this.lblConectadoA.Text = "|  Conectado a";
+            // 
+            // menuStrip1
+            // 
+            this.menuStrip1.BackColor = System.Drawing.SystemColors.MenuBar;
+            this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.comprasToolStripMenuItem,
+            this.ventasToolStripMenuItem,
+            this.cajaToolStripMenuItem,
+            this.mantenimientoToolStripMenuItem,
+            this.finanzasToolStripMenuItem,
+            this.stockToolStripMenuItem,
+            this.probarToolStripMenuItem,
+            this.contactoToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
+            this.menuStrip1.Size = new System.Drawing.Size(866, 24);
+            this.menuStrip1.TabIndex = 0;
+            this.menuStrip1.Text = "menuStrip1";
             // 
             // comprasToolStripMenuItem
             // 
@@ -503,7 +564,7 @@
             // verComprasToolStripMenuItem
             // 
             this.verComprasToolStripMenuItem.Name = "verComprasToolStripMenuItem";
-            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.verComprasToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
             this.verComprasToolStripMenuItem.Text = "Ver Compras";
             this.verComprasToolStripMenuItem.Click += new System.EventHandler(this.verComprasToolStripMenuItem_Click);
             // 
@@ -551,7 +612,7 @@
             // cierresCajaToolStripMenuItem
             // 
             this.cierresCajaToolStripMenuItem.Name = "cierresCajaToolStripMenuItem";
-            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cierresCajaToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
             this.cierresCajaToolStripMenuItem.Text = "Cierres Caja";
             this.cierresCajaToolStripMenuItem.Click += new System.EventHandler(this.cierresCajaToolStripMenuItem_Click);
             // 
@@ -650,21 +711,21 @@
             // ctasCtesToolStripMenuItem
             // 
             this.ctasCtesToolStripMenuItem.Name = "ctasCtesToolStripMenuItem";
-            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.ctasCtesToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.ctasCtesToolStripMenuItem.Text = "Ctas. Ctes.";
             this.ctasCtesToolStripMenuItem.Click += new System.EventHandler(this.ctasCtesToolStripMenuItem_Click_1);
             // 
             // pagosToolStripMenuItem
             // 
             this.pagosToolStripMenuItem.Name = "pagosToolStripMenuItem";
-            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.pagosToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.pagosToolStripMenuItem.Text = "Pagos";
             this.pagosToolStripMenuItem.Click += new System.EventHandler(this.pagosToolStripMenuItem_Click_1);
             // 
             // chequesToolStripMenuItem
             // 
             this.chequesToolStripMenuItem.Name = "chequesToolStripMenuItem";
-            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.chequesToolStripMenuItem.Size = new System.Drawing.Size(129, 22);
             this.chequesToolStripMenuItem.Text = "Cheques";
             this.chequesToolStripMenuItem.Click += new System.EventHandler(this.chequesToolStripMenuItem_Click);
             // 
@@ -680,7 +741,7 @@
             // stockActualToolStripMenuItem
             // 
             this.stockActualToolStripMenuItem.Name = "stockActualToolStripMenuItem";
-            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.stockActualToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
             this.stockActualToolStripMenuItem.Text = "Stock Actual";
             this.stockActualToolStripMenuItem.Click += new System.EventHandler(this.stockActualToolStripMenuItem_Click);
             // 
@@ -739,68 +800,24 @@
             this.celularToolStripMenuItem.Size = new System.Drawing.Size(217, 22);
             this.celularToolStripMenuItem.Text = "Celular: +54 9 341 339-6372";
             // 
-            // menuStrip1
+            // timerInactividadAdmin
             // 
-            this.menuStrip1.BackColor = System.Drawing.SystemColors.MenuBar;
-            this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.comprasToolStripMenuItem,
-            this.ventasToolStripMenuItem,
-            this.cajaToolStripMenuItem,
-            this.mantenimientoToolStripMenuItem,
-            this.finanzasToolStripMenuItem,
-            this.stockToolStripMenuItem,
-            this.probarToolStripMenuItem,
-            this.contactoToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(4, 2, 0, 2);
-            this.menuStrip1.Size = new System.Drawing.Size(866, 24);
-            this.menuStrip1.TabIndex = 0;
-            this.menuStrip1.Text = "menuStrip1";
+            this.timerInactividadAdmin.Interval = 3000000;
+            this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // lblConectadoA
+            // pictureBoxUser
             // 
-            this.lblConectadoA.AutoSize = true;
-            this.lblConectadoA.BackColor = System.Drawing.SystemColors.MenuBar;
-            this.lblConectadoA.ForeColor = System.Drawing.SystemColors.MenuText;
-            this.lblConectadoA.Location = new System.Drawing.Point(615, 5);
-            this.lblConectadoA.Name = "lblConectadoA";
-            this.lblConectadoA.Size = new System.Drawing.Size(76, 13);
-            this.lblConectadoA.TabIndex = 102;
-            this.lblConectadoA.Text = "|  Conectado a";
-            // 
-            // comboConexion
-            // 
-            this.comboConexion.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.comboConexion.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboConexion.Enabled = false;
-            this.comboConexion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboConexion.FormattingEnabled = true;
-            this.comboConexion.Items.AddRange(new object[] {
-            "local",
-            "sanMartin",
-            "sanMartinRemoto",
-            "sanLorenzo",
-            "sanLorenzoRemoto"});
-            this.comboConexion.Location = new System.Drawing.Point(697, 1);
-            this.comboConexion.Name = "comboConexion";
-            this.comboConexion.Size = new System.Drawing.Size(157, 23);
-            this.comboConexion.TabIndex = 103;
-            this.comboConexion.SelectedIndexChanged += new System.EventHandler(this.comboConexion_SelectedIndexChanged);
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.panel1.Controls.Add(this.lblNombreAdmin);
-            this.panel1.Controls.Add(this.btnLogin);
-            this.panel1.Controls.Add(this.checkAutoDesconectar);
-            this.panel1.Controls.Add(this.btnCerrarSesion);
-            this.panel1.Location = new System.Drawing.Point(0, 21);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(866, 22);
-            this.panel1.TabIndex = 104;
+            this.pictureBoxUser.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pictureBoxUser.ErrorImage = null;
+            this.pictureBoxUser.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxUser.Image")));
+            this.pictureBoxUser.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxUser.InitialImage")));
+            this.pictureBoxUser.Location = new System.Drawing.Point(635, 2);
+            this.pictureBoxUser.Name = "pictureBoxUser";
+            this.pictureBoxUser.Size = new System.Drawing.Size(22, 19);
+            this.pictureBoxUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBoxUser.TabIndex = 38;
+            this.pictureBoxUser.TabStop = false;
+            this.pictureBoxUser.Visible = false;
             // 
             // FormPrincipal
             // 
@@ -825,10 +842,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxUser)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -890,6 +908,7 @@
         private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
+        private System.Windows.Forms.PictureBox pictureBoxUser;
     }
 }
 
