@@ -2084,10 +2084,9 @@ namespace Presentacion.Caja
                 ///TODO:cambiar color
                 Color colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
                     System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129))))) : System.Drawing.Color.FromName(oUsuario.ColorForm);
-               
-                colorUser = System.Drawing.SystemColors.InactiveBorder;
-                this.pnlBuscar.BackColor = colorUser;
-                this.grupoCortes.BackColor = colorUser;
+
+                colorUser = System.Drawing.SystemColors.ButtonFace;
+                cambiarBackColorForm(colorUser);
                 //comboColors.Text = colorUser.ToString();
                 //grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
                 timerBloquearCaja.Start();
@@ -2105,6 +2104,18 @@ namespace Presentacion.Caja
             {
                 this.Close();
             }
+        }
+
+        private void cambiarBackColorForm(Color colorUser)
+        {
+            this.pnlBuscar.BackColor = colorUser;
+            this.grupoCortes.BackColor = colorUser;
+            this.panel2.BackColor = colorUser;
+            this.panelPago.BackColor = colorUser;
+            this.panelAbonar.BackColor = colorUser;
+            txtCantItems.BackColor = colorUser;
+            txtTotalKgs.BackColor = colorUser;
+            lblTeclasRapidas.BackColor = colorUser;
         }
 
         private void AplicarPlaceholder()
@@ -2650,7 +2661,7 @@ namespace Presentacion.Caja
                             cantCajaVenta++;
                             if (cantCajaVenta > 1)
                             {
-                                titilarTextBoxVendedor();
+                                //titilarTextBoxVendedor();
                                 break; 
                             }
                         }
