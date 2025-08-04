@@ -1293,20 +1293,27 @@ namespace Presentacion.Caja
                 return;
             }
 
-            if (!txtCantKgs.Text.Equals("") && (checkLeerPeso.Checked  || 
-                ( !checkLeerPeso.Checked && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))))
+            if (txtCantKgs.Text.Equals("") || (checkLeerPeso.Checked  || 
+                ( !checkLeerPeso.Checked && !txtCantKgs.Text.Equals("") && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Kgs"))))
             {
                 try
                 {
-                    //Lectura de peso estable en balanza "001.305"
-                    try
+                    //si es estableca cantKg = 0 para que muestre correctamente el total de la venta
+                    //sino quedaba con el valor anterior
+                    if (txtCantKgs.Text.Equals(""))
+                        cantKg = 0;
+                    else
                     {
-                        cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, false);
-                    }
-                    catch (Exception)
-                    {
+                        //Lectura de peso estable en balanza "001.305"
+                        try
+                        {
+                            cantKg = Utilidades.Util_Form.convertFloat(txtCantKgs.Text, false);
+                        }
+                        catch (Exception)
+                        {
 
-                        cantKg = float.Parse(txtCantKgs.Text.Trim());
+                            cantKg = float.Parse(txtCantKgs.Text.Trim());
+                        }
                     }
 
                     if (oCorteE != null)
@@ -2067,6 +2074,9 @@ namespace Presentacion.Caja
             comboFormaPago.SelectedIndex = 0;
             AplicarPlaceholder();
 
+            //Para forzar formato importe ne RichBox
+            txtTotalS.Text = "0,0";
+            txtTotalS.Text = "000,00";// txtTotalS.Text;
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -2113,6 +2123,7 @@ namespace Presentacion.Caja
             this.panel2.BackColor = colorUser;
             this.panelPago.BackColor = colorUser;
             this.panelAbonar.BackColor = colorUser;
+            this.checkPagoMixto.BackColor = readOnlyColor;
             txtCantItems.BackColor = colorUser;
             txtTotalKgs.BackColor = colorUser;
             lblTeclasRapidas.BackColor = colorUser;
@@ -3078,6 +3089,39 @@ namespace Presentacion.Caja
         {
 
         }
+
+        private void txtTotalS_TextChanged(object sender, EventArgs e)
+        {
+            MostrarMonto();
+        }
+        private void MostrarMonto()
+        {
+            string[] partes = txtTotalS.Text.Split(','); // Separar entero y decimales
+            string entero = partes[0];
+            string decimales = partes[1];
+
+            // Limpia el RichTextBox
+            txtTotalRich.Clear();
+
+            // Aplica alineación centrada al párrafo
+            txtTotalRich.SelectionAlignment = HorizontalAlignment.Center;
+
+            // Parte entera (fuente grande y normal)
+            txtTotalRich.SelectionFont = new Font("Segoe UI", 38);
+            txtTotalRich.SelectionCharOffset = 0;
+            txtTotalRich.AppendText(entero);
+
+            // espacio entre ambos
+            txtTotalRich.SelectionFont = new Font("Segoe UI", 10);
+            txtTotalRich.SelectionCharOffset = 12; // Elevar decimales
+            txtTotalRich.AppendText(" ");
+
+            // Parte decimal (fuente más chica y elevada)
+            txtTotalRich.SelectionFont = new Font("Segoe UI", 25);
+            txtTotalRich.SelectionCharOffset = 12; // Elevar decimales
+            txtTotalRich.AppendText(decimales);
+        }
+
 
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
         {
