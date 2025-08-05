@@ -15,6 +15,8 @@ namespace Presentacion.Usuario
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
 
         private List<Entidades.PermisosUsuarios> Permisos = new List<Entidades.PermisosUsuarios>();
+        private bool grillaModificada = false;
+
         public FormUsuarios()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -28,6 +30,11 @@ namespace Presentacion.Usuario
 
             //crear grilla permisos
             //GrillaPermisosLoad();
+            CargarGrilla();
+        }
+
+        private void CargarGrilla()
+        {
             ConfigurarGrillaPermisos();
             CargarPermisosEnGrilla();
 
@@ -41,6 +48,7 @@ namespace Presentacion.Usuario
                 row.Cells["PermisoEdicion"].ReadOnly = !editarMarcado;
             }
         }
+
         private void CargarPermisosEnGrilla()
         {
             grillaPermisos.Rows.Clear();
@@ -54,8 +62,8 @@ namespace Presentacion.Usuario
                     permiso.IdForm,
                     permiso.Formulario.NombreForm,
                     verMarcado,
-                    editarMarcado,
                     verMarcado ? permiso.DiasPermitidosVer : -1,
+                    editarMarcado,
                     editarMarcado ? permiso.DiasPermitidosEditar : -1,
                     permiso.SoloRegistrosPropios // true -> Propios, false -> Todos
                 );
@@ -72,6 +80,9 @@ namespace Presentacion.Usuario
         private void grillaPermisos_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
+
+            if (e.RowIndex >= 0) grillaModificada = true;
 
             var row = grillaPermisos.Rows[e.RowIndex];
 
@@ -185,7 +196,7 @@ namespace Presentacion.Usuario
             var colHastaDiasAtras = new DataGridViewTextBoxColumn
             {
                 Name = "HastaDiasAtras",
-                HeaderText = "Hasta Días Atrás",
+                HeaderText = "Días Atrás",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader
             };
             grillaPermisos.Columns.Add(colHastaDiasAtras);
@@ -204,7 +215,7 @@ namespace Presentacion.Usuario
             var colHastaDiasAtras2 = new DataGridViewTextBoxColumn
             {
                 Name = "HastaDiasAtras2",
-                HeaderText = "Hasta Días Atrás 2",
+                HeaderText = "Días Atrás",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader
             };
             grillaPermisos.Columns.Add(colHastaDiasAtras2);
@@ -233,75 +244,13 @@ namespace Presentacion.Usuario
             grillaPermisos.Columns["Editar"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
             grillaPermisos.Columns["HastaDiasAtras"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
             grillaPermisos.Columns["HastaDiasAtras2"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["PermisoEdicion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPermisos.Columns["PermisoEdicion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
 
-            grillaPermisos.DefaultCellStyle.Font = new Font("Segoe UI", 12F, FontStyle.Regular);
-            //grillaPermisos.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            grillaPermisos.DefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Regular);
+            grillaPermisos.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
         }
 
-        private void GrillaPermisosLoad()
-        {
-            // Configuración básica
-            grillaPermisos.AutoGenerateColumns = false;
-            grillaPermisos.AllowUserToAddRows = false;
-
-            // 1. Columna de texto (Formulario)
-            DataGridViewTextBoxColumn colFormulario = new DataGridViewTextBoxColumn();
-            colFormulario.HeaderText = "Formulario";
-            colFormulario.Name = "Formulario";
-            colFormulario.ReadOnly = true;
-            grillaPermisos.Columns.Add(colFormulario);
-
-            // 2. Columna checkbox (Ver)
-            DataGridViewCheckBoxColumn colVer = new DataGridViewCheckBoxColumn();
-            colVer.HeaderText = "Ver";
-            colVer.Name = "Ver";
-            grillaPermisos.Columns.Add(colVer);
-
-            // 3. Columna numérica (Hasta Días Atrás)
-            DataGridViewTextBoxColumn colHastaDiasAtras = new DataGridViewTextBoxColumn();
-            colHastaDiasAtras.HeaderText = "Hasta(Días Atrás)";
-            colHastaDiasAtras.Name = "HastaDiasAtras";
-            grillaPermisos.Columns.Add(colHastaDiasAtras);
-
-            // 4. Columna checkbox (Editar)
-            DataGridViewCheckBoxColumn colEditar = new DataGridViewCheckBoxColumn();
-            colEditar.HeaderText = "Editar";
-            colEditar.Name = "Editar";
-            grillaPermisos.Columns.Add(colEditar);
-
-            // 5. Columna numérica (Hasta Días Atrás 2)
-            DataGridViewTextBoxColumn colHastaDiasAtras2 = new DataGridViewTextBoxColumn();
-            colHastaDiasAtras2.HeaderText = "Hasta(Días Atrás)";
-            colHastaDiasAtras2.Name = "HastaDiasAtras2";
-            grillaPermisos.Columns.Add(colHastaDiasAtras2);
-
-            // 6. Columna ComboBox (Permiso Edición)
-            DataGridViewComboBoxColumn colPermisoEdicion = new DataGridViewComboBoxColumn();
-            colPermisoEdicion.HeaderText = "Permiso Edición";
-            colPermisoEdicion.Name = "PermisoEdicion";
-            colPermisoEdicion.Items.Add("Todos");
-            colPermisoEdicion.Items.Add("Propios");
-            grillaPermisos.Columns.Add(colPermisoEdicion);
-
-            // Ajustar ancho al encabezado
-            grillaPermisos.RowHeadersVisible = false;
-            grillaPermisos.Columns["Formulario"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            grillaPermisos.Columns["Ver"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["Editar"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["HastaDiasAtras"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["HastaDiasAtras2"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["PermisoEdicion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-
-            grillaPermisos.DefaultCellStyle.ForeColor = Color.Black;
-
-            // Filas de ejemplo
-            grillaPermisos.Rows.Add("Ventas", true, 30, true, 15, "Todos");
-            grillaPermisos.Rows.Add("Compras", false, 10, true, 5, "Propios");
-            grillaPermisos.Rows.Add("Inventario", true, 60, false, 0, "Todos");
-            grillaPermisos.Rows.Add("Usuarios", false, 0, false, 0, "Propios");
-        }
         private void grillaPermisos_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
             // Validar columnas 2 y 4 (numéricas)
@@ -344,7 +293,17 @@ namespace Presentacion.Usuario
 
         private void comboUsuario_SelectedValueChanged(object sender, EventArgs e)
         {
-            oUsuarioE = comboUsuario.SelectedValue != null ? oUsuarioN.getUser(comboUsuario.SelectedValue.ToString()) : null;
+            //TODO: Al cambiar el usuario vericar que no hay cambios
+            //si los hay, y no quiere perderlos volver al valor del usuario anterior
+            if (ValidarCambiosSinGuardar() == DialogResult.No)
+            {
+
+            }
+
+            oUsuarioE = !string.IsNullOrWhiteSpace(comboUsuario.SelectedValue?.ToString())
+                    ? oUsuarioN.getUser(comboUsuario.SelectedValue.ToString())
+                    : null;
+
             if (oUsuarioE != null)
             {
                 txtNombre.Text = oUsuarioE.Nombre;
@@ -363,7 +322,8 @@ namespace Presentacion.Usuario
                 checkActivo.Checked = false;
             }
             checkOlvidoClave.Checked = false;
-            
+
+            CargarGrilla();
         }
 
         private void btnGuardarDatos_Click(object sender, EventArgs e)
@@ -481,6 +441,110 @@ namespace Presentacion.Usuario
             var permisos = ReconstruirListaDesdeGrilla();
             oUsuarioN.AddOrEditPermisos(permisos);
             MessageBox.Show("Permisos guardados correctamente.");
+            grillaModificada = false;
+        }
+
+        private void checkMarcarEditar_CheckedChanged(object sender, EventArgs e)
+        {
+            bool marcar = checkMarcarEditar.Checked;
+
+            foreach (DataGridViewRow row in grillaPermisos.Rows)
+            {
+                row.Cells["Editar"].Value = marcar;
+
+                // Ajustar días y habilitar/deshabilitar combo de PermisoEdicion
+                if (!marcar)
+                {
+                    row.Cells["HastaDiasAtras2"].Value = -1;
+                    row.Cells["HastaDiasAtras2"].ReadOnly = true;
+
+                    row.Cells["PermisoEdicion"].Value = true; // por defecto Propios
+                    row.Cells["PermisoEdicion"].ReadOnly = true;
+                }
+                else
+                {
+                    row.Cells["HastaDiasAtras2"].Value = 0;
+                    row.Cells["HastaDiasAtras2"].ReadOnly = false;
+
+                    row.Cells["PermisoEdicion"].ReadOnly = false;
+                }
+            }
+        }
+
+        private void checkMarcarVer_CheckedChanged(object sender, EventArgs e)
+        {
+            bool marcar = checkMarcarVer.Checked;
+
+            foreach (DataGridViewRow row in grillaPermisos.Rows)
+            {
+                row.Cells["Ver"].Value = marcar;
+
+                // Si se desmarca, fijar el valor -1 y deshabilitar campo
+                if (!marcar)
+                {
+                    row.Cells["HastaDiasAtras"].Value = -1;
+                    row.Cells["HastaDiasAtras"].ReadOnly = true;
+                }
+                else
+                {
+                    row.Cells["HastaDiasAtras"].Value = 0;
+                    row.Cells["HastaDiasAtras"].ReadOnly = false;
+                }
+            }
+        }
+
+        private void checkCambiosEnLote_CheckedChanged(object sender, EventArgs e)
+        {
+            panelMarcarTodos.Enabled = checkCambiosEnLote.Checked;
+        }
+
+        private void txtDiasVer_TextChanged(object sender, EventArgs e)
+        {
+            if (!int.TryParse(txtDiasVer.Text, out int diasVer)) diasVer = 0;
+
+            foreach (DataGridViewRow row in grillaPermisos.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells["Ver"].Value))
+                {
+                    row.Cells["HastaDiasAtras"].Value = diasVer;
+                }
+            }
+        }
+
+        private void txtDiasEditar_TextChanged(object sender, EventArgs e)
+        {
+            if (!int.TryParse(txtDiasEditar.Text, out int diasEditar)) diasEditar = 0;
+
+            foreach (DataGridViewRow row in grillaPermisos.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells["Editar"].Value))
+                {
+                    row.Cells["HastaDiasAtras2"].Value = diasEditar;
+                }
+            }
+        }
+
+        private void FormUsuarios_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (ValidarCambiosSinGuardar() == DialogResult.No)
+            {
+                e.Cancel = true; // Cancela el cierre del formulario
+            }
+        }
+
+        private DialogResult ValidarCambiosSinGuardar()
+        {
+            DialogResult resp = DialogResult.No;
+            if (grillaModificada)
+            {
+                resp = MessageBox.Show(
+                    "Hay cambios sin guardar. ¿Desea salir de todos modos?",
+                    "Confirmar salida",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning
+                );
+            }
+            return resp;
         }
     }
 }
