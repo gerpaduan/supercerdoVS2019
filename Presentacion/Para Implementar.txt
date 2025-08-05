@@ -167,5 +167,55 @@ END
 GO
 
 
-////
+/////////////////
 
+04/08 
+
+/// CREAANDO PERMISOS DE USUARIOS
+
+
+
+/****** Object:  Table [dbo].[Formularios]    Script Date: 4/8/2025 20:43:39 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[Formularios](
+	[idForm] [int] IDENTITY(1,1) NOT NULL,
+	[nombreForm] [varchar](100) NOT NULL,
+	[descripcion] [varchar](255) NULL,
+	[formConsulta] [varchar](50) NULL,
+	[formEdicion] [varchar](50) NULL,
+	[formEdicionExtra1] [varchar](50) NULL,
+	[formEdicionExtra2] [varchar](50) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[idForm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[nombreForm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
+*********************
+
+ALTER TABLE usuarios
+ADD CONSTRAINT PK_usuarios PRIMARY KEY (id);
+
+*****************
+
+CREATE TABLE PermisosUsuarios (
+  idUsuario INT NOT NULL,
+  idForm INT NOT NULL,
+  diasPermitidosVer INT NOT NULL DEFAULT -1,
+  diasPermitidosEditar INT NOT NULL DEFAULT -1,
+  soloRegistrosPropios BIT NOT NULL DEFAULT 0,
+  PRIMARY KEY (idUsuario, idForm),
+  FOREIGN KEY (idUsuario) REFERENCES Usuarios(id),
+  FOREIGN KEY (idForm) REFERENCES Formularios(idForm)
+);

@@ -53,5 +53,9 @@ namespace Entidades
         }
 
         public bool Activo { get => activo; set => activo = value; }
+
+
+        // Lista de permisos asociados a este usuario
+        public List<PermisosUsuarios> Permisos { get; set; } = new List<PermisosUsuarios>();
     }
 }
