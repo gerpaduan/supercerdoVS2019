@@ -43,9 +43,9 @@ namespace Negocio
         public List<Entidades.Usuario> convertDatatableToList()
         {
             if (dtUsuarios == null || (listUsuarios != null && listUsuarios.Count != dtUsuarios.Rows.Count))
-	        {
-        	    obtenerUsuarios(false);
-	        }
+            {
+                obtenerUsuarios(false);
+            }
             if (dtUsuarios.Rows.Count > 0)
             {
                 listUsuarios = new List<Entidades.Usuario>();
@@ -60,7 +60,7 @@ namespace Negocio
                     user.Admin = Convert.ToBoolean(drUsuario["admin"]);
                     user.Activo = Convert.ToBoolean(drUsuario["activo"]);
                     user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
-   
+
                     listUsuarios.Add(user);
                 }
             }
@@ -76,9 +76,9 @@ namespace Negocio
         {
             Entidades.Usuario userEncontrado = null;
             if (listUsuarios == null)
-	        {
+            {
                 listUsuarios = convertDatatableToList();
-	        }
+            }
             foreach (Entidades.Usuario user in listUsuarios)
             {
                 if (soloNombreUsuario)
@@ -103,7 +103,8 @@ namespace Negocio
             return userEncontrado;
         }
 
-        public Entidades.Usuario getUser(string usuario) {
+        public Entidades.Usuario getUser(string usuario)
+        {
             convertDatatableToList();
 
             Entidades.Usuario userEncontrado = null;
@@ -143,6 +144,15 @@ namespace Negocio
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
             oUsuarioD.addOrEditUser(oUsuarioE);
+        }
+
+        public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
+        {
+            return oUsuarioD.getPermisosUsuario(idUsuario);
+        }
+        public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
+        {
+            oUsuarioD.AddOrEditPermisos(permisos);
         }
     }
 }

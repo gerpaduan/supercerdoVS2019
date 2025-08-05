@@ -16,5 +16,7 @@ namespace Entidades
         public int DiasPermitidosEditar { get; set; } = -1;
 
         public bool SoloRegistrosPropios { get; set; } = false;
+
+        public Formulario Formulario { get; set; } // <-- nueva propiedad
     }
 }

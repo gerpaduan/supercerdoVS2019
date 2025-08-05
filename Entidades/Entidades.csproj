@@ -56,6 +56,7 @@
     <Compile Include="CortePorFormula.cs" />
     <Compile Include="Formula.cs" />
     <Compile Include="FacturaElectronica.cs" />
+    <Compile Include="Formulario.cs" />
     <Compile Include="lineaVentaUnificada.cs" />
     <Compile Include="MovCtaCte.cs" />
     <Compile Include="Parametros.cs" />

@@ -96,5 +96,120 @@ namespace Datos
             cmUsuario.ExecuteNonQuery();
             cmUsuario.Connection.Close();
         }
+
+
+        public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
+        {
+            string query = @"
+                SELECT 
+                    f.idForm,
+                    f.nombreForm,
+                    f.descripcion,
+                    f.formConsulta,
+                    f.formEdicion,
+                    f.formEdicionExtra1,
+                    f.formEdicionExtra2,
+                    COALESCE(p.diasPermitidosVer, -1) AS diasPermitidosVer,
+                    COALESCE(p.diasPermitidosEditar, -1) AS diasPermitidosEditar,
+                    CAST(COALESCE(p.soloRegistrosPropios, 1) AS bit) AS soloRegistrosPropios
+                FROM 
+                    Formularios f
+                LEFT JOIN 
+                    PermisosUsuarios p 
+                    ON f.idForm = p.idForm AND p.idUsuario = @idUsuario
+                ORDER BY
+                    f.idForm;
+            ";
+            List<Entidades.PermisosUsuarios> listPermisos = new List<Entidades.PermisosUsuarios>();
+
+            using (SqlConnection con = conn.conectar())
+            using (SqlCommand cmUsuario = new SqlCommand(query, con))
+            {
+                cmUsuario.CommandType = CommandType.Text;
+                cmUsuario.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+                con.Open();
+                using (SqlDataReader drUsuario = cmUsuario.ExecuteReader())
+                {
+                    while (drUsuario.Read())
+                    {
+                        Entidades.PermisosUsuarios permisosUsuarios = new Entidades.PermisosUsuarios
+                        {
+                            IdUsuario = idUsuario,
+                            IdForm = drUsuario.GetInt32(drUsuario.GetOrdinal("idForm")),
+                            DiasPermitidosVer = drUsuario.IsDBNull(drUsuario.GetOrdinal("diasPermitidosVer")) ? -1 :
+                                                                        drUsuario.GetInt32(drUsuario.GetOrdinal("diasPermitidosVer")),
+                            DiasPermitidosEditar = drUsuario.IsDBNull(drUsuario.GetOrdinal("diasPermitidosEditar")) ? -1 :
+                                                                           drUsuario.GetInt32(drUsuario.GetOrdinal("diasPermitidosEditar")),
+                            SoloRegistrosPropios = drUsuario.IsDBNull(drUsuario.GetOrdinal("soloRegistrosPropios")) ? true :
+                                                                           drUsuario.GetBoolean(drUsuario.GetOrdinal("soloRegistrosPropios")),
+                            Formulario = new Entidades.Formulario
+                            {
+                                IdForm = drUsuario.GetInt32(drUsuario.GetOrdinal("idForm")),
+                                NombreForm = drUsuario.GetString(drUsuario.GetOrdinal("nombreForm")),
+                                Descripcion = drUsuario.IsDBNull(drUsuario.GetOrdinal("descripcion")) ? "" :
+                                                                      drUsuario.GetString(drUsuario.GetOrdinal("descripcion")),
+                                FormConsulta = drUsuario.IsDBNull(drUsuario.GetOrdinal("formConsulta")) ? "" :
+                                                                       drUsuario.GetString(drUsuario.GetOrdinal("formConsulta")),
+                                FormEdicion = drUsuario.IsDBNull(drUsuario.GetOrdinal("formEdicion")) ? "" :
+                                                                      drUsuario.GetString(drUsuario.GetOrdinal("formEdicion")),
+                                FormEdicionExtra1 = drUsuario.IsDBNull(drUsuario.GetOrdinal("formEdicionExtra1")) ? "" :
+                                                                            drUsuario.GetString(drUsuario.GetOrdinal("formEdicionExtra1")),
+                                FormEdicionExtra2 = drUsuario.IsDBNull(drUsuario.GetOrdinal("formEdicionExtra2")) ? "" :
+                                                                            drUsuario.GetString(drUsuario.GetOrdinal("formEdicionExtra2"))
+                            }
+                        };
+                        //var permiso = permisosUsuarios;
+
+                        listPermisos.Add(permisosUsuarios);
+                    }
+                }
+            }
+
+            return listPermisos;
+
+        }
+
+        public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
+        {
+
+            using (SqlConnection con = conn.conectar())
+            {
+                con.Open();
+
+                foreach (var permiso in permisos)
+                {
+                    string query = @"
+                IF EXISTS (
+                    SELECT 1 FROM PermisosUsuarios 
+                    WHERE idUsuario = @idUsuario AND idForm = @idForm
+                )
+                BEGIN
+                    UPDATE PermisosUsuarios
+                    SET diasPermitidosVer = @diasVer,
+                        diasPermitidosEditar = @diasEditar,
+                        soloRegistrosPropios = @soloPropios
+                    WHERE idUsuario = @idUsuario AND idForm = @idForm
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO PermisosUsuarios 
+                    (idUsuario, idForm, diasPermitidosVer, diasPermitidosEditar, soloRegistrosPropios)
+                    VALUES (@idUsuario, @idForm, @diasVer, @diasEditar, @soloPropios)
+                END";
+
+                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@idUsuario", permiso.IdUsuario);
+                        cmd.Parameters.AddWithValue("@idForm", permiso.IdForm);
+                        cmd.Parameters.AddWithValue("@diasVer", permiso.DiasPermitidosVer);
+                        cmd.Parameters.AddWithValue("@diasEditar", permiso.DiasPermitidosEditar);
+                        cmd.Parameters.AddWithValue("@soloPropios", permiso.SoloRegistrosPropios);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
     }
 }
