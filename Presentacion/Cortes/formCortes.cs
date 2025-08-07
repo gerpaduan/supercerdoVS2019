@@ -162,7 +162,7 @@ namespace Presentacion
         {
             try
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso())
+                if (!Usuarios.FormValidarPermiso.validarPermiso("formModificarPrecios"))
                 {
                     //this.Close();
                 }

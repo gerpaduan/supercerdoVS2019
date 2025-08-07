@@ -61,6 +61,8 @@ namespace Negocio
                     user.Activo = Convert.ToBoolean(drUsuario["activo"]);
                     user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
 
+                    user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
+
                     listUsuarios.Add(user);
                 }
             }
@@ -153,6 +155,60 @@ namespace Negocio
         public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
         {
             oUsuarioD.AddOrEditPermisos(permisos);
+        }
+
+        /// <summary>
+        /// Se valida si el oUsuario tiene permiso en el formulario, por defecto pasar Fecha Actual,
+        /// idCreador, pasar -1 si no se quiere verificar la Edicion
+        /// </summary>
+        /// <param name="oUser"></param>
+        /// <param name="nombreForm"></param>
+        /// <param name="fechaDesde"></param>
+        /// <returns></returns>
+        public bool tienePermiso(Entidades.Usuario oUser, string nombreForm, DateTime fechaDesde, int idCreador)
+        {
+            bool permisoVer = false, permisoEditar = false;
+
+            if (oUser == null)
+                return false;
+
+            if (oUser.Admin)
+                return true;
+
+            foreach (var permiso in oUser.Permisos)
+            {
+
+                if (idCreador >= 0)
+                {
+                    if (permiso.Formulario.FormConsulta.Contains(nombreForm))
+                    {
+                        bool d = false;
+                    }
+
+                    permisoEditar = (permiso.Formulario.FormEdicion.Contains(nombreForm) ||
+                        permiso.Formulario.FormEdicionExtra1.Contains(nombreForm) ||
+                        permiso.Formulario.FormEdicionExtra2.Contains(nombreForm)) &&
+                        DateTime.Today.AddDays(-permiso.DiasPermitidosEditar) <= fechaDesde;
+
+                    //si permisoEditar es TRUE, se verifica q sea que permita editar todos ó haya creado el registro
+                    if (permisoEditar)
+                    {
+                        permisoEditar = !permiso.SoloRegistrosPropios || permiso.SoloRegistrosPropios && oUser.Id == idCreador;
+                        return permisoEditar;
+                    }
+                }
+                else
+                {
+                    permisoVer = permiso.Formulario.FormConsulta.Contains(nombreForm) &&
+                        DateTime.Today.AddDays(-permiso.DiasPermitidosVer) <= fechaDesde;
+                }
+                
+                //si idCreador mayor o igual a 0 se debe validar la edicion
+
+                if (permisoVer || permisoEditar)
+                    break;
+            }
+            return permisoVer || permisoEditar;
         }
     }
 }

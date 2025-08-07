@@ -950,7 +950,7 @@ namespace Presentacion.Ventas
             checkLeerPeso.Checked =  Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString());
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (!(FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso()))
+            if (!(FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso("formNuevaVent")))
             {
                 MessageBox.Show("No está logueado");
                 this.Close();

@@ -18,7 +18,7 @@ namespace Presentacion.Caja
 
         protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-        Entidades.Usuario oUsuario;
+        public Entidades.Usuario oUsuario;
         string[] arrayRowFilter = new string[] { "1 = 1", "1 = 1", "1 = 1", "1 = 1" };
         string consultaRowFilter = "";
 
@@ -38,11 +38,12 @@ namespace Presentacion.Caja
             this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today;
             fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
-            fechaDesde.Value = today.AddDays(-8);
+            fechaDesde.Value = today;
             cargarSucursal();
             cargarComboUsuario();
             cargarTiposEgresoCaja();
             loadingForm = false;
+            oUsuario = FormPrincipal.oUserLogueado;
             cargarGrilla();            
         }
 
@@ -70,6 +71,13 @@ namespace Presentacion.Caja
         {
             if (loadingForm) return;
             lblActualizar.Visible = false;
+
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                Utilidades.Mensajes.ErrorPermisoAcceso();
+                return;
+            }
+
             dtEgresosCaja = oCierreN.obtenerEgresosCaja(oEgresoCajaE.Sucursal.idSucursal,
                 Convert.ToInt32(comboUsuario.SelectedValue.ToString()), oEgresoCajaE.IdTipoEgresoCaja, txtDescripcion.Text, fechaDesde.Value, fechaHasta.Value);
             grillaEgresosCaja.DataSource = dtEgresosCaja;
@@ -148,7 +156,7 @@ namespace Presentacion.Caja
 
             if (oUsuario == null) return;
 
-            if (oUsuario.Admin)
+            if (oUsuarioN.tienePermiso(oUsuario, "formAddOrEditEgresoCaja", DateTime.Today, oUsuario.Id))
             {
                 formAddOrEditEgresoCaja frmAddOrEditEgresoCaja = new formAddOrEditEgresoCaja();
                 frmAddOrEditEgresoCaja.oUsuario = oUsuario;
@@ -157,7 +165,7 @@ namespace Presentacion.Caja
             }
             else
             {
-                MessageBox.Show("Debe agregar sus gastos desde la pantalla de Caja Venta.\n");
+                MessageBox.Show("Debe agregar sus gastos desde la pantalla de Punto de Venta (POS).\n");
             }
             oUsuario = null;
         }

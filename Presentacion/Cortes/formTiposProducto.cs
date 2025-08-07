@@ -74,7 +74,7 @@ namespace Presentacion.Cortes
                 return;
             }
 
-            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+            if (!Usuarios.FormValidarPermiso.validarPermiso("formAddOrEditTipoProducto")) return;
 
             formAddOrEditTipoProducto frmAddOrEditTipoProducto = new formAddOrEditTipoProducto();
             frmAddOrEditTipoProducto.tipoProductoSelected  = !esInsert ? grilla.CurrentRow.Cells["tipo"].Value.ToString() :"";

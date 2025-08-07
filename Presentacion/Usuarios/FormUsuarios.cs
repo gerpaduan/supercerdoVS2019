@@ -16,6 +16,8 @@ namespace Presentacion.Usuario
 
         private List<Entidades.PermisosUsuarios> Permisos = new List<Entidades.PermisosUsuarios>();
         private bool grillaModificada = false;
+        string ultimoUsuario;
+        bool guardarPermisos = false;
 
         public FormUsuarios()
         {
@@ -28,9 +30,22 @@ namespace Presentacion.Usuario
             cargarCombo();
             validarLogueoAdmin();
 
-            //crear grilla permisos
-            //GrillaPermisosLoad();
             CargarGrilla();
+            BotonPermisos();
+        }
+
+        private void BotonPermisos()
+        {
+            btnGuardarPermisos.Text = guardarPermisos ? "Guardar &Permisos" : "Editar &Permisos";
+
+            if (grillaPermisos.Columns.Count > 0)
+            {
+                grillaPermisos.Columns["Ver"].ReadOnly = !guardarPermisos;
+                grillaPermisos.Columns["Editar"].ReadOnly = !guardarPermisos;
+                grillaPermisos.Columns["HastaDiasAtras"].ReadOnly = !guardarPermisos;
+                grillaPermisos.Columns["HastaDiasAtras2"].ReadOnly = !guardarPermisos;
+                grillaPermisos.Columns["PermisoEdicion"].ReadOnly = !guardarPermisos;
+            }
         }
 
         private void CargarGrilla()
@@ -162,7 +177,8 @@ namespace Presentacion.Usuario
             grillaPermisos.AllowUserToAddRows = false;
 
             grillaPermisos.DefaultCellStyle.ForeColor = Color.Black;
-
+            grillaPermisos.RowTemplate.Height = 28; // Cambiá 30 por el valor que necesites
+            grillaPermisos.AllowUserToResizeRows = false;
             // Columna oculta IdForm
             var colIdForm = new DataGridViewTextBoxColumn
             {
@@ -293,15 +309,18 @@ namespace Presentacion.Usuario
 
         private void comboUsuario_SelectedValueChanged(object sender, EventArgs e)
         {
-            //TODO: Al cambiar el usuario vericar que no hay cambios
-            //si los hay, y no quiere perderlos volver al valor del usuario anterior
-            if (ValidarCambiosSinGuardar() == DialogResult.No)
+            string usuarioSelected  = ((DataRowView)comboUsuario.SelectedItem)["usuario"].ToString();
+            if (grillaModificada && ValidarCambiosSinGuardar() == DialogResult.No)
             {
-
+                if (ultimoUsuario != null && comboUsuario.SelectedValue != null)
+                {
+                    comboUsuario.SelectedItem = ultimoUsuario;
+                    return;
+                }
             }
 
-            oUsuarioE = !string.IsNullOrWhiteSpace(comboUsuario.SelectedValue?.ToString())
-                    ? oUsuarioN.getUser(comboUsuario.SelectedValue.ToString())
+            oUsuarioE = !string.IsNullOrWhiteSpace(usuarioSelected)
+                    ? oUsuarioN.getUser(usuarioSelected)
                     : null;
 
             if (oUsuarioE != null)
@@ -324,6 +343,8 @@ namespace Presentacion.Usuario
             checkOlvidoClave.Checked = false;
 
             CargarGrilla();
+
+            ultimoUsuario = usuarioSelected;
         }
 
         private void btnGuardarDatos_Click(object sender, EventArgs e)
@@ -437,11 +458,20 @@ namespace Presentacion.Usuario
 
         private void btnGuardarPermisos_Click(object sender, EventArgs e)
         {
-            grillaPermisos.EndEdit(); // Asegura que los cambios en celdas se confirmen
-            var permisos = ReconstruirListaDesdeGrilla();
-            oUsuarioN.AddOrEditPermisos(permisos);
-            MessageBox.Show("Permisos guardados correctamente.");
-            grillaModificada = false;
+            if (guardarPermisos)
+            {
+                grillaPermisos.EndEdit(); // Asegura que los cambios en celdas se confirmen
+                var permisos = ReconstruirListaDesdeGrilla();
+                oUsuarioN.AddOrEditPermisos(permisos);
+                MessageBox.Show("Permisos guardados correctamente.");
+                grillaModificada = false;
+            }
+            else
+            {
+
+            }
+            guardarPermisos = !guardarPermisos;
+            BotonPermisos();
         }
 
         private void checkMarcarEditar_CheckedChanged(object sender, EventArgs e)
@@ -526,7 +556,7 @@ namespace Presentacion.Usuario
 
         private void FormUsuarios_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (ValidarCambiosSinGuardar() == DialogResult.No)
+            if (grillaModificada && ValidarCambiosSinGuardar() == DialogResult.No)
             {
                 e.Cancel = true; // Cancela el cierre del formulario
             }
@@ -538,10 +568,11 @@ namespace Presentacion.Usuario
             if (grillaModificada)
             {
                 resp = MessageBox.Show(
-                    "Hay cambios sin guardar. ¿Desea salir de todos modos?",
+                    "Hay cambios sin guardar en Permisos. ¿Desea salir de todos modos?",
                     "Confirmar salida",
                     MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning
+                    MessageBoxIcon.Warning, 
+                    MessageBoxDefaultButton.Button2
                 );
             }
             return resp;

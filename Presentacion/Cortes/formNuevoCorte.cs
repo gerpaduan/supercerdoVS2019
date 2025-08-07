@@ -370,7 +370,7 @@ namespace Presentacion
                     cargarCampos();
                 }
 
-                if (!Usuarios.FormValidarPermiso.validarPermiso())
+                if (!Usuarios.FormValidarPermiso.validarPermiso("formNuevoCorte"))
                 {
                     this.Close();
                 }

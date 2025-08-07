@@ -12,6 +12,7 @@ namespace Presentacion.Usuarios
     public partial class FormValidarPermiso : Form, InterfaceUsuario
     {
         Entidades.Usuario oUsuario;
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         public FormValidarPermiso()
         {
@@ -27,13 +28,13 @@ namespace Presentacion.Usuarios
             oUsuario = usuario;
         }
 
-        public static bool validarPermiso()
+        public static bool validarPermiso(string nombreForm)
         {
             FormValidarPermiso thisForm = new FormValidarPermiso();
-            return thisForm.tienePermiso();       
+            return thisForm.tienePermiso(nombreForm);       
         }
 
-        private bool tienePermiso()
+        private bool tienePermiso(string nombreForm)
         {
             bool resp = true;
 
@@ -42,12 +43,16 @@ namespace Presentacion.Usuarios
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
                 frmLogin.ShowDialog(this);
                 if (oUsuario == null) return false;
-                if (!oUsuario.Admin)
-                {
-                    resp = false;
-                    MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
-                }
+                FormPrincipal.oUserLogueado = oUsuario;
             }
+            else
+                oUsuario = FormPrincipal.oUserLogueado;
+            if (!oUsuario.Admin && !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, nombreForm, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                resp = false;
+                Utilidades.Mensajes.ErrorPermisoAcceso();
+            }
+
             return resp;
         }
     }

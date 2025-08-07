@@ -115,7 +115,7 @@ namespace Presentacion
 
         private void eliminar_Click(object sender, EventArgs e)
         {
-            if (!Usuarios.FormValidarPermiso.validarPermiso())
+            if (!Usuarios.FormValidarPermiso.validarPermiso("EliminarCorte"))
                 return;
 
             eliminarCorte();

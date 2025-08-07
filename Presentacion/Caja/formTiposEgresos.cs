@@ -75,7 +75,7 @@ namespace Presentacion.Caja
             }
 
 
-            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+            if (!Usuarios.FormValidarPermiso.validarPermiso("formAddOrEditTipoEgreso")) return;
 
             if (Application.OpenForms["formAddOrEditTipoEgreso"] != null)
             {

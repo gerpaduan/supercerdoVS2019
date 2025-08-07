@@ -55,6 +55,7 @@ namespace Presentacion
         bool formAbierto = false;
         Entidades.Usuario oUsuario;
         Entidades.Usuario oUserAdminEmpresa;
+        public static Entidades.Usuario oUserLogueado;
         public static Entidades.Usuario oUserAdmin;
 
         string ultimaConnSelect;
@@ -73,7 +74,7 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+                if (!Usuarios.FormValidarPermiso.validarPermiso("formCompras")) return;
 
                 formCompras frmCompras = new formCompras();
                 frmCompras.Logueado = true;
@@ -90,7 +91,7 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+                if (!Usuarios.FormValidarPermiso.validarPermiso("formVentas")) return;
 
                 formVentas frmVentas = new formVentas();
                 frmVentas.Logueado = true;
@@ -446,18 +447,20 @@ namespace Presentacion
             frmLogin.ShowDialog(this);
 
             if (oUsuario == null) return;
-            if (!oUsuario.Admin)
-            {
-                MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
-                return;
-            }
+
+            //if (!oUsuario.Admin)
+            //{
+            //    MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+            //    return;
+            //}
 
             logueado = true;
             checkAutoDesconectar.Visible = logueado;
             if (logueado)
             {
                 oUserAdmin = oUsuario.User.Equals("admin") ? oUsuario : null;
-                oUserAdminEmpresa = oUsuario;
+                oUserAdminEmpresa = oUsuario.Admin ? oUsuario : null;
+                oUserLogueado = oUsuario;
                 btnLogin.Visible = false;
                 btnCerrarSesion.Visible = true;
                 lblNombreAdmin.Visible = pictureBoxUser.Visible = true;
@@ -471,6 +474,8 @@ namespace Presentacion
             else
             {
                 oUserAdmin = null;
+                oUserAdminEmpresa = null;
+                oUserLogueado = null;
                 btnLogin.Visible = true;
                 btnCerrarSesion.Visible = false;
                 lblNombreAdmin.Visible = pictureBoxUser.Visible = false;
@@ -611,7 +616,7 @@ namespace Presentacion
 
         private static void cierresCaja()
         {
-            if (Usuarios.FormValidarPermiso.validarPermiso())
+            if (Usuarios.FormValidarPermiso.validarPermiso("formCierresDeCaja"))
             {
                 if (Application.OpenForms["formCierresDeCaja"] != null)
                 {
@@ -781,8 +786,20 @@ namespace Presentacion
 
         private void btnUsuarios_Click(object sender, EventArgs e)
         {
-            FormUsuarios frmUsuario = new FormUsuarios();
-            frmUsuario.Show();
+            if (Application.OpenForms["FormUsuarios"] != null)
+            {
+
+                Application.OpenForms["FormUsuarios"].Activate();
+                Application.OpenForms["FormUsuarios"].WindowState = FormWindowState.Normal;
+
+            }
+            else
+            {
+                if (!Usuarios.FormValidarPermiso.validarPermiso("FormUsuarios")) return;
+                FormUsuarios frmUsuario = new FormUsuarios();
+                frmUsuario.Show();
+            }
+
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -801,7 +818,7 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+                if (!Usuarios.FormValidarPermiso.validarPermiso("formEgresosCaja")) return;
                 formEgresosCaja frmEgresosCaja = new formEgresosCaja();
                 frmEgresosCaja.Show();
             }
@@ -1245,7 +1262,7 @@ namespace Presentacion
 
         private void parametrosToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!Usuarios.FormValidarPermiso.validarPermiso()) return;
+            if (!Usuarios.FormValidarPermiso.validarPermiso("formAppConfigTerminal")) return;
 
             Utilidades.formAppConfigTerminal formAppConfig = new Utilidades.formAppConfigTerminal();
             formAppConfig.Show();

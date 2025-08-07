@@ -51,12 +51,12 @@
             this.checkMarcarVer = new System.Windows.Forms.CheckBox();
             this.checkMarcarEditar = new System.Windows.Forms.CheckBox();
             this.panelMarcarTodos = new System.Windows.Forms.Panel();
-            this.txtDiasVer = new System.Windows.Forms.TextBox();
-            this.txtDiasEditar = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
-            this.comboPropioTodos = new System.Windows.Forms.ComboBox();
+            this.txtDiasVer = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.txtDiasEditar = new System.Windows.Forms.TextBox();
             this.checkCambiosEnLote = new System.Windows.Forms.CheckBox();
+            this.comboPropioTodos = new System.Windows.Forms.ComboBox();
             this.groupCambiarContra.SuspendLayout();
             this.groupCambiarDatos.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPermisos)).BeginInit();
@@ -67,7 +67,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(14, 13);
+            this.label1.Location = new System.Drawing.Point(13, 14);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(55, 16);
             this.label1.TabIndex = 0;
@@ -107,13 +107,13 @@
             // comboUsuario
             // 
             this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.comboUsuario.FormattingEnabled = true;
-            this.comboUsuario.Location = new System.Drawing.Point(75, 12);
+            this.comboUsuario.Location = new System.Drawing.Point(74, 10);
             this.comboUsuario.Name = "comboUsuario";
-            this.comboUsuario.Size = new System.Drawing.Size(140, 21);
+            this.comboUsuario.Size = new System.Drawing.Size(140, 24);
             this.comboUsuario.TabIndex = 0;
             this.comboUsuario.SelectedValueChanged += new System.EventHandler(this.comboUsuario_SelectedValueChanged);
-            this.comboUsuario.TextChanged += new System.EventHandler(this.comboUsuario_SelectedValueChanged);
             // 
             // txtNueva
             // 
@@ -266,9 +266,9 @@
             // 
             this.btnNuevoUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnNuevoUsuario.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.btnNuevoUsuario.Location = new System.Drawing.Point(220, 11);
+            this.btnNuevoUsuario.Location = new System.Drawing.Point(220, 9);
             this.btnNuevoUsuario.Name = "btnNuevoUsuario";
-            this.btnNuevoUsuario.Size = new System.Drawing.Size(141, 22);
+            this.btnNuevoUsuario.Size = new System.Drawing.Size(141, 26);
             this.btnNuevoUsuario.TabIndex = 9;
             this.btnNuevoUsuario.Text = "&Nuevo Usuario";
             this.btnNuevoUsuario.UseVisualStyleBackColor = true;
@@ -278,7 +278,7 @@
             // 
             this.grillaPermisos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaPermisos.Location = new System.Drawing.Point(10, 279);
-            this.grillaPermisos.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.grillaPermisos.Margin = new System.Windows.Forms.Padding(2);
             this.grillaPermisos.Name = "grillaPermisos";
             this.grillaPermisos.RowHeadersWidth = 51;
             this.grillaPermisos.RowTemplate.Height = 24;
@@ -297,7 +297,7 @@
             this.btnGuardarPermisos.Name = "btnGuardarPermisos";
             this.btnGuardarPermisos.Size = new System.Drawing.Size(141, 27);
             this.btnGuardarPermisos.TabIndex = 9;
-            this.btnGuardarPermisos.Text = "Guardar &Permisos";
+            this.btnGuardarPermisos.Text = "Editar &Permisos";
             this.btnGuardarPermisos.UseVisualStyleBackColor = true;
             this.btnGuardarPermisos.Click += new System.EventHandler(this.btnGuardarPermisos_Click);
             // 
@@ -347,6 +347,17 @@
             this.panelMarcarTodos.Size = new System.Drawing.Size(576, 47);
             this.panelMarcarTodos.TabIndex = 13;
             // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.SystemColors.ControlLightLight;
+            this.label7.Location = new System.Drawing.Point(416, 26);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(34, 16);
+            this.label7.TabIndex = 16;
+            this.label7.Text = "días";
+            // 
             // txtDiasVer
             // 
             this.txtDiasVer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
@@ -355,15 +366,6 @@
             this.txtDiasVer.Size = new System.Drawing.Size(43, 22);
             this.txtDiasVer.TabIndex = 14;
             this.txtDiasVer.TextChanged += new System.EventHandler(this.txtDiasVer_TextChanged);
-            // 
-            // txtDiasEditar
-            // 
-            this.txtDiasEditar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.txtDiasEditar.Location = new System.Drawing.Point(361, 23);
-            this.txtDiasEditar.Name = "txtDiasEditar";
-            this.txtDiasEditar.Size = new System.Drawing.Size(49, 22);
-            this.txtDiasEditar.TabIndex = 15;
-            this.txtDiasEditar.TextChanged += new System.EventHandler(this.txtDiasEditar_TextChanged);
             // 
             // label6
             // 
@@ -376,29 +378,14 @@
             this.label6.TabIndex = 9;
             this.label6.Text = "días";
             // 
-            // label7
+            // txtDiasEditar
             // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.label7.Location = new System.Drawing.Point(416, 26);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(34, 16);
-            this.label7.TabIndex = 16;
-            this.label7.Text = "días";
-            // 
-            // comboPropioTodos
-            // 
-            this.comboPropioTodos.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboPropioTodos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.comboPropioTodos.FormattingEnabled = true;
-            this.comboPropioTodos.Items.AddRange(new object[] {
-            "Propios",
-            "Todos"});
-            this.comboPropioTodos.Location = new System.Drawing.Point(458, 21);
-            this.comboPropioTodos.Name = "comboPropioTodos";
-            this.comboPropioTodos.Size = new System.Drawing.Size(115, 23);
-            this.comboPropioTodos.TabIndex = 17;
+            this.txtDiasEditar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.txtDiasEditar.Location = new System.Drawing.Point(361, 23);
+            this.txtDiasEditar.Name = "txtDiasEditar";
+            this.txtDiasEditar.Size = new System.Drawing.Size(49, 22);
+            this.txtDiasEditar.TabIndex = 15;
+            this.txtDiasEditar.TextChanged += new System.EventHandler(this.txtDiasEditar_TextChanged);
             // 
             // checkCambiosEnLote
             // 
@@ -413,6 +400,20 @@
             this.checkCambiosEnLote.TextAlign = System.Drawing.ContentAlignment.BottomRight;
             this.checkCambiosEnLote.UseVisualStyleBackColor = true;
             this.checkCambiosEnLote.CheckedChanged += new System.EventHandler(this.checkCambiosEnLote_CheckedChanged);
+            // 
+            // comboPropioTodos
+            // 
+            this.comboPropioTodos.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboPropioTodos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.comboPropioTodos.FormattingEnabled = true;
+            this.comboPropioTodos.Items.AddRange(new object[] {
+            "Propios",
+            "Todos"});
+            this.comboPropioTodos.Location = new System.Drawing.Point(458, 21);
+            this.comboPropioTodos.Name = "comboPropioTodos";
+            this.comboPropioTodos.Size = new System.Drawing.Size(115, 23);
+            this.comboPropioTodos.TabIndex = 17;
+            this.comboPropioTodos.Visible = false;
             // 
             // FormUsuarios
             // 
@@ -475,11 +476,11 @@
         private System.Windows.Forms.CheckBox checkMarcarVer;
         private System.Windows.Forms.CheckBox checkMarcarEditar;
         private System.Windows.Forms.Panel panelMarcarTodos;
-        private System.Windows.Forms.ComboBox comboPropioTodos;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.TextBox txtDiasVer;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtDiasEditar;
         private System.Windows.Forms.CheckBox checkCambiosEnLote;
+        private System.Windows.Forms.ComboBox comboPropioTodos;
     }
 }

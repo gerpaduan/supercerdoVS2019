@@ -98,6 +98,7 @@
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
     <Compile Include="GenerarCodigoBarra.cs" />
+    <Compile Include="Mensajes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SingletonLeerPeso.cs" />
     <Compile Include="Util_Form.cs">
@@ -106,6 +107,7 @@
     <Compile Include="Util_Form.designer.cs">
       <DependentUpon>Util_Form.cs</DependentUpon>
     </Compile>
+    <Compile Include="ValoresParametrosMetodos.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="BarraProgreso.resx">

@@ -22,6 +22,7 @@ namespace Presentacion.Caja
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
 
         public Entidades.Usuario oUsuario;
+        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         formEgresosCaja frmEgresosCaja;
 
@@ -200,7 +201,20 @@ namespace Presentacion.Caja
                     }
                 }
 
-                bool cajaAbierta = (!egresoDesdeCajaVenta && (Presentacion.FormPrincipal.logueado || oUsuario.Admin)) ? true : validarCajaAbiertaVendedeor();
+                //bool cajaAbierta = (!egresoDesdeCajaVenta && (Presentacion.FormPrincipal.logueado || oUsuario.Admin)) ? true : validarCajaAbiertaVendedeor();
+                bool cajaAbierta = true;
+                if (!egresoDesdeCajaVenta)
+                {
+                    if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaEgresoCaja.Value,
+                    oEgresoCajaE.Id > 0 ? oEgresoCajaE.CreadoPorUser.Id : oUsuario.Id)))
+                    {
+                        Utilidades.Mensajes.ErrorPermisoEdicion();
+                        return;
+                    }
+                }
+                else
+                    cajaAbierta = validarCajaAbiertaVendedeor();
+
 
                 if (tienePermiso && cajaAbierta && Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado,
                         Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
@@ -285,6 +299,7 @@ namespace Presentacion.Caja
                             //si nuevoEgresoCaja es llamado desde FrmEgresos no se cierra
                             if (frmEgresosCaja != null)
                             {
+                                frmEgresosCaja.oUsuario = oUsuario;
                                 frmEgresosCaja.cargarGrilla();
                                 txtFechaEgresoCaja.Focus();
 
