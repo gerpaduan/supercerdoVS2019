@@ -306,6 +306,7 @@ namespace Presentacion.Usuario
             ActualizarPermisosUsuario();
             
             txtNombre.Enabled = permisoEdicion;
+            txtNombre.ReadOnly = !permisoEdicion;
             checkAdmin.Enabled = permisoEdicion;
             checkActivo.Enabled = permisoEdicion;
             //btnNuevoUsuario.Enabled = FormPrincipal.logueado;

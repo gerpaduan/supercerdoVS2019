@@ -34,6 +34,7 @@ namespace Presentacion.Ventas
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
         Entidades.Venta oVentaE = new Entidades.Venta();
         Entidades.LineaVenta oLineaVenta;
+        public Entidades.Usuario oUsuario;
 
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();
         List<LineaVenta> listaLineaGrilla = new List<LineaVenta>();
@@ -308,10 +309,10 @@ namespace Presentacion.Ventas
             //asigo sucursal a la venta            
             oVentaE.Sucursal = oSucursalE;
 
-            Entidades.Usuario oUsuario = new Entidades.Usuario();
-            oUsuario.Id = Convert.ToInt32(comboUsuario.SelectedValue.ToString());
+            Entidades.Usuario oVendedor = new Entidades.Usuario();
+            oVendedor.Id = Convert.ToInt32(comboUsuario.SelectedValue.ToString());
 
-            oVentaE.Vendedor = oUsuario;
+            oVentaE.Vendedor = oVendedor;
             oVentaE.FechaVenta = txtFechaVenta.Value;
             oVentaE.DiaFestivo = txtCuit.Text.Trim();
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
@@ -508,8 +509,11 @@ namespace Presentacion.Ventas
         
         private bool validarLinea()
         {
+            ///TODO: valide que cant sea numero y seguir con el permiso al guardar nueva venta
+            ///tambian agregar campos creadorPor y ActulizadoPor en la tabal ventas
             string mensaje = "Complete los siguientes campos: ";
-            if (oCorteE == null || txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == "")
+            if (oCorteE == null || txtCodigo.Text.Trim() == "" || txtCantKgs.Text.Trim() == "" || txtPrecioKg.Text.Trim() == ""
+                || !Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Cantidad") || !Util_Form.validarNumeroMayorACero(txtPrecioKg.Text, "Precio"))
             {
                 if (oCorteE == null || txtCodigo.Text.Trim() == "")
                 {
@@ -518,17 +522,17 @@ namespace Presentacion.Ventas
                 }
                 else
                 {
-                    if (txtCantKgs.Text.Trim() == "")
-                    {
-                        mensaje += "\n" + "-Cant. Kgs";
+                    //if (!Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Cantidad"))
+                    //{
+                    //    mensaje += "\n" + "-Cant. Kgs";
                         
-                    }
-                    if (txtPrecioKg.Text.Trim() == "")
-                    {
-                        mensaje += "\n" + "-Precio Kg";
-                    }
+                    //}
+                    //if (txtPrecioKg.Text.Trim() == "" || !Util_Form.validarNumeroMayorACero(txtPrecioKg.Text, "Precio"))
+                    //{
+                    //    //mensaje += "\n" + "-Precio Kg";
+                    //}
 
-                    MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    //MessageBox.Show(mensaje, "Completar campos", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     txtCantKgs.Focus();                                    
                 }
                 return false;
@@ -950,12 +954,13 @@ namespace Presentacion.Ventas
             checkLeerPeso.Checked =  Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString());
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (!(FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso("formNuevaVent")))
+            if (!(FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso(this.Name)))
             {
                 MessageBox.Show("No está logueado");
                 this.Close();
             }
 
+            txtUsuario.Text = oUsuario.Nombre;
             checkCtaCte.Visible = false;
             comboTipoComprobante.SelectedIndex = 0; //Remito
             restablecerFormaDePago();

@@ -330,7 +330,8 @@ namespace Presentacion.Compras
                     return;
             }
 
-            if (oUsuarioN.tienePermiso(oUsuario, "formNuevaCompra", DateTime.Today, oUsuario.Id))
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value, 
+                oCompraModificada.IdCompra > 0 ? oCompraModificada.CreadoPor.Id : oUsuario.Id))
             {
                 Utilidades.Mensajes.ErrorPermisoEdicion();
                 return;
@@ -708,7 +709,6 @@ namespace Presentacion.Compras
 
         private void modificarCompra()
         {          
-            //TODO: seguir validan permiso en modificacion y cambio de precio
             if (oUsuario == null)
             {
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
@@ -718,7 +718,8 @@ namespace Presentacion.Compras
                     return; 
             }
 
-            if (oUsuarioN.tienePermiso(oUsuario, "formNuevaCompra", DateTime.Today, oUsuario.Id))
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
+                oCompraModificada.IdCompra > 0 ? oCompraModificada.CreadoPor.Id : oUsuario.Id))
             {
                 Utilidades.Mensajes.ErrorPermisoEdicion();
                 return;

@@ -92,7 +92,6 @@ namespace Presentacion
             }
             else
             {
-                //if (!Usuarios.FormValidarPermiso.validarPermiso("formVentas")) return;
                 if (!ValidarInicioSesion()) return;
 
                 formVentas frmVentas = new formVentas();

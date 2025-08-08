@@ -219,3 +219,12 @@ CREATE TABLE PermisosUsuarios (
   FOREIGN KEY (idUsuario) REFERENCES Usuarios(id),
   FOREIGN KEY (idForm) REFERENCES Formularios(idForm)
 );
+
+**************
+
+crear campos en Ventas
+
+ALTER TABLE Ventas
+ADD creadoPor INT NULL,
+    actualizadoPor INT NULL;
+

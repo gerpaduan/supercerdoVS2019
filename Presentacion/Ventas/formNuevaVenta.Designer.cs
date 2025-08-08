@@ -112,6 +112,8 @@
             this.label18 = new System.Windows.Forms.Label();
             this.txtActualizado = new System.Windows.Forms.TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.txtUsuario = new System.Windows.Forms.TextBox();
+            this.label21 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.grupoCortes.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -398,6 +400,8 @@
             // 
             this.groupBox1.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.txtUsuario);
+            this.groupBox1.Controls.Add(this.label21);
             this.groupBox1.Controls.Add(this.linkVerCtaCte);
             this.groupBox1.Controls.Add(this.groupBox2);
             this.groupBox1.Controls.Add(this.checkLimpiarCliente);
@@ -452,7 +456,7 @@
             this.groupBox2.Controls.Add(this.checkCredito);
             this.groupBox2.Controls.Add(this.checkDebito);
             this.groupBox2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupBox2.Location = new System.Drawing.Point(314, 64);
+            this.groupBox2.Location = new System.Drawing.Point(282, 64);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(226, 77);
             this.groupBox2.TabIndex = 66;
@@ -670,7 +674,7 @@
             // 
             this.txtFechaVenta.CustomFormat = "dd/MM/yyyy  HH:mm";
             this.txtFechaVenta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaVenta.Location = new System.Drawing.Point(589, 57);
+            this.txtFechaVenta.Location = new System.Drawing.Point(589, 85);
             this.txtFechaVenta.Name = "txtFechaVenta";
             this.txtFechaVenta.Size = new System.Drawing.Size(156, 21);
             this.txtFechaVenta.TabIndex = 20;
@@ -678,9 +682,9 @@
             // 
             // txtNroRemito
             // 
-            this.txtNroRemito.Location = new System.Drawing.Point(588, 35);
+            this.txtNroRemito.Location = new System.Drawing.Point(588, 61);
             this.txtNroRemito.Name = "txtNroRemito";
-            this.txtNroRemito.Size = new System.Drawing.Size(156, 21);
+            this.txtNroRemito.Size = new System.Drawing.Size(157, 21);
             this.txtNroRemito.TabIndex = 23;
             this.txtNroRemito.TabStop = false;
             // 
@@ -700,7 +704,7 @@
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label8.Location = new System.Drawing.Point(512, 38);
+            this.label8.Location = new System.Drawing.Point(514, 64);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(70, 15);
             this.label8.TabIndex = 24;
@@ -775,7 +779,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(542, 60);
+            this.label3.Location = new System.Drawing.Point(543, 87);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(41, 15);
             this.label3.TabIndex = 14;
@@ -1126,6 +1130,26 @@
             this.panel1.Size = new System.Drawing.Size(759, 1);
             this.panel1.TabIndex = 47;
             // 
+            // txtUsuario
+            // 
+            this.txtUsuario.Location = new System.Drawing.Point(588, 37);
+            this.txtUsuario.Name = "txtUsuario";
+            this.txtUsuario.ReadOnly = true;
+            this.txtUsuario.Size = new System.Drawing.Size(157, 21);
+            this.txtUsuario.TabIndex = 70;
+            this.txtUsuario.TabStop = false;
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label21.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label21.Location = new System.Drawing.Point(533, 41);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(50, 15);
+            this.label21.TabIndex = 69;
+            this.label21.Text = "Usuario";
+            // 
             // formNuevaVenta
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1246,5 +1270,7 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn alicuotaIva;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
         private System.Windows.Forms.LinkLabel linkVerCtaCte;
+        private System.Windows.Forms.TextBox txtUsuario;
+        protected System.Windows.Forms.Label label21;
     }
 }

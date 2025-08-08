@@ -14,7 +14,7 @@ using System.IO;
 
 namespace Presentacion
 {
-    public partial class formVentas : Form, InterfacePersona
+    public partial class formVentas : Form, InterfacePersona, InterfaceUsuario
     {
         private bool logueado = false;
 
@@ -29,6 +29,7 @@ namespace Presentacion
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         public Negocio.Venta oVentaN = new Negocio.Venta();
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Entidades.Usuario oUsuario;
 
         public DataTable dtVentas;
 
@@ -44,12 +45,23 @@ namespace Presentacion
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
         }
 
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        }
+
         public void cargarGrilla()
         {
             try
             {
                 if (cargar)
                 {
+                    if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                    {
+                        Utilidades.Mensajes.ErrorPermisoAcceso();
+                        return;
+                    }
+
                     Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando ventas", "Cargando...");
                     barraProgreso.Show();
 
@@ -149,9 +161,24 @@ namespace Presentacion
             }
             else
             {
-                formNuevaVenta frmNuevaVenta = new formNuevaVenta();
-                frmNuevaVenta.asigarFormVentas(this);
-                frmNuevaVenta.Show();
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
+                frmLogin.ShowDialog(this);
+
+                if (oUsuario == null)
+                    return;
+                if (oUsuarioN.tienePermiso(oUsuario, "formNuevaVenta", DateTime.Today, oUsuario.Id))
+                {
+                    formNuevaVenta frmNuevaVenta = new formNuevaVenta();
+                    frmNuevaVenta.asigarFormVentas(this);
+                    frmNuevaVenta.oUsuario = oUsuario;
+                    frmNuevaVenta.Show();
+                }
+                else
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                }
+
             }
         }
 
