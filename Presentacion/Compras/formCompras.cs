@@ -27,6 +27,7 @@ namespace Presentacion
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Entidades.Usuario oUsuario;
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();  
 
         bool cargar = false;
         public formCompras()
@@ -42,7 +43,7 @@ namespace Presentacion
                 cargarSucursal();
                 this.comboTipoCompra.SelectedIndex = 0;
                 this.comboTipoCompra.Enabled = FormPrincipal.soyYo;
-                fechaDesde.Value = DateTime.Today.AddDays(-7);
+                fechaDesde.Value = DateTime.Today.AddDays(0);
                 cargar = true;
                 cargarGrilla();
             }
@@ -58,7 +59,8 @@ namespace Presentacion
         #region metodos
 
         public void cargarGrilla()
-        {            
+        {
+
             if (cargar)
             {
                 int idSucCombo = 0;
@@ -66,6 +68,14 @@ namespace Presentacion
 	            {
                     idSucCombo = Convert.ToInt32(comboSucursal.SelectedValue);
 	            }
+
+
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    return;
+                }
+
                 oCompraN = new Negocio.Compra();
 
                 grillaCompras.AutoGenerateColumns = false;
@@ -134,11 +144,17 @@ namespace Presentacion
 
                 if (oUsuario == null)
                     return;
-
-                formNuevaCompra frmNuevaCompra = new formNuevaCompra();
-                frmNuevaCompra.asignarFormCompra(this);
-                frmNuevaCompra.oUsuario = oUsuario;
-                frmNuevaCompra.Show();
+                if (oUsuarioN.tienePermiso(oUsuario, "formNuevaCompra", DateTime.Today, oUsuario.Id))
+                {
+                    formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+                    frmNuevaCompra.asignarFormCompra(this);
+                    frmNuevaCompra.oUsuario = oUsuario;
+                    frmNuevaCompra.Show();
+                }
+                else
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                }
             }
         }
 

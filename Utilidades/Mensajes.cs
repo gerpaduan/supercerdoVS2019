@@ -8,6 +8,16 @@ namespace Utilidades
 {
     public static class Mensajes
     {
+        public static void MensajeInicioSesion()
+        {
+            MessageBox.Show(
+                "Inicie Sesión para ingresar a esta función.",
+                "Inicie Sesion",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+
         public static void ErrorPermisoAcceso()
         {
             MessageBox.Show(

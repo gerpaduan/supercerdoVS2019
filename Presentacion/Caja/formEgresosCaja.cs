@@ -72,7 +72,7 @@ namespace Presentacion.Caja
             if (loadingForm) return;
             lblActualizar.Visible = false;
 
-            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
                 Utilidades.Mensajes.ErrorPermisoAcceso();
                 return;

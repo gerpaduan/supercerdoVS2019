@@ -180,7 +180,9 @@ namespace Negocio
 
                 if (idCreador >= 0)
                 {
-                    if (permiso.Formulario.FormConsulta.Contains(nombreForm))
+                    if ((permiso.Formulario.FormEdicion.Contains(nombreForm) ||
+                        permiso.Formulario.FormEdicionExtra1.Contains(nombreForm) ||
+                        permiso.Formulario.FormEdicionExtra2.Contains(nombreForm)))
                     {
                         bool d = false;
                     }

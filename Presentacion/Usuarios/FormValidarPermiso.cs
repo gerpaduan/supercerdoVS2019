@@ -43,11 +43,11 @@ namespace Presentacion.Usuarios
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
                 frmLogin.ShowDialog(this);
                 if (oUsuario == null) return false;
-                FormPrincipal.oUserLogueado = oUsuario;
+                //FormPrincipal.oUserLogueado = oUsuario;
             }
             else
                 oUsuario = FormPrincipal.oUserLogueado;
-            if (!oUsuario.Admin && !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, nombreForm, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            if (!oUsuario.Admin && !oUsuarioN.tienePermiso(oUsuario, nombreForm, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
             {
                 resp = false;
                 Utilidades.Mensajes.ErrorPermisoAcceso();

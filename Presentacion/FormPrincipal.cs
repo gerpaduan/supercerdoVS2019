@@ -22,6 +22,7 @@ using wsAFIPvs2008;
 using Negocio;
 using Presentacion.Licencia;
 using Presentacion.Cheques;
+using System.Runtime.CompilerServices;
 
 
 namespace Presentacion
@@ -74,8 +75,8 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso("formCompras")) return;
-
+                //if (!Usuarios.FormValidarPermiso.validarPermiso("formCompras")) return;
+                if (!ValidarInicioSesion()) return;
                 formCompras frmCompras = new formCompras();
                 frmCompras.Logueado = true;
                 frmCompras.Show();
@@ -91,7 +92,8 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso("formVentas")) return;
+                //if (!Usuarios.FormValidarPermiso.validarPermiso("formVentas")) return;
+                if (!ValidarInicioSesion()) return;
 
                 formVentas frmVentas = new formVentas();
                 frmVentas.Logueado = true;
@@ -295,6 +297,7 @@ namespace Presentacion
         {
             logueado = false;
             oUserAdminEmpresa = null;
+            oUserLogueado = null;
             btnLogin.Visible = true;
             btnCerrarSesion.Visible = false;
             lblNombreAdmin.Visible = pictureBoxUser.Visible = false;
@@ -795,7 +798,9 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso("FormUsuarios")) return;
+                //if (!Usuarios.FormValidarPermiso.validarPermiso("FormUsuarios")) return;
+
+                //if (!ValidarInicioSesion()) return;
                 FormUsuarios frmUsuario = new FormUsuarios();
                 frmUsuario.Show();
             }
@@ -818,7 +823,9 @@ namespace Presentacion
             }
             else
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso("formEgresosCaja")) return;
+                //if (!Usuarios.FormValidarPermiso.validarPermiso("formEgresosCaja")) return;
+
+                if (!ValidarInicioSesion()) return;
                 formEgresosCaja frmEgresosCaja = new formEgresosCaja();
                 frmEgresosCaja.Show();
             }
@@ -1299,6 +1306,17 @@ namespace Presentacion
             {
                 MessageBox.Show("No está logueado");
             }
+        }
+
+        private static bool ValidarInicioSesion()
+        {
+            bool validar = true;
+            if (oUserLogueado == null)
+            {
+                validar = false;
+                Utilidades.Mensajes.MensajeInicioSesion();
+            }
+            return validar;
         }
     }
 }

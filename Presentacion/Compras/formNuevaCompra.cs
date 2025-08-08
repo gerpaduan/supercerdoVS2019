@@ -44,6 +44,7 @@ namespace Presentacion
         List<Entidades.CortePorCompra> listaCortePorCompra = new List<Entidades.CortePorCompra>();
 
         formCompras oFrmCompra;
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         bool ultimaValidacion = true;
         bool mostrarCartelCierre = true;
@@ -166,6 +167,13 @@ namespace Presentacion
         {
             try
             {
+                if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
+                    oCompraE.IdCompra > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id)))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    return;
+                }
+
                 if (listaCortePorCompra.Count > 0 || listaMediaRes.Count > 0)
                 {
                     if (validaciónFinal())

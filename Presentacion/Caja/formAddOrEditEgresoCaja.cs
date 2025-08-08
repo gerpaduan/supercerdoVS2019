@@ -192,13 +192,13 @@ namespace Presentacion.Caja
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
                     frmLogin.ShowDialog(this);
                     if (oUsuario == null) return;
-                    tienePermiso = (oEgresoCajaE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
-                    if (!tienePermiso)
-                    {
-                        MessageBox.Show("No tiene permisos para modificar gastos de otra persona");
-                        oUsuario = null;
-                        return;
-                    }
+                    //tienePermiso = (oEgresoCajaE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
+                    //if (!tienePermiso)
+                    //{
+                    //    MessageBox.Show("No tiene permisos para modificar gastos de otra persona");
+                    //    oUsuario = null;
+                    //    return;
+                    //}
                 }
 
                 //bool cajaAbierta = (!egresoDesdeCajaVenta && (Presentacion.FormPrincipal.logueado || oUsuario.Admin)) ? true : validarCajaAbiertaVendedeor();

@@ -31,6 +31,8 @@ namespace Presentacion.Compras
         CortesPorCompra cortePorCompra;
         MediasPorCompra mediaPorCompra;
 
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+
         List<CortesPorCompra> listaCortesEnGrilla = new List<CortesPorCompra>();//Lista que se carga en la grilla
         List<MediasPorCompra> listaMediasEnGrilla = new List<MediasPorCompra>();
 
@@ -47,8 +49,8 @@ namespace Presentacion.Compras
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarComboSucursal();
-            oUsuario = new Entidades.Usuario();
-            oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)
+            oUsuario = FormPrincipal.oUserLogueado; ;
+            //oUsuario.Id = 0; //se setea Admin (es id 0 en la base de datos)
         }
 
         private void formModificarCompra_Load(object sender, EventArgs e)
@@ -317,6 +319,23 @@ namespace Presentacion.Compras
 
         private void habilitarModificacion()
         {
+
+            if (oUsuario == null)
+            {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
+                frmLogin.ShowDialog(this); 
+                
+                if (oUsuario == null)
+                    return;
+            }
+
+            if (oUsuarioN.tienePermiso(oUsuario, "formNuevaCompra", DateTime.Today, oUsuario.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
             this.Text = "Modificar Compra";
 
             grupoMediaRes.Enabled = true;
@@ -688,7 +707,23 @@ namespace Presentacion.Compras
         }
 
         private void modificarCompra()
-        {        
+        {          
+            //TODO: seguir validan permiso en modificacion y cambio de precio
+            if (oUsuario == null)
+            {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
+                frmLogin.ShowDialog(this);
+                if (oUsuario == null)
+                    return; 
+            }
+
+            if (oUsuarioN.tienePermiso(oUsuario, "formNuevaCompra", DateTime.Today, oUsuario.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
             if (modificado && Utilidades.Util_Form.validarFecha(txtFechaCompra.Value, "Fecha"))
             {
                  DialogResult respuesta = MessageBox.Show("¿Está seguro que desea guardar los cambios realizados?. ", "Modificar Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);

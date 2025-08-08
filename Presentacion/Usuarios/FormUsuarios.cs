@@ -18,6 +18,7 @@ namespace Presentacion.Usuario
         private bool grillaModificada = false;
         string ultimoUsuario;
         bool guardarPermisos = false;
+        bool permisoEdicion = false;
 
         public FormUsuarios()
         {
@@ -36,7 +37,9 @@ namespace Presentacion.Usuario
 
         private void BotonPermisos()
         {
+            ActualizarPermisosUsuario();
             btnGuardarPermisos.Text = guardarPermisos ? "Guardar &Permisos" : "Editar &Permisos";
+            //checkCambiosEnLote.Checked = checkCambiosEnLote.Checked && !guardarPermisos ? false : checkCambiosEnLote.Checked;
 
             if (grillaPermisos.Columns.Count > 0)
             {
@@ -48,20 +51,29 @@ namespace Presentacion.Usuario
             }
         }
 
+        private void ActualizarPermisosUsuario()
+        {
+            permisoEdicion = FormPrincipal.oUserLogueado != null &&
+                            oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "FormNuevoUsuario", DateTime.Today, FormPrincipal.oUserLogueado.Id);
+        }
+
         private void CargarGrilla()
         {
             ConfigurarGrillaPermisos();
             CargarPermisosEnGrilla();
+            BotonPermisos();
 
             foreach (DataGridViewRow row in grillaPermisos.Rows)
             {
                 bool verMarcado = Convert.ToBoolean(row.Cells["Ver"].Value);
                 bool editarMarcado = Convert.ToBoolean(row.Cells["Editar"].Value);
 
-                row.Cells["HastaDiasAtras"].ReadOnly = !verMarcado;
-                row.Cells["HastaDiasAtras2"].ReadOnly = !editarMarcado;
-                row.Cells["PermisoEdicion"].ReadOnly = !editarMarcado;
+                row.Cells["HastaDiasAtras"].ReadOnly = !guardarPermisos || (!verMarcado && !guardarPermisos);
+                row.Cells["HastaDiasAtras2"].ReadOnly = !guardarPermisos || (!verMarcado && !guardarPermisos);
+                row.Cells["PermisoEdicion"].ReadOnly = !guardarPermisos || (!verMarcado && !guardarPermisos);
             }
+            //se reestablece la variable
+            grillaModificada = false;
         }
 
         private void CargarPermisosEnGrilla()
@@ -291,13 +303,15 @@ namespace Presentacion.Usuario
 
         private void validarLogueoAdmin()
         {
-            txtNombre.Enabled = FormPrincipal.logueado;
-            checkAdmin.Enabled = FormPrincipal.logueado;
-            checkActivo.Enabled = FormPrincipal.logueado;
+            ActualizarPermisosUsuario();
+            
+            txtNombre.Enabled = permisoEdicion;
+            checkAdmin.Enabled = permisoEdicion;
+            checkActivo.Enabled = permisoEdicion;
             //btnNuevoUsuario.Enabled = FormPrincipal.logueado;
-            btnGuardarDatos.Enabled = FormPrincipal.logueado;
-            btnGuardarPermisos.Enabled = FormPrincipal.logueado;
-            checkOlvidoClave.Enabled = FormPrincipal.logueado;
+            //btnGuardarDatos.Enabled = FormPrincipal.logueado;
+            //btnGuardarPermisos.Enabled = FormPrincipal.logueado;
+            checkOlvidoClave.Enabled = permisoEdicion;
         }
 
         private void cargarCombo()
@@ -349,6 +363,13 @@ namespace Presentacion.Usuario
 
         private void btnGuardarDatos_Click(object sender, EventArgs e)
         {
+            ActualizarPermisosUsuario();
+            if (!permisoEdicion)
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
             if (oUsuarioE != null)
             {
                 oUsuarioE.Nombre = txtNombre.Text;
@@ -441,11 +462,13 @@ namespace Presentacion.Usuario
 
         private void btnNuevoUsuario_Click(object sender, EventArgs e)
         {
-            if (!FormPrincipal.logueado)
+            ActualizarPermisosUsuario();
+            if (!permisoEdicion)
             {
-                MessageBox.Show("Debe iniciar sesion con un usuario administrador para crear nuevos usuarios.", "Inicie sesión");
+                Utilidades.Mensajes.ErrorPermisoEdicion();
                 return;
             }
+
             FormNuevoUsuario formNuevoUsuario1 = new FormNuevoUsuario();
             formNuevoUsuario1.ShowDialog();
             //cargarCombo();
@@ -458,6 +481,13 @@ namespace Presentacion.Usuario
 
         private void btnGuardarPermisos_Click(object sender, EventArgs e)
         {
+            ActualizarPermisosUsuario();
+            if (!permisoEdicion)
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
             if (guardarPermisos)
             {
                 grillaPermisos.EndEdit(); // Asegura que los cambios en celdas se confirmen
