@@ -155,12 +155,16 @@ namespace Presentacion.Ventas
 
         private void esModificacion()
         {
-            //if (FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso())
-            //{
-            if (true)
+            //valida que el vendedor sea igual al usuario que modifica
+            if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaVenta.Value,
+                    oVentaE.IdVenta > 0 ? oVentaE.Vendedor.Id : oUsuario.Id)))
             {
-                //si es modificacion o agregacion
-                if (modificar)
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
+            //si es modificacion o agregacion
+            if (modificar)
                 {
                     //si no pasa validación final
                     if (!modificarVenta())
@@ -209,12 +213,7 @@ namespace Presentacion.Ventas
                 catch (Exception ex)
                 {
                     MessageBox.Show("Hubo un error y no se registró el movimiento en la Cta. Cta\n\n"+ex.Message);
-                }
-            }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }            
+                }    
         }
 
         public void asigarFormVentas(formVentas frmVentasParam)

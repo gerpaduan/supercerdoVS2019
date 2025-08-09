@@ -311,8 +311,21 @@ namespace Presentacion
                 }
                 else
                 {
-                    formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
-                    frmTemporalLineaVenta.Show();
+                    Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                    frmLogin.soloActivos = true;
+                    frmLogin.ShowDialog(this);
+
+                    if (oUsuario == null)
+                        return;
+                    if (oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                    {
+                        formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
+                        frmTemporalLineaVenta.Show();
+                    }
+                    else
+                    {
+                        Utilidades.Mensajes.ErrorPermisoAcceso();
+                    }
                 }
             }
             else

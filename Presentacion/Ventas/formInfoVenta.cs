@@ -128,6 +128,7 @@ namespace Presentacion.Ventas
                 formNuevaVenta frmNuevaVenta = new formNuevaVenta();
                 frmNuevaVenta.parametrosModificacion(frmVentas, oVentaE, oVentaE.LineasVenta, listaLineaGrilla);
                 frmNuevaVenta.SucAnterior = oVentaE.Sucursal.idSucursal;
+                frmNuevaVenta.oUsuario = FormPrincipal.oUserLogueado;
                 this.Close();
                 frmNuevaVenta.Show();
             }

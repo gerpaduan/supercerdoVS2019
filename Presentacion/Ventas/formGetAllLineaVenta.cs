@@ -51,10 +51,17 @@ namespace Presentacion
             {
                 if (cargar)
                 {
+
+                    lblActualizar.Visible = false;
+                    if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formVentas", fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                    {
+                        Utilidades.Mensajes.ErrorPermisoAcceso();
+                        return;
+                    }
+
                     Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando lineas de ventas", "Cargando...");
                     barraProgreso.Show();
 
-                    lblActualizar.Visible = false;
                     dtVentas = new DataTable();
                     dtVentas = verUltimasVentasClientes ? oVentaN.ultimasVentasCliente(idSucursal, idPersona) : 
                         oVentaN.getAllLineasVenta(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), 
