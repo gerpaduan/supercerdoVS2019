@@ -40,8 +40,12 @@ namespace Presentacion
 
         Negocio.Corte oCorteN = new Negocio.Corte();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
+
+        bool loginRapidoMovimiento = true;// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
+
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool cantSuc2 = false;
 
@@ -63,12 +67,33 @@ namespace Presentacion
 
         private void formNuevoMovimiento_Load(object sender, EventArgs e)
         {
-            logueoUsuario();
+            //TODO: Loguear rapido
+            if (loginRapidoMovimiento)
+                logueoUsuario();
+            else
+            {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
+                frmLogin.ShowDialog(this);
+
+                if (oUsuario != null)
+                {
+                    if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaMovimiento.Value, 
+                        oMovimiento.IdMovimiento > 0 ? oMovimiento.CreadoPor.Id : oUsuario.Id))
+                    {
+                        Utilidades.Mensajes.ErrorPermisoEdicion();
+                        this.Close();
+                        return;
+                    }
+                }
+            }
+
             if (oUsuario == null)
             {
                 this.Close();
                 return;
             }
+
             txtUsuario.Text = oUsuario.Nombre;
             this.Text += Utilidades.Conexion.getSucursalConexion();
             if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
@@ -140,6 +165,13 @@ namespace Presentacion
 
         public void agregarMovimiento()
         {
+            if (!loginRapidoMovimiento && !oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaMovimiento.Value,
+                        oMovimiento.IdMovimiento > 0 ? oMovimiento.CreadoPor.Id : oUsuario.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
             if (comboSucOrigen.SelectedValue.Equals(comboSucDestino.SelectedValue) || 
                 comboSucOrigen.SelectedValue.Equals(0) || comboSucDestino.SelectedValue.Equals(0))
             {
