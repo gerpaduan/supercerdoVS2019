@@ -15,6 +15,7 @@ namespace Presentacion.Caja
     {
         protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         protected Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
@@ -117,9 +118,12 @@ namespace Presentacion.Caja
             if (cierreCajaId != null)
             {
                 FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.soloActivos = true;
                 frmLogin.ShowDialog(this);
 
-                if (oUsuario != null)
+                if (oUsuario == null)
+                    return;
+                if (oUsuarioN.tienePermiso(oUsuario, "formCerrarCaja", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
                     formCerrarCaja frmCerrarCaja = new formCerrarCaja();
                     frmCerrarCaja.oUserCierre = oUsuario;
@@ -127,7 +131,11 @@ namespace Presentacion.Caja
                     frmCerrarCaja.ShowDialog();
                     cargarGrilla();
                 }
-                oUsuario = null;
+                else
+                {
+                    oUsuario = null;
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                }
             }
         }
 
