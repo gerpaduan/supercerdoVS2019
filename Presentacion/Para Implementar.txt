@@ -228,3 +228,8 @@ ALTER TABLE Ventas
 ADD creadoPor INT NULL,
     actualizadoPor INT NULL;
 
+****
+Agregar campo en Formularios
+
+21	Bonificacion en POS	NULL	formBonificar	formBonificar	NULL	NULL
+

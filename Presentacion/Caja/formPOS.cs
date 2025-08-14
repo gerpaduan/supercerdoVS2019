@@ -18,6 +18,7 @@ using static Presentacion.Caja.formCerrarCaja;
 using System.Drawing.Text;
 using System.Windows;
 using System.Globalization;
+using Entidades;
 
 namespace Presentacion.Caja
 {
@@ -41,6 +42,7 @@ namespace Presentacion.Caja
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Venta oVentaN = new Negocio.Venta();
         Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
@@ -964,33 +966,38 @@ namespace Presentacion.Caja
                 }
 
                 string mensaje = "Complete los siguientes campos: ";
-                
-                //se valida que no finalice venta con bonificacion para consumidor final
-                for (int index = 0; index < listaLineaVenta.Count; index++)
-                {
-                    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
-                        oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
-                    {
-                        bool esAnulado = false;
-                        //se valida que el corte no hay sido anulado
-                        for (int nroFila = 0; nroFila < listaLineaVenta.Count; nroFila++)
-                        {
-                            if (listaLineaVenta[index].IndexAnulado >= 0 || (listaLineaVenta[index].Corte.codigo == listaLineaVenta[nroFila].Corte.codigo &&
-                                listaLineaVenta[nroFila].IndexAnulado == index))
-                            {                                
-                                esAnulado = true;
-                                break;
-                            }
-                        }
 
-                        if (!esAnulado)
-                        {
-                            mensaje = "No tienes permiso para hacer bonificaciones a un cliente Consumidor Final";
-                            MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            return false;
-                        }  
-                    }                  
-                }
+                ///VALIDACION DE BONIFICACION *COMENTADA* PORQUE YA
+                ///SE HIZO AL BONIFICAR
+                ///
+                #region VALIDACION BONIFICAR
+                ////se valida que no finalice venta con bonificacion para consumidor final
+                //for (int index = 0; index < listaLineaVenta.Count; index++)
+                //{
+                //    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
+                //        oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+                //    {
+                //        bool esAnulado = false;
+                //        //se valida que el corte no hay sido anulado
+                //        for (int nroFila = 0; nroFila < listaLineaVenta.Count; nroFila++)
+                //        {
+                //            if (listaLineaVenta[index].IndexAnulado >= 0 || (listaLineaVenta[index].Corte.codigo == listaLineaVenta[nroFila].Corte.codigo &&
+                //                listaLineaVenta[nroFila].IndexAnulado == index))
+                //            {                                
+                //                esAnulado = true;
+                //                break;
+                //            }
+                //        }
+
+                //        if (!esAnulado)
+                //        {
+                //            mensaje = "No tienes permiso para hacer bonificaciones a un cliente Consumidor Final";
+                //            MessageBox.Show(mensaje, "No se puede bonificar", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //            return false;
+                //        }  
+                //    }                  
+                //}
+                #endregion
 
                 //valido que no haya ningún Producto seleccionado al finalizar venta
                 if (txtCodigo.Text.Length > 0)
@@ -2359,7 +2366,7 @@ namespace Presentacion.Caja
         }
 
         private void bonificarCorte()
-        {
+        {            
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 int nroFila = grillaLineasVenta.Rows.GetFirstRow(DataGridViewElementStates.Selected);//obtiene nro de fila de la grilla
@@ -2378,11 +2385,29 @@ namespace Presentacion.Caja
                     }
                 }
 
-                //si es consumidor final no se permite bonificacion excepto que esté logueado como admin
-                if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+                ////si es consumidor final no se permite bonificacion excepto que esté logueado como admin
+                //if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+                //{
+                //    MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
+                //    return;
+                //}
+
+                ///Validar que el Vendedor tenga permiso de Bonificar
+                ///si no tiene permiso informar que se lo debe pedir al supervision
+                ///
+                if (!(oUsuarioN.tienePermiso(oUsuario, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
-                    MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
-                    return;
+                    if (FormPrincipal.oUserLogueado == null)
+                    {
+                        MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor");
+                        return;
+                    }
+
+                    if (!(oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                    {
+                        MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor correspondiente");
+                        return;
+                    }
                 }
 
                 precioBonificado = oLineaVentaSelect.PrecioKg.ToString("F2");

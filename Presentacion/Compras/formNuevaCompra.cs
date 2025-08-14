@@ -167,7 +167,8 @@ namespace Presentacion
         {
             try
             {
-                if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
+                //si no es un egreso de caja y no tiene permiso
+                if (!esEgresoCaja || !(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
                     oCompraE.IdCompra > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id)))
                 {
                     Utilidades.Mensajes.ErrorPermisoEdicion();
