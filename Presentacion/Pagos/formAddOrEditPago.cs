@@ -618,7 +618,7 @@ namespace Presentacion.Pagos
                     return;
                 }
 
-                if (oCheque.FechaPago < DateTime.Today)
+                if (oCheque.FechaPago.AddDays(30) < DateTime.Today)
                 {
                     DialogResult resp = MessageBox.Show("El Cheque N°: " + txtNroCheque.Text + " está vencido (Fecha Pago: " + oCheque.FechaPago.ToShortDateString() + " ).\n¿Desea agregarlo igualmente?", "",
                                 MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
