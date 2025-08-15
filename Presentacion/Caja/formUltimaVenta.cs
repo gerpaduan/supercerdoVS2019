@@ -211,8 +211,13 @@ namespace Presentacion.Caja
                 int diffMinutos = diffMinutosTime.Minutes;
 
                 //si no está loguedo, si fecha venta es distinta a hoy y pasaron minino de minutos para el acceso
-                if (!oCierreE.UsuarioInicio.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
-                    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
+                //if (!oCierreE.UsuarioInicio.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
+                //    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
+                ///TODO: agregar permiso Ultima Venta para permitir modificar
+                ///y se deberia eliminar la validacion de (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin)
+                if (!((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
+                    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)) && 
+                    (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin))
                 {
                     MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.",
                         "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
