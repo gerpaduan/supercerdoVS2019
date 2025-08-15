@@ -44,7 +44,7 @@ namespace Presentacion
 
         bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
 
-        bool loginRapidoMovimiento = true;// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
+        bool loginRapidoMovimiento = Entidades.Parametros.loginRapidoMovimiento;// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
 
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool cantSuc2 = false;
@@ -75,16 +75,17 @@ namespace Presentacion
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
                 frmLogin.soloActivos = true;
                 frmLogin.ShowDialog(this);
+            }
 
-                if (oUsuario != null)
+            if (oUsuario != null)
+            {
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, 
+                    oMovimiento.IdMovimiento > 0 ? oMovimiento.FechaMovimiento : DateTime.Today,
+                    oMovimiento.IdMovimiento > 0 ? oMovimiento.CreadoPor.Id : oUsuario.Id))
                 {
-                    if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaMovimiento.Value, 
-                        oMovimiento.IdMovimiento > 0 ? oMovimiento.CreadoPor.Id : oUsuario.Id))
-                    {
-                        Utilidades.Mensajes.ErrorPermisoEdicion();
-                        this.Close();
-                        return;
-                    }
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    this.Close();
+                    return;
                 }
             }
 
@@ -165,7 +166,7 @@ namespace Presentacion
 
         public void agregarMovimiento()
         {
-            if (!loginRapidoMovimiento && !oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaMovimiento.Value,
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaMovimiento.Value,
                         oMovimiento.IdMovimiento > 0 ? oMovimiento.CreadoPor.Id : oUsuario.Id))
             {
                 Utilidades.Mensajes.ErrorPermisoEdicion();
@@ -188,8 +189,7 @@ namespace Presentacion
                 return;
             }
 
-            if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaMovimiento.Value, "Fecha") && 
-                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()))
+            if (Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucOrigen.SelectedValue.ToString()))
                  && Util_Form.validarFecha(txtFechaMovimiento.Value, "Fecha") && validacionFinal())
             {
                 cargarMovimiento();

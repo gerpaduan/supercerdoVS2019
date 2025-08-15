@@ -121,6 +121,15 @@ namespace Negocio
                     case "mayuscula":
                         Entidades.Parametros.mayuscula = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
                         break;
+                    case "loginRapidoMovimiento":
+                        Entidades.Parametros.loginRapidoMovimiento = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+                        break;
+                    case "loginRapidoElaborado":
+                        Entidades.Parametros.loginRapidoElaborado = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+                        break;
+                    case "loginRapidoStock":
+                        Entidades.Parametros.loginRapidoStock = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+                        break;
 
                     default:
                         break;

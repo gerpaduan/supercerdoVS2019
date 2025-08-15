@@ -233,3 +233,5 @@ Agregar campo en Formularios
 
 21	Bonificacion en POS	NULL	formBonificar	formBonificar	NULL	NULL
 
+***
+

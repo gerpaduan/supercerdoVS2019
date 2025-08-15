@@ -26,6 +26,7 @@ namespace Presentacion.Movimientos
         List<CortesPorMovimiento> listaEnGrilla;
 
         Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         public formInfoMovimiento()
         {
@@ -153,14 +154,10 @@ namespace Presentacion.Movimientos
                 }
                 if (!formAbierto)
                 {
-                    if (Utilidades.Util_Form.validarSucursal(FormPrincipal.logueado, oMovimientoE.SucursalOrigen.idSucursal) &&
-                    Utilidades.Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimientoE.FechaMovimiento))
-                    {
-                        formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
-                        frmNuevoMovimiento.obtenerParametros(frmMovimiento, oMovimientoE, listaCortesPorMovimiento);
-                        this.Close();
-                        frmNuevoMovimiento.Show();
-                    }
+                    formNuevoMovimiento frmNuevoMovimiento = new formNuevoMovimiento();
+                    frmNuevoMovimiento.obtenerParametros(frmMovimiento, oMovimientoE, listaCortesPorMovimiento);
+                    this.Close();
+                    frmNuevoMovimiento.Show();
                 }
             }
             catch (Exception ex)

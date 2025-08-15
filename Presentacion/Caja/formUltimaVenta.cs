@@ -219,7 +219,8 @@ namespace Presentacion.Caja
                     (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)) && 
                     (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin))
                 {
-                    MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.",
+                    MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.\n\n"+
+                        "Solicite la asistencia de un usuario con permisos para esta acción.",
                         "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     huboModificaciones = false;
                     return;
