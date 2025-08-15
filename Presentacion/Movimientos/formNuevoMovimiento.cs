@@ -68,7 +68,7 @@ namespace Presentacion
         private void formNuevoMovimiento_Load(object sender, EventArgs e)
         {
             //TODO: Loguear rapido
-            if (loginRapidoMovimiento)
+            if (loginRapidoMovimiento && oMovimiento.IdMovimiento == 0)
                 logueoUsuario();
             else
             {
@@ -97,10 +97,10 @@ namespace Presentacion
 
             txtUsuario.Text = oUsuario.Nombre;
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
-            {
-                this.Close();
-            }
+            //if (modificacion && !Util_Form.validarPermisoModif(Presentacion.FormPrincipal.logueado, oMovimiento.FechaMovimiento))
+            //{
+            //    this.Close();
+            //}
 
             if (dtCorte.Rows.Count == 0)
             {
