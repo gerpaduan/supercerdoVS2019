@@ -11,7 +11,7 @@ using Presentacion.Cortes;
 using System.Configuration;
 using Utilidades;
 using Entidades;
-
+using Presentacion.Caja;
 
 namespace Presentacion
 {
@@ -23,6 +23,7 @@ namespace Presentacion
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN=new Negocio.Corte();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         //Entidades.Corte oCorteFormulaE;
         Entidades.Corte oCorteE;
@@ -327,6 +328,19 @@ namespace Presentacion
                 this.Text = "Modificar fórmula";
                 btnGuardar.Text = "&Guardar";
                 groupBoxFormula.Enabled = groupBoxCortesFormula.Enabled = btnReceta.Enabled = true;
+                return;
+            }
+
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+
+            if (oUsuario == null) return;
+
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today,
+                oFormulaE.IdFormula > 0 ? oFormulaE.CreadoPor.Id : oUsuario.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                oUsuario = null;
                 return;
             }
             agregarFormula();

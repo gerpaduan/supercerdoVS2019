@@ -122,8 +122,8 @@ namespace Presentacion
                 //FormLoginVendedor frmLogin = new FormLoginVendedor();
                 //frmLogin.ShowDialog(this);
 
-                Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
-                frmSelectUser.ShowDialog(this);
+                //Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
+                //frmSelectUser.ShowDialog(this);
 
                 formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();
                 frmIngresoEmbutido.oUsuario = oUsuario;
@@ -279,6 +279,12 @@ namespace Presentacion
             }
             else
             {
+                if (FormPrincipal.oUserLogueado == null)
+                {
+                    Utilidades.Mensajes.MensajeInicioSesion();
+                    return;
+                }
+
                 formFormulas frmmFormulas = new formFormulas();
                 frmmFormulas.Show();
             }

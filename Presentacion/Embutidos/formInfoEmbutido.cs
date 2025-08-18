@@ -22,6 +22,7 @@ namespace Presentacion.Embutidos
         Entidades.Usuario oUsuario;
 
         Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         DataTable dtCortesPorEmbutido = new DataTable();
         private Formula oFormulaE;
@@ -39,12 +40,7 @@ namespace Presentacion.Embutidos
                 oEmbutidoE = oCorteN.findEmbutidoById(idEmbutido_);
                 int sucActual = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
                 cargarCampos();
-                cargarGrilla(); 
-                if (!FormPrincipal.logueado && Convert.ToDateTime(txtFechaEmbutido.Text) < DateTime.Today ||
-                    !FormPrincipal.logueado && oEmbutidoE.sucursal.idSucursal != sucActual)
-                {
-                    anular.Enabled = false;
-                }
+                cargarGrilla();
             }
             catch (Exception ex)
             {
@@ -108,21 +104,27 @@ namespace Presentacion.Embutidos
 
         private void anularEmbutido()
         {
+            FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.ShowDialog(this);
+
+            if (oUsuario == null)
+                return;
+
+            if (!oUsuarioN.tienePermiso(oUsuario, "formIngresoEmbutido", oEmbutidoE.fechaEmbutido, oEmbutidoE.CreadoPor.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
             DialogResult respuesta=MessageBox.Show("¿Está seguro que desea anular el Elaborado?. ","Anular Elaborado", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
             if (respuesta == System.Windows.Forms.DialogResult.Yes)
             {
-                FormLoginVendedor frmLogin = new FormLoginVendedor();
-                frmLogin.ShowDialog(this);
-
-                if (oUsuario != null )
-                {
-                    oEmbutidoE.ActualizadoPor = oUsuario;
-                    oCorteN.anularEmbutido(oEmbutidoE);
-                    embutidoAnulado();
-                }
-                oUsuario = null;            
+                oEmbutidoE.ActualizadoPor = oUsuario;
+                oCorteN.anularEmbutido(oEmbutidoE);
+                embutidoAnulado();
             }
+            oUsuario = null;
         }
 
         private void embutidoAnulado()

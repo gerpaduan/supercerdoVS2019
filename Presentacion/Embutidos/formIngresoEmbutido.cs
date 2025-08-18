@@ -25,6 +25,7 @@ namespace Presentacion
         DataTable dtFormula;
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN=new Negocio.Corte();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         Entidades.Corte oCorteEmbutidoE;
         Entidades.Corte oCorteE;
@@ -45,6 +46,8 @@ namespace Presentacion
         bool dejarDeLeerPeso = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         int nroErrorBalanza = 0;
+
+        bool loginRapidoElaborado = Entidades.Parametros.loginRapidoElaborado;// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -76,9 +79,13 @@ namespace Presentacion
 
         private void agregarEmbutido()
         {
-            if ( Utilidades.Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado, txtFechaEmbutido.Value, "Fecha") &&
-                Utilidades.Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
-                  && validacionFinal())
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaEmbutido.Value, oUsuario.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                return;
+            }
+
+            if (validacionFinal())
             {
                 cargarEmbutido();
                 oEmbutidoE.idEmbutido = oCorteN.agregarEmbutido(oEmbutidoE);
@@ -508,8 +515,44 @@ namespace Presentacion
             cargarCorteEnEmbutido();
         }
 
+
+        private void logueoUsuario()
+        {
+            //Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            //frmLogin.ShowDialog(this);
+            this.BringToFront();
+            Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
+            frmSelectUser.ShowDialog(this);
+        }
+
+
         private void formIngresoEmbutido_Load(object sender, EventArgs e)
         {
+            if (loginRapidoElaborado)
+                logueoUsuario();
+            else
+            {
+                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
+                frmLogin.ShowDialog(this);
+            }
+
+            if (oUsuario != null)
+            {
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today,oUsuario.Id))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    this.Close();
+                    return;
+                }
+            }
+
+            if (oUsuario == null)
+            {
+                this.Close();
+                return;
+            }
+
             //Se obtienen los parametros
             Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
             oOtrasClasesN.obtenerParametros();
@@ -741,6 +784,7 @@ namespace Presentacion
         public void EnviarUsuario(Entidades.Usuario usuario)
         {
             oUsuarioNuevoEmbutido = usuario;
+            oUsuario = usuario; //para evitar errores inesperados dublico el objeto oUsuario
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

@@ -28,6 +28,7 @@ namespace Presentacion
 
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         Entidades.Usuario oUsuario;
         bool cargar = false;
@@ -77,15 +78,6 @@ namespace Presentacion
 
         private void addOrEditFormula(int idFormula)
         {
-            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-            frmLogin.ShowDialog(this);
-            if (oUsuario == null) return;
-            if (!oUsuario.Admin)
-            {
-                MessageBox.Show("No tienes permiso para ver reportes");
-                return;
-            }
-
             if (Application.OpenForms["formIngresoFormula"] != null)
             {
 
@@ -95,7 +87,7 @@ namespace Presentacion
             else
             {
                 formIngresoFormula formIngresoFormula = new formIngresoFormula();
-                formIngresoFormula.oUsuario = oUsuario; 
+                formIngresoFormula.oUsuario = FormPrincipal.oUserLogueado; 
                 formIngresoFormula.idFormula = idFormula;
                 formIngresoFormula.frmFormulas = this;
                 formIngresoFormula.ShowDialog();
@@ -130,6 +122,14 @@ namespace Presentacion
 
         private void formFormulas_Load(object sender, EventArgs e)
         {
+
+            if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                Utilidades.Mensajes.ErrorPermisoAcceso();
+                this.Close();
+                return;
+            }
+
             try
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
@@ -227,16 +227,21 @@ namespace Presentacion
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
                     frmLogin.ShowDialog(this);
 
-                    if (oUsuario != null && oUsuario.Admin)
+                    if (oUsuario == null) return;
+
+                    Entidades.Formula formulaEliminar = oCorteN.findFormulaByID(Convert.ToInt32(grilla.CurrentRow.Cells["idFormula"].Value.ToString()), 0);
+
+                    if (!oUsuarioN.tienePermiso(oUsuario, "formIngresoFormula", DateTime.Today, formulaEliminar.CreadoPor.Id))
                     {
-                        oCorteN.eliminarFormula(Convert.ToInt32(grilla.CurrentRow.Cells["idFormula"].Value.ToString()));
-                        MessageBox.Show("La Formula se eliminó correctamente");
-                        this.cargarGrilla();
+                        Utilidades.Mensajes.ErrorPermisoEdicion();
+                        oUsuario = null;
+                        return;
                     }
-                    else
-                    {
-                        MessageBox.Show("Debe tener permiso de Administrador para eliminar una Formula");
-                    }
+
+                    oCorteN.eliminarFormula(Convert.ToInt32(grilla.CurrentRow.Cells["idFormula"].Value.ToString()));
+                    MessageBox.Show("La Formula se eliminó correctamente");
+                    this.cargarGrilla();
+
                     oUsuario = null;
                 }
             }
