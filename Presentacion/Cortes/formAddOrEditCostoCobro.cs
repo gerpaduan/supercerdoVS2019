@@ -39,6 +39,11 @@ namespace Presentacion.Cortes
             try
             {
                 //validar que sea Admin
+                if (!Usuarios.FormValidarPermiso.validarPermiso(this.Name))
+                {
+                    this.Close();
+                }
+
                 //al guardar informa que tiene que volver a abrir la aplicacion para que se actualicen los valores
                 dtParametros = oOtrasClasesN.obtenerParametrosDt();
                 for (int fila = 0; fila < dtParametros.Rows.Count; fila++)

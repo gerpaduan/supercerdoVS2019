@@ -33,6 +33,12 @@ namespace Presentacion.Cortes
 
         private void formAddOrEditTipoProducto_Load(object sender, EventArgs e)
         {
+            //validar que sea Admin
+            if (!Usuarios.FormValidarPermiso.validarPermiso(this.Name))
+            {
+                this.Close();
+            }
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {

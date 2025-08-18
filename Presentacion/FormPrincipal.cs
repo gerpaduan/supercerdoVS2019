@@ -450,12 +450,6 @@ namespace Presentacion
 
             if (oUsuario == null) return;
 
-            //if (!oUsuario.Admin)
-            //{
-            //    MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
-            //    return;
-            //}
-
             logueado = true;
             checkAutoDesconectar.Visible = logueado;
             if (logueado)

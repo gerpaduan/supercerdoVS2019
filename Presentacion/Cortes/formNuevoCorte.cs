@@ -19,6 +19,7 @@ namespace Presentacion
         public int idCorte = 0;
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
         Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();  
         Entidades.Corte oCorteE=new Entidades.Corte();
         Entidades.Corte oExisteCorte = new Entidades.Corte();
         public formCortes frmCorte;// = new formCortes();
@@ -370,10 +371,11 @@ namespace Presentacion
                     cargarCampos();
                 }
 
-                if (!Usuarios.FormValidarPermiso.validarPermiso("formNuevoCorte"))
+                if (!Usuarios.FormValidarPermiso.validarPermiso(this.Name))
                 {
                     this.Close();
                 }
+
                 groupBox1.Select();
                 huboModificacion = false;
             }

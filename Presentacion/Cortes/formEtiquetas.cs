@@ -27,6 +27,12 @@ namespace Presentacion.Cortes
 
         private void formEtiquetas_Load(object sender, EventArgs e)
         {
+            //validar que sea Admin
+            if (!Usuarios.FormValidarPermiso.validarPermiso(this.Name))
+            {
+                this.Close();
+            }
+
             // Desactivar la generación automática de columnas
             grillaCortes.AutoGenerateColumns = false;
             grillaCortes.DataSource = dtCortes;

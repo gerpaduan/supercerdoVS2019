@@ -268,6 +268,11 @@ namespace Presentacion
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
+            if (!Usuarios.FormValidarPermiso.validarPermiso("ImprimirListaPreciosTicket"))
+            {
+                this.Close();
+            }
+
             Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
             tipoTicket.cortesConPrecios(dtCortesFiltrado);
             //imprimirReporte();
@@ -403,6 +408,12 @@ namespace Presentacion
         {
             try
             {
+                if (FormPrincipal.oUserAdmin == null)
+                {
+                    MessageBox.Show("Acción reservada para el administrador CarniSys.");
+                    return;
+                }
+
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
                 DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
                 string rutaArchivo = @ruta + "\\PLU_Systel.csv";
@@ -460,7 +471,7 @@ namespace Presentacion
             {
                 if (FormPrincipal.oUserAdmin == null)
                 {
-                    MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+                    MessageBox.Show("Acción reservada para el administrador CarniSys.");
                     return;
                 }
 
@@ -577,6 +588,11 @@ namespace Presentacion
         {
             try
             {
+                if (!Usuarios.FormValidarPermiso.validarPermiso("ExportarListaPrecioExcel"))
+                {
+                    this.Close();
+                }
+
                 if (dtCortesFiltrado == null || dtCortesFiltrado.Rows.Count == 0)
                 {
                     MessageBox.Show("No hay datos para exportar");
@@ -875,6 +891,7 @@ namespace Presentacion
             }
             else
             {
+
                 formEtiquetas frmEtiquetas = new formEtiquetas();
                 frmEtiquetas.dtCortes = dtCortesFiltrado;
                 frmEtiquetas.Show();

@@ -74,8 +74,6 @@ namespace Presentacion.Cortes
                 return;
             }
 
-            if (!Usuarios.FormValidarPermiso.validarPermiso("formAddOrEditTipoProducto")) return;
-
             formAddOrEditTipoProducto frmAddOrEditTipoProducto = new formAddOrEditTipoProducto();
             frmAddOrEditTipoProducto.tipoProductoSelected  = !esInsert ? grilla.CurrentRow.Cells["tipo"].Value.ToString() :"";
             frmAddOrEditTipoProducto.ordenSelected = !esInsert ? grilla.CurrentRow.Cells["orden"].Value.ToString() : "100";
@@ -153,10 +151,7 @@ namespace Presentacion.Cortes
 
                 if (respuesta == System.Windows.Forms.DialogResult.Yes)
                 {
-                    FormLoginVendedor frmLogin = new FormLoginVendedor();
-                    frmLogin.ShowDialog(this);
-
-                    if (oUsuario != null && oUsuario.Admin)
+                    if (Usuarios.FormValidarPermiso.validarPermiso("formAddOrEditTipoProducto"))
                     {
                         string mensaje = oCorteN.eliminarTipoProducto(grilla.CurrentRow.Cells["tipo"].Value.ToString());
 
@@ -169,10 +164,6 @@ namespace Presentacion.Cortes
                         MessageBox.Show("El Tipo Producto se eliminó correctamente");
                         this.cargarGrilla();
                         posibleModificaciones = true;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Debe tener permiso de Administrador para eliminar una TipoProducto");
                     }
                     oUsuario = null;
                 }
