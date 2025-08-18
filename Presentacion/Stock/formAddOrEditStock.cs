@@ -25,6 +25,7 @@ namespace Presentacion
         Negocio.Compra oCompraN=new Negocio.Compra();
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra;
         public Entidades.Usuario oUsuario;
@@ -78,14 +79,15 @@ namespace Presentacion
             {
                 timer1.Stop();
                 logueoUsuario();
+
                 if (oUsuario == null)
                 {
                     this.Close();
                     return;
                 }
-
-                if (!validarAjusteStock())
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today, oUsuario.Id))
                 {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
                     this.Close();
                     return;
                 }
@@ -239,32 +241,34 @@ namespace Presentacion
             {
                 logueoUsuario();
                 if (oUsuario == null)
+                    return;
+
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, oCompraE.FechaCompra, oCompraE.IdCompra > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id))
                 {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
                     return;
                 }
 
-                if (!validarAjusteStock())
-                    return;
-                
-                if (Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
-                Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString())))
-                {
-                    txtUsuario.Text = oUsuario.Nombre;
-                    btnAceptar.Text = "&Guardar";
-                    btnCambiarAccion.Visible = true;
-                    btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
-                    setTituloForm();//se setea el titulo luego de cambiar el text a BtnAceptar 
-                    txtFechaCompra.Enabled = true;
-                    comboSucursal.Enabled = true;
-                    groupBox1.Enabled = true;
-                    panelPesaje.Enabled = true;
-                    panelProveedor.Enabled = true;
-                    txtObservaciones.ReadOnly = false;
-                    timer1.Start();               
-                }
+                txtUsuario.Text = oUsuario.Nombre;
+                btnAceptar.Text = "&Guardar";
+                btnCambiarAccion.Visible = true;
+                btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
+                setTituloForm();//se setea el titulo luego de cambiar el text a BtnAceptar 
+                txtFechaCompra.Enabled = true;
+                comboSucursal.Enabled = true;
+                groupBox1.Enabled = true;
+                panelPesaje.Enabled = true;
+                panelProveedor.Enabled = true;
+                txtObservaciones.ReadOnly = false;
+                timer1.Start();               
             }
             else
             {
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value, oCompraE.IdCompra > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    return;
+                }
                 agregarCompra();
             }
         }
@@ -279,9 +283,7 @@ namespace Presentacion
             {
                 if (listaCortePorCompra.Count > 0 || accion.Equals(Entidades.Compra.accion.Modificar))
                 {
-                    if (validarAjusteStock() && Util_Form.validarFechaConAdmin(Presentacion.FormPrincipal.logueado || oUsuario.Admin, txtFechaCompra.Value, "Fecha") &&
-                        Util_Form.validarSucursal(Presentacion.FormPrincipal.logueado || oUsuario.Admin, Convert.ToInt32(comboSucursal.SelectedValue.ToString()))
-                        && Util_Form.validarFecha(txtFechaCompra.Value, "Fecha") && validaciónFinal())
+                    if (validaciónFinal())
                     {
                         cargarCompra();//se cargan datos de la compra
                         if (accion.Equals(Entidades.Compra.accion.Modificar))

@@ -56,7 +56,8 @@ namespace Datos
                 //// Genera automáticamente los comandos INSERT, UPDATE y DELETE
                 //SqlCommandBuilder commandBuilder = new SqlCommandBuilder(adapter);
                 //adapter.Fill(dt);
-                //dtParametros.PrimaryKey = new DataColumn[] { dtParametros.Columns["id"] };
+                //dt
+                //PrimaryKey = new DataColumn[] { dtParametros.Columns["id"] };
                 //dt.PrimaryKey = new DataColumn[] { dt.Columns["id"] };
                 //cmOtrasClases.Connection.Open();
                 //dt = dtParametros;

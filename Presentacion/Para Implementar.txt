@@ -235,3 +235,4 @@ Agregar campo en Formularios
 
 ***
 
+Actualizar tabla Parametros

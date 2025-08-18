@@ -18,7 +18,8 @@ namespace Presentacion
         DataTable dtCompras = new DataTable();
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
         bool cargar = false;
         public formStock()
         {
@@ -33,7 +34,7 @@ namespace Presentacion
                 cargarSucursal();
                 this.comboTipoCompra.SelectedIndex = 0;
 
-                fechaDesde.Value = DateTime.Now.AddMonths(-2);
+                fechaDesde.Value = limitFechaDesde;
                 cargar = true;
                 cargarGrilla();
             }
@@ -53,6 +54,15 @@ namespace Presentacion
             if (cargar)
             {
                 lblActualizar.Visible = false;
+
+                if (fechaDesde.Value < limitFechaDesde && (FormPrincipal.oUserLogueado == null ||
+                    !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value,
+                    Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                {
+                    MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                    fechaDesde.Value = limitFechaDesde;
+                }
+
                 grillaCompras.AutoGenerateColumns = false;
 
                 dtCompras = null;

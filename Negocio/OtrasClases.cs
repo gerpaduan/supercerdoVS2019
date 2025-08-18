@@ -130,6 +130,12 @@ namespace Negocio
                     case "loginRapidoStock":
                         Entidades.Parametros.loginRapidoStock = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
                         break;
+                    case "diasLimitFechaDesde":
+                        Entidades.Parametros.diasLimitFechaDesde = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
+                    case "importeMaxRedondeo":
+                        Entidades.Parametros.importeMaxRedondeo = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
 
                     default:
                         break;

@@ -43,7 +43,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursales();
-                txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
+                txtFechaDesde.Value = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
                 cargar = true;
                 cargarGrilla();
             }
@@ -205,7 +205,6 @@ namespace Presentacion
         private void txtFechaDesde_ValueChanged(object sender, EventArgs e)
         {
             lblActualizar.Visible = true;
-        }
-   
+        }   
     }
 }

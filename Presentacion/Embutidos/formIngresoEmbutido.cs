@@ -47,7 +47,7 @@ namespace Presentacion
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         int nroErrorBalanza = 0;
 
-        bool loginRapidoElaborado = Entidades.Parametros.loginRapidoElaborado;// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
+        bool loginRapidoElaborado = Entidades.Parametros.loginRapidoElaborado;
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;

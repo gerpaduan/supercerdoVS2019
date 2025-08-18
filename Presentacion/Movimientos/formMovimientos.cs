@@ -43,7 +43,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursales();
-                txtFechaDesde.Value = txtFechaHasta.Value.AddDays(-txtFechaHasta.Value.Day - 30);
+                txtFechaDesde.Value = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
                 cargar = true;
                 cargarGrilla();
                 actualizar.Visible = FormPrincipal.soyYo;
@@ -80,6 +80,7 @@ namespace Presentacion
             {
                 if (cargar)
                 {
+
                     grillaMovimientos.DataSource = null;
 
                     string sucOrigen, SucDestino;

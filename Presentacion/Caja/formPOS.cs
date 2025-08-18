@@ -97,8 +97,7 @@ namespace Presentacion.Caja
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool redondeo = Convert.ToBoolean(ConfigurationManager.AppSettings["redondeo"].ToString());
-        int importeMaxRedondeo = Convert.ToInt32(ConfigurationManager.AppSettings["importeMaxRedondeo"].ToString());        
-        bool cartelPrimerCorteVendedor = Convert.ToBoolean(ConfigurationManager.AppSettings["cartelPrimerCorteVendedor"].ToString());
+        int importeMaxRedondeo = Entidades.Parametros.importeMaxRedondeo;
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
         float totalCorte, precioKg, precioKgCorteExpendio, cantKg, cantKgTarjeta, kgsTotalCalculado;
@@ -2687,7 +2686,7 @@ namespace Presentacion.Caja
                     }
                 }
 
-                if (cartelPrimerCorteVendedor && !this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
+                if (!this.txtCodigo.Text.Equals("") && grillaLineasVenta.Rows.Count.Equals(0))
                 {
                     int cantCajaVenta = 0;
                     foreach (Form frm in Application.OpenForms)

@@ -27,10 +27,12 @@ namespace Presentacion
 
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         Entidades.Usuario oUsuario;
+        
 
-        int cantDiasLimitFechaDesde = Convert.ToInt32(ConfigurationManager.AppSettings["cantDiasLimitFechaDesde"].ToString());
+        int cantDiasLimitFechaDesde = Entidades.Parametros.diasLimitFechaDesde;
         DateTime limitFechaDesde;
         bool cargar = false;
         public formEmbutidos()
@@ -119,12 +121,6 @@ namespace Presentacion
             }
             else
             {
-                //FormLoginVendedor frmLogin = new FormLoginVendedor();
-                //frmLogin.ShowDialog(this);
-
-                //Usuarios.formSelectUser frmSelectUser = new Presentacion.Usuarios.formSelectUser();
-                //frmSelectUser.ShowDialog(this);
-
                 formIngresoEmbutido frmIngresoEmbutido = new formIngresoEmbutido();
                 frmIngresoEmbutido.oUsuario = oUsuario;
                 frmIngresoEmbutido.frmEmbutidos = this;
@@ -228,7 +224,9 @@ namespace Presentacion
 
         private void txtDescripcion_TextChanged(object sender, EventArgs e)
         {
-            if (!FormPrincipal.logueado && fechaDesde.Value < limitFechaDesde)
+            if (fechaDesde.Value < limitFechaDesde &&  (FormPrincipal.oUserLogueado == null || 
+                !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value,
+                Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
             {
                 MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
                 fechaDesde.Value = limitFechaDesde;
