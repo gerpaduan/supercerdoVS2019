@@ -203,18 +203,8 @@ namespace Presentacion
         }
 
         private void reportes()
-        {            
-            if (!logueado)
-            {
-                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-                frmLogin.ShowDialog(this);
-                if (oUsuario == null) return;
-                if (!oUsuario.Admin)
-                {
-                    MessageBox.Show("No tienes permiso para ver reportes");
-                    return;
-                }                
-            }
+        {
+            if (!ValidarInicioSesion()) return;
             formReporteStock frmReporteStock = new formReporteStock();
             frmReporteStock.Show();
         }
@@ -816,8 +806,6 @@ namespace Presentacion
             }
             else
             {
-                //if (!Usuarios.FormValidarPermiso.validarPermiso("formEgresosCaja")) return;
-
                 if (!ValidarInicioSesion()) return;
                 formEgresosCaja frmEgresosCaja = new formEgresosCaja();
                 frmEgresosCaja.Show();

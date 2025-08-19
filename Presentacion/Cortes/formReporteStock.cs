@@ -78,7 +78,7 @@ namespace Presentacion.Cortes
                 }
 
                 //Reporte Acum
-                if (comboTipoReporte.Text == "Acum. Ventas")
+                if (comboTipoReporte.Text == "Proyeccion Ventas vs Stock")
                 {
                     Ticket.formTipoTicket tipoTicket = new Presentacion.Ticket.formTipoTicket();
                     tipoTicket.acumVentas(fechaDesdeProgresivo.Value.ToString(), txtFechaHastaProgresivo.Value.ToString(), grillaReportes);
@@ -259,6 +259,9 @@ namespace Presentacion.Cortes
 
         private void cargarGrilla()
         {
+            if (!Usuarios.FormValidarPermiso.validarPermiso(comboTipoReporte.Text))
+                return;
+
             Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando reporte", "Cargando...");
             barraProgreso.Show();
 
@@ -300,7 +303,7 @@ namespace Presentacion.Cortes
 
             ///Cierre Stock
             if (comboTipoReporte.Text == "Cierre Stock" || comboTipoReporte.Text == "Stock Actual" ||
-                comboTipoReporte.Text == "Stock Progresivo")
+                comboTipoReporte.Text == "Stock Retroactivo")
             {
                 try
                 {
@@ -552,7 +555,7 @@ namespace Presentacion.Cortes
             }
 
             ///Acumulado de ventas
-            if (comboTipoReporte.Text.Equals("Acum. Ventas"))
+            if (comboTipoReporte.Text.Equals("Proyeccion Ventas vs Stock"))
             {
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
@@ -586,7 +589,7 @@ namespace Presentacion.Cortes
             }
 
             ///TotalPorCortesVendidos
-            if (comboTipoReporte.Text.Equals("Total Cortes Vendidos"))
+            if (comboTipoReporte.Text.Equals("Ventas por Producto"))
             {
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
@@ -643,7 +646,7 @@ namespace Presentacion.Cortes
             }
 
             ///Balance
-            if (comboTipoReporte.Text.Equals("Balance"))
+            if (comboTipoReporte.Text.Equals("Balance Económico"))
             {
                 grillaReportes.DataSource = null;
                 dtGrillaReporte = null;
@@ -705,21 +708,21 @@ namespace Presentacion.Cortes
             //this.comboTipoReporte.Items.AddRange(new object[] {
             //"Stock Actual",
             //"Cierre Stock",
-            //"Stock Progresivo",
+            //"Stock Retroactivo",
             //"Cierre Stock 2",
             //"Ingreso - Egreso",
-            //"Acum. Ventas",
-            //"Total Cortes Vendidos",
+            //"Proyeccion Ventas vs Stock",
+            //"Ventas por Producto",
             //"Total Kgs Corte/Compra",
             //"Movimiento/Corte",
             //"Teorico - Real"}); 
             this.comboTipoReporte.Items.AddRange(new object[] {
             "Stock Actual",
             "Cierre Stock",
-            "Stock Progresivo",
-            "Acum. Ventas",
-            "Total Cortes Vendidos",
-            "Balance"});
+            "Stock Retroactivo",
+            "Proyeccion Ventas vs Stock",
+            "Ventas por Producto",
+            "Balance Económico"});
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
 
@@ -732,8 +735,8 @@ namespace Presentacion.Cortes
         private void cargarComboCierreStock()
         {
             if (comboSucursal.ValueMember != "" && (comboTipoReporte.Text.Equals("Cierre Stock") ||
-                comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Progresivo") ||
-                comboTipoReporte.Text.Equals("Acum. Ventas")))
+                comboTipoReporte.Text.Equals("Stock Actual") || comboTipoReporte.Text.Equals("Stock Retroactivo") ||
+                comboTipoReporte.Text.Equals("Proyeccion Ventas vs Stock")))
             {
                 checkSoloFaltantes.Visible = true;
                 checkOcultarColumnas.Visible = true;
@@ -904,17 +907,17 @@ namespace Presentacion.Cortes
             checkSoloFaltantes.Checked = checkOcultarColumnas.Checked = checkOcultarPtoStock.Checked = false;
             if (comboTipoReporte.Text.Equals("Cierre Stock") ||
                 comboTipoReporte.Text.Equals("Stock Actual") ||
-                comboTipoReporte.Text.Equals("Stock Progresivo") ||
-                comboTipoReporte.Text.Equals("Acum. Ventas"))
+                comboTipoReporte.Text.Equals("Stock Retroactivo") ||
+                comboTipoReporte.Text.Equals("Proyeccion Ventas vs Stock"))
             {
                 stockActual = comboTipoReporte.Text.Equals("Stock Actual");
-                acumVentas = comboTipoReporte.Text.Equals("Acum. Ventas");
-                stockProgresivo = comboTipoReporte.Text.Equals("Stock Progresivo");
+                acumVentas = comboTipoReporte.Text.Equals("Proyeccion Ventas vs Stock");
+                stockProgresivo = comboTipoReporte.Text.Equals("Stock Retroactivo");
                 comboInicioStock.Visible = !acumVentas;
                 comboCierreStock.Visible = !stockProgresivo && !acumVentas;
                 cargarComboCierreStock();
                 checkSoloFaltantes.Visible = checkOcultarColumnas.Visible =
-                    checkOcultarPtoStock.Visible = !comboTipoReporte.Text.Equals("Acum. Ventas");
+                    checkOcultarPtoStock.Visible = !comboTipoReporte.Text.Equals("Proyeccion Ventas vs Stock");
                 //checkOcultarColumnas.Visible = true;
                 //checkOcultarPtoStock.Visible = true;
             }
@@ -926,7 +929,7 @@ namespace Presentacion.Cortes
                 txtFechaHastaProgresivo.Visible = true;
             }
 
-            if (comboTipoReporte.Text.Equals("Balance"))
+            if (comboTipoReporte.Text.Equals("Balance Económico"))
             {
                 // Si la condición es verdadera, se oculta la hora mostrando solo la fecha
                 fechaDesdeProgresivo.Format = DateTimePickerFormat.Short;  // Muestra solo la fecha (dd/MM/yyyy)
