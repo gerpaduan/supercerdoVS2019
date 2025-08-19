@@ -2396,13 +2396,15 @@ namespace Presentacion.Caja
                 ///
                 if (!(oUsuarioN.tienePermiso(oUsuario, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
-                    if (FormPrincipal.oUserLogueado == null)
-                    {
-                        MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor");
-                        return;
-                    }
+                    //if (FormPrincipal.oUserLogueado == null)
+                    //{
+                    //    MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor");
+                    //    return;
+                    //}
 
-                    if (!(oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                    if (!(oUsuarioN.tienePermiso(oUsuario, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())) 
+                        && (FormPrincipal.oUserLogueado == null ||
+                        !(oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))))
                     {
                         MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor correspondiente");
                         return;

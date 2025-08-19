@@ -236,3 +236,114 @@ Agregar campo en Formularios
 ***
 
 Actualizar tabla Parametros
+
+*********
+
+ACELERAR PROCEDIMIENTO
+
+ALTER PROCEDURE [dbo].[obtenerVentas] 
+	@fechaDesde datetime,
+	@fechaHasta datetime,
+	@texto nvarchar(50) = '',
+	@idSucursal int = -1,
+	@idVendedor int = -1,
+	@idCliente int = -1,
+	@soloAnulados tinyint = 0
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	DECLARE @sql nvarchar(max);
+	DECLARE @params nvarchar(max) = '
+		@fechaDesde datetime,
+		@fechaHasta datetime,
+		@texto nvarchar(50),
+		@idSucursal int,
+		@idVendedor int,
+		@idCliente int,
+		@soloAnulados tinyint';
+
+	-- Base de la consulta
+	SET @sql = N'
+	SELECT v.idVenta, v.fechaVenta, v.idVendedor, u.nombre, v.nroRemito, 
+		   v.idPersona, p.razonSocial, v.idSucursal, s.sucursal, 
+		   v.tipoComprobante, v.enCtaCte, v.formaPago, v.comisionTarjeta,
+		   v.turno, v.diaFestivo, v.observaciones, v.creado, v.actualizado,
+		   v.estado,
+		   SUM(l.kgsAjusteTarj) as totalKgAj, 
+		   SUM(l.kgsAjusteTarj * l.precioKg) AS totalImpAj,
+		   SUM(l.cantKg) as totalKg, 
+		   SUM(l.cantKg * l.precioKg) AS totalS, 
+		   (v.comisionTarjeta * SUM(l.cantKg * l.precioKg)) AS totComTarj, 
+		   SUM(l.ajustePrecio * l.cantKg) AS totAjuste
+	FROM dbo.LineaVenta l
+	INNER JOIN dbo.Ventas v ON l.idVenta = v.idVenta
+	INNER JOIN dbo.Sucursal s ON v.idSucursal = s.idSucursal
+	INNER JOIN dbo.Personas p ON v.idPersona = p.idPersona
+	INNER JOIN dbo.Usuarios u ON v.idVendedor = u.id
+	WHERE v.fechaVenta BETWEEN @fechaDesde AND @fechaHasta ';
+
+	-- Filtros opcionales
+	IF (@idSucursal >= 0)
+		SET @sql += ' AND v.idSucursal = @idSucursal';
+
+	IF (@idVendedor >= 0)
+		SET @sql += ' AND v.idVendedor = @idVendedor';
+
+	IF (@idCliente >= 0)
+		SET @sql += ' AND v.idPersona = @idCliente';
+
+	IF (LTRIM(RTRIM(@texto)) <> '')
+		SET @sql += '
+		AND (
+			CAST(v.idVenta AS nvarchar(50)) LIKE ''%'' + @texto + ''%'' OR
+			v.nroRemito LIKE ''%'' + @texto + ''%'' OR
+			p.razonSocial LIKE ''%'' + @texto + ''%'' OR
+			v.diaFestivo LIKE ''%'' + @texto + ''%'' OR
+			DATENAME(WEEKDAY, v.fechaVenta) LIKE ''%'' + @texto + ''%''
+		)';
+
+	IF (@soloAnulados = 1)
+		SET @sql += ' AND l.cantKg < 0';
+
+	-- Group by y orden
+	SET @sql += '
+	GROUP BY v.idVenta, v.fechaVenta, v.idVendedor, u.nombre, v.nroRemito, 
+			 v.idPersona, p.razonSocial, v.idSucursal, s.sucursal, 
+			 v.tipoComprobante, v.enCtaCte, v.formaPago, v.comisionTarjeta,
+			 v.turno, v.diaFestivo, v.observaciones, v.creado, v.actualizado, 
+			 v.estado, v.acumRedondeoKgs, v.acumRedondeoImporte
+	ORDER BY v.fechaVenta DESC;';
+
+	-- Ejecutar
+	EXEC sp_executesql @sql, @params, 
+		@fechaDesde=@fechaDesde, 
+		@fechaHasta=@fechaHasta,
+		@texto=@texto, 
+		@idSucursal=@idSucursal,
+		@idVendedor=@idVendedor,
+		@idCliente=@idCliente,
+		@soloAnulados=@soloAnulados;
+END
+
+
+AGREGAR INDICES
+
+//MEJORA
+
+-- 1️⃣ Índice principal en Ventas para filtrar por fecha, sucursal, vendedor y cliente
+CREATE NONCLUSTERED INDEX IX_Ventas_FechaSucursalVendedorCliente
+ON dbo.Ventas (fechaVenta, idSucursal, idVendedor, idPersona)
+INCLUDE (idVenta, nroRemito, tipoComprobante, enCtaCte, formaPago, comisionTarjeta, turno, diaFestivo, observaciones, creado, actualizado, estado);
+
+-- 2️⃣ Índice para JOIN rápido con LineaVenta
+CREATE NONCLUSTERED INDEX IX_LineaVenta_IdVenta
+ON dbo.LineaVenta (idVenta)
+INCLUDE (cantKg, precioKg, ajustePrecio, kgsAjusteTarj);
+
+
+///
+copiar desde BD SL
+
+ALTER PROCEDURE [dbo].[a_CierreStock]
+

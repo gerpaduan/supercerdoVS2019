@@ -442,6 +442,12 @@ namespace Presentacion.Cortes
                         System.Drawing.Font fuente = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
                         grillaReportes.Columns["Codigo"].DefaultCellStyle.Font = fuente;
+                        // Configurar la columna Codigo
+                        var col = grillaReportes.Columns["Codigo"];
+                        col.ValueType = typeof(long);
+                        col.DefaultCellStyle.Format = "0";   // entero puro
+                        col.SortMode = DataGridViewColumnSortMode.Automatic; // permite ordenar como número
+
                         grillaReportes.Columns["Corte"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Corte"].HeaderText = "Producto";
                         grillaReportes.Columns["Tot.INGR"].DefaultCellStyle.BackColor = Color.PaleGreen;
