@@ -443,6 +443,7 @@ namespace Presentacion.Cortes
 
                         grillaReportes.Columns["Codigo"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Corte"].DefaultCellStyle.Font = fuente;
+                        grillaReportes.Columns["Corte"].HeaderText = "Producto";
                         grillaReportes.Columns["Tot.INGR"].DefaultCellStyle.BackColor = Color.PaleGreen;
                         grillaReportes.Columns["Tot.INGR"].DefaultCellStyle.Font = fuente;
                         grillaReportes.Columns["Tot.EGR"].DefaultCellStyle.BackColor = Color.PaleGreen;
@@ -673,6 +674,10 @@ namespace Presentacion.Cortes
 
             }
 
+                if (grillaReportes.Columns.Contains("Corte"))
+            {
+                grillaReportes.Columns["Corte"].HeaderText = "Producto";
+            }
 
             txtCantItems.Text = grillaReportes.Rows.Count.ToString();
         }
@@ -1025,7 +1030,7 @@ namespace Presentacion.Cortes
             for (int i = 0; i < grillaReportes.Columns.Count; i++)
             {
                 bool visible = !checkOcultarColumnas.Checked ? true :
-                   ((grillaReportes.Columns[i].HeaderText == "Codigo" || grillaReportes.Columns[i].HeaderText == "Corte" ||
+                   ((grillaReportes.Columns[i].HeaderText == "Codigo" || grillaReportes.Columns[i].HeaderText == "Producto" ||
                    grillaReportes.Columns[i].HeaderText == "Faltante" || grillaReportes.Columns[i].HeaderText == "Stock Actual"
                    || grillaReportes.Columns[i].HeaderText == "Falta" || grillaReportes.Columns[i].HeaderText == "Pto.Stock") ? true : false);
 
