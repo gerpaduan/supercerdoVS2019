@@ -2105,6 +2105,16 @@ namespace Presentacion.Caja
                 cambiarBackColorForm(colorUser);
                 //comboColors.Text = colorUser.ToString();
                 //grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
+                // Evita que el estilo de Windows sobrescriba el tuyo
+                grillaLineasVenta.EnableHeadersVisualStyles = false;
+                // Cambiar color de fondo y texto del encabezado
+                grillaLineasVenta.ColumnHeadersDefaultCellStyle.BackColor = readOnlyColor;
+                //grillaLineasVenta.ColumnHeadersDefaultCellStyle.ForeColor = Color.DarkSlateGray;
+                //grillaLineasVenta.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+                // Cuando seleccionás una celda, que el encabezado no cambie de color
+                grillaLineasVenta.ColumnHeadersDefaultCellStyle.SelectionBackColor = grillaLineasVenta.ColumnHeadersDefaultCellStyle.BackColor;
+                grillaLineasVenta.ColumnHeadersDefaultCellStyle.SelectionForeColor = grillaLineasVenta.ColumnHeadersDefaultCellStyle.ForeColor;
+
                 timerBloquearCaja.Start();
                 ultimaVentaVendedor();
                 restablecerFormaDePago();
