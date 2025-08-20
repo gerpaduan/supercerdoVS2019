@@ -2123,6 +2123,7 @@ namespace Presentacion.Caja
                 dtCortes = oCorteN.cargarDtCortes();
 
                 timer1.Enabled = true;
+                validarPagoMixto();
 
                 panelExpendios();
             }
@@ -2139,7 +2140,7 @@ namespace Presentacion.Caja
             this.panel2.BackColor = colorUser;
             this.panelPago.BackColor = colorUser;
             this.panelAbonar.BackColor = colorUser;
-            this.checkPagoMixto.BackColor = readOnlyColor;
+            //this.checkPagoMixto.BackColor = readOnlyColor;
             txtCantItems.BackColor = colorUser;
             txtTotalKgs.BackColor = colorUser;
             lblTeclasRapidas.BackColor = colorUser;
@@ -3166,6 +3167,8 @@ namespace Presentacion.Caja
 
         private void validarPagoMixto()
         {
+            checkPagoMixto.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkPagoMixto.Checked);
+
             if (checkPagoMixto.Checked && (checkEfectivo.Checked || checkCtaCte.Checked || oVentaE.FormaPago == null))
             {
                 MessageBox.Show("Para 'Pago Mixto' debe seleccionar una forma pago y ser diferente a Efectivo y Cta.Cte", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
