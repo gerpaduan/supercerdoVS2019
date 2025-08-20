@@ -1664,13 +1664,13 @@ namespace Presentacion.Caja
         {
             oCliente = persona;
 
-            linkVerCtaCte.Visible = oUsuario.Admin;// !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            linkVerCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
             linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) ?
                 "mis ventas" : "Ver ultimas 5 ventas";
 
             ////Ocultar Ultimas Ventas Para Cocinas y Furlana
             if ((FormPrincipal.soyYo && !oUsuario.Admin) &&
-                (oCliente.razonSocial.ToLower().Contains("furlana") || oCliente.razonSocial.ToLower().Contains("cocina")))
+                (oCliente.CtaCte || oCliente.razonSocial.ToLower().Contains("empleado") || oCliente.razonSocial.ToLower().Contains("empleada")))
             {
                 linkUltimasVentasCliente.Visible = false;
                 linkVerCtaCte.Visible = false;
@@ -3209,6 +3209,8 @@ namespace Presentacion.Caja
             {
                 formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
                 frmCtaCtePersona.idPersona = oCliente.idPersona;
+                frmCtaCtePersona.oUsuario = oUsuario;
+                frmCtaCtePersona.desdePOS = true;
                 frmCtaCtePersona.ShowDialog();
             }
             catch (Exception ex)

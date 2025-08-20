@@ -20,6 +20,7 @@ namespace Presentacion.Caja
         public Entidades.CierreCaja oCierreE;
 
         Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.LineaVenta oLineaVenta;
         wsAFIPvs2008.formFacturaElectronica formFactElec;
 

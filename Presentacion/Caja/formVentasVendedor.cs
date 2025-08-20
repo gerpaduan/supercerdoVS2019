@@ -14,6 +14,7 @@ namespace Presentacion
     {
         public Entidades.CierreCaja oCierreE;
         public Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         public DataTable dtVentas;
         bool soloAnulados = false;
@@ -28,6 +29,13 @@ namespace Presentacion
         {
             try
             {
+                if (!(oUsuarioN.tienePermiso(oCierreE.UsuarioInicio, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    this.Close();
+                    return;
+                }
+
                 dtVentas = oVentaN.getVentasVendedorCierreCaja(oCierreE, soloAnulados);
 
                 grillaVentas.AutoGenerateColumns = false;

@@ -30,6 +30,7 @@ namespace Presentacion.Pagos
         public formPagos frmPagos;
         protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         public Entidades.Persona oPersonaE = new Entidades.Persona();
         Entidades.Pago oPagoE = new Entidades.Pago();
         Entidades.Pago oPagoSinMod = new Entidades.Pago();
@@ -44,6 +45,7 @@ namespace Presentacion.Pagos
         bool cargandoForm = true;
         bool ultimaValidacion = true;//valida que los ingresos estén correctos antes de ingresar datos al DB
         string ultimaFormaPagoSelected = ""; //guarda la ultima forma de pago seleccionada
+        public bool desdePOS = true; //para indicar que es llamado desde el form POS
         public formAddOrEditPago()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -54,6 +56,31 @@ namespace Presentacion.Pagos
             this.Text += Utilidades.Conexion.getSucursalConexion();
             try
             {
+                //si es desdePOS se oculta el boton para buscar persona y se establace que es un cobro 'Recibi de..'
+                btnBuscarProv.Visible = !desdePOS;
+                checkAProveedor.Checked = !desdePOS;
+                
+
+                if (oUsuario == null)
+                {
+                    FormLoginVendedor frmLogin = new FormLoginVendedor();
+                    frmLogin.ShowDialog(this);
+                }
+
+                if (oUsuario == null)
+                {
+                    this.Close();
+                    return;
+                }
+
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaPago.Value,
+                            oPagoE != null && oPagoE.Id > 0 ? oPagoE.CreadoPor.Id : oUsuario.Id))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    this.Close();
+                    return;
+                }
+
                 bool closeForm = false;
                 if (idPago == 0 && oUsuario == null) closeForm = true;
 
@@ -276,15 +303,19 @@ namespace Presentacion.Pagos
                     {
                         FormLoginVendedor frmLogin = new FormLoginVendedor();
                         frmLogin.ShowDialog(this);
-                        if (oUsuario == null) return;
+                    }
 
-                        if (!oUsuario.Admin)
-                        {
-                            MessageBox.Show("No tiene permisos para modificar gastos de otra persona");
-                            oUsuario = null;
-                            return;
-                        }
+                    if (oUsuario == null) return;
 
+                    if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaPago.Value, 
+                        oPagoE != null && oPagoE.Id > 0 ? oPagoE.CreadoPor.Id : oUsuario.Id))
+                    {
+                        Utilidades.Mensajes.ErrorPermisoEdicion();
+                        return;
+                    }
+
+                    if (readOnly)
+                    {
                         formNuevoPago_Load(null, null);
                         readOnly = false;
                         setearPropiedadesForm();
@@ -406,8 +437,14 @@ namespace Presentacion.Pagos
         {
             bool respuesta = true;
 
+            if (oPersonaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+            {
+                MessageBox.Show("No se pueden registrar Pagos a Consumidor Final", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return false;
+            }            
+
             if (!Util_Form.validarFecha(txtFechaPago.Value, "Fecha"))
-                return false; ;
+                return false; 
 
             if (txtNroRecibo.Text == "" || txtPersona.Text == "" || comboTipoPago.Text == ""
                 || txtImporte.Text == "")

@@ -17,12 +17,14 @@ namespace Presentacion.CuentaCorriente
     public partial class formCtaCtePersona : Form, InterfaceUsuario
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Entidades.Usuario oUsuario;
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        public Entidades.Usuario oUsuario;
 
         public int idPersona;
         DataTable dtMov;
         Entidades.Persona oPersonaE;
-        DateTime fechaDesde = DateTime.Now.AddDays(-30);
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        public bool desdePOS = true; //para indicar que es llamado desde el form POS
 
         public formCtaCtePersona()
         {
@@ -33,12 +35,19 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
+                if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    this.Close();
+                    return;
+                }
+
                 Negocio.Persona oPersonaN = new Negocio.Persona();
                 oPersonaE = oPersonaN.findById(idPersona);
                 txtPersona.Text = oPersonaE.razonSocial;
                 if (!oPersonaE.Identificacion.Equals(oPersonaE.razonSocial))
                     txtPersona.Text = oPersonaE.Identificacion + " / " + oPersonaE.razonSocial;
-                fechaDesdePick.Value = fechaDesde;
+                fechaDesdePick.Value = limitFechaDesde;
                 cargarGrilla();
             }
             catch (Exception ex)
@@ -51,6 +60,14 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
+                if (fechaDesdePick.Value < limitFechaDesde && 
+                    !oUsuarioN.tienePermiso(oUsuario, this.Name, fechaDesdePick.Value,
+                    Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                    fechaDesdePick.Value = limitFechaDesde;
+                }
+
                 dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
 
                 if (!checkSinRegRepetidos.Checked)
@@ -147,6 +164,7 @@ namespace Presentacion.CuentaCorriente
                     case Entidades.MovCtaCte.tablas.Pagos:
                         Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
                         frmAddOrEditPago.idPago = idTabla;
+                        frmAddOrEditPago.desdePOS = desdePOS;
                         frmAddOrEditPago.Show();
                         break;
                     default:
@@ -199,23 +217,19 @@ namespace Presentacion.CuentaCorriente
 
         private void menuNuevoPago_Click(object sender, EventArgs e)
         {
-            FormLoginVendedor frmLogin = new FormLoginVendedor();
-            frmLogin.ShowDialog(this);
+            if (oUsuario == null)
+            {
+                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.ShowDialog(this);
+            }
 
             if (oUsuario == null) return;
 
-            if (oUsuario.Admin)
-            {
-                Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
-                frmAddOrEditPago.oPersonaE = oPersonaE;
-                frmAddOrEditPago.oUsuario = oUsuario;
-                frmAddOrEditPago.Show();
-            }
-            else
-            {
-                MessageBox.Show("Debe agregar sus gastos desde la pantalla de Caja Venta.\n");
-            }
-            oUsuario = null;
+            Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
+            frmAddOrEditPago.oPersonaE = oPersonaE;
+            frmAddOrEditPago.oUsuario = oUsuario;
+            frmAddOrEditPago.desdePOS = desdePOS;
+            frmAddOrEditPago.ShowDialog();
         }
         
         public void EnviarUsuario(Entidades.Usuario usuario)
