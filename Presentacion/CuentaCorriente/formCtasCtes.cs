@@ -34,7 +34,7 @@ namespace Presentacion.CuentaCorriente
                 grillaCtasCtes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
                 //formato
-                grillaCtasCtes.Columns["Saldo"].DefaultCellStyle.Format = "F2";
+                grillaCtasCtes.Columns["Saldo"].DefaultCellStyle.Format = "N2";
             }
             catch (Exception ex)
             {
@@ -58,6 +58,7 @@ namespace Presentacion.CuentaCorriente
             {
                 formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
                 frmCtaCtePersona.idPersona = Convert.ToInt32(grillaCtasCtes.CurrentRow.Cells["IdPersona"].Value.ToString());
+                frmCtaCtePersona.desdePOS = false;
                 frmCtaCtePersona.Show();
             }
             catch (Exception ex)

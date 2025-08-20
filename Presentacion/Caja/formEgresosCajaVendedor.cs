@@ -175,18 +175,18 @@ namespace Presentacion.Caja
                 case "Todos":
                         form_Load();
                         break;
-                case "Tarjeta":
-                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'Tarjeta Pago'");// comboFiltro.SelectedItem.ToString());
+                case "Pago Electronico":
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'Pago Electronico'");// comboFiltro.SelectedItem.ToString());
                         break;
                 case "CtaCte":
-                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'CtaCte Sta Fe'");
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = string.Format(nombreCol + "= 'Cta Cte'");
                         break;
                 case "Egresos":
                         StringBuilder filter = new StringBuilder();
-                        filter.Append(nombreCol + "<> 'Tarjeta Pago'");
+                        filter.Append(nombreCol + "<> 'Pago Electronico'");
                         filter.Append(" AND ");
-                        filter.Append(nombreCol + "<> 'CtaCte Sta Fe'");
-                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = filter.ToString(); //string.Format(nombreCol + "<> 'Tarjeta Pago'");                      
+                        filter.Append(nombreCol + "<> 'Cta Cte'");
+                        (grillaEgresosCaja.DataSource as DataTable).DefaultView.RowFilter = filter.ToString(); //string.Format(nombreCol + "<> 'Pago Electronico'");                      
                         break;
                 default:
                     break;

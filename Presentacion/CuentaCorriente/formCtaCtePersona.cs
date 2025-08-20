@@ -35,6 +35,7 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
+                oUsuario = desdePOS ? oUsuario : FormPrincipal.oUserLogueado;
                 if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
@@ -118,10 +119,14 @@ namespace Presentacion.CuentaCorriente
                 grillaMovCtaCte.Columns["idPersona"].Visible = false;
                 grillaMovCtaCte.Columns["razonSocial"].Visible = false;
                 grillaMovCtaCte.Columns["id"].Visible = true;// false;
+                grillaMovCtaCte.Columns["id"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                grillaMovCtaCte.Columns["tabla"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                grillaMovCtaCte.Columns["idTabla"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                grillaMovCtaCte.Columns["tipo"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
                 //formato
-                grillaMovCtaCte.Columns["importe"].DefaultCellStyle.Format = "F2";
-                grillaMovCtaCte.Columns["Saldo"].DefaultCellStyle.Format = "F2";
+                grillaMovCtaCte.Columns["importe"].DefaultCellStyle.Format = "N2";
+                grillaMovCtaCte.Columns["Saldo"].DefaultCellStyle.Format = "N2";
 
                 if (grillaMovCtaCte.Rows.Count > 0)
                 {
