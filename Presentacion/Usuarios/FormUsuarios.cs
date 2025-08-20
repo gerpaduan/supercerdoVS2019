@@ -39,6 +39,7 @@ namespace Presentacion.Usuario
         {
             ActualizarPermisosUsuario();
             btnGuardarPermisos.Text = guardarPermisos ? "Guardar &Permisos" : "Editar &Permisos";
+            checkCambiosEnLote.Enabled = guardarPermisos;
             //checkCambiosEnLote.Checked = checkCambiosEnLote.Checked && !guardarPermisos ? false : checkCambiosEnLote.Checked;
 
             if (grillaPermisos.Columns.Count > 0)
@@ -80,7 +81,7 @@ namespace Presentacion.Usuario
         {
             grillaPermisos.Rows.Clear();
 
-            foreach (var permiso in Permisos)
+            foreach (var permiso in Permisos.OrderBy(p => p.Formulario.NombreForm))
             {
                 bool verMarcado = permiso.DiasPermitidosVer != -1;
                 bool editarMarcado = permiso.DiasPermitidosEditar != -1;
@@ -501,6 +502,7 @@ namespace Presentacion.Usuario
             {
 
             }
+
             guardarPermisos = !guardarPermisos;
             BotonPermisos();
         }

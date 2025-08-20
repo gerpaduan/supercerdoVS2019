@@ -347,3 +347,6 @@ copiar desde BD SL
 
 ALTER PROCEDURE [dbo].[a_CierreStock]
 
+//
+agregar tabla Empresas 
+actulaizar tabla Sucursal
