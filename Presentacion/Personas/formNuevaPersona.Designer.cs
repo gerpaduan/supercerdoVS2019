@@ -138,6 +138,7 @@
             // 
             // txtIdentificacion
             // 
+            this.txtIdentificacion.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
             this.txtIdentificacion.Location = new System.Drawing.Point(111, 23);
             this.txtIdentificacion.Name = "txtIdentificacion";
             this.txtIdentificacion.Size = new System.Drawing.Size(251, 21);
@@ -184,6 +185,7 @@
             // 
             // txtCiudad
             // 
+            this.txtCiudad.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
             this.txtCiudad.Location = new System.Drawing.Point(111, 153);
             this.txtCiudad.Name = "txtCiudad";
             this.txtCiudad.Size = new System.Drawing.Size(150, 21);
@@ -202,6 +204,7 @@
             // 
             // txtDomicilio
             // 
+            this.txtDomicilio.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
             this.txtDomicilio.Location = new System.Drawing.Point(111, 132);
             this.txtDomicilio.Name = "txtDomicilio";
             this.txtDomicilio.Size = new System.Drawing.Size(150, 21);
@@ -303,6 +306,7 @@
             // 
             // txtRazonSocial
             // 
+            this.txtRazonSocial.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
             this.txtRazonSocial.Location = new System.Drawing.Point(111, 44);
             this.txtRazonSocial.Name = "txtRazonSocial";
             this.txtRazonSocial.Size = new System.Drawing.Size(251, 21);
