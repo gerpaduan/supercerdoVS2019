@@ -226,7 +226,8 @@ namespace Presentacion.Usuario
             {
                 Name = "HastaDiasAtras",
                 HeaderText = "Días Atrás",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                Width = 65
             };
             grillaPermisos.Columns.Add(colHastaDiasAtras);
 
@@ -245,7 +246,8 @@ namespace Presentacion.Usuario
             {
                 Name = "HastaDiasAtras2",
                 HeaderText = "Días Atrás",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                Width = 65
             };
             grillaPermisos.Columns.Add(colHastaDiasAtras2);
 
@@ -271,8 +273,8 @@ namespace Presentacion.Usuario
             grillaPermisos.Columns["Formulario"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             grillaPermisos.Columns["Ver"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
             grillaPermisos.Columns["Editar"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["HastaDiasAtras"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPermisos.Columns["HastaDiasAtras2"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            //grillaPermisos.Columns["HastaDiasAtras"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            //grillaPermisos.Columns["HastaDiasAtras2"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
             grillaPermisos.Columns["PermisoEdicion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
 
