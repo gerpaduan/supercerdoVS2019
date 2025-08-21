@@ -781,9 +781,6 @@ namespace Presentacion
             }
             else
             {
-                //if (!Usuarios.FormValidarPermiso.validarPermiso("FormUsuarios")) return;
-
-                //if (!ValidarInicioSesion()) return;
                 FormUsuarios frmUsuario = new FormUsuarios();
                 frmUsuario.Show();
             }
@@ -900,29 +897,24 @@ namespace Presentacion
 
         private void lineasVentaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (logueado)
-            {
-                if (Application.OpenForms["formGetAllLineaVenta"] != null)
-                {
-                    Application.OpenForms["formGetAllLineaVenta"].Activate();
-                    Application.OpenForms["formGetAllLineaVenta"].WindowState = FormWindowState.Normal;
 
-                }
-                else
-                {
-                    formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
-                    frmTemporalLineaVenta.Show();
-                }
+            if (Usuarios.FormValidarPermiso.validarPermiso("formVentas"))
+            if (Application.OpenForms["formGetAllLineaVenta"] != null)
+            {
+                Application.OpenForms["formGetAllLineaVenta"].Activate();
+                Application.OpenForms["formGetAllLineaVenta"].WindowState = FormWindowState.Normal;
+
             }
             else
             {
-                MessageBox.Show("No está logueado");
+                formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
+                frmTemporalLineaVenta.Show();
             }
         }
 
         private void ctasCtesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (logueado)
+            if (Usuarios.FormValidarPermiso.validarPermiso("formCtasCtes"))
             {
                 if (Application.OpenForms["formCtasCtes"] != null)
                 {
@@ -936,31 +928,22 @@ namespace Presentacion
                     frmCtasCtes.Show();
                 }
             }
-            else
-            {
-                MessageBox.Show("No está logueado");
-            }
         }
 
         private void pagosToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (logueado)
-            {
-                if (Application.OpenForms["formPagos"] != null)
-                {
-                    Application.OpenForms["formPagos"].Activate();
-                    Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
+            if (!Usuarios.FormValidarPermiso.validarPermiso("formPagos")) return;
 
-                }
-                else
-                {
-                    Pagos.formPagos frmPagos = new formPagos();
-                    frmPagos.Show();
-                }
+            if (Application.OpenForms["formPagos"] != null)
+            {
+                Application.OpenForms["formPagos"].Activate();
+                Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
+
             }
             else
             {
-                MessageBox.Show("No está logueado");
+                Pagos.formPagos frmPagos = new formPagos();
+                frmPagos.Show();
             }
         }
 
@@ -1268,24 +1251,19 @@ namespace Presentacion
 
         private void chequesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (logueado)
-            {
-                if (Application.OpenForms["formCheques"] != null)
-                {
-                    Application.OpenForms["formCheques"].Activate();
-                    Application.OpenForms["formCheques"].WindowState = FormWindowState.Normal;
+            if (!Usuarios.FormValidarPermiso.validarPermiso("formCheques")) return;
 
-                }
-                else
-                {
-                    formCheques frmCheques = new formCheques();
-                    frmCheques.oUsuario = oUserAdminEmpresa;
-                    frmCheques.Show();
-                }
+            if (Application.OpenForms["formCheques"] != null)
+            {
+                Application.OpenForms["formCheques"].Activate();
+                Application.OpenForms["formCheques"].WindowState = FormWindowState.Normal;
+
             }
             else
             {
-                MessageBox.Show("No está logueado");
+                formCheques frmCheques = new formCheques();
+                frmCheques.oUsuario = oUserAdminEmpresa;
+                frmCheques.Show();
             }
         }
 
