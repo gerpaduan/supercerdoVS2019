@@ -350,3 +350,9 @@ ALTER PROCEDURE [dbo].[a_CierreStock]
 //
 agregar tabla Empresas 
 actulaizar tabla Sucursal
+
+ALTER TABLE Parametros
+ALTER COLUMN descripcion NVARCHAR(MAX) NULL;
+
+ALTER TABLE Formularios
+ALTER COLUMN descripcion NVARCHAR(MAX) NULL;

@@ -19,8 +19,7 @@ namespace Presentacion
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-        DateTime 
-            = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         bool cargar = false;
         public formStock()
