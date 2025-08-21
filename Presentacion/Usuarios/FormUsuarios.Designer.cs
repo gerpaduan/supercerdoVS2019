@@ -89,7 +89,7 @@
             this.txtClave.Location = new System.Drawing.Point(151, 25);
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
-            this.txtClave.Size = new System.Drawing.Size(141, 22);
+            this.txtClave.Size = new System.Drawing.Size(185, 22);
             this.txtClave.TabIndex = 2;
             // 
             // btnGuardarContra
@@ -98,7 +98,7 @@
             this.btnGuardarContra.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnGuardarContra.Location = new System.Drawing.Point(151, 110);
             this.btnGuardarContra.Name = "btnGuardarContra";
-            this.btnGuardarContra.Size = new System.Drawing.Size(141, 27);
+            this.btnGuardarContra.Size = new System.Drawing.Size(185, 27);
             this.btnGuardarContra.TabIndex = 4;
             this.btnGuardarContra.Text = "Guardar &Contraseña";
             this.btnGuardarContra.UseVisualStyleBackColor = true;
@@ -111,7 +111,7 @@
             this.comboUsuario.FormattingEnabled = true;
             this.comboUsuario.Location = new System.Drawing.Point(74, 10);
             this.comboUsuario.Name = "comboUsuario";
-            this.comboUsuario.Size = new System.Drawing.Size(140, 24);
+            this.comboUsuario.Size = new System.Drawing.Size(168, 24);
             this.comboUsuario.TabIndex = 0;
             this.comboUsuario.SelectedValueChanged += new System.EventHandler(this.comboUsuario_SelectedValueChanged);
             // 
@@ -121,7 +121,7 @@
             this.txtNueva.Location = new System.Drawing.Point(151, 53);
             this.txtNueva.Name = "txtNueva";
             this.txtNueva.PasswordChar = '*';
-            this.txtNueva.Size = new System.Drawing.Size(141, 22);
+            this.txtNueva.Size = new System.Drawing.Size(185, 22);
             this.txtNueva.TabIndex = 3;
             this.txtNueva.TextChanged += new System.EventHandler(this.txtNueva_TextChanged);
             // 
@@ -141,7 +141,7 @@
             this.txtRepetir.Location = new System.Drawing.Point(151, 78);
             this.txtRepetir.Name = "txtRepetir";
             this.txtRepetir.PasswordChar = '*';
-            this.txtRepetir.Size = new System.Drawing.Size(141, 22);
+            this.txtRepetir.Size = new System.Drawing.Size(185, 22);
             this.txtRepetir.TabIndex = 4;
             // 
             // label4
@@ -164,9 +164,9 @@
             this.groupCambiarContra.Controls.Add(this.txtNueva);
             this.groupCambiarContra.Controls.Add(this.label3);
             this.groupCambiarContra.ForeColor = System.Drawing.Color.Cornsilk;
-            this.groupCambiarContra.Location = new System.Drawing.Point(290, 50);
+            this.groupCambiarContra.Location = new System.Drawing.Point(373, 50);
             this.groupCambiarContra.Name = "groupCambiarContra";
-            this.groupCambiarContra.Size = new System.Drawing.Size(298, 143);
+            this.groupCambiarContra.Size = new System.Drawing.Size(342, 143);
             this.groupCambiarContra.TabIndex = 10;
             this.groupCambiarContra.TabStop = false;
             this.groupCambiarContra.Text = "Cambiar contraseña";
@@ -181,7 +181,7 @@
             this.groupCambiarDatos.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupCambiarDatos.Location = new System.Drawing.Point(12, 50);
             this.groupCambiarDatos.Name = "groupCambiarDatos";
-            this.groupCambiarDatos.Size = new System.Drawing.Size(272, 143);
+            this.groupCambiarDatos.Size = new System.Drawing.Size(349, 143);
             this.groupCambiarDatos.TabIndex = 11;
             this.groupCambiarDatos.TabStop = false;
             this.groupCambiarDatos.Text = "Cambiar datos";
@@ -230,7 +230,7 @@
             this.btnGuardarDatos.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnGuardarDatos.Location = new System.Drawing.Point(113, 110);
             this.btnGuardarDatos.Name = "btnGuardarDatos";
-            this.btnGuardarDatos.Size = new System.Drawing.Size(141, 27);
+            this.btnGuardarDatos.Size = new System.Drawing.Size(230, 27);
             this.btnGuardarDatos.TabIndex = 7;
             this.btnGuardarDatos.Text = "Guardar &Datos";
             this.btnGuardarDatos.UseVisualStyleBackColor = true;
@@ -242,7 +242,7 @@
             this.txtNombre.Location = new System.Drawing.Point(113, 25);
             this.txtNombre.Name = "txtNombre";
             this.txtNombre.ReadOnly = true;
-            this.txtNombre.Size = new System.Drawing.Size(141, 22);
+            this.txtNombre.Size = new System.Drawing.Size(230, 22);
             this.txtNombre.TabIndex = 5;
             this.txtNombre.TabStop = false;
             // 
@@ -252,7 +252,7 @@
             this.checkOlvidoClave.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkOlvidoClave.Enabled = false;
             this.checkOlvidoClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkOlvidoClave.Location = new System.Drawing.Point(456, 27);
+            this.checkOlvidoClave.Location = new System.Drawing.Point(589, 27);
             this.checkOlvidoClave.Name = "checkOlvidoClave";
             this.checkOlvidoClave.Size = new System.Drawing.Size(126, 17);
             this.checkOlvidoClave.TabIndex = 6;
@@ -265,7 +265,7 @@
             // 
             this.btnNuevoUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnNuevoUsuario.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.btnNuevoUsuario.Location = new System.Drawing.Point(220, 9);
+            this.btnNuevoUsuario.Location = new System.Drawing.Point(248, 9);
             this.btnNuevoUsuario.Name = "btnNuevoUsuario";
             this.btnNuevoUsuario.Size = new System.Drawing.Size(141, 26);
             this.btnNuevoUsuario.TabIndex = 9;
@@ -277,12 +277,13 @@
             // 
             this.grillaPermisos.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.grillaPermisos.Location = new System.Drawing.Point(10, 279);
-            this.grillaPermisos.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.grillaPermisos.Margin = new System.Windows.Forms.Padding(2);
             this.grillaPermisos.Name = "grillaPermisos";
             this.grillaPermisos.RowHeadersWidth = 51;
             this.grillaPermisos.RowTemplate.Height = 24;
-            this.grillaPermisos.Size = new System.Drawing.Size(578, 295);
+            this.grillaPermisos.Size = new System.Drawing.Size(711, 295);
             this.grillaPermisos.TabIndex = 12;
+            this.grillaPermisos.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaPermisos_CellDoubleClick);
             this.grillaPermisos.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.grillaPermisos_CellValueChanged);
             this.grillaPermisos.CurrentCellDirtyStateChanged += new System.EventHandler(this.grillaPermisos_CurrentCellDirtyStateChanged);
             this.grillaPermisos.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.grillaPermisos_EditingControlShowing);
@@ -291,9 +292,9 @@
             // 
             this.btnGuardarPermisos.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardarPermisos.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.btnGuardarPermisos.Location = new System.Drawing.Point(441, 579);
+            this.btnGuardarPermisos.Location = new System.Drawing.Point(524, 579);
             this.btnGuardarPermisos.Name = "btnGuardarPermisos";
-            this.btnGuardarPermisos.Size = new System.Drawing.Size(141, 27);
+            this.btnGuardarPermisos.Size = new System.Drawing.Size(197, 27);
             this.btnGuardarPermisos.TabIndex = 9;
             this.btnGuardarPermisos.Text = "Editar &Permisos";
             this.btnGuardarPermisos.UseVisualStyleBackColor = true;
@@ -305,7 +306,7 @@
             this.checkMarcarVer.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkMarcarVer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.checkMarcarVer.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.checkMarcarVer.Location = new System.Drawing.Point(88, 3);
+            this.checkMarcarVer.Location = new System.Drawing.Point(218, 3);
             this.checkMarcarVer.Name = "checkMarcarVer";
             this.checkMarcarVer.Size = new System.Drawing.Size(143, 20);
             this.checkMarcarVer.TabIndex = 9;
@@ -320,7 +321,7 @@
             this.checkMarcarEditar.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkMarcarEditar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.checkMarcarEditar.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.checkMarcarEditar.Location = new System.Drawing.Point(253, 3);
+            this.checkMarcarEditar.Location = new System.Drawing.Point(383, 3);
             this.checkMarcarEditar.Name = "checkMarcarEditar";
             this.checkMarcarEditar.Size = new System.Drawing.Size(157, 20);
             this.checkMarcarEditar.TabIndex = 13;
@@ -342,7 +343,7 @@
             this.panelMarcarTodos.Enabled = false;
             this.panelMarcarTodos.Location = new System.Drawing.Point(12, 227);
             this.panelMarcarTodos.Name = "panelMarcarTodos";
-            this.panelMarcarTodos.Size = new System.Drawing.Size(576, 47);
+            this.panelMarcarTodos.Size = new System.Drawing.Size(709, 47);
             this.panelMarcarTodos.TabIndex = 13;
             // 
             // comboPropioTodos
@@ -353,7 +354,7 @@
             this.comboPropioTodos.Items.AddRange(new object[] {
             "Propios",
             "Todos"});
-            this.comboPropioTodos.Location = new System.Drawing.Point(458, 21);
+            this.comboPropioTodos.Location = new System.Drawing.Point(588, 21);
             this.comboPropioTodos.Name = "comboPropioTodos";
             this.comboPropioTodos.Size = new System.Drawing.Size(115, 23);
             this.comboPropioTodos.TabIndex = 17;
@@ -364,7 +365,7 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.label7.Location = new System.Drawing.Point(416, 26);
+            this.label7.Location = new System.Drawing.Point(546, 26);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(34, 16);
             this.label7.TabIndex = 16;
@@ -373,7 +374,7 @@
             // txtDiasVer
             // 
             this.txtDiasVer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.txtDiasVer.Location = new System.Drawing.Point(188, 23);
+            this.txtDiasVer.Location = new System.Drawing.Point(318, 23);
             this.txtDiasVer.Name = "txtDiasVer";
             this.txtDiasVer.Size = new System.Drawing.Size(43, 22);
             this.txtDiasVer.TabIndex = 14;
@@ -384,7 +385,7 @@
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.SystemColors.ControlLightLight;
-            this.label6.Location = new System.Drawing.Point(233, 26);
+            this.label6.Location = new System.Drawing.Point(363, 26);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(34, 16);
             this.label6.TabIndex = 9;
@@ -393,7 +394,7 @@
             // txtDiasEditar
             // 
             this.txtDiasEditar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
-            this.txtDiasEditar.Location = new System.Drawing.Point(361, 23);
+            this.txtDiasEditar.Location = new System.Drawing.Point(491, 23);
             this.txtDiasEditar.Name = "txtDiasEditar";
             this.txtDiasEditar.Size = new System.Drawing.Size(49, 22);
             this.txtDiasEditar.TabIndex = 15;
@@ -419,7 +420,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.ClientSize = new System.Drawing.Size(602, 609);
+            this.ClientSize = new System.Drawing.Size(733, 609);
             this.Controls.Add(this.checkCambiosEnLote);
             this.Controls.Add(this.panelMarcarTodos);
             this.Controls.Add(this.btnGuardarPermisos);

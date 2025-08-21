@@ -89,6 +89,7 @@ namespace Presentacion.Usuario
                 grillaPermisos.Rows.Add(
                     permiso.IdForm,
                     permiso.Formulario.NombreForm,
+                    permiso.Formulario.Descripcion,
                     verMarcado,
                     verMarcado ? permiso.DiasPermitidosVer : -1,
                     editarMarcado,
@@ -173,7 +174,8 @@ namespace Presentacion.Usuario
                     Formulario = new Entidades.Formulario
                     {
                         IdForm = idForm,
-                        NombreForm = row.Cells["Formulario"].Value.ToString()
+                        NombreForm = row.Cells["Formulario"].Value.ToString(),
+                        Descripcion = row.Cells["Descripcion"].Value.ToString()
                     }
                 };
 
@@ -210,6 +212,16 @@ namespace Presentacion.Usuario
                 ReadOnly = true
             };
             grillaPermisos.Columns.Add(colFormulario);
+
+            // Formulario
+            var colDesc = new DataGridViewTextBoxColumn
+            {
+                Name = "Descripcion",
+                HeaderText = "Detalle",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader,
+                ReadOnly = true
+            };
+            grillaPermisos.Columns.Add(colDesc);
 
             // Ver (CheckBox)
             var colVer = new DataGridViewCheckBoxColumn
@@ -285,7 +297,8 @@ namespace Presentacion.Usuario
         private void grillaPermisos_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
             // Validar columnas 2 y 4 (numéricas)
-            if (grillaPermisos.CurrentCell.ColumnIndex == 2 || grillaPermisos.CurrentCell.ColumnIndex == 4)
+            //if (grillaPermisos.CurrentCell.ColumnIndex == 2 || grillaPermisos.CurrentCell.ColumnIndex == 4)
+            if (grillaPermisos.CurrentCell.ColumnIndex == 3 || grillaPermisos.CurrentCell.ColumnIndex == 5)
             {
                 TextBox tb = e.Control as TextBox;
                 if (tb != null)
@@ -611,6 +624,50 @@ namespace Presentacion.Usuario
                 );
             }
             return resp;
+        }
+
+        private void grillaPermisos_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Evitamos que se ejecute en encabezados
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                // Verificamos si la columna es "Descripcion"
+                if (grillaPermisos.Columns[e.ColumnIndex].Name == "Descripcion")
+                {
+                    string form = grillaPermisos["Formulario", e.RowIndex].Value?.ToString();
+                    string valorCelda = grillaPermisos[e.ColumnIndex, e.RowIndex].Value?.ToString();
+
+                    if (!string.IsNullOrEmpty(valorCelda))
+                    {
+                        Form detalleForm = new Form();
+                        detalleForm.Text = form;
+                        detalleForm.Size = new Size(400, 250);
+                        detalleForm.StartPosition = FormStartPosition.CenterParent;
+                        detalleForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                        detalleForm.MaximizeBox = false;
+                        detalleForm.MinimizeBox = false;
+                        detalleForm.ShowIcon = false;
+                        detalleForm.ShowInTaskbar = false;
+
+                        TextBox txtDetalle = new TextBox();
+                        txtDetalle.Multiline = true;
+                        txtDetalle.ReadOnly = true;
+                        txtDetalle.Dock = DockStyle.Fill;
+                        txtDetalle.ScrollBars = ScrollBars.Vertical;
+                        txtDetalle.BorderStyle = BorderStyle.None;
+                        txtDetalle.BackColor = Color.White;
+                        txtDetalle.Font = new Font("Segoe UI", 13F, FontStyle.Regular, GraphicsUnit.Point);
+                        txtDetalle.Text = valorCelda;
+
+                        // Evitar que quede seleccionado
+                        txtDetalle.SelectionStart = 0;
+                        txtDetalle.SelectionLength = 0;
+
+                        detalleForm.Controls.Add(txtDetalle);
+                        detalleForm.ShowDialog();
+                    }
+                }
+            }
         }
     }
 }
