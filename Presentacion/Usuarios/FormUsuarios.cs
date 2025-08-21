@@ -115,19 +115,25 @@ namespace Presentacion.Usuario
 
             var row = grillaPermisos.Rows[e.RowIndex];
 
+
+            var valor = row.Cells["Formulario"].Value?.ToString();
+
+            int valorDiasAtras = valor.Equals("Cheques") ? 30 : 0;
+
             // Si cambia el CheckBox de Ver
             if (grillaPermisos.Columns[e.ColumnIndex].Name == "Ver")
             {
                 bool verMarcado = Convert.ToBoolean(row.Cells["Ver"].Value);
                 row.Cells["HastaDiasAtras"].ReadOnly = !verMarcado;
-                row.Cells["HastaDiasAtras"].Value = verMarcado ? 0 : -1;
+                //si es cheque se establece 30 dias por defecto para abarcar la fecha de vencimiento
+                row.Cells["HastaDiasAtras"].Value = verMarcado ? valorDiasAtras : -1;
             }
 
             if (grillaPermisos.Columns[e.ColumnIndex].Name == "Editar")
             {
                 bool editarMarcado = Convert.ToBoolean(row.Cells["Editar"].Value);
                 row.Cells["HastaDiasAtras2"].ReadOnly = !editarMarcado;
-                row.Cells["HastaDiasAtras2"].Value = editarMarcado ? 0 : -1;
+                row.Cells["HastaDiasAtras2"].Value = editarMarcado ? valorDiasAtras : -1;
 
                 // Habilitar o deshabilitar el ComboBox de PermisoEdicion
                 row.Cells["PermisoEdicion"].ReadOnly = !editarMarcado;

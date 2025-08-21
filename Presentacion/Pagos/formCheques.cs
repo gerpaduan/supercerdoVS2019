@@ -19,6 +19,7 @@ namespace Presentacion.Cheques
     public partial class formCheques : Form, InterfaceUsuario
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+        protected Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.Pago oPagoE = new Entidades.Pago();
         Entidades.Persona oPersonaE;
         public Entidades.Usuario oUsuario;
@@ -67,6 +68,14 @@ namespace Presentacion.Cheques
         {
             if (cargar)
             {
+
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, txtFechaDesde.Value,
+                        Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    return;
+                }
+
                 string descripcion = txtBuscarNroCheque.Text.Trim();
                 string estado = comboEstadosFiltro.Text.Trim().Equals("TODOS") ? "" : comboEstadosFiltro.Text.Trim();
 
@@ -229,6 +238,13 @@ namespace Presentacion.Cheques
         {
             try
             {
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today,
+                           oCheque != null && oCheque.Id > 0 ? oCheque.CreadoPor.Id : FormPrincipal.oUserLogueado.Id))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    return;
+                }
+
                 if (string.IsNullOrWhiteSpace(txtNroCheque.Text))
                 {
                     MessageBox.Show("Debe ingresar el número de cheque.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -382,6 +398,13 @@ namespace Presentacion.Cheques
             CargarChequeSeleccionado();
             try
             {
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today,
+                           oCheque != null && oCheque.Id > 0 ? oCheque.CreadoPor.Id : FormPrincipal.oUserLogueado.Id))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    return;
+                }
+
                 if ((oCheque.PagoA != null && oCheque.PagoA.Id > 0) || (oCheque.PagoDe != null && oCheque.PagoDe.Id > 0))
                 {
                     string detallePagos = oCheque.PagoA != null && oCheque.PagoA.Id > 0 ? "Pago realizado a: " + oCheque.PagoA.Persona.Identificacion + " - Fecha: " + oCheque.PagoA.Fecha.ToString() + "\n" : "";

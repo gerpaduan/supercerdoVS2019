@@ -75,7 +75,6 @@ namespace Presentacion
             }
             else
             {
-                //if (!Usuarios.FormValidarPermiso.validarPermiso("formCompras")) return;
                 if (!ValidarInicioSesion()) return;
                 formCompras frmCompras = new formCompras();
                 frmCompras.Logueado = true;
@@ -863,23 +862,17 @@ namespace Presentacion
 
         private void verToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (logueado)
+            if (Application.OpenForms["formTemporalLineaVenta"] != null)
             {
-                if (Application.OpenForms["formTemporalLineaVenta"] != null)
-                {
-                    Application.OpenForms["formTemporalLineaVenta"].Activate();
-                    Application.OpenForms["formTemporalLineaVenta"].WindowState = FormWindowState.Normal;
+                Application.OpenForms["formTemporalLineaVenta"].Activate();
+                Application.OpenForms["formTemporalLineaVenta"].WindowState = FormWindowState.Normal;
 
-                }
-                else
-                {
-                    formTemporalLineaVenta frmTemporalLineaVenta = new formTemporalLineaVenta();
-                    frmTemporalLineaVenta.Show();
-                }
             }
             else
             {
-                MessageBox.Show("No está logueado");
+                if (!ValidarInicioSesion()) return;
+                formTemporalLineaVenta frmTemporalLineaVenta = new formTemporalLineaVenta();
+                frmTemporalLineaVenta.Show();
             }
         }
 
@@ -914,34 +907,30 @@ namespace Presentacion
 
         private void ctasCtesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (Usuarios.FormValidarPermiso.validarPermiso("formCtasCtes"))
+            if (Application.OpenForms["formCtasCtes"] != null)
             {
-                if (Application.OpenForms["formCtasCtes"] != null)
-                {
-                    Application.OpenForms["formCtasCtes"].Activate();
-                    Application.OpenForms["formCtasCtes"].WindowState = FormWindowState.Normal;
+                Application.OpenForms["formCtasCtes"].Activate();
+                Application.OpenForms["formCtasCtes"].WindowState = FormWindowState.Normal;
 
-                }
-                else
-                {
-                    formCtasCtes frmCtasCtes = new formCtasCtes();
-                    frmCtasCtes.Show();
-                }
+            }
+            else
+            {
+                if (!ValidarInicioSesion()) return;
+                formCtasCtes frmCtasCtes = new formCtasCtes();
+                frmCtasCtes.Show();
             }
         }
 
         private void pagosToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!Usuarios.FormValidarPermiso.validarPermiso("formPagos")) return;
-
             if (Application.OpenForms["formPagos"] != null)
             {
                 Application.OpenForms["formPagos"].Activate();
                 Application.OpenForms["formPagos"].WindowState = FormWindowState.Normal;
-
             }
             else
             {
+                if (!ValidarInicioSesion()) return;
                 Pagos.formPagos frmPagos = new formPagos();
                 frmPagos.Show();
             }
@@ -1037,6 +1026,7 @@ namespace Presentacion
             }
             else
             {
+                if (!ValidarInicioSesion()) return;
                 formFormulas frmmFormulas = new formFormulas();
                 frmmFormulas.Show();
             }
@@ -1251,8 +1241,6 @@ namespace Presentacion
 
         private void chequesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!Usuarios.FormValidarPermiso.validarPermiso("formCheques")) return;
-
             if (Application.OpenForms["formCheques"] != null)
             {
                 Application.OpenForms["formCheques"].Activate();
@@ -1261,8 +1249,9 @@ namespace Presentacion
             }
             else
             {
+                if (!ValidarInicioSesion()) return;
                 formCheques frmCheques = new formCheques();
-                frmCheques.oUsuario = oUserAdminEmpresa;
+                frmCheques.oUsuario = oUserLogueado;
                 frmCheques.Show();
             }
         }
