@@ -34,6 +34,7 @@ namespace Presentacion
 
         int cantDiasLimitFechaDesde = Entidades.Parametros.diasLimitFechaDesde;
         DateTime limitFechaDesde;
+        DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         bool cargar = false;
         public formEmbutidos()
         {
@@ -46,6 +47,25 @@ namespace Presentacion
             {
                 try
                 {
+                    if (fechaDesde.Value < limitFechaDesde && (FormPrincipal.oUserLogueado == null ||
+                       !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value,
+                       Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                    {
+                        ///si ultimaFechaDesde es menor al limitFechaDesde significa que el usuario tiene permiso para fecha anterior
+                        ///
+                        if (ultimaFechaDesde < limitFechaDesde)
+                        {
+                            Utilidades.Mensajes.ErrorPermisoAcceso();
+                            fechaDesde.Value = ultimaFechaDesde;
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                            fechaDesde.Value = limitFechaDesde;
+                        }
+                    }
+
                     dtEmbutidos = null;
                     grillaEmbutidos.DataSource = null;
                     grillaEmbutidos.AutoGenerateColumns = true;
@@ -176,7 +196,7 @@ namespace Presentacion
                 DateTime today = DateTime.Today;
                 fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
                 limitFechaDesde = today.AddDays(-cantDiasLimitFechaDesde);
-                fechaDesde.Value = limitFechaDesde;
+                fechaDesde.Value = ultimaFechaDesde = limitFechaDesde;
                 cargarSucursal();
                 cargar = true;
                 cargarGrilla();  

@@ -24,6 +24,7 @@ namespace Presentacion.CuentaCorriente
         DataTable dtMov;
         Entidades.Persona oPersonaE;
         DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         public bool desdePOS = true; //para indicar que es llamado desde el form POS
 
         public formCtaCtePersona()
@@ -48,7 +49,8 @@ namespace Presentacion.CuentaCorriente
                 txtPersona.Text = oPersonaE.razonSocial;
                 if (!oPersonaE.Identificacion.Equals(oPersonaE.razonSocial))
                     txtPersona.Text = oPersonaE.Identificacion + " / " + oPersonaE.razonSocial;
-                fechaDesdePick.Value = limitFechaDesde;
+                fechaDesdePick.Value = ultimaFechaDesde = 
+                    ;
                 cargarGrilla();
             }
             catch (Exception ex)
@@ -65,6 +67,15 @@ namespace Presentacion.CuentaCorriente
                     !oUsuarioN.tienePermiso(oUsuario, this.Name, fechaDesdePick.Value,
                     Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
+                    ///si ultimaFechaDesde es menor al limitFechaDesde significa que el usuario tiene permiso para fecha anterior
+                    ///
+                    if (ultimaFechaDesde < limitFechaDesde)
+                    {
+                        Utilidades.Mensajes.ErrorPermisoAcceso();
+                        fechaDesdePick.Value = ultimaFechaDesde;
+                        return;
+                    }
+
                     MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
                     fechaDesdePick.Value = limitFechaDesde;
                 }

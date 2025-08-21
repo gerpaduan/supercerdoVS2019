@@ -27,8 +27,11 @@ namespace Presentacion
         DataTable dtSucursalDestino = new DataTable();
  
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         int cantServidores = Convert.ToInt32(ConfigurationManager.AppSettings["cantServidores"].ToString());
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
 
         bool cargar = false;
 
@@ -43,7 +46,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursales();
-                txtFechaDesde.Value = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+                txtFechaDesde.Value = ultimaFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
                 cargar = true;
                 cargarGrilla();
                 actualizar.Visible = FormPrincipal.soyYo;
@@ -80,6 +83,25 @@ namespace Presentacion
             {
                 if (cargar)
                 {
+                    if (txtFechaDesde.Value < 
+                        && (FormPrincipal.oUserLogueado == null ||
+                       !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, txtFechaDesde.Value,
+                       Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                    {
+                        ///si ultimaFechaDesde es menor al limitFechaDesde significa que el usuario tiene permiso para fecha anterior
+                        ///
+                        if (ultimaFechaDesde < limitFechaDesde)
+                        {
+                            Utilidades.Mensajes.ErrorPermisoAcceso();
+                            txtFechaDesde.Value = ultimaFechaDesde;
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                            txtFechaDesde.Value = limitFechaDesde;
+                        }
+                    }
 
                     grillaMovimientos.DataSource = null;
 

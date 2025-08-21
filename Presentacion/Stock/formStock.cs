@@ -19,7 +19,9 @@ namespace Presentacion
         public DataTable dtSucursales;
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime 
+            = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         bool cargar = false;
         public formStock()
         {
@@ -34,7 +36,8 @@ namespace Presentacion
                 cargarSucursal();
                 this.comboTipoCompra.SelectedIndex = 0;
 
-                fechaDesde.Value = limitFechaDesde;
+                fechaDesde.Value = ultimaFechaDesde = limitFechaDesde;
+
                 cargar = true;
                 cargarGrilla();
             }
@@ -59,8 +62,19 @@ namespace Presentacion
                     !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value,
                     Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
-                    MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
-                    fechaDesde.Value = limitFechaDesde;
+                    ///si ultimaFechaDesde es menor al limitFechaDesde significa que el usuario tiene permiso para fecha anterior
+                    ///
+                    if (ultimaFechaDesde < limitFechaDesde)
+                    {
+                        Utilidades.Mensajes.ErrorPermisoAcceso();
+                        fechaDesde.Value = ultimaFechaDesde;
+                        return;
+                    }
+                    else
+                    {
+                        MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                        fechaDesde.Value = limitFechaDesde;
+                    }
                 }
 
                 grillaCompras.AutoGenerateColumns = false;
@@ -70,6 +84,7 @@ namespace Presentacion
                 grillaCompras.DataSource = dtCompras;
                 formatearGrilla();
                 cargarTotales();
+                ultimaFechaDesde = fechaDesde.Value.Date;
             }
         }
 
