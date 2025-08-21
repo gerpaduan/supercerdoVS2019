@@ -49,8 +49,7 @@ namespace Presentacion.CuentaCorriente
                 txtPersona.Text = oPersonaE.razonSocial;
                 if (!oPersonaE.Identificacion.Equals(oPersonaE.razonSocial))
                     txtPersona.Text = oPersonaE.Identificacion + " / " + oPersonaE.razonSocial;
-                fechaDesdePick.Value = ultimaFechaDesde = 
-                    ;
+                fechaDesdePick.Value = ultimaFechaDesde = limitFechaDesde;
                 cargarGrilla();
             }
             catch (Exception ex)

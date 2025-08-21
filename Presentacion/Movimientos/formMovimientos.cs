@@ -83,8 +83,7 @@ namespace Presentacion
             {
                 if (cargar)
                 {
-                    if (txtFechaDesde.Value < 
-                        && (FormPrincipal.oUserLogueado == null ||
+                    if (txtFechaDesde.Value < limitFechaDesde && (FormPrincipal.oUserLogueado == null ||
                        !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, txtFechaDesde.Value,
                        Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                     {
