@@ -22,7 +22,7 @@ using Entidades;
 
 namespace Presentacion.Caja
 {
-    public partial class formPOS : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago, InterfaceImprimirCbte
+    public partial class formPOS : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago, InterfaceImprimirCbte, InterfaceUsuarioConPermiso
     {
         bool pesoBalanza = false;
         bool capturarPantallaFinal = false;
@@ -47,6 +47,7 @@ namespace Presentacion.Caja
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
         public Entidades.Usuario oUsuario;
+        public Entidades.Usuario oUsuarioConPermisos;
         Entidades.Corte oCorteE;
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Sucursal oSucAnterior = new Entidades.Sucursal();
@@ -172,6 +173,11 @@ namespace Presentacion.Caja
         {
             oUsuario = usuario;
             this.txtVendedor.Text = oUsuario.Nombre;
+        }
+
+        public void EnviarUsuarioConPermiso(Entidades.Usuario usuario)
+        {
+            oUsuarioConPermisos = usuario;
         }
         #region Modificar_Venta
 
@@ -594,6 +600,8 @@ namespace Presentacion.Caja
             grillaLineasVenta.DataSource = null;
             oVentaE.ListaExpendios.Clear();
             txtBuscarExpendio.Text = "";
+
+            oUsuarioConPermisos = null; //quito los permiso provisorio bonificacion y/o eliminacion
         }
 
         private void cargarVenta()
@@ -2394,31 +2402,43 @@ namespace Presentacion.Caja
                         return;
                     }
                 }
-
-                ////si es consumidor final no se permite bonificacion excepto que esté logueado como admin
-                //if (!FormPrincipal.logueado && !oUsuario.Admin && oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
-                //{
-                //    MessageBox.Show("No tienes permiso para realizar bonificaciones a un consumidor final.\n\nBusque el cliente o agréguelo para poder realizar la bonificación");
-                //    return;
-                //}
-
                 ///Validar que el Vendedor tenga permiso de Bonificar
-                ///si no tiene permiso informar que se lo debe pedir al supervision
+                ///si no tiene permiso y no el usuario que inició sesion tampoco, informar que se lo debe pedir al supervision
                 ///
                 if (!(oUsuarioN.tienePermiso(oUsuario, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
-                    //if (FormPrincipal.oUserLogueado == null)
-                    //{
-                    //    MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor");
-                    //    return;
-                    //}
-
                     if (!(oUsuarioN.tienePermiso(oUsuario, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())) 
-                        && (FormPrincipal.oUserLogueado == null ||
+                        && oUsuarioConPermisos == null && (FormPrincipal.oUserLogueado == null ||
                         !(oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))))
                     {
-                        MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\nDebe solicitar el permiso de bonificación al Supervisor correspondiente");
-                        return;
+                        DialogResult result = MessageBox.Show("No tienes permiso para realizar bonificaciones.\n\n¿Solicitar permiso de bonificación al Supervisor correspondiente ? ", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (result == DialogResult.Yes)
+                        {
+                            if (oUsuarioConPermisos == null)
+                            {
+                                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                                frmLogin.usuarioConPermiso = true;//solicito permiso
+                                frmLogin.ShowDialog(this);
+                            }
+
+                            if (oUsuarioConPermisos == null)
+                            {
+                                return;
+                            }
+
+                            if (!(oUsuarioN.tienePermiso(oUsuarioConPermisos, "formBonificar", DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                            {
+                                MessageBox.Show("El usuario ingresado no tiene permiso para realizar bonificaciones.");
+                                oUsuarioConPermisos = null;
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            oUsuarioConPermisos = null;
+                            return;
+                        }
                     }
                 }
 
@@ -3515,5 +3535,6 @@ namespace Presentacion.Caja
             frmVentaCajaDuplicada.duplicarVentana.Visible = false;
             frmVentaCajaDuplicada.Show();
         }
+
     }
 }

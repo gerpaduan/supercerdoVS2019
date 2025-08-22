@@ -14,6 +14,7 @@ namespace Presentacion.Caja
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
         public bool soloActivos = false;
+        public bool usuarioConPermiso = false;
 
         public FormLoginVendedor()
         {
@@ -42,6 +43,15 @@ namespace Presentacion.Caja
             }
             this.Close();
         }
+        public void enviarUsuarioConPermiso()
+        {
+            InterfaceUsuarioConPermiso formInterface = this.Owner as InterfaceUsuarioConPermiso;
+            if (formInterface != null)
+            {
+                formInterface.EnviarUsuarioConPermiso(oUsuarioE);
+            }
+            this.Close();
+        }
 
         private void btnIngresar_Click(object sender, EventArgs e)
         {
@@ -53,7 +63,10 @@ namespace Presentacion.Caja
             oUsuarioE = oUsuarioN.validarUsuario(comboUsuario.SelectedValue.ToString(), txtClave.Text, false);
             if (oUsuarioE != null)
             {
-                enviarUsuario();
+                if (usuarioConPermiso)
+                    enviarUsuarioConPermiso();
+                else
+                    enviarUsuario();
             }
             else
             {

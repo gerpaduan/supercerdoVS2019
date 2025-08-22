@@ -721,5 +721,15 @@ namespace Presentacion.Usuario
                 );
             }
         }
+
+        private void btnPermisosBasicos_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show("¿Cargar Permisos Básicos? ", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+
+            }
+        }
     }
 }

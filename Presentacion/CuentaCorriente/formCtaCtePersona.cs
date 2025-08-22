@@ -75,11 +75,13 @@ namespace Presentacion.CuentaCorriente
                         return;
                     }
 
-                    MessageBox.Show("No tiene permiso para ingresar una fecha desde menor a " + limitFechaDesde.ToShortDateString());
+                    MessageBox.Show("No tiene permiso para filtrar a partir de la fecha desde seleccionada");
                     fechaDesdePick.Value = limitFechaDesde;
                 }
 
                 dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+
+                ultimaFechaDesde = fechaDesdePick.Value;
 
                 if (!checkSinRegRepetidos.Checked)
                 {

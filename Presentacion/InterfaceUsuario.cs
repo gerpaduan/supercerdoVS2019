@@ -9,6 +9,10 @@ namespace Presentacion
     {
         void EnviarUsuario(Entidades.Usuario usuario);
     }
+    public interface InterfaceUsuarioConPermiso
+    {
+        void EnviarUsuarioConPermiso(Entidades.Usuario usuario);
+    }
 
     public interface InterfaceSector
     {  

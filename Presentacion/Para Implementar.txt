@@ -356,3 +356,73 @@ ALTER COLUMN descripcion NVARCHAR(MAX) NULL;
 
 ALTER TABLE Formularios
 ALTER COLUMN descripcion NVARCHAR(MAX) NULL;
+
+//
+
+USE [CarniSys0]
+GO
+/****** Object:  StoredProcedure [dbo].[addOrEditUser]    Script Date: 22/08/2025 19:53:18 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+ALTER PROCEDURE [dbo].[addOrEditUser]
+	-- Add the parameters for the stored procedure here
+	@id int = null,
+	@nombre	varchar(50)	,
+	@usuario varchar(50),	
+	@clave varchar(50),	
+	@admin	tinyint,	
+	@activo	tinyint,	
+	@colorForm	varchar(50)	
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	IF(@id = 0 or @id is null)
+		BEGIN
+			set @id = ((SELECT MAX(id) FROM Usuarios)+ 1)
+			
+			INSERT INTO Usuarios (id, nombre, usuario, clave, admin, activo, colorForm) 
+				values (@id, @nombre, @usuario, @clave, @admin, @activo, @colorForm)
+				-- 2) Insertar permisos (valores específicos y por defecto)
+
+			INSERT INTO PermisosUsuarios (idUsuario, idForm, diasPermitidosVer, diasPermitidosEditar, soloRegistrosPropios)
+			SELECT @id,
+				   f.idForm,
+				   ISNULL(v.diasPermitidosVer, -1) AS diasPermitidosVer,
+				   ISNULL(v.diasPermitidosEditar, -1) AS diasPermitidosEditar,
+				   ISNULL(v.propios, 1) AS soloRegistrosPropios
+			FROM Formularios f
+			LEFT JOIN (VALUES
+				(3,  -1,  0, 1),
+				(10, -1,  0, 1),
+				(19,  0,  0, 0),
+				(21,  0, -1, 0),
+				(1,   0,  0, 0),
+				(2,  -1,  0, 0),
+				(4,   0, -1, 0),
+				(32,  0, -1, 0),
+				(18, 14,  0, 1),
+				(33,  0,  0, 1),
+				(5,   0,  0, 0)
+			) AS v(idForm, diasPermitidosVer, diasPermitidosEditar, propios)
+				ON f.idForm = v.idForm;
+		END	
+	ELSE
+		BEGIN
+			UPDATE Usuarios SET 
+				nombre = @nombre, usuario = @usuario, clave = @clave, admin = @admin , activo = @activo, colorForm = @colorForm
+				WHERE id = @id
+		END		
+END
+
+//////////////
