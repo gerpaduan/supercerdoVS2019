@@ -57,6 +57,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.txtDiasEditar = new System.Windows.Forms.TextBox();
             this.checkCambiosEnLote = new System.Windows.Forms.CheckBox();
+            this.button1 = new System.Windows.Forms.Button();
             this.groupCambiarContra.SuspendLayout();
             this.groupCambiarDatos.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaPermisos)).BeginInit();
@@ -213,6 +214,7 @@
             this.checkAdmin.Text = "Administrador";
             this.checkAdmin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkAdmin.UseVisualStyleBackColor = true;
+            this.checkAdmin.CheckedChanged += new System.EventHandler(this.checkAdmin_CheckedChanged);
             // 
             // label5
             // 
@@ -415,12 +417,25 @@
             this.checkCambiosEnLote.UseVisualStyleBackColor = true;
             this.checkCambiosEnLote.CheckedChanged += new System.EventHandler(this.checkCambiosEnLote_CheckedChanged);
             // 
+            // button1
+            // 
+            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button1.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.button1.Location = new System.Drawing.Point(524, 199);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(185, 26);
+            this.button1.TabIndex = 19;
+            this.button1.Text = "¿como funcionan los permisos?";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // FormUsuarios
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
             this.ClientSize = new System.Drawing.Size(733, 609);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.checkCambiosEnLote);
             this.Controls.Add(this.panelMarcarTodos);
             this.Controls.Add(this.btnGuardarPermisos);
@@ -482,5 +497,6 @@
         private System.Windows.Forms.TextBox txtDiasEditar;
         private System.Windows.Forms.CheckBox checkCambiosEnLote;
         private System.Windows.Forms.ComboBox comboPropioTodos;
+        private System.Windows.Forms.Button button1;
     }
 }

@@ -19,6 +19,7 @@ namespace Presentacion.Usuario
         string ultimoUsuario;
         bool guardarPermisos = false;
         bool permisoEdicion = false;
+        bool usuarioCargado = false;
 
         public FormUsuarios()
         {
@@ -273,7 +274,7 @@ namespace Presentacion.Usuario
             var colPermisoEdicion = new DataGridViewComboBoxColumn
             {
                 Name = "PermisoEdicion",
-                HeaderText = "Permiso Edición",
+                HeaderText = "Alcance",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader,
                 DataSource = new[]
                 {
@@ -346,6 +347,8 @@ namespace Presentacion.Usuario
 
         private void comboUsuario_SelectedValueChanged(object sender, EventArgs e)
         {
+            usuarioCargado = false;
+
             string usuarioSelected  = ((DataRowView)comboUsuario.SelectedItem)["usuario"].ToString();
             if (grillaModificada && ValidarCambiosSinGuardar() == DialogResult.No)
             {
@@ -382,6 +385,7 @@ namespace Presentacion.Usuario
             CargarGrilla();
 
             ultimoUsuario = usuarioSelected;
+            usuarioCargado = true;
         }
 
         private void btnGuardarDatos_Click(object sender, EventArgs e)
@@ -673,6 +677,48 @@ namespace Presentacion.Usuario
                         detalleForm.ShowDialog();
                     }
                 }
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "Seleccione la opción 'Ver' y/o 'Editar' para otorgar permisos al usuario.\n" +
+                "En 'Días Atrás', indique hasta cuántos días previos a la fecha actual se aplicará el permiso.\n" +
+                "Ejemplo: si ingresa 0, el usuario tendrá permiso solo para hoy; si ingresa 1, el usuario tendrá permiso solo para hoy y ayer; si ingresa 30, para los últimos 30 días.\n\n" +
+                "En el campo 'Alcance', seleccione:\n" +
+                "• 'Propios': solo permite editar los registros creados por el mismo usuario.\n" +
+                "• 'Todos': permite editar cualquier registro, sin importar quién lo creó.\n\n" +
+                "El alcance y los días aplican únicamente a las acciones habilitadas (Ver y/o Editar).",
+                "Información",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+
+        private void checkAdmin_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!usuarioCargado)
+                return;
+
+            if (checkAdmin.Checked)
+            {
+                MessageBox.Show(
+                    "Si selecciona la opción 'Administrador', el usuario tendrá permisos ilimitados en todo el sistema, sin importar la lista de permisos configurada.\n" +
+                    "Use esta opción solo para usuarios de máxima confianza.",
+                    "Advertencia",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Al quitar la opción 'Administrador', deberá asignar manualmente los permisos de este usuario desde la lista correspondiente.",
+                    "Información",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
             }
         }
     }
