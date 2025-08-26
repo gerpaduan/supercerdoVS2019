@@ -148,11 +148,10 @@ namespace Presentacion.Caja
             idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
-            //txtFecVenta.Text = DateTime.Now.ToString();
-            txtFecVenta.Text = DateTime.Now.ToString("ddd dd MMM yyyy · HH:mm", new CultureInfo("es-AR"));
+            txtFechaVenta.Text = DateTime.Now.ToString();
             if (!fecha.Equals(""))
             {
-                txtFecVenta.Text = DateTime.Now.ToString("ddd dd MMM yyyy · HH:mm", new CultureInfo("es-AR"));
+                txtFechaVenta.Text = DateTime.Now.ToString();
             }
             checkCtaCte_CheckedChanged(null,null);
             checkLeerPeso.Visible = (FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString()));
@@ -565,7 +564,7 @@ namespace Presentacion.Caja
             EnviarPersona(oCliente);
             txtCuit.Text = "";
             txtDomicilio.Text = "";
-            txtFecVenta.Text = DateTime.Now.ToString();
+            txtFechaVenta.Text = DateTime.Now.ToString();
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
             txtCantItems.Text = "0";
@@ -619,7 +618,7 @@ namespace Presentacion.Caja
             oVentaE.Persona = oCliente;
             oVentaE.Sucursal = oSucursalE;
             oVentaE.TipoVenta = "Caja";
-            oVentaE.FechaVenta = Convert.ToDateTime(txtFecVenta.Text).AddDays(0);
+            oVentaE.FechaVenta = txtFechaVenta.Value;
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
@@ -669,7 +668,7 @@ namespace Presentacion.Caja
                 {
                     if (grillaLineasVenta.Rows.Count == 0)
                     {
-                        txtFecVenta.Text = DateTime.Now.ToString();
+                        txtFechaVenta.Text = DateTime.Now.ToString();
                     }
                     cargarLinea();
 
@@ -961,13 +960,13 @@ namespace Presentacion.Caja
             else
             {
                 Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(Convert.ToDateTime(txtFecVenta.Text), oVentaE.Sucursal, oUsuario);
+                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(txtFechaVenta.Value, oVentaE.Sucursal, oUsuario);
                 if (totalVenta > 0 && !cajaAbierta)
                 {
                     MessageBox.Show(oUsuario.Nombre + " la caja ha sido cerrada.\n\n"+
                     "Pasos:\n1- Anule todos los ítems y finalice la Venta.\n2- Abra caja y vuelva a registrar la venta.", "No abrió caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    txtFecVenta.Text = DateTime.Now.ToString();//se actualiza la hora
+                    txtFechaVenta.Text = DateTime.Now.ToString(); ;//se actualiza la hora
 
                     return false;
                 }
@@ -2134,6 +2133,8 @@ namespace Presentacion.Caja
                 validarPagoMixto();
 
                 panelExpendios();
+                SendKeys.Send("{HOME}");
+
             }
             else
             {
@@ -3254,6 +3255,24 @@ namespace Presentacion.Caja
             }
         }
 
+        private void txtFechaVenta_ValueChanged(object sender, EventArgs e)
+        {
+            txtFecVenta.Text = txtFechaVenta.Value.ToString("ddd dd MMM yyyy · HH:mm", new CultureInfo("es-AR"));
+        }
+
+        private void formPOS_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (this.Owner != null)
+            {
+                this.Owner.Activate();
+            }
+        }
+
+        private void formPOS_Activated(object sender, EventArgs e)
+        {
+            SendKeys.Send("{HOME}");
+        }
+
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
         {
             validarPagoMixto();
@@ -3607,6 +3626,7 @@ namespace Presentacion.Caja
             frmVentaCajaDuplicada.oUsuario = oUsuario;
             frmVentaCajaDuplicada.ventanaDuplicada = true;
             frmVentaCajaDuplicada.duplicarVentana.Visible = false;
+            frmVentaCajaDuplicada.Owner = this;
             frmVentaCajaDuplicada.Show();
         }
 
