@@ -1388,6 +1388,22 @@ namespace Presentacion.Pagos
         public void CargarObservaciones(string obs)
         {
             txtObservaciones.Text = obs;
-        }    
+        }
+
+        private void btnIngresoBilletes_Click(object sender, EventArgs e)
+        {
+            CalculoBilletes();
+        }
+
+        private void CalculoBilletes()
+        {
+            formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
+            frmIngresoBilletes.txtBoxAcargar = this.txtEfectivo;
+            frmIngresoBilletes.ShowDialog();
+            if (!frmIngresoBilletes.txtBoxAcargar.Text.Equals("0"))
+            {
+                txtEfectivo.Text = frmIngresoBilletes.txtBoxAcargar.Text;
+            }
+        }
     }
 }

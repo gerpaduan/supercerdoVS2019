@@ -48,6 +48,7 @@
             this.lblCantCheques = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.panelEfectivo = new System.Windows.Forms.Panel();
+            this.btnIngresoBilletes = new System.Windows.Forms.Button();
             this.txtEfectivo = new System.Windows.Forms.TextBox();
             this.label14 = new System.Windows.Forms.Label();
             this.txtTotalCheques = new System.Windows.Forms.TextBox();
@@ -310,17 +311,30 @@
             // 
             // panelEfectivo
             // 
+            this.panelEfectivo.Controls.Add(this.btnIngresoBilletes);
             this.panelEfectivo.Controls.Add(this.txtEfectivo);
             this.panelEfectivo.Controls.Add(this.label14);
-            this.panelEfectivo.Location = new System.Drawing.Point(306, 181);
+            this.panelEfectivo.Location = new System.Drawing.Point(263, 181);
             this.panelEfectivo.Name = "panelEfectivo";
-            this.panelEfectivo.Size = new System.Drawing.Size(233, 25);
+            this.panelEfectivo.Size = new System.Drawing.Size(276, 25);
             this.panelEfectivo.TabIndex = 41;
+            // 
+            // btnIngresoBilletes
+            // 
+            this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresoBilletes.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnIngresoBilletes.Image = global::Presentacion.Properties.Resources.dinero_calculadora1;
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(20, 1);
+            this.btnIngresoBilletes.Name = "btnIngresoBilletes";
+            this.btnIngresoBilletes.Size = new System.Drawing.Size(27, 24);
+            this.btnIngresoBilletes.TabIndex = 41;
+            this.btnIngresoBilletes.UseVisualStyleBackColor = true;
+            this.btnIngresoBilletes.Click += new System.EventHandler(this.btnIngresoBilletes_Click);
             // 
             // txtEfectivo
             // 
             this.txtEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtEfectivo.Location = new System.Drawing.Point(81, 3);
+            this.txtEfectivo.Location = new System.Drawing.Point(124, 3);
             this.txtEfectivo.Name = "txtEfectivo";
             this.txtEfectivo.ReadOnly = true;
             this.txtEfectivo.Size = new System.Drawing.Size(149, 22);
@@ -333,7 +347,7 @@
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label14.Location = new System.Drawing.Point(11, 6);
+            this.label14.Location = new System.Drawing.Point(54, 6);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(66, 16);
             this.label14.TabIndex = 40;
@@ -821,5 +835,6 @@
         private System.Windows.Forms.Button btnObservaciones;
         private System.Windows.Forms.TextBox txtSaldo;
         protected System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Button btnIngresoBilletes;
     }
 }

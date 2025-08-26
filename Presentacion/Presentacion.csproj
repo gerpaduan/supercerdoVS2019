@@ -1054,6 +1054,9 @@
     <None Include="Resources\programmer.png" />
     <None Include="Resources\profile.png" />
     <None Include="Resources\profile %281%29.png" />
+    <None Include="Resources\dinero-calculadora.png" />
+    <None Include="Resources\dinero-calculadora1.png" />
+    <None Include="Resources\dinero-calculadora2.png" />
     <Content Include="Tareas.txt" />
   </ItemGroup>
   <ItemGroup>
