@@ -2109,7 +2109,7 @@ namespace Presentacion.Caja
                 Color colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
                     System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129))))) : System.Drawing.Color.FromName(oUsuario.ColorForm);
 
-                colorUser = System.Drawing.SystemColors.ButtonFace;
+                colorUser = System.Drawing.SystemColors.ControlLight;// System.Drawing.SystemColors.ButtonFace;
                 cambiarBackColorForm(colorUser);
                 //comboColors.Text = colorUser.ToString();
                 //grillaLineasVenta.DefaultCellStyle.SelectionBackColor = colorUser;
@@ -3179,6 +3179,80 @@ namespace Presentacion.Caja
             txtTotalRich.AppendText(decimales);
         }
 
+        private void btnTemaOscuro_Click(object sender, EventArgs e)
+        {
+            AplicarTemaOscuro(this);
+        }
+
+        private void AplicarTemaOscuro(Control parent)
+        {
+            // Fondo del formulario
+            //this.BackColor = Color.FromArgb(63, 63, 70); // gris oscuro (no negro puro)
+
+            // Texto por defecto
+            parent.ForeColor = Color.White;
+            parent.BackColor = Color.FromArgb(186, 182, 182);
+
+            // Recorro todos los controles dentro del Form
+            foreach (Control ctrl in parent.Controls)
+            {
+                if (ctrl is DataGridView dgv)
+                {
+                    dgv.BackgroundColor = Color.FromArgb(224, 224, 224);
+                    //dgv.ForeColor = Color.White;
+                    //dgv.EnableHeadersVisualStyles = false;
+                    //dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 48);
+                    //dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+                }
+                else
+                {
+                    continue;  
+                }
+
+                if (ctrl is Button)
+                {
+                    //ctrl.BackColor = Color.FromArgb(63, 63, 70); // gris medio
+                    //ctrl.ForeColor = Color.White;
+                    //((Button)ctrl).FlatStyle = FlatStyle.Flat;
+                    //((Button)ctrl).FlatAppearance.BorderColor = Color.FromArgb(100, 100, 100);
+                }
+                else if (ctrl is TextBox)
+                {
+                    ctrl.BackColor = Color.FromArgb(186, 182, 182);
+                    ctrl.ForeColor = Color.White;
+                    ((TextBox)ctrl).BorderStyle = BorderStyle.FixedSingle;
+                }
+                else if (ctrl is DataGridView dgv1)
+                {
+                    dgv.BackgroundColor = Color.FromArgb(224, 224, 224);
+                    dgv.ForeColor = Color.White;
+                    dgv.EnableHeadersVisualStyles = false;
+                    //dgv.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(45, 45, 48);
+                    dgv.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+                }
+                else if (ctrl is Panel)
+                {
+                    if (ctrl.Name.Equals("panelDespliegue") || ctrl.Name.Equals("panelExpendioLateral") ||
+                        ctrl.Name.Equals("panelSuperior") || ctrl.Name.Equals("panelDespliegue"))
+                        return;
+
+                    ctrl.BackColor = Color.FromArgb(186, 182, 182);
+                    ctrl.ForeColor = Color.White;
+                }
+                else
+                {
+                    // Controles genéricos
+                    ctrl.BackColor = Color.FromArgb(186, 182, 182);
+                    ctrl.ForeColor = Color.White;
+                }
+
+                // 🔹 RECURSIVIDAD: si el control contiene otros controles, aplicar tema también
+                if (ctrl.HasChildren)
+                {
+                    AplicarTemaOscuro(ctrl);
+                }
+            }
+        }
 
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
         {
