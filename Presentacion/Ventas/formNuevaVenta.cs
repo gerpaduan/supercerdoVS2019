@@ -15,7 +15,7 @@ using Presentacion.CuentaCorriente;
 
 namespace Presentacion.Ventas
 {
-    public partial class formNuevaVenta : Form, InterfaceCorte, InterfacePersona
+    public partial class formNuevaVenta : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario
     {
         Utilidades.SingletonLeerPeso Leer_Peso;
         #region variables
@@ -80,7 +80,13 @@ namespace Presentacion.Ventas
             comboUsuario.SelectedValue = 0;
         }
 
-#region Modificar_Venta
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+            this.txtUsuario.Text = oUsuario.Nombre;
+        }
+
+        #region Modificar_Venta
 
 
         public void parametrosModificacion(formVentas frmVentasParam,Entidades.Venta oVentaParam, List<Entidades.LineaVenta> listaLineaVentaParam, List<LineaVenta> listaLineaGrillaParam)
@@ -152,6 +158,7 @@ namespace Presentacion.Ventas
         }
 
 #endregion
+
 
         private void esModificacion()
         {
@@ -953,12 +960,28 @@ namespace Presentacion.Ventas
             checkLeerPeso.Checked =  Convert.ToBoolean(ConfigurationManager.AppSettings["leerPesoCaja"].ToString());
 
             this.Text += Utilidades.Conexion.getSucursalConexion();
-            if (!(FormPrincipal.logueado || Usuarios.FormValidarPermiso.validarPermiso(this.Name)))
+
+            if (oUsuario == null)
             {
-                MessageBox.Show("No está logueado");
-                this.Close();
+                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.ShowDialog(this);
             }
 
+            if (oUsuario == null)
+            {
+                this.Close();
+                return;
+            }
+
+
+            if (!(FormPrincipal.logueado || oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaVenta.Value,
+                        oVentaE != null && oVentaE.IdVenta > 0 ? oVentaE.Vendedor.Id : oUsuario.Id)))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                this.Close();
+                return;
+            }
+                
             txtUsuario.Text = oUsuario.Nombre;
             checkCtaCte.Visible = false;
             comboTipoComprobante.SelectedIndex = 0; //Remito

@@ -69,8 +69,8 @@ namespace Presentacion.Cheques
             if (cargar)
             {
 
-                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, txtFechaDesde.Value,
-                        Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                if (!(FormPrincipal.logueado || oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaDesde.Value,
+                        Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
                     return;
@@ -86,7 +86,6 @@ namespace Presentacion.Cheques
                 grilla.Columns["propio"].Visible = false;
                 grilla.Columns["recibidoDe"].Visible = false;
                 grilla.Columns["entregadoA"].Visible = false;
-
 
                 lblChequeVence.Visible = chequesVencidos || chequesPorVencer;
             }
@@ -238,8 +237,8 @@ namespace Presentacion.Cheques
         {
             try
             {
-                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today,
-                           oCheque != null && oCheque.Id > 0 ? oCheque.CreadoPor.Id : FormPrincipal.oUserLogueado.Id))
+                if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today,
+                           oCheque != null && oCheque.Id > 0 ? oCheque.CreadoPor.Id : oUsuario.Id)))
                 {
                     Utilidades.Mensajes.ErrorPermisoEdicion();
                     return;

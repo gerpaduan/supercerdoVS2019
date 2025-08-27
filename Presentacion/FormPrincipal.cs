@@ -110,13 +110,25 @@ namespace Presentacion
             {
                 if (frm.GetType() == typeof(formPOS))
                 {
-                    foreach (Control ctrl in frm.Controls)
+                    // Buscamos el panel contenedor
+                    Panel pnlBuscar = frm.Controls.OfType<Panel>()
+                                                  .FirstOrDefault(p => p.Name == "pnlBuscar");
+                    if (pnlBuscar != null)
                     {
-                        if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+                        // Dentro de pnlBuscar buscamos panelSuperior
+                        Panel panelSuperior = pnlBuscar.Controls.OfType<Panel>()
+                                                                .FirstOrDefault(p => p.Name == "panelSuperior");
+                        if (panelSuperior != null)
                         {
-                            frm.BringToFront();
-                            formAbierto = true;
-                            break;
+                            foreach (Control ctrl in panelSuperior.Controls)
+                            {
+                                if (oUsuario != null && ctrl.Name.Equals("usuario") && ctrl.Text.Equals(oUsuario.User))
+                                {
+                                    frm.BringToFront();
+                                    formAbierto = true;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

@@ -99,6 +99,7 @@ namespace Presentacion.Pagos
                         readOnly = true;
                         checkNroRecibo.Text = "Editar N°Recibo"; //solo cuando es un nuevo recibo se formatea su numero
                         checkNroRecibo.Checked = false;
+                        btnIngresoBilletes.Enabled = !readOnly;
                         cargarCampos();
                         ultimaFormaPagoSelected = oPagoE.FormaPago;
                         setearPropiedadesForm();
@@ -184,6 +185,7 @@ namespace Presentacion.Pagos
             //txtBanco.ReadOnly = readOnly;
             txtNroCheque.ReadOnly = readOnly;
             txtEfectivo.ReadOnly = readOnly;
+            btnIngresoBilletes.Enabled = !readOnly;
             //txtTitular.ReadOnly = readOnly;
             txtObservaciones.ReadOnly = readOnly;
             btnImprimir.Visible = readOnly;
