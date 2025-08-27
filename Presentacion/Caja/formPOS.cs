@@ -2537,20 +2537,33 @@ namespace Presentacion.Caja
             {
                 if (frm.GetType() == typeof(formPOS))
                 {
-                    foreach (Control ctrl in frm.Controls)
+                    // Buscamos el panel contenedor
+                    Panel pnlBuscar = frm.Controls.OfType<Panel>()
+                                                  .FirstOrDefault(p => p.Name == "pnlBuscar");
+                    if (pnlBuscar != null)
                     {
-                        if (oUsuario != null && ctrl.Name.Equals("usuario") && !ctrl.Text.Equals(oUsuario.User))
+                        // Dentro de pnlBuscar buscamos panelSuperior
+                        Panel panelSuperior = pnlBuscar.Controls.OfType<Panel>()
+                                                                .FirstOrDefault(p => p.Name == "panelSuperior");
+                        if (panelSuperior != null)
                         {
-                            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso(null ,ctrl.Text.ToUpper());
-                            barraProgreso.ShowDialog();
-                            cambioForm = true;
-                            frm.TopMost = true;  // Asegúrate de que esté por encima de otras ventanas
-                            frm.BringToFront();
-                            frm.Activate();
-                            frm.TopMost = false; // Restablece su estado normal
-                            break;
+                            foreach (Control ctrl in panelSuperior.Controls)
+                            {
+                                if (oUsuario != null && ctrl.Name.Equals("usuario") && !ctrl.Text.Equals(oUsuario.User))
+                                {
+                                    Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso(null, ctrl.Text.ToUpper());
+                                    barraProgreso.ShowDialog();
+                                    cambioForm = true;
+                                    frm.TopMost = true;  // Asegúrate de que esté por encima de otras ventanas
+                                    frm.BringToFront();
+                                    frm.Activate();
+                                    frm.TopMost = false; // Restablece su estado normal
+                                    break;
+                                }
+                            }
                         }
                     }
+
                 }
                 if (cambioForm)
                 { break; }
