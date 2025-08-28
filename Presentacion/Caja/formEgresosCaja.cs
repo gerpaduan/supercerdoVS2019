@@ -35,6 +35,14 @@ namespace Presentacion.Caja
 
         private void formEgresosCaja_Load(object sender, EventArgs e)
         {
+
+            if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            {
+                Utilidades.Mensajes.ErrorPermisoAcceso();
+                this.Close();
+                return;
+            }
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             DateTime today = DateTime.Today;
             fechaHasta.Value = today.AddDays(1).AddSeconds(-1);
