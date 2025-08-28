@@ -29,7 +29,7 @@ namespace Presentacion
         {
             try
             {
-                if (!(oUsuarioN.tienePermiso(oCierreE.UsuarioInicio, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+                if (oCierreE == null && !(oUsuarioN.tienePermiso(oCierreE.UsuarioInicio, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
                     this.Close();
@@ -47,7 +47,7 @@ namespace Presentacion
                 {
                     if (Convert.ToDecimal(row.Cells["totalS"].Value) == 0)
                     {
-                        row.DefaultCellStyle.BackColor = Color.Orange;
+                        row.DefaultCellStyle.BackColor = Color.Orange;// Color.Orange;
                     }
                 }
                 cargarTotales();

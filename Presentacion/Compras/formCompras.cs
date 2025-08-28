@@ -39,11 +39,19 @@ namespace Presentacion
         {
             try
             {
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    this.Close();
+                    return;
+                }
+
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursal();
                 this.comboTipoCompra.SelectedIndex = 0;
                 this.comboTipoCompra.Enabled = FormPrincipal.soyYo;
-                fechaDesde.Value = DateTime.Today.AddDays(0);
+                fechaDesde.Value = DateTime.Today.AddDays(0);                
+
                 cargar = true;
                 cargarGrilla();
             }
@@ -60,6 +68,7 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
+            
 
             if (cargar)
             {
@@ -68,7 +77,6 @@ namespace Presentacion
 	            {
                     idSucCombo = Convert.ToInt32(comboSucursal.SelectedValue);
 	            }
-
 
                 if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
@@ -138,23 +146,10 @@ namespace Presentacion
             }
             else
             {
-                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-                frmLogin.soloActivos = true;
-                frmLogin.ShowDialog(this);
-
-                if (oUsuario == null)
-                    return;
-                if (oUsuarioN.tienePermiso(oUsuario, "formNuevaCompra", DateTime.Today, oUsuario.Id))
-                {
-                    formNuevaCompra frmNuevaCompra = new formNuevaCompra();
-                    frmNuevaCompra.asignarFormCompra(this);
-                    frmNuevaCompra.oUsuario = oUsuario;
-                    frmNuevaCompra.Show();
-                }
-                else
-                {
-                    Utilidades.Mensajes.ErrorPermisoEdicion();
-                }
+                formNuevaCompra frmNuevaCompra = new formNuevaCompra();
+                frmNuevaCompra.asignarFormCompra(this);
+                frmNuevaCompra.oUsuario = oUsuario;
+                frmNuevaCompra.Show();
             }
         }
 

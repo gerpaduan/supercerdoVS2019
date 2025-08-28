@@ -129,6 +129,7 @@ namespace Presentacion.Caja
                     frmCerrarCaja.oUserCierre = oUsuario;
                     frmCerrarCaja.oCierreE.Id = cierreCajaId.Value;
                     frmCerrarCaja.ShowDialog();
+                    oUsuario = null;
                     cargarGrilla();
                 }
                 else

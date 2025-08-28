@@ -11,7 +11,7 @@ using Utilidades;
 
 namespace Presentacion.Compras
 {
-    public partial class formModificarCompra : Form, InterfaceProveedor, InterfaceCorte
+    public partial class formModificarCompra : Form, InterfaceProveedor, InterfaceCorte, InterfaceUsuario
     {
         Negocio.Compra oCompraN = new Negocio.Compra();
         Negocio.Corte oCorteN = new Negocio.Corte();
@@ -271,7 +271,7 @@ namespace Presentacion.Compras
             oSucursal = oCompraModificada.Sucursal;
             oProvNuevaCompra = oCompraModificada.Proveedor;
 
-            txtUsuario.Text = oUsuario.Nombre;
+            txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             comboSucursal.SelectedValue = oSucursal.idSucursal;
             txtNroRemito.Text = oCompraModificada.NroRemito;
             txtProveedor.Text = oCompraModificada.Proveedor.razonSocial;
@@ -319,7 +319,6 @@ namespace Presentacion.Compras
 
         private void habilitarModificacion()
         {
-
             if (oUsuario == null)
             {
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
@@ -334,6 +333,7 @@ namespace Presentacion.Compras
                 oCompraModificada.IdCompra > 0 ? oCompraModificada.CreadoPor.Id : oUsuario.Id))
             {
                 Utilidades.Mensajes.ErrorPermisoEdicion();
+                oUsuario = null;
                 return;
             }
 
@@ -916,6 +916,12 @@ namespace Presentacion.Compras
         }
 
         //comunicación con interface
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+            this.txtUsuario.Text = oUsuario.Nombre;
+        }
+
         public void EnviarProveedor(Entidades.Persona proveedor)
         {
             oProvNuevaCompra = proveedor;

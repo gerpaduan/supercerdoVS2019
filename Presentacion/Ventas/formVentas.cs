@@ -224,6 +224,13 @@ namespace Presentacion
         {
             try
             {
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    this.Close();
+                    return;
+                }
+
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 DateTime today = DateTime.Today.Date.AddHours(24);
                 fechaHasta.Value = today.AddMilliseconds(-1);

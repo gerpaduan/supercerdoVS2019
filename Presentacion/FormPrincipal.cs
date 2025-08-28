@@ -75,7 +75,9 @@ namespace Presentacion
             }
             else
             {
-                if (!ValidarInicioSesion()) return;
+                if (!ValidarInicioSesion()) 
+                    return;
+
                 formCompras frmCompras = new formCompras();
                 frmCompras.Logueado = true;
                 frmCompras.Show();

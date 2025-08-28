@@ -6,13 +6,14 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using Presentacion.Caja;
 using Presentacion.Cortes;
 using Utilidades;
 
 
 namespace Presentacion
 {
-    public partial class formNuevaCompra : Form, InterfacePersona, InterfaceCorte
+    public partial class formNuevaCompra : Form, InterfacePersona, InterfaceCorte, InterfaceUsuario
     {
         DataTable dtSucursales;
         DataTable dtCortes;
@@ -113,6 +114,12 @@ namespace Presentacion
             this.txtProveedor.Text = oProvNuevaCompra.razonSocial;
         }
 
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+            this.txtUsuario.Text = oUsuario.Nombre;
+        }
+
         //comunicación con interface
         public void EnviarCorte(Entidades.Corte corte)
         {
@@ -167,8 +174,8 @@ namespace Presentacion
         {
             try
             {
-                //si no es un egreso de caja y no tiene permiso
-                if (!esEgresoCaja || !(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
+                //si NO es Egreso de caja y NO tiene permiso
+                if (!esEgresoCaja && !(oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
                     oCompraE.IdCompra > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id)))
                 {
                     Utilidades.Mensajes.ErrorPermisoEdicion();
@@ -186,7 +193,7 @@ namespace Presentacion
                         {
                             if (!oCierreN.validarCajaAbiertaVendedor(oCompraE.FechaCompra, oCompraE.Sucursal, oUsuario))
                             {
-                                MessageBox.Show("La fecha no corresponde con un caja abierta");
+                                MessageBox.Show("La compra seleccionada es de una fecha anterior a la apertura de su caja. No puede registrarla.","",MessageBoxButtons.OK,MessageBoxIcon.Error);
                                 return;
                             }
                         }
@@ -1066,6 +1073,26 @@ namespace Presentacion
 
         private void formNuevaCompra_Load(object sender, EventArgs e)
         {
+            if (oUsuario == null)
+            {
+                FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.ShowDialog(this);
+            }
+
+            if (oUsuario == null)
+            {
+                this.Close();
+                return;
+            }
+
+            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
+                        oCompraE != null && oCompraE.IdCompra > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id))
+            {
+                Utilidades.Mensajes.ErrorPermisoEdicion();
+                this.Close();
+                return;
+            }
+
             this.Text += Utilidades.Conexion.getSucursalConexion();
             txtUsuario.Text = oUsuario.Nombre;
             cargarSucursal();            
