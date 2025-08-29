@@ -97,15 +97,15 @@ namespace Datos
             cmPersona.Connection = conn.conectar();
             daPersona = new SqlDataAdapter("SELECT dbo.Personas.idPersona as idPersona, dbo.Personas.identificacion as identificacion, dbo.Personas.razonSocial as razonSocial, " +
                       " dbo.Personas.tipo as tipo, dbo.Personas.otrosDatos as otrosDatos, dbo.Personas.ctaCte as ctaCte, "+
-                      " dbo.Personas.bonificacion as bonificacion, dbo.Personas.cuit as cuit, dbo.Personas.telefono as telefono, "+ 
-                      " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.idIva as idIva, "+
+                      " dbo.Personas.bonificacion as bonificacion, dbo.Personas.cuit as cuit, dbo.Personas.telefono as telefono, "+
+                      " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.creado, dbo.Personas.idIva as idIva, " +
                       " dbo.Iva.iva as iva FROM  dbo.Iva RIGHT OUTER JOIN " +
                       " dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva where idPersona = " + id, conn.conectar());
             daPersona.Fill(dtPersona);
 
             Entidades.Persona oPersona = new Entidades.Persona();
             if (dtPersona.Rows.Count > 0)
-            {                
+            {
                 oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
                 oPersona.tipo = dtPersona.Rows[0]["tipo"].ToString();
                 oPersona.Identificacion = dtPersona.Rows[0]["identificacion"].ToString();
@@ -119,6 +119,8 @@ namespace Datos
                 oPersona.CtaCte = !dtPersona.Rows[0].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["ctaCte"]) : false;
                 oPersona.Bonificacion = !dtPersona.Rows[0]["bonificacion"].ToString().Equals(DBNull.Value) ? float.Parse(dtPersona.Rows[0]["bonificacion"].ToString()) : 0;
                 oPersona.OtrosDatos = dtPersona.Rows[0]["otrosDatos"].ToString();
+                oPersona.Creado = Convert.ToDateTime(dtPersona.Rows[0]["creado"]);
+
             }
             conn.cerraConexion();
 
@@ -203,6 +205,31 @@ namespace Datos
             {
                 cmPersona.Connection.Close();
             }
+        }
+
+        public bool personaTieneCompras_Ventas(int idPersona)
+        {
+            int existe = 0;
+            using (SqlConnection connection = conn.conectar())
+            {
+                string query = @"
+                        SELECT 
+                            CASE 
+                                WHEN EXISTS (SELECT 1 FROM Ventas WHERE idPersona = @idPersona) 
+                                     OR EXISTS (SELECT 1 FROM Compras WHERE idProveedor = @idPersona)
+                                THEN 1 
+                                ELSE 0 
+                            END AS Existe;";
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@idPersona", idPersona);
+
+                    connection.Open();
+                    existe = (int)cmd.ExecuteScalar();
+                }
+            }
+            return (existe == 1);
         }
 
         public DataTable obtenerProveedores()

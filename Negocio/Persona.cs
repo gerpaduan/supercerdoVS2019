@@ -36,6 +36,12 @@ namespace Negocio
             return oPersonaD.findById(id);
         }
 
+        public bool personaTieneCompras_Ventas(int idPersona)
+        {
+            oPersonaD = new Datos.Persona();
+            return oPersonaD.personaTieneCompras_Ventas(idPersona);
+        }
+
         public DataTable buscarPersona(string texto)
         {
             oPersonaD = new Datos.Persona();

@@ -126,5 +126,9 @@ namespace Entidades
                 tipo = value;
             }
         }
+
+        public DateTime Creado { get => creado; set => creado = value; }
+
+        DateTime creado;
     }
 }

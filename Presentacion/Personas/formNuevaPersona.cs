@@ -1,4 +1,5 @@
 ﻿using Entidades;
+using Presentacion.Caja;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -11,12 +12,14 @@ using Utilidades;
 
 namespace Presentacion.Personas
 {
-    public partial class formNuevaPersona : Form
+    public partial class formNuevaPersona : Form, InterfaceUsuario
     {
         public  formPersonas frmPersonas;
         Entidades.Persona oPersonaE = new Entidades.Persona();
         Entidades.Persona oPersonaSinMod = new Entidades.Persona();
         Negocio.Persona oPersonaN = new Negocio.Persona();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        public Entidades.Usuario oUsuario;
         public int idPersona = 0;
         bool huboModif = true;
         bool modificar = false;
@@ -69,15 +72,50 @@ namespace Presentacion.Personas
             this.Text = readOnly ? "Info Persona" : "Modificar Persona";
             this.btnGuardar.Text = readOnly ? "&Modificar" : "&Guardar";
 
+            ///validar que la persona a modificar no tenga ventas ni compras a su nombre
+            ///si tiene pedir permiso a Admin para modificar datos importantes
+            ///
+            //valido que es un nueva persona
+            bool permitirModificarCampos = oPersonaE == null || oPersonaE.idPersona == 0;
+            bool personaTieneCompras_Ventas = true;
+
+            if (!permitirModificarCampos && oUsuario != null)
+            {
+                personaTieneCompras_Ventas = oPersonaN.personaTieneCompras_Ventas(oPersonaE.idPersona);
+
+                if (personaTieneCompras_Ventas)
+                {
+                    if (oUsuario.Admin)
+                    {
+                        personaTieneCompras_Ventas = false;//establezco false para permitir la edicion en los campos
+                        MessageBox.Show(
+                           "“Al cambiar la Identificación, Razón Social o CUIT puede afectar los registros históricos. (la persona tiene ventas o compras realizadas)”",
+                           "Info",
+                           MessageBoxButtons.OK,
+                           MessageBoxIcon.Information
+                         );
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                           "“Para cambiar la Identificación, Razón Social o CUIT debe comunicarse con un administrador," +
+                           " ya que puede afectar los registros históricos. (la persona tiene ventas o compras realizadas)”",
+                           "Info",
+                           MessageBoxButtons.OK,
+                           MessageBoxIcon.Information
+                         );
+                    }
+                }
+            }
+
             //comboTipoPersona.Enabled = !readOnly && FormPrincipal.logueado;
-            txtIdentificacion.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
-            btnCopiarRS.Visible = !readOnly;
-            txtRazonSocial.ReadOnly = readOnly;
-            txtBonificacion.ReadOnly = !(this.btnGuardar.Text.Equals("&Guardar") && FormPrincipal.logueado);
-            checkCtaCte.Enabled = !readOnly;
-            comboIva.Enabled = !readOnly;
-            txtCuit.ReadOnly = readOnly;
-            btnBuscarAfip.Enabled = !readOnly;
+            txtIdentificacion.ReadOnly = personaTieneCompras_Ventas; //!(this.btnGuardar.Text.Equals("&Guardar") && oUsuario.Admin);
+            btnCopiarRS.Visible = !readOnly && !personaTieneCompras_Ventas;
+            txtRazonSocial.ReadOnly = personaTieneCompras_Ventas; //readOnly;
+            checkCtaCte.Enabled = oUsuario!= null && oUsuario.Admin; //!readOnly;
+            comboIva.Enabled = !personaTieneCompras_Ventas; //!readOnly;
+            txtCuit.ReadOnly = personaTieneCompras_Ventas; //readOnly;
+            btnBuscarAfip.Visible = !readOnly && !personaTieneCompras_Ventas;
             txtTelefono.ReadOnly = readOnly;
             txtDomicilio.ReadOnly = readOnly;
             txtCiudad.ReadOnly = readOnly;
@@ -104,6 +142,11 @@ namespace Presentacion.Personas
             frmPersonas = formPersonaParam;
         }
 
+        public void EnviarUsuario(Entidades.Usuario usuario)
+        {
+            oUsuario = usuario;
+        }
+
         private void addOrEditPersona()
         {
             if (oPersonaE.idPersona > 0 && readOnly)
@@ -115,6 +158,21 @@ namespace Presentacion.Personas
                     MessageBox.Show("La persona seleccionada es reservada por el sistema y no se puede modificar");
                     return;
                 }
+
+                if (oUsuario == null)
+                {
+                    FormLoginVendedor frmLogin = new FormLoginVendedor();
+                    frmLogin.ShowDialog(this);
+                }
+
+                if (oUsuario == null) return;
+
+                //if (!oUsuarioN.tienePermiso(oUsuario, this.Name, oPersonaE.Creado, oUsuario.Id))
+                //{
+                //    Utilidades.Mensajes.ErrorPermisoEdicion();
+                //    oUsuario = null;
+                //    return;
+                //}
 
                 readOnly = false;
                 setearPropiedadesForm();
@@ -277,6 +335,19 @@ namespace Presentacion.Personas
             {
                 MessageBox.Show("No se pudo obtener los datos desde Afip. " + ex.Message);
             }
+        }
+
+        private void btnInfo_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                   "⚠️ Aviso:\n\n" +
+                   "• Cualquier usuario puede crear nuevas personas.\n" +
+                   "• Solo los administradores pueden modificar la Razón Social, CUIT o Identificación" +
+                   " de personas que ya tengan ventas o compras registradas.",
+                   "Restricción de permisos",
+                   MessageBoxButtons.OK,
+                   MessageBoxIcon.Information
+               );
         }
     }
 }

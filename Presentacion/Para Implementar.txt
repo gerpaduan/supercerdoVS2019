@@ -6,7 +6,7 @@
 
 ##
  public class EgresoCaja
-     public static int idPagoTarjeta = 200;
+     public static int idPagoTarjeta = 200;<    
 
      **modificar este codigo idPagoTarjeta para hacer los egreso de caja venta. Ver de hacerlo general
 
@@ -16,9 +16,42 @@
 
 /////////////////
 
-04/08 
+28/08
+
+ALTER TABLE Personas
+ADD creado DATETIME;
+ALTER TABLE Personas
+ADD modificado DATETIME;
+
+copiar de SM
+ALTER PROCEDURE [dbo].[addOrEditPersona] 
+
+UPDATE Personas
+SET creado = DATEADD(YEAR, -5, GETDATE());
+
+UPDATE Personas
+SET modificado = DATEADD(YEAR, -5, GETDATE());
 
 *********
+
+BEGIN TRANSACTION;
+
+    -- Primero eliminar de la tabla dependiente
+    DELETE FROM PermisosUsuarios
+    WHERE idForm = 4;
+
+    -- Luego eliminar de la tabla principal
+    DELETE FROM Formularios
+    WHERE idForm = 4;
+
+COMMIT TRANSACTION;
+
+
+actualiar desde SM
+
+[addOrEditUser]
+
+***
 
 
 //
