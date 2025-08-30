@@ -59,30 +59,28 @@ namespace Presentacion.Pagos
                 //si es desdePOS se oculta el boton para buscar persona y se establace que es un cobro 'Recibi de..'
                 btnBuscarProv.Visible = !desdePOS;
                 checkAProveedor.Checked = !desdePOS;
-                
-
-                if (oUsuario == null)
-                {
-                    FormLoginVendedor frmLogin = new FormLoginVendedor();
-                    frmLogin.ShowDialog(this);
-                }
-
-                if (oUsuario == null)
-                {
-                    this.Close();
-                    return;
-                }
-
-                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaPago.Value,
-                            oPagoE != null && oPagoE.Id > 0 ? oPagoE.CreadoPor.Id : oUsuario.Id))
-                {
-                    Utilidades.Mensajes.ErrorPermisoEdicion();
-                    this.Close();
-                    return;
-                }
 
                 bool closeForm = false;
-                if (idPago == 0 && oUsuario == null) closeForm = true;
+                if (idPago == 0 && oUsuario == null)
+                {
+                    FormLoginVendedor frmLogin = new FormLoginVendedor();
+                    frmLogin.soloActivos = true;
+                    frmLogin.ShowDialog(this);
+
+                    if (oUsuario == null)
+                    {
+                        this.Close();
+                        return;
+                    }
+
+                    if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaPago.Value,
+                                oPagoE != null && oPagoE.Id > 0 ? oPagoE.CreadoPor.Id : oUsuario.Id))
+                    {
+                        Utilidades.Mensajes.ErrorPermisoEdicion();
+                        this.Close();
+                        return;
+                    }
+                }
 
                 //inicio form con id 0 y se setea si es edicion
                 idPagoLabel.Text = "0";
@@ -112,7 +110,12 @@ namespace Presentacion.Pagos
 
                     btnImprimir.Visible = oPagoE.Id > 0;
                     txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
-                    txtPersona.Text = oPersonaE != null ? oPersonaE.razonSocial : "";
+                    if (oPersonaE != null && oPersonaE.idPersona > 0)
+                    {
+                        txtPersona.Text = oPersonaE != null ? oPersonaE.razonSocial : "";
+                        CargarSaldo();
+                    }
+                    
                     //se valida que sea Admin para cambiar de sucursal
                     comboSucursal.Visible = ((oUsuario != null && oUsuario.Admin) || FormPrincipal.logueado);
                     txtSucursal.Visible = !comboSucursal.Visible;
@@ -304,6 +307,7 @@ namespace Presentacion.Pagos
                     if (oUsuario == null)
                     {
                         FormLoginVendedor frmLogin = new FormLoginVendedor();
+                        frmLogin.soloActivos = true;
                         frmLogin.ShowDialog(this);
                     }
 
@@ -562,6 +566,8 @@ namespace Presentacion.Pagos
                         comboTipoPago.Text = ultimaFormaPagoSelected;
                         return;
                     }
+
+                    btnIngresoBilleteEfvo.Enabled = comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Efectivo.ToString());                    
                     panelCheque.Enabled = false;
                     txtImporte.ReadOnly = false;
                     txtEfectivo.Text = "";
@@ -1394,18 +1400,26 @@ namespace Presentacion.Pagos
 
         private void btnIngresoBilletes_Click(object sender, EventArgs e)
         {
-            CalculoBilletes();
+            CalculoBilletes(false);
         }
 
-        private void CalculoBilletes()
+        private void CalculoBilletes(bool esFormaPagoEfvo)
         {
             formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
-            frmIngresoBilletes.txtBoxAcargar = this.txtEfectivo;
+            frmIngresoBilletes.txtBoxAcargar = esFormaPagoEfvo ? txtImporte : this.txtEfectivo;
             frmIngresoBilletes.ShowDialog();
             if (!frmIngresoBilletes.txtBoxAcargar.Text.Equals("0"))
             {
-                txtEfectivo.Text = frmIngresoBilletes.txtBoxAcargar.Text;
+                if (esFormaPagoEfvo)
+                    txtImporte.Text = frmIngresoBilletes.txtBoxAcargar.Text;
+                else
+                    txtEfectivo.Text = frmIngresoBilletes.txtBoxAcargar.Text;
             }
+        }
+
+        private void btnIngresoBilleteEfvo_Click(object sender, EventArgs e)
+        {
+            CalculoBilletes(true);
         }
     }
 }

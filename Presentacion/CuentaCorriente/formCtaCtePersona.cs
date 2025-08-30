@@ -234,17 +234,9 @@ namespace Presentacion.CuentaCorriente
 
         private void menuNuevoPago_Click(object sender, EventArgs e)
         {
-            if (oUsuario == null)
-            {
-                FormLoginVendedor frmLogin = new FormLoginVendedor();
-                frmLogin.ShowDialog(this);
-            }
-
-            if (oUsuario == null) return;
-
             Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
             frmAddOrEditPago.oPersonaE = oPersonaE;
-            frmAddOrEditPago.oUsuario = oUsuario;
+            frmAddOrEditPago.oUsuario = desdePOS ? oUsuario : null;//forzo que fuera de POS se llame al logueo
             frmAddOrEditPago.desdePOS = desdePOS;
             frmAddOrEditPago.ShowDialog();
         }

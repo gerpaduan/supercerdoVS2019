@@ -160,6 +160,7 @@ namespace Presentacion.Caja
         private void nuevo_Click(object sender, EventArgs e)
         {
             FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.soloActivos = true;
             frmLogin.ShowDialog(this);
 
             if (oUsuario == null) return;

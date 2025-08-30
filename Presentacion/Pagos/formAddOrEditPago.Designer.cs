@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditPago));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.txtUsuario = new System.Windows.Forms.TextBox();
@@ -82,6 +82,7 @@
             this.btnCancelar = new System.Windows.Forms.Button();
             this.idPagoLabel = new System.Windows.Forms.Label();
             this.btnImprimir = new System.Windows.Forms.Button();
+            this.btnIngresoBilleteEfvo = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panelCheque.SuspendLayout();
@@ -163,6 +164,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.btnIngresoBilleteEfvo);
             this.groupBox1.Controls.Add(this.txtSaldo);
             this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.btnObservaciones);
@@ -324,7 +326,7 @@
             this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnIngresoBilletes.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnIngresoBilletes.Image = global::Presentacion.Properties.Resources.dinero_calculadora1;
-            this.btnIngresoBilletes.Location = new System.Drawing.Point(20, 1);
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(249, 2);
             this.btnIngresoBilletes.Name = "btnIngresoBilletes";
             this.btnIngresoBilletes.Size = new System.Drawing.Size(27, 24);
             this.btnIngresoBilletes.TabIndex = 41;
@@ -337,7 +339,7 @@
             this.txtEfectivo.Location = new System.Drawing.Point(124, 3);
             this.txtEfectivo.Name = "txtEfectivo";
             this.txtEfectivo.ReadOnly = true;
-            this.txtEfectivo.Size = new System.Drawing.Size(149, 22);
+            this.txtEfectivo.Size = new System.Drawing.Size(126, 22);
             this.txtEfectivo.TabIndex = 39;
             this.txtEfectivo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.txtEfectivo.TextChanged += new System.EventHandler(this.txtEfectivo_TextChanged);
@@ -359,7 +361,7 @@
             this.txtTotalCheques.Location = new System.Drawing.Point(387, 159);
             this.txtTotalCheques.Name = "txtTotalCheques";
             this.txtTotalCheques.ReadOnly = true;
-            this.txtTotalCheques.Size = new System.Drawing.Size(149, 22);
+            this.txtTotalCheques.Size = new System.Drawing.Size(126, 22);
             this.txtTotalCheques.TabIndex = 39;
             this.txtTotalCheques.TabStop = false;
             this.txtTotalCheques.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -399,24 +401,24 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grilla.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.MenuText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.MenuText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grilla.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.grilla.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.Cornsilk;
-            dataGridViewCellStyle2.NullValue = null;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grilla.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.Cornsilk;
+            dataGridViewCellStyle4.NullValue = null;
+            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grilla.DefaultCellStyle = dataGridViewCellStyle4;
             this.grilla.Location = new System.Drawing.Point(3, 32);
             this.grilla.Name = "grilla";
             this.grilla.ReadOnly = true;
@@ -563,7 +565,7 @@
             this.txtImporte.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtImporte.Location = new System.Drawing.Point(389, 140);
             this.txtImporte.Name = "txtImporte";
-            this.txtImporte.Size = new System.Drawing.Size(149, 22);
+            this.txtImporte.Size = new System.Drawing.Size(126, 22);
             this.txtImporte.TabIndex = 3;
             this.txtImporte.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
@@ -752,6 +754,18 @@
             this.btnImprimir.Visible = false;
             this.btnImprimir.Click += new System.EventHandler(this.btnImprimir_Click);
             // 
+            // btnIngresoBilleteEfvo
+            // 
+            this.btnIngresoBilleteEfvo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnIngresoBilleteEfvo.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnIngresoBilleteEfvo.Image = global::Presentacion.Properties.Resources.dinero_calculadora1;
+            this.btnIngresoBilleteEfvo.Location = new System.Drawing.Point(514, 139);
+            this.btnIngresoBilleteEfvo.Name = "btnIngresoBilleteEfvo";
+            this.btnIngresoBilleteEfvo.Size = new System.Drawing.Size(27, 24);
+            this.btnIngresoBilleteEfvo.TabIndex = 42;
+            this.btnIngresoBilleteEfvo.UseVisualStyleBackColor = true;
+            this.btnIngresoBilleteEfvo.Click += new System.EventHandler(this.btnIngresoBilleteEfvo_Click);
+            // 
             // formAddOrEditPago
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -836,5 +850,6 @@
         private System.Windows.Forms.TextBox txtSaldo;
         protected System.Windows.Forms.Label label10;
         private System.Windows.Forms.Button btnIngresoBilletes;
+        private System.Windows.Forms.Button btnIngresoBilleteEfvo;
     }
 }

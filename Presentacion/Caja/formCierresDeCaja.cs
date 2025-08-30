@@ -95,6 +95,7 @@ namespace Presentacion.Caja
             if (cierreCajaId != null)
             {
                 FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.soloActivos = true;
                 frmLogin.ShowDialog(this);
                 if (oUsuario == null) return;
                 if (oUsuario.Admin)

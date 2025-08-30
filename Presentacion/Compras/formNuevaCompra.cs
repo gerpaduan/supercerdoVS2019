@@ -1076,6 +1076,7 @@ namespace Presentacion
             if (oUsuario == null)
             {
                 FormLoginVendedor frmLogin = new FormLoginVendedor();
+                frmLogin.soloActivos = true;
                 frmLogin.ShowDialog(this);
             }
 

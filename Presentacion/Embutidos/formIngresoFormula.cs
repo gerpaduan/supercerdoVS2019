@@ -332,6 +332,7 @@ namespace Presentacion
             }
 
             FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.soloActivos = true;
             frmLogin.ShowDialog(this);
 
             if (oUsuario == null) return;

@@ -12,6 +12,7 @@ namespace Presentacion.CuentaCorriente
     public partial class formCtasCtes : Form
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         public formCtasCtes()
         {
@@ -29,6 +30,14 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
+                if (FormPrincipal.oUserLogueado == null || 
+                    !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today, 
+                    Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    return;
+                }
+
                 grillaCtasCtes.DataSource = oCtaCteN.obtenerCtasCtes(txtDescripcion.Text,null);
                 grillaCtasCtes.AutoGenerateColumns = false;
                 grillaCtasCtes.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;

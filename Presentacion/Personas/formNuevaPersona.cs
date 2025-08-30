@@ -162,6 +162,7 @@ namespace Presentacion.Personas
                 if (oUsuario == null)
                 {
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
+                    frmLogin.soloActivos = true;
                     frmLogin.ShowDialog(this);
                 }
 

@@ -105,6 +105,7 @@ namespace Presentacion.Embutidos
         private void anularEmbutido()
         {
             FormLoginVendedor frmLogin = new FormLoginVendedor();
+            frmLogin.soloActivos = true;
             frmLogin.ShowDialog(this);
 
             if (oUsuario == null)

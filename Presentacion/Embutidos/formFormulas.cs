@@ -225,6 +225,7 @@ namespace Presentacion
                 if (respuesta == System.Windows.Forms.DialogResult.Yes)
                 {
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
+                    frmLogin.soloActivos = true;
                     frmLogin.ShowDialog(this);
 
                     if (oUsuario == null) return;

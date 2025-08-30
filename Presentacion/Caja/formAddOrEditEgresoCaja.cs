@@ -190,6 +190,7 @@ namespace Presentacion.Caja
                 if (oUsuario == null)
                 {
                     FormLoginVendedor frmLogin = new FormLoginVendedor();
+                    frmLogin.soloActivos = true;
                     frmLogin.ShowDialog(this);
                     if (oUsuario == null) return;
                     //tienePermiso = (oEgresoCajaE.CreadoPor == oUsuario.Id || oUsuario.Admin) ? true : false;
