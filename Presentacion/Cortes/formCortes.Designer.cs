@@ -114,6 +114,7 @@
             this.label9 = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.marcas = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.panel1.SuspendLayout();
@@ -129,6 +130,7 @@
             this.modificarPrecios,
             this.btnCostoPorCobro,
             this.tipos,
+            this.marcas,
             this.etiquetas,
             this.systelPLU,
             this.exportar,
@@ -152,6 +154,7 @@
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.nuevo.Size = new System.Drawing.Size(48, 46);
             this.nuevo.Text = "&Nuevo";
+            this.nuevo.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
             // 
@@ -164,6 +167,7 @@
             this.modificar.Padding = new System.Windows.Forms.Padding(1);
             this.modificar.Size = new System.Drawing.Size(64, 46);
             this.modificar.Text = "&Modificar";
+            this.modificar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.modificar.Click += new System.EventHandler(this.modificar_Click);
             // 
@@ -176,6 +180,7 @@
             this.modificarPrecios.Padding = new System.Windows.Forms.Padding(1);
             this.modificarPrecios.Size = new System.Drawing.Size(82, 46);
             this.modificarPrecios.Text = "Mod. &Precios";
+            this.modificarPrecios.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.modificarPrecios.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.modificarPrecios.Click += new System.EventHandler(this.modificarPrecios_Click);
             // 
@@ -186,6 +191,7 @@
             this.btnCostoPorCobro.Name = "btnCostoPorCobro";
             this.btnCostoPorCobro.Size = new System.Drawing.Size(80, 46);
             this.btnCostoPorCobro.Text = "&Costo/Cobro";
+            this.btnCostoPorCobro.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.btnCostoPorCobro.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.btnCostoPorCobro.Click += new System.EventHandler(this.btnCostoPorCobro_Click);
             // 
@@ -196,6 +202,7 @@
             this.tipos.Name = "tipos";
             this.tipos.Size = new System.Drawing.Size(51, 46);
             this.tipos.Text = "  &Tipos  ";
+            this.tipos.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.tipos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tipos.Click += new System.EventHandler(this.tipos_Click);
             // 
@@ -206,6 +213,7 @@
             this.etiquetas.Name = "etiquetas";
             this.etiquetas.Size = new System.Drawing.Size(65, 46);
             this.etiquetas.Text = "  &Etiquetas";
+            this.etiquetas.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.etiquetas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.etiquetas.Click += new System.EventHandler(this.etiquetas_Click_1);
             // 
@@ -216,6 +224,7 @@
             this.systelPLU.Name = "systelPLU";
             this.systelPLU.Size = new System.Drawing.Size(71, 46);
             this.systelPLU.Text = "  &Systel PLU";
+            this.systelPLU.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.systelPLU.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.systelPLU.ToolTipText = "Exportar Lista de precios Systel en carpeta C:\\CarniSys_Docs\r\n\r\nFormato CSV para " +
     "ser importada a Balanza Systel\r\n\r\n\r\n";
@@ -228,6 +237,7 @@
             this.exportar.Name = "exportar";
             this.exportar.Size = new System.Drawing.Size(82, 46);
             this.exportar.Text = "  &Lista Precios";
+            this.exportar.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.exportar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.exportar.ToolTipText = "Exportar Lista de precios";
             this.exportar.Click += new System.EventHandler(this.exportar_Click);
@@ -239,6 +249,7 @@
             this.importarCSV.Name = "importarCSV";
             this.importarCSV.Size = new System.Drawing.Size(87, 46);
             this.importarCSV.Text = "  &Importar CSV";
+            this.importarCSV.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.importarCSV.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.importarCSV.ToolTipText = "Importar lista productos desde carpeta C:\\CarniSys_Docs\r\n\r\n\r\n";
             this.importarCSV.Click += new System.EventHandler(this.importarCSV_Click);
@@ -252,6 +263,7 @@
             this.Imprimir.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
             this.Imprimir.Size = new System.Drawing.Size(59, 46);
             this.Imprimir.Text = "Imprimir";
+            this.Imprimir.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
             // 
@@ -965,6 +977,17 @@
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
             // 
+            // marcas
+            // 
+            this.marcas.Image = ((System.Drawing.Image)(resources.GetObject("marcas.Image")));
+            this.marcas.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.marcas.Name = "marcas";
+            this.marcas.Size = new System.Drawing.Size(49, 46);
+            this.marcas.Text = "Marcas";
+            this.marcas.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.marcas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.marcas.Click += new System.EventHandler(this.marcas_Click);
+            // 
             // formCortes
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1064,5 +1087,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn idSucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn sucursalSM;
         private System.Windows.Forms.DataGridViewTextBoxColumn stockSM;
+        private System.Windows.Forms.ToolStripButton marcas;
     }
 }

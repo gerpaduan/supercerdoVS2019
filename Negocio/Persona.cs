@@ -42,10 +42,10 @@ namespace Negocio
             return oPersonaD.personaTieneCompras_Ventas(idPersona);
         }
 
-        public DataTable buscarPersona(string texto)
+        public DataTable buscarPersona(string texto, bool? marca)
         {
             oPersonaD = new Datos.Persona();
-            return oPersonaD.buscarPersona(texto);
+            return oPersonaD.buscarPersona(texto, marca);
         }
 
         public DataTable getIva()

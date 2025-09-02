@@ -8,13 +8,13 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
 
-namespace Presentacion.Personas
+namespace Presentacion.Cortes
 {
-    public partial class formPersonas : Form
+    public partial class formMarcas : Form
     {
         Negocio.Persona oPersonaN;
 
-        public formPersonas()
+        public formMarcas()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
             cargarGrilla();
@@ -25,27 +25,37 @@ namespace Presentacion.Personas
 
         public void cargarGrilla()
         {
-
             oPersonaN = new Negocio.Persona();
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.DataSource = null;
             grillaPersonas.AutoGenerateColumns = true;
-            grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda, false);
+            grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda, true);
             grillaPersonas.Columns["idPersona"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPersonas.Columns["nombreIdentif"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            grillaPersonas.Columns["razonSocial"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            grillaPersonas.Columns["iva"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
-            grillaPersonas.Columns["ctaCte"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPersonas.Columns["bonificacion"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPersonas.Columns["otrosDatos"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
+            grillaPersonas.Columns["Marca"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            grillaPersonas.Columns["otrosDatos"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            grillaPersonas.Columns["Propietario"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            grillaPersonas.Columns["cuit"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["telefono"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["domicilio"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            grillaPersonas.Columns["ciudad"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
             oPersonaN = null;
+
+            //p.idPersona,
+            //p.razonSocial as Marca,
+            //p.otrosDatos AS otrosDatos,
+            //prop.razonSocial AS Propietario,
+            //prop.cuit AS cuit,
+            //prop.telefono AS telefono,
+            //prop.domicilio AS domicilio,
+            //prop.ciudad AS ciudad
+            grillaPersonas.Columns["idPersona"].Visible = false;
         }
 
 
         public void agregarPersona()
         {
             formNuevaPersona frmNuevaPersona = new formNuevaPersona();
-            frmNuevaPersona.obtenerParametros(this);
+            //frmNuevaPersona.obtenerParametros(this);
             frmNuevaPersona.ShowDialog();
             
         }
@@ -57,7 +67,7 @@ namespace Presentacion.Personas
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells["idPersona"].Value.ToString());
                 formNuevaPersona frmNuevaPersona = new formNuevaPersona();
                 frmNuevaPersona.idPersona = idPersona;
-                frmNuevaPersona.frmPersonas = this;
+                //frmNuevaPersona.frmPersonas = this;
                 frmNuevaPersona.ShowDialog();
                 cargarGrilla();
             }

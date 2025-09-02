@@ -145,21 +145,45 @@ namespace Datos
             return dtProveedores;
         }
 
-        public DataTable buscarPersona(string buscarTexto)
+        public DataTable buscarPersona(string buscarTexto, bool? marca)
         {
             DataTable dtPersonas = new DataTable();
-            daPersona = new SqlDataAdapter();
-            cmPersona = new SqlCommand();
 
-            cmPersona.Connection = conn.conectar();
-            cmPersona.Connection.Open();
-            cmPersona.CommandType = CommandType.StoredProcedure;
-            cmPersona.CommandText = "buscarPersona";
-            cmPersona.Parameters.AddWithValue("@texto", buscarTexto);
-            daPersona.SelectCommand = cmPersona;
+            using (SqlConnection connection = conn.conectar())
+            {
+                string query = @"select  idPersona, identificacion as nombreIdentif, razonSocial, dbo.Iva.abrev as iva, 
+	                cuit, telefono, ctaCte, bonificacion, domicilio, ciudad, otrosDatos
+	                 FROM  dbo.Iva RIGHT OUTER JOIN
+                                      dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva
+	                where marca = 0 AND (identificacion like '%'+@texto+'%' or razonSocial like '%'+@texto+'%' or cuit like '%'+@texto+'%')";
 
-            daPersona.Fill(dtPersonas);
+                if (marca.HasValue && marca == true)
+                {
+                    query = @"
+                        SELECT p.idPersona,
+                               p.razonSocial as Marca,
+                               p.otrosDatos AS otrosDatos,
+                               prop.razonSocial AS Propietario,
+                               prop.cuit AS cuit,
+                               prop.telefono AS telefono,
+                               prop.domicilio AS domicilio,
+                               prop.ciudad AS ciudad
+                        FROM Personas p
+                        LEFT JOIN Personas prop ON p.idPropietario = prop.idPersona
+                        WHERE p.marca = 1 AND (p.identificacion LIKE '%' + @texto + '%'
+                               OR p.razonSocial LIKE '%' + @texto + '%')";
+                }
 
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@texto", buscarTexto);
+
+                    using (SqlDataAdapter daPersona = new SqlDataAdapter(cmd))
+                    {
+                        daPersona.Fill(dtPersonas);
+                    }
+                }
+            }
             return dtPersonas;
         }
 

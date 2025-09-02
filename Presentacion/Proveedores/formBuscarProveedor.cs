@@ -25,7 +25,7 @@ namespace Presentacion
             oProveedorN = new Negocio.Persona();
             grillaProveedores.AutoGenerateColumns = false;
 
-            grillaProveedores.DataSource = oProveedorN.buscarPersona(txtBuscar.Text.Trim());
+            grillaProveedores.DataSource = oProveedorN.buscarPersona(txtBuscar.Text.Trim(), false);
 
             oProveedorN = null;
         }
@@ -35,7 +35,7 @@ namespace Presentacion
             oProveedorN = new Negocio.Persona();
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaProveedores.AutoGenerateColumns = false;
-            grillaProveedores.DataSource = oProveedorN.buscarPersona(txtBusqueda);
+            grillaProveedores.DataSource = oProveedorN.buscarPersona(txtBusqueda, false);
             oProveedorN = null;
         }
 

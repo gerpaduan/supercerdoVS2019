@@ -14,6 +14,8 @@ namespace Entidades
         private bool ctaCte;
 
         private int idIva;
+        private bool marca;
+        private int? idPropietario;
 
         public int IdIva
         {
@@ -128,6 +130,8 @@ namespace Entidades
         }
 
         public DateTime Creado { get => creado; set => creado = value; }
+        public bool Marca { get => marca; set => marca = value; }
+        public int? IdPropietario { get => idPropietario; set => idPropietario = value; }
 
         DateTime creado;
     }

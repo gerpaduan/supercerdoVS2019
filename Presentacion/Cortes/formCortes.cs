@@ -899,6 +899,21 @@ namespace Presentacion
             //etiquetaPDF();
         }
 
+        private void marcas_Click(object sender, EventArgs e)
+        {
+            if (Application.OpenForms["formMarcas"] != null)
+            {
+                Application.OpenForms["formMarcas"].Activate();
+                Application.OpenForms["formMarcas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                formMarcas frmMarcas = new formMarcas();
+                frmMarcas.Show();
+            }
+
+        }
+
         private string MostrarDialogoNombreArchivo()
         {
             // Crear un formulario para ingresar el nombre

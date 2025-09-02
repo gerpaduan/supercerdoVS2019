@@ -27,7 +27,7 @@ namespace Presentacion.Personas
             oPersonaN = new Negocio.Persona();
             grillaPersonas.AutoGenerateColumns = false;
 
-            grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBuscar.Text.Trim());
+            grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBuscar.Text.Trim(), false);
 
             oPersonaN = null;
 
@@ -40,7 +40,7 @@ namespace Presentacion.Personas
             oPersonaN = new Negocio.Persona();
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.AutoGenerateColumns = false;
-            grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda);
+            grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda, false);
             oPersonaN = null;
 
         }

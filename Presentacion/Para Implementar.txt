@@ -50,11 +50,97 @@ COMMIT TRANSACTION;
 actualiar desde SM
 
 [addOrEditUser]
+****
+////////////////////////////////////////////
 
-***
+ALTER TABLE Personas
+ADD marca BIT NOT NULL DEFAULT 0,
+    idPropietario INT NULL;
+
+    
+UPDATE Personas
+SET marca = 0,
+    idPropietario = NULL;
+
+	ALTER TABLE Personas
+ADD CONSTRAINT FK_Personas_Propietario
+FOREIGN KEY (idPropietario) REFERENCES Personas(idPersona);
+
+------
+/////////////////////////////////
 
 
-//
+ALTER PROCEDURE [dbo].[addOrEditPersona]
+	-- Add the parameters for the stored procedure here
+	
+	@idPersona  int = null,
+	@identificacion nvarchar(50) = null,
+	@razonSocial nvarchar(50) = null,
+	@idIva  int = null,
+	@cuit nvarchar(50) = null,
+	@telefono nvarchar(50) = null,
+	@domicilio nvarchar(50) = null,
+	@ciudad	nvarchar(50) = null,
+	@otrosDatos nvarchar(200) = null,
+	@tipo nvarchar(50) = null,
+	@ctaCte tinyint  = null,
+	@bonificacion float  = null,
+	@marca tinyint = 0,
+    @idPropietario int = NULL
+	
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	IF @idPersona = 0 
+			BEGIN 
+				Insert into Personas (identificacion, razonSocial, idIva, cuit, telefono, domicilio, ciudad, 
+				otrosDatos, tipo, ctaCte, bonificacion, marca, idPropietario, creado) values (@identificacion, @razonSocial, 
+				@idIva, @cuit, @telefono, @domicilio, @ciudad, @otrosDatos, @tipo, @ctaCte, @bonificacion, @marca, @idPropietario, GETDATE()) 
+				set @idPersona = SCOPE_IDENTITY()
+			END 
+		ELSE 
+		BEGIN 
+			update Personas set identificacion=@identificacion, razonSocial=@razonSocial, idIva=@idIva, cuit = @cuit, telefono = @telefono, 
+				domicilio = @domicilio, ciudad = @ciudad, tipo=@tipo, otrosDatos= @otrosDatos,
+				ctaCte = @ctaCte, bonificacion = @bonificacion, marca = @marca, idPropietario = @idPropietario, modificado = GETDATE() 
+			where idPersona =@idPersona 		
+		END 
+	select @idPersona 
+END
+
+
+
+
+//////////////////
+ALTER PROCEDURE [dbo].[buscarPersona]
+	-- Add the parameters for the stored procedure here
+	@texto nvarchar(50)
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	select  idPersona, identificacion as nombreIdentif, razonSocial, dbo.Iva.abrev as iva, 
+	cuit, telefono, ctaCte, bonificacion, domicilio, ciudad, otrosDatos, marca, idPropietario
+	 FROM  dbo.Iva RIGHT OUTER JOIN
+                      dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva
+	where identificacion like '%'+@texto+'%' or razonSocial like '%'+@texto+'%' or cuit like '%'+@texto+'%'
+END
+
+//////////////
+
+DELETE PROCEDURE [dbo].[buscarPersona]
+
+
+
+/////////////////
+
 agregar tabla Empresas 
 actulaizar tabla Sucursal
 
