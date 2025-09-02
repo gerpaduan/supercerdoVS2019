@@ -41,6 +41,7 @@ namespace Presentacion.Usuarios
             if (!FormPrincipal.logueado)
             {
                 Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                frmLogin.soloActivos = true;
                 frmLogin.ShowDialog(this);
                 if (oUsuario == null) return false;
                 //FormPrincipal.oUserLogueado = oUsuario;

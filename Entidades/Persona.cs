@@ -131,7 +131,10 @@ namespace Entidades
 
         public DateTime Creado { get => creado; set => creado = value; }
         public bool Marca { get => marca; set => marca = value; }
+
+        Persona propietario;
         public int? IdPropietario { get => idPropietario; set => idPropietario = value; }
+        public Persona Propietario { get => propietario; set => propietario = value; }
 
         DateTime creado;
     }

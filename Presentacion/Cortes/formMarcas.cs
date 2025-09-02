@@ -49,15 +49,20 @@ namespace Presentacion.Cortes
             //prop.domicilio AS domicilio,
             //prop.ciudad AS ciudad
             grillaPersonas.Columns["idPersona"].Visible = false;
+            grillaPersonas.Columns["cuit"].Visible = false;
+            grillaPersonas.Columns["telefono"].Visible = false;
+            grillaPersonas.Columns["domicilio"].Visible = false;
+            grillaPersonas.Columns["ciudad"].Visible = false;
+
+            grillaPersonas.ClearSelection();
         }
 
 
         public void agregarPersona()
         {
-            formNuevaPersona frmNuevaPersona = new formNuevaPersona();
+            formMarcaAddOrEdit frmMarcaAddOrEdit = new formMarcaAddOrEdit();
             //frmNuevaPersona.obtenerParametros(this);
-            frmNuevaPersona.ShowDialog();
-            
+            frmMarcaAddOrEdit.ShowDialog();            
         }
 
         public void infoPersona()
@@ -65,10 +70,10 @@ namespace Presentacion.Cortes
             try
             {
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells["idPersona"].Value.ToString());
-                formNuevaPersona frmNuevaPersona = new formNuevaPersona();
-                frmNuevaPersona.idPersona = idPersona;
-                //frmNuevaPersona.frmPersonas = this;
-                frmNuevaPersona.ShowDialog();
+                formMarcaAddOrEdit frmMarcaAddOrEdit = new formMarcaAddOrEdit();
+                frmMarcaAddOrEdit.idPersona = idPersona;
+                frmMarcaAddOrEdit.frmMarcas = this;
+                frmMarcaAddOrEdit.ShowDialog();
                 cargarGrilla();
             }
             catch (Exception)

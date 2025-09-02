@@ -68,6 +68,8 @@ namespace Datos
             cmPersona.Parameters.AddWithValue("@tipo", oPersonaE.tipo);
             cmPersona.Parameters.AddWithValue("@ctaCte", oPersonaE.CtaCte);
             cmPersona.Parameters.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
+            cmPersona.Parameters.AddWithValue("@marca", oPersonaE.Marca);
+            cmPersona.Parameters.AddWithValue("@idPropietario", oPersonaE.Propietario != null ? oPersonaE.Propietario.idPersona : (object)DBNull.Value);
 
             cmPersona.ExecuteNonQuery();
             cmPersona.Connection.Close();
@@ -98,7 +100,7 @@ namespace Datos
             daPersona = new SqlDataAdapter("SELECT dbo.Personas.idPersona as idPersona, dbo.Personas.identificacion as identificacion, dbo.Personas.razonSocial as razonSocial, " +
                       " dbo.Personas.tipo as tipo, dbo.Personas.otrosDatos as otrosDatos, dbo.Personas.ctaCte as ctaCte, "+
                       " dbo.Personas.bonificacion as bonificacion, dbo.Personas.cuit as cuit, dbo.Personas.telefono as telefono, "+
-                      " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.creado, dbo.Personas.idIva as idIva, " +
+                      " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.marca, dbo.Personas.idPropietario, dbo.Personas.creado, dbo.Personas.idIva as idIva, " +
                       " dbo.Iva.iva as iva FROM  dbo.Iva RIGHT OUTER JOIN " +
                       " dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva where idPersona = " + id, conn.conectar());
             daPersona.Fill(dtPersona);
@@ -120,7 +122,8 @@ namespace Datos
                 oPersona.Bonificacion = !dtPersona.Rows[0]["bonificacion"].ToString().Equals(DBNull.Value) ? float.Parse(dtPersona.Rows[0]["bonificacion"].ToString()) : 0;
                 oPersona.OtrosDatos = dtPersona.Rows[0]["otrosDatos"].ToString();
                 oPersona.Creado = Convert.ToDateTime(dtPersona.Rows[0]["creado"]);
-
+                oPersona.Marca = !dtPersona.Rows[0]["Marca"].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["Marca"]) : false;
+                oPersona.IdPropietario = !dtPersona.Rows[0]["IdPropietario"].Equals(DBNull.Value) ? Convert.ToInt32(dtPersona.Rows[0]["IdPropietario"]) : 0;
             }
             conn.cerraConexion();
 
@@ -274,6 +277,34 @@ namespace Datos
 
             return dtProveedores;
         }
-        
+
+        public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
+        {
+            DataTable dtMarcasParecidas = new DataTable();
+
+            using (SqlConnection connection = conn.conectar())
+            {
+                string query = @"
+                        SELECT p.idPersona,
+                               p.razonSocial as Marca,
+                               p.otrosDatos AS otrosDatos,
+                               prop.razonSocial AS Propietario
+                        FROM Personas p
+                        LEFT JOIN Personas prop ON p.idPropietario = prop.idPersona
+                        WHERE p.idPersona <> @idMarca AND p.marca = 1 AND p.razonSocial COLLATE Latin1_General_CI_AI LIKE '%' + @texto + '%'";                
+
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    cmd.Parameters.AddWithValue("@texto", buscarTexto);
+                    cmd.Parameters.AddWithValue("@idMarca", idMarca);
+
+                    using (SqlDataAdapter daPersona = new SqlDataAdapter(cmd))
+                    {
+                        daPersona.Fill(dtMarcasParecidas);
+                    }
+                }
+            }
+            return dtMarcasParecidas;
+        }
     }
 }

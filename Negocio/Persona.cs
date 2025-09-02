@@ -33,7 +33,12 @@ namespace Negocio
         public Entidades.Persona findById(int id)
         {
             oPersonaD = new Datos.Persona();
-            return oPersonaD.findById(id);
+            Entidades.Persona oPersonaE = oPersonaD.findById(id);
+            if (oPersonaE != null && oPersonaE.Marca && oPersonaE.IdPropietario > 0)
+            {
+                oPersonaE.Propietario = oPersonaD.findById((int)oPersonaE.IdPropietario);
+            }
+            return oPersonaE;
         }
 
         public bool personaTieneCompras_Ventas(int idPersona)
@@ -64,6 +69,12 @@ namespace Negocio
             return oPersonaD.buscarProveedor(buscarTexto);
 
         }
+        public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
+        {
+            oPersonaD = new Datos.Persona();
+            return oPersonaD.existenMarcasParecidas(buscarTexto, idMarca);
 
-    }
+        }
+
+     }
 }

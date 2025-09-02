@@ -326,6 +326,12 @@
     <Compile Include="Cortes\formMarcas.Designer.cs">
       <DependentUpon>formMarcas.cs</DependentUpon>
     </Compile>
+    <Compile Include="Cortes\formMarcaAddOrEdit.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Cortes\formMarcaAddOrEdit.Designer.cs">
+      <DependentUpon>formMarcaAddOrEdit.cs</DependentUpon>
+    </Compile>
     <Compile Include="Cortes\formReporteStock.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -785,6 +791,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Cortes\formMarcas.resx">
       <DependentUpon>formMarcas.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cortes\formMarcaAddOrEdit.resx">
+      <DependentUpon>formMarcaAddOrEdit.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Cortes\formReporteStock.resx">
       <DependentUpon>formReporteStock.cs</DependentUpon>
