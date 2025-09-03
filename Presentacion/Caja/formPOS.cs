@@ -1768,7 +1768,13 @@ namespace Presentacion.Caja
 
             int primerosDos = txtCodigo.Text.Length == 8 ?
                 int.Parse(txtCodigo.Text.Substring(0, 2)) : 0;
-            bool esEAN8 = primerosDos < 20 && primerosDos > 29;
+
+                bool esEAN8 = primerosDos < 20 && primerosDos > 29;
+
+             if (txtCodigo.Text.Length == 12)
+            {
+                txtCodigo.Text = "0" + txtCodigo.Text;  
+            }
 
             if ((txtCodigo.Text.Length == 8 && esEAN8 && esDigitoControlCorrectoEAN8(false)) ||
                txtCodigo.Text.Length == 13 && esDigitoControlCorrectoEAN13(false))
