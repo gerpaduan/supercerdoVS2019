@@ -562,13 +562,14 @@ namespace Presentacion
 
         private void buscarMarca()
         {
-            formBuscarPersona frmBuscarPersona = new formBuscarPersona();
-            frmBuscarPersona.Show(this);
+            formMarcas frmMarcas = new formMarcas();
+            frmMarcas.buscardorMarcas = true;
+            frmMarcas.Show(this);
         }
 
         public void EnviarPersona(Entidades.Persona persona)
         {
-            this.txtMarca.Text = persona.Identificacion;
+            this.txtMarca.Text = persona.razonSocial;
             idMarca = persona.idPersona;
             //cargarGrilla();
             filtarGrilla();

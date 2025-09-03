@@ -490,19 +490,23 @@ namespace Presentacion
 
         private void btnMarca_Click(object sender, EventArgs e)
         {
-            buscarPersona();
+            buscarMarca();
         }
-        private void buscarPersona()
+
+        private void buscarMarca()
         {
-            Personas.formBuscarPersona frmBuscarPersona = new Personas.formBuscarPersona();
-            frmBuscarPersona.ShowDialog(this);
+            ///TODO: llamar a form marcas, tambien en addorEdit cortes y en reportes
+            ///
+            formMarcas frmMarcas = new formMarcas();
+            frmMarcas.buscardorMarcas = true;
+            frmMarcas.Show(this);
             comboTipo.Focus();
         }
 
         //comunicación con interface
-        public void EnviarPersona(Entidades.Persona proveedor)
+        public void EnviarPersona(Entidades.Persona marca)
         {
-            oMarca = proveedor;
+            oMarca = marca;
             cargarMarca();
         }
 
@@ -519,7 +523,7 @@ namespace Presentacion
 
         private void cargarMarca()
         {
-            this.txtMarca.Text = oMarca != null ? oMarca.Identificacion : ""; 
+            this.txtMarca.Text = oMarca != null ? oMarca.RazonSocial : ""; 
             btnBorrarMarca.Visible = string.IsNullOrEmpty(txtMarca.Text) ? false : true;
         }
 

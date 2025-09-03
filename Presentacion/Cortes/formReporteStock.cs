@@ -1258,7 +1258,14 @@ namespace Presentacion.Cortes
         private void btnBuscarMarca_Click(object sender, EventArgs e)
         {
             cargarPersona = "Marca";
-            buscarPersona();
+            buscarMarca();
+        }
+
+        private void buscarMarca()
+        {
+            formMarcas frmMarcas = new formMarcas();
+            frmMarcas.buscardorMarcas = true;
+            frmMarcas.Show(this);
         }
 
         private void buscarPersona()
@@ -1319,7 +1326,7 @@ namespace Presentacion.Cortes
         {
             if (cargarPersona == "Marca")
             {
-                this.txtMarca.Text = persona.Identificacion;
+                this.txtMarca.Text = persona.RazonSocial;
                 oMarcaE = persona;
                 idMarca = persona.idPersona;
             }

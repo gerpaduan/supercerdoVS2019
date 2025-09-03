@@ -52,6 +52,7 @@
             this.modificarPrecios = new System.Windows.Forms.ToolStripButton();
             this.btnCostoPorCobro = new System.Windows.Forms.ToolStripButton();
             this.tipos = new System.Windows.Forms.ToolStripButton();
+            this.marcas = new System.Windows.Forms.ToolStripButton();
             this.etiquetas = new System.Windows.Forms.ToolStripButton();
             this.systelPLU = new System.Windows.Forms.ToolStripButton();
             this.exportar = new System.Windows.Forms.ToolStripButton();
@@ -114,7 +115,6 @@
             this.label9 = new System.Windows.Forms.Label();
             this.btnBuscar = new System.Windows.Forms.Button();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.marcas = new System.Windows.Forms.ToolStripButton();
             this.barraControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortes)).BeginInit();
             this.panel1.SuspendLayout();
@@ -205,6 +205,17 @@
             this.tipos.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
             this.tipos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.tipos.Click += new System.EventHandler(this.tipos_Click);
+            // 
+            // marcas
+            // 
+            this.marcas.Image = ((System.Drawing.Image)(resources.GetObject("marcas.Image")));
+            this.marcas.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.marcas.Name = "marcas";
+            this.marcas.Size = new System.Drawing.Size(49, 46);
+            this.marcas.Text = "Marcas";
+            this.marcas.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.marcas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.marcas.Click += new System.EventHandler(this.marcas_Click);
             // 
             // etiquetas
             // 
@@ -773,9 +784,9 @@
             this.btnLimpiar.AccessibleDescription = "";
             this.btnLimpiar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnLimpiar.ForeColor = System.Drawing.Color.Black;
-            this.btnLimpiar.Location = new System.Drawing.Point(296, 32);
+            this.btnLimpiar.Location = new System.Drawing.Point(285, 32);
             this.btnLimpiar.Name = "btnLimpiar";
-            this.btnLimpiar.Size = new System.Drawing.Size(61, 21);
+            this.btnLimpiar.Size = new System.Drawing.Size(61, 22);
             this.btnLimpiar.TabIndex = 66;
             this.btnLimpiar.TabStop = false;
             this.btnLimpiar.Text = "Todas";
@@ -788,9 +799,9 @@
             this.btnBuscarCliente.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarCliente.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCliente.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCliente.Image")));
-            this.btnBuscarCliente.Location = new System.Drawing.Point(260, 32);
+            this.btnBuscarCliente.Location = new System.Drawing.Point(254, 32);
             this.btnBuscarCliente.Name = "btnBuscarCliente";
-            this.btnBuscarCliente.Size = new System.Drawing.Size(30, 21);
+            this.btnBuscarCliente.Size = new System.Drawing.Size(30, 22);
             this.btnBuscarCliente.TabIndex = 65;
             this.btnBuscarCliente.TabStop = false;
             this.btnBuscarCliente.UseVisualStyleBackColor = true;
@@ -869,7 +880,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(308, 80);
+            this.lblActualizar.Location = new System.Drawing.Point(303, 81);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(69, 15);
             this.lblActualizar.TabIndex = 53;
@@ -960,33 +971,22 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label9.Location = new System.Drawing.Point(53, 79);
+            this.label9.Location = new System.Drawing.Point(31, 80);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(36, 15);
+            this.label9.Size = new System.Drawing.Size(56, 15);
             this.label9.TabIndex = 2;
-            this.label9.Text = "Prod.";
+            this.label9.Text = "Producto";
             // 
             // btnBuscar
             // 
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscar.Location = new System.Drawing.Point(235, 78);
+            this.btnBuscar.Location = new System.Drawing.Point(230, 78);
             this.btnBuscar.Name = "btnBuscar";
             this.btnBuscar.Size = new System.Drawing.Size(67, 21);
             this.btnBuscar.TabIndex = 1;
             this.btnBuscar.Text = "Buscar";
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscar_Click);
-            // 
-            // marcas
-            // 
-            this.marcas.Image = ((System.Drawing.Image)(resources.GetObject("marcas.Image")));
-            this.marcas.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.marcas.Name = "marcas";
-            this.marcas.Size = new System.Drawing.Size(49, 46);
-            this.marcas.Text = "Marcas";
-            this.marcas.TextAlign = System.Drawing.ContentAlignment.BottomCenter;
-            this.marcas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.marcas.Click += new System.EventHandler(this.marcas_Click);
             // 
             // formCortes
             // 

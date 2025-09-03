@@ -29,10 +29,10 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formReporteStock));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             this.panel1 = new System.Windows.Forms.Panel();
             this.txtCantItems = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -105,7 +105,7 @@
             this.panel1.Controls.Add(this.label9);
             this.panel1.Location = new System.Drawing.Point(-5, 44);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1007, 107);
+            this.panel1.Size = new System.Drawing.Size(1007, 106);
             this.panel1.TabIndex = 12;
             // 
             // txtCantItems
@@ -136,9 +136,9 @@
             this.btnTodosProveedores.AccessibleDescription = "";
             this.btnTodosProveedores.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnTodosProveedores.ForeColor = System.Drawing.Color.Black;
-            this.btnTodosProveedores.Location = new System.Drawing.Point(297, 29);
+            this.btnTodosProveedores.Location = new System.Drawing.Point(284, 30);
             this.btnTodosProveedores.Name = "btnTodosProveedores";
-            this.btnTodosProveedores.Size = new System.Drawing.Size(61, 21);
+            this.btnTodosProveedores.Size = new System.Drawing.Size(61, 22);
             this.btnTodosProveedores.TabIndex = 76;
             this.btnTodosProveedores.TabStop = false;
             this.btnTodosProveedores.Text = "Todos";
@@ -152,9 +152,9 @@
             this.btnBuscarProveedor.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarProveedor.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarProveedor.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProveedor.Image")));
-            this.btnBuscarProveedor.Location = new System.Drawing.Point(261, 29);
+            this.btnBuscarProveedor.Location = new System.Drawing.Point(255, 30);
             this.btnBuscarProveedor.Name = "btnBuscarProveedor";
-            this.btnBuscarProveedor.Size = new System.Drawing.Size(30, 21);
+            this.btnBuscarProveedor.Size = new System.Drawing.Size(30, 22);
             this.btnBuscarProveedor.TabIndex = 75;
             this.btnBuscarProveedor.TabStop = false;
             this.btnBuscarProveedor.UseVisualStyleBackColor = true;
@@ -185,9 +185,9 @@
             this.btnTodasMarcas.AccessibleDescription = "";
             this.btnTodasMarcas.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnTodasMarcas.ForeColor = System.Drawing.Color.Black;
-            this.btnTodasMarcas.Location = new System.Drawing.Point(297, 5);
+            this.btnTodasMarcas.Location = new System.Drawing.Point(284, 5);
             this.btnTodasMarcas.Name = "btnTodasMarcas";
-            this.btnTodasMarcas.Size = new System.Drawing.Size(61, 21);
+            this.btnTodasMarcas.Size = new System.Drawing.Size(61, 22);
             this.btnTodasMarcas.TabIndex = 72;
             this.btnTodasMarcas.TabStop = false;
             this.btnTodasMarcas.Text = "Todas";
@@ -201,9 +201,9 @@
             this.btnBuscarMarca.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarMarca.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarMarca.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarMarca.Image")));
-            this.btnBuscarMarca.Location = new System.Drawing.Point(261, 5);
+            this.btnBuscarMarca.Location = new System.Drawing.Point(255, 5);
             this.btnBuscarMarca.Name = "btnBuscarMarca";
-            this.btnBuscarMarca.Size = new System.Drawing.Size(30, 21);
+            this.btnBuscarMarca.Size = new System.Drawing.Size(30, 22);
             this.btnBuscarMarca.TabIndex = 71;
             this.btnBuscarMarca.TabStop = false;
             this.btnBuscarMarca.UseVisualStyleBackColor = true;
@@ -235,7 +235,7 @@
             this.comboTipo.FormattingEnabled = true;
             this.comboTipo.Location = new System.Drawing.Point(95, 54);
             this.comboTipo.Name = "comboTipo";
-            this.comboTipo.Size = new System.Drawing.Size(137, 21);
+            this.comboTipo.Size = new System.Drawing.Size(161, 21);
             this.comboTipo.TabIndex = 67;
             this.comboTipo.SelectedIndexChanged += new System.EventHandler(this.comboTipo_SelectedIndexChanged);
             // 
@@ -304,7 +304,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(368, 10);
+            this.lblActualizar.Location = new System.Drawing.Point(351, 10);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(69, 15);
             this.lblActualizar.TabIndex = 53;
@@ -399,9 +399,9 @@
             this.btnBuscar.AccessibleDescription = "";
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
             this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
-            this.btnBuscar.Location = new System.Drawing.Point(237, 79);
+            this.btnBuscar.Location = new System.Drawing.Point(255, 79);
             this.btnBuscar.Name = "btnBuscar";
-            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
+            this.btnBuscar.Size = new System.Drawing.Size(29, 23);
             this.btnBuscar.TabIndex = 21;
             this.btnBuscar.TabStop = false;
             this.btnBuscar.UseVisualStyleBackColor = true;
@@ -457,7 +457,7 @@
             // 
             this.txtDescripcion.Location = new System.Drawing.Point(95, 80);
             this.txtDescripcion.Name = "txtDescripcion";
-            this.txtDescripcion.Size = new System.Drawing.Size(137, 20);
+            this.txtDescripcion.Size = new System.Drawing.Size(161, 20);
             this.txtDescripcion.TabIndex = 0;
             this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             this.txtDescripcion.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtDescripcion_KeyDown);
@@ -503,7 +503,7 @@
             this.exportExcel.Image = ((System.Drawing.Image)(resources.GetObject("exportExcel.Image")));
             this.exportExcel.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.exportExcel.Name = "exportExcel";
-            this.exportExcel.Size = new System.Drawing.Size(60, 39);
+            this.exportExcel.Size = new System.Drawing.Size(61, 39);
             this.exportExcel.Text = "  &Exportar";
             this.exportExcel.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.exportExcel.ToolTipText = "Exportar lista a Excel\r\n\r\n\r\n";
@@ -517,39 +517,39 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaReportes.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.grillaReportes.ColumnHeadersHeight = 29;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.WhiteSmoke;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.Color.WhiteSmoke;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.grillaReportes.DefaultCellStyle = dataGridViewCellStyle6;
             this.grillaReportes.Location = new System.Drawing.Point(12, 158);
             this.grillaReportes.Name = "grillaReportes";
             this.grillaReportes.ReadOnly = true;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle7.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.grillaReportes.RowHeadersDefaultCellStyle = dataGridViewCellStyle7;
             this.grillaReportes.RowHeadersVisible = false;
             this.grillaReportes.RowHeadersWidth = 300;
-            dataGridViewCellStyle4.Format = "N2";
-            dataGridViewCellStyle4.NullValue = null;
-            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle8.Format = "N2";
+            dataGridViewCellStyle8.NullValue = null;
+            this.grillaReportes.RowsDefaultCellStyle = dataGridViewCellStyle8;
             this.grillaReportes.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.grillaReportes.Size = new System.Drawing.Size(973, 413);
             this.grillaReportes.TabIndex = 13;

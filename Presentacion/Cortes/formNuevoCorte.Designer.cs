@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
@@ -273,9 +273,9 @@
             // 
             this.btnBorrarMarca.AccessibleDescription = "";
             this.btnBorrarMarca.ForeColor = System.Drawing.Color.Black;
-            this.btnBorrarMarca.Location = new System.Drawing.Point(263, 110);
+            this.btnBorrarMarca.Location = new System.Drawing.Point(254, 109);
             this.btnBorrarMarca.Name = "btnBorrarMarca";
-            this.btnBorrarMarca.Size = new System.Drawing.Size(82, 23);
+            this.btnBorrarMarca.Size = new System.Drawing.Size(67, 23);
             this.btnBorrarMarca.TabIndex = 58;
             this.btnBorrarMarca.Text = "Borrar Marca";
             this.btnBorrarMarca.UseVisualStyleBackColor = true;
@@ -298,7 +298,7 @@
             this.btnMarca.AccessibleDescription = "";
             this.btnMarca.ForeColor = System.Drawing.Color.Black;
             this.btnMarca.Image = ((System.Drawing.Image)(resources.GetObject("btnMarca.Image")));
-            this.btnMarca.Location = new System.Drawing.Point(230, 110);
+            this.btnMarca.Location = new System.Drawing.Point(226, 109);
             this.btnMarca.Name = "btnMarca";
             this.btnMarca.Size = new System.Drawing.Size(28, 23);
             this.btnMarca.TabIndex = 3;
@@ -344,8 +344,8 @@
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle9;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
             this.dataGridViewTextBoxColumn3.HeaderText = "Razon Social";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
@@ -355,8 +355,8 @@
             // ultimoPrecio
             // 
             this.ultimoPrecio.DataPropertyName = "ultimoPrecio";
-            dataGridViewCellStyle2.Format = "F2";
-            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle10.Format = "F2";
+            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle10;
             this.ultimoPrecio.HeaderText = "Ultimo Precio";
             this.ultimoPrecio.MinimumWidth = 6;
             this.ultimoPrecio.Name = "ultimoPrecio";
@@ -642,7 +642,7 @@
             this.btnBuscarCorteM.AccessibleDescription = "";
             this.btnBuscarCorteM.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCorteM.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCorteM.Image")));
-            this.btnBuscarCorteM.Location = new System.Drawing.Point(275, 20);
+            this.btnBuscarCorteM.Location = new System.Drawing.Point(270, 20);
             this.btnBuscarCorteM.Name = "btnBuscarCorteM";
             this.btnBuscarCorteM.Size = new System.Drawing.Size(28, 23);
             this.btnBuscarCorteM.TabIndex = 29;
@@ -663,11 +663,11 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(71, 24);
+            this.label3.Location = new System.Drawing.Point(51, 24);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(36, 15);
+            this.label3.Size = new System.Drawing.Size(56, 15);
             this.label3.TabIndex = 31;
-            this.label3.Text = "Prod.";
+            this.label3.Text = "Producto";
             // 
             // txtIndependiente
             // 

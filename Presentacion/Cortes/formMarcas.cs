@@ -13,7 +13,7 @@ namespace Presentacion.Cortes
     public partial class formMarcas : Form
     {
         Negocio.Persona oPersonaN;
-
+        public bool buscardorMarcas = false;
         public formMarcas()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -31,7 +31,7 @@ namespace Presentacion.Cortes
             grillaPersonas.AutoGenerateColumns = true;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda, true);
             grillaPersonas.Columns["idPersona"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaPersonas.Columns["Marca"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            grillaPersonas.Columns["Marca"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             grillaPersonas.Columns["otrosDatos"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
             grillaPersonas.Columns["Propietario"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
             grillaPersonas.Columns["cuit"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
@@ -48,6 +48,9 @@ namespace Presentacion.Cortes
             //prop.telefono AS telefono,
             //prop.domicilio AS domicilio,
             //prop.ciudad AS ciudad
+
+            grillaPersonas.Columns["otrosDatos"].Visible = !buscardorMarcas;
+            grillaPersonas.Columns["Propietario"].Visible = !buscardorMarcas;
             grillaPersonas.Columns["idPersona"].Visible = false;
             grillaPersonas.Columns["cuit"].Visible = false;
             grillaPersonas.Columns["telefono"].Visible = false;
@@ -123,12 +126,44 @@ namespace Presentacion.Cortes
         }
         private void btnSeleccionar_Click(object sender, EventArgs e)
         {
-            infoPersona();
+            if (buscardorMarcas)
+                enviarPersona();
+            else
+                infoPersona();
+        }
+
+        //enviar Marca
+        public void enviarPersona()
+        {
+            Entidades.Persona oMarcaE = new Entidades.Persona();
+            try
+            {
+                if (grillaPersonas.Rows.Count == 0)
+                    return;
+
+                int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
+                oPersonaN = new Negocio.Persona();
+                oMarcaE = oPersonaN.findById(idPersona);
+
+                InterfacePersona formInterface = this.Owner as InterfacePersona;
+                if (formInterface != null)
+                {
+                    formInterface.EnviarPersona(oMarcaE);
+                }
+                this.Close();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("No se seleccionó ninguna Marca.\n\nSeleccione una Marca o presione Cerrar para no seleccionar.");
+            }
         }
 
         private void grillaPersonas_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            infoPersona();
+            if (buscardorMarcas)
+                enviarPersona();
+            else
+                infoPersona();
         }
         #endregion
 
