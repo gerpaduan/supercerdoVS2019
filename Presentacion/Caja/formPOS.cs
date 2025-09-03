@@ -1771,11 +1771,6 @@ namespace Presentacion.Caja
 
                 bool esEAN8 = primerosDos < 20 && primerosDos > 29;
 
-             if (txtCodigo.Text.Length == 12)
-            {
-                txtCodigo.Text = "0" + txtCodigo.Text;  
-            }
-
             if ((txtCodigo.Text.Length == 8 && esEAN8 && esDigitoControlCorrectoEAN8(false)) ||
                txtCodigo.Text.Length == 13 && esDigitoControlCorrectoEAN13(false))
             {
@@ -2705,6 +2700,14 @@ namespace Presentacion.Caja
         {
             try
             {
+                ///Si lector lee 12 digitos es probable sea un codigo q empiece con 0
+                ///y el lector no lee los ceros al comienzo
+                ///entonces se le asigna el cero
+                if (txtCodigo.Text.Length == 12)
+                {
+                    txtCodigo.Text = "0" + txtCodigo.Text;
+                }
+
                 ///Al leer con la pistola se aplica el tab
                 ///entonces aca se valida si es codigo de barra cuando todo el campo codigo está cargado 
                 ///y no surge el problema de cortar un ean13 en 8 digitos
