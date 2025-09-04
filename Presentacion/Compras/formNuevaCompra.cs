@@ -281,12 +281,12 @@ namespace Presentacion
                             }
                         }
 
-                        if (oFrmCompra != null) oFrmCompra.cargarGrilla();
-                        //this.Close();
-                        limpiarListas();
-                        oCompraE.IdCompra = 0;
-                        txtFechaCompra.Focus();
-                        mostrarCartelCierre = true;
+                        //if (oFrmCompra != null) oFrmCompra.cargarGrilla();
+                        this.Close();
+                        //limpiarListas();
+                        //oCompraE.IdCompra = 0;
+                        //txtFechaCompra.Focus();
+                        //mostrarCartelCierre = true;
                     }
                 }
                 else
