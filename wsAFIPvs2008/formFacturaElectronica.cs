@@ -78,6 +78,8 @@ namespace wsAFIPvs2008
         private string urlWSPN;
         string servicioAfipPerson = "ws_sr_padron_a13";
         string errores = "";
+        bool forzarCierre = false;
+
 
         LoginClass Login_;
         public LoginClass Login
@@ -523,7 +525,21 @@ namespace wsAFIPvs2008
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message + "\n\n" + errores);
+                MessageBox.Show(
+                    "No se pudo establecer la conexión con los servicios de AFIP.\n\n" +
+                    "Esto puede deberse a:\n" +
+                    "• Falta de conexión a internet.\n" +
+                    "• Inconvenientes en los servidores de AFIP.\n\n" +
+                    "Por favor, verifique su conexión y vuelva a intentar.\n\n" + ex.Message,
+                    "Error de conexión",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+
+                forzarCierre = true;
+                this.Close();
+                this.Dispose();
+                return;
             }
         }
 
@@ -1475,6 +1491,25 @@ namespace wsAFIPvs2008
         {
             var s = new Service();
             s.Url = urlWSFE;
+
+            // Tiempo máximo de espera (milisegundos)
+            s.Timeout = 3000; // 3 segundos, podés bajarlo a 2000 si querés
+
+            var dummy = s.FEDummy();
+
+            //si alguno es false
+            if (!(dummy.AppServer == "OK" &&
+                    dummy.DbServer == "OK" &&
+                    dummy.AuthServer == "OK"))
+            {
+                MessageBox.Show("No se pudo establecer conexión con AFIP. Verifique su conexión a internet o intente más tarde.",
+                    "Error de conexión", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                forzarCierre = true;
+                this.Close();
+                this.Dispose();
+            }
+
             return s;
         }
         private Service getServicioPerson()
@@ -1556,7 +1591,10 @@ namespace wsAFIPvs2008
 
         private void formFacturaElectronica_FormClosing(object sender, FormClosingEventArgs e)
         {
-            e.Cancel = salir();
+            if (forzarCierre)
+                e.Cancel = false;
+            else
+                e.Cancel = salir();
                 
         }
 
