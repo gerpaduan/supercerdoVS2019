@@ -186,7 +186,11 @@ namespace Datos
             cmCompra.CommandText = consulta;
             cmCompra.CommandType = CommandType.Text;
             cmCompra.Connection.Open();
-            double totalCompraD = cmCompra.ExecuteScalar().Equals(DBNull.Value) ? 0 : (double)cmCompra.ExecuteScalar();
+            object result = cmCompra.ExecuteScalar();
+            double totalCompraD = (result == null || result == DBNull.Value)
+                ? 0
+                : Convert.ToDouble(result);
+
             float totalCompra = (float)totalCompraD;
             cmCompra.Connection.Close();
             return totalCompra;

@@ -155,7 +155,11 @@ namespace Datos
             cmVenta.CommandText = consulta;
             cmVenta.CommandType = CommandType.Text;
             cmVenta.Connection.Open();
-            double totalVentaD = (double)cmVenta.ExecuteScalar();
+            object result = cmVenta.ExecuteScalar();
+            double totalVentaD = (result == null || result == DBNull.Value)
+                ? 0
+                : Convert.ToDouble(result);
+
             float totalVenta = (float)totalVentaD;
             cmVenta.Connection.Close();
             return totalVenta;
