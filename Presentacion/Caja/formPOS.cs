@@ -445,10 +445,13 @@ namespace Presentacion.Caja
             {
                 formFactElec = new wsAFIPvs2008.formFacturaElectronica(() =>
                 {
-                    // Esto se ejecuta al cerrarse FormC
-                    this.WindowState = FormWindowState.Normal;
-                    this.Show();
-                    this.Activate(); // o BringToFront()
+                    if (!this.IsDisposed && this.IsHandleCreated)
+                    {
+                        // Esto se ejecuta al cerrarse FormC
+                        this.WindowState = FormWindowState.Normal;
+                        this.Show();
+                        this.Activate(); // o BringToFront()
+                    }
                 });
                 formFactElec.idVenta = oVentaE.IdVenta;
                 formFactElec.logueado = FormPrincipal.logueado;
