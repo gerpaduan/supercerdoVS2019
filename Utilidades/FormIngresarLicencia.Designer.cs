@@ -28,39 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.txtClave = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.btnSalir = new System.Windows.Forms.Button();
             this.btnAgregar = new System.Windows.Forms.Button();
             this.groupLicencias = new System.Windows.Forms.GroupBox();
             this.lblErrorLicencia = new System.Windows.Forms.Label();
+            this.txtIdentificacion = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.serialHD = new System.Windows.Forms.Label();
             this.serialCPU = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.btnValidar = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
-            this.txtIdentificacion = new System.Windows.Forms.TextBox();
             this.groupLicencias.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // txtClave
-            // 
-            this.txtClave.Location = new System.Drawing.Point(50, 25);
-            this.txtClave.Name = "txtClave";
-            this.txtClave.Size = new System.Drawing.Size(139, 20);
-            this.txtClave.TabIndex = 4;
-            this.txtClave.UseSystemPasswordChar = true;
-            this.txtClave.TextChanged += new System.EventHandler(this.txtClave_TextChanged);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(8, 28);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(36, 13);
-            this.label1.TabIndex = 6;
-            this.label1.Text = "Admin";
             // 
             // btnSalir
             // 
@@ -107,8 +87,24 @@
             this.lblErrorLicencia.Name = "lblErrorLicencia";
             this.lblErrorLicencia.Size = new System.Drawing.Size(233, 91);
             this.lblErrorLicencia.TabIndex = 13;
-            this.lblErrorLicencia.Text = "\r\nEsta copia no cuenta con la licencia habilitada. \r\n(ymd)\r\nContactar al proveedo" +
-    "r.\r\n\r\n\r\nEmail: germanpaduan@gmail.com\r\n";
+            this.lblErrorLicencia.Text = "\r\nEsta copia no cuenta con la licencia habilitada. \r\n\r\nContactar al proveedor.\r\n\r" +
+    "\n\r\nEmail: germanpaduan@gmail.com\r\n";
+            // 
+            // txtIdentificacion
+            // 
+            this.txtIdentificacion.Location = new System.Drawing.Point(98, 19);
+            this.txtIdentificacion.Name = "txtIdentificacion";
+            this.txtIdentificacion.Size = new System.Drawing.Size(139, 20);
+            this.txtIdentificacion.TabIndex = 14;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(6, 22);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(70, 13);
+            this.label4.TabIndex = 15;
+            this.label4.Text = "Identificación";
             // 
             // serialHD
             // 
@@ -150,29 +146,13 @@
             // 
             // btnValidar
             // 
-            this.btnValidar.Location = new System.Drawing.Point(195, 23);
+            this.btnValidar.Location = new System.Drawing.Point(12, 12);
             this.btnValidar.Name = "btnValidar";
-            this.btnValidar.Size = new System.Drawing.Size(76, 23);
+            this.btnValidar.Size = new System.Drawing.Size(259, 34);
             this.btnValidar.TabIndex = 9;
             this.btnValidar.Text = "Ingresar";
             this.btnValidar.UseVisualStyleBackColor = true;
             this.btnValidar.Click += new System.EventHandler(this.btnValidar_Click);
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(6, 22);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(70, 13);
-            this.label4.TabIndex = 15;
-            this.label4.Text = "Identificación";
-            // 
-            // txtIdentificacion
-            // 
-            this.txtIdentificacion.Location = new System.Drawing.Point(98, 19);
-            this.txtIdentificacion.Name = "txtIdentificacion";
-            this.txtIdentificacion.Size = new System.Drawing.Size(139, 20);
-            this.txtIdentificacion.TabIndex = 14;
             // 
             // FormIngresarLicencia
             // 
@@ -183,9 +163,7 @@
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.btnAgregar);
             this.Controls.Add(this.groupLicencias);
-            this.Controls.Add(this.txtClave);
-            this.Controls.Add(this.label1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "FormIngresarLicencia";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Ingresar Licencia";
@@ -193,14 +171,10 @@
             this.groupLicencias.ResumeLayout(false);
             this.groupLicencias.PerformLayout();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox txtClave;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSalir;
         private System.Windows.Forms.Button btnAgregar;
         private System.Windows.Forms.GroupBox groupLicencias;

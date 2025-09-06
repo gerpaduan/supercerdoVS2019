@@ -53,11 +53,11 @@ namespace Utilidades
 
         public void Logueado()
         {
-            string day = DateTime.Now.Day > 9 ? DateTime.Now.Day.ToString() : "0" + DateTime.Now.Day.ToString();
-            claveSistema = DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + day; //ConfigurationManager.AppSettings["admin"].ToString();
-            clave = txtClave.Text.Trim();
-            if (clave.Equals(claveSistema))
-            {
+            //string day = DateTime.Now.Day > 9 ? DateTime.Now.Day.ToString() : "0" + DateTime.Now.Day.ToString();
+            //claveSistema = DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString() + day; //ConfigurationManager.AppSettings["admin"].ToString();
+            //clave = txtClave.Text.Trim();
+            //if (clave.Equals(claveSistema))
+            //{
                 existe = true;
                 groupLicencias.Visible = true;
                 lblErrorLicencia.Visible = false;
@@ -65,13 +65,13 @@ namespace Utilidades
                 //serialHD.Text = Utilidades.Util_Form.GetHDSerial();
                 btnAgregar.Visible = true;
                 txtIdentificacion.Focus();
-            }
-            else
-            {
-                MessageBox.Show("Clave Incorrecta.");
-                txtClave.Focus();
-                lblErrorLicencia.Visible = true;
-            }
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Clave Incorrecta.");
+            //    txtClave.Focus();
+            //    lblErrorLicencia.Visible = true;
+            //}
             //return existe;
         }
 

@@ -369,6 +369,13 @@ namespace Presentacion
                 else
                 {
                     //DialogResult resp = MessageBox.Show("Esta copia no cuenta con la licencia habilitada. Contactar al proveedor.", "Licencia no habilitada", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    login();
+                    if (oUserAdmin == null)
+                    {
+                        MessageBox.Show("No tienes permiso para acceder al area seleccionada.");
+                        Application.Exit();
+                        return;
+                    }
 
                     Utilidades.FormIngresarLicencia frmLicencia = new Utilidades.FormIngresarLicencia();
                     frmLicencia.ShowDialog();
