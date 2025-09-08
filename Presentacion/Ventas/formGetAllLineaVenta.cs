@@ -40,7 +40,7 @@ namespace Presentacion
         public DataTable dtVentas;
 
         bool cargar = false;
-        bool cerrarForm = true;
+        bool cerrarForm = false;
         public formGetAllLineaVenta()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
@@ -50,7 +50,8 @@ namespace Presentacion
         {
             try
             {
-                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formVentas", fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                //CerrarForm = true para evitar que se muestre dos veces el cartel del mensaje
+                if (!cerrarForm && !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formVentas", fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
                     if (!cargar)
