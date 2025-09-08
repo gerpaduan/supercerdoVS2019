@@ -13,7 +13,8 @@ namespace Presentacion.CuentaCorriente
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-
+        public bool desdePOS = false;
+        bool formCargado = false;
         public formCtasCtes()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -24,6 +25,7 @@ namespace Presentacion.CuentaCorriente
             cargarGrilla();
             txtDescripcion.Focus();
             txtDescripcion.Select();
+            formCargado = true;
         }
 
         private void cargarGrilla()
@@ -35,6 +37,8 @@ namespace Presentacion.CuentaCorriente
                     Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
+                    if (!formCargado)
+                        this.Close();
                     return;
                 }
 

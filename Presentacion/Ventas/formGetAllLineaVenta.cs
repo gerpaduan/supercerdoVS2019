@@ -40,6 +40,7 @@ namespace Presentacion
         public DataTable dtVentas;
 
         bool cargar = false;
+        bool cerrarForm = true;
         public formGetAllLineaVenta()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
@@ -49,15 +50,18 @@ namespace Presentacion
         {
             try
             {
+                if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formVentas", fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                {
+                    Utilidades.Mensajes.ErrorPermisoAcceso();
+                    if (!cargar)
+                        cerrarForm = true;
+                    return;
+                }
+
                 if (cargar)
                 {
 
                     lblActualizar.Visible = false;
-                    if (!oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formVentas", fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-                    {
-                        Utilidades.Mensajes.ErrorPermisoAcceso();
-                        return;
-                    }
 
                     Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando lineas de ventas", "Cargando...");
                     barraProgreso.Show();
@@ -234,6 +238,11 @@ namespace Presentacion
             }
 
             cargar = true;
+            if (cerrarForm)
+            {
+                this.Close();
+                return;
+            }
             cargarGrilla();
         }
 

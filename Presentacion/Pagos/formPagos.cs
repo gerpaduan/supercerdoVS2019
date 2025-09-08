@@ -14,6 +14,7 @@ namespace Presentacion.Pagos
     public partial class formPagos : Form, InterfaceUsuario
     {
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Entidades.Pago oPagoE = new Entidades.Pago();
         Entidades.Persona oPersonaE;
         Entidades.Usuario oUsuario;
@@ -23,6 +24,7 @@ namespace Presentacion.Pagos
         DataGridViewRow fila;
         string tramite;
         bool cargar = false;
+        bool cerrarForm = false;
 
         public formPagos()
         {
@@ -94,6 +96,17 @@ namespace Presentacion.Pagos
         #region Metodos
         public void cargarGrilla()
         {
+            //CerrarForm = true para evitar que se muestre dos veces el cartel del mensaje
+            if (!cerrarForm && (FormPrincipal.oUserLogueado == null ||
+                       !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, txtFechaDesde.Value,
+                       Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
+            {
+                Utilidades.Mensajes.ErrorPermisoAcceso();
+                if (!cargar)
+                    cerrarForm = true;
+                return;
+            }
+
             if (cargar)
             {
                 string descripcion = txtDescripcion.Text.Trim();
@@ -197,8 +210,13 @@ namespace Presentacion.Pagos
         {
             this.Text += Utilidades.Conexion.getSucursalConexion();
             //leo de App.config fecha Desde
-            txtFechaDesde.Value = DateTime.Now.AddDays(-30);
+            txtFechaDesde.Value = DateTime.Now;
             cargar = true;
+            if (cerrarForm)
+            {
+                this.Close();
+                return;
+            }
             cargarGrilla();
         }
 

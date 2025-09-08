@@ -1678,7 +1678,7 @@ namespace Presentacion.Caja
             linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) ?
                 "mis ventas" : "Ver ultimas 5 ventas";
 
-            ////Ocultar Ultimas Ventas Para Cocinas y Furlana
+            ////Ocultar Ultimas Ventas para SuperCerdo si cliente es Empleado o Cliente tiene CtaCte por defecto
             if ((FormPrincipal.soyYo && !oUsuario.Admin) &&
                 (oCliente.CtaCte || oCliente.razonSocial.ToLower().Contains("empleado") || oCliente.razonSocial.ToLower().Contains("empleada")))
             {
@@ -2084,7 +2084,7 @@ namespace Presentacion.Caja
         {
             timer1.Enabled = false;
             this.Text = FormPrincipal.textForm;
-            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  Insert = Forma Pago  |  Supr = Quitar Línea  | F2 = Pant.Principal  |   " +
+            lblTeclasRapidas.Text = "Inicio = Codigo  |  Fin = Abonar  |  ESC = Salir  |  Insert = Forma Pago  |  Supr = Quitar Línea  | F2 = Ctas.Ctes.  |   " +
                 "F3 = Cálculo Billetes  | F4 = Bonificación  |  F5 = Nueva Compra  |  \n F6 = Mis Egresos Caja  |  F7 = Egresos Caja  | F8 = Facturacion | F9 = Buscar Cliente  |  " +
                 "F10 = Buscar Producto  |  F12 = Bloquear | RePág = Cambiar Vendedor |  AvPág = Expendios";
             comboExpendioEstado.SelectedIndex = 0;
@@ -2280,14 +2280,9 @@ namespace Presentacion.Caja
                     quitarLinea();
                     break;
                 case Keys.F2:
-                    foreach (Form frm in Application.OpenForms)
-                    {
-                        if (frm.GetType() == typeof(FormPrincipal))
-                        {
-                            frm.BringToFront();
-                            break;
-                        }
-                    }
+                    //ver ctas.ctes.
+                    formCtasCtes frmCtasCtes = new formCtasCtes();
+                    frmCtasCtes.ShowDialog();
                     break;
                 case Keys.F3:
                         calculoBilletes();
