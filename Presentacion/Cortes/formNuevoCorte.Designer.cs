@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
@@ -344,8 +344,8 @@
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
             this.dataGridViewTextBoxColumn3.HeaderText = "Razon Social";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
@@ -355,8 +355,8 @@
             // ultimoPrecio
             // 
             this.ultimoPrecio.DataPropertyName = "ultimoPrecio";
-            dataGridViewCellStyle10.Format = "F2";
-            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle2.Format = "F2";
+            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle2;
             this.ultimoPrecio.HeaderText = "Ultimo Precio";
             this.ultimoPrecio.MinimumWidth = 6;
             this.ultimoPrecio.Name = "ultimoPrecio";
@@ -445,7 +445,7 @@
             this.checkPesable.AutoSize = true;
             this.checkPesable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkPesable.Checked = true;
-            this.checkPesable.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkPesable.CheckState = System.Windows.Forms.CheckState.Indeterminate;
             this.checkPesable.Location = new System.Drawing.Point(35, 166);
             this.checkPesable.Name = "checkPesable";
             this.checkPesable.Size = new System.Drawing.Size(71, 19);
@@ -501,6 +501,7 @@
             this.txtPromedio.Name = "txtPromedio";
             this.txtPromedio.Size = new System.Drawing.Size(71, 21);
             this.txtPromedio.TabIndex = 5;
+            this.txtPromedio.Text = "1";
             this.txtPromedio.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // label8
