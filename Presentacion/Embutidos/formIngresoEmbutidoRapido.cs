@@ -56,6 +56,8 @@ namespace Presentacion
         public formIngresoEmbutidoRapido()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
+
+            this.KeyPreview = true; // Importante para que el form capture las teclas
         }
 
         #region Métodos
@@ -524,6 +526,14 @@ namespace Presentacion
         {
             formReceta frmReceta = new formReceta(txtReceta.Text); // Pasar el texto actual
             frmReceta.editar = false;
+        }
+
+        private void formIngresoEmbutidoRapido_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Multiply || e.KeyCode == Keys.D8 && e.Shift) // NumPad * o Shift+8
+            {
+                checkLeerPeso.Checked = !checkLeerPeso.Checked;
+            }
         }
     }
 }

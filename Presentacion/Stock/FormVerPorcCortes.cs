@@ -136,6 +136,7 @@ namespace Presentacion.Stock
         {
             this.BringToFront();
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.soloActivos = true;
             frmLogin.ShowDialog(this);
         }
 

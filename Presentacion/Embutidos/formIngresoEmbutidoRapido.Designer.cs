@@ -210,7 +210,7 @@
             this.lblErrorBalanza.BackColor = System.Drawing.Color.SandyBrown;
             this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
-            this.lblErrorBalanza.Location = new System.Drawing.Point(372, 213);
+            this.lblErrorBalanza.Location = new System.Drawing.Point(337, 9);
             this.lblErrorBalanza.Name = "lblErrorBalanza";
             this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
             this.lblErrorBalanza.TabIndex = 49;
@@ -638,7 +638,7 @@
             this.kgs.MinimumWidth = 6;
             this.kgs.Name = "kgs";
             this.kgs.ReadOnly = true;
-            this.kgs.Width = 50;
+            this.kgs.Width = 54;
             // 
             // agregarAuto
             // 
@@ -689,6 +689,7 @@
             this.Text = "Ingreso Rápido de Elaborados";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.formIngresoEmbutidoRapido_FormClosing);
             this.Load += new System.EventHandler(this.formIngresoEmbutidoRapido_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.formIngresoEmbutidoRapido_KeyDown);
             this.pnlBuscar.ResumeLayout(false);
             this.pnlBuscar.PerformLayout();
             this.groupReceta.ResumeLayout(false);
