@@ -55,6 +55,7 @@ namespace Presentacion.Caja
                         oEgresoCajaE = oCierreN.getEgresoCajaById(idEgresoCaja);
                         cargarCampos();
                         readOnly = true;
+                        btnIngresoBilletes.Enabled = !readOnly;
                         setearPropiedadesForm();
                         idEgresoCajaLabel.Text = idEgresoCaja.ToString();//asigno id para identificar el formulario al llamar
                     }
@@ -107,6 +108,7 @@ namespace Presentacion.Caja
             txtTipoEgresoCaja.Text = comboTipoEgresoCaja.Text;
             txtDescripcion.ReadOnly = readOnly;
             txtMonto.ReadOnly = readOnly;
+            btnIngresoBilletes.Enabled = !readOnly;
             txtDetalle.ReadOnly = readOnly;
             checkTicket.Visible = !readOnly;
             btnImprimir.Visible = readOnly;
@@ -422,6 +424,7 @@ namespace Presentacion.Caja
         {
             formIngresoBilletes frmIngresoBilletes = new formIngresoBilletes();
             frmIngresoBilletes.txtBoxAcargar = this.txtMonto;
+            frmIngresoBilletes.imprimir = false;
             frmIngresoBilletes.ShowDialog();
             if (!frmIngresoBilletes.txtBoxAcargar.Text.Equals("0") )
             {
@@ -433,15 +436,18 @@ namespace Presentacion.Caja
             string delimitadorFin = "]";
             string textoReemplazo = frmIngresoBilletes.detalleCantBilletes.ToString();
 
-            // Expresión regular para encontrar texto entre delimitadores
-            string patron = $@"{Regex.Escape(delimitadorInicio)}(.*?){Regex.Escape(delimitadorFin)}";
+            if (!string.IsNullOrEmpty(textoReemplazo))
+            {
+                // Expresión regular para encontrar texto entre delimitadores
+                string patron = $@"{Regex.Escape(delimitadorInicio)}(.*?){Regex.Escape(delimitadorFin)}";
 
-            // Reemplazar el texto entre delimitadores
-            string resultado = textoOriginal.Contains("[") ?
-                Regex.Replace(textoOriginal, patron, $"{delimitadorInicio}{textoReemplazo}{delimitadorFin}") :
-                textoOriginal + textoReemplazo;
-            resultado = string.IsNullOrEmpty(textoReemplazo) && resultado.Contains("///") ? resultado.Replace("///", "") : resultado;
-            txtDetalle.Text =  resultado;
+                // Reemplazar el texto entre delimitadores
+                string resultado = textoOriginal.Contains("[") ?
+                    Regex.Replace(textoOriginal, patron, $"{delimitadorInicio}{textoReemplazo}{delimitadorFin}") :
+                    textoOriginal + textoReemplazo;
+                resultado = string.IsNullOrEmpty(textoReemplazo) && resultado.Contains("///") ? resultado.Replace("///", "") : resultado;
+                txtDetalle.Text = resultado;
+            }
         }
     }
 }

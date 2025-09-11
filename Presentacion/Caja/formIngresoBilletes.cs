@@ -18,6 +18,7 @@ namespace Presentacion.Caja
             veinte = 0, diez = 0, cinco = 0, dos = 0, monedas = 0;
         public string[] cantBilletes = new string[11];
         public string detalleCantBilletes = "";
+        public bool imprimir = true;
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -35,7 +36,7 @@ namespace Presentacion.Caja
             {
                 txtBoxAcargar = new TextBox();
             }
-            txtBoxAcargar.Text = "0";
+            //txtBoxAcargar.Text = "0"; lo comenté porque al cerrar el form establece cero y quiero q quede el valor inicial
         }
 
         private void txtPress_Enter(object sender, KeyEventArgs e)
@@ -145,12 +146,16 @@ namespace Presentacion.Caja
             }
             detalleCantBilletes += " ]";
             txtBoxAcargar.Text = txtTotal.Text;
-            DialogResult resp = MessageBox.Show("¿Imprimir detalle billetes?",
-                            "Imprimir detalle", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-            if (resp == DialogResult.Yes)
+            if (imprimir)
             {
-                imprimirTicket();
+                DialogResult resp = MessageBox.Show("¿Imprimir detalle billetes?",
+                                "Imprimir detalle", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                if (resp == DialogResult.Yes)
+                {
+                    imprimirTicket();
+                }
             }
             this.Close();
         }

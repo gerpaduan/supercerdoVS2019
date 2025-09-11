@@ -444,8 +444,6 @@
             // 
             this.checkPesable.AutoSize = true;
             this.checkPesable.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkPesable.Checked = true;
-            this.checkPesable.CheckState = System.Windows.Forms.CheckState.Indeterminate;
             this.checkPesable.Location = new System.Drawing.Point(35, 166);
             this.checkPesable.Name = "checkPesable";
             this.checkPesable.Size = new System.Drawing.Size(71, 19);
