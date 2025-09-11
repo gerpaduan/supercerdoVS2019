@@ -89,9 +89,10 @@
             this.cambiarVendedor = new System.Windows.Forms.ToolStripButton();
             this.ImprimirTicket = new System.Windows.Forms.ToolStripButton();
             this.facturaElec = new System.Windows.Forms.ToolStripButton();
+            this.notaCredito = new System.Windows.Forms.ToolStripButton();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.notaCredito = new System.Windows.Forms.ToolStripButton();
+            this.pdf = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -784,6 +785,7 @@
             this.barraControl.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cambiarVendedor,
             this.ImprimirTicket,
+            this.pdf,
             this.facturaElec,
             this.notaCredito});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
@@ -828,6 +830,17 @@
             this.facturaElec.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.facturaElec.Click += new System.EventHandler(this.facturaElectronica_Click);
             // 
+            // notaCredito
+            // 
+            this.notaCredito.Image = ((System.Drawing.Image)(resources.GetObject("notaCredito.Image")));
+            this.notaCredito.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.notaCredito.Name = "notaCredito";
+            this.notaCredito.Size = new System.Drawing.Size(68, 46);
+            this.notaCredito.Text = "Nota Créd.";
+            this.notaCredito.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
+            this.notaCredito.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.notaCredito.Click += new System.EventHandler(this.notaCredito_Click);
+            // 
             // txtTotalKgs
             // 
             this.txtTotalKgs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -853,16 +866,16 @@
             this.label12.TabIndex = 54;
             this.label12.Text = "Cant. Kgs.";
             // 
-            // notaCredito
+            // pdf
             // 
-            this.notaCredito.Image = ((System.Drawing.Image)(resources.GetObject("notaCredito.Image")));
-            this.notaCredito.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.notaCredito.Name = "notaCredito";
-            this.notaCredito.Size = new System.Drawing.Size(68, 46);
-            this.notaCredito.Text = "Nota Créd.";
-            this.notaCredito.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-            this.notaCredito.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.notaCredito.Click += new System.EventHandler(this.notaCredito_Click);
+            this.pdf.Image = ((System.Drawing.Image)(resources.GetObject("pdf.Image")));
+            this.pdf.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.pdf.Name = "pdf";
+            this.pdf.Size = new System.Drawing.Size(44, 46);
+            this.pdf.Text = "  PDF  ";
+            this.pdf.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
+            this.pdf.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.pdf.Click += new System.EventHandler(this.pdf_Click);
             // 
             // formUltimaVenta
             // 
@@ -960,5 +973,6 @@
         private System.Windows.Forms.CheckBox checkQr;
         private System.Windows.Forms.CheckBox checkPagoMixto;
         private System.Windows.Forms.ToolStripButton notaCredito;
+        private System.Windows.Forms.ToolStripButton pdf;
     }
 }

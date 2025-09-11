@@ -149,6 +149,24 @@ namespace Presentacion
             setTituloForm();
         }
 
+        /// <summary>
+        /// motivos de baja de stock
+        /// 
+        /// 📋 Motivos típicos de baja de mercadería
+
+        //Vencimiento → producto llegó a la fecha límite de consumo.
+        //Rotura / Deterioro → envase dañado, golpeado, pérdida de cadena de frío.
+        //Mal estado → producto en malas condiciones (olor, color, textura).
+        //Devolución al proveedor → mercadería defectuosa o no conforme.
+        //Consumo interno → uso dentro del local (ej: empleados, elaboración propia).
+        //Robo / Pérdida → faltante detectado en inventario.
+        //Error de carga → ingreso incorrecto en stock.
+        //Muestra comercial → entregado como muestra a clientes o degustación.
+        //Donación → mercadería retirada del stock para donar.
+        //Transformación → producto que se da de baja para ser procesado en otro (ej: media res que pasa a cortes).
+
+        /// </summary>
+        /// <param name="estadoAjStock"></param>
         public void cargarEstadoAjuste(string estadoAjStock)
         {
             lblEstadoAjuste.Text = estadoAjStock;

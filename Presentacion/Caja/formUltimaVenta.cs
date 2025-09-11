@@ -8,6 +8,10 @@ using System.Text;
 using System.Windows.Forms;
 using Presentacion.Personas;
 using System.Configuration;
+using iTextSharp.text;
+using System.IO;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.draw;
 
 namespace Presentacion.Caja
 {
@@ -98,7 +102,7 @@ namespace Presentacion.Caja
                         {
                             if (grillaLineasVenta.Rows[nroFila].Cells["Corte"].Value.ToString().Length > 22)
                             {
-                                grillaLineasVenta.Rows[nroFila].Cells["Corte"].Style.Font = new Font(grillaLineasVenta.Font.ToString(), 13);
+                                grillaLineasVenta.Rows[nroFila].Cells["Corte"].Style.Font = new System.Drawing.Font(grillaLineasVenta.Font.ToString(), 13);
                             }
 
                             if (Convert.ToInt64(grillaLineasVenta.Rows[nroFila].Cells["Codigo"].Value) == linea.Corte.codigo && 
@@ -732,5 +736,228 @@ namespace Presentacion.Caja
             formFactElecNotaCredito.esShowDialog = true;
             formFactElecNotaCredito.ShowDialog();
         }
+
+        private void pdf_Click(object sender, EventArgs e)
+        {
+            string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
+            ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), ruta);// "ReciboCheques.pdf");
+            //GenerarPDFRecibo(oUltimaVenta, ruta);
+            GenerarPDF(ruta);
+            System.Diagnostics.Process.Start(ruta);
+        }
+
+        #region imprimirRecibo
+        public void GenerarPDF(string rutaDestino)
+        {
+            ///TODO: verificar si esta facturado para mostrar la factura y no el remito
+            rutaDestino = rutaDestino + "\\" + oUltimaVenta.FechaVenta.ToString("yyyyMMdd") + " - Comprobante X - ID " + 
+                oUltimaVenta.IdVenta.ToString() + ".pdf";
+
+            Document doc = new Document(PageSize.A4, 30, 30, 20, 20);
+            PdfWriter.GetInstance(doc, new FileStream(rutaDestino, FileMode.Create));
+
+
+            doc.Open();
+
+            // Fuentes y estilos
+            var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
+            var fontSubTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
+            var fontNormal = FontFactory.GetFont(FontFactory.HELVETICA, 10);
+            var fontComments = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+            var fontNormalBold = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+
+            var colorRojo = new BaseColor(174, 0, 0);
+            var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, colorRojo);
+            var fuenteRazonSocial = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+            var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
+            var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+            var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
+            var fuenteFooter = FontFactory.GetFont(FontFactory.HELVETICA, 7);
+
+            // ---------- CABECERA: tabla 3 columnas ----------
+            PdfPTable cabecera = new PdfPTable(3);
+            cabecera.WidthPercentage = 100;
+            cabecera.SetWidths(new float[] { 33f, 34f, 33f });
+
+            // Columna izquierda: nombre empresa y dirección
+            PdfPCell izquierda = new PdfPCell();
+            izquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Negocio"].ToString() + "\n", fuenteTitulo));
+            izquierda.AddElement(new Paragraph(" ", fuenteRazonSocial));
+            izquierda.AddElement(new Paragraph("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
+            izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
+            izquierda.AddElement(new Paragraph("Cond.IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
+            cabecera.AddCell(izquierda);
+
+            PdfPCell centro = new PdfPCell();
+            centro.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            centro.VerticalAlignment = Element.ALIGN_MIDDLE; // esto sí funciona
+
+            // Usá un Paragraph con alineación centrada
+            Paragraph parrafoCentro = new Paragraph();
+            parrafoCentro.Alignment = Element.ALIGN_CENTER;
+            parrafoCentro.Add(new Chunk("X\n", fuenteX));
+            parrafoCentro.Add(new Chunk("- Documento no válido como factura -", fuenteFooter));
+
+            centro.AddElement(parrafoCentro);
+            cabecera.AddCell(centro);
+
+            // Columna derecha: número, fecha, cuit, etc.
+            PdfPCell derecha = new PdfPCell();
+            derecha.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            derecha.HorizontalAlignment = Element.ALIGN_RIGHT;
+
+            derecha.AddElement(new Paragraph("N°Comprobante: " + oUltimaVenta.Sucursal.idSucursal.ToString() + " - " + oUltimaVenta.IdVenta.ToString() + "\n", fuenteNegrita));
+            derecha.AddElement(new Paragraph("Fecha: " + oUltimaVenta.FechaVenta.Date.ToString("dd/MM/yyyy") + "\n\n", fuenteNormal));
+            derecha.AddElement(new Paragraph(ConfigurationManager.AppSettings["IIBB"] + "\n", fuenteNormal));
+            derecha.AddElement(new Paragraph("CUIT: " + ConfigurationManager.AppSettings["cuit"] + "\n", fuenteNormal));
+            derecha.AddElement(new Paragraph("Inicio Act.: " + ConfigurationManager.AppSettings["InicioActividades"] + "\n", fuenteNormal));
+
+            cabecera.AddCell(derecha);
+
+            doc.Add(cabecera);
+            LineSeparator linea = new LineSeparator(1.5f, 100f, BaseColor.GRAY, Element.ALIGN_CENTER, -6);
+            doc.Add(new Chunk(linea));
+
+            doc.Add(new Paragraph(" ")); // Espacio
+            // ---------- CLIENTE ----------
+            PdfPTable cliente = new PdfPTable(4);
+            cliente.WidthPercentage = 100;
+            cliente.SetWidths(new float[] { 15, 45, 10, 20 });
+
+
+            cliente.AddCell(CeldaSimple("Sr. (es):", fuenteNegrita));
+            cliente.AddCell(CeldaSimple(oUltimaVenta.Persona.razonSocial.ToUpper(), fuenteNormal));
+
+            cliente.AddCell(CeldaSimple("Cond. IVA:", fuenteNegrita));
+            cliente.AddCell(CeldaSimple(oUltimaVenta.Persona.Iva, fuenteNormal));
+
+            cliente.AddCell(CeldaSimple("Domicilio:", fuenteNegrita));
+            cliente.AddCell(CeldaSimple(oUltimaVenta.Persona.Domicilio.ToUpper(), fuenteNormal));
+
+            cliente.AddCell(CeldaSimple("CUIT:", fuenteNegrita));
+            cliente.AddCell(CeldaSimple(oUltimaVenta.Persona.Cuit, fuenteNormal));
+
+            cliente.AddCell(CeldaSimple("Forma pago:", fuenteNegrita));
+            cliente.AddCell(CeldaSimple(oUltimaVenta.FormaPago, fuenteNormal));
+
+            cliente.AddCell(CeldaSimple("", fuenteNegrita));
+            cliente.AddCell(CeldaSimple("", fuenteNormal));
+
+            doc.Add(cliente);
+
+            doc.Add(linea);
+            doc.Add(new Paragraph(" ")); // Espacio
+
+
+            Entidades.FacturaElectronica oDocumentoImprimir = new Entidades.FacturaElectronica(); //notaCredito ? oNotaCredito : oFactuElec;
+            oDocumentoImprimir.Venta = oUltimaVenta;
+
+            #region tabla de productos
+            char letraFactura = oUltimaVenta.TipoComprobante;
+            int cantCol = letraFactura == 'A' ? 5 : 4;
+            PdfPTable productosTable = new PdfPTable(cantCol);
+            productosTable.WidthPercentage = 100;
+
+
+            if (letraFactura == 'A')
+                productosTable.SetWidths(new float[] { 6f, 2f, 2f, 2f, 2f });
+            else
+                productosTable.SetWidths(new float[] { 6f, 2f, 2f, 2f });
+
+
+            string[] headers = { "Descripción", "Cantidad", "Precio Un", "Importe" };
+            foreach (var h in headers)
+            {
+                var celda = new PdfPCell(new Phrase(h, fuenteNegrita));
+                celda.BackgroundColor = new BaseColor(255, 200, 200);
+                celda.HorizontalAlignment = Element.ALIGN_CENTER;
+                productosTable.AddCell(celda);
+            }
+
+            //productosTable.AddCell(new PdfPCell(new Phrase("Descripción", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+            //productosTable.AddCell(new PdfPCell(new Phrase("Cantidad", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+            //productosTable.AddCell(new PdfPCell(new Phrase("Precio Un.", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+            //if (letraFactura == 'A')
+            //    productosTable.AddCell(new PdfPCell(new Phrase("Alicuota Iva", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+
+            //productosTable.AddCell(new PdfPCell(new Phrase("Importe", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+
+
+
+            //coomento xq lo traigo de formFacturaElectornica
+            //oDocumentoImprimir.Venta = oDocumentoImprimir.Venta == null ? oVentaE : oDocumentoImprimir.Venta;
+
+            foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
+            {
+                productosTable.AddCell(new PdfPCell(new Phrase(item.Corte.codigo.ToString() + " - " + item.Corte.corte, fontNormal)) { Border = 0 });
+                productosTable.AddCell(new PdfPCell(new Phrase(item.CantKg.ToString("F3"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("F2"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                if (letraFactura == 'A')
+                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("F2"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("F2"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+            }
+
+            doc.Add(productosTable);
+
+            ///TODO: cargar los total - ¿inmediato al fin de productos para ahorrar hoja?
+
+            int cantLineasVacias = Convert.ToInt32(ConfigurationManager.AppSettings["cantLineasVacias"].ToString());
+            //se le resta la cantidad e alicuota - 1 para evitar que pise el QR
+            cantLineasVacias -= (oDocumentoImprimir.Venta.LineasVenta.Count - 1);
+            for (int i = 0; i < cantLineasVacias; i++)
+                doc.Add(new iTextSharp.text.Paragraph("\n"));
+
+            #endregion
+
+
+
+            doc.Close();
+        }
+
+        // Funciones auxiliares
+        private PdfPCell CeldaSimple(string texto, iTextSharp.text.Font fuente, int alineacion = Element.ALIGN_LEFT)
+        {
+            PdfPCell celda = new PdfPCell(new Phrase(texto, fuente));
+            celda.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            celda.HorizontalAlignment = alineacion;
+            celda.Padding = 4f;
+            return celda;
+        }
+
+        private PdfPCell CeldaCentrada(string texto, iTextSharp.text.Font fuente)
+        {
+            return new PdfPCell(new Phrase(texto, fuente))
+            {
+                HorizontalAlignment = Element.ALIGN_CENTER,
+                Padding = 5
+            };
+        }
+
+        private PdfPCell CeldaDerecha(string texto, iTextSharp.text.Font fuente)
+        {
+            return new PdfPCell(new Phrase(texto, fuente))
+            {
+                HorizontalAlignment = Element.ALIGN_RIGHT,
+                Padding = 5
+            };
+        }
+
+        string AjustarString(string input, int espacios, bool espaciosDerecha)
+        {
+            // Si la cadena es más larga que 20 caracteres, se trunca a 20
+            if (input.Length > espacios)
+                return input.Substring(0, espacios);
+            // Si es menor a 20, se completa con espacios a la derecha hasta llegar a 20 caracteres
+            else
+            {
+                input = espaciosDerecha ? input.PadRight(espacios) : input.PadLeft(espacios);
+                return input;
+            }
+        }
+
+        #endregion
     }
 }
