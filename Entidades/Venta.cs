@@ -51,6 +51,7 @@ namespace Entidades
             X,
             A,
             B,
+            C,
             NC_A,
             NC_B,
             NC_C

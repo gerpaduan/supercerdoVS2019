@@ -36,8 +36,8 @@ namespace wsAFIPvs2008
         Entidades.Venta oVentaE; 
         Negocio.Venta oVentaN = new Negocio.Venta();
         Negocio.Persona oPersonaN = new Negocio.Persona();
-        Entidades.FacturaElectronica oFactuElec;
-        Entidades.FacturaElectronica oNotaCredito;
+        public Entidades.FacturaElectronica oFactuElec;
+        public Entidades.FacturaElectronica oNotaCredito;
         Entidades.Sucursal oSucursalEntidad = new Entidades.Sucursal();
         Entidades.Persona personaPadron = new Entidades.Persona();
         List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
@@ -1661,7 +1661,7 @@ namespace wsAFIPvs2008
             pdf_FacturaMetodo();
         }
 
-        private void pdf_FacturaMetodo()
+        public void pdf_FacturaMetodo()
         {
             Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
             string tipoDocumentoDesc = notaCredito ? "Nota Crédito" : "Factura";
@@ -1808,11 +1808,11 @@ namespace wsAFIPvs2008
             {
                 productosTable.AddCell(new PdfPCell(new Phrase(item.Corte.codigo.ToString() + " - " + item.Corte.corte, fontNormal)) { Border = 0 });
                 productosTable.AddCell(new PdfPCell(new Phrase(item.CantKg.ToString("F3"), fontNormal)) { Border = 0 });
-                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("F2"), fontNormal)) { Border = 0 });
+                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0 });
                 if (letraFactura == 'A')
-                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("F2"), fontNormal)) { Border = 0 });
+                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0 });
 
-                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("F2"), fontNormal)) { Border = 0 });
+                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0 });
 
             }
 
@@ -1855,7 +1855,7 @@ namespace wsAFIPvs2008
                     {
                         totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                         totalTable.AddCell(new PdfPCell(new Phrase("Iva " + item.Iva + "%: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                        totalTable.AddCell(new PdfPCell(new Phrase(item.Importe.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                        totalTable.AddCell(new PdfPCell(new Phrase(item.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                     }
                 }
             }
@@ -1863,11 +1863,11 @@ namespace wsAFIPvs2008
             {
                 //totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 totalTable.AddCell(new PdfPCell(new Phrase("Subtotal: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteTotal.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             }
             totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
             totalTable.AddCell(new PdfPCell(new Phrase("Total: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-            totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteTotal.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteTotal.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
             documento.Add(totalTable);
 

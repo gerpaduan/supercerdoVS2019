@@ -12,6 +12,9 @@ using iTextSharp.text;
 using System.IO;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.draw;
+using System.Diagnostics;
+using System.Threading;
+using System.Globalization;
 
 namespace Presentacion.Caja
 {
@@ -749,12 +752,23 @@ namespace Presentacion.Caja
         #region imprimirRecibo
         public void GenerarPDF(string rutaDestino)
         {
-            ///TODO: verificar si esta facturado para mostrar la factura y no el remito
-            rutaDestino = rutaDestino + "\\" + oUltimaVenta.FechaVenta.ToString("yyyyMMdd") + " - Comprobante X - ID " + 
+            ///si es factura llamar a generador pdf de factura electronica
+            ///            
+            if (!oUltimaVenta.TipoComprobante.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString()))
+            {
+                wsAFIPvs2008.formFacturaElectronica  formFactElectronica = new wsAFIPvs2008.formFacturaElectronica();
+                formFactElectronica.oFactuElec = oVentaN.getFactuElecById(oVentaN.esVentaSinFacturar(oUltimaVenta.IdVenta, false));
+                formFactElectronica.pdf_FacturaMetodo();
+                formFactElectronica.Close();
+                return;
+            }
+
+            string ruta = rutaDestino;
+            string rutaPDF = rutaDestino + "\\" + oUltimaVenta.FechaVenta.ToString("yyyyMMdd") + " - Comprobante X - ID " + 
                 oUltimaVenta.IdVenta.ToString() + ".pdf";
 
             Document doc = new Document(PageSize.A4, 30, 30, 20, 20);
-            PdfWriter.GetInstance(doc, new FileStream(rutaDestino, FileMode.Create));
+            PdfWriter.GetInstance(doc, new FileStream(rutaPDF, FileMode.Create));
 
 
             doc.Open();
@@ -784,9 +798,9 @@ namespace Presentacion.Caja
             izquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
             izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Negocio"].ToString() + "\n", fuenteTitulo));
             izquierda.AddElement(new Paragraph(" ", fuenteRazonSocial));
-            izquierda.AddElement(new Paragraph("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
-            izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
-            izquierda.AddElement(new Paragraph("Cond.IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
+            //izquierda.AddElement(new Paragraph("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
+            //izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
+            //izquierda.AddElement(new Paragraph("Cond.IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
             cabecera.AddCell(izquierda);
 
             PdfPCell centro = new PdfPCell();
@@ -809,9 +823,9 @@ namespace Presentacion.Caja
 
             derecha.AddElement(new Paragraph("N°Comprobante: " + oUltimaVenta.Sucursal.idSucursal.ToString() + " - " + oUltimaVenta.IdVenta.ToString() + "\n", fuenteNegrita));
             derecha.AddElement(new Paragraph("Fecha: " + oUltimaVenta.FechaVenta.Date.ToString("dd/MM/yyyy") + "\n\n", fuenteNormal));
-            derecha.AddElement(new Paragraph(ConfigurationManager.AppSettings["IIBB"] + "\n", fuenteNormal));
-            derecha.AddElement(new Paragraph("CUIT: " + ConfigurationManager.AppSettings["cuit"] + "\n", fuenteNormal));
-            derecha.AddElement(new Paragraph("Inicio Act.: " + ConfigurationManager.AppSettings["InicioActividades"] + "\n", fuenteNormal));
+            //derecha.AddElement(new Paragraph(ConfigurationManager.AppSettings["IIBB"] + "\n", fuenteNormal));
+            //derecha.AddElement(new Paragraph("CUIT: " + ConfigurationManager.AppSettings["cuit"] + "\n", fuenteNormal));
+            //derecha.AddElement(new Paragraph("Inicio Act.: " + ConfigurationManager.AppSettings["InicioActividades"] + "\n", fuenteNormal));
 
             cabecera.AddCell(derecha);
 
@@ -875,46 +889,57 @@ namespace Presentacion.Caja
                 productosTable.AddCell(celda);
             }
 
-            //productosTable.AddCell(new PdfPCell(new Phrase("Descripción", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-            //productosTable.AddCell(new PdfPCell(new Phrase("Cantidad", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-            //productosTable.AddCell(new PdfPCell(new Phrase("Precio Un.", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-            //if (letraFactura == 'A')
-            //    productosTable.AddCell(new PdfPCell(new Phrase("Alicuota Iva", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-
-            //productosTable.AddCell(new PdfPCell(new Phrase("Importe", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-
-
-
-            //coomento xq lo traigo de formFacturaElectornica
-            //oDocumentoImprimir.Venta = oDocumentoImprimir.Venta == null ? oVentaE : oDocumentoImprimir.Venta;
-
             foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
             {
                 productosTable.AddCell(new PdfPCell(new Phrase(item.Corte.codigo.ToString() + " - " + item.Corte.corte, fontNormal)) { Border = 0 });
                 productosTable.AddCell(new PdfPCell(new Phrase(item.CantKg.ToString("F3"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("F2"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 if (letraFactura == 'A')
-                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("F2"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
-                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("F2"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
             }
 
             doc.Add(productosTable);
 
-            ///TODO: cargar los total - ¿inmediato al fin de productos para ahorrar hoja?
-
-            int cantLineasVacias = Convert.ToInt32(ConfigurationManager.AppSettings["cantLineasVacias"].ToString());
-            //se le resta la cantidad e alicuota - 1 para evitar que pise el QR
-            cantLineasVacias -= (oDocumentoImprimir.Venta.LineasVenta.Count - 1);
-            for (int i = 0; i < cantLineasVacias; i++)
-                doc.Add(new iTextSharp.text.Paragraph("\n"));
-
             #endregion
 
+            // Agregar la línea al doc
+            doc.Add(linea);
+            doc.Add(new iTextSharp.text.Paragraph("\n"));
 
+            // Totales
+            PdfPTable totalTable = new PdfPTable(3);
+            totalTable.WidthPercentage = 100;
+            totalTable.SetWidths(new float[] { 5f, 1f, 1f });
+
+            totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            totalTable.AddCell(new PdfPCell(new Phrase("Total: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.Venta.TotalImporte.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+            doc.Add(totalTable);
+
+            // Agregar la línea al doc
+            doc.Add(linea);
+
+            doc.Add(new iTextSharp.text.Paragraph(" "));
+
+            // Obs
+            PdfPTable obs = new PdfPTable(3);
+            obs.WidthPercentage = 100;
+            obs.SetWidths(new float[] { 5f, 1f, 1f });
+            string observaciones = string.IsNullOrEmpty(txtObservaciones.Text) ? "" : "obs:  " + txtObservaciones.Text;
+            obs.AddCell(new PdfPCell(new Phrase(observaciones, fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+            obs.AddCell(new PdfPCell(new Phrase("", fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+            obs.AddCell(new PdfPCell(new Phrase("", fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+
+            doc.Add(obs);
 
             doc.Close();
+
+            //// Usar Process.Start para abrir el PDF
+            Process.Start(new ProcessStartInfo(rutaPDF) { UseShellExecute = true });
         }
 
         // Funciones auxiliares
