@@ -1687,11 +1687,20 @@ namespace wsAFIPvs2008
             documento.Open();
 
             // Fuentes y estilos
+            // Fuentes y estilos
             var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16);
             var fontSubTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
             var fontNormal = FontFactory.GetFont(FontFactory.HELVETICA, 10);
             var fontComments = FontFactory.GetFont(FontFactory.HELVETICA, 8);
             var fontNormalBold = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+
+            var colorRojo = new BaseColor(174, 0, 0);
+            var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, colorRojo);
+            var fuenteRazonSocial = FontFactory.GetFont(FontFactory.HELVETICA, 8);
+            var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
+            var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+            var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
+            var fuenteFooter = FontFactory.GetFont(FontFactory.HELVETICA, 7);
 
             // Crear una tabla para el membrete
             PdfPTable tablaMembrete = new PdfPTable(3);
@@ -1712,76 +1721,99 @@ namespace wsAFIPvs2008
             //tablaMembrete.AddCell(celdaLogo);
 
             PdfPCell celdamembreteIzquierda = new PdfPCell();
-            //celdamembreteIzquierda.Border = iTextSharp.text.Rectangle.RECTANGLE;
-            celdamembreteIzquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
-            celdamembreteIzquierda.HorizontalAlignment = Element.ALIGN_CENTER;
-            celdamembreteIzquierda.VerticalAlignment = Element.ALIGN_CENTER;
-
-            Phrase membreteIzquierda = new Phrase();
-            membreteIzquierda.Add(new Chunk("\n" + ConfigurationManager.AppSettings["Negocio"].ToString() + "\n\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 20)));
-            membreteIzquierda.Add(new Chunk("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteIzquierda.Add(new Chunk(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteIzquierda.Add(new Chunk("Condición frente al IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            celdamembreteIzquierda.AddElement(membreteIzquierda);
-            tablaMembrete.AddCell(celdamembreteIzquierda);
-
-            // Celda tipo Factura
-            PdfPCell celdaTipoFactura = new PdfPCell();
-            //celdaTipoFactura.Border = iTextSharp.text.Rectangle.RECTANGLE;
-            celdaTipoFactura.Border = iTextSharp.text.Rectangle.NO_BORDER;
-            celdaTipoFactura.HorizontalAlignment = Element.ALIGN_CENTER;
-            celdaTipoFactura.VerticalAlignment = Element.ALIGN_TOP;
 
             Phrase tipoFactura = new Phrase();
             char letraFactura = oDocumentoImprimir.DescTipoCbteAfip[oDocumentoImprimir.DescTipoCbteAfip.Length - 1];
             string letraFacturaEncabezado = "  " + letraFactura + "  ";
             String codFactura = "COD." + (oDocumentoImprimir.CodTipoCbteAfip < 10 ? ("0" + oDocumentoImprimir.CodTipoCbteAfip.ToString()) : oDocumentoImprimir.CodTipoCbteAfip.ToString());
             string descComprobante = oDocumentoImprimir.DescTipoCbteAfip.Substring(0, oDocumentoImprimir.DescTipoCbteAfip.Length - 1);
-            tipoFactura.Add(new Chunk(letraFacturaEncabezado, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 15)));
-            tipoFactura.Add(new Chunk(codFactura, FontFactory.GetFont(FontFactory.HELVETICA, 7)));
-            celdaTipoFactura.AddElement(tipoFactura);
-            tablaMembrete.AddCell(celdaTipoFactura);
+            
+            // ---------- CABECERA: tabla 3 columnas ----------
+            PdfPTable cabecera = new PdfPTable(3);
+            cabecera.WidthPercentage = 100;
+            cabecera.SetWidths(new float[] { 40f, 20f, 40f });
 
-            // Celda Membrete derecha
-            PdfPCell celdamembreteDerecha = new PdfPCell();
-            //celdamembreteDerecha.Border = iTextSharp.text.Rectangle.RECTANGLE;
-            celdamembreteDerecha.Border = iTextSharp.text.Rectangle.NO_BORDER;
-            celdamembreteDerecha.HorizontalAlignment = Element.ALIGN_CENTER;
+            // Columna izquierda: nombre empresa y dirección
+            PdfPCell izquierda = new PdfPCell();
+            izquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            izquierda.HorizontalAlignment = Element.ALIGN_LEFT;
+            izquierda.VerticalAlignment = Element.ALIGN_TOP;
+            izquierda.PaddingTop = 0;
+            izquierda.PaddingBottom = 0;
 
-            Phrase membreteDerecha = new Phrase();
-            membreteDerecha.Add(new Chunk(descComprobante.ToUpper() + "\n", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12)));
-            membreteDerecha.Add(new Chunk("Punto de Venta: " + oDocumentoImprimir.PtoVtaAfip + "   Comp.Nro: " + oDocumentoImprimir.NroCbteAfip + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk("Fecha de Emisión: " + oDocumentoImprimir.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") + "\n\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk("CUIT: " + ConfigurationManager.AppSettings["cuit"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk(ConfigurationManager.AppSettings["IIBB"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            membreteDerecha.Add(new Chunk(ConfigurationManager.AppSettings["InicioActividades"].ToString() + "\n", FontFactory.GetFont(FontFactory.HELVETICA, 9)));
-            celdamembreteDerecha.AddElement(membreteDerecha);
-            tablaMembrete.AddCell(celdamembreteDerecha);
 
-            // Agregar la tabla al documento
-            documento.Add(tablaMembrete);
+            izquierda.AddElement(new iTextSharp.text.Paragraph(ConfigurationManager.AppSettings["Negocio"].ToString() + "\n", fuenteTitulo));
+            izquierda.AddElement(new iTextSharp.text.Paragraph(" ", fuenteRazonSocial));
+            izquierda.AddElement(new iTextSharp.text.Paragraph("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
+            izquierda.AddElement(new iTextSharp.text.Paragraph(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
+            izquierda.AddElement(new iTextSharp.text.Paragraph("Cond.IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
+            cabecera.AddCell(izquierda);
+
+            PdfPCell centro = new PdfPCell();
+            centro.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            centro.VerticalAlignment = Element.ALIGN_TOP; // esto sí funciona
+
+            // Usá un iTextSharp.text.Paragraph con alineación centrada
+            iTextSharp.text.Paragraph parrafoCentro = new iTextSharp.text.Paragraph();
+            parrafoCentro.Alignment = Element.ALIGN_CENTER;
+            parrafoCentro.Add(new Chunk(letraFactura, fuenteX));
+            parrafoCentro.Add(new Chunk("\n"+codFactura, fuenteFooter));
+
+            centro.AddElement(parrafoCentro);
+            cabecera.AddCell(centro);
+
+            // Columna derecha: número, fecha, cuit, etc.
+            PdfPCell derecha = new PdfPCell();
+            derecha.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            derecha.HorizontalAlignment = Element.ALIGN_RIGHT;
+            derecha.VerticalAlignment = Element.ALIGN_TOP; // esto sí funciona
+            derecha.AddElement(new iTextSharp.text.Paragraph(descComprobante.ToUpper() + "\n", fuenteNegrita));
+            derecha.AddElement(new iTextSharp.text.Paragraph("Punto de Venta: " + oDocumentoImprimir.PtoVtaAfip + "   Comp.Nro: " + oDocumentoImprimir.NroCbteAfip + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph("Fecha de Emisión: " + oDocumentoImprimir.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph(ConfigurationManager.AppSettings["IIBB"] + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph("CUIT: " + ConfigurationManager.AppSettings["cuit"] + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph("Inicio Act.: " + ConfigurationManager.AppSettings["InicioActividades"] + "\n", fuenteNormal));
+
+            cabecera.AddCell(derecha);
+
+            documento.Add(cabecera);
+
             //documento.Add(new Paragraph("\n")); // Añadir un espacio después del membrete
 
             // Crear un LineSeparator para la línea horizontal
-            LineSeparator line = new LineSeparator(1f, 100f, BaseColor.BLACK, Element.ALIGN_CENTER, 0);
+            //LineSeparator line = new LineSeparator(1f, 100f, BaseColor.BLACK, Element.ALIGN_CENTER, 0);
+
+            LineSeparator line = new LineSeparator(1.5f, 100f, BaseColor.GRAY, Element.ALIGN_CENTER, -6);
             // Agregar la línea al documento
             documento.Add(new Chunk(line));
-            documento.Add(new Chunk(line));
+            //documento.Add(new Chunk(line));
 
-            //// Información del Cliente
+            //documento.Add(new iTextSharp.text.Paragraph(" ")); // Espacio
+            documento.Add(new Phrase(Chunk.NEWLINE));
+            // ------------------------
+            // Uso en la factura
             PdfPTable clienteTable = new PdfPTable(1);
             clienteTable.WidthPercentage = 100;
-            clienteTable.SetWidths(new float[] { 1f });
 
-            string datosCliente = "CUIT:   " + oDocumentoImprimir.NroDocAfip +
-                "              Apellido y Nombre/Razón Social:   " + oDocumentoImprimir.RazonSocialAFIP.ToUpper() +
-                "\n\nCondición frente al IVA:   " + comboIva.Text + //oDocumentoImprimir.CondicionIvaAFIP.ToUpper() + 
-                "\n\nDomicilio :   " + oDocumentoImprimir.DomicilioAFIP.ToUpper() +
-                "\n\nCondición de venta:   " + txtFormaPago.Text.ToUpper() +
-                "                                    " + txtNroFacturaNotaCredito.Text; //oDocumentoImprimir.CondicionVenta.ToUpper();
+            PdfPCell cell = new PdfPCell();
+            cell.Border = iTextSharp.text.Rectangle.NO_BORDER;
+            cell.Padding = 0;
 
-            clienteTable.AddCell(new PdfPCell(new Phrase(datosCliente, fontNormal)) { Border = 0 });
+            // Agregar cada línea usando la función auxiliar
+            cell.AddElement(CrearLinea("CUIT", oDocumentoImprimir.NroDocAfip));
+            cell.AddElement(CrearLinea("Denominación", oDocumentoImprimir.RazonSocialAFIP.ToUpper()));
+            cell.AddElement(CrearLinea("Cond. IVA", comboIva.Text));
+            cell.AddElement(CrearLinea("Domicilio", oDocumentoImprimir.DomicilioAFIP.ToUpper()));
+            cell.AddElement(CrearLinea("Cond. Venta", txtFormaPago.Text.ToUpper() + "    " + txtNroFacturaNotaCredito.Text));
+
+            // Agregar celda a la tabla
+            clienteTable.AddCell(cell);
             documento.Add(clienteTable);
+
+            documento.Add(new Chunk(line));
+
+            //documento.Add(new iTextSharp.text.Paragraph(" ")); // Espacio
+            documento.Add(new Phrase(Chunk.NEWLINE));
 
             #region tabla de productos
 
@@ -1794,25 +1826,31 @@ namespace wsAFIPvs2008
             else
                 productosTable.SetWidths(new float[] { 6f, 2f, 2f, 2f });
 
-            productosTable.AddCell(new PdfPCell(new Phrase("Descripción", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-            productosTable.AddCell(new PdfPCell(new Phrase("Cantidad", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-            productosTable.AddCell(new PdfPCell(new Phrase("Precio Un.", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
-            if (letraFactura == 'A')
-                productosTable.AddCell(new PdfPCell(new Phrase("Alicuota Iva", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+            string[] headers = { "Descripción", "Cantidad", "Precio Un", "Importe" }; 
 
-            productosTable.AddCell(new PdfPCell(new Phrase("Importe", fontNormalBold)) { BorderWidthTop = 1, BorderWidthBottom = 1 });
+            if (letraFactura == 'A')
+                headers = new string[] { "Descripción", "Cantidad", "Precio Un", "Alicuota Iva", "Importe" };
+
+            foreach (var h in headers)
+            {
+                var celda = new PdfPCell(new Phrase(h, fuenteNegrita));
+                celda.BackgroundColor = new BaseColor(255, 200, 200);
+                celda.HorizontalAlignment = Element.ALIGN_CENTER;
+                celda.Border = iTextSharp.text.Rectangle.NO_BORDER;
+                productosTable.AddCell(celda);
+            }
 
             oDocumentoImprimir.Venta = oDocumentoImprimir.Venta == null ? oVentaE : oDocumentoImprimir.Venta;
 
             foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
             {
                 productosTable.AddCell(new PdfPCell(new Phrase(item.Corte.codigo.ToString() + " - " + item.Corte.corte, fontNormal)) { Border = 0 });
-                productosTable.AddCell(new PdfPCell(new Phrase(item.CantKg.ToString("F3"), fontNormal)) { Border = 0 });
-                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0 });
+                productosTable.AddCell(new PdfPCell(new Phrase(item.CantKg.ToString("F3"), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                productosTable.AddCell(new PdfPCell(new Phrase(item.PrecioKg.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 if (letraFactura == 'A')
-                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0 });
+                    productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
-                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0 });
+                productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
             }
 
@@ -1830,7 +1868,7 @@ namespace wsAFIPvs2008
             PdfPTable importeTextoTable = new PdfPTable(1);
             importeTextoTable.WidthPercentage = 100;
             importeTextoTable.SetWidths(new float[] { 1f });
-            importeTextoTable.AddCell(new PdfPCell(new Phrase(ConvertirMontoEnTexto(Convert.ToDecimal(oVentaE.TotalImporte)), fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+            importeTextoTable.AddCell(new PdfPCell(new Phrase(ConvertirMontoEnTexto(Convert.ToDecimal(oFactuElec.Venta.TotalImporte)), fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
             documento.Add(importeTextoTable);
 
             // Agregar la línea al documento
@@ -1847,7 +1885,7 @@ namespace wsAFIPvs2008
             {
                 //totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 totalTable.AddCell(new PdfPCell(new Phrase("Neto s/iva: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteNetoGravado.ToString("F2"), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteNetoGravado.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
                 foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
                 {
@@ -1876,15 +1914,18 @@ namespace wsAFIPvs2008
 
             documento.Add(new iTextSharp.text.Paragraph(" "));
 
-            // Insertar el código QR en el documento PDF
+            // Crear imagen QR
             iTextSharp.text.Image qrImage = iTextSharp.text.Image.GetInstance(GenerateQRCode());
-            // Configurar la posición del QR en la esquina inferior izquierda
-            float xPosition = documento.LeftMargin; // Considera el margen izquierdo
-            float yPosition = documento.BottomMargin + (100 / 2); // Considera el margen inferior
-            qrImage.SetAbsolutePosition(xPosition, yPosition); // Esquina inferior izquierda
-            qrImage.ScaleAbsolute(100, 100); // Ajustar el tamaño del QR
-
+            // Escalar a 100x100 px
+            qrImage.ScaleAbsolute(100, 100);
+            // Posicionar en la esquina inferior izquierda dentro de márgenes
+            float xPosition = documento.LeftMargin;          // borde izquierdo del área imprimible
+            float yPosition = documento.BottomMargin;        // borde inferior del área imprimible
+            qrImage.SetAbsolutePosition(xPosition, yPosition);
+            // Agregar al documento
             documento.Add(qrImage);
+
+
             // Información del CAE
             // Totales
             PdfPTable infoCAE = new PdfPTable(1);
@@ -1897,17 +1938,27 @@ namespace wsAFIPvs2008
             // Cerrar el documento
             documento.Close();
 
-            if (MessageBox.Show("¿Abrir ubicación del archivo?",
-                    "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
-            {
-                //Abre ubicacion
-                Process.Start("explorer.exe", @ruta);
-                Thread.Sleep(1500); // Pausa por 3000 milisegundos (3 segundos)
-            }
+            //if (MessageBox.Show("¿Abrir ubicación del archivo?",
+            //        "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1).Equals(DialogResult.Yes))
+            //{
+            //    //Abre ubicacion
+            //    Process.Start("explorer.exe", @ruta);
+            //    Thread.Sleep(1500); // Pausa por 3000 milisegundos (3 segundos)
+            //}
 
             // Usar Process.Start para abrir el PDF
             Process.Start(new ProcessStartInfo(rutaPDF) { UseShellExecute = true });
             #endregion
+        }
+        // Función auxiliar para crear línea de cliente
+        private Phrase CrearLinea(string etiqueta, string valor, float tamEtiqueta = 9, float tamValor = 9)
+        {
+            Phrase linea = new Phrase();
+            // Etiqueta en negrita
+            linea.Add(new Chunk(etiqueta + ":   ", FontFactory.GetFont(FontFactory.HELVETICA_BOLD, tamEtiqueta)));
+            // Valor normal
+            linea.Add(new Chunk(valor + "\n", FontFactory.GetFont(FontFactory.HELVETICA, tamValor)));
+            return linea;
         }
 
         public byte[] GenerateQRCode()
@@ -1936,7 +1987,14 @@ namespace wsAFIPvs2008
             long _nroDocRec = string.IsNullOrEmpty(oDocumentoImprimir.NroDocAfip) ? 0 : long.Parse(oDocumentoImprimir.NroDocAfip);
             long _codAut = long.Parse(oDocumentoImprimir.CAE1);
             int _ptoVta = Convert.ToInt32(oDocumentoImprimir.PtoVtaAfip);
-            int _tipoDocRec = Convert.ToInt32(TipoDocCMB.SelectedValue.ToString());
+
+            //TODO: mejorar la obtenendo del idTipoDoc (CUIT, DNI, DOC)
+            //80 CUIT
+            //96 DNI
+            //99 Doc. (otro)
+            int _tipoDocRec = oDocumentoImprimir.TipoDocAfip.Equals("CUIT") ? 80:
+                oDocumentoImprimir.TipoDocAfip.Equals("DNI") ? 86 : 99; //= Convert.ToInt32(TipoDocCMB.SelectedValue.ToString());
+
             decimal _importe = Convert.ToDecimal(oDocumentoImprimir.ImporteTotal);
             var qrData = new
             {
