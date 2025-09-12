@@ -1695,7 +1695,7 @@ namespace wsAFIPvs2008
             var fontNormalBold = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
 
             var colorRojo = new BaseColor(174, 0, 0);
-            var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, colorRojo);
+            var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 33, colorRojo);
             var fuenteRazonSocial = FontFactory.GetFont(FontFactory.HELVETICA, 8);
             var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
             var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
@@ -1741,13 +1741,22 @@ namespace wsAFIPvs2008
             izquierda.PaddingTop = 0;
             izquierda.PaddingBottom = 0;
 
+            // Armamos un único párrafo con todo el contenido
+            iTextSharp.text.Paragraph parrafoIzq = new iTextSharp.text.Paragraph();
+            parrafoIzq.Alignment = Element.ALIGN_LEFT;
 
-            izquierda.AddElement(new iTextSharp.text.Paragraph(ConfigurationManager.AppSettings["Negocio"].ToString() + "\n", fuenteTitulo));
-            izquierda.AddElement(new iTextSharp.text.Paragraph(" ", fuenteRazonSocial));
-            izquierda.AddElement(new iTextSharp.text.Paragraph("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
-            izquierda.AddElement(new iTextSharp.text.Paragraph(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
-            izquierda.AddElement(new iTextSharp.text.Paragraph("Cond.IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
+            parrafoIzq.Add(new Chunk("\n" + ConfigurationManager.AppSettings["Negocio"].ToString() + "\n\n", fuenteTitulo));
+            parrafoIzq.Add(new Chunk("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
+            parrafoIzq.Add(new Chunk(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " +
+                                    ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
+            parrafoIzq.Add(new Chunk("Cond. IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
+
+            // Agregamos el párrafo a la celda
+            izquierda.AddElement(parrafoIzq);
+
+            // Agregamos la celda a la tabla
             cabecera.AddCell(izquierda);
+
 
             PdfPCell centro = new PdfPCell();
             centro.Border = iTextSharp.text.Rectangle.NO_BORDER;
@@ -1784,12 +1793,12 @@ namespace wsAFIPvs2008
             //LineSeparator line = new LineSeparator(1f, 100f, BaseColor.BLACK, Element.ALIGN_CENTER, 0);
 
             LineSeparator line = new LineSeparator(1.5f, 100f, BaseColor.GRAY, Element.ALIGN_CENTER, -6);
+
             // Agregar la línea al documento
             documento.Add(new Chunk(line));
-            //documento.Add(new Chunk(line));
+            AgregarSalto(documento, 8f);
 
-            //documento.Add(new iTextSharp.text.Paragraph(" ")); // Espacio
-            documento.Add(new Phrase(Chunk.NEWLINE));
+
             // ------------------------
             // Uso en la factura
             PdfPTable clienteTable = new PdfPTable(1);
@@ -1810,10 +1819,14 @@ namespace wsAFIPvs2008
             clienteTable.AddCell(cell);
             documento.Add(clienteTable);
 
+
+            // Agregar la línea al documento
+            AgregarSalto(documento, 3f);
             documento.Add(new Chunk(line));
+            AgregarSalto(documento, 8f);
 
             //documento.Add(new iTextSharp.text.Paragraph(" ")); // Espacio
-            documento.Add(new Phrase(Chunk.NEWLINE));
+            //documento.Add(new Phrase(Chunk.NEWLINE));
 
             #region tabla de productos
 
@@ -1959,6 +1972,15 @@ namespace wsAFIPvs2008
             // Valor normal
             linea.Add(new Chunk(valor + "\n", FontFactory.GetFont(FontFactory.HELVETICA, tamValor)));
             return linea;
+        }
+
+        public static void AgregarSalto(Document documento, float alto)
+        {
+            // Creamos un párrafo vacío con altura fija (leading)
+            iTextSharp.text.Paragraph salto = new iTextSharp.text.Paragraph(" ");
+            salto.Leading = alto; // altura en puntos
+
+            documento.Add(salto);
         }
 
         public byte[] GenerateQRCode()
