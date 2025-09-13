@@ -29,5 +29,6 @@ namespace Entidades
         public static bool loginRapidoStock;		// 1 : Si | 0: No
         public static int diasLimitFechaDesde;//	Cuantos días hacia atrás se pueden consultar sin permisos los registros de Movimientos y Elaborados
         public static int importeMaxRedondeo;//	Cuantos días hacia atrás se pueden consultar sin permisos los registros de Movimientos y Elaborados
+        public static int idPagoCobroEgresoCaja;//idPago (Recibi de / Pagar a..) registro en Cta.Cte Reservado para los Egresos de Caja
     }
 }

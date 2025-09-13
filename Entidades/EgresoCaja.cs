@@ -9,11 +9,11 @@ namespace Entidades
     {
         public static int idPagoTarjeta = Entidades.Parametros.idPagoTarjetaEgresoCaja;
         public static int idCtaCte = Entidades.Parametros.idCtaCteEgresoCaja;
-        
+
         public bool esEgresoCtaCte(int idTipoEgreso)
         {
             //100 es el IdTipoEgresoCaja para CtaCte
-            return idTipoEgreso.Equals(idCtaCte);
+            return (idTipoEgreso.Equals(idCtaCte) || idTipoEgreso.Equals(Entidades.Parametros.idPagoCobroEgresoCaja));
         }
 
         public enum tablas

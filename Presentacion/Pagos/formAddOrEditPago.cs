@@ -36,6 +36,7 @@ namespace Presentacion.Pagos
         Entidades.Pago oPagoSinMod = new Entidades.Pago();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         public Entidades.Usuario oUsuario;
+        public Entidades.CierreCaja oCierreCajaE;
 
         public int idPago = 0;
         bool comboSucursalCargada = false;
@@ -320,6 +321,7 @@ namespace Presentacion.Pagos
                         return;
                     }
 
+
                     if (readOnly)
                     {
                         formNuevoPago_Load(null, null);
@@ -330,6 +332,21 @@ namespace Presentacion.Pagos
 
                     cargarPago();
 
+                    ///si se llama desde POS validar que la fecha de pago sea mayor a la fecha de apertura caja
+                    ///
+                    if(!(oCierreCajaE != null && oCierreCajaE.Id > 0 && 
+                        oPagoE.Fecha >= oCierreCajaE.FechaHoraInicio && oPagoE.Fecha <= DateTime.Now))
+                    {
+                        MessageBox.Show(
+                               $"La fecha del pago debe ser posterior a la fecha de apertura de caja {oCierreCajaE.FechaHoraInicio}" +
+                               $"\n\nEl pago debe ser modificado por un usuario con el permiso correspondiente desde el menú Finanzas/Pagos ",
+                               "Validación de fecha",
+                               MessageBoxButtons.OK,
+                               MessageBoxIcon.Warning
+                           );
+                        return;
+                    }
+
                     if (!huboModificaciones())
                         return;
 
@@ -337,10 +354,11 @@ namespace Presentacion.Pagos
 
                     oPagoE = oCtaCteN.addOrEditPago(oPagoE);
 
-                    //Cuenta Corriente
+                    ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
+                    ///
                     try
                     {
-                        oCtaCteN.crearMovCtaCtePago(oPagoE);
+                        oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE);
                     }
                     catch (Exception ex)
                     {

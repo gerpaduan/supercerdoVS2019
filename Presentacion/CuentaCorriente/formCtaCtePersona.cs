@@ -19,6 +19,7 @@ namespace Presentacion.CuentaCorriente
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         public Entidades.Usuario oUsuario;
+        public Entidades.CierreCaja oCierreCajaE;
 
         public int idPersona;
         DataTable dtMov;
@@ -182,6 +183,7 @@ namespace Presentacion.CuentaCorriente
                         Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
                         frmAddOrEditPago.idPago = idTabla;
                         frmAddOrEditPago.desdePOS = desdePOS;
+                        frmAddOrEditPago.oCierreCajaE = oCierreCajaE;
                         frmAddOrEditPago.Show();
                         break;
                     default:
@@ -238,6 +240,7 @@ namespace Presentacion.CuentaCorriente
             frmAddOrEditPago.oPersonaE = oPersonaE;
             frmAddOrEditPago.oUsuario = desdePOS ? oUsuario : null;//forzo que fuera de POS se llame al logueo
             frmAddOrEditPago.desdePOS = desdePOS;
+            frmAddOrEditPago.oCierreCajaE = oCierreCajaE;
             frmAddOrEditPago.ShowDialog();
         }
         

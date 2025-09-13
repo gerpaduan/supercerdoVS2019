@@ -136,7 +136,9 @@ namespace Negocio
                     case "importeMaxRedondeo":
                         Entidades.Parametros.importeMaxRedondeo = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
                         break;
-
+                    case "idPagoCobroEgresoCaja":
+                        Entidades.Parametros.idPagoCobroEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     default:
                         break;
                 }

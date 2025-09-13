@@ -466,7 +466,7 @@ namespace Presentacion.Caja
                 Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
                 oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
-                oEgresoCajaE.IdTipoEgresoCaja = 100;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idCtaCteEgresoCaja;
                 oEgresoCajaE.Descripcion = "Venta a " + oVentaConEgresoCaja.Persona.razonSocial + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
                 oEgresoCajaE.Monto = oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
                 oEgresoCajaE.Detalle = oVentaConEgresoCaja.Observaciones;
@@ -3347,6 +3347,7 @@ namespace Presentacion.Caja
                 frmCtaCtePersona.idPersona = oCliente.idPersona;
                 frmCtaCtePersona.oUsuario = oUsuario;
                 frmCtaCtePersona.desdePOS = true;
+                frmCtaCtePersona.oCierreCajaE = oCierreE;
                 frmCtaCtePersona.ShowDialog();
             }
             catch (Exception ex)

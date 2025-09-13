@@ -11,7 +11,14 @@
      **modificar este codigo idPagoTarjeta para hacer los egreso de caja venta. Ver de hacerlo general
 
     idPagoTarjeta de Cta Cte = 100
+
+	55	idPagoCobroEgresoCaja	300	idPago (Recibi de / Pagar a..) Reservado para los Egresos de Caja
+
+	agregar registro a talba tipo egreso
+	300	Pago/Cobro	1	NULL	NULL	1	NULL	NULL
 ##
+
+
 
 
 /////////////////
