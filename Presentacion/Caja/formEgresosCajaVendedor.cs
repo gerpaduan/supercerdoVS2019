@@ -38,7 +38,7 @@ namespace Presentacion.Caja
             grillaEgresosCaja.DataSource = oCierreN.getEgresosCajaVendedor(oCierreE);
             grillaEgresosCaja.Columns["Fecha"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
-            grillaEgresosCaja.Columns["Monto"].DefaultCellStyle.Format = "F2";
+            grillaEgresosCaja.Columns["Monto"].DefaultCellStyle.Format = "N2";
             grillaEgresosCaja.Columns["Creado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
             grillaEgresosCaja.Columns["Actualizado"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
 
@@ -56,7 +56,7 @@ namespace Presentacion.Caja
             }
             txtItems.Text = items.ToString();
             //Solo mostrar total monetario de egresos si es Cierre de Caja o el vendedor es administrador
-            txtTotalS.Text = oCierreE.FechaHoraCierre != null || oCierreE.UsuarioInicio.Admin  ? total.ToString("F2") : "-";
+            txtTotalS.Text = oCierreE.FechaHoraCierre != null || oCierreE.UsuarioInicio.Admin  ? total.ToString("N2") : "-";
         }
 
         private void btnCancelar_Click(object sender, EventArgs e)
@@ -122,9 +122,9 @@ namespace Presentacion.Caja
                 int idEgresoCaja = Convert.ToInt32(grillaEgresosCaja.CurrentRow.Cells["id"].Value.ToString());
                 oEgresoCajaE = oCierreN.getEgresoCajaById(idEgresoCaja);
 
-                ///si es Venta con tarjeta o Cta Cte se muestra la venta infoVenta
+                ///si es Venta con tarjeta o Cta Cte se muestra la venta infoVenta y NO es egreso por pago/cobro
                 if (oEgresoCajaE.Monto > 0 && (oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.EgresoCaja.idPagoTarjeta) ||
-                    oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja)))
+                    (!oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.Parametros.idPagoCobroEgresoCaja) && oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja))))
                 {
                     //Obtiene el ID de la Venta
                     string resultString = "";

@@ -95,6 +95,12 @@ namespace Presentacion.Pagos
                         oPagoE = oCtaCteN.getPagoById(idPago);
                         oPersonaE = oPagoE.Persona;
                         oPagoSinMod = oCtaCteN.getPagoById(idPago);
+                        
+                        //oPagoE.EfectivoUltimoPago = oPagoSinMod.FormaPago.Equals(Entidades.Pago.formasPago.EftvoCheque.ToString()) ?
+                        //    oPagoSinMod.Efectivo : (oPagoSinMod.FormaPago.Equals(Entidades.Pago.formasPago.Efectivo.ToString()) ?
+                        //    oPagoSinMod.Importe  : 0);
+                        //oPagoE.AProveddorUltimoValor = oPagoSinMod.AProveedor;
+
                         readOnly = true;
                         checkNroRecibo.Text = "Editar N°Recibo"; //solo cuando es un nuevo recibo se formatea su numero
                         checkNroRecibo.Checked = false;
@@ -377,7 +383,7 @@ namespace Presentacion.Pagos
                     ///
                     try
                     {
-                        oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE);
+                        oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
                     }
                     catch (Exception ex)
                     {
@@ -487,7 +493,26 @@ namespace Presentacion.Pagos
             }            
 
             if (!Util_Form.validarFecha(txtFechaPago.Value, "Fecha"))
-                return false; 
+                return false;
+
+            ///validar qeu si es Efvo y Cheque. Ambos tengan campos cargados
+            ///
+            if (comboTipoPago.Text.Equals("Eftvo+Cheque"))
+            {
+                if (grilla.Rows.Count == 0)
+                {
+                    MessageBox.Show("Debe ingresar el/los cheques que forman parte del pago.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtNroCheque.Focus();
+                    return false;
+                }
+                if ( (!decimal.TryParse(txtEfectivo.Text, out decimal valor) || valor <= 0))
+                {
+                    MessageBox.Show("Ingrese un importe en efectivo mayor a 0", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtEfectivo.Focus();
+                    txtEfectivo.SelectAll();
+                    return false;
+                }
+            }
 
             if (txtNroRecibo.Text == "" || txtPersona.Text == "" || comboTipoPago.Text == ""
                 || txtImporte.Text == "")
@@ -738,6 +763,7 @@ namespace Presentacion.Pagos
             if (oPagoE.Cheques == null || oPagoE.Cheques.Count == 0)
             {
                 grilla.DataSource = null;
+                txtTotalCheques.Text = "0";
                 return;
             }
 

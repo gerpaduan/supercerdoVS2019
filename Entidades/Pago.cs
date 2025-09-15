@@ -95,6 +95,21 @@ namespace Entidades
             set { efectivo = value; }
         }
 
+        /// <summary>
+        /// se guarda el último importe en efectivo para hacer la cancelación en los Egresos de Caja
+        /// cuando hay modificaciones en los pagos de cta cte realizados desde POS
+        /// 
+        /// </summary>
+        private float efectivoUltimoPago;
+        public float EfectivoUltimoPago
+        {
+            get { return efectivoUltimoPago; }
+            set { efectivoUltimoPago = value; }
+        }
+
+        private bool aProveddorUltimoValor;
+
+
         List<Entidades.Cheque> cheques;
         private string observaciones;
 
@@ -140,5 +155,6 @@ namespace Entidades
         }
 
         public List<Cheque> Cheques { get => cheques; set => cheques = value; }
+        public bool AProveddorUltimoValor { get => aProveddorUltimoValor; set => aProveddorUltimoValor = value; }
     }
 }

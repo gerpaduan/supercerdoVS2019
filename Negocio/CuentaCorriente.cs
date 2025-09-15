@@ -32,7 +32,7 @@ namespace Negocio
         public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha,
             Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
-            Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE)
+            Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE, Entidades.Pago oPagoAnterior)
         {
             Datos.CuentaCorriente oCtaCteN = new Datos.CuentaCorriente();
             Entidades.MovCtaCte oMovCtaCte = oCtaCteN.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
@@ -44,10 +44,6 @@ namespace Negocio
             }
             else
             {
-                ///TODO: cargar el egreso de caja por pago. lo pongo acá para tambien registar el archivo duplicado
-                ///
-
-
                 ///--si tiene mov cta cte y tiene el mismo TipoMov se actualiza                
                 ///--si tiene mov cta cte y es distinto tipo se crea un registro opuesto
                 ///-----
@@ -73,7 +69,7 @@ namespace Negocio
                                 return;
                             break;
                         case Entidades.MovCtaCte.tablas.Pagos:
-                            CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, true);
+                            CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoAnterior, true);
                             break;
                         case Entidades.MovCtaCte.tablas.MovCtaCte:
                             break;
@@ -189,13 +185,13 @@ namespace Negocio
             return oCtaCteD.obtenerPagos(texto, fechaDesde, fechaHasta);
         }
 
-        public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE)
+        public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoAnterior)
         {
             oPagoE = oCtaCteD.getPagoById(oPagoE.Id);
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
             oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
-                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE);
+                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior);
         }
 
         private static void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE, 
@@ -208,29 +204,32 @@ namespace Negocio
 
             Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
-            ///TODO: generar el registro anulacion correcto 
+            ///si es ANULACION recupera se carga el pago del importe en efectivo correspondiente al pago de esta caja abierta
+            ///
             string descripcionEgreso = esRegistroAnulacion ? "ANULACION: " : "";
-            descripcionEgreso = (oPagoE.AProveedor ? "Pago a " : "Cobro a ");
+            descripcionEgreso += (oPagoE.AProveedor ? "Pago a " : "Cobro a "); 
             string detalleEgreso = string.Empty;
-            float montoEgreso = esRegistroAnulacion ? oMovCtaCte.Importe * -1 : oPagoE.Importe;
+            float montoEgreso;
 
             switch (oPagoE.FormaPago.ToUpper())
             {
                 case "EFECTIVO":
                     montoEgreso = oPagoE.AProveedor ? oPagoE.Importe : (-1 * oPagoE.Importe);//se multiplica *-1 para que sume a la caja
-                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("F2");
+                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("N2");
                     break;
 
                 case "EFTVO+CHEQUE":
                     montoEgreso = oPagoE.AProveedor ? oPagoE.Efectivo : (-1 * oPagoE.Efectivo);//se multiplica *-1 para que sume a la caja
-                    detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("F2") + " | EF $" + oPagoE.Efectivo;
+                    detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("N2") + " | EF $" + oPagoE.Efectivo;
                     break;
 
                 default:
                     montoEgreso = 0;
-                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("F2");
+                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("N2");
                     break;
             }
+            ///si es anulación establezco el monto inverso
+            montoEgreso = esRegistroAnulacion ? montoEgreso * -1 : montoEgreso;
 
             descripcionEgreso += oPagoE.Persona.razonSocial + " - ID:" + oPagoE.Id.ToString() + detalleEgreso;
 
