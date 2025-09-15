@@ -32,9 +32,10 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
-                if (FormPrincipal.oUserLogueado == null || 
+                //si se llama desde POS se oculta el importe del Saldo
+                if (!desdePOS && (FormPrincipal.oUserLogueado == null || 
                     !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, this.Name, DateTime.Today, 
-                    Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                    Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
                     if (!formCargado)
@@ -48,6 +49,7 @@ namespace Presentacion.CuentaCorriente
 
                 //formato
                 grillaCtasCtes.Columns["Saldo"].DefaultCellStyle.Format = "N2";
+                grillaCtasCtes.Columns["Saldo"].Visible = !desdePOS;//si se llama desde POS se oculta el importe del Saldo
             }
             catch (Exception ex)
             {
@@ -71,7 +73,7 @@ namespace Presentacion.CuentaCorriente
             {
                 formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
                 frmCtaCtePersona.idPersona = Convert.ToInt32(grillaCtasCtes.CurrentRow.Cells["IdPersona"].Value.ToString());
-                frmCtaCtePersona.desdePOS = false;
+                frmCtaCtePersona.desdePOS = desdePOS;
                 frmCtaCtePersona.Show();
             }
             catch (Exception ex)

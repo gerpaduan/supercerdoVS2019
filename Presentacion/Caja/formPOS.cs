@@ -2282,6 +2282,7 @@ namespace Presentacion.Caja
                 case Keys.F2:
                     //ver ctas.ctes.
                     formCtasCtes frmCtasCtes = new formCtasCtes();
+                    frmCtasCtes.desdePOS = true;
                     frmCtasCtes.ShowDialog();
                     break;
                 case Keys.F3:
