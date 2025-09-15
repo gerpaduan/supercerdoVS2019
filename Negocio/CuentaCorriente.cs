@@ -32,7 +32,7 @@ namespace Negocio
         public void crearMovCtaCte(Entidades.Persona oPersonaE, DateTime fecha,
             Entidades.MovCtaCte.tablas tabla, int idTabla, string nroDoc, string detalle, Entidades.MovCtaCte.tipoMov tipoMov, float importe,
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
-            Entidades.Usuario actualizadoPor, bool crearMovCtaCte)
+            Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE)
         {
             Datos.CuentaCorriente oCtaCteN = new Datos.CuentaCorriente();
             Entidades.MovCtaCte oMovCtaCte = oCtaCteN.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
@@ -56,7 +56,7 @@ namespace Negocio
                     oMovCtaCte.Importe.Equals(oMovCtaCte.getImporte(importe,tipoMov))))
                 {
                     oMovCtaCte.Id = 0;
-                    oMovCtaCte.Detalle = "";
+                    oMovCtaCte.Detalle = "ANULACION";
                     oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     //se registra el registro opuesto
@@ -73,7 +73,7 @@ namespace Negocio
                                 return;
                             break;
                         case Entidades.MovCtaCte.tablas.Pagos:
-                            CargarEgresoCajaPorPago(oMovCtaCte);
+                            CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, true);
                             break;
                         case Entidades.MovCtaCte.tablas.MovCtaCte:
                             break;
@@ -95,6 +95,7 @@ namespace Negocio
                     oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     //se registra el registro opuesto
                     oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+                    CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, false);
 
                     //se crea la nueva instancia para el nuevo registro
                     oMovCtaCte = new Entidades.MovCtaCte();
@@ -119,6 +120,7 @@ namespace Negocio
             oMovCtaCte.ActualizadoPor = actualizadoPor;
 
             oCtaCteD.addOrEditMovCtaCte(oMovCtaCte);
+            CargarEgresoCajaPorPago(oMovCtaCte, oCierreCajaE, oPagoE, false);
         }
 
         #region Cheques
@@ -193,18 +195,24 @@ namespace Negocio
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
             oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
-                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true);
+                oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE);
         }
 
-        private static void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte)//Pago oPagoE, Entidades.CierreCaja oCierreCajaE)
+        private static void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE, 
+            Entidades.Pago oPagoE, bool esRegistroAnulacion)//Pago oPagoE, Entidades.CierreCaja oCierreCajaE)
         {
             ///Si se llama desde POS, generar el egreso de caja de pago/cobro
             ///
+            if ((oCierreCajaE == null || oCierreCajaE.Id == 0))
+                return;
+
             Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
-            string descripcionEgreso = oPagoE.AProveedor ? "Pago a " : "Cobro a ";
+            ///TODO: generar el registro anulacion correcto 
+            string descripcionEgreso = esRegistroAnulacion ? "ANULACION: " : "";
+            descripcionEgreso = (oPagoE.AProveedor ? "Pago a " : "Cobro a ");
             string detalleEgreso = string.Empty;
-            float montoEgreso = oPagoE.Importe;
+            float montoEgreso = esRegistroAnulacion ? oMovCtaCte.Importe * -1 : oPagoE.Importe;
 
             switch (oPagoE.FormaPago.ToUpper())
             {
@@ -220,7 +228,7 @@ namespace Negocio
 
                 default:
                     montoEgreso = 0;
-                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + montoEgreso.ToString("F2");
+                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("F2");
                     break;
             }
 

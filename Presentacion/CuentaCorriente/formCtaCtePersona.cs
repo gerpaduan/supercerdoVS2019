@@ -37,7 +37,7 @@ namespace Presentacion.CuentaCorriente
         {
             try
             {
-                oUsuario = desdePOS ? oUsuario : FormPrincipal.oUserLogueado;
+                oUsuario = desdePOS ? oCierreCajaE.UsuarioInicio : FormPrincipal.oUserLogueado;
                 if (!(oUsuarioN.tienePermiso(oUsuario, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo())))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
@@ -136,6 +136,7 @@ namespace Presentacion.CuentaCorriente
                 grillaMovCtaCte.Columns["tabla"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
                 grillaMovCtaCte.Columns["idTabla"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
                 grillaMovCtaCte.Columns["tipo"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+                grillaMovCtaCte.Columns["detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
                 //formato
                 grillaMovCtaCte.Columns["importe"].DefaultCellStyle.Format = "N2";

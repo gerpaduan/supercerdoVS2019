@@ -14,6 +14,7 @@ namespace Presentacion.CuentaCorriente
         Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         public bool desdePOS = false;
+        public Entidades.CierreCaja oCierreCajaE;
         bool formCargado = false;
         public formCtasCtes()
         {
@@ -74,6 +75,7 @@ namespace Presentacion.CuentaCorriente
                 formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
                 frmCtaCtePersona.idPersona = Convert.ToInt32(grillaCtasCtes.CurrentRow.Cells["IdPersona"].Value.ToString());
                 frmCtaCtePersona.desdePOS = desdePOS;
+                frmCtaCtePersona.oCierreCajaE = oCierreCajaE;
                 frmCtaCtePersona.Show();
             }
             catch (Exception ex)

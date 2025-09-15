@@ -332,19 +332,38 @@ namespace Presentacion.Pagos
 
                     cargarPago();
 
-                    ///si se llama desde POS validar que la fecha de pago sea mayor a la fecha de apertura caja
+                    ///si se llama desde POS validar que..
                     ///
-                    if(!(oCierreCajaE != null && oCierreCajaE.Id > 0 && 
-                        oPagoE.Fecha >= oCierreCajaE.FechaHoraInicio && oPagoE.Fecha <= DateTime.Now))
+                    if(!(oCierreCajaE != null && oCierreCajaE.Id > 0))
                     {
-                        MessageBox.Show(
+                        ///el usuario sea el mismo del ingreso de caja
+                        ///
+                        if (!(oCierreCajaE.UsuarioInicio.Id == oUsuario.Id))
+                        {
+                            MessageBox.Show(
+                               $"El Usuario ingresado debe ser el mismo que el usuario vendedor" +
+                               $"\nSino pago debe ser modificado por un usuario con el permiso correspondiente desde el menú Finanzas/Pagos ",
+                               "Validación de usuario",
+                               MessageBoxButtons.OK,
+                               MessageBoxIcon.Warning
+                           );
+                            return;
+                        }
+
+                        ///la fecha de pago sea mayor a la fecha de apertura caja
+                        ///
+                        if (!(oPagoE.Fecha >= oCierreCajaE.FechaHoraInicio && oPagoE.Fecha <= DateTime.Now))
+                        {
+                            MessageBox.Show(
                                $"La fecha del pago debe ser posterior a la fecha de apertura de caja {oCierreCajaE.FechaHoraInicio}" +
                                $"\n\nEl pago debe ser modificado por un usuario con el permiso correspondiente desde el menú Finanzas/Pagos ",
                                "Validación de fecha",
                                MessageBoxButtons.OK,
                                MessageBoxIcon.Warning
                            );
-                        return;
+                            return;
+                        }
+                            
                     }
 
                     if (!huboModificaciones())

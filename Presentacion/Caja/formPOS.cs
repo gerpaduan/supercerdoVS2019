@@ -2281,8 +2281,12 @@ namespace Presentacion.Caja
                     break;
                 case Keys.F2:
                     //ver ctas.ctes.
+                    if (estaBloqueado())
+                        break;
+
                     formCtasCtes frmCtasCtes = new formCtasCtes();
                     frmCtasCtes.desdePOS = true;
+                    frmCtasCtes.oCierreCajaE = oCierreE;
                     frmCtasCtes.ShowDialog();
                     break;
                 case Keys.F3:
@@ -3346,7 +3350,6 @@ namespace Presentacion.Caja
             {
                 formCtaCtePersona frmCtaCtePersona = new formCtaCtePersona();
                 frmCtaCtePersona.idPersona = oCliente.idPersona;
-                frmCtaCtePersona.oUsuario = oUsuario;
                 frmCtaCtePersona.desdePOS = true;
                 frmCtaCtePersona.oCierreCajaE = oCierreE;
                 frmCtaCtePersona.ShowDialog();
