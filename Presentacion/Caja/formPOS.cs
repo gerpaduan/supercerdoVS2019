@@ -1722,6 +1722,7 @@ namespace Presentacion.Caja
             //con clientes en cta cte.
             checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked = checkCtaCtePago.Checked = checkQr.Checked =
                     checkTransf.Checked =  false;
+            comboFormaPago.SelectedIndex = 0;
         }
 
         public void EnviarFormaPago(Entidades.Venta.formaPagoEnum formaPago)
