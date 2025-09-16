@@ -340,7 +340,7 @@ namespace Presentacion.Pagos
 
                     ///si se llama desde POS validar que..
                     ///
-                    if(!(oCierreCajaE != null && oCierreCajaE.Id > 0))
+                    if((oCierreCajaE != null && oCierreCajaE.Id > 0))
                     {
                         ///el usuario sea el mismo del ingreso de caja
                         ///
@@ -348,7 +348,7 @@ namespace Presentacion.Pagos
                         {
                             MessageBox.Show(
                                $"El Usuario ingresado debe ser el mismo que el usuario vendedor" +
-                               $"\nSino pago debe ser modificado por un usuario con el permiso correspondiente desde el menú Finanzas/Pagos ",
+                               $"\nSino el pago debe ser modificado por un usuario con el permiso correspondiente desde el menú Finanzas/Pagos ",
                                "Validación de usuario",
                                MessageBoxButtons.OK,
                                MessageBoxIcon.Warning
@@ -368,8 +368,7 @@ namespace Presentacion.Pagos
                                MessageBoxIcon.Warning
                            );
                             return;
-                        }
-                            
+                        }                            
                     }
 
                     if (!huboModificaciones())
