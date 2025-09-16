@@ -41,7 +41,8 @@ namespace Presentacion.Caja
             {
                     //Salir
                 case Keys.NumPad0:
-                    this.Close();
+                    Salir();
+                    //this.Close();
                     break;
                     //Sin Ticket
                 case Keys.NumPad1:
@@ -71,8 +72,9 @@ namespace Presentacion.Caja
                         enviarImprimirCbte();
                     break;
                 case Keys.Escape:
-                    imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
-                    enviarImprimirCbte();
+                    //imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
+                    //enviarImprimirCbte();
+                    Salir();
                     break;
                 default:
                     //imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
@@ -155,6 +157,11 @@ namespace Presentacion.Caja
         }
 
         private void btnSalir_Click(object sender, EventArgs e)
+        {
+            Salir();
+        }
+
+        private void Salir()
         {
             imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
             enviarImprimirCbte();

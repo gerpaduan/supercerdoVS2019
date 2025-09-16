@@ -48,6 +48,15 @@ namespace Presentacion.CuentaCorriente
                 Negocio.Persona oPersonaN = new Negocio.Persona();
                 oPersonaE = oPersonaN.findById(idPersona);
                 txtPersona.Text = oPersonaE.razonSocial;
+                ////Ocultar Ultimas Ventas para SuperCerdo si cliente es Empleado o Cliente tiene CtaCte por defecto
+                if ((FormPrincipal.soyYo && !oUsuario.Admin) &&
+                    (oPersonaE.CtaCte || oPersonaE.razonSocial.ToLower().Contains("empleado") || oPersonaE.razonSocial.ToLower().Contains("empleada")))
+                {
+                    MessageBox.Show("No se pueden modificar los registros de la Persona seleccionada.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    this.Close();
+                    return;
+                }
+
                 if (!oPersonaE.Identificacion.Equals(oPersonaE.razonSocial))
                     txtPersona.Text = oPersonaE.Identificacion + " / " + oPersonaE.razonSocial;
                 fechaDesdePick.Value = ultimaFechaDesde = limitFechaDesde;

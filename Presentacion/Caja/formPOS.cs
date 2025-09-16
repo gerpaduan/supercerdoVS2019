@@ -124,6 +124,12 @@ namespace Presentacion.Caja
         /// </summary>
         private bool asteriscoPressKey = false;
         bool valorAnteriorBalanza = false;
+
+        /// <summary>
+        /// formFormaPago mostrar una vez, si se cierra volver al mostrar al modificar venta
+        /// </summary>
+        bool mostrarFormaPago = true;
+        bool seIngresoFormaPago = false;
         #endregion
 
 
@@ -402,6 +408,7 @@ namespace Presentacion.Caja
                     }
                     ultimaVentaVendedor();
 
+                    mostrarFormaPago = true;
                     //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
                     if (!oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
                         ingresarFormaPago();
@@ -797,7 +804,7 @@ namespace Presentacion.Caja
         private bool ingresarFormaPago()
         {
             bool resp = true;
-            if (string.IsNullOrEmpty(oVentaE.FormaPago))
+            if (string.IsNullOrEmpty(oVentaE.FormaPago) && mostrarFormaPago)
             {
                 checkEfectivo.Checked = checkDebito.Checked = checkCredito.Checked =
                     checkCtaCtePago.Checked = checkQr.Checked = checkTransf.Checked = checkCtaCte.Checked = false;//Asegura q se inicien todos false
@@ -805,11 +812,15 @@ namespace Presentacion.Caja
                 formFormaPago frmFormaPago = new formFormaPago();
                 frmFormaPago.ShowDialog(this);
 
+                mostrarFormaPago = false;
                 //si ninguna forma de pago está seleccionada no se valida
                 if (checkEfectivo.Checked == false && checkDebito.Checked == false && checkCredito.Checked == false
                     && checkCtaCtePago.Checked == false && checkQr.Checked == false && checkTransf.Checked == false)
                     return false;
-                txtCodigo.Focus();
+
+                //txtCodigo.Focus();
+                seIngresoFormaPago = true;
+
             }
             if (oCorteE != null)
                 cargarCorte();
@@ -1046,11 +1057,21 @@ namespace Presentacion.Caja
                         }
                         else
                         {
+                            //si no está seteada la forma de pago se llama al form
+                            if (oVentaE.FormaPago == null)
+                            {
+                                mostrarFormaPago = true;
+                                ingresarFormaPago();
+                                //si no seleccionó una forma se aborta
+                                if (oVentaE.FormaPago == null)
+                                    return false;
+                            }
+
                             formFinalizarVenta formFinVenta = new formFinalizarVenta();
                             formFinVenta.oVentaE = oVentaE;
                             formFinVenta.ShowDialog(this);
 
-                            if (oVentaE.ImprimirTipoCbte != null && !oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Nulo.ToString()))
+                            if (!(oVentaE.ImprimirTipoCbte == null || oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Nulo.ToString())))
                             {
                                 txtCodigo.Focus();
                                 return true;
@@ -1647,6 +1668,7 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Click(object sender, EventArgs e)
         {
+            mostrarFormaPago = true;
             tiempoInactivo = 0;
             esModificacion();
             if (capturarPantallaFinal) capturarPantalla();
@@ -2266,7 +2288,8 @@ namespace Presentacion.Caja
                     cambiarPuntoDeVenta();
                     break;
                 case Keys.End:
-                    if (!estaBloqueado())
+                    if (estaBloqueado())
+                        break;
                     mostrarPago();
                     break;
                 case Keys.PageDown:
@@ -2671,6 +2694,12 @@ namespace Presentacion.Caja
 
         private void mostrarPago()
         {
+            if (!mostrarFormaPago)
+            {
+                mostrarFormaPago = true;
+                ingresarFormaPago();
+            }
+
             if (txtAbona.Focused)
             {
                 esModificacion();
@@ -2697,6 +2726,12 @@ namespace Presentacion.Caja
             this.txtCodigo.BackColor = focusColor;
 
             ingresarFormaPago();
+            if (seIngresoFormaPago)
+            {
+                txtAbona.Focus();
+                txtAbona.SelectAll();
+                this.txtCodigo.BackColor = enableColor;
+            }
         }
 
         private void txtCodigo_Leave(object sender, EventArgs e)
@@ -3295,7 +3330,13 @@ namespace Presentacion.Caja
 
         private void formPOS_Activated(object sender, EventArgs e)
         {
-            SendKeys.Send("{HOME}");
+            if (seIngresoFormaPago)
+            {
+                txtAbona.Focus();
+                seIngresoFormaPago = false;
+            }            
+            else
+                SendKeys.Send("{HOME}");
         }
 
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
