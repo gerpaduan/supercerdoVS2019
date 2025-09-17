@@ -1204,7 +1204,7 @@ namespace wsAFIPvs2008
             }
         }
 
-        private void imprimirTicket(bool esFacturaA, DialogResult imprimir)
+        public void imprimirTicket(bool esFacturaA, DialogResult imprimir)
         {
             #region imprimir desde objeta FacturaElectronica
             try
@@ -1263,6 +1263,10 @@ namespace wsAFIPvs2008
 
                 ticket.LineasGuion();
 
+                ///si oVentaE es null, cargar el objeto desde oFactura
+                if (oVentaE == null && oFactuElec.Venta != null)
+                    oVentaE = oFactuElec.Venta;
+
                 //Si linea es vacia se crea un ítem para facturacion
                 Entidades.LineaVenta oLineaUnica = new Entidades.LineaVenta();
                 Entidades.Corte oCorteUnico = new Entidades.Corte();
@@ -1299,7 +1303,8 @@ namespace wsAFIPvs2008
                             linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
                 }
-
+                ///TODO: no carga las alícuotas al llamar a impresion ticket
+                ///ver en pdf como lo manejé
                 ticket.TextoDerecha("-------");
                 //Si Factura A (id = 1)
                 if (esFacturaA)
@@ -1342,6 +1347,7 @@ namespace wsAFIPvs2008
                 //ticket = null;
                 //ticket.LineasEnBlanco(3);
                 //ticket.realizarImpresion();
+                ticket.CortaTicket();
 
                 //si es transferencia preguntar si imprimir copia para el cliente
                 if (esTransferencia)
@@ -1646,13 +1652,6 @@ namespace wsAFIPvs2008
 
         private void imprimir_Click(object sender, EventArgs e)
         {
-            
-            if (oFactuElec == null || (oFactuElec != null && string.IsNullOrEmpty(oFactuElec.CAE1)))
-            {
-                MessageBox.Show("No se puede imprimir ticket porque la factura no ha sido generada");
-                return;
-            }
-
             imprimirTicket(oFactuElec.esFacturaA(TiposComprobantesCMB.SelectedValue.ToString()), DialogResult.Yes);
         }
 

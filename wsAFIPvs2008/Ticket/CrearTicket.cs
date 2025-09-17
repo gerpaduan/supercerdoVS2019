@@ -284,7 +284,8 @@ namespace wsAFIPvs2008.Ticket
         public void CortaTicket()
         {
             string corte = "\x1B" + "m";                  // caracteres de corte
-            string avance = "\x1B" + "d" + "\x09";        // avanza 9 renglones
+            //string avance = "\x1B" + "d" + "\x09";        // avanza 9 renglones
+            string avance = "\x1B" + "d" + "\x03";        // avanza 9 renglones
             RawPrinterHelper.SendStringToPrinter(impresora, avance, imprimir); // avanza
             RawPrinterHelper.SendStringToPrinter(impresora, corte, imprimir); // corta
         }

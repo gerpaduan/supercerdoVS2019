@@ -206,7 +206,18 @@ namespace Presentacion.Caja
         }
 
         private void ImprimirTicket_Click(object sender, EventArgs e)
-        {
+        {   ///si es factura llamar a generador pdf de factura electronica
+            ///            
+            if (!oUltimaVenta.TipoComprobante.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString()))
+            {
+                wsAFIPvs2008.formFacturaElectronica formFactElectronica = new wsAFIPvs2008.formFacturaElectronica();
+                formFactElectronica.oFactuElec = oVentaN.getFactuElecById(oVentaN.esVentaSinFacturar(oUltimaVenta.IdVenta, false));
+                //formFactElectronica.pdf_FacturaMetodo();
+                formFactElectronica.imprimirTicket(formFactElectronica.oFactuElec.esFacturaA(formFactElectronica.oFactuElec.CodTipoCbteAfip.ToString()), 
+                    DialogResult.Yes);
+                formFactElectronica.Close();
+                return;
+            }
             imprimirTicket();
         }
 
