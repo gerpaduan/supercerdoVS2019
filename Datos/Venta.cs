@@ -963,7 +963,12 @@ namespace Datos
 
             cmVenta.Connection = conn.conectar();
             cmVenta.CommandType = CommandType.Text; cmVenta.CommandTimeout = conn.TimeOut();
-            cmVenta.CommandText = "SELECT idFacturaElectronica, idIva, baseImponible, importe FROM AlicuotaIvaPorFactura WHERE  idFacturaElectronica = @idFacturaElectronica";
+            //cmVenta.CommandText = "SELECT idFacturaElectronica, idIva, baseImponible, importe FROM AlicuotaIvaPorFactura WHERE  idFacturaElectronica = @idFacturaElectronica";
+            cmVenta.CommandText = @"SELECT dbo.AlicuotaIvaPorFactura.idFacturaElectronica, dbo.AlicuotaIvaPorFactura.idIva, 
+                                            dbo.AlicuotasIva.iva, dbo.AlicuotaIvaPorFactura.baseImponible, dbo.AlicuotaIvaPorFactura.importe
+                                    FROM dbo.AlicuotaIvaPorFactura INNER JOIN
+                                         dbo.AlicuotasIva ON dbo.AlicuotaIvaPorFactura.idIva = dbo.AlicuotasIva.idIva
+                                    WHERE  idFacturaElectronica = @idFacturaElectronica";
             cmVenta.Parameters.AddWithValue("@idFacturaElectronica", idFacturaElectronica);
 
             //creo lista de Lineas
@@ -979,6 +984,7 @@ namespace Datos
                         Entidades.AlicuotaIva oLinea = new Entidades.AlicuotaIva();
 
                         oLinea.IdIva = Convert.ToInt32(drLinea["idIva"]);
+                        oLinea.Iva = float.Parse(drLinea["iva"].ToString());
                         oLinea.BaseImponible = float.Parse(drLinea["baseImponible"].ToString());
                         oLinea.Importe = float.Parse(drLinea["importe"].ToString());
 

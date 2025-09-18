@@ -25,7 +25,7 @@ namespace Presentacion
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
         }
 
-        public void cargarGrilla()
+        public void cargarGrilla()  
         {
             try
             {

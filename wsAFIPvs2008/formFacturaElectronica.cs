@@ -1311,7 +1311,7 @@ namespace wsAFIPvs2008
                 {
                     ticket.TextoExtremos("Neto s/iva: ", oDocumentoImprimir.ImporteNetoGravado.ToString("F2"));
 
-                    foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
+                    foreach (Entidades.AlicuotaIva item in oDocumentoImprimir.ListaAlicuota)
                         if (item.Importe != 0)
                             ticket.TextoExtremos("Iva " + item.Iva + "%:", item.Importe.ToString("F2"));
                 }
@@ -1899,7 +1899,8 @@ namespace wsAFIPvs2008
                 totalTable.AddCell(new PdfPCell(new Phrase("Neto s/iva: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                 totalTable.AddCell(new PdfPCell(new Phrase(oDocumentoImprimir.ImporteNetoGravado.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
-                foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
+
+                foreach (Entidades.AlicuotaIva item in oDocumentoImprimir.ListaAlicuota)
                 {
                     if (item.Importe > 0)
                     {
@@ -1908,6 +1909,17 @@ namespace wsAFIPvs2008
                         totalTable.AddCell(new PdfPCell(new Phrase(item.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                     }
                 }
+
+                ///COMENTADO PORQUE OBTENGO LAS ALICUOTAS DE LA BD
+                //foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
+                //{
+                //    if (item.Importe > 0)
+                //    {
+                //        totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                //        totalTable.AddCell(new PdfPCell(new Phrase("Iva " + item.Iva + "%: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                //        totalTable.AddCell(new PdfPCell(new Phrase(item.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+                //    }
+                //}
             }
             else
             {

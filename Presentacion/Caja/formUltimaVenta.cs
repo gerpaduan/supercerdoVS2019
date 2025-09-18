@@ -225,23 +225,42 @@ namespace Presentacion.Caja
         {
             try
             {
-                //valido que la fecha/hora de la venta sea menor al minimo de minutos parametrizado
-                TimeSpan diffMinutosTime = DateTime.Now - oUltimaVenta.FechaVenta;
-                int diffMinutos = diffMinutosTime.Minutes;
+                ////valido que la fecha/hora de la venta sea menor al minimo de minutos parametrizado
+                //TimeSpan diffMinutosTime = DateTime.Now - oUltimaVenta.FechaVenta;
+                //int diffMinutos = diffMinutosTime.Minutes;
 
-                //si no está loguedo, si fecha venta es distinta a hoy y pasaron minino de minutos para el acceso
-                //if (!oCierreE.UsuarioInicio.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
-                //    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
-                ///TODO: agregar permiso Ultima Venta para permitir modificar
-                ///y se deberia eliminar la validacion de (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin)
-                if (!((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
-                    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)) && 
-                    (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin))
+                ////si no está loguedo, si fecha venta es distinta a hoy y pasaron minino de minutos para el acceso
+                ////if (!oCierreE.UsuarioInicio.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
+                ////    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
+                /////TODO: agregar permiso Ultima Venta para permitir modificar
+                /////y se deberia eliminar la validacion de (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin)
+                //if (!((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
+                //    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)) && 
+                //    (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin))
+                //{
+                //    MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.\n\n"+
+                //        "Solicite la asistencia de un usuario con permisos para esta acción.",
+                //        "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //    huboModificaciones = false;
+                //    return;
+                //}
+
+                //Validación que es llamado desde POS
+                if (oCierreE != null)
                 {
-                    MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.\n\n"+
-                        "Solicite la asistencia de un usuario con permisos para esta acción.",
-                        "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    huboModificaciones = false;
+                    Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                    bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(oUltimaVenta.FechaVenta, oUltimaVenta.Sucursal, oCierreE.UsuarioInicio);
+                    if (!cajaAbierta)
+                    {
+                        MessageBox.Show(oCierreE.UsuarioInicio.Nombre + " la caja ha sido cerrada.\n\n" , "Caja Cerrada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                }
+
+                if (oCierreE == null || !(oUsuarioN.tienePermiso(oCierreE.UsuarioInicio, this.Name, oUltimaVenta.FechaVenta, oCierreE.UsuarioInicio.Id)))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    this.Close();
                     return;
                 }
 
@@ -431,6 +450,7 @@ namespace Presentacion.Caja
                 ticket.GraciasPorSuCompra();
                 ticket.LineasEnBlanco(2);
                 ticket.realizarImpresion();
+                ticket.CortaTicket();
             }
             catch (Exception ex)
             {

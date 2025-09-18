@@ -46,6 +46,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle42 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle43 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.panelDivisor = new System.Windows.Forms.Panel();
             this.panelSuperior = new System.Windows.Forms.Panel();
             this.txtVendedor = new System.Windows.Forms.TextBox();
             this.usuario = new System.Windows.Forms.Label();
@@ -162,7 +163,7 @@
             this.panelExpendioLateral = new System.Windows.Forms.Panel();
             this.btnDespligueLateral = new System.Windows.Forms.Button();
             this.btnBloquear = new System.Windows.Forms.Button();
-            this.panelDivisor = new System.Windows.Forms.Panel();
+            this.lblSaldo = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.panelSuperior.SuspendLayout();
             this.groupFormaPago.SuspendLayout();
@@ -183,6 +184,7 @@
             // 
             this.pnlBuscar.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.pnlBuscar.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.pnlBuscar.Controls.Add(this.lblSaldo);
             this.pnlBuscar.Controls.Add(this.panelDivisor);
             this.pnlBuscar.Controls.Add(this.panelSuperior);
             this.pnlBuscar.Controls.Add(this.comboFormaPago);
@@ -202,6 +204,14 @@
             this.pnlBuscar.Name = "pnlBuscar";
             this.pnlBuscar.Size = new System.Drawing.Size(1133, 632);
             this.pnlBuscar.TabIndex = 4;
+            // 
+            // panelDivisor
+            // 
+            this.panelDivisor.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.panelDivisor.Location = new System.Drawing.Point(834, 34);
+            this.panelDivisor.Name = "panelDivisor";
+            this.panelDivisor.Size = new System.Drawing.Size(1, 553);
+            this.panelDivisor.TabIndex = 71;
             // 
             // panelSuperior
             // 
@@ -1066,7 +1076,7 @@
             this.grillaLineasVenta.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.grillaLineasVenta.BackgroundColor = System.Drawing.SystemColors.ButtonFace;
             dataGridViewCellStyle31.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle31.Font = new System.Drawing.Font("Segoe UI", 13.25F);
+            dataGridViewCellStyle31.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle31.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(46)))), ((int)(((byte)(46)))));
             dataGridViewCellStyle31.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             dataGridViewCellStyle31.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
@@ -1083,7 +1093,7 @@
             this.estado});
             dataGridViewCellStyle38.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle38.BackColor = System.Drawing.SystemColors.ButtonFace;
-            dataGridViewCellStyle38.Font = new System.Drawing.Font("Segoe UI Semibold", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle38.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle38.ForeColor = System.Drawing.SystemColors.ControlText;
             dataGridViewCellStyle38.SelectionBackColor = System.Drawing.Color.LightSkyBlue;
             dataGridViewCellStyle38.SelectionForeColor = System.Drawing.SystemColors.ActiveCaptionText;
@@ -1121,7 +1131,7 @@
             this.codigo.MinimumWidth = 6;
             this.codigo.Name = "codigo";
             this.codigo.ReadOnly = true;
-            this.codigo.Width = 96;
+            this.codigo.Width = 65;
             // 
             // corte
             // 
@@ -1866,13 +1876,17 @@
             this.btnBloquear.UseVisualStyleBackColor = true;
             this.btnBloquear.Click += new System.EventHandler(this.btnBloquear_Click);
             // 
-            // panelDivisor
+            // lblSaldo
             // 
-            this.panelDivisor.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panelDivisor.Location = new System.Drawing.Point(834, 34);
-            this.panelDivisor.Name = "panelDivisor";
-            this.panelDivisor.Size = new System.Drawing.Size(1, 553);
-            this.panelDivisor.TabIndex = 71;
+            this.lblSaldo.AutoSize = true;
+            this.lblSaldo.Font = new System.Drawing.Font("Segoe UI", 7F);
+            this.lblSaldo.ForeColor = System.Drawing.Color.Crimson;
+            this.lblSaldo.Location = new System.Drawing.Point(903, 32);
+            this.lblSaldo.Name = "lblSaldo";
+            this.lblSaldo.Size = new System.Drawing.Size(31, 12);
+            this.lblSaldo.TabIndex = 66;
+            this.lblSaldo.Text = "Saldo:";
+            this.lblSaldo.Visible = false;
             // 
             // formPOS
             // 
@@ -2050,5 +2064,6 @@
         protected System.Windows.Forms.Label lblCarnisys;
         private System.Windows.Forms.RichTextBox txtTotalRich;
         private System.Windows.Forms.Panel panelDivisor;
+        protected System.Windows.Forms.Label lblSaldo;
     }
 }

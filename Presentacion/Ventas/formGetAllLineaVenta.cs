@@ -51,10 +51,10 @@ namespace Presentacion
             try
             {
                 //CerrarForm = true para evitar que se muestre dos veces el cartel del mensaje
-                if (!cerrarForm && !oUsuarioN.tienePermiso(FormPrincipal.oUserLogueado, "formVentas", fechaDesde.Value.Date, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+                if (!cerrarForm && !oUsuarioN.tienePermiso(desdeCajaVenta ? oCierreE.UsuarioInicio : FormPrincipal.oUserLogueado, this.Name, DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
                 {
                     Utilidades.Mensajes.ErrorPermisoAcceso();
-                    if (!cargar)
+                    //if (!cargar)
                         cerrarForm = true;
                     return;
                 }
@@ -245,6 +245,11 @@ namespace Presentacion
                 return;
             }
             cargarGrilla();
+            if (cerrarForm)
+            {
+                this.Close();
+                return;
+            }
         }
 
         private void cargarComboVendedor()

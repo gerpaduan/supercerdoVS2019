@@ -1711,6 +1711,18 @@ namespace Presentacion.Caja
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;
             this.txtDomicilio.Text = oCliente.Domicilio + " - " + oCliente.Ciudad;
+
+            lblSaldo.Visible = linkVerCtaCte.Visible;
+            if (linkVerCtaCte.Visible)
+            {
+                Negocio.CuentaCorriente ctacteN = new Negocio.CuentaCorriente();
+                float saldoF = float.Parse(ctacteN.getCtaCteByIdPersona(oCliente.idPersona, DateTime.Now).Rows[0]["Saldo"].ToString());
+                //string saldoS 
+                lblSaldo.Text = "Saldo: $" + saldoF.ToString("N2");
+                lblSaldo.ForeColor = saldoF >= 0 ? Color.SeaGreen : Color.Crimson;
+            }
+
+
             //Si es RRII (IdIva = 2) se selecciona Comprobante A
             //comboTipoComprobante.SelectedItem = oCliente.IdIva == 2 ? Entidades.Venta.tipoComprobanteEnum.A.ToString() : Entidades.Venta.tipoComprobanteEnum.X.ToString();
             lblClienteConBonif.Visible = oCliente.Bonificacion.Equals(0) ? false : true;
@@ -3364,18 +3376,19 @@ namespace Presentacion.Caja
             if (ultimaVenta)
             {
                 ultimaVentaVendedor();
-                //se valida que no hay pasado el limite de tiempo para editar la venta
-                if (!FormPrincipal.logueado && oUltimaVentaVendedor.Creado.AddMinutes(15) < DateTime.Now)
-                {
-                    MessageBox.Show("Caducó el tiempo para modificar la venta.\n\n(Inicie sesión como admin para poder modificar)",
-                        "Tiempo Caducado");
-                    return;
-                }
+                ////se valida que no hay pasado el limite de tiempo para editar la venta
+                //if (!FormPrincipal.logueado && oUltimaVentaVendedor.Creado.AddMinutes(15) < DateTime.Now)
+                //{
+                //    MessageBox.Show("Caducó el tiempo para modificar la venta.\n\n(Inicie sesión como admin para poder modificar)",
+                //        "Tiempo Caducado");
+                //    return;
+                //}
 
                 if (oUltimaVentaVendedor != null)
                 {
                     formUltimaVenta frmUltimaVenta = new formUltimaVenta();
                     frmUltimaVenta.oUltimaVenta = oUltimaVentaVendedor;
+                    frmUltimaVenta.oCierreE = oCierreE;
                     frmUltimaVenta.ShowDialog();
                     ultimaVentaVendedor();
                 }
@@ -3414,7 +3427,7 @@ namespace Presentacion.Caja
                 }
                 lblHoraUltimaVenta.Text = oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
                     " " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
-                    "\n$ " + totalUltimaVenta.ToString("F2");
+                    "\n$ " + totalUltimaVenta.ToString("N2");
             }
             catch (Exception)
             {
