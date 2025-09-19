@@ -163,7 +163,11 @@ namespace Presentacion.Ventas
 
         private void Imprimir_Click(object sender, EventArgs e)
         {
-            imprimirTicket();
+            //imprimirTicket();
+            Caja.formUltimaVenta oFormUltimaVenta = new Caja.formUltimaVenta();
+            oFormUltimaVenta.oUltimaVenta = oVentaE;
+            oFormUltimaVenta.imprimirTicket_menu();
+            oFormUltimaVenta.Close();
         }
 
         private void imprimirTicket()
@@ -270,6 +274,15 @@ namespace Presentacion.Ventas
             formFactElecNotaCredito.logueado = FormPrincipal.logueado;
             formFactElecNotaCredito.esShowDialog = true;
             formFactElecNotaCredito.ShowDialog();
+        }
+
+        private void pdf_Click(object sender, EventArgs e)
+        {
+
+            Caja.formUltimaVenta oFormUltimaVenta = new Caja.formUltimaVenta();
+            oFormUltimaVenta.oUltimaVenta = oVentaE;
+            oFormUltimaVenta.PDF_menu();
+            oFormUltimaVenta.Close();
         }
     }
 }

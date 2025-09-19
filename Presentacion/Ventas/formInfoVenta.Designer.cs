@@ -28,13 +28,22 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoVenta));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             this.grillaLineasVenta = new System.Windows.Forms.DataGridView();
+            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.cantKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.precioKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.bonificacion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.PesoBalanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnSalir = new System.Windows.Forms.Button();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
@@ -77,15 +86,7 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.idVentaLabel = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
-            this.idCorte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.codigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.corte = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.cantKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.precioKgs = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalS = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.bonificacion = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.PesoBalanza = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.estado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pdf = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -120,6 +121,102 @@
             this.grillaLineasVenta.Size = new System.Drawing.Size(719, 264);
             this.grillaLineasVenta.TabIndex = 48;
             this.grillaLineasVenta.TabStop = false;
+            // 
+            // idCorte
+            // 
+            this.idCorte.DataPropertyName = "idCorte";
+            this.idCorte.HeaderText = "ID Prod.";
+            this.idCorte.MinimumWidth = 6;
+            this.idCorte.Name = "idCorte";
+            this.idCorte.ReadOnly = true;
+            this.idCorte.Visible = false;
+            this.idCorte.Width = 125;
+            // 
+            // codigo
+            // 
+            this.codigo.DataPropertyName = "codigo";
+            this.codigo.HeaderText = "Código";
+            this.codigo.MinimumWidth = 6;
+            this.codigo.Name = "codigo";
+            this.codigo.ReadOnly = true;
+            this.codigo.Width = 80;
+            // 
+            // corte
+            // 
+            this.corte.DataPropertyName = "corte";
+            this.corte.HeaderText = "Prod.";
+            this.corte.MinimumWidth = 6;
+            this.corte.Name = "corte";
+            this.corte.ReadOnly = true;
+            this.corte.Width = 150;
+            // 
+            // cantKgs
+            // 
+            this.cantKgs.DataPropertyName = "cantKgs";
+            dataGridViewCellStyle6.Format = "N3";
+            dataGridViewCellStyle6.NullValue = null;
+            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle6;
+            this.cantKgs.HeaderText = "Cantidad";
+            this.cantKgs.MinimumWidth = 6;
+            this.cantKgs.Name = "cantKgs";
+            this.cantKgs.ReadOnly = true;
+            this.cantKgs.Width = 110;
+            // 
+            // precioKgs
+            // 
+            this.precioKgs.DataPropertyName = "precioKg";
+            dataGridViewCellStyle7.Format = "N2";
+            dataGridViewCellStyle7.NullValue = null;
+            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle7;
+            this.precioKgs.HeaderText = "Precio Kg.";
+            this.precioKgs.MinimumWidth = 6;
+            this.precioKgs.Name = "precioKgs";
+            this.precioKgs.ReadOnly = true;
+            this.precioKgs.Width = 80;
+            // 
+            // totalS
+            // 
+            this.totalS.DataPropertyName = "totalS";
+            dataGridViewCellStyle8.Format = "N2";
+            dataGridViewCellStyle8.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle8;
+            this.totalS.HeaderText = "Total $";
+            this.totalS.MinimumWidth = 6;
+            this.totalS.Name = "totalS";
+            this.totalS.ReadOnly = true;
+            this.totalS.Width = 110;
+            // 
+            // bonificacion
+            // 
+            this.bonificacion.DataPropertyName = "bonificacion";
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Format = "N2";
+            this.bonificacion.DefaultCellStyle = dataGridViewCellStyle9;
+            this.bonificacion.HeaderText = "Bonif.";
+            this.bonificacion.MinimumWidth = 6;
+            this.bonificacion.Name = "bonificacion";
+            this.bonificacion.ReadOnly = true;
+            this.bonificacion.Width = 60;
+            // 
+            // PesoBalanza
+            // 
+            this.PesoBalanza.DataPropertyName = "pesoBalanza";
+            this.PesoBalanza.HeaderText = "Balanza";
+            this.PesoBalanza.MinimumWidth = 6;
+            this.PesoBalanza.Name = "PesoBalanza";
+            this.PesoBalanza.ReadOnly = true;
+            this.PesoBalanza.Width = 50;
+            // 
+            // estado
+            // 
+            this.estado.DataPropertyName = "estado";
+            dataGridViewCellStyle10.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle10;
+            this.estado.HeaderText = "Estado";
+            this.estado.MinimumWidth = 6;
+            this.estado.Name = "estado";
+            this.estado.ReadOnly = true;
+            this.estado.Width = 70;
             // 
             // btnSalir
             // 
@@ -445,6 +542,7 @@
             this.modificar,
             this.toolStripSeparator1,
             this.Imprimir,
+            this.pdf,
             this.facturaElec,
             this.notaCredito});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
@@ -614,101 +712,16 @@
             this.label10.TabIndex = 60;
             this.label10.Text = "Total (Un./Kgs.)";
             // 
-            // idCorte
+            // pdf
             // 
-            this.idCorte.DataPropertyName = "idCorte";
-            this.idCorte.HeaderText = "ID Prod.";
-            this.idCorte.MinimumWidth = 6;
-            this.idCorte.Name = "idCorte";
-            this.idCorte.ReadOnly = true;
-            this.idCorte.Visible = false;
-            this.idCorte.Width = 125;
-            // 
-            // codigo
-            // 
-            this.codigo.DataPropertyName = "codigo";
-            this.codigo.HeaderText = "Código";
-            this.codigo.MinimumWidth = 6;
-            this.codigo.Name = "codigo";
-            this.codigo.ReadOnly = true;
-            this.codigo.Width = 80;
-            // 
-            // corte
-            // 
-            this.corte.DataPropertyName = "corte";
-            this.corte.HeaderText = "Prod.";
-            this.corte.MinimumWidth = 6;
-            this.corte.Name = "corte";
-            this.corte.ReadOnly = true;
-            this.corte.Width = 150;
-            // 
-            // cantKgs
-            // 
-            this.cantKgs.DataPropertyName = "cantKgs";
-            dataGridViewCellStyle1.Format = "N3";
-            dataGridViewCellStyle1.NullValue = null;
-            this.cantKgs.DefaultCellStyle = dataGridViewCellStyle1;
-            this.cantKgs.HeaderText = "Cantidad";
-            this.cantKgs.MinimumWidth = 6;
-            this.cantKgs.Name = "cantKgs";
-            this.cantKgs.ReadOnly = true;
-            this.cantKgs.Width = 110;
-            // 
-            // precioKgs
-            // 
-            this.precioKgs.DataPropertyName = "precioKg";
-            dataGridViewCellStyle2.Format = "N2";
-            dataGridViewCellStyle2.NullValue = null;
-            this.precioKgs.DefaultCellStyle = dataGridViewCellStyle2;
-            this.precioKgs.HeaderText = "Precio Kg.";
-            this.precioKgs.MinimumWidth = 6;
-            this.precioKgs.Name = "precioKgs";
-            this.precioKgs.ReadOnly = true;
-            this.precioKgs.Width = 80;
-            // 
-            // totalS
-            // 
-            this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle3.Format = "N2";
-            dataGridViewCellStyle3.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
-            this.totalS.HeaderText = "Total $";
-            this.totalS.MinimumWidth = 6;
-            this.totalS.Name = "totalS";
-            this.totalS.ReadOnly = true;
-            this.totalS.Width = 110;
-            // 
-            // bonificacion
-            // 
-            this.bonificacion.DataPropertyName = "bonificacion";
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            dataGridViewCellStyle4.Format = "N2";
-            this.bonificacion.DefaultCellStyle = dataGridViewCellStyle4;
-            this.bonificacion.HeaderText = "Bonif.";
-            this.bonificacion.MinimumWidth = 6;
-            this.bonificacion.Name = "bonificacion";
-            this.bonificacion.ReadOnly = true;
-            this.bonificacion.Width = 60;
-            // 
-            // PesoBalanza
-            // 
-            this.PesoBalanza.DataPropertyName = "pesoBalanza";
-            this.PesoBalanza.HeaderText = "Balanza";
-            this.PesoBalanza.MinimumWidth = 6;
-            this.PesoBalanza.Name = "PesoBalanza";
-            this.PesoBalanza.ReadOnly = true;
-            this.PesoBalanza.Width = 50;
-            // 
-            // estado
-            // 
-            this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle5.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle5;
-            this.estado.HeaderText = "Estado";
-            this.estado.MinimumWidth = 6;
-            this.estado.Name = "estado";
-            this.estado.ReadOnly = true;
-            this.estado.Width = 70;
+            this.pdf.Image = ((System.Drawing.Image)(resources.GetObject("pdf.Image")));
+            this.pdf.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.pdf.Name = "pdf";
+            this.pdf.Size = new System.Drawing.Size(44, 46);
+            this.pdf.Text = "  PDF  ";
+            this.pdf.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
+            this.pdf.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.pdf.Click += new System.EventHandler(this.pdf_Click);
             // 
             // formInfoVenta
             // 
@@ -807,5 +820,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn bonificacion;
         private System.Windows.Forms.DataGridViewCheckBoxColumn PesoBalanza;
         private System.Windows.Forms.DataGridViewTextBoxColumn estado;
+        private System.Windows.Forms.ToolStripButton pdf;
     }
 }

@@ -186,7 +186,7 @@ namespace Presentacion.Ticket
         public void AgregaTotales(string par1, double total)
         {
             ticket += par1;
-            parte2 = total.ToString("F2");
+            parte2 = total.ToString("N2");
             int espacios = cantMaxChar - parte2.Length;
             for (int i = par1.Length; i < espacios; i++)                // **********
             {
@@ -197,7 +197,7 @@ namespace Presentacion.Ticket
         }
         public void AgregaArticulo(string producto, double cant, double precio, double total)
         {
-            string cantidad = cant.ToString("F3") + " x " + precio.ToString("F2");
+            string cantidad = cant.ToString("F3") + " x " + precio.ToString("N2");
             ticket += cantidad + "\n";
 
             int longProd = producto.Length;
@@ -211,14 +211,14 @@ namespace Presentacion.Ticket
             ticket += producto;
 
 
-            int longTotal = total.ToString("F2").Length;
+            int longTotal = total.ToString("N2").Length;
             int espacios = cantMaxChar - longTotal;
 
             for (int i = longProd; i < espacios; i++)
             {
                 ticket += " ";
             }
-            ticket += total.ToString("F2") + "\n";
+            ticket += total.ToString("N2") + "\n";
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
 
         }

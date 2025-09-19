@@ -206,14 +206,20 @@ namespace Presentacion.Caja
         }
 
         private void ImprimirTicket_Click(object sender, EventArgs e)
-        {   ///si es factura llamar a generador pdf de factura electronica
+        {
+            imprimirTicket_menu();
+        }
+
+        public void imprimirTicket_menu()
+        {
+            ///si es factura llamar a generador pdf de factura electronica
             ///            
             if (!oUltimaVenta.TipoComprobante.ToString().Equals(Entidades.Venta.tipoComprobanteEnum.X.ToString()))
             {
                 wsAFIPvs2008.formFacturaElectronica formFactElectronica = new wsAFIPvs2008.formFacturaElectronica();
                 formFactElectronica.oFactuElec = oVentaN.getFactuElecById(oVentaN.esVentaSinFacturar(oUltimaVenta.IdVenta, false));
                 //formFactElectronica.pdf_FacturaMetodo();
-                formFactElectronica.imprimirTicket(formFactElectronica.oFactuElec.esFacturaA(formFactElectronica.oFactuElec.CodTipoCbteAfip.ToString()), 
+                formFactElectronica.imprimirTicket(formFactElectronica.oFactuElec.esFacturaA(formFactElectronica.oFactuElec.CodTipoCbteAfip.ToString()),
                     DialogResult.Yes);
                 formFactElectronica.Close();
                 return;
@@ -426,6 +432,21 @@ namespace Presentacion.Caja
                 ticket.imprimir = true;
                 ticket.TextoCentro("x");
                 ticket.NoValidoComoFactura();
+                ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
+                string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
+                string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
+                string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
+                string NegocioAgregado4 = ConfigurationManager.AppSettings["NegocioAgregado4"].ToString();
+
+                if (!(NegocioAgregado1.Equals("-") || string.IsNullOrEmpty(NegocioAgregado1)))
+                    ticket.TextoCentro(NegocioAgregado1);
+                if (!(NegocioAgregado2.Equals("-") || string.IsNullOrEmpty(NegocioAgregado2)))
+                    ticket.TextoCentro(NegocioAgregado2);
+                if (!(NegocioAgregado3.Equals("-") || string.IsNullOrEmpty(NegocioAgregado3)))
+                    ticket.TextoIzquierda(NegocioAgregado3);
+                if (!(NegocioAgregado4.Equals("-") || string.IsNullOrEmpty(NegocioAgregado4)))
+                    ticket.TextoIzquierda(NegocioAgregado4);
+
                 ticket.LineasEnBlanco(1);
                 if (oUltimaVenta.EnCtaCte && oUltimaVenta.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
                     ticket.TextoCentro("A Cta. Cte.");
@@ -438,13 +459,16 @@ namespace Presentacion.Caja
 
                 foreach (Entidades.LineaVenta linea in oUltimaVenta.LineasVenta)
                 {
-                    ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                    //ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                    //    linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+
+                    ticket.AgregaArticulo(linea.Corte.corte.ToString(),
                         linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                 }
                 ticket.TextoDerecha("-------");
-                ticket.AgregaTotales("Total", Convert.ToDouble(txtTotalS.Text));
+                ticket.AgregaTotales("Total", (double)oUltimaVenta.getImporteVenta(oUltimaVenta));//Convert.ToDouble(txtTotalS.Text));
                 ticket.LineasEnBlanco(1);
-                ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
+                ticket.TextoIzquierda("Articulos: " + oUltimaVenta.getCantItems(oUltimaVenta).ToString());//txtCantItems.Text);// + "   Cajero: " + txtVendedor.Text);
                 //ticket.TextoIzquierda("Cajero: " + txtVendedor.Text);
                 ticket.TextoIzquierda("Cajero: " + oUltimaVenta.Vendedor.Id);
                 ticket.GraciasPorSuCompra();
@@ -772,6 +796,11 @@ namespace Presentacion.Caja
         }
 
         private void pdf_Click(object sender, EventArgs e)
+        {
+            PDF_menu();
+        }
+
+        public void PDF_menu()
         {
             string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
             ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), ruta);// "ReciboCheques.pdf");

@@ -1303,8 +1303,6 @@ namespace wsAFIPvs2008
                             linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
                 }
-                ///TODO: no carga las alícuotas al llamar a impresion ticket
-                ///ver en pdf como lo manejé
                 ticket.TextoDerecha("-------");
                 //Si Factura A (id = 1)
                 if (esFacturaA)
@@ -2367,7 +2365,6 @@ namespace wsAFIPvs2008
                     oNotaCredito.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oNotaCredito.IdVenta = oVentaE.IdVenta;
 
-                    ///TODO: pendiente -> agregar campo de Alicuota en tabla FacturaElectronica para registra los importes de cada Alicuota
                     oVentaN.addOrEditFactuElec(oNotaCredito);
 
                     DialogResult imprimir = MessageBox.Show("La Nota de Credito se generó correctamente!.\n\n¿Imprimir ticket?.",

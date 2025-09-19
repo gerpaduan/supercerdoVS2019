@@ -88,11 +88,12 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.cambiarVendedor = new System.Windows.Forms.ToolStripButton();
             this.ImprimirTicket = new System.Windows.Forms.ToolStripButton();
+            this.pdf = new System.Windows.Forms.ToolStripButton();
             this.facturaElec = new System.Windows.Forms.ToolStripButton();
             this.notaCredito = new System.Windows.Forms.ToolStripButton();
             this.txtTotalKgs = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.pdf = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -819,6 +820,17 @@
             this.ImprimirTicket.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.ImprimirTicket.Click += new System.EventHandler(this.ImprimirTicket_Click);
             // 
+            // pdf
+            // 
+            this.pdf.Image = ((System.Drawing.Image)(resources.GetObject("pdf.Image")));
+            this.pdf.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.pdf.Name = "pdf";
+            this.pdf.Size = new System.Drawing.Size(44, 46);
+            this.pdf.Text = "  PDF  ";
+            this.pdf.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
+            this.pdf.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.pdf.Click += new System.EventHandler(this.pdf_Click);
+            // 
             // facturaElec
             // 
             this.facturaElec.Image = ((System.Drawing.Image)(resources.GetObject("facturaElec.Image")));
@@ -866,16 +878,10 @@
             this.label12.TabIndex = 54;
             this.label12.Text = "Cant. Kgs.";
             // 
-            // pdf
+            // toolStripButton1
             // 
-            this.pdf.Image = ((System.Drawing.Image)(resources.GetObject("pdf.Image")));
-            this.pdf.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.pdf.Name = "pdf";
-            this.pdf.Size = new System.Drawing.Size(44, 46);
-            this.pdf.Text = "  PDF  ";
-            this.pdf.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-            this.pdf.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.pdf.Click += new System.EventHandler(this.pdf_Click);
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(23, 23);
             // 
             // formUltimaVenta
             // 
@@ -974,5 +980,6 @@
         private System.Windows.Forms.CheckBox checkPagoMixto;
         private System.Windows.Forms.ToolStripButton notaCredito;
         private System.Windows.Forms.ToolStripButton pdf;
+        private System.Windows.Forms.ToolStripButton toolStripButton1;
     }
 }

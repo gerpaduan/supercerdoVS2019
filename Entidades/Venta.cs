@@ -37,6 +37,11 @@ namespace Entidades
             return totalKgs;
         }
 
+        public int getCantItems(Entidades.Venta oVentaE)
+        {
+            return oVentaE.lineasVenta.Count;
+        }
+
         //0-SinTicket | 1-Ticket | 2-Factura
         public enum imprimirCbteEnum
         {

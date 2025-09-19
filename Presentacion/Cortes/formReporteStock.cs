@@ -1274,9 +1274,6 @@ namespace Presentacion.Cortes
             frmBuscarPersona.Show(this);
         }
 
-        ///TODO: recuperar marca, proveedor y tipo en dtcierre stock para poder filtrar <summary>
-        /// analizar si conviene armar otro reporte que se llame faltantes o lista a pedir, etc
-
         private void btnLimpiar_Click(object sender, EventArgs e)
         {
             if (idMarca != 0)//validacion para evitar conexion a la BD

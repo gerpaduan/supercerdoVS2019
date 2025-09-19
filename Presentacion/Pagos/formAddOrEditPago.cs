@@ -288,8 +288,8 @@ namespace Presentacion.Pagos
             checkAProveedor.Checked = oPagoE.AProveedor;
             txtFechaPago.Value = oPagoE.Fecha.Year > 1000 ? oPagoE.Fecha : DateTime.Now;
             comboTipoPago.Text = oPagoE.FormaPago != null ? oPagoE.FormaPago : "";
-            txtImporte.Text = oPagoE.Importe.ToString("F2");
-            txtEfectivo.Text = oPagoE.Efectivo.ToString("F2");
+            txtImporte.Text = oPagoE.Importe.ToString("N2");
+            txtEfectivo.Text = oPagoE.Efectivo.ToString("N2");
             CargarSaldo();
             CargarGrillaCheques();
             ///los datos de los campo que ya no se usan se agregan a observaciones
@@ -672,6 +672,10 @@ namespace Presentacion.Pagos
         {
             try
             {
+                //readOnly TRUE que está en modo INFO
+                if (readOnly)
+                    return;
+
                 // Intentamos convertir ambos campos a float
                 float efectivo = 0;
                 float totalCheques = 0;
@@ -681,7 +685,7 @@ namespace Presentacion.Pagos
 
                 float total = efectivo + totalCheques;
 
-                txtImporte.Text = total.ToString("0.00"); // Con dos decimales
+                txtImporte.Text = total.ToString("N2"); // Con dos decimales
             }
             catch (Exception)
             {
@@ -778,7 +782,7 @@ namespace Presentacion.Pagos
                                     NroCheque = c.NroCheque,
                                     Banco = c.Banco,
                                     FechaPago = c.FechaPago.ToShortDateString(), // o sin ToShortDateString si querés el DateTime completo
-                                    Importe = c.Importe.ToString("F2"),
+                                    Importe = c.Importe.ToString("N2"),
                                 })
                                 .ToList();
 
@@ -821,7 +825,7 @@ namespace Presentacion.Pagos
                 }
             }
             txtTotalCheques.DataBindings.Clear();
-            txtTotalCheques.Text = totalImporte.ToString("F2");
+            txtTotalCheques.Text = totalImporte.ToString("N2");
             lblCantCheques.Text = oPagoE.Cheques.Count.ToString();
         }
 

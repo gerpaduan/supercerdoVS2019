@@ -187,20 +187,20 @@
   <data name="pdf.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         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
-        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
+        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
 </value>
   </data>
   <data name="facturaElec.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">

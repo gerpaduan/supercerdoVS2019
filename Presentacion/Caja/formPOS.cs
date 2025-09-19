@@ -327,6 +327,21 @@ namespace Presentacion.Caja
                     ticket.imprimir = checkTicket.Checked;
                     ticket.TextoCentro("x");
                     ticket.NoValidoComoFactura();
+                    ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
+                    string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
+                    string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
+                    string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
+                    string NegocioAgregado4 = ConfigurationManager.AppSettings["NegocioAgregado4"].ToString();
+
+                    if (!(NegocioAgregado1.Equals("-") || string.IsNullOrEmpty(NegocioAgregado1)))
+                        ticket.TextoCentro(NegocioAgregado1);
+                    if (!(NegocioAgregado2.Equals("-") || string.IsNullOrEmpty(NegocioAgregado2)))
+                        ticket.TextoCentro(NegocioAgregado2);
+                    if (!(NegocioAgregado3.Equals("-") || string.IsNullOrEmpty(NegocioAgregado3)))
+                        ticket.TextoIzquierda(NegocioAgregado3);
+                    if (!(NegocioAgregado4.Equals("-") || string.IsNullOrEmpty(NegocioAgregado4)))
+                        ticket.TextoIzquierda(NegocioAgregado4);
+
                     ticket.LineasEnBlanco(1);
                     if (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
                         ticket.TextoCentro("A Cta. Cte.");
