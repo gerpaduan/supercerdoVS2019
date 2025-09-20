@@ -199,88 +199,92 @@ namespace Presentacion
                         }
 
                         mostrarCartelCierre = false;
-                        if (oCompraE != null && oCompraE.IdCompra > 0)
-                        {
-                            oCompraN.modificarCompra(oCompraE);
-                        }
-                        else
-                        {
-                            oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
-                        }
 
-                        if (tipoCompra == "Media Res")
-                        {
-                            foreach (Entidades.MediaRes mediaRes in listaMediaRes)
-                            {
-                                oCompraN.agregarMedias(mediaRes);
-                            }
-                        }
-                        if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
-                        {
-                            foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
-                            {
-                                oCompraN.agregarCortePorCompra(cortePorCompra);
+                        //if (oCompraE != null && oCompraE.IdCompra > 0)
+                        //{
+                        //    oCompraN.modificarCompra(oCompraE);
+                        //}
+                        //else
+                        //{
+                        //    oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
+                        //}
 
-                                //se actualiza el precio del corte
-                                if (cortePorCompra.PrecioVenta > 0)
-                                {
-                                    cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
-                                    oCorteN.editPrecioCorte(cortePorCompra.Corte);
-                                }
-                            }
-                        }
+                        oCompraE.IdCompra = oCompraN.AddOrEditCompra(oCompraE, tipoCompra, listaMediaRes, listaCortePorCompra, esEgresoCaja, oEgresoCajaE);
 
-                        //Cuenta Corriente
-                        try
-                        {
-                            oCompraN.crearMovCtaCteCompra(oCompraE);
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Error al guardar Mov en Cta Cte" + "\n\n" + ex.Source);
-                        }
+                        //if (tipoCompra == "Media Res")
+                        //{
+                        //    foreach (Entidades.MediaRes mediaRes in listaMediaRes)
+                        //    {
+                        //        oCompraN.agregarMedias(mediaRes);
+                        //    }
+                        //}
+                        //if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
+                        //{
+                        //    foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
+                        //    {
+                        //        oCompraN.agregarCortePorCompra(cortePorCompra);
 
-                        if (esEgresoCaja)
-                        {
-                            try
-                            {
-                                if (oEgresoCajaE == null)
-                                    oEgresoCajaE = new Entidades.EgresoCaja();
+                        //        //se actualiza el precio del corte
+                        //        if (cortePorCompra.PrecioVenta > 0)
+                        //        {
+                        //            cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
+                        //            oCorteN.editPrecioCorte(cortePorCompra.Corte);
+                        //        }
+                        //    }
+                        //}
 
-                                ///si la compra es en CTA CTE, 
-                                ///se informa en egresos pero el monto será 0 porque no salió el dinero de la caja
-                                string descripcionEgreso = "Compra a ";
-                                string detalleEgreso = string.Empty;
-                                float montoEgreso = Utilidades.Util_Form.convertFloat(txtTotal.Text, false);
-                                if (oCompraE.EnCtaCte)
-                                {
-                                    descripcionEgreso = "Compra CTA CTE a ";
-                                    detalleEgreso = " | $"+ montoEgreso.ToString("F2");
-                                    montoEgreso = 0;
-                                }
-                                descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
+                        ////Cuenta Corriente
+                        //try
+                        //{
+                        //    oCompraN.crearMovCtaCteCompra(oCompraE);
+                        //}
+                        //catch (Exception ex)
+                        //{
+                        //    MessageBox.Show("Error al guardar Mov en Cta Cte" + "\n\n" + ex.Source);
+                        //}
 
-                                oEgresoCajaE.Fecha = oCompraE.FechaCompra;
-                                oEgresoCajaE.IdTipoEgresoCaja = oCierreN.getIdEgresoCajaPorCompra();
-                                oEgresoCajaE.Descripcion = descripcionEgreso;
-                                oEgresoCajaE.Monto = montoEgreso;
-                                oEgresoCajaE.Detalle = oCompraE.Observaciones;
-                                oEgresoCajaE.Sucursal = oCompraE.Sucursal;
-                                oEgresoCajaE.IdCompra = oCompraE.IdCompra;
-                                oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id;
-                                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oUsuario.Id : 0;
+                        //if (esEgresoCaja)
+                        //{
+                        //    try
+                        //    {
+                        //        if (oEgresoCajaE == null)
+                        //            oEgresoCajaE = new Entidades.EgresoCaja();
 
-                                oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
-                                MessageBox.Show("La Compra y el Egreso de caja se guardaron correctamente.");
-                                //imprimirTicket(oEgresoCajaE);
-                                this.Close();
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show("Error al guardar el Egreso.\n\nLa compra se registró correctamente." + "\n\n" + ex.Source);
-                            }
-                        }
+                        //        ///si la compra es en CTA CTE, 
+                        //        ///se informa en egresos pero el monto será 0 porque no salió el dinero de la caja
+                        //        string descripcionEgreso = "Compra a ";
+                        //        string detalleEgreso = string.Empty;
+                        //        float montoEgreso = Utilidades.Util_Form.convertFloat(txtTotal.Text, false);
+                        //        if (oCompraE.EnCtaCte)
+                        //        {
+                        //            descripcionEgreso = "Compra CTA CTE a ";
+                        //            detalleEgreso = " | $"+ montoEgreso.ToString("F2");
+                        //            montoEgreso = 0;
+                        //        }
+                        //        descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
 
+                        //        oEgresoCajaE.Fecha = oCompraE.FechaCompra;
+                        //        oEgresoCajaE.IdTipoEgresoCaja = oCierreN.getIdEgresoCajaPorCompra();
+                        //        oEgresoCajaE.Descripcion = descripcionEgreso;
+                        //        oEgresoCajaE.Monto = montoEgreso;
+                        //        oEgresoCajaE.Detalle = oCompraE.Observaciones;
+                        //        oEgresoCajaE.Sucursal = oCompraE.Sucursal;
+                        //        oEgresoCajaE.IdCompra = oCompraE.IdCompra;
+                        //        oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oCompraE.CreadoPor.Id : oUsuario.Id;
+                        //        oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oUsuario.Id : 0;
+
+                        //        oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                        //        MessageBox.Show("La Compra y el Egreso de caja se guardaron correctamente.");
+                        //        //imprimirTicket(oEgresoCajaE);
+                        //        this.Close();
+                        //    }
+                        //    catch (Exception ex)
+                        //    {
+                        //        MessageBox.Show("Error al guardar el Egreso.\n\nLa compra se registró correctamente." + "\n\n" + ex.Source);
+                        //    }
+                        //}
+
+                        MessageBox.Show("La Compra se registró correctamente.");
                         //if (oFrmCompra != null) oFrmCompra.cargarGrilla();
                         this.Close();
                         //limpiarListas();

@@ -134,7 +134,7 @@ namespace Presentacion.Ventas
                 cargarVenta();
                 try
                 {
-                    oVentaN.modificarVenta(oVentaE, SucAnterior, true);
+                    oVentaN.modificarVenta(oVentaE, SucAnterior, true, null);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
                     {

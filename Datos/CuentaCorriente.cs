@@ -70,13 +70,16 @@ namespace Datos
             {
 	            cmCtaCte.Connection.Open();
                 SqlDataReader drMovCtaCte = cmCtaCte.ExecuteReader();
+                int idPersona = 0, idSucursal = 0, idCreadoPor = 0, idModifPor = 0;
                 using (drMovCtaCte)
                 {
 	                while(drMovCtaCte.Read())
                     {
+                        //TODO: cargar objetos por fuera como se hizo en Ventas
                         oMovCtaCteE.Id = Convert.ToInt32(drMovCtaCte["id"]);
-                        Datos.Persona oPersonaD = new Datos.Persona();
-                        oMovCtaCteE.Persona = oPersonaD.findById(Convert.ToInt32(drMovCtaCte["idPersona"]));
+                        //Datos.Persona oPersonaD = new Datos.Persona();
+                        //oMovCtaCteE.Persona = oPersonaD.findById(Convert.ToInt32(drMovCtaCte["idPersona"]));
+                        idPersona = Convert.ToInt32(drMovCtaCte["idPersona"]);
 
                         oMovCtaCteE.Fecha = Convert.ToDateTime(drMovCtaCte["fecha"]);
                         oMovCtaCteE.Tabla = Convert.ToString(drMovCtaCte["tabla"]);
@@ -86,19 +89,32 @@ namespace Datos
                         oMovCtaCteE.Tipo = Convert.ToString(drMovCtaCte["tipo"]);
                         oMovCtaCteE.Importe = float.Parse(drMovCtaCte["importe"].ToString());
 
-                        Datos.Sucursal oSucursalD = new Sucursal();
-                        oMovCtaCteE.Sucursal = oSucursalD.findById(Convert.ToInt32(drMovCtaCte["idSucursal"]));
+                        //Datos.Sucursal oSucursalD = new Sucursal();
+                        //oMovCtaCteE.Sucursal = oSucursalD.findById(Convert.ToInt32(drMovCtaCte["idSucursal"]));
+                        idSucursal = Convert.ToInt32(drMovCtaCte["idSucursal"]);
 
                         oMovCtaCteE.QuitadoCtaCta = drMovCtaCte["quitadoCtaCte"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drMovCtaCte["quitadoCtaCte"]);
 
                         oMovCtaCteE.Creado = Convert.ToDateTime(drMovCtaCte["creado"]);
                         oMovCtaCteE.Actualizado = drMovCtaCte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drMovCtaCte["actualizado"]);
 
-                        Datos.Usuario oUsuarioD = new Usuario();
-                        oMovCtaCteE.CreadoPor = oUsuarioD.getUsuarioById(Convert.ToInt32(drMovCtaCte["creadoPor"]));
-                        oMovCtaCteE.ActualizadoPor = drMovCtaCte["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drMovCtaCte["actualizadoPor"]));
-
+                        //Datos.Usuario oUsuarioD = new Usuario();
+                        //oMovCtaCteE.CreadoPor = oUsuarioD.getUsuarioById(Convert.ToInt32(drMovCtaCte["creadoPor"]));
+                        //oMovCtaCteE.ActualizadoPor = drMovCtaCte["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drMovCtaCte["actualizadoPor"]));
+                        idCreadoPor = Convert.ToInt32(drMovCtaCte["creadoPor"]);
+                        idModifPor = drMovCtaCte["actualizadoPor"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(drMovCtaCte["actualizadoPor"]);
                     }
+
+                    Datos.Usuario oUsuarioD = new Usuario();
+                    oMovCtaCteE.CreadoPor = oUsuarioD.getUsuarioById(idCreadoPor);
+                    oMovCtaCteE.ActualizadoPor = idModifPor.Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(idModifPor);
+
+                    Datos.Sucursal oSucursalD = new Sucursal();
+                    oMovCtaCteE.Sucursal = oSucursalD.findById(idSucursal);
+
+                    Datos.Persona oPersonaD = new Datos.Persona();
+                    oMovCtaCteE.Persona = oPersonaD.findById(idPersona);
+
                     return oMovCtaCteE;
                 }
             }

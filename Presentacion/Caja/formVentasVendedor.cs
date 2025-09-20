@@ -88,7 +88,29 @@ namespace Presentacion
                 {
                     Caja.formUltimaVenta frmUltimaVenta = new Caja.formUltimaVenta();
                     frmUltimaVenta.oUltimaVenta = oVentaN.getVentaById(idVenta);
+                    frmUltimaVenta.oCierreE = oCierreE;
                     frmUltimaVenta.ShowDialog();
+
+                    if (grillaVentas.CurrentRow != null)
+                    {
+                        // 1. Guardar el IdVenta de la fila actual
+                        int idVentaSeleccionada = Convert.ToInt32(grillaVentas.CurrentRow.Cells["IdVenta"].Value);
+
+                        // 2. Refrescar la grilla
+                        cargarGrilla();
+
+                        // 3. Buscar la fila y seleccionarla
+                        foreach (DataGridViewRow fila in grillaVentas.Rows)
+                        {
+                            if (Convert.ToInt32(fila.Cells["IdVenta"].Value) == idVentaSeleccionada)
+                            {
+                                fila.Selected = true;                                // La pinta
+                                grillaVentas.CurrentCell = fila.Cells[0];            // Le da foco
+                                grillaVentas.FirstDisplayedScrollingRowIndex = fila.Index; // Hace scroll hasta mostrarla
+                                break;
+                            }
+                        }
+                    }
                 }
                 else
                 {

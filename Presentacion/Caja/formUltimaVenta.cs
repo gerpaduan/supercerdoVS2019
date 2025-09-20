@@ -266,7 +266,6 @@ namespace Presentacion.Caja
                 if (oCierreE == null || !(oUsuarioN.tienePermiso(oCierreE.UsuarioInicio, this.Name, oUltimaVenta.FechaVenta, oCierreE.UsuarioInicio.Id)))
                 {
                     Utilidades.Mensajes.ErrorPermisoEdicion();
-                    this.Close();
                     return;
                 }
 
@@ -312,6 +311,7 @@ namespace Presentacion.Caja
                     return;
                 }
 
+                ///TODO: al modificar forma de pago desde Ultima venta no se genera el registro de egreso por pago electronico
                 if (huboModificaciones || (oUltimaVenta.Observaciones != txtObservaciones.Text))
                 {
                     oUltimaVenta.Observaciones = txtObservaciones.Text;
@@ -319,27 +319,27 @@ namespace Presentacion.Caja
                     DialogResult respuesta = MessageBox.Show("¿Está seguro que desea modificar los datos de la venta?", "Modificar venta", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                     if (respuesta.Equals(DialogResult.Yes))
                     {
-                        oVentaN.modificarVenta(oUltimaVenta, oUltimaVenta.Sucursal.IdSucursal, false);
+                        oVentaN.modificarVenta(oUltimaVenta, oUltimaVenta.Sucursal.IdSucursal, false, lineaNuevosAnulados);
 
-                        foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
-                        {
-                            oVentaN.agregarLineaVenta(lineaNuevoAnulado);
-                        }
+                        //foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
+                        //{
+                        //    oVentaN.agregarLineaVenta(lineaNuevoAnulado);
+                        //}
 
-                        formPOS fVtaCaja = new formPOS();
-                        //se genera el egreso de caja si no es Efectivo
-                        fVtaCaja.egresoCajaPagoTarjeta(oUltimaVenta);
+                        //formPOS fVtaCaja = new formPOS();
+                        ////se genera el egreso de caja si no es Efectivo
+                        //fVtaCaja.egresoCajaPagoTarjeta(oUltimaVenta);
 
-                        //Agregar en Cta Cte
-                        try
-                        {
-                            oVentaN.crearMovCtaCteVenta(oUltimaVenta);
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n"+
-                                "**La Venta se registró correctamente**\n\n" + ex.Message + "\n" + ex.Source);
-                        }
+                        ////Agregar en Cta Cte
+                        //try
+                        //{
+                        //    oVentaN.crearMovCtaCteVenta(oUltimaVenta);
+                        //}
+                        //catch (Exception ex)
+                        //{
+                        //    MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n"+
+                        //        "**La Venta se registró correctamente**\n\n" + ex.Message + "\n" + ex.Source);
+                        //}
 
                         if(checkTicket.Checked)
                             imprimirTicket();

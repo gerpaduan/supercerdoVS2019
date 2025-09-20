@@ -326,5 +326,12 @@ namespace Entidades
         public List<Int32> ListaExpendios { get => listaExpendios; set => listaExpendios = value; }
         public float PagoMixtoEfectivo { get => pagoMixtoEfectivo; set => pagoMixtoEfectivo = value; }
         public int IdExpendio { get => idExpendio; set => idExpendio = value; }
+
+        int idVendedor;
+        int idpersona;
+        int idSucursal;
+        public int IdVendedor { get => idVendedor; set => idVendedor = value; }
+        public int Idpersona { get => idpersona; set => idpersona = value; }
+        public int IdSucursal { get => idSucursal; set => idSucursal = value; }
     }
 }

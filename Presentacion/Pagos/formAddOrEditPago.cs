@@ -376,25 +376,33 @@ namespace Presentacion.Pagos
 
                     bool esModificacion = oPagoE.Id > 0;
 
-                    oPagoE = oCtaCteN.addOrEditPago(oPagoE);
 
                     ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
-                    ///
-                    try
-                    {
-                        oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error al guardar Mov en Cta Cte. \n-El Pago se registró correctamente." + "\n\n" + ex.Source);
-                    }
+                    oPagoE = oCtaCteN.addOrEditPago(oPagoE, oCierreCajaE, oPagoSinMod);//oCtaCteN.addOrEditPago(oPagoE);
+
+                    /////Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
+                    //oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
+
+                    DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
+                                    MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+
+                    /////Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
+                    /////
+                    //try
+                    //{
+                    //    oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    MessageBox.Show("Error al guardar Mov en Cta Cte. \n-El Pago se registró correctamente." + "\n\n" + ex.Source);
+                    //}
 
                     //se actualiza el saldo
                     CargarSaldo();
 
-                    //MessageBox.Show("El Pago de registró correctamente.");
-                    DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
-                                    MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    ////MessageBox.Show("El Pago de registró correctamente.");
+                    //DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
+                    //                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
                     if (resp.Equals(DialogResult.Yes))
                         imprimirRecibo();

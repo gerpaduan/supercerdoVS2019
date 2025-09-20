@@ -731,6 +731,7 @@ namespace Presentacion.Compras
                  if (respuesta == DialogResult.Yes)
                  {  
                     cargarDatosCompraModificada();
+
                     oCompraN.modificarCompra(oCompraModificada);
 
                     if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))

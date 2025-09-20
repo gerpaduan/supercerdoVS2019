@@ -195,7 +195,7 @@ namespace Presentacion.Caja
                 try
                 {
 
-                    oVentaN.modificarVenta(oVentaE, SucAnterior, true);
+                    //oVentaN.modificarVenta(oVentaE, SucAnterior, true);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
                     {

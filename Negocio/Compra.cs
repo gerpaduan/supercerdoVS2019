@@ -3,13 +3,103 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Transactions;
 
 namespace Negocio
 {
     public class Compra
     {
         Datos.Compra oCompraD = new Datos.Compra();
-        
+
+        public int AddOrEditCompra(Entidades.Compra oCompraE, string tipoCompra,List<Entidades.MediaRes> listaMediaRes, 
+            List<Entidades.CortePorCompra> listaCortePorCompra, bool esEgresoCaja, Entidades.EgresoCaja oEgresoCajaE)
+        {
+            using (TransactionScope scope = new TransactionScope())
+            {
+                try
+                {
+                    if (oCompraE != null && oCompraE.IdCompra > 0)
+                    {
+                        modificarCompra(oCompraE);
+                    }
+                    else
+                    {
+                        oCompraE.IdCompra = oCompraD.agregarCompra(oCompraE);
+                    }
+
+                    if(tipoCompra == "Media Res")
+                    {
+                        foreach (Entidades.MediaRes mediaRes in listaMediaRes)
+                        {
+                            agregarMedias(mediaRes);
+                        }
+                    }
+
+                    if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
+                    {
+                        Negocio.Corte oCorteN = new Corte();
+                        foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
+                        {
+                            agregarCortePorCompra(cortePorCompra);
+
+                            //se actualiza el precio del corte
+                            if (cortePorCompra.PrecioVenta > 0)
+                            {
+                                cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
+                                oCorteN.editPrecioCorte(cortePorCompra.Corte);
+                            }
+                        }
+                    }
+
+                    //Cuenta Corriente
+                    crearMovCtaCteCompra(oCompraE);
+
+
+                    if (esEgresoCaja)
+                    {
+                        if (oEgresoCajaE == null)
+                            oEgresoCajaE = new Entidades.EgresoCaja();
+
+                        ///si la compra es en CTA CTE, 
+                        ///se informa en egresos pero el monto será 0 porque no salió el dinero de la caja
+                        string descripcionEgreso = "Compra a ";
+                        string detalleEgreso = string.Empty;
+                        float montoEgreso = oCompraE.getImporteCompra(oCompraE, listaMediaRes, listaCortePorCompra);
+                        if (oCompraE.EnCtaCte)
+                        {
+                            descripcionEgreso = "Compra CTA CTE a ";
+                            detalleEgreso = " | $" + montoEgreso.ToString("F2");
+                            montoEgreso = 0;
+                        }
+                        descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
+
+                        oEgresoCajaE.Fecha = oCompraE.FechaCompra;
+                        oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idCompraEgresoCaja;// oCierreN.getIdEgresoCajaPorCompra();
+                        oEgresoCajaE.Descripcion = descripcionEgreso;
+                        oEgresoCajaE.Monto = montoEgreso;
+                        oEgresoCajaE.Detalle = oCompraE.Observaciones;
+                        oEgresoCajaE.Sucursal = oCompraE.Sucursal;
+                        oEgresoCajaE.IdCompra = oCompraE.IdCompra;
+                        oEgresoCajaE.CreadoPor =  oCompraE.CreadoPor.Id;
+                        oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCompraE.ActualizadoPor.Id : 0;
+
+                        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                        oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
+                    }
+
+                    // si todo salió bien, confirmamos
+                    scope.Complete();
+
+                    return oCompraE.IdCompra;
+                }
+                catch (Exception ex)
+                {
+                    // si algo falla NO llamamos a scope.Complete()
+                    // y automáticamente se hace rollback
+                    throw new Exception("Error en registrar la compra: \n" + ex.Message, ex);
+                }
+            }
+        }
         public int agregarCompra(Entidades.Compra oCompraE)
         {
            return oCompraD.agregarCompra(oCompraE);            
@@ -23,6 +113,7 @@ namespace Negocio
 
         public Entidades.Compra findById_convertToCompra(int idCompra)
         {
+            //TODO: compra el using como en Ventas
             Entidades.Compra oCompra = new Entidades.Compra();
             DataTable dtCompra = this.findById(idCompra);
             foreach (DataRow row in dtCompra.Rows)

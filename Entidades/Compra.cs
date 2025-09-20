@@ -30,6 +30,30 @@ namespace Entidades
             NoActualizado,
         }
 
+
+        public float getImporteCompra(Entidades.Compra oCompra, List<Entidades.MediaRes> listaMediasCompras, 
+            List<Entidades.CortePorCompra> listaProductosCompra)
+        {
+            float importe = 0;
+
+            if (listaMediasCompras != null)
+            {
+                foreach (Entidades.MediaRes linea in listaMediasCompras)
+                {
+                    importe += linea.kgMedia * linea.precioMedia;
+                }
+            }
+            if (listaProductosCompra != null)
+            {
+                foreach (Entidades.CortePorCompra linea in listaProductosCompra)
+                {
+                    importe += linea.CantKgs * linea.precioKg;
+                }
+            }
+
+            return importe;
+        }
+
         public static string estadoAjStockToString(estadoAjusteStock estadoAjStockToConvert)
         {
             string estadoAjStockToString = "";

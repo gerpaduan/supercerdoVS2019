@@ -5,6 +5,7 @@ using System.Text;
 using System.Data;
 using Entidades;
 using System.Data.SqlClient;
+using System.Transactions;
 
 namespace Negocio
 {
@@ -159,20 +160,72 @@ namespace Negocio
             return oCtaCteD.getPagoById(idPago);
         }
 
-        public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE)
+        public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoSinMod)
         {
-            ///obtener los cheques del pago antes de modificar y comparo si se eliminar cheques del pago, los receteo
-            ///
-            List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id);
-            foreach (Cheque cheque in listaCheques)
+            using (TransactionScope scope = new TransactionScope())
             {
-                bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
+                try
+                {
+                    // obtener los cheques del pago antes de modificar
+                    List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id);
+                    foreach (Cheque cheque in listaCheques)
+                    {
+                        bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
 
-                if (!yaExiste)
-                    oCtaCteD.resetearChequesAsignados(oPagoE.Id);
+                        if (!yaExiste)
+                            oCtaCteD.resetearChequesAsignados(oPagoE.Id);
+                    }
+
+                    // guardar o editar el pago
+                    oPagoE = oCtaCteD.addOrEditPago(oPagoE);
+
+                    // crear movimiento
+                    crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
+
+                    // si todo salió bien, confirmamos
+                    scope.Complete();
+
+                    return oPagoE;
+                }
+                catch (Exception ex)
+                {
+                    // si algo falla NO llamamos a scope.Complete()
+                    // y automáticamente se hace rollback
+                    throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
+                }
             }
 
-            return oCtaCteD.addOrEditPago(oPagoE);
+            //using (TransactionScope scope = new TransactionScope())
+            //{
+            //    try
+            //    {
+            //        ///obtener los cheques del pago antes de modificar y comparo si se eliminar cheques del pago, los receteo
+            //        ///
+            //        List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id);
+            //        foreach (Cheque cheque in listaCheques)
+            //        {
+            //            bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
+
+            //            if (!yaExiste)
+            //                oCtaCteD.resetearChequesAsignados(oPagoE.Id);
+            //        }
+
+            //        oPagoE = oCtaCteD.addOrEditPago(oPagoE);
+
+            //        crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
+
+            //        // si todo salió bien, confirmamos
+            //        scope.Complete();
+
+            //        return oPagoE;
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    // si algo falla NO llamamos a scope.Complete()
+            //    // y automáticamente se hace rollback
+            //    throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
+            //}
         }
 
         public void eliminarPago(Entidades.Pago oPagoE)

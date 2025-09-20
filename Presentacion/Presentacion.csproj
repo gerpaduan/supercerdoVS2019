@@ -259,12 +259,6 @@
     <Compile Include="Caja\formPuntoExpendio.Designer.cs">
       <DependentUpon>formPuntoExpendio.cs</DependentUpon>
     </Compile>
-    <Compile Include="Caja\formVentaCajaConExpendio.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Caja\formVentaCajaConExpendio.Designer.cs">
-      <DependentUpon>formVentaCajaConExpendio.cs</DependentUpon>
-    </Compile>
     <Compile Include="Caja\formVentasVendedor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -764,9 +758,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formPuntoExpendio.resx">
       <DependentUpon>formPuntoExpendio.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Caja\formVentaCajaConExpendio.resx">
-      <DependentUpon>formVentaCajaConExpendio.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Caja\formVentasVendedor.resx">
       <DependentUpon>formVentasVendedor.cs</DependentUpon>

@@ -224,7 +224,7 @@ namespace Presentacion.Caja
                 try
                 {
 
-                    oVentaN.modificarVenta(oVentaE, SucAnterior, true);
+                    //oVentaN.modificarVenta(oVentaE, SucAnterior, true);
 
                     foreach (Entidades.LineaVenta linea in listaLineaVenta)
                     {
@@ -314,14 +314,17 @@ namespace Presentacion.Caja
             {
                 cargarVenta();
 
+                string mensajeCatch = "ERROR al registrar la Venta";
                 try
                 {
                     //oVentaN.cargaExhaustiva(oVentaE, listaLineaVenta);
                     //return;
 
-
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
-                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();                
+
+                    mensajeCatch = "La Venta (egreso de caja y actualización de cta cte, si los hay) se registraron correctamente";
+
+                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();              
                                      
                     //imprimir si está checked
                     ticket.imprimir = checkTicket.Checked;
@@ -386,21 +389,21 @@ namespace Presentacion.Caja
 
 
                     //se genera el egreso de caja si no es Efectivo
-                    egresoCajaPagoTarjeta(oVentaE);
+                    //egresoCajaPagoTarjeta(oVentaE); PASADO A CAPA NEGOCIO
 
-                    //Agregar en Cta Cte
-                    try
-                    {
-                        oVentaN.crearMovCtaCteVenta(oVentaE);
+                    ////Agregar en Cta Cte PASADO A CAPA NEGOCIO
+                    //try
+                    //{
+                    //    oVentaN.crearMovCtaCteVenta(oVentaE);
 
-                        ////se genera el egreso de caja por Cta. Cte
-                        //if(oVentaE.EnCtaCte) 
-                        //    egresoCajaPorCtaCte(oVentaE);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
-                    }
+                    //    ////se genera el egreso de caja por Cta. Cte
+                    //    //if(oVentaE.EnCtaCte) 
+                    //    //    egresoCajaPorCtaCte(oVentaE);
+                    //}
+                    //catch (Exception ex)
+                    //{
+                    //    MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
+                    //}
 
                     try
                     {
@@ -430,7 +433,7 @@ namespace Presentacion.Caja
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show(mensajeCatch + "\n" +  ex.Message);
                 }
             }
         }
@@ -516,7 +519,7 @@ namespace Presentacion.Caja
         {
             try
             {
-                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja.IdVenta, oUsuario, oVentaConEgresoCaja.PagoMixtoEfectivo);
+                oVentaN.egresoCajaPagoTarjeta(oVentaConEgresoCaja);
 
                 #region Codigo anterior: SE PASO A CAPA NEGOCIO
                 ///Codigo anterior: SE PASO A CAPA NEGOCIO
@@ -3434,15 +3437,16 @@ namespace Presentacion.Caja
         {
             try
             {
-                oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oUsuario.Id);
-                double totalUltimaVenta = 0;
-                foreach (Entidades.LineaVenta  linea in oUltimaVentaVendedor.LineasVenta)
-                {
-                    totalUltimaVenta += linea.PrecioKg * linea.CantKg;
-                }
+                //TODO: carga ultima ven con una sucursal distante a la seteada
+                oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oCierreE);
+                //double totalUltimaVenta = TotalImporte;
+                //foreach (Entidades.LineaVenta  linea in oUltimaVentaVendedor.LineasVenta)
+                //{
+                //    totalUltimaVenta += linea.PrecioKg * linea.CantKg;
+                //}
                 lblHoraUltimaVenta.Text = oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
                     " " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
-                    "\n$ " + totalUltimaVenta.ToString("N2");
+                    "\n$ " + oUltimaVentaVendedor.TotalImporte.ToString("N2");
             }
             catch (Exception)
             {

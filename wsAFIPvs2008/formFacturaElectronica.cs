@@ -2398,7 +2398,7 @@ namespace wsAFIPvs2008
                             oVentaN.agregarLineaVenta(oVentaAnularPorNotaCredito.LineasVenta[i]);
                         }
                         errorLinea = "-Las lineas de venta se registraron ok.";
-                        oVentaN.egresoCajaPagoTarjeta(oVentaAnularPorNotaCredito.IdVenta, oVentaAnularPorNotaCredito.Vendedor, oVentaAnularPorNotaCredito.PagoMixtoEfectivo);
+                        oVentaN.egresoCajaPagoTarjeta(oVentaAnularPorNotaCredito);//(oVentaAnularPorNotaCredito.IdVenta, oVentaAnularPorNotaCredito.Vendedor, oVentaAnularPorNotaCredito.PagoMixtoEfectivo);
                         errorEgresoCaja = "-El egreso de caja se registró ok.";
                         oVentaN.crearMovCtaCteVenta(oVentaAnularPorNotaCredito);
                         errorCtaCte = "-El registro de Cta Cte ok.";

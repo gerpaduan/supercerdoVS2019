@@ -1076,7 +1076,7 @@
             this.grillaLineasVenta.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.grillaLineasVenta.BackgroundColor = System.Drawing.SystemColors.ButtonFace;
             dataGridViewCellStyle31.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle31.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle31.Font = new System.Drawing.Font("Segoe UI", 13.25F);
             dataGridViewCellStyle31.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(46)))), ((int)(((byte)(46)))), ((int)(((byte)(46)))));
             dataGridViewCellStyle31.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             dataGridViewCellStyle31.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
@@ -1093,7 +1093,7 @@
             this.estado});
             dataGridViewCellStyle38.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle38.BackColor = System.Drawing.SystemColors.ButtonFace;
-            dataGridViewCellStyle38.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle38.Font = new System.Drawing.Font("Segoe UI Semibold", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             dataGridViewCellStyle38.ForeColor = System.Drawing.SystemColors.ControlText;
             dataGridViewCellStyle38.SelectionBackColor = System.Drawing.Color.LightSkyBlue;
             dataGridViewCellStyle38.SelectionForeColor = System.Drawing.SystemColors.ActiveCaptionText;

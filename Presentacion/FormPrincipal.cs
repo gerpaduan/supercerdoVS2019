@@ -405,6 +405,17 @@ namespace Presentacion
             }
 
 
+
+            //public static int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+            Negocio.Sucursal oSucN = new Negocio.Sucursal();
+            Entidades.Sucursal oSucE = oSucN.findById(idSucursal);
+            nombreSucursal = oSucE.sucursal; // ConfigurationManager.AppSettings["nombreSucursal"].ToString();
+            //public static string cliente = ConfigurationManager.AppSettings["cliente"].ToString();
+            //public static string cuitCliente = ConfigurationManager.AppSettings["cuitCliente"].ToString();
+            //public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals
+
+            textForm = cliente + " | Suc. " + nombreSucursal;
+
             this.Text = textForm + " " + version_nro;
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
 

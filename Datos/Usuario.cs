@@ -41,40 +41,114 @@ namespace Datos
             return dtUsuarios;
         }
 
-        public Entidades.Usuario getUsuarioById(int idUsuario)
+        public Entidades.Usuario getUsuarioById(int idUsuario, SqlConnection conn = null)//, SqlTransaction tran = null)
         {
-            cmUsuario = new SqlCommand();
-            cmUsuario.Connection = conn.conectar();
-            cmUsuario.CommandType = CommandType.Text;
-            cmUsuario.CommandText = "Select Usuarios.* from Usuarios where id =" + idUsuario;
-
-            Entidades.Usuario oUsuarioE = new Entidades.Usuario();
+            Entidades.Usuario oUsuarioE = null;
+            bool conexionPropia = false;
 
             try
             {
-                cmUsuario.Connection.Open();
-                SqlDataReader drUsuario = cmUsuario.ExecuteReader();
-
-                using (drUsuario)
+                // Si no hay conexión pasada, creamos y abrimos una propia
+                if (conn == null)
                 {
-                    while (drUsuario.Read())
+                    conn = this.conn.conectar();
+                    conn.Open();
+                    conexionPropia = true;
+                }
+
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Usuarios WHERE id = @id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", idUsuario);
+
+                    using (SqlDataReader drUsuario = cmd.ExecuteReader())
                     {
+                        if (drUsuario.Read())
+                        {
+                            oUsuarioE = new Entidades.Usuario
+                            {
+                                Id = Convert.ToInt32(drUsuario["id"]),
+                                Nombre = drUsuario["nombre"]?.ToString(),
+                                User = drUsuario["usuario"]?.ToString(),
+                                Clave = drUsuario["clave"]?.ToString(),
+                                Admin = drUsuario["admin"] != DBNull.Value && Convert.ToBoolean(drUsuario["admin"]),
+                                Activo = drUsuario["activo"] != DBNull.Value && Convert.ToBoolean(drUsuario["activo"]),
+                                ColorForm = drUsuario["colorForm"]?.ToString()
+                            };
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                // Cerramos solo si fue conexión propia
+                if (conexionPropia && conn.State == ConnectionState.Open)
+                    conn.Close();
+            }
+
+            return oUsuarioE;
+        }
+
+        public Entidades.Usuario getUsuarioById(int idUsuario)
+        {
+            Entidades.Usuario oUsuarioE = null;
+
+            using (SqlConnection conn = this.conn.conectar()) 
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Usuarios WHERE id = @id", conn))
+            {
+                cmd.Parameters.AddWithValue("@id", idUsuario);
+
+                conn.Open();
+                using (SqlDataReader drUsuario = cmd.ExecuteReader())
+                {
+                    if (drUsuario.Read())
+                    {
+                        oUsuarioE = new Entidades.Usuario();
                         oUsuarioE.Id = Convert.ToInt32(drUsuario["id"]);
                         oUsuarioE.Nombre = Convert.ToString(drUsuario["nombre"]);
                         oUsuarioE.User = Convert.ToString(drUsuario["usuario"]);
                         oUsuarioE.Clave = Convert.ToString(drUsuario["clave"]);
                         oUsuarioE.Admin = Convert.ToBoolean(drUsuario["admin"]);
                         oUsuarioE.Activo = Convert.ToBoolean(drUsuario["activo"]);
-                        oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);	
+                        oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);
                     }
-                    return oUsuarioE;
                 }
             }
-            finally
-            {
-                cmUsuario.Connection.Close();
-                oUsuarioE = null;
-            }
+
+            return oUsuarioE;
+
+
+            //cmUsuario = new SqlCommand();
+            //cmUsuario.Connection = conn.conectar();
+            //cmUsuario.CommandType = CommandType.Text;
+            //cmUsuario.CommandText = "Select Usuarios.* from Usuarios where id =" + idUsuario;
+
+            //Entidades.Usuario oUsuarioE = new Entidades.Usuario();
+
+            //try
+            //{
+            //    cmUsuario.Connection.Open();
+            //    SqlDataReader drUsuario = cmUsuario.ExecuteReader();
+
+            //    using (drUsuario)
+            //    {
+            //        while (drUsuario.Read())
+            //        {
+            //            oUsuarioE.Id = Convert.ToInt32(drUsuario["id"]);
+            //            oUsuarioE.Nombre = Convert.ToString(drUsuario["nombre"]);
+            //            oUsuarioE.User = Convert.ToString(drUsuario["usuario"]);
+            //            oUsuarioE.Clave = Convert.ToString(drUsuario["clave"]);
+            //            oUsuarioE.Admin = Convert.ToBoolean(drUsuario["admin"]);
+            //            oUsuarioE.Activo = Convert.ToBoolean(drUsuario["activo"]);
+            //            oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);	
+            //        }
+            //        return oUsuarioE;
+            //    }
+            //}
+            //finally
+            //{
+            //    cmUsuario.Connection.Close();
+            //    oUsuarioE = null;
+            //}
         }
 
         public void addOrEditUser(Entidades.Usuario oUsuarioE)

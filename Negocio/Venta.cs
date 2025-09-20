@@ -5,6 +5,7 @@ using System.Text;
 using System.Data;
 using System.Data.SqlClient;
 using System.Net.Sockets;
+using System.Transactions;
 
 namespace Negocio
 {
@@ -14,54 +15,120 @@ namespace Negocio
 
         public int agregarVenta(Entidades.Venta oVentaE)
         {
-            //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
-            switch (oVentaE.FormaPago.ToString())
+            using (TransactionScope scope = new TransactionScope())
             {
-                case "Efectivo":
-                    oVentaE.ComisionTarjeta = 0;
-                    break;
-                case "Debito":
-                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
-                    break;
-                case "Credito":
-                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
-                    break;
-                default:
-                    oVentaE.ComisionTarjeta = 0;
-                    break;
-            }
-            oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
-            ///llama al metodo para asinar el idVenta a la tabla Expendios
-            ///
-            if (oVentaE.ListaExpendios != null)
-            {
-                foreach (int item in oVentaE.ListaExpendios)
-                    oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
-            }
+                try
+                {
+                    //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
+                    switch (oVentaE.FormaPago.ToString())
+                    {
+                        case "Efectivo":
+                            oVentaE.ComisionTarjeta = 0;
+                            break;
+                        case "Debito":
+                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+                            break;
+                        case "Credito":
+                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+                            break;
+                        default:
+                            oVentaE.ComisionTarjeta = 0;
+                            break;
+                    }
+                    oVentaE.IdVenta = oVentaD.agregarVenta(oVentaE);
 
-            return oVentaE.IdVenta;
+                    ///llama al metodo para asinar el idVenta a la tabla Expendios
+                    ///
+                    if (oVentaE.ListaExpendios != null)
+                    {
+                        foreach (int item in oVentaE.ListaExpendios)
+                            oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
+                    }
+
+                    egresoCajaPagoTarjeta(oVentaE);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
+
+                    crearMovCtaCteVenta(oVentaE);
+
+                    // si todo salió bien, confirmamos
+                    scope.Complete();
+
+                    return oVentaE.IdVenta;
+                }
+                catch (Exception ex)
+                {
+                    // si algo falla NO llamamos a scope.Complete()
+                    // y automáticamente se hace rollback
+                    throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
+                }
+            }
         }
 
-        public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas)
+        public void modificarVenta(Entidades.Venta oVentaE, int SucAnterior, bool eliminarLineas, List<Entidades.LineaVenta> lineaNuevosAnulados)
         {
-            //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
-            switch (oVentaE.FormaPago.ToString())
+            ////Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
+            //switch (oVentaE.FormaPago.ToString())
+            //{
+            //    case "Efectivo":
+            //        oVentaE.ComisionTarjeta = 0;
+            //        break;
+            //    case "Debito":
+            //        oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+            //        break;
+            //    case "Credito":
+            //        oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+            //        break;
+            //    default:
+            //        oVentaE.ComisionTarjeta = 0;
+            //        break;
+            //}
+            //oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
+
+            using (TransactionScope scope = new TransactionScope())
             {
-                case "Efectivo":
-                    oVentaE.ComisionTarjeta = 0;
-                    break;
-                case "Debito":
-                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
-                    break;
-                case "Credito":
-                    oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
-                    break;
-                default:
-                    oVentaE.ComisionTarjeta = 0;
-                    break;
+                try
+                {
+                    //Se carga la comision segun el tipo de tarjeta (Este valor se obtiene desde tabla parametros)
+                    switch (oVentaE.FormaPago.ToString())
+                    {
+                        case "Efectivo":
+                            oVentaE.ComisionTarjeta = 0;
+                            break;
+                        case "Debito":
+                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+                            break;
+                        case "Credito":
+                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+                            break;
+                        default:
+                            oVentaE.ComisionTarjeta = 0;
+                            break;
+                    }
+                    oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
+
+                    if (lineaNuevosAnulados != null)
+                    {
+                        foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
+                        {
+                            agregarLineaVenta(lineaNuevoAnulado);
+                        }
+                    }
+
+                    egresoCajaPagoTarjeta(oVentaE);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
+
+                    crearMovCtaCteVenta(oVentaE);
+
+                    // si todo salió bien, confirmamos
+                    scope.Complete();
+                }
+                catch (Exception ex)
+                {
+                    // si algo falla NO llamamos a scope.Complete()
+                    // y automáticamente se hace rollback
+                    throw new Exception("Error en registrar la venta: \n" + ex.Message, ex);
+                }
             }
-            oVentaD.modificarVenta(oVentaE, SucAnterior, eliminarLineas);
         }
+
 
         public void crearMovCtaCteVenta(Entidades.Venta oVentaE)
         {
@@ -118,9 +185,9 @@ namespace Negocio
             oVentaD.agregarStockVenta(oVentaE);
         }
 
-        public Entidades.Venta getUltimaVentaVendedor(int idVendedor)
+        public Entidades.Venta getUltimaVentaVendedor(Entidades.CierreCaja oCierreE)
         {
-            return oVentaD.getUltimaVentaVendedor(idVendedor);
+            return oVentaD.getUltimaVentaVendedor(oCierreE);
         }
 
         public void agregarTemporalLineaVenta(Entidades.TemporalLineaVenta oTemporalLV)
@@ -143,9 +210,9 @@ namespace Negocio
             return oVentaD.ultimasVentasCliente(idSucursal, idPersona);
         }
 
-        public void egresoCajaPagoTarjeta(int idVenta, Entidades.Usuario oUsuario, float pagoMixtoEfectivo)
-    {
-            Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
+        public void egresoCajaPagoTarjeta(Entidades.Venta oVentaConEgresoCaja)//(int idVenta, Entidades.Usuario oUsuario, float pagoMixtoEfectivo)
+        {
+            //Entidades.Venta oVentaConEgresoCaja = getVentaById(idVenta);
 
             bool esEfectivo = oVentaConEgresoCaja.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString());                   
             //se genera el egreso de caja si no es Efectivo
@@ -169,14 +236,14 @@ namespace Negocio
                 }
                 else
                 {
-                    formaPagoDetalle = pagoMixtoEfectivo > 0 ? 
-                        "Mixta - T$"+ totalS.ToString("N2") + " -> " + oVentaConEgresoCaja.FormaPago.ToString()+" $"+(totalS - pagoMixtoEfectivo).ToString("N2")+" | "+"Efvo $"+pagoMixtoEfectivo.ToString("N2") : 
+                    formaPagoDetalle = oVentaConEgresoCaja.PagoMixtoEfectivo > 0 ? 
+                        "Mixta - T$"+ totalS.ToString("N2") + " -> " + oVentaConEgresoCaja.FormaPago.ToString()+" $"+(totalS - oVentaConEgresoCaja.PagoMixtoEfectivo).ToString("N2")+" | "+"Efvo $"+oVentaConEgresoCaja.PagoMixtoEfectivo.ToString("N2") : 
                         oVentaConEgresoCaja.FormaPago.ToString();
                     oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoTarjeta;
                     oEgresoCajaE.Descripcion = "Venta " + formaPagoDetalle + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
                 }
 
-                oEgresoCajaE.Monto = totalS - pagoMixtoEfectivo;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
+                oEgresoCajaE.Monto = totalS - oVentaConEgresoCaja.PagoMixtoEfectivo;// oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
                 oEgresoCajaE.Detalle = " | Kgs: " + totalKgs.ToString("N3") +
                     " | Precio: " + (totalS / totalKgs).ToString("N3") +
                     " | TOT: " + totalS.ToString("N3") + "\n\n" + oVentaConEgresoCaja.Observaciones;
@@ -185,7 +252,7 @@ namespace Negocio
                 oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Ventas.ToString();
                 oEgresoCajaE.IdTabla = oVentaConEgresoCaja.IdVenta;
                 oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
-                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oVentaConEgresoCaja.Vendedor != null ? oVentaConEgresoCaja.Vendedor.Id : -1) : -1;
 
                 Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);

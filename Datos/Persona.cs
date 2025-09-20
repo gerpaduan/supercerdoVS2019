@@ -92,42 +92,98 @@ namespace Datos
 
         public Entidades.Persona findById(int id)
         {
-            DataTable dtPersona = new DataTable();
-            SqlDataAdapter daPersona;
-            cmPersona = new SqlCommand();
+            Entidades.Persona oPersona = null;
 
-            cmPersona.Connection = conn.conectar();
-            daPersona = new SqlDataAdapter("SELECT dbo.Personas.idPersona as idPersona, dbo.Personas.identificacion as identificacion, dbo.Personas.razonSocial as razonSocial, " +
-                      " dbo.Personas.tipo as tipo, dbo.Personas.otrosDatos as otrosDatos, dbo.Personas.ctaCte as ctaCte, "+
-                      " dbo.Personas.bonificacion as bonificacion, dbo.Personas.cuit as cuit, dbo.Personas.telefono as telefono, "+
-                      " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.marca, dbo.Personas.idPropietario, dbo.Personas.creado, dbo.Personas.idIva as idIva, " +
-                      " dbo.Iva.iva as iva FROM  dbo.Iva RIGHT OUTER JOIN " +
-                      " dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva where idPersona = " + id, conn.conectar());
-            daPersona.Fill(dtPersona);
-
-            Entidades.Persona oPersona = new Entidades.Persona();
-            if (dtPersona.Rows.Count > 0)
+            using (SqlConnection connection = conn.conectar())
+            using (SqlCommand cmd = new SqlCommand(@"
+                                                    SELECT 
+                                                        p.idPersona,
+                                                        p.identificacion,
+                                                        p.razonSocial,
+                                                        p.tipo,
+                                                        p.otrosDatos,
+                                                        p.ctaCte,
+                                                        p.bonificacion,
+                                                        p.cuit,
+                                                        p.telefono,
+                                                        p.domicilio,
+                                                        p.ciudad,
+                                                        p.marca,
+                                                        p.idPropietario,
+                                                        p.creado,
+                                                        p.idIva,
+                                                        i.iva
+                                                    FROM dbo.Personas p
+                                                    LEFT JOIN dbo.Iva i ON i.id = p.idIva
+                                                    WHERE p.idPersona = @id", connection))
             {
-                oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
-                oPersona.tipo = dtPersona.Rows[0]["tipo"].ToString();
-                oPersona.Identificacion = dtPersona.Rows[0]["identificacion"].ToString();
-                oPersona.razonSocial = dtPersona.Rows[0]["razonSocial"].ToString();
-                oPersona.Iva = dtPersona.Rows[0]["iva"].ToString();
-                oPersona.IdIva = string.IsNullOrEmpty(dtPersona.Rows[0]["idIva"].ToString()) ? 0 : Convert.ToInt32(dtPersona.Rows[0]["idIva"].ToString());
-                oPersona.Cuit = dtPersona.Rows[0]["cuit"].ToString();
-                oPersona.Telefono = dtPersona.Rows[0]["telefono"].ToString();
-                oPersona.Domicilio = dtPersona.Rows[0]["domicilio"].ToString();
-                oPersona.Ciudad = dtPersona.Rows[0]["ciudad"].ToString();
-                oPersona.CtaCte = !dtPersona.Rows[0].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["ctaCte"]) : false;
-                oPersona.Bonificacion = !dtPersona.Rows[0]["bonificacion"].ToString().Equals(DBNull.Value) ? float.Parse(dtPersona.Rows[0]["bonificacion"].ToString()) : 0;
-                oPersona.OtrosDatos = dtPersona.Rows[0]["otrosDatos"].ToString();
-                oPersona.Creado = Convert.ToDateTime(dtPersona.Rows[0]["creado"]);
-                oPersona.Marca = !dtPersona.Rows[0]["Marca"].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["Marca"]) : false;
-                oPersona.IdPropietario = !dtPersona.Rows[0]["IdPropietario"].Equals(DBNull.Value) ? Convert.ToInt32(dtPersona.Rows[0]["IdPropietario"]) : 0;
+                cmd.Parameters.AddWithValue("@id", id);
+
+                connection.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        oPersona = new Entidades.Persona
+                        {
+                            idPersona = Convert.ToInt32(dr["idPersona"]),
+                            tipo = dr["tipo"].ToString(),
+                            Identificacion = dr["identificacion"].ToString(),
+                            razonSocial = dr["razonSocial"].ToString(),
+                            Iva = dr["iva"] == DBNull.Value ? null : dr["iva"].ToString(),
+                            IdIva = dr["idIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idIva"]),
+                            Cuit = dr["cuit"].ToString(),
+                            Telefono = dr["telefono"].ToString(),
+                            Domicilio = dr["domicilio"].ToString(),
+                            Ciudad = dr["ciudad"].ToString(),
+                            CtaCte = dr["ctaCte"] != DBNull.Value && Convert.ToBoolean(dr["ctaCte"]),
+                            Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
+                            OtrosDatos = dr["otrosDatos"].ToString(),
+                            Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
+                            Marca = dr["marca"] != DBNull.Value && Convert.ToBoolean(dr["marca"]),
+                            IdPropietario = dr["idPropietario"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idPropietario"])
+                        };
+                    }
+                }
             }
-            conn.cerraConexion();
 
             return oPersona;
+            //DataTable dtPersona = new DataTable();
+            //SqlDataAdapter daPersona;
+            //cmPersona = new SqlCommand();
+
+            //cmPersona.Connection = conn.conectar();
+            //daPersona = new SqlDataAdapter("SELECT dbo.Personas.idPersona as idPersona, dbo.Personas.identificacion as identificacion, dbo.Personas.razonSocial as razonSocial, " +
+            //          " dbo.Personas.tipo as tipo, dbo.Personas.otrosDatos as otrosDatos, dbo.Personas.ctaCte as ctaCte, "+
+            //          " dbo.Personas.bonificacion as bonificacion, dbo.Personas.cuit as cuit, dbo.Personas.telefono as telefono, "+
+            //          " dbo.Personas.domicilio as domicilio, dbo.Personas.ciudad as ciudad, dbo.Personas.marca, dbo.Personas.idPropietario, dbo.Personas.creado, dbo.Personas.idIva as idIva, " +
+            //          " dbo.Iva.iva as iva FROM  dbo.Iva RIGHT OUTER JOIN " +
+            //          " dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva where idPersona = " + id, conn.conectar());
+            //daPersona.Fill(dtPersona);
+
+            //Entidades.Persona oPersona = new Entidades.Persona();
+            //if (dtPersona.Rows.Count > 0)
+            //{
+            //    oPersona.idPersona = Convert.ToInt32(dtPersona.Rows[0]["idPersona"].ToString());
+            //    oPersona.tipo = dtPersona.Rows[0]["tipo"].ToString();
+            //    oPersona.Identificacion = dtPersona.Rows[0]["identificacion"].ToString();
+            //    oPersona.razonSocial = dtPersona.Rows[0]["razonSocial"].ToString();
+            //    oPersona.Iva = dtPersona.Rows[0]["iva"].ToString();
+            //    oPersona.IdIva = string.IsNullOrEmpty(dtPersona.Rows[0]["idIva"].ToString()) ? 0 : Convert.ToInt32(dtPersona.Rows[0]["idIva"].ToString());
+            //    oPersona.Cuit = dtPersona.Rows[0]["cuit"].ToString();
+            //    oPersona.Telefono = dtPersona.Rows[0]["telefono"].ToString();
+            //    oPersona.Domicilio = dtPersona.Rows[0]["domicilio"].ToString();
+            //    oPersona.Ciudad = dtPersona.Rows[0]["ciudad"].ToString();
+            //    oPersona.CtaCte = !dtPersona.Rows[0].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["ctaCte"]) : false;
+            //    oPersona.Bonificacion = !dtPersona.Rows[0]["bonificacion"].ToString().Equals(DBNull.Value) ? float.Parse(dtPersona.Rows[0]["bonificacion"].ToString()) : 0;
+            //    oPersona.OtrosDatos = dtPersona.Rows[0]["otrosDatos"].ToString();
+            //    oPersona.Creado = Convert.ToDateTime(dtPersona.Rows[0]["creado"]);
+            //    oPersona.Marca = !dtPersona.Rows[0]["Marca"].Equals(DBNull.Value) ? Convert.ToBoolean(dtPersona.Rows[0]["Marca"]) : false;
+            //    oPersona.IdPropietario = !dtPersona.Rows[0]["IdPropietario"].Equals(DBNull.Value) ? Convert.ToInt32(dtPersona.Rows[0]["IdPropietario"]) : 0;
+            //}
+            //conn.cerraConexion();
+
+            //return oPersona;
         }
 
         public DataTable buscarProveedor(string buscarTexto)

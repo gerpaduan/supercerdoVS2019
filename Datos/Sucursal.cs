@@ -23,16 +23,27 @@ namespace Datos
 
         public Entidades.Sucursal findById(int id)
         {
-            DataTable dtSucursal = new DataTable();
-            daSucursal = new SqlDataAdapter("Select * from sucursal where idSucursal = " + id, conn.conectar());
-            daSucursal.Fill(dtSucursal);
+            Entidades.Sucursal oSucursalE = null;
 
-            Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-            if (dtSucursal.Rows.Count > 0)
+            using (SqlConnection conn = this.conn.conectar())
+            using (SqlCommand cmd = new SqlCommand("SELECT idSucursal, sucursal FROM sucursal WHERE idSucursal = @id", conn))
             {
-                oSucursalE.idSucursal = Convert.ToInt32(dtSucursal.Rows[0]["idSucursal"].ToString());
-                oSucursalE.sucursal = dtSucursal.Rows[0]["sucursal"].ToString();
+                cmd.Parameters.AddWithValue("@id", id);
+
+                conn.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        oSucursalE = new Entidades.Sucursal
+                        {
+                            idSucursal = Convert.ToInt32(dr["idSucursal"]),
+                            sucursal = dr["sucursal"].ToString()
+                        };
+                    }
+                }
             }
+
             return oSucursalE;
         }
 
