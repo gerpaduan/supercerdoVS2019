@@ -61,6 +61,7 @@ namespace Presentacion.Pagos
                 {
                     Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
                     frmAddOrEditPago.oPersonaE = oPersonaE;
+                    frmAddOrEditPago.desdePOS = false;
                     frmAddOrEditPago.oUsuario = oUsuario;
                     frmAddOrEditPago.Show();
                 }
@@ -257,6 +258,7 @@ namespace Presentacion.Pagos
             {
                 formAddOrEditPago frmAddOrEditPago = new formAddOrEditPago();
                 frmAddOrEditPago.idPago = idPago;
+                frmAddOrEditPago.desdePOS = false;
                 frmAddOrEditPago.frmPagos = this;
                 frmAddOrEditPago.Show();
             }

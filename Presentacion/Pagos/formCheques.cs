@@ -182,7 +182,8 @@ namespace Presentacion.Cheques
             this.Text += Utilidades.Conexion.getSucursalConexion();
             txtTitular.CharacterCasing = CharacterCasing.Upper;
             comboEstadosFiltro.SelectedIndex = 0;
-            txtFechaHasta.Value = DateTime.Now.AddDays(30); 
+            txtFechaDesde.Value = DateTime.Now.AddDays(-30);
+            txtFechaHasta.Value = DateTime.Now.AddMonths(12); 
             txtUsuario.Text = oUsuario.Nombre;
             groupChequeEstado(false || llamadoDesdePago);
 

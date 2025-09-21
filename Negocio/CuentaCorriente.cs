@@ -195,37 +195,6 @@ namespace Negocio
                 }
             }
 
-            //using (TransactionScope scope = new TransactionScope())
-            //{
-            //    try
-            //    {
-            //        ///obtener los cheques del pago antes de modificar y comparo si se eliminar cheques del pago, los receteo
-            //        ///
-            //        List<Cheque> listaCheques = oCtaCteD.getChequesPorPago(oPagoE.Id);
-            //        foreach (Cheque cheque in listaCheques)
-            //        {
-            //            bool yaExiste = oPagoE.Cheques.Any(c => c.Id == cheque.Id);
-
-            //            if (!yaExiste)
-            //                oCtaCteD.resetearChequesAsignados(oPagoE.Id);
-            //        }
-
-            //        oPagoE = oCtaCteD.addOrEditPago(oPagoE);
-
-            //        crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
-
-            //        // si todo salió bien, confirmamos
-            //        scope.Complete();
-
-            //        return oPagoE;
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //    // si algo falla NO llamamos a scope.Complete()
-            //    // y automáticamente se hace rollback
-            //    throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
-            //}
         }
 
         public void eliminarPago(Entidades.Pago oPagoE)
@@ -240,7 +209,7 @@ namespace Negocio
 
         public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoAnterior)
         {
-            oPagoE = oCtaCteD.getPagoById(oPagoE.Id);
+            //oPagoE = oCtaCteD.getPagoById(oPagoE.Id); COMENTADO XQ YA ENVIO EL OBJETO POR PARAMETRO
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
             oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,

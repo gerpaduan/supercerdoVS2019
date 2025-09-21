@@ -53,32 +53,29 @@ namespace Datos
 
         public Entidades.MovCtaCte getMovCtaCteBy(int id, Entidades.MovCtaCte.tablas tabla, int idTabla, Entidades.MovCtaCte.getBy getBy)
         {
-	        cmCtaCte = new SqlCommand();
-            cmCtaCte.Connection = conn.conectar();
-            cmCtaCte.CommandType = CommandType.Text;
+            Entidades.MovCtaCte oMovCtaCteE = null;
+            int idPersona = 0, idSucursal = 0, idCreadoPor = 0, idModifPor = 0;
+            string commandText = "";
             if (getBy.Equals(Entidades.MovCtaCte.getBy.Id))
             {
-                cmCtaCte.CommandText = "Select top 1 MovCtaCte.* from MovCtaCte where id = "+id+" order by id desc";
-            } 
+                commandText = "Select top 1 MovCtaCte.* from MovCtaCte where id = " + id + " order by id desc";
+            }
             if (getBy.Equals(Entidades.MovCtaCte.getBy.TablaAndId))
             {
-                cmCtaCte.CommandText = "Select top 1 MovCtaCte.* from MovCtaCte where tabla = \'" + tabla.ToString() + "\' and idTabla = " + idTabla + " order by id desc";
+                commandText = "Select top 1 MovCtaCte.* from MovCtaCte where tabla = \'" + tabla.ToString() + "\' and idTabla = " + idTabla + " order by id desc";
             }
 
-            Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
-            try
+            using (SqlConnection conn = this.conn.conectar())
+            using (SqlCommand cmd = new SqlCommand(commandText, conn))
             {
-	            cmCtaCte.Connection.Open();
-                SqlDataReader drMovCtaCte = cmCtaCte.ExecuteReader();
-                int idPersona = 0, idSucursal = 0, idCreadoPor = 0, idModifPor = 0;
-                using (drMovCtaCte)
+                conn.Open();
+                using (SqlDataReader drMovCtaCte = cmd.ExecuteReader())
                 {
-	                while(drMovCtaCte.Read())
+                    while (drMovCtaCte.Read())
                     {
-                        //TODO: cargar objetos por fuera como se hizo en Ventas
+                        oMovCtaCteE = new Entidades.MovCtaCte();
+
                         oMovCtaCteE.Id = Convert.ToInt32(drMovCtaCte["id"]);
-                        //Datos.Persona oPersonaD = new Datos.Persona();
-                        //oMovCtaCteE.Persona = oPersonaD.findById(Convert.ToInt32(drMovCtaCte["idPersona"]));
                         idPersona = Convert.ToInt32(drMovCtaCte["idPersona"]);
 
                         oMovCtaCteE.Fecha = Convert.ToDateTime(drMovCtaCte["fecha"]);
@@ -88,41 +85,30 @@ namespace Datos
                         oMovCtaCteE.Detalle = Convert.ToString(drMovCtaCte["detalle"]);
                         oMovCtaCteE.Tipo = Convert.ToString(drMovCtaCte["tipo"]);
                         oMovCtaCteE.Importe = float.Parse(drMovCtaCte["importe"].ToString());
-
-                        //Datos.Sucursal oSucursalD = new Sucursal();
-                        //oMovCtaCteE.Sucursal = oSucursalD.findById(Convert.ToInt32(drMovCtaCte["idSucursal"]));
                         idSucursal = Convert.ToInt32(drMovCtaCte["idSucursal"]);
-
                         oMovCtaCteE.QuitadoCtaCta = drMovCtaCte["quitadoCtaCte"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drMovCtaCte["quitadoCtaCte"]);
-
                         oMovCtaCteE.Creado = Convert.ToDateTime(drMovCtaCte["creado"]);
                         oMovCtaCteE.Actualizado = drMovCtaCte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drMovCtaCte["actualizado"]);
-
-                        //Datos.Usuario oUsuarioD = new Usuario();
-                        //oMovCtaCteE.CreadoPor = oUsuarioD.getUsuarioById(Convert.ToInt32(drMovCtaCte["creadoPor"]));
-                        //oMovCtaCteE.ActualizadoPor = drMovCtaCte["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drMovCtaCte["actualizadoPor"]));
                         idCreadoPor = Convert.ToInt32(drMovCtaCte["creadoPor"]);
-                        idModifPor = drMovCtaCte["actualizadoPor"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(drMovCtaCte["actualizadoPor"]);
+                        idModifPor = drMovCtaCte["actualizadoPor"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(drMovCtaCte["actualizadoPor"]);                    
                     }
-
-                    Datos.Usuario oUsuarioD = new Usuario();
-                    oMovCtaCteE.CreadoPor = oUsuarioD.getUsuarioById(idCreadoPor);
-                    oMovCtaCteE.ActualizadoPor = idModifPor.Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(idModifPor);
-
-                    Datos.Sucursal oSucursalD = new Sucursal();
-                    oMovCtaCteE.Sucursal = oSucursalD.findById(idSucursal);
-
-                    Datos.Persona oPersonaD = new Datos.Persona();
-                    oMovCtaCteE.Persona = oPersonaD.findById(idPersona);
-
-                    return oMovCtaCteE;
                 }
             }
-            finally
-            {
-	            cmCtaCte.Connection.Close();
-                oMovCtaCteE = null;
-            }
+
+            if (oMovCtaCteE == null)
+                return null;
+            
+            Datos.Usuario oUsuarioD = new Usuario();
+            oMovCtaCteE.CreadoPor = idCreadoPor.Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(idCreadoPor);
+            oMovCtaCteE.ActualizadoPor = idModifPor.Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(idModifPor);
+
+            Datos.Sucursal oSucursalD = new Sucursal();
+            oMovCtaCteE.Sucursal = oSucursalD.findById(idSucursal);
+
+            Datos.Persona oPersonaD = new Datos.Persona();
+            oMovCtaCteE.Persona = oPersonaD.findById(idPersona);            
+            
+            return oMovCtaCteE; 
         }
 
         public Entidades.MovCtaCte addOrEditMovCtaCte(Entidades.MovCtaCte oMovCtaCteE)
@@ -246,55 +232,126 @@ namespace Datos
         }
 
 
-        public List<Entidades.Cheque> getChequesPorPago(int idPago)
+        /// <summary>
+        /// Recupera los datos del Cheque segun ID - conPagos debe ser falso si se llama desde Pagos para evitar bucle
+        /// </summary>
+        /// <param name="idPago"></param>
+        /// <param name="conPagos"></param>
+        /// <returns></returns>
+        public List<Entidades.Cheque> getChequesPorPago(int idPago, bool conPagos = true)
         {
-            Cheque cheque = null;
-            List<Cheque> listCheques = new List<Cheque>();
-            // Conexión a la base de datos
+            var listCheques = new List<Cheque>();
+            if (idPago == 0)
+                return listCheques;
+
             using (SqlConnection connection = conn.conectar())
+            using (SqlCommand cmd = new SqlCommand(
+                "SELECT * FROM Cheques WHERE recibidoDe = @idPago OR entregadoA = @idPago", connection))
             {
+                cmd.Parameters.AddWithValue("@idPago", idPago);
+                connection.Open();
 
-                string query = "SELECT * FROM Cheques WHERE recibidoDe = @idPago OR entregadoA = @idPago";
-
-                using (SqlCommand cmd = new SqlCommand(query, connection))
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    cmd.Parameters.AddWithValue("@idPago", idPago);
-                    connection.Open();
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
+                        // cachear valores que se usan más de una vez
+                        int idRecibidoDe = reader["recibidoDe"] != DBNull.Value ? Convert.ToInt32(reader["recibidoDe"]) : 0;
+                        int idEntregadoA = reader["entregadoA"] != DBNull.Value ? Convert.ToInt32(reader["entregadoA"]) : 0;
+                        int idCreadoPor = reader["creadoPor"] != DBNull.Value ? Convert.ToInt32(reader["creadoPor"]) : 0;
+                        int idActualizadoPor = reader["actualizadoPor"] != DBNull.Value ? Convert.ToInt32(reader["actualizadoPor"]) : 0;
+
+                        var cheque = new Cheque
                         {
-                            Datos.Usuario oUserD = new Usuario();
-                            cheque = new Cheque
-                            {
-                                Id = reader.GetInt32(reader.GetOrdinal("id")),
-                                NroCheque = reader["nroCheque"].ToString(),
-                                Banco = reader["banco"].ToString(),
-                                Propio = Convert.ToBoolean(reader["propio"]),
-                                FechaEmision = reader["fechaEmision"].ToString(),
-                                FechaPago = Convert.ToDateTime(reader["fechaPago"]),
-                                Importe = Convert.ToDouble(reader["importe"]),
-                                Estado = reader["estado"].ToString(),
-                                Titular = reader["titular"].ToString(),
-                                Observaciones = reader["observaciones"].ToString(),
-                                RecibidoDe = Convert.ToInt32(reader["recibidoDe"]),
-                                EntregadoA = Convert.ToInt32(reader["entregadoA"]),
-                                ///se comenta estas lineas xq sino entre en bucle
-                                //PagoDe = Convert.ToInt32(reader["recibidoDe"]) > 0 ? getPagoById(Convert.ToInt32(reader["recibidoDe"])) : null,
-                                //PagoA = Convert.ToInt32(reader["entregadoA"]) > 0 ? getPagoById(Convert.ToInt32(reader["entregadoA"])) : null,
-                                Creado = Convert.ToDateTime(reader["creado"]),
-                                CreadoPor = Convert.ToInt32(reader["creadoPor"]) > 0 ? oUserD.getUsuarioById(Convert.ToInt32(reader["creadoPor"])) : null,
-                                Actualizado = reader["actualizado"] != DBNull.Value ? Convert.ToDateTime(reader["actualizado"]) : (DateTime?)null,
-                                ActualizadoPor = Convert.ToInt32(reader["actualizadoPor"]) > 0 ? oUserD.getUsuarioById(Convert.ToInt32(reader["creadoPor"])) : null,
-                            };
-                            listCheques.Add(cheque);
-                        }
+                            Id = Convert.ToInt32(reader["id"]),
+                            NroCheque = reader["nroCheque"].ToString(),
+                            Banco = reader["banco"].ToString(),
+                            Propio = Convert.ToBoolean(reader["propio"]),
+                            FechaEmision = reader["fechaEmision"].ToString(),
+                            FechaPago = Convert.ToDateTime(reader["fechaPago"]),
+                            Importe = Convert.ToDouble(reader["importe"]),
+                            Estado = reader["estado"].ToString(),
+                            Titular = reader["titular"].ToString(),
+                            Observaciones = reader["observaciones"].ToString(),
+                            RecibidoDe = idRecibidoDe,
+                            EntregadoA = idEntregadoA,
+                            Creado = Convert.ToDateTime(reader["creado"]),
+                            Actualizado = reader["actualizado"] != DBNull.Value ? Convert.ToDateTime(reader["actualizado"]) : (DateTime?)null,
+
+                            IdCreadoPor = Convert.ToInt32(reader["creadoPor"]),
+                            IdActualizadoPor = reader["actualizadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["actualizadoPor"])
+                        };
+
+                        listCheques.Add(cheque);
                     }
                 }
             }
 
+            var oUserD = new Usuario(); // reutilizamos el mismo objeto
+            for (int i = 0; i < listCheques.Count; i++)
+            {
+                listCheques[i].PagoDe = listCheques[i].RecibidoDe > 0 ? getPagoById(listCheques[i].RecibidoDe, conPagos) : null;
+                listCheques[i].PagoA = listCheques[i].EntregadoA > 0 ? getPagoById(listCheques[i].EntregadoA, conPagos) : null;
+                listCheques[i].CreadoPor = listCheques[i].IdCreadoPor > 0 ? oUserD.getUsuarioById(listCheques[i].IdCreadoPor) : null;
+                if (listCheques[i].IdActualizadoPor.HasValue)
+                    listCheques[i].ActualizadoPor = oUserD.getUsuarioById(Convert.ToInt32(listCheques[i].IdActualizadoPor));
+            }
+
             return listCheques;
+
+            //if (idPago < 1)
+            //{
+            //    Cheque cheque = null;
+            //    List<Cheque> listCheques = new List<Cheque>();
+            //    if (idPago == 0)
+            //        return listCheques;
+
+            //    // Conexión a la base de datos
+            //    using (SqlConnection connection = conn.conectar())
+            //    {
+
+            //        string query = "SELECT * FROM Cheques WHERE recibidoDe = @idPago OR entregadoA = @idPago";
+
+            //        using (SqlCommand cmd = new SqlCommand(query, connection))
+            //        {
+            //            cmd.Parameters.AddWithValue("@idPago", idPago);
+            //            connection.Open();
+
+            //            Datos.Usuario oUserD = new Usuario();
+            //            using (SqlDataReader reader = cmd.ExecuteReader())
+            //            {
+            //                while (reader.Read())
+            //                {
+            //                    cheque = new Cheque
+            //                    {
+            //                        Id = reader.GetInt32(reader.GetOrdinal("id")),
+            //                        NroCheque = reader["nroCheque"].ToString(),
+            //                        Banco = reader["banco"].ToString(),
+            //                        Propio = Convert.ToBoolean(reader["propio"]),
+            //                        FechaEmision = reader["fechaEmision"].ToString(),
+            //                        FechaPago = Convert.ToDateTime(reader["fechaPago"]),
+            //                        Importe = Convert.ToDouble(reader["importe"]),
+            //                        Estado = reader["estado"].ToString(),
+            //                        Titular = reader["titular"].ToString(),
+            //                        Observaciones = reader["observaciones"].ToString(),
+            //                        RecibidoDe = Convert.ToInt32(reader["recibidoDe"]),
+            //                        EntregadoA = Convert.ToInt32(reader["entregadoA"]),
+            //                        ///se comenta estas lineas xq sino entre en bucle
+            //                        PagoDe = Convert.ToInt32(reader["recibidoDe"]) > 0 ? getPagoById(Convert.ToInt32(reader["recibidoDe"])) : null,
+            //                        PagoA = Convert.ToInt32(reader["entregadoA"]) > 0 ? getPagoById(Convert.ToInt32(reader["entregadoA"])) : null,
+            //                        Creado = Convert.ToDateTime(reader["creado"]),
+            //                        CreadoPor = Convert.ToInt32(reader["creadoPor"]) > 0 ? oUserD.getUsuarioById(Convert.ToInt32(reader["creadoPor"])) : null,
+            //                        Actualizado = reader["actualizado"] != DBNull.Value ? Convert.ToDateTime(reader["actualizado"]) : (DateTime?)null,
+            //                        ActualizadoPor = Convert.ToInt32(reader["actualizadoPor"]) > 0 ? oUserD.getUsuarioById(Convert.ToInt32(reader["creadoPor"])) : null,
+            //                    };
+            //                    listCheques.Add(cheque);
+            //                }
+            //            }
+            //        }
+            //    }
+
+            //    return listCheques;
+            //}
         }
 
         public bool AddOrEditCheque(Cheque oCheque)
@@ -533,57 +590,118 @@ namespace Datos
             return dtPagos;
         }
 
-        public Entidades.Pago getPagoById(int idPago)
+        public Entidades.Pago getPagoById(int idPago, bool conCheques = true)
         {
-            cmCtaCte = new SqlCommand();
-            cmCtaCte.Connection = conn.conectar();
-            cmCtaCte.CommandType = CommandType.Text;
-            cmCtaCte.CommandText = "Select Pagos.* from Pagos where id = " + idPago;
+            Entidades.Pago oPagoE = null;
 
-            Entidades.Pago oPagoE = new Entidades.Pago();
-            try
+            using (SqlConnection connection = conn.conectar())
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Pagos WHERE id = @id", connection))
             {
-                cmCtaCte.Connection.Open();
-                SqlDataReader drPago = cmCtaCte.ExecuteReader();
-                using (drPago)
+                cmd.Parameters.AddWithValue("@id", idPago);
+                connection.Open();
+
+                using (SqlDataReader drPago = cmd.ExecuteReader())
                 {
-                    while (drPago.Read())
+                    if (drPago.Read())
                     {
-                        oPagoE.Id = Convert.ToInt32(drPago["id"]);
-                        Datos.Persona oPersonaD = new Datos.Persona();
-                        oPagoE.Persona = oPersonaD.findById(Convert.ToInt32(drPago["idPersona"]));
-
-                        oPagoE.Fecha = Convert.ToDateTime(drPago["fecha"]);
-                        oPagoE.NroRecibo = Convert.ToString(drPago["nroRecibo"]);
-                        oPagoE.AProveedor = drPago["aProveedor"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drPago["aProveedor"]);
-                        oPagoE.FormaPago = Convert.ToString(drPago["formaPago"]);
-                        oPagoE.Banco = Convert.ToString(drPago["banco"]);
-                        oPagoE.NroCheque = Convert.ToString(drPago["nroCheque"]);
-                        oPagoE.TitularCheque = Convert.ToString(drPago["titularCheque"]);
-                        oPagoE.Importe = float.Parse(drPago["importe"].ToString());
-                        oPagoE.Efectivo = float.Parse(drPago["efectivo"].ToString());
-                        oPagoE.Observaciones = Convert.ToString(drPago["observaciones"]);
-                        oPagoE.Cheques = getChequesPorPago(oPagoE.Id);
-
-                        Datos.Sucursal oSucursalD = new Sucursal();
-                        oPagoE.Sucursal = oSucursalD.findById(Convert.ToInt32(drPago["idSucursal"]));
-
-
-                        oPagoE.Creado = Convert.ToDateTime(drPago["creado"]);
-                        oPagoE.Actualizado = drPago["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drPago["actualizado"]);
-
-                        Datos.Usuario oUsuarioD = new Usuario();
-                        oPagoE.CreadoPor = oUsuarioD.getUsuarioById(Convert.ToInt32(drPago["creadoPor"]));
-                        oPagoE.ActualizadoPor = drPago["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drPago["actualizadoPor"]));
+                        // 1) Cargo solo lo básico en memoria
+                        oPagoE = new Entidades.Pago
+                        {
+                            Id = Convert.ToInt32(drPago["id"]),
+                            IdPersona = Convert.ToInt32(drPago["idPersona"]),
+                            Fecha = Convert.ToDateTime(drPago["fecha"]),
+                            NroRecibo = Convert.ToString(drPago["nroRecibo"]),
+                            AProveedor = drPago["aProveedor"] != DBNull.Value && Convert.ToBoolean(drPago["aProveedor"]),
+                            FormaPago = Convert.ToString(drPago["formaPago"]),
+                            Banco = Convert.ToString(drPago["banco"]),
+                            NroCheque = Convert.ToString(drPago["nroCheque"]),
+                            TitularCheque = Convert.ToString(drPago["titularCheque"]),
+                            Importe = float.Parse(drPago["importe"].ToString()),
+                            Efectivo = float.Parse(drPago["efectivo"].ToString()),
+                            Observaciones = Convert.ToString(drPago["observaciones"]),
+                            IdSucursal = Convert.ToInt32(drPago["idSucursal"]),
+                            Creado = Convert.ToDateTime(drPago["creado"]),
+                            Actualizado = drPago["actualizado"] == DBNull.Value ? null : (DateTime?)drPago["actualizado"],
+                            IdCreadoPor = Convert.ToInt32(drPago["creadoPor"]),
+                            IdActualizadoPor = drPago["actualizadoPor"] == DBNull.Value ? (int?)null : Convert.ToInt32(drPago["actualizadoPor"])
+                        };
                     }
-                    return oPagoE;
                 }
             }
-            finally
-            {
-                cmCtaCte.Connection.Close();
-                oPagoE = null;
-            }
+
+            if (oPagoE == null)
+                return null;
+
+            // 2) Ya no hay DataReader abierto → ahora puedo llamar a otros métodos sin conflicto
+            Datos.Persona oPersonaD = new Datos.Persona();
+            oPagoE.Persona = oPersonaD.findById(oPagoE.IdPersona);
+
+            if (conCheques)
+                oPagoE.Cheques = getChequesPorPago(oPagoE.Id, false);
+
+            Datos.Sucursal oSucursalD = new Datos.Sucursal();
+            oPagoE.Sucursal = oSucursalD.findById(oPagoE.IdSucursal);
+
+            Datos.Usuario oUsuarioD = new Datos.Usuario();
+            oPagoE.CreadoPor = oUsuarioD.getUsuarioById(oPagoE.IdCreadoPor);
+            if (oPagoE.IdActualizadoPor.HasValue)
+                oPagoE.ActualizadoPor = oUsuarioD.getUsuarioById(oPagoE.IdActualizadoPor.Value);
+
+            return oPagoE;
+
+            //if (idPago > 0)
+            //{
+            //    cmCtaCte = new SqlCommand();
+            //    cmCtaCte.Connection = conn.conectar();
+            //    cmCtaCte.CommandType = CommandType.Text;
+            //    cmCtaCte.CommandText = "Select Pagos.* from Pagos where id = " + idPago;
+
+            //    Entidades.Pago oPagoE = new Entidades.Pago();
+            //    try
+            //    {
+            //        cmCtaCte.Connection.Open();
+            //        SqlDataReader drPago = cmCtaCte.ExecuteReader();
+            //        using (drPago)
+            //        {
+            //            while (drPago.Read())
+            //            {
+            //                oPagoE.Id = Convert.ToInt32(drPago["id"]);
+            //                Datos.Persona oPersonaD = new Datos.Persona();
+            //                oPagoE.Persona = oPersonaD.findById(Convert.ToInt32(drPago["idPersona"]));
+
+            //                oPagoE.Fecha = Convert.ToDateTime(drPago["fecha"]);
+            //                oPagoE.NroRecibo = Convert.ToString(drPago["nroRecibo"]);
+            //                oPagoE.AProveedor = drPago["aProveedor"].Equals(DBNull.Value) ? false : Convert.ToBoolean(drPago["aProveedor"]);
+            //                oPagoE.FormaPago = Convert.ToString(drPago["formaPago"]);
+            //                oPagoE.Banco = Convert.ToString(drPago["banco"]);
+            //                oPagoE.NroCheque = Convert.ToString(drPago["nroCheque"]);
+            //                oPagoE.TitularCheque = Convert.ToString(drPago["titularCheque"]);
+            //                oPagoE.Importe = float.Parse(drPago["importe"].ToString());
+            //                oPagoE.Efectivo = float.Parse(drPago["efectivo"].ToString());
+            //                oPagoE.Observaciones = Convert.ToString(drPago["observaciones"]);
+            //                oPagoE.Cheques = getChequesPorPago(oPagoE.Id);
+
+            //                Datos.Sucursal oSucursalD = new Sucursal();
+            //                oPagoE.Sucursal = oSucursalD.findById(Convert.ToInt32(drPago["idSucursal"]));
+
+
+            //                oPagoE.Creado = Convert.ToDateTime(drPago["creado"]);
+            //                oPagoE.Actualizado = drPago["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drPago["actualizado"]);
+
+            //                Datos.Usuario oUsuarioD = new Usuario();
+            //                oPagoE.CreadoPor = oUsuarioD.getUsuarioById(Convert.ToInt32(drPago["creadoPor"]));
+            //                oPagoE.ActualizadoPor = drPago["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioD.getUsuarioById(Convert.ToInt32(drPago["actualizadoPor"]));
+            //            }
+            //            return oPagoE;
+            //        }
+            //    }
+            //    finally
+            //    {
+            //        cmCtaCte.Connection.Close();
+            //        oPagoE = null;
+            //    }
+            //}
+
         }
 
         #endregion

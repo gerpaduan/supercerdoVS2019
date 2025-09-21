@@ -493,9 +493,9 @@ namespace Presentacion.Pagos
         {
             bool respuesta = true;
 
-            if (oPersonaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+            if (oPersonaE == null || oPersonaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
             {
-                MessageBox.Show("No se pueden registrar Pagos a Consumidor Final", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Debe seleccionar una persona y ser diferente a Consumidor Final.\nNo pueden asignarse pagos/cobros a CF", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }            
 
@@ -879,11 +879,11 @@ namespace Presentacion.Pagos
                                 break;
 
                             case "RecibidoDe":
-                                valorFormateado = chequeInfo.PagoDe != null ? chequeInfo.PagoDe.Persona.Identificacion : "-";
+                                valorFormateado = chequeInfo.PagoDe != null && chequeInfo.PagoDe.Persona != null ? chequeInfo.PagoDe.Persona.Identificacion : "-";
                                 break;
 
                             case "EntregadoA":
-                                valorFormateado = chequeInfo.PagoA != null ? chequeInfo.PagoA.Persona.Identificacion : "-";
+                                valorFormateado = chequeInfo.PagoA != null && chequeInfo.PagoA.Persona != null ? chequeInfo.PagoA.Persona.Identificacion : "-";
                                 break;
 
                             case "CreadoPor":

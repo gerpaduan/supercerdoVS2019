@@ -285,58 +285,6 @@ namespace Datos
             }
 
             return oVentaE;
-
-            //cmVenta = new SqlCommand();
-            //cmVenta.Connection = conn.conectar();
-            //cmVenta.CommandType = CommandType.Text;
-            //cmVenta.CommandText = "Select Ventas.* from Ventas where idVenta =" + idVenta;
-
-            //Entidades.Venta oVentaE = new Entidades.Venta();
-
-            //try
-            //{
-            //    cmVenta.Connection.Open();
-            //    SqlDataReader drVenta = cmVenta.ExecuteReader();
-
-            //    using (drVenta)
-            //    {
-            //        while (drVenta.Read())
-            //        {
-            //            oVentaE.IdVenta = Convert.ToInt32(drVenta["idVenta"]);
-            //            Datos.Usuario oUsuarioD = new Usuario();
-            //            oVentaE.Vendedor = oUsuarioD.getUsuarioById(Convert.ToInt32(drVenta["idVendedor"]));
-            //            oVentaE.FechaVenta = Convert.ToDateTime(drVenta["fechaVenta"]);
-            //            oVentaE.Turno = Convert.ToString(drVenta["turno"]);
-            //            Datos.Sucursal oSucursalD = new Sucursal();
-            //            oVentaE.Sucursal = oSucursalD.findById(Convert.ToInt32(drVenta["idSucursal"]));
-            //            oVentaE.DiaFestivo = Convert.ToString(drVenta["diaFestivo"]);
-            //            oVentaE.Observaciones = Convert.ToString(drVenta["observaciones"]);
-            //            Datos.Persona oPersonaD = new Datos.Persona();
-            //            oVentaE.Persona = oPersonaD.findById(Convert.ToInt32(drVenta["idPersona"]));
-            //            oVentaE.NroRemito = Convert.ToString(drVenta["nroRemito"]);
-            //            oVentaE.Estado = Convert.ToString(drVenta["estado"]);
-            //            oVentaE.EnCtaCte = Convert.ToBoolean(drVenta["enCtaCte"]);
-            //            oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
-            //            oVentaE.Email = Convert.ToString(drVenta["email"]);
-            //            oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
-            //            oVentaE.FormaPago = Convert.ToString(drVenta["formaPago"]);
-            //            oVentaE.TipoComprobante = Convert.ToChar(drVenta["tipoComprobante"]);
-            //            oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
-            //            oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
-                        
-            //            oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
-            //            oVentaE.TotalImporte = getTotalVenta(idVenta);
-            //            oVentaE.PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"].Equals(DBNull.Value) ? 0f : float.Parse(drVenta["pagoMixtoEfectivo"].ToString());
-                    
-            //        }
-            //        return oVentaE;
-            //    }
-            //}
-            //finally
-            //{
-            //    cmVenta.Connection.Close();
-            //    oVentaE = null;
-            //}
         }
 
         public Entidades.Venta getUltimaVentaVendedor(Entidades.CierreCaja oCierreE)

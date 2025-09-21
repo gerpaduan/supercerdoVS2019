@@ -3437,13 +3437,7 @@ namespace Presentacion.Caja
         {
             try
             {
-                //TODO: carga ultima ven con una sucursal distante a la seteada
                 oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oCierreE);
-                //double totalUltimaVenta = TotalImporte;
-                //foreach (Entidades.LineaVenta  linea in oUltimaVentaVendedor.LineasVenta)
-                //{
-                //    totalUltimaVenta += linea.PrecioKg * linea.CantKg;
-                //}
                 lblHoraUltimaVenta.Text = oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
                     " " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
                     "\n$ " + oUltimaVentaVendedor.TotalImporte.ToString("N2");

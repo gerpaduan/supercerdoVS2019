@@ -36,5 +36,8 @@ namespace Entidades
         public DateTime? Actualizado { get; set; }
         public Usuario ActualizadoPor { get; set; }
 
+        public int IdCreadoPor { get; set; }
+        public int? IdActualizadoPor { get; set; } // nullable porque puede venir NULL
+
     }
 }

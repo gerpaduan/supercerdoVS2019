@@ -156,5 +156,11 @@ namespace Entidades
 
         public List<Cheque> Cheques { get => cheques; set => cheques = value; }
         public bool AProveddorUltimoValor { get => aProveddorUltimoValor; set => aProveddorUltimoValor = value; }
+
+        // 🔹 Nuevos IDs para manejo interno
+        public int IdPersona { get; set; }
+        public int IdSucursal { get; set; }
+        public int IdCreadoPor { get; set; }
+        public int? IdActualizadoPor { get; set; } // nullable porque puede venir NULL
     }
 }

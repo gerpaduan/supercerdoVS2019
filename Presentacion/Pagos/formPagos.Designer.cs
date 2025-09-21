@@ -82,8 +82,7 @@
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.grillaPagos.DefaultCellStyle = dataGridViewCellStyle2;
-            this.grillaPagos.Location = new System.Drawing.Point(11, 146);
-            this.grillaPagos.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.grillaPagos.Location = new System.Drawing.Point(8, 119);
             this.grillaPagos.Name = "grillaPagos";
             this.grillaPagos.ReadOnly = true;
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
@@ -97,7 +96,7 @@
             this.grillaPagos.RowHeadersVisible = false;
             this.grillaPagos.RowHeadersWidth = 51;
             this.grillaPagos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grillaPagos.Size = new System.Drawing.Size(1207, 388);
+            this.grillaPagos.Size = new System.Drawing.Size(905, 315);
             this.grillaPagos.TabIndex = 21;
             this.grillaPagos.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.grillaPagos_ColumnHeaderMouseClick);
             // 
@@ -105,10 +104,9 @@
             // 
             this.btnSalir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSalir.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSalir.Location = new System.Drawing.Point(1032, 542);
-            this.btnSalir.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSalir.Location = new System.Drawing.Point(774, 440);
             this.btnSalir.Name = "btnSalir";
-            this.btnSalir.Size = new System.Drawing.Size(185, 33);
+            this.btnSalir.Size = new System.Drawing.Size(139, 27);
             this.btnSalir.TabIndex = 19;
             this.btnSalir.Text = "&Cerrar";
             this.btnSalir.UseVisualStyleBackColor = true;
@@ -128,10 +126,9 @@
             this.pnlBuscar.Controls.Add(this.label3);
             this.pnlBuscar.Controls.Add(this.txtFechaHasta);
             this.pnlBuscar.Controls.Add(this.label4);
-            this.pnlBuscar.Location = new System.Drawing.Point(-12, 52);
-            this.pnlBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.pnlBuscar.Location = new System.Drawing.Point(-9, 42);
             this.pnlBuscar.Name = "pnlBuscar";
-            this.pnlBuscar.Size = new System.Drawing.Size(1257, 87);
+            this.pnlBuscar.Size = new System.Drawing.Size(943, 71);
             this.pnlBuscar.TabIndex = 18;
             // 
             // groupBox2
@@ -140,11 +137,9 @@
             this.groupBox2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
-            this.groupBox2.Location = new System.Drawing.Point(820, 32);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Location = new System.Drawing.Point(615, 26);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.groupBox2.Size = new System.Drawing.Size(395, 9);
+            this.groupBox2.Size = new System.Drawing.Size(296, 7);
             this.groupBox2.TabIndex = 47;
             this.groupBox2.TabStop = false;
             // 
@@ -153,10 +148,9 @@
             this.btnBuscar.AccessibleDescription = "";
             this.btnBuscar.ForeColor = System.Drawing.Color.Black;
             this.btnBuscar.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscar.Image")));
-            this.btnBuscar.Location = new System.Drawing.Point(353, 44);
-            this.btnBuscar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnBuscar.Location = new System.Drawing.Point(265, 36);
             this.btnBuscar.Name = "btnBuscar";
-            this.btnBuscar.Size = new System.Drawing.Size(37, 28);
+            this.btnBuscar.Size = new System.Drawing.Size(28, 23);
             this.btnBuscar.TabIndex = 15;
             this.btnBuscar.UseVisualStyleBackColor = true;
             this.btnBuscar.Click += new System.EventHandler(this.btnBuscarCorte_Click);
@@ -164,10 +158,9 @@
             // txtDescripcion
             // 
             this.txtDescripcion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDescripcion.Location = new System.Drawing.Point(133, 44);
-            this.txtDescripcion.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtDescripcion.Location = new System.Drawing.Point(100, 36);
             this.txtDescripcion.Name = "txtDescripcion";
-            this.txtDescripcion.Size = new System.Drawing.Size(211, 24);
+            this.txtDescripcion.Size = new System.Drawing.Size(159, 21);
             this.txtDescripcion.TabIndex = 0;
             this.txtDescripcion.TextChanged += new System.EventHandler(this.txtDescripcion_TextChanged);
             this.txtDescripcion.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.txtDescripcion_KeyPress);
@@ -177,10 +170,9 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(29, 46);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Location = new System.Drawing.Point(22, 37);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(87, 18);
+            this.label2.Size = new System.Drawing.Size(72, 15);
             this.label2.TabIndex = 11;
             this.label2.Text = "Descripción";
             // 
@@ -190,10 +182,9 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label1.Location = new System.Drawing.Point(757, 21);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(568, 17);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(49, 18);
+            this.label1.Size = new System.Drawing.Size(41, 15);
             this.label1.TabIndex = 9;
             this.label1.Text = "Fecha";
             // 
@@ -203,10 +194,9 @@
             this.txtFechaDesde.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaDesde.CustomFormat = "dd/MM/yyyy";
             this.txtFechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaDesde.Location = new System.Drawing.Point(880, 48);
-            this.txtFechaDesde.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtFechaDesde.Location = new System.Drawing.Point(660, 39);
             this.txtFechaDesde.Name = "txtFechaDesde";
-            this.txtFechaDesde.Size = new System.Drawing.Size(129, 22);
+            this.txtFechaDesde.Size = new System.Drawing.Size(98, 20);
             this.txtFechaDesde.TabIndex = 5;
             this.txtFechaDesde.Value = new System.DateTime(2011, 9, 1, 0, 0, 0, 0);
             this.txtFechaDesde.ValueChanged += new System.EventHandler(this.txtFechaDesde_ValueChanged);
@@ -217,10 +207,9 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(813, 50);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label3.Location = new System.Drawing.Point(610, 41);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(51, 18);
+            this.label3.Size = new System.Drawing.Size(43, 15);
             this.label3.TabIndex = 4;
             this.label3.Text = "Desde";
             // 
@@ -230,10 +219,9 @@
             this.txtFechaHasta.CalendarFont = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFechaHasta.CustomFormat = "dd/MM/yyyy";
             this.txtFechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaHasta.Location = new System.Drawing.Point(1084, 48);
-            this.txtFechaHasta.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtFechaHasta.Location = new System.Drawing.Point(813, 39);
             this.txtFechaHasta.Name = "txtFechaHasta";
-            this.txtFechaHasta.Size = new System.Drawing.Size(129, 22);
+            this.txtFechaHasta.Size = new System.Drawing.Size(98, 20);
             this.txtFechaHasta.TabIndex = 7;
             this.txtFechaHasta.ValueChanged += new System.EventHandler(this.txtFechaHasta_ValueChanged);
             // 
@@ -243,10 +231,9 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label4.Location = new System.Drawing.Point(1024, 50);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(768, 41);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(47, 18);
+            this.label4.Size = new System.Drawing.Size(39, 15);
             this.label4.TabIndex = 6;
             this.label4.Text = "Hasta";
             // 
@@ -261,8 +248,8 @@
             this.menuDuplicar});
             this.barraControl.Location = new System.Drawing.Point(0, 0);
             this.barraControl.Name = "barraControl";
-            this.barraControl.Padding = new System.Windows.Forms.Padding(13, 0, 0, 0);
-            this.barraControl.Size = new System.Drawing.Size(1233, 54);
+            this.barraControl.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.barraControl.Size = new System.Drawing.Size(925, 49);
             this.barraControl.TabIndex = 17;
             this.barraControl.Text = "toolStrip1";
             // 
@@ -273,7 +260,7 @@
             this.nuevo.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.nuevo.Name = "nuevo";
             this.nuevo.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.nuevo.Size = new System.Drawing.Size(58, 51);
+            this.nuevo.Size = new System.Drawing.Size(48, 46);
             this.nuevo.Text = "Nuevo";
             this.nuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.nuevo.Click += new System.EventHandler(this.nuevo_Click);
@@ -285,9 +272,10 @@
             this.modificar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.modificar.Name = "modificar";
             this.modificar.Padding = new System.Windows.Forms.Padding(1);
-            this.modificar.Size = new System.Drawing.Size(79, 51);
+            this.modificar.Size = new System.Drawing.Size(64, 46);
             this.modificar.Text = "Modificar";
             this.modificar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.modificar.Visible = false;
             this.modificar.Click += new System.EventHandler(this.modificar_Click);
             // 
             // eliminar
@@ -297,7 +285,7 @@
             this.eliminar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.eliminar.Name = "eliminar";
             this.eliminar.Padding = new System.Windows.Forms.Padding(1);
-            this.eliminar.Size = new System.Drawing.Size(69, 51);
+            this.eliminar.Size = new System.Drawing.Size(56, 46);
             this.eliminar.Text = "Eliminar";
             this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.eliminar.Visible = false;
@@ -310,7 +298,7 @@
             this.menuDuplicar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 1);
             this.menuDuplicar.Name = "menuDuplicar";
             this.menuDuplicar.Padding = new System.Windows.Forms.Padding(1, 1, 1, 6);
-            this.menuDuplicar.Size = new System.Drawing.Size(71, 51);
+            this.menuDuplicar.Size = new System.Drawing.Size(57, 46);
             this.menuDuplicar.Text = "&Duplicar";
             this.menuDuplicar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.menuDuplicar.Click += new System.EventHandler(this.menuDuplicar_Click);
@@ -319,10 +307,9 @@
             // 
             this.btnSeleccionar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSeleccionar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSeleccionar.Location = new System.Drawing.Point(839, 542);
-            this.btnSeleccionar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnSeleccionar.Location = new System.Drawing.Point(629, 440);
             this.btnSeleccionar.Name = "btnSeleccionar";
-            this.btnSeleccionar.Size = new System.Drawing.Size(185, 33);
+            this.btnSeleccionar.Size = new System.Drawing.Size(139, 27);
             this.btnSeleccionar.TabIndex = 22;
             this.btnSeleccionar.Text = "&Seleccionar";
             this.btnSeleccionar.UseVisualStyleBackColor = true;
@@ -330,16 +317,15 @@
             // 
             // formPagos
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
-            this.ClientSize = new System.Drawing.Size(1233, 580);
+            this.ClientSize = new System.Drawing.Size(925, 471);
             this.Controls.Add(this.btnSeleccionar);
             this.Controls.Add(this.grillaPagos);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.barraControl);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "formPagos";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
