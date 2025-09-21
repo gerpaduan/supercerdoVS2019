@@ -2007,6 +2007,12 @@ namespace Presentacion.Caja
         private void txtCodigo_KeyDown(object sender, KeyEventArgs e)
         {
             ultimoTextoEnTxtCodigo = txtCodigo.Text;
+
+            if (panelDespliegue.Visible)
+            {
+                txtBuscarExpendio.Focus();
+                txtBuscarExpendio.SelectAll();
+            }
         }
 
         private void label5_Click(object sender, EventArgs e)
@@ -2931,6 +2937,7 @@ namespace Presentacion.Caja
                 dtExpendios = oVentaN.obtenerUltimosExpendios(Convert.ToInt32(txtMinutosDesde.Text), oSucursalE.IdSucursal);
                 filtrarExpendio();
                 txtBuscarExpendio.Focus();
+                txtBuscarExpendio.SelectAll();
             }
 
             isExpanded = !isExpanded;
@@ -3051,6 +3058,7 @@ namespace Presentacion.Caja
                         }
                     }
 
+                    bool seAgregaron = false;
                     for (int i = 0; i < grillaExpendios.Rows.Count; i++)
                     {
                         DataGridViewRow fila = grillaExpendios.Rows[i];
@@ -3059,10 +3067,17 @@ namespace Presentacion.Caja
                         if (!fila.IsNewRow)
                         {
                             agregarExpendio(fila);
+                            seAgregaron = true;
                         }
                     }
+                    //si se agregaron se desde el txtBuscarExpendio se setea a vacio y se cierra el panel
+                    if (seAgregaron)
+                    {
+                        txtBuscarExpendio.Text = "";
+                        expendirExpendios();
+                    }
 
-                    if (grillaExpendios.Rows.Count == 0)
+                    if (!string.IsNullOrEmpty(txtBuscarExpendio.Text) && grillaExpendios.Rows.Count == 0)
                     {
                         MessageBox.Show($"No se encontró el Nro Expendio: {txtBuscarExpendio.Text}\nPuede que no exista o ya haya sido asignado a una venta\n"+
                             "Realice una busqueda manual incrementando la cantidad de minutos",
