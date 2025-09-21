@@ -311,7 +311,6 @@ namespace Presentacion.Caja
                     return;
                 }
 
-                ///TODO: al modificar forma de pago desde Ultima venta no se genera el registro de egreso por pago electronico
                 if (huboModificaciones || (oUltimaVenta.Observaciones != txtObservaciones.Text))
                 {
                     oUltimaVenta.Observaciones = txtObservaciones.Text;
@@ -320,27 +319,7 @@ namespace Presentacion.Caja
                     if (respuesta.Equals(DialogResult.Yes))
                     {
                         oVentaN.modificarVenta(oUltimaVenta, oUltimaVenta.Sucursal.IdSucursal, false, lineaNuevosAnulados);
-
-                        //foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
-                        //{
-                        //    oVentaN.agregarLineaVenta(lineaNuevoAnulado);
-                        //}
-
-                        //formPOS fVtaCaja = new formPOS();
-                        ////se genera el egreso de caja si no es Efectivo
-                        //fVtaCaja.egresoCajaPagoTarjeta(oUltimaVenta);
-
-                        ////Agregar en Cta Cte
-                        //try
-                        //{
-                        //    oVentaN.crearMovCtaCteVenta(oUltimaVenta);
-                        //}
-                        //catch (Exception ex)
-                        //{
-                        //    MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n"+
-                        //        "**La Venta se registró correctamente**\n\n" + ex.Message + "\n" + ex.Source);
-                        //}
-
+                            
                         if(checkTicket.Checked)
                             imprimirTicket();
 
