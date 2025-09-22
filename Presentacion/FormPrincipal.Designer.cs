@@ -46,6 +46,8 @@
             this.btnCompras = new System.Windows.Forms.Button();
             this.btnVentas = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.adminBotton = new System.Windows.Forms.PictureBox();
+            this.pictureBoxUser = new System.Windows.Forms.PictureBox();
             this.lblNombreAdmin = new System.Windows.Forms.Label();
             this.btnLogin = new System.Windows.Forms.Button();
             this.checkAutoDesconectar = new System.Windows.Forms.CheckBox();
@@ -85,15 +87,15 @@
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.pictureBoxUser = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel1.SuspendLayout();
-            this.menuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.adminBotton)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxUser)).BeginInit();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -435,6 +437,7 @@
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.panel1.Controls.Add(this.adminBotton);
             this.panel1.Controls.Add(this.pictureBoxUser);
             this.panel1.Controls.Add(this.lblNombreAdmin);
             this.panel1.Controls.Add(this.btnLogin);
@@ -444,6 +447,34 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(866, 22);
             this.panel1.TabIndex = 104;
+            // 
+            // adminBotton
+            // 
+            this.adminBotton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.adminBotton.ErrorImage = null;
+            this.adminBotton.Image = ((System.Drawing.Image)(resources.GetObject("adminBotton.Image")));
+            this.adminBotton.InitialImage = ((System.Drawing.Image)(resources.GetObject("adminBotton.InitialImage")));
+            this.adminBotton.Location = new System.Drawing.Point(841, 2);
+            this.adminBotton.Name = "adminBotton";
+            this.adminBotton.Size = new System.Drawing.Size(22, 19);
+            this.adminBotton.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.adminBotton.TabIndex = 39;
+            this.adminBotton.TabStop = false;
+            this.adminBotton.Click += new System.EventHandler(this.adminBotton_Click);
+            // 
+            // pictureBoxUser
+            // 
+            this.pictureBoxUser.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pictureBoxUser.ErrorImage = null;
+            this.pictureBoxUser.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxUser.Image")));
+            this.pictureBoxUser.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxUser.InitialImage")));
+            this.pictureBoxUser.Location = new System.Drawing.Point(635, 2);
+            this.pictureBoxUser.Name = "pictureBoxUser";
+            this.pictureBoxUser.Size = new System.Drawing.Size(22, 19);
+            this.pictureBoxUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBoxUser.TabIndex = 38;
+            this.pictureBoxUser.TabStop = false;
+            this.pictureBoxUser.Visible = false;
             // 
             // lblNombreAdmin
             // 
@@ -462,7 +493,7 @@
             this.btnLogin.FlatAppearance.BorderSize = 0;
             this.btnLogin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnLogin.ForeColor = System.Drawing.Color.White;
-            this.btnLogin.Location = new System.Drawing.Point(775, -1);
+            this.btnLogin.Location = new System.Drawing.Point(759, -1);
             this.btnLogin.Name = "btnLogin";
             this.btnLogin.Size = new System.Drawing.Size(79, 23);
             this.btnLogin.TabIndex = 32;
@@ -492,7 +523,7 @@
             this.btnCerrarSesion.FlatAppearance.BorderSize = 0;
             this.btnCerrarSesion.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCerrarSesion.ForeColor = System.Drawing.Color.White;
-            this.btnCerrarSesion.Location = new System.Drawing.Point(776, -1);
+            this.btnCerrarSesion.Location = new System.Drawing.Point(760, -1);
             this.btnCerrarSesion.Name = "btnCerrarSesion";
             this.btnCerrarSesion.Size = new System.Drawing.Size(78, 23);
             this.btnCerrarSesion.TabIndex = 33;
@@ -805,20 +836,6 @@
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
             // 
-            // pictureBoxUser
-            // 
-            this.pictureBoxUser.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
-            this.pictureBoxUser.ErrorImage = null;
-            this.pictureBoxUser.Image = ((System.Drawing.Image)(resources.GetObject("pictureBoxUser.Image")));
-            this.pictureBoxUser.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBoxUser.InitialImage")));
-            this.pictureBoxUser.Location = new System.Drawing.Point(635, 2);
-            this.pictureBoxUser.Name = "pictureBoxUser";
-            this.pictureBoxUser.Size = new System.Drawing.Size(22, 19);
-            this.pictureBoxUser.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.pictureBoxUser.TabIndex = 38;
-            this.pictureBoxUser.TabStop = false;
-            this.pictureBoxUser.Visible = false;
-            // 
             // FormPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -844,9 +861,10 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.adminBotton)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxUser)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxUser)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -909,6 +927,7 @@
         private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
         private System.Windows.Forms.PictureBox pictureBoxUser;
+        private System.Windows.Forms.PictureBox adminBotton;
     }
 }
 

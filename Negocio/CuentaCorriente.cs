@@ -194,7 +194,6 @@ namespace Negocio
                     throw new Exception("Error en addOrEditPago: " + ex.Message, ex);
                 }
             }
-
         }
 
         public void eliminarPago(Entidades.Pago oPagoE)

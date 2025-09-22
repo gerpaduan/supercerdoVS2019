@@ -13,10 +13,12 @@ namespace Datos
         SqlDataAdapter daUsuario;
         SqlCommand cmUsuario;
 
-        public DataTable obtenerUsuarios(bool soloActivos)
+        public DataTable obtenerUsuarios(bool soloActivos, bool soloAdmin = false)
         {
             DataTable dtUsuario = new DataTable();
             string sqlConsulta = "Select * from Usuarios" + (soloActivos ? " where activo = 1" : "");
+            if (soloAdmin) 
+                sqlConsulta = "Select * from Usuarios where usuario = 'admin'";
             daUsuario = new SqlDataAdapter(sqlConsulta, conn.conectar());
             daUsuario.Fill(dtUsuario);
 

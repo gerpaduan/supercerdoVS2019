@@ -12,10 +12,10 @@ namespace Negocio
         public DataTable dtUsuarios;
         List<Entidades.Usuario> listUsuarios;
 
-        public DataTable obtenerUsuarios(bool soloActivos)
+        public DataTable obtenerUsuarios(bool soloActivos, bool soloAdmin = false)
         {
             oUsuarioD = new Datos.Usuario();
-            dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos);
+            dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos, soloAdmin);
             convertDatatableToList();
             return dtUsuarios;
         }

@@ -107,7 +107,8 @@
             // 
             // comboUsuario
             // 
-            this.comboUsuario.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboUsuario.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.comboUsuario.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.comboUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
             this.comboUsuario.FormattingEnabled = true;
             this.comboUsuario.Location = new System.Drawing.Point(74, 10);

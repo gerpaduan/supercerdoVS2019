@@ -15,6 +15,7 @@ namespace Presentacion.Caja
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
         public bool soloActivos = false;
         public bool usuarioConPermiso = false;
+        public bool soloAdmin = false;
 
         public FormLoginVendedor()
         {
@@ -29,7 +30,7 @@ namespace Presentacion.Caja
 
         private void cargarCombo()
         {
-            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(soloActivos);
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(soloActivos, soloAdmin);
             comboUsuario.DisplayMember = "usuario";
             comboUsuario.ValueMember = "usuario";
         }

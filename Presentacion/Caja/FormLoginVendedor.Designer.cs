@@ -61,7 +61,7 @@
             // 
             this.txtClave.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
             this.txtClave.Location = new System.Drawing.Point(141, 63);
-            this.txtClave.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtClave.Margin = new System.Windows.Forms.Padding(4);
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
             this.txtClave.Size = new System.Drawing.Size(187, 24);
@@ -72,7 +72,7 @@
             // 
             this.btnIngresar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
             this.btnIngresar.Location = new System.Drawing.Point(51, 97);
-            this.btnIngresar.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnIngresar.Margin = new System.Windows.Forms.Padding(4);
             this.btnIngresar.Name = "btnIngresar";
             this.btnIngresar.Size = new System.Drawing.Size(277, 39);
             this.btnIngresar.TabIndex = 4;
@@ -82,10 +82,12 @@
             // 
             // comboUsuario
             // 
+            this.comboUsuario.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.comboUsuario.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.comboUsuario.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F);
             this.comboUsuario.FormattingEnabled = true;
             this.comboUsuario.Location = new System.Drawing.Point(143, 27);
-            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.comboUsuario.Margin = new System.Windows.Forms.Padding(4);
             this.comboUsuario.Name = "comboUsuario";
             this.comboUsuario.Size = new System.Drawing.Size(185, 26);
             this.comboUsuario.TabIndex = 2;
@@ -102,7 +104,7 @@
             this.Controls.Add(this.label1);
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "FormLoginVendedor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Login";

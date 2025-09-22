@@ -1048,6 +1048,7 @@
     <None Include="Resources\CarniSys Pantalla Principal -actual achicado7.jpg" />
     <None Include="Resources\CarniSys Pantalla Principal -actual achicado8.jpg" />
     <None Include="Resources\CarniSys Pantalla Principal -actual achicado9.jpg" />
+    <None Include="Resources\admin_logo 16x.png" />
     <Content Include="Resources\CarniSys_ICONO.ico" />
     <None Include="Resources\scale.png" />
     <None Include="Resources\Compras_carrito.png" />

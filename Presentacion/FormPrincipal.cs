@@ -463,10 +463,11 @@ namespace Presentacion
             login();
         }
 
-        private void login()
+        private void login(bool soloAdmin = false)
         {
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.soloActivos = true;
+            frmLogin.soloAdmin = soloAdmin;
             frmLogin.ShowDialog(this);
 
             if (oUsuario == null) return;
@@ -1297,6 +1298,11 @@ namespace Presentacion
                 Utilidades.Mensajes.MensajeInicioSesion();
             }
             return validar;
+        }
+
+        private void adminBotton_Click(object sender, EventArgs e)
+        {
+            login(true);
         }
     }
 }
