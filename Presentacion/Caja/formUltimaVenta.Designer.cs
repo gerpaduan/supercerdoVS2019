@@ -400,7 +400,7 @@
             // 
             this.checkCtaCtePago.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCtaCtePago.AutoSize = true;
-            this.checkCtaCtePago.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCtePago.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCtaCtePago.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCtePago.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCtePago.Location = new System.Drawing.Point(9, 46);
@@ -416,7 +416,7 @@
             // 
             this.checkTransf.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkTransf.AutoSize = true;
-            this.checkTransf.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkTransf.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkTransf.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkTransf.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkTransf.Location = new System.Drawing.Point(153, 46);
@@ -432,7 +432,7 @@
             // 
             this.checkQr.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkQr.AutoSize = true;
-            this.checkQr.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkQr.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkQr.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkQr.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkQr.Location = new System.Drawing.Point(86, 46);
@@ -448,7 +448,7 @@
             // 
             this.checkEfectivo.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkEfectivo.AutoSize = true;
-            this.checkEfectivo.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkEfectivo.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkEfectivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkEfectivo.Location = new System.Drawing.Point(9, 15);
@@ -464,7 +464,7 @@
             // 
             this.checkCredito.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCredito.AutoSize = true;
-            this.checkCredito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCredito.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCredito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCredito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCredito.Location = new System.Drawing.Point(153, 15);
@@ -480,7 +480,7 @@
             // 
             this.checkDebito.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkDebito.AutoSize = true;
-            this.checkDebito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkDebito.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkDebito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkDebito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkDebito.Location = new System.Drawing.Point(86, 15);
@@ -516,7 +516,7 @@
             // 
             this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCtaCte.AutoSize = true;
-            this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCte.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCte.Checked = true;
             this.checkCtaCte.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -536,7 +536,7 @@
             // 
             this.checkTicket.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkTicket.AutoSize = true;
-            this.checkTicket.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkTicket.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkTicket.Location = new System.Drawing.Point(514, 10);

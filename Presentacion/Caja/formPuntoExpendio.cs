@@ -1725,7 +1725,7 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Enter(object sender, EventArgs e)
         {
-            btnAceptar.BackColor = Color.FromName("LimeGreen");
+            btnAceptar.BackColor = Color.FromName("DarkSeaGreen");
         }
 
         private void btnAceptar_Leave(object sender, EventArgs e)

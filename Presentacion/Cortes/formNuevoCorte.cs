@@ -534,7 +534,7 @@ namespace Presentacion
 
         private void checkSegerirCodigo_CheckedChanged(object sender, EventArgs e)
         {
-            checkSugerirCodigo.BackColor = checkSugerirCodigo.Checked ? System.Drawing.Color.LimeGreen : SystemColors.ControlDark;
+            checkSugerirCodigo.BackColor = checkSugerirCodigo.Checked ? System.Drawing.Color.DarkSeaGreen : SystemColors.ControlDark;
             if (checkSugerirCodigo.Checked)
             {
                 MessageBox.Show("Ha activado la sugerencia para códigos de productos\n\n"+

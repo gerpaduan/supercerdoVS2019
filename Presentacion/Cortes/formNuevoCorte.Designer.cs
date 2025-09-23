@@ -181,7 +181,7 @@
             this.checkSugerirCodigo.AutoSize = true;
             this.checkSugerirCodigo.BackColor = System.Drawing.SystemColors.ControlDark;
             this.checkSugerirCodigo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkSugerirCodigo.FlatAppearance.CheckedBackColor = System.Drawing.Color.LimeGreen;
+            this.checkSugerirCodigo.FlatAppearance.CheckedBackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkSugerirCodigo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
             this.checkSugerirCodigo.Location = new System.Drawing.Point(243, 27);
             this.checkSugerirCodigo.Name = "checkSugerirCodigo";

@@ -177,7 +177,7 @@
             // 
             this.checkPorcentaje.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkPorcentaje.AutoSize = true;
-            this.checkPorcentaje.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkPorcentaje.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkPorcentaje.CheckAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.checkPorcentaje.Checked = true;
             this.checkPorcentaje.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -210,7 +210,7 @@
             this.checkBonificarTodos.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBonificarTodos.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkBonificarTodos.AutoSize = true;
-            this.checkBonificarTodos.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkBonificarTodos.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkBonificarTodos.CheckAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.checkBonificarTodos.Checked = true;
             this.checkBonificarTodos.CheckState = System.Windows.Forms.CheckState.Checked;

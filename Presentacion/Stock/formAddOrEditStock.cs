@@ -812,7 +812,7 @@ namespace Presentacion
 
         private void btnAceptar_Enter(object sender, EventArgs e)
         {
-            btnAceptar.BackColor = System.Drawing.Color.FromName("LimeGreen");
+            btnAceptar.BackColor = System.Drawing.Color.FromName("DarkSeaGreen");
         }
 
         private void btnAceptar_Leave(object sender, EventArgs e)

@@ -26,6 +26,9 @@ namespace Presentacion.Caja
     {
         bool pesoBalanza = false;
         bool capturarPantallaFinal = false;
+        Color colorUser;
+        Color auxiliarColor = SystemColors.ActiveCaption;
+        bool cambiarColorForm = false;
         Utilidades.SingletonLeerPeso Leer_Peso;
         Utilidades.Util_Form Util_Form = new Utilidades.Util_Form();
         wsAFIPvs2008.formFacturaElectronica formFactElec;
@@ -2153,6 +2156,8 @@ namespace Presentacion.Caja
             //Para forzar formato importe ne RichBox
             txtTotalS.Text = "0,0";
             txtTotalS.Text = "000,00";// txtTotalS.Text;
+            btnCambiarColor.BackColor = auxiliarColor;
+
             if (oUsuario != null)
             {
                 validarAperturaCaja();
@@ -2168,7 +2173,7 @@ namespace Presentacion.Caja
                 //this.Text = oUsuario.Nombre;
 
                 ///TODO:cambiar color
-                Color colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
+                colorUser = string.IsNullOrEmpty(oUsuario.ColorForm) ?
                     System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129))))) : System.Drawing.Color.FromName(oUsuario.ColorForm);
 
                 colorUser = System.Drawing.SystemColors.ControlLight;// System.Drawing.SystemColors.ButtonFace;
@@ -2716,7 +2721,7 @@ namespace Presentacion.Caja
 
         private void btnAceptar_Enter(object sender, EventArgs e)
         {
-            //btnAceptar.BackColor = Color.FromName("LimeGreen");
+            //btnAceptar.BackColor = Color.FromName("DarkSeaGreen");
         }
 
         private void btnAceptar_Leave(object sender, EventArgs e)
@@ -3385,6 +3390,82 @@ namespace Presentacion.Caja
                 SendKeys.Send("{HOME}");
         }
 
+        private void btnCambiarColor_Click(object sender, EventArgs e)
+        {
+            cambiarColorForm = !cambiarColorForm;
+            CambiarColorControles(this.Controls);
+        }
+
+        private void CambiarColorControles(Control.ControlCollection controles)
+        {
+            #region Paleto Modo Oscuro
+            //Paleta sugerida(modo oscuro POS)
+
+            //Fondo principal del formulario:
+            //Color.FromArgb(30, 30, 30) → gris muy oscuro, casi negro.
+
+            //Paneles secundarios(ej.menú lateral, encabezado):
+            //Color.FromArgb(45, 45, 48) → gris oscuro intermedio.
+
+            //Texto general:
+            //ForeColor = Color.Gainsboro → gris claro, evita el contraste fuerte del blanco puro.
+
+            //Botones estándar:
+
+            //BackColor = Color.FromArgb(63, 63, 70);
+            //            ForeColor = Color.WhiteSmoke;
+
+
+            //            Se ven oscuros, pero destacan sobre el fondo.
+
+            //            Botón principal(ej.COBRAR):
+
+            //BackColor = Color.FromArgb(0, 122, 204); // Azul moderno
+            //            ForeColor = Color.White;
+
+
+            //            Botón secundario(ej.CANCELAR):
+
+            //BackColor = Color.FromArgb(192, 57, 43); // Rojo apagado
+            //            ForeColor = Color.White;
+
+
+            //            Campos de texto(TextBox):
+
+            //BackColor = Color.FromArgb(37, 37, 38);
+            //            ForeColor = Color.Gainsboro;
+            //            BorderStyle = BorderStyle.FixedSingle;
+
+            #endregion
+            btnCambiarColor.BackColor = cambiarColorForm ? colorUser : auxiliarColor;
+            btnCambiarColor.Text  = cambiarColorForm ? "Modo\nClaro" : "Modo\nOscuro";
+            grillaLineasVenta.BackgroundColor = (cambiarColorForm ?
+                 SystemColors.InactiveCaption : SystemColors.ButtonFace);
+
+            foreach (Control ctrl in controles)
+            {
+                //ctrl.BackColor = cambiarColorForm ? auxiliarColor : colorUser;
+                //ctrl.ForeColor = cambiarColorForm ? Color.Black : Color.Black; // El texto pasa a plata
+
+                // Si el fondo era ButtonFace, cambiar a ActiveCaption
+                if (cambiarColorForm && ctrl.BackColor == colorUser)
+                {
+                    ctrl.BackColor = auxiliarColor;
+                    ctrl.ForeColor = Color.Black; // El texto pasa a plata
+                }
+                else if (!cambiarColorForm && ctrl.BackColor == auxiliarColor)
+                {
+                    ctrl.BackColor = colorUser;
+                    ctrl.ForeColor = Color.Black; // El texto pasa a plata
+                }
+
+                // Si el control tiene hijos (Panel, GroupBox, etc.), recorrerlos también
+                if (ctrl.HasChildren)
+                {
+                    CambiarColorControles(ctrl.Controls);
+                }
+            }
+        }
         private void checkPagoMixto_CheckedChanged(object sender, EventArgs e)
         {
             validarPagoMixto();

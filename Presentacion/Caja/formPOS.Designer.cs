@@ -46,8 +46,10 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle42 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle43 = new System.Windows.Forms.DataGridViewCellStyle();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.lblSaldo = new System.Windows.Forms.Label();
             this.panelDivisor = new System.Windows.Forms.Panel();
             this.panelSuperior = new System.Windows.Forms.Panel();
+            this.btnCambiarColor = new System.Windows.Forms.Button();
             this.txtVendedor = new System.Windows.Forms.TextBox();
             this.usuario = new System.Windows.Forms.Label();
             this.lblCarnisys = new System.Windows.Forms.Label();
@@ -73,35 +75,6 @@
             this.btnBuscarCliente = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.txtCliente = new System.Windows.Forms.TextBox();
-            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
-            this.lblClienteConBonif = new System.Windows.Forms.Label();
-            this.grupoCortes = new System.Windows.Forms.GroupBox();
-            this.checkLeerPeso = new System.Windows.Forms.CheckBox();
-            this.checkTicket = new System.Windows.Forms.CheckBox();
-            this.checkBoxRedondeo = new System.Windows.Forms.CheckBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.label21 = new System.Windows.Forms.Label();
-            this.label22 = new System.Windows.Forms.Label();
-            this.txtRedondeo = new System.Windows.Forms.MaskedTextBox();
-            this.txtKgsRedondeo = new System.Windows.Forms.MaskedTextBox();
-            this.lblNoHabilitado = new System.Windows.Forms.Label();
-            this.btnQuitar = new System.Windows.Forms.Button();
-            this.lblHoraUltimaVenta = new System.Windows.Forms.Label();
-            this.txtCorte = new System.Windows.Forms.TextBox();
-            this.btnAgregar = new System.Windows.Forms.Button();
-            this.txtObservaciones = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.btnBuscarCorte = new System.Windows.Forms.Button();
-            this.lblUltimaVenta = new System.Windows.Forms.Label();
-            this.txtTotalCorte = new System.Windows.Forms.MaskedTextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.lblErrorBalanza = new System.Windows.Forms.Label();
-            this.txtCodigo = new System.Windows.Forms.MaskedTextBox();
-            this.txtPrecioKg = new System.Windows.Forms.MaskedTextBox();
-            this.label13 = new System.Windows.Forms.Label();
-            this.txtCantKgs = new System.Windows.Forms.MaskedTextBox();
-            this.label15 = new System.Windows.Forms.Label();
-            this.label11 = new System.Windows.Forms.Label();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.btnAceptar = new System.Windows.Forms.Button();
             this.grillaLineasVenta = new System.Windows.Forms.DataGridView();
@@ -163,12 +136,37 @@
             this.panelExpendioLateral = new System.Windows.Forms.Panel();
             this.btnDespligueLateral = new System.Windows.Forms.Button();
             this.btnBloquear = new System.Windows.Forms.Button();
-            this.lblSaldo = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
+            this.txtCantKgs = new System.Windows.Forms.MaskedTextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.txtPrecioKg = new System.Windows.Forms.MaskedTextBox();
+            this.txtCodigo = new System.Windows.Forms.MaskedTextBox();
+            this.lblErrorBalanza = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.lblClienteConBonif = new System.Windows.Forms.Label();
+            this.txtTotalCorte = new System.Windows.Forms.MaskedTextBox();
+            this.lblUltimaVenta = new System.Windows.Forms.Label();
+            this.btnBuscarCorte = new System.Windows.Forms.Button();
+            this.label7 = new System.Windows.Forms.Label();
+            this.txtObservaciones = new System.Windows.Forms.TextBox();
+            this.btnAgregar = new System.Windows.Forms.Button();
+            this.txtCorte = new System.Windows.Forms.TextBox();
+            this.lblHoraUltimaVenta = new System.Windows.Forms.Label();
+            this.comboTipoComprobante = new System.Windows.Forms.ComboBox();
+            this.btnQuitar = new System.Windows.Forms.Button();
+            this.lblNoHabilitado = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label21 = new System.Windows.Forms.Label();
+            this.label22 = new System.Windows.Forms.Label();
+            this.txtRedondeo = new System.Windows.Forms.MaskedTextBox();
+            this.txtKgsRedondeo = new System.Windows.Forms.MaskedTextBox();
+            this.checkBoxRedondeo = new System.Windows.Forms.CheckBox();
+            this.checkTicket = new System.Windows.Forms.CheckBox();
+            this.checkLeerPeso = new System.Windows.Forms.CheckBox();
+            this.grupoCortes = new System.Windows.Forms.GroupBox();
             this.pnlBuscar.SuspendLayout();
             this.panelSuperior.SuspendLayout();
             this.groupFormaPago.SuspendLayout();
-            this.grupoCortes.SuspendLayout();
-            this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.panelPago.SuspendLayout();
             this.panelBloquear.SuspendLayout();
@@ -178,6 +176,8 @@
             this.panelDespliegue.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaExpendios)).BeginInit();
             this.panelExpendioLateral.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.grupoCortes.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlBuscar
@@ -205,6 +205,18 @@
             this.pnlBuscar.Size = new System.Drawing.Size(1133, 632);
             this.pnlBuscar.TabIndex = 4;
             // 
+            // lblSaldo
+            // 
+            this.lblSaldo.AutoSize = true;
+            this.lblSaldo.Font = new System.Drawing.Font("Segoe UI", 7F);
+            this.lblSaldo.ForeColor = System.Drawing.Color.Crimson;
+            this.lblSaldo.Location = new System.Drawing.Point(903, 32);
+            this.lblSaldo.Name = "lblSaldo";
+            this.lblSaldo.Size = new System.Drawing.Size(31, 12);
+            this.lblSaldo.TabIndex = 66;
+            this.lblSaldo.Text = "Saldo:";
+            this.lblSaldo.Visible = false;
+            // 
             // panelDivisor
             // 
             this.panelDivisor.BackColor = System.Drawing.SystemColors.ControlDark;
@@ -216,6 +228,7 @@
             // panelSuperior
             // 
             this.panelSuperior.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(150)))), ((int)(((byte)(243)))));
+            this.panelSuperior.Controls.Add(this.btnCambiarColor);
             this.panelSuperior.Controls.Add(this.txtVendedor);
             this.panelSuperior.Controls.Add(this.usuario);
             this.panelSuperior.Controls.Add(this.lblCarnisys);
@@ -225,6 +238,19 @@
             this.panelSuperior.Name = "panelSuperior";
             this.panelSuperior.Size = new System.Drawing.Size(1133, 30);
             this.panelSuperior.TabIndex = 70;
+            // 
+            // btnCambiarColor
+            // 
+            this.btnCambiarColor.FlatAppearance.BorderSize = 0;
+            this.btnCambiarColor.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCambiarColor.Font = new System.Drawing.Font("Segoe UI", 6F);
+            this.btnCambiarColor.Location = new System.Drawing.Point(1087, -1);
+            this.btnCambiarColor.Name = "btnCambiarColor";
+            this.btnCambiarColor.Size = new System.Drawing.Size(46, 31);
+            this.btnCambiarColor.TabIndex = 67;
+            this.btnCambiarColor.Text = "Modo\r\nOscuro\r\n";
+            this.btnCambiarColor.UseVisualStyleBackColor = true;
+            this.btnCambiarColor.Click += new System.EventHandler(this.btnCambiarColor_Click);
             // 
             // txtVendedor
             // 
@@ -271,7 +297,7 @@
             this.txtFecVenta.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtFecVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtFecVenta.ForeColor = System.Drawing.SystemColors.Window;
-            this.txtFecVenta.Location = new System.Drawing.Point(879, 8);
+            this.txtFecVenta.Location = new System.Drawing.Point(832, 8);
             this.txtFecVenta.Multiline = true;
             this.txtFecVenta.Name = "txtFecVenta";
             this.txtFecVenta.ReadOnly = true;
@@ -288,7 +314,7 @@
             this.duplicarVentana.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.duplicarVentana.Image = ((System.Drawing.Image)(resources.GetObject("duplicarVentana.Image")));
             this.duplicarVentana.LinkColor = System.Drawing.SystemColors.Window;
-            this.duplicarVentana.Location = new System.Drawing.Point(1090, 7);
+            this.duplicarVentana.Location = new System.Drawing.Point(1043, 7);
             this.duplicarVentana.Name = "duplicarVentana";
             this.duplicarVentana.Size = new System.Drawing.Size(36, 18);
             this.duplicarVentana.TabIndex = 66;
@@ -319,7 +345,7 @@
             // checkPagoMixto
             // 
             this.checkPagoMixto.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkPagoMixto.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkPagoMixto.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkPagoMixto.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkPagoMixto.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.checkPagoMixto.Location = new System.Drawing.Point(1059, 151);
@@ -383,7 +409,7 @@
             // 
             this.checkCtaCtePago.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCtaCtePago.AutoSize = true;
-            this.checkCtaCtePago.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCtePago.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCtaCtePago.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCtePago.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCtePago.Location = new System.Drawing.Point(10, 43);
@@ -399,7 +425,7 @@
             // 
             this.checkTransf.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkTransf.AutoSize = true;
-            this.checkTransf.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkTransf.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkTransf.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkTransf.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkTransf.Location = new System.Drawing.Point(163, 43);
@@ -415,7 +441,7 @@
             // 
             this.checkQr.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkQr.AutoSize = true;
-            this.checkQr.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkQr.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkQr.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkQr.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkQr.Location = new System.Drawing.Point(92, 43);
@@ -431,7 +457,7 @@
             // 
             this.checkEfectivo.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkEfectivo.AutoSize = true;
-            this.checkEfectivo.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkEfectivo.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkEfectivo.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkEfectivo.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkEfectivo.Location = new System.Drawing.Point(10, 14);
@@ -447,7 +473,7 @@
             // 
             this.checkCredito.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCredito.AutoSize = true;
-            this.checkCredito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCredito.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCredito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCredito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCredito.Location = new System.Drawing.Point(163, 14);
@@ -463,7 +489,7 @@
             // 
             this.checkDebito.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkDebito.AutoSize = true;
-            this.checkDebito.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkDebito.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkDebito.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkDebito.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkDebito.Location = new System.Drawing.Point(92, 14);
@@ -479,7 +505,7 @@
             // 
             this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCtaCte.AutoSize = true;
-            this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCte.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCte.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
@@ -596,442 +622,6 @@
             this.txtCliente.TabIndex = 18;
             this.txtCliente.TabStop = false;
             // 
-            // comboTipoComprobante
-            // 
-            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.comboTipoComprobante.DisplayMember = "R";
-            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboTipoComprobante.Enabled = false;
-            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboTipoComprobante.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.comboTipoComprobante.FormattingEnabled = true;
-            this.comboTipoComprobante.Items.AddRange(new object[] {
-            "X",
-            "A",
-            "B"});
-            this.comboTipoComprobante.Location = new System.Drawing.Point(762, 7);
-            this.comboTipoComprobante.Name = "comboTipoComprobante";
-            this.comboTipoComprobante.Size = new System.Drawing.Size(53, 33);
-            this.comboTipoComprobante.TabIndex = 64;
-            this.comboTipoComprobante.TabStop = false;
-            this.comboTipoComprobante.ValueMember = "R";
-            this.comboTipoComprobante.Visible = false;
-            this.comboTipoComprobante.SelectedIndexChanged += new System.EventHandler(this.comboTipoComprobante_SelectedIndexChanged);
-            // 
-            // lblClienteConBonif
-            // 
-            this.lblClienteConBonif.AutoSize = true;
-            this.lblClienteConBonif.BackColor = System.Drawing.Color.SandyBrown;
-            this.lblClienteConBonif.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblClienteConBonif.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.lblClienteConBonif.Location = new System.Drawing.Point(650, 11);
-            this.lblClienteConBonif.Name = "lblClienteConBonif";
-            this.lblClienteConBonif.Size = new System.Drawing.Size(161, 15);
-            this.lblClienteConBonif.TabIndex = 51;
-            this.lblClienteConBonif.Text = "Cliente con Bonificación del ";
-            this.lblClienteConBonif.Visible = false;
-            // 
-            // grupoCortes
-            // 
-            this.grupoCortes.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.grupoCortes.BackColor = System.Drawing.SystemColors.ButtonFace;
-            this.grupoCortes.Controls.Add(this.checkLeerPeso);
-            this.grupoCortes.Controls.Add(this.checkTicket);
-            this.grupoCortes.Controls.Add(this.checkBoxRedondeo);
-            this.grupoCortes.Controls.Add(this.groupBox2);
-            this.grupoCortes.Controls.Add(this.lblNoHabilitado);
-            this.grupoCortes.Controls.Add(this.btnQuitar);
-            this.grupoCortes.Controls.Add(this.comboTipoComprobante);
-            this.grupoCortes.Controls.Add(this.lblHoraUltimaVenta);
-            this.grupoCortes.Controls.Add(this.txtCorte);
-            this.grupoCortes.Controls.Add(this.btnAgregar);
-            this.grupoCortes.Controls.Add(this.txtObservaciones);
-            this.grupoCortes.Controls.Add(this.label7);
-            this.grupoCortes.Controls.Add(this.btnBuscarCorte);
-            this.grupoCortes.Controls.Add(this.lblUltimaVenta);
-            this.grupoCortes.Controls.Add(this.txtTotalCorte);
-            this.grupoCortes.Controls.Add(this.lblClienteConBonif);
-            this.grupoCortes.Controls.Add(this.label5);
-            this.grupoCortes.Controls.Add(this.lblErrorBalanza);
-            this.grupoCortes.Controls.Add(this.txtCodigo);
-            this.grupoCortes.Controls.Add(this.txtPrecioKg);
-            this.grupoCortes.Controls.Add(this.label13);
-            this.grupoCortes.Controls.Add(this.txtCantKgs);
-            this.grupoCortes.Controls.Add(this.label15);
-            this.grupoCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.grupoCortes.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.grupoCortes.Location = new System.Drawing.Point(10, 33);
-            this.grupoCortes.Name = "grupoCortes";
-            this.grupoCortes.Size = new System.Drawing.Size(821, 557);
-            this.grupoCortes.TabIndex = 19;
-            this.grupoCortes.TabStop = false;
-            // 
-            // checkLeerPeso
-            // 
-            this.checkLeerPeso.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkLeerPeso.AutoSize = true;
-            this.checkLeerPeso.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkLeerPeso.Checked = true;
-            this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkLeerPeso.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkLeerPeso.ForeColor = System.Drawing.Color.Black;
-            this.checkLeerPeso.Image = global::Presentacion.Properties.Resources.scale;
-            this.checkLeerPeso.Location = new System.Drawing.Point(358, 35);
-            this.checkLeerPeso.Name = "checkLeerPeso";
-            this.checkLeerPeso.Size = new System.Drawing.Size(30, 34);
-            this.checkLeerPeso.TabIndex = 45;
-            this.checkLeerPeso.TabStop = false;
-            this.checkLeerPeso.Text = " ";
-            this.checkLeerPeso.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkLeerPeso.UseVisualStyleBackColor = false;
-            this.checkLeerPeso.Visible = false;
-            this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
-            this.checkLeerPeso.Enter += new System.EventHandler(this.checkLeerPeso_Enter);
-            // 
-            // checkTicket
-            // 
-            this.checkTicket.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkTicket.AutoSize = true;
-            this.checkTicket.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkTicket.Checked = true;
-            this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkTicket.ForeColor = System.Drawing.Color.Black;
-            this.checkTicket.Location = new System.Drawing.Point(707, 40);
-            this.checkTicket.Name = "checkTicket";
-            this.checkTicket.Size = new System.Drawing.Size(61, 30);
-            this.checkTicket.TabIndex = 46;
-            this.checkTicket.TabStop = false;
-            this.checkTicket.Text = "&Ticket";
-            this.checkTicket.UseVisualStyleBackColor = false;
-            this.checkTicket.Visible = false;
-            this.checkTicket.CheckedChanged += new System.EventHandler(this.checkTicket_CheckedChanged);
-            // 
-            // checkBoxRedondeo
-            // 
-            this.checkBoxRedondeo.Appearance = System.Windows.Forms.Appearance.Button;
-            this.checkBoxRedondeo.AutoSize = true;
-            this.checkBoxRedondeo.BackColor = System.Drawing.Color.LimeGreen;
-            this.checkBoxRedondeo.CheckAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.checkBoxRedondeo.Checked = true;
-            this.checkBoxRedondeo.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkBoxRedondeo.ForeColor = System.Drawing.Color.Black;
-            this.checkBoxRedondeo.Location = new System.Drawing.Point(774, 39);
-            this.checkBoxRedondeo.Name = "checkBoxRedondeo";
-            this.checkBoxRedondeo.Size = new System.Drawing.Size(37, 30);
-            this.checkBoxRedondeo.TabIndex = 53;
-            this.checkBoxRedondeo.TabStop = false;
-            this.checkBoxRedondeo.Text = "&R ";
-            this.checkBoxRedondeo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.checkBoxRedondeo.UseVisualStyleBackColor = false;
-            this.checkBoxRedondeo.CheckedChanged += new System.EventHandler(this.checkBoxRedondeo_CheckedChanged);
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.groupBox2.Controls.Add(this.label21);
-            this.groupBox2.Controls.Add(this.label22);
-            this.groupBox2.Controls.Add(this.txtRedondeo);
-            this.groupBox2.Controls.Add(this.txtKgsRedondeo);
-            this.groupBox2.Location = new System.Drawing.Point(699, 560);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(135, 27);
-            this.groupBox2.TabIndex = 65;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Pruebas";
-            this.groupBox2.Visible = false;
-            // 
-            // label21
-            // 
-            this.label21.AutoSize = true;
-            this.label21.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label21.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label21.Location = new System.Drawing.Point(55, 13);
-            this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(69, 20);
-            this.label21.TabIndex = 56;
-            this.label21.Text = "Tot Real";
-            // 
-            // label22
-            // 
-            this.label22.AutoSize = true;
-            this.label22.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label22.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label22.Location = new System.Drawing.Point(6, 12);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(57, 20);
-            this.label22.TabIndex = 58;
-            this.label22.Text = "Redon";
-            // 
-            // txtRedondeo
-            // 
-            this.txtRedondeo.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtRedondeo.Location = new System.Drawing.Point(137, 6);
-            this.txtRedondeo.Name = "txtRedondeo";
-            this.txtRedondeo.ReadOnly = true;
-            this.txtRedondeo.Size = new System.Drawing.Size(113, 29);
-            this.txtRedondeo.TabIndex = 55;
-            this.txtRedondeo.TabStop = false;
-            this.txtRedondeo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // txtKgsRedondeo
-            // 
-            this.txtKgsRedondeo.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.txtKgsRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtKgsRedondeo.Location = new System.Drawing.Point(63, 12);
-            this.txtKgsRedondeo.Name = "txtKgsRedondeo";
-            this.txtKgsRedondeo.ReadOnly = true;
-            this.txtKgsRedondeo.Size = new System.Drawing.Size(113, 29);
-            this.txtKgsRedondeo.TabIndex = 57;
-            this.txtKgsRedondeo.TabStop = false;
-            this.txtKgsRedondeo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // lblNoHabilitado
-            // 
-            this.lblNoHabilitado.AutoSize = true;
-            this.lblNoHabilitado.BackColor = System.Drawing.Color.SandyBrown;
-            this.lblNoHabilitado.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblNoHabilitado.ForeColor = System.Drawing.Color.Black;
-            this.lblNoHabilitado.Location = new System.Drawing.Point(128, 22);
-            this.lblNoHabilitado.Name = "lblNoHabilitado";
-            this.lblNoHabilitado.Size = new System.Drawing.Size(110, 18);
-            this.lblNoHabilitado.TabIndex = 52;
-            this.lblNoHabilitado.Text = "No Habilitado";
-            this.lblNoHabilitado.Visible = false;
-            // 
-            // btnQuitar
-            // 
-            this.btnQuitar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnQuitar.ForeColor = System.Drawing.Color.Black;
-            this.btnQuitar.Image = ((System.Drawing.Image)(resources.GetObject("btnQuitar.Image")));
-            this.btnQuitar.Location = new System.Drawing.Point(754, 72);
-            this.btnQuitar.Name = "btnQuitar";
-            this.btnQuitar.Size = new System.Drawing.Size(57, 29);
-            this.btnQuitar.TabIndex = 32;
-            this.btnQuitar.TabStop = false;
-            this.btnQuitar.UseVisualStyleBackColor = true;
-            this.btnQuitar.Click += new System.EventHandler(this.btnQuitar_Click);
-            // 
-            // lblHoraUltimaVenta
-            // 
-            this.lblHoraUltimaVenta.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.lblHoraUltimaVenta.AutoSize = true;
-            this.lblHoraUltimaVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
-            this.lblHoraUltimaVenta.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.lblHoraUltimaVenta.Location = new System.Drawing.Point(713, 526);
-            this.lblHoraUltimaVenta.Name = "lblHoraUltimaVenta";
-            this.lblHoraUltimaVenta.Size = new System.Drawing.Size(58, 13);
-            this.lblHoraUltimaVenta.TabIndex = 47;
-            this.lblHoraUltimaVenta.Text = "      ---        ";
-            // 
-            // txtCorte
-            // 
-            this.txtCorte.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.txtCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCorte.ForeColor = System.Drawing.Color.Black;
-            this.txtCorte.Location = new System.Drawing.Point(11, 72);
-            this.txtCorte.Name = "txtCorte";
-            this.txtCorte.ReadOnly = true;
-            this.txtCorte.Size = new System.Drawing.Size(266, 29);
-            this.txtCorte.TabIndex = 36;
-            this.txtCorte.TabStop = false;
-            // 
-            // btnAgregar
-            // 
-            this.btnAgregar.AccessibleDescription = "";
-            this.btnAgregar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAgregar.ForeColor = System.Drawing.Color.Black;
-            this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
-            this.btnAgregar.Location = new System.Drawing.Point(691, 71);
-            this.btnAgregar.Name = "btnAgregar";
-            this.btnAgregar.Size = new System.Drawing.Size(57, 30);
-            this.btnAgregar.TabIndex = 4;
-            this.btnAgregar.UseVisualStyleBackColor = true;
-            this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
-            this.btnAgregar.Enter += new System.EventHandler(this.btnAgregar_Enter);
-            this.btnAgregar.Leave += new System.EventHandler(this.btnAgregar_Leave);
-            // 
-            // txtObservaciones
-            // 
-            this.txtObservaciones.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.txtObservaciones.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtObservaciones.Location = new System.Drawing.Point(0, 528);
-            this.txtObservaciones.Multiline = true;
-            this.txtObservaciones.Name = "txtObservaciones";
-            this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtObservaciones.Size = new System.Drawing.Size(635, 27);
-            this.txtObservaciones.TabIndex = 30;
-            this.txtObservaciones.TabStop = false;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-            this.label7.ForeColor = System.Drawing.Color.Black;
-            this.label7.Location = new System.Drawing.Point(531, 48);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(46, 23);
-            this.label7.TabIndex = 34;
-            this.label7.Text = "Total";
-            // 
-            // btnBuscarCorte
-            // 
-            this.btnBuscarCorte.AccessibleDescription = "";
-            this.btnBuscarCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F);
-            this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarCorte.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnBuscarCorte.Location = new System.Drawing.Point(238, 41);
-            this.btnBuscarCorte.Name = "btnBuscarCorte";
-            this.btnBuscarCorte.Size = new System.Drawing.Size(40, 31);
-            this.btnBuscarCorte.TabIndex = 29;
-            this.btnBuscarCorte.TabStop = false;
-            this.btnBuscarCorte.Text = "F10";
-            this.btnBuscarCorte.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnBuscarCorte.UseVisualStyleBackColor = true;
-            this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscaCorte_Click);
-            // 
-            // lblUltimaVenta
-            // 
-            this.lblUltimaVenta.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.lblUltimaVenta.AutoSize = true;
-            this.lblUltimaVenta.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.lblUltimaVenta.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.lblUltimaVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblUltimaVenta.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.lblUltimaVenta.Location = new System.Drawing.Point(641, 524);
-            this.lblUltimaVenta.Name = "lblUltimaVenta";
-            this.lblUltimaVenta.Size = new System.Drawing.Size(78, 15);
-            this.lblUltimaVenta.TabIndex = 46;
-            this.lblUltimaVenta.Text = "Ultima venta:";
-            this.lblUltimaVenta.Click += new System.EventHandler(this.lblUltimaVenta_Click);
-            // 
-            // txtTotalCorte
-            // 
-            this.txtTotalCorte.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.txtTotalCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotalCorte.ForeColor = System.Drawing.Color.Black;
-            this.txtTotalCorte.Location = new System.Drawing.Point(535, 72);
-            this.txtTotalCorte.Name = "txtTotalCorte";
-            this.txtTotalCorte.ReadOnly = true;
-            this.txtTotalCorte.Size = new System.Drawing.Size(150, 29);
-            this.txtTotalCorte.TabIndex = 3;
-            this.txtTotalCorte.TabStop = false;
-            this.txtTotalCorte.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtTotalCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-            this.label5.ForeColor = System.Drawing.Color.Black;
-            this.label5.Location = new System.Drawing.Point(12, 17);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(110, 23);
-            this.label5.TabIndex = 39;
-            this.label5.Text = "Código Prod.";
-            this.label5.Click += new System.EventHandler(this.label5_Click);
-            // 
-            // lblErrorBalanza
-            // 
-            this.lblErrorBalanza.AutoSize = true;
-            this.lblErrorBalanza.BackColor = System.Drawing.Color.NavajoWhite;
-            this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
-            this.lblErrorBalanza.Location = new System.Drawing.Point(391, 9);
-            this.lblErrorBalanza.Name = "lblErrorBalanza";
-            this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
-            this.lblErrorBalanza.TabIndex = 48;
-            this.lblErrorBalanza.Text = "Error Balanza";
-            this.lblErrorBalanza.Visible = false;
-            // 
-            // txtCodigo
-            // 
-            this.txtCodigo.BackColor = System.Drawing.SystemColors.Window;
-            this.txtCodigo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCodigo.ForeColor = System.Drawing.Color.Black;
-            this.txtCodigo.Location = new System.Drawing.Point(11, 42);
-            this.txtCodigo.Name = "txtCodigo";
-            this.txtCodigo.Size = new System.Drawing.Size(228, 29);
-            this.txtCodigo.TabIndex = 0;
-            this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
-            this.txtCodigo.Enter += new System.EventHandler(this.txtCodigo_Enter);
-            this.txtCodigo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCodigo_KeyDown);
-            this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            this.txtCodigo.Leave += new System.EventHandler(this.txtCodigo_Leave);
-            // 
-            // txtPrecioKg
-            // 
-            this.txtPrecioKg.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.txtPrecioKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtPrecioKg.ForeColor = System.Drawing.Color.Black;
-            this.txtPrecioKg.Location = new System.Drawing.Point(402, 72);
-            this.txtPrecioKg.Name = "txtPrecioKg";
-            this.txtPrecioKg.ReadOnly = true;
-            this.txtPrecioKg.Size = new System.Drawing.Size(127, 29);
-            this.txtPrecioKg.TabIndex = 2;
-            this.txtPrecioKg.TabStop = false;
-            this.txtPrecioKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtPrecioKg.TextChanged += new System.EventHandler(this.txtPrecioKg_TextChanged);
-            this.txtPrecioKg.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            // 
-            // label13
-            // 
-            this.label13.AutoSize = true;
-            this.label13.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-            this.label13.ForeColor = System.Drawing.Color.Black;
-            this.label13.Location = new System.Drawing.Point(279, 48);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(79, 23);
-            this.label13.TabIndex = 43;
-            this.label13.Text = "Cantidad";
-            // 
-            // txtCantKgs
-            // 
-            this.txtCantKgs.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.txtCantKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCantKgs.ForeColor = System.Drawing.Color.Black;
-            this.txtCantKgs.Location = new System.Drawing.Point(283, 72);
-            this.txtCantKgs.Name = "txtCantKgs";
-            this.txtCantKgs.ReadOnly = true;
-            this.txtCantKgs.Size = new System.Drawing.Size(113, 29);
-            this.txtCantKgs.TabIndex = 1;
-            this.txtCantKgs.TabStop = false;
-            this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtCantKgs.TextChanged += new System.EventHandler(this.txtCantKgs_TextChanged);
-            this.txtCantKgs.Enter += new System.EventHandler(this.txtCantKgs_Enter);
-            this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
-            this.txtCantKgs.Leave += new System.EventHandler(this.txtCantKgs_Leave);
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Segoe UI", 12.5F);
-            this.label15.ForeColor = System.Drawing.Color.Black;
-            this.label15.Location = new System.Drawing.Point(398, 48);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(57, 23);
-            this.label15.TabIndex = 44;
-            this.label15.Text = "Precio";
-            // 
-            // label11
-            // 
-            this.label11.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.label11.AutoSize = true;
-            this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(6, 526);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(120, 15);
-            this.label11.TabIndex = 31;
-            this.label11.Text = "Observaciones (F11)";
-            // 
             // txtTotalS
             // 
             this.txtTotalS.Anchor = System.Windows.Forms.AnchorStyles.None;
@@ -1131,7 +721,7 @@
             this.codigo.MinimumWidth = 6;
             this.codigo.Name = "codigo";
             this.codigo.ReadOnly = true;
-            this.codigo.Width = 65;
+            this.codigo.Width = 96;
             // 
             // corte
             // 
@@ -1876,17 +1466,430 @@
             this.btnBloquear.UseVisualStyleBackColor = true;
             this.btnBloquear.Click += new System.EventHandler(this.btnBloquear_Click);
             // 
-            // lblSaldo
+            // label15
             // 
-            this.lblSaldo.AutoSize = true;
-            this.lblSaldo.Font = new System.Drawing.Font("Segoe UI", 7F);
-            this.lblSaldo.ForeColor = System.Drawing.Color.Crimson;
-            this.lblSaldo.Location = new System.Drawing.Point(903, 32);
-            this.lblSaldo.Name = "lblSaldo";
-            this.lblSaldo.Size = new System.Drawing.Size(31, 12);
-            this.lblSaldo.TabIndex = 66;
-            this.lblSaldo.Text = "Saldo:";
-            this.lblSaldo.Visible = false;
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+            this.label15.ForeColor = System.Drawing.Color.Black;
+            this.label15.Location = new System.Drawing.Point(398, 48);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(57, 23);
+            this.label15.TabIndex = 44;
+            this.label15.Text = "Precio";
+            // 
+            // txtCantKgs
+            // 
+            this.txtCantKgs.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.txtCantKgs.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCantKgs.ForeColor = System.Drawing.Color.Black;
+            this.txtCantKgs.Location = new System.Drawing.Point(283, 72);
+            this.txtCantKgs.Name = "txtCantKgs";
+            this.txtCantKgs.ReadOnly = true;
+            this.txtCantKgs.Size = new System.Drawing.Size(113, 29);
+            this.txtCantKgs.TabIndex = 1;
+            this.txtCantKgs.TabStop = false;
+            this.txtCantKgs.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCantKgs.TextChanged += new System.EventHandler(this.txtCantKgs_TextChanged);
+            this.txtCantKgs.Enter += new System.EventHandler(this.txtCantKgs_Enter);
+            this.txtCantKgs.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCantKgs.Leave += new System.EventHandler(this.txtCantKgs_Leave);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+            this.label13.ForeColor = System.Drawing.Color.Black;
+            this.label13.Location = new System.Drawing.Point(279, 48);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(79, 23);
+            this.label13.TabIndex = 43;
+            this.label13.Text = "Cantidad";
+            // 
+            // txtPrecioKg
+            // 
+            this.txtPrecioKg.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.txtPrecioKg.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtPrecioKg.ForeColor = System.Drawing.Color.Black;
+            this.txtPrecioKg.Location = new System.Drawing.Point(402, 72);
+            this.txtPrecioKg.Name = "txtPrecioKg";
+            this.txtPrecioKg.ReadOnly = true;
+            this.txtPrecioKg.Size = new System.Drawing.Size(127, 29);
+            this.txtPrecioKg.TabIndex = 2;
+            this.txtPrecioKg.TabStop = false;
+            this.txtPrecioKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPrecioKg.TextChanged += new System.EventHandler(this.txtPrecioKg_TextChanged);
+            this.txtPrecioKg.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            // 
+            // txtCodigo
+            // 
+            this.txtCodigo.BackColor = System.Drawing.SystemColors.Window;
+            this.txtCodigo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCodigo.ForeColor = System.Drawing.Color.Black;
+            this.txtCodigo.Location = new System.Drawing.Point(11, 42);
+            this.txtCodigo.Name = "txtCodigo";
+            this.txtCodigo.Size = new System.Drawing.Size(228, 29);
+            this.txtCodigo.TabIndex = 0;
+            this.txtCodigo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCodigo.TextChanged += new System.EventHandler(this.txtCodigo_TextChanged);
+            this.txtCodigo.Enter += new System.EventHandler(this.txtCodigo_Enter);
+            this.txtCodigo.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtCodigo_KeyDown);
+            this.txtCodigo.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            this.txtCodigo.Leave += new System.EventHandler(this.txtCodigo_Leave);
+            // 
+            // lblErrorBalanza
+            // 
+            this.lblErrorBalanza.AutoSize = true;
+            this.lblErrorBalanza.BackColor = System.Drawing.Color.NavajoWhite;
+            this.lblErrorBalanza.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblErrorBalanza.ForeColor = System.Drawing.Color.Black;
+            this.lblErrorBalanza.Location = new System.Drawing.Point(391, 9);
+            this.lblErrorBalanza.Name = "lblErrorBalanza";
+            this.lblErrorBalanza.Size = new System.Drawing.Size(82, 15);
+            this.lblErrorBalanza.TabIndex = 48;
+            this.lblErrorBalanza.Text = "Error Balanza";
+            this.lblErrorBalanza.Visible = false;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+            this.label5.ForeColor = System.Drawing.Color.Black;
+            this.label5.Location = new System.Drawing.Point(12, 17);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(110, 23);
+            this.label5.TabIndex = 39;
+            this.label5.Text = "Código Prod.";
+            this.label5.Click += new System.EventHandler(this.label5_Click);
+            // 
+            // lblClienteConBonif
+            // 
+            this.lblClienteConBonif.AutoSize = true;
+            this.lblClienteConBonif.BackColor = System.Drawing.Color.SandyBrown;
+            this.lblClienteConBonif.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblClienteConBonif.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.lblClienteConBonif.Location = new System.Drawing.Point(650, 11);
+            this.lblClienteConBonif.Name = "lblClienteConBonif";
+            this.lblClienteConBonif.Size = new System.Drawing.Size(161, 15);
+            this.lblClienteConBonif.TabIndex = 51;
+            this.lblClienteConBonif.Text = "Cliente con Bonificación del ";
+            this.lblClienteConBonif.Visible = false;
+            // 
+            // txtTotalCorte
+            // 
+            this.txtTotalCorte.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.txtTotalCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotalCorte.ForeColor = System.Drawing.Color.Black;
+            this.txtTotalCorte.Location = new System.Drawing.Point(535, 72);
+            this.txtTotalCorte.Name = "txtTotalCorte";
+            this.txtTotalCorte.ReadOnly = true;
+            this.txtTotalCorte.Size = new System.Drawing.Size(150, 29);
+            this.txtTotalCorte.TabIndex = 3;
+            this.txtTotalCorte.TabStop = false;
+            this.txtTotalCorte.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtTotalCorte.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
+            // 
+            // lblUltimaVenta
+            // 
+            this.lblUltimaVenta.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblUltimaVenta.AutoSize = true;
+            this.lblUltimaVenta.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.lblUltimaVenta.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.lblUltimaVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblUltimaVenta.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblUltimaVenta.Location = new System.Drawing.Point(641, 524);
+            this.lblUltimaVenta.Name = "lblUltimaVenta";
+            this.lblUltimaVenta.Size = new System.Drawing.Size(78, 15);
+            this.lblUltimaVenta.TabIndex = 46;
+            this.lblUltimaVenta.Text = "Ultima venta:";
+            this.lblUltimaVenta.Click += new System.EventHandler(this.lblUltimaVenta_Click);
+            // 
+            // btnBuscarCorte
+            // 
+            this.btnBuscarCorte.AccessibleDescription = "";
+            this.btnBuscarCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F);
+            this.btnBuscarCorte.ForeColor = System.Drawing.Color.Black;
+            this.btnBuscarCorte.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnBuscarCorte.Location = new System.Drawing.Point(238, 41);
+            this.btnBuscarCorte.Name = "btnBuscarCorte";
+            this.btnBuscarCorte.Size = new System.Drawing.Size(40, 31);
+            this.btnBuscarCorte.TabIndex = 29;
+            this.btnBuscarCorte.TabStop = false;
+            this.btnBuscarCorte.Text = "F10";
+            this.btnBuscarCorte.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnBuscarCorte.UseVisualStyleBackColor = true;
+            this.btnBuscarCorte.Click += new System.EventHandler(this.btnBuscaCorte_Click);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Segoe UI", 12.5F);
+            this.label7.ForeColor = System.Drawing.Color.Black;
+            this.label7.Location = new System.Drawing.Point(531, 48);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(46, 23);
+            this.label7.TabIndex = 34;
+            this.label7.Text = "Total";
+            // 
+            // txtObservaciones
+            // 
+            this.txtObservaciones.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.txtObservaciones.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtObservaciones.Location = new System.Drawing.Point(1, 528);
+            this.txtObservaciones.Multiline = true;
+            this.txtObservaciones.Name = "txtObservaciones";
+            this.txtObservaciones.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.txtObservaciones.Size = new System.Drawing.Size(634, 27);
+            this.txtObservaciones.TabIndex = 30;
+            this.txtObservaciones.TabStop = false;
+            // 
+            // btnAgregar
+            // 
+            this.btnAgregar.AccessibleDescription = "";
+            this.btnAgregar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAgregar.ForeColor = System.Drawing.Color.Black;
+            this.btnAgregar.Image = ((System.Drawing.Image)(resources.GetObject("btnAgregar.Image")));
+            this.btnAgregar.Location = new System.Drawing.Point(691, 71);
+            this.btnAgregar.Name = "btnAgregar";
+            this.btnAgregar.Size = new System.Drawing.Size(57, 30);
+            this.btnAgregar.TabIndex = 4;
+            this.btnAgregar.UseVisualStyleBackColor = true;
+            this.btnAgregar.Click += new System.EventHandler(this.btnAgregar_Click);
+            this.btnAgregar.Enter += new System.EventHandler(this.btnAgregar_Enter);
+            this.btnAgregar.Leave += new System.EventHandler(this.btnAgregar_Leave);
+            // 
+            // txtCorte
+            // 
+            this.txtCorte.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.txtCorte.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCorte.ForeColor = System.Drawing.Color.Black;
+            this.txtCorte.Location = new System.Drawing.Point(11, 72);
+            this.txtCorte.Name = "txtCorte";
+            this.txtCorte.ReadOnly = true;
+            this.txtCorte.Size = new System.Drawing.Size(266, 29);
+            this.txtCorte.TabIndex = 36;
+            this.txtCorte.TabStop = false;
+            // 
+            // lblHoraUltimaVenta
+            // 
+            this.lblHoraUltimaVenta.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblHoraUltimaVenta.AutoSize = true;
+            this.lblHoraUltimaVenta.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
+            this.lblHoraUltimaVenta.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblHoraUltimaVenta.Location = new System.Drawing.Point(713, 526);
+            this.lblHoraUltimaVenta.Name = "lblHoraUltimaVenta";
+            this.lblHoraUltimaVenta.Size = new System.Drawing.Size(58, 13);
+            this.lblHoraUltimaVenta.TabIndex = 47;
+            this.lblHoraUltimaVenta.Text = "      ---        ";
+            // 
+            // comboTipoComprobante
+            // 
+            this.comboTipoComprobante.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.comboTipoComprobante.DisplayMember = "R";
+            this.comboTipoComprobante.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboTipoComprobante.Enabled = false;
+            this.comboTipoComprobante.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboTipoComprobante.Font = new System.Drawing.Font("Microsoft Sans Serif", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboTipoComprobante.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.comboTipoComprobante.FormattingEnabled = true;
+            this.comboTipoComprobante.Items.AddRange(new object[] {
+            "X",
+            "A",
+            "B"});
+            this.comboTipoComprobante.Location = new System.Drawing.Point(762, 7);
+            this.comboTipoComprobante.Name = "comboTipoComprobante";
+            this.comboTipoComprobante.Size = new System.Drawing.Size(53, 33);
+            this.comboTipoComprobante.TabIndex = 64;
+            this.comboTipoComprobante.TabStop = false;
+            this.comboTipoComprobante.ValueMember = "R";
+            this.comboTipoComprobante.Visible = false;
+            this.comboTipoComprobante.SelectedIndexChanged += new System.EventHandler(this.comboTipoComprobante_SelectedIndexChanged);
+            // 
+            // btnQuitar
+            // 
+            this.btnQuitar.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnQuitar.ForeColor = System.Drawing.Color.Black;
+            this.btnQuitar.Image = ((System.Drawing.Image)(resources.GetObject("btnQuitar.Image")));
+            this.btnQuitar.Location = new System.Drawing.Point(754, 72);
+            this.btnQuitar.Name = "btnQuitar";
+            this.btnQuitar.Size = new System.Drawing.Size(57, 29);
+            this.btnQuitar.TabIndex = 32;
+            this.btnQuitar.TabStop = false;
+            this.btnQuitar.UseVisualStyleBackColor = true;
+            this.btnQuitar.Click += new System.EventHandler(this.btnQuitar_Click);
+            // 
+            // lblNoHabilitado
+            // 
+            this.lblNoHabilitado.AutoSize = true;
+            this.lblNoHabilitado.BackColor = System.Drawing.Color.SandyBrown;
+            this.lblNoHabilitado.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblNoHabilitado.ForeColor = System.Drawing.Color.Black;
+            this.lblNoHabilitado.Location = new System.Drawing.Point(128, 22);
+            this.lblNoHabilitado.Name = "lblNoHabilitado";
+            this.lblNoHabilitado.Size = new System.Drawing.Size(110, 18);
+            this.lblNoHabilitado.TabIndex = 52;
+            this.lblNoHabilitado.Text = "No Habilitado";
+            this.lblNoHabilitado.Visible = false;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.groupBox2.Controls.Add(this.label21);
+            this.groupBox2.Controls.Add(this.label22);
+            this.groupBox2.Controls.Add(this.txtRedondeo);
+            this.groupBox2.Controls.Add(this.txtKgsRedondeo);
+            this.groupBox2.Location = new System.Drawing.Point(699, 560);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(135, 27);
+            this.groupBox2.TabIndex = 65;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Pruebas";
+            this.groupBox2.Visible = false;
+            // 
+            // label21
+            // 
+            this.label21.AutoSize = true;
+            this.label21.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label21.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label21.Location = new System.Drawing.Point(55, 13);
+            this.label21.Name = "label21";
+            this.label21.Size = new System.Drawing.Size(69, 20);
+            this.label21.TabIndex = 56;
+            this.label21.Text = "Tot Real";
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label22.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label22.Location = new System.Drawing.Point(6, 12);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(57, 20);
+            this.label22.TabIndex = 58;
+            this.label22.Text = "Redon";
+            // 
+            // txtRedondeo
+            // 
+            this.txtRedondeo.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtRedondeo.Location = new System.Drawing.Point(137, 6);
+            this.txtRedondeo.Name = "txtRedondeo";
+            this.txtRedondeo.ReadOnly = true;
+            this.txtRedondeo.Size = new System.Drawing.Size(113, 29);
+            this.txtRedondeo.TabIndex = 55;
+            this.txtRedondeo.TabStop = false;
+            this.txtRedondeo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // txtKgsRedondeo
+            // 
+            this.txtKgsRedondeo.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.txtKgsRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtKgsRedondeo.Location = new System.Drawing.Point(63, 12);
+            this.txtKgsRedondeo.Name = "txtKgsRedondeo";
+            this.txtKgsRedondeo.ReadOnly = true;
+            this.txtKgsRedondeo.Size = new System.Drawing.Size(113, 29);
+            this.txtKgsRedondeo.TabIndex = 57;
+            this.txtKgsRedondeo.TabStop = false;
+            this.txtKgsRedondeo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // checkBoxRedondeo
+            // 
+            this.checkBoxRedondeo.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkBoxRedondeo.AutoSize = true;
+            this.checkBoxRedondeo.BackColor = System.Drawing.Color.DarkSeaGreen;
+            this.checkBoxRedondeo.CheckAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.checkBoxRedondeo.Checked = true;
+            this.checkBoxRedondeo.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxRedondeo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBoxRedondeo.ForeColor = System.Drawing.Color.Black;
+            this.checkBoxRedondeo.Location = new System.Drawing.Point(774, 39);
+            this.checkBoxRedondeo.Name = "checkBoxRedondeo";
+            this.checkBoxRedondeo.Size = new System.Drawing.Size(37, 30);
+            this.checkBoxRedondeo.TabIndex = 53;
+            this.checkBoxRedondeo.TabStop = false;
+            this.checkBoxRedondeo.Text = "&R ";
+            this.checkBoxRedondeo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBoxRedondeo.UseVisualStyleBackColor = false;
+            this.checkBoxRedondeo.CheckedChanged += new System.EventHandler(this.checkBoxRedondeo_CheckedChanged);
+            // 
+            // checkTicket
+            // 
+            this.checkTicket.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkTicket.AutoSize = true;
+            this.checkTicket.BackColor = System.Drawing.Color.DarkSeaGreen;
+            this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkTicket.Checked = true;
+            this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkTicket.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkTicket.ForeColor = System.Drawing.Color.Black;
+            this.checkTicket.Location = new System.Drawing.Point(707, 40);
+            this.checkTicket.Name = "checkTicket";
+            this.checkTicket.Size = new System.Drawing.Size(61, 30);
+            this.checkTicket.TabIndex = 46;
+            this.checkTicket.TabStop = false;
+            this.checkTicket.Text = "&Ticket";
+            this.checkTicket.UseVisualStyleBackColor = false;
+            this.checkTicket.Visible = false;
+            this.checkTicket.CheckedChanged += new System.EventHandler(this.checkTicket_CheckedChanged);
+            // 
+            // checkLeerPeso
+            // 
+            this.checkLeerPeso.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkLeerPeso.AutoSize = true;
+            this.checkLeerPeso.BackColor = System.Drawing.Color.DarkSeaGreen;
+            this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkLeerPeso.Checked = true;
+            this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkLeerPeso.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkLeerPeso.ForeColor = System.Drawing.Color.Black;
+            this.checkLeerPeso.Image = global::Presentacion.Properties.Resources.scale;
+            this.checkLeerPeso.Location = new System.Drawing.Point(356, 35);
+            this.checkLeerPeso.Name = "checkLeerPeso";
+            this.checkLeerPeso.Size = new System.Drawing.Size(40, 34);
+            this.checkLeerPeso.TabIndex = 45;
+            this.checkLeerPeso.TabStop = false;
+            this.checkLeerPeso.Text = "    ";
+            this.checkLeerPeso.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.checkLeerPeso.UseVisualStyleBackColor = false;
+            this.checkLeerPeso.Visible = false;
+            this.checkLeerPeso.CheckedChanged += new System.EventHandler(this.checkLeerPeso_CheckedChanged);
+            this.checkLeerPeso.Enter += new System.EventHandler(this.checkLeerPeso_Enter);
+            // 
+            // grupoCortes
+            // 
+            this.grupoCortes.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.grupoCortes.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.grupoCortes.Controls.Add(this.checkLeerPeso);
+            this.grupoCortes.Controls.Add(this.checkTicket);
+            this.grupoCortes.Controls.Add(this.checkBoxRedondeo);
+            this.grupoCortes.Controls.Add(this.groupBox2);
+            this.grupoCortes.Controls.Add(this.lblNoHabilitado);
+            this.grupoCortes.Controls.Add(this.btnQuitar);
+            this.grupoCortes.Controls.Add(this.comboTipoComprobante);
+            this.grupoCortes.Controls.Add(this.lblHoraUltimaVenta);
+            this.grupoCortes.Controls.Add(this.txtCorte);
+            this.grupoCortes.Controls.Add(this.btnAgregar);
+            this.grupoCortes.Controls.Add(this.txtObservaciones);
+            this.grupoCortes.Controls.Add(this.label7);
+            this.grupoCortes.Controls.Add(this.btnBuscarCorte);
+            this.grupoCortes.Controls.Add(this.lblUltimaVenta);
+            this.grupoCortes.Controls.Add(this.txtTotalCorte);
+            this.grupoCortes.Controls.Add(this.lblClienteConBonif);
+            this.grupoCortes.Controls.Add(this.label5);
+            this.grupoCortes.Controls.Add(this.lblErrorBalanza);
+            this.grupoCortes.Controls.Add(this.txtCodigo);
+            this.grupoCortes.Controls.Add(this.txtPrecioKg);
+            this.grupoCortes.Controls.Add(this.label13);
+            this.grupoCortes.Controls.Add(this.txtCantKgs);
+            this.grupoCortes.Controls.Add(this.label15);
+            this.grupoCortes.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grupoCortes.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.grupoCortes.Location = new System.Drawing.Point(10, 33);
+            this.grupoCortes.Name = "grupoCortes";
+            this.grupoCortes.Size = new System.Drawing.Size(821, 557);
+            this.grupoCortes.TabIndex = 19;
+            this.grupoCortes.TabStop = false;
             // 
             // formPOS
             // 
@@ -1902,7 +1905,6 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btnBloquear);
             this.Controls.Add(this.lblTeclasRapidas);
-            this.Controls.Add(this.label11);
             this.Controls.Add(this.pnlBuscar);
             this.Controls.Add(this.panelDespliegue);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -1921,10 +1923,6 @@
             this.panelSuperior.PerformLayout();
             this.groupFormaPago.ResumeLayout(false);
             this.groupFormaPago.PerformLayout();
-            this.grupoCortes.ResumeLayout(false);
-            this.grupoCortes.PerformLayout();
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).EndInit();
             this.panelPago.ResumeLayout(false);
             this.panelPago.PerformLayout();
@@ -1939,6 +1937,10 @@
             this.panelDespliegue.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaExpendios)).EndInit();
             this.panelExpendioLateral.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            this.grupoCortes.ResumeLayout(false);
+            this.grupoCortes.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1952,8 +1954,6 @@
         private System.Windows.Forms.Button btnBuscarCliente;
         private System.Windows.Forms.TextBox txtCliente;
         protected System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.TextBox txtObservaciones;
         private System.Windows.Forms.TextBox txtTotalS;
         protected System.Windows.Forms.Button btnAceptar;
         private System.Windows.Forms.DataGridView grillaLineasVenta;
@@ -1963,28 +1963,12 @@
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Button btnQuitar;
-        protected System.Windows.Forms.GroupBox grupoCortes;
-        protected System.Windows.Forms.TextBox txtCorte;
-        private System.Windows.Forms.Button btnAgregar;
-        private System.Windows.Forms.CheckBox checkLeerPeso;
-        protected System.Windows.Forms.Label label7;
-        protected internal System.Windows.Forms.Button btnBuscarCorte;
-        private System.Windows.Forms.MaskedTextBox txtTotalCorte;
-        protected System.Windows.Forms.Label label5;
-        private System.Windows.Forms.MaskedTextBox txtPrecioKg;
-        protected System.Windows.Forms.Label label13;
-        private System.Windows.Forms.MaskedTextBox txtCantKgs;
-        protected System.Windows.Forms.Label label15;
         protected System.Windows.Forms.Panel panelPago;
         protected System.Windows.Forms.TextBox txtAbona;
         protected System.Windows.Forms.TextBox txtCambio;
-        protected System.Windows.Forms.MaskedTextBox txtCodigo;
         private System.Windows.Forms.Label lblTeclasRapidas;
         public System.Windows.Forms.TextBox txtVendedor;
         private System.Windows.Forms.TextBox txtFecVenta;
-        private System.Windows.Forms.Label lblUltimaVenta;
-        private System.Windows.Forms.Label lblHoraUltimaVenta;
         private System.Windows.Forms.Button btnBloquear;
         private System.Windows.Forms.Panel panelBloquear;
         private System.Windows.Forms.Button btnIngresar;
@@ -1994,30 +1978,19 @@
         private System.Windows.Forms.Label usuario;
         protected System.Windows.Forms.Button btnAbonar;
         private System.Windows.Forms.Panel panelAbonar;
-        private System.Windows.Forms.CheckBox checkTicket;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Timer timerBloquearCaja;
         private System.Windows.Forms.Timer timerTitilar;
-        protected System.Windows.Forms.Label lblErrorBalanza;
         private System.Windows.Forms.TextBox txtTotalKgs;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.CheckBox checkCtaCte;
-        protected System.Windows.Forms.Label lblClienteConBonif;
-        protected System.Windows.Forms.Label lblNoHabilitado;
         private System.Windows.Forms.LinkLabel linkUltimasVentasCliente;
-        private System.Windows.Forms.CheckBox checkBoxRedondeo;
         private System.Windows.Forms.TextBox txtDomicilio;
         private System.Windows.Forms.TextBox txtCuit;
         private System.Windows.Forms.CheckBox checkCredito;
         private System.Windows.Forms.CheckBox checkDebito;
         private System.Windows.Forms.CheckBox checkEfectivo;
         private System.Windows.Forms.GroupBox groupFormaPago;
-        private System.Windows.Forms.ComboBox comboTipoComprobante;
-        protected System.Windows.Forms.Label label21;
-        private System.Windows.Forms.MaskedTextBox txtRedondeo;
-        protected System.Windows.Forms.Label label22;
-        private System.Windows.Forms.MaskedTextBox txtKgsRedondeo;
-        private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.CheckBox checkCtaCtePago;
         private System.Windows.Forms.CheckBox checkTransf;
         private System.Windows.Forms.CheckBox checkQr;
@@ -2065,5 +2038,34 @@
         private System.Windows.Forms.RichTextBox txtTotalRich;
         private System.Windows.Forms.Panel panelDivisor;
         protected System.Windows.Forms.Label lblSaldo;
+        private System.Windows.Forms.Button btnCambiarColor;
+        protected System.Windows.Forms.Label label15;
+        private System.Windows.Forms.MaskedTextBox txtCantKgs;
+        protected System.Windows.Forms.Label label13;
+        private System.Windows.Forms.MaskedTextBox txtPrecioKg;
+        protected System.Windows.Forms.MaskedTextBox txtCodigo;
+        protected System.Windows.Forms.Label lblErrorBalanza;
+        protected System.Windows.Forms.Label label5;
+        protected System.Windows.Forms.Label lblClienteConBonif;
+        private System.Windows.Forms.MaskedTextBox txtTotalCorte;
+        private System.Windows.Forms.Label lblUltimaVenta;
+        protected internal System.Windows.Forms.Button btnBuscarCorte;
+        protected System.Windows.Forms.Label label7;
+        private System.Windows.Forms.TextBox txtObservaciones;
+        private System.Windows.Forms.Button btnAgregar;
+        protected System.Windows.Forms.TextBox txtCorte;
+        private System.Windows.Forms.Label lblHoraUltimaVenta;
+        private System.Windows.Forms.ComboBox comboTipoComprobante;
+        private System.Windows.Forms.Button btnQuitar;
+        protected System.Windows.Forms.Label lblNoHabilitado;
+        private System.Windows.Forms.GroupBox groupBox2;
+        protected System.Windows.Forms.Label label21;
+        protected System.Windows.Forms.Label label22;
+        private System.Windows.Forms.MaskedTextBox txtRedondeo;
+        private System.Windows.Forms.MaskedTextBox txtKgsRedondeo;
+        private System.Windows.Forms.CheckBox checkBoxRedondeo;
+        private System.Windows.Forms.CheckBox checkTicket;
+        private System.Windows.Forms.CheckBox checkLeerPeso;
+        protected System.Windows.Forms.GroupBox grupoCortes;
     }
 }

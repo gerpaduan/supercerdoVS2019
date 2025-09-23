@@ -818,7 +818,7 @@ namespace Presentacion
 
         private void btnGuardar_Enter(object sender, EventArgs e)
         {
-            btnGuardar.BackColor = System.Drawing.Color.FromName("LimeGreen");
+            btnGuardar.BackColor = System.Drawing.Color.FromName("DarkSeaGreen");
         }
 
         private void btnGuardar_Leave(object sender, EventArgs e)

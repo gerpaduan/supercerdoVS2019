@@ -147,7 +147,7 @@
             // 
             this.checkPermitirIngreso.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.checkPermitirIngreso.AutoSize = true;
-            this.checkPermitirIngreso.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkPermitirIngreso.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkPermitirIngreso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkPermitirIngreso.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkPermitirIngreso.Location = new System.Drawing.Point(354, 88);

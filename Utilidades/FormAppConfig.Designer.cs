@@ -34,7 +34,7 @@
             // 
             // btnGuardar
             // 
-            this.btnGuardar.BackColor = System.Drawing.Color.LimeGreen;
+            this.btnGuardar.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.btnGuardar.Dock = System.Windows.Forms.DockStyle.Top;
             this.btnGuardar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGuardar.Location = new System.Drawing.Point(0, 0);

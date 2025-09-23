@@ -524,7 +524,7 @@
             // 
             this.checkAProveedor.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkAProveedor.AutoSize = true;
-            this.checkAProveedor.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkAProveedor.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkAProveedor.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkAProveedor.Checked = true;
             this.checkAProveedor.CheckState = System.Windows.Forms.CheckState.Checked;

@@ -233,7 +233,7 @@
             // 
             this.checkLeerPeso.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkLeerPeso.AutoSize = true;
-            this.checkLeerPeso.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkLeerPeso.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;

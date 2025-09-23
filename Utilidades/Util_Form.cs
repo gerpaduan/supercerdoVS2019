@@ -19,7 +19,7 @@ namespace Utilidades
         public static Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         public static Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
         public static Color focusColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["focusColor"].ToString());//Color.Orange;//Color.NavajoWhite;//Color.MediumAquamarine;
-        public static Color checkedColor = Color.LimeGreen;
+        public static Color checkedColor = Color.DarkSeaGreen;
         public static float escalaPantalla = convertFloat(ConfigurationManager.AppSettings["escalaPantalla"].ToString(), false);
 
         public Util_Form()
@@ -348,7 +348,7 @@ namespace Utilidades
         {
             try
             {
-                Color color = isChecked ? Color.LimeGreen :ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
+                Color color = isChecked ? Color.DarkSeaGreen :ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
 
                 return color;
             }

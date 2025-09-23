@@ -370,7 +370,7 @@
             // 
             this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkCtaCte.AutoSize = true;
-            this.checkCtaCte.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkCtaCte.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkCtaCte.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkCtaCte.Checked = true;
             this.checkCtaCte.CheckState = System.Windows.Forms.CheckState.Checked;

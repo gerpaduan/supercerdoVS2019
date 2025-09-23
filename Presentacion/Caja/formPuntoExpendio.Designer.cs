@@ -267,7 +267,7 @@
             // 
             this.checkTicket.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkTicket.AutoSize = true;
-            this.checkTicket.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkTicket.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkTicket.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkTicket.Checked = true;
             this.checkTicket.CheckState = System.Windows.Forms.CheckState.Checked;
@@ -419,7 +419,7 @@
             // 
             this.checkLeerPeso.Appearance = System.Windows.Forms.Appearance.Button;
             this.checkLeerPeso.AutoSize = true;
-            this.checkLeerPeso.BackColor = System.Drawing.Color.LimeGreen;
+            this.checkLeerPeso.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.checkLeerPeso.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkLeerPeso.Checked = true;
             this.checkLeerPeso.CheckState = System.Windows.Forms.CheckState.Checked;

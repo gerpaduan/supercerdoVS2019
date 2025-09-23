@@ -591,7 +591,7 @@ namespace Presentacion.Pagos
             if (checkAProveedor.Checked)
             {
                 checkAProveedor.Text = "Pagar a ...";
-                checkAProveedor.BackColor = Color.LimeGreen;
+                checkAProveedor.BackColor = Color.DarkSeaGreen;
             }
             else
             {

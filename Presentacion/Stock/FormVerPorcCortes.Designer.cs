@@ -99,7 +99,7 @@
             // 
             // btnGenerarAj
             // 
-            this.btnGenerarAj.BackColor = System.Drawing.Color.LimeGreen;
+            this.btnGenerarAj.BackColor = System.Drawing.Color.DarkSeaGreen;
             this.btnGenerarAj.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGenerarAj.Location = new System.Drawing.Point(562, 38);
             this.btnGenerarAj.Name = "btnGenerarAj";
