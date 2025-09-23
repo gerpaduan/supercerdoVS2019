@@ -148,12 +148,13 @@ namespace Negocio
         
         public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
         {
-            oCompraE = findById_convertToCompra(oCompraE.IdCompra);
+            //oCompraE = findById_convertToCompra(oCompraE.IdCompra);
             Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
             string detalle = "\'" + oCompraE.TipoCompra + "\'" + " | Kgs: " + oCompraE.KgsMedias.ToString()
                 + " | " + "Cant: " + oCompraE.CantMedias.ToString();
             oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra, oCompraE.NroRemito,
-                detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
+                //detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraD.getTotalCompra(oCompraE.IdCompra, oCompraE.TipoCompra), oCompraE.Sucursal,
+                detalle, Entidades.MovCtaCte.tipoMov.Credito, oCompraE.getImporteCompra(oCompraE, oCompraE.LineasMediasReses, oCompraE.LineasCortes), oCompraE.Sucursal,
                 oCompraE.Creado, oCompraE.CreadoPor, oCompraE.Actualizado, null, oCompraE.EnCtaCte, null, null, null);
         }
 

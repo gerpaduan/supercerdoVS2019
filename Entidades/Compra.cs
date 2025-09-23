@@ -165,6 +165,7 @@ namespace Entidades
         private Usuario creadoPor;
         private Usuario actualizadoPor;
         private List<Entidades.CortePorCompra> lineasCortes;
+        private List<Entidades.MediaRes> lineasMediasReses;
         bool enCtaCte;
 
         public bool EnCtaCte
@@ -304,5 +305,7 @@ namespace Entidades
             get { return sucursal; }
             set { sucursal = value; }
         }
+
+        public List<MediaRes> LineasMediasReses { get => lineasMediasReses; set => lineasMediasReses = value; }
     }
 }
