@@ -3441,6 +3441,11 @@ namespace Presentacion.Caja
             btnCambiarColor.Text  = cambiarColorForm ? "Modo\nClaro" : "Modo\nOscuro";
             grillaLineasVenta.BackgroundColor = (cambiarColorForm ?
                  SystemColors.InactiveCaption : SystemColors.ButtonFace);
+            //LightSkyBlue
+            grillaLineasVenta.DefaultCellStyle.SelectionBackColor = cambiarColorForm ?
+                 Color.SlateGray : System.Drawing.Color.LightSteelBlue; 
+            grillaLineasVenta.DefaultCellStyle.SelectionForeColor =
+                (cambiarColorForm ? Color.WhiteSmoke : System.Drawing.SystemColors.ActiveCaptionText); // o cualquier color que prefieras
 
             foreach (Control ctrl in controles)
             {
