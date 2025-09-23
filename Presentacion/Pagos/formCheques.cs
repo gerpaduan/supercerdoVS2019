@@ -225,8 +225,11 @@ namespace Presentacion.Cheques
             if (llamadoDesdePago)
             {
                 txtNroCheque.Text = nroChequeDesdePago;
-                comboBanco.Focus();
             }
+
+
+            comboBanco.Focus();
+            comboBanco.SelectAll();
         }
 
         private void btnGuardar_Click(object sender, EventArgs e)
@@ -242,6 +245,14 @@ namespace Presentacion.Cheques
                            oCheque != null && oCheque.Id > 0 ? oCheque.CreadoPor.Id : oUsuario.Id)))
                 {
                     Utilidades.Mensajes.ErrorPermisoEdicion();
+                    return;
+                }
+
+                ///Validar que el banco esté en la lista y sea distinto a nulo
+                if (string.IsNullOrWhiteSpace(comboBanco.Text))// !float.TryParse(txtImporteCheque.Text, out float importe))
+                {
+                    MessageBox.Show("El Banco ingresado no es válido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    comboBanco.Focus();
                     return;
                 }
 
@@ -315,6 +326,7 @@ namespace Presentacion.Cheques
             checkPropio.Checked = false;
             comboEstado.SelectedIndex = -1;
             comboBanco.SelectedIndex = -1;
+            comboBanco.Text = "";
             txtFechaEmision.Text = "";
             txtFechaPago.Value = DateTime.Now;
             foreach (Control control in parent.Controls)
@@ -510,6 +522,22 @@ namespace Presentacion.Cheques
         public void CargarObservaciones(string obs)
         { 
             txtObservaciones.Text = obs;
+        }
+
+        private void comboBanco_Validating(object sender, CancelEventArgs e)
+        {
+            ComboBox combo = (ComboBox)sender;
+
+            // Verifico si el texto coincide con algún item
+            if (!string.IsNullOrEmpty(combo.Text) && combo.FindStringExact(combo.Text) == -1)
+            {
+                MessageBox.Show("Debe seleccionar un banco válido de la lista.",
+                                "Validación",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
+
+                e.Cancel = true; // Cancela la salida del control
+            }
         }
     }
 }

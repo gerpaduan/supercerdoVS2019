@@ -271,18 +271,18 @@ namespace Datos
                         oVentaE.Idpersona = Convert.ToInt32(drVenta["idPersona"]);
                     }
                 }
-                Datos.Usuario oUsuarioD = new Usuario();
-                oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
-
-                Datos.Sucursal oSucursalD = new Sucursal();
-                oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
-
-                Datos.Persona oPersonaD = new Datos.Persona();
-                oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
-
-                oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
-                oVentaE.TotalImporte = getTotalVenta(idVenta);
             }
+            Datos.Usuario oUsuarioD = new Usuario();
+            oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
+
+            Datos.Sucursal oSucursalD = new Sucursal();
+            oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
+
+            Datos.Persona oPersonaD = new Datos.Persona();
+            oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
+
+            oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
+            oVentaE.TotalImporte = getTotalVenta(idVenta);
 
             return oVentaE;
         }
