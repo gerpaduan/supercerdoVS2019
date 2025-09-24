@@ -2157,6 +2157,7 @@ namespace Presentacion.Caja
             txtTotalS.Text = "0,0";
             txtTotalS.Text = "000,00";// txtTotalS.Text;
             btnCambiarColor.BackColor = auxiliarColor;
+            grillaLineasVenta.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
 
             if (oUsuario != null)
             {
@@ -2806,7 +2807,9 @@ namespace Presentacion.Caja
 
                 if ((!string.IsNullOrEmpty(txtCodigo.Text) && oCorteE != null && oCorteE.idCorte > 0 &&
                     !oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && checkLeerPeso.Checked) ||
-                    (!esCodBarraEstandar && !esCodBarraInterno && !FormPrincipal.leerBalanza))
+                    ///(!esCodBarraEstandar && !esCodBarraInterno && !FormPrincipal.leerBalanza)) 
+                    ///Comentado 23/09/2025 xq si es estandar y balanza puerto 0, debe saltar a txtCantidad kgs
+                    (esCodBarraEstandar && !esCodBarraInterno && !FormPrincipal.leerBalanza))
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
@@ -3439,19 +3442,21 @@ namespace Presentacion.Caja
             #endregion
             btnCambiarColor.BackColor = cambiarColorForm ? colorUser : auxiliarColor;
             btnCambiarColor.Text  = cambiarColorForm ? "Modo\nClaro" : "Modo\nOscuro";
+
             grillaLineasVenta.BackgroundColor = (cambiarColorForm ?
                  SystemColors.InactiveCaption : SystemColors.ButtonFace);
             //LightSkyBlue
             grillaLineasVenta.DefaultCellStyle.SelectionBackColor = cambiarColorForm ?
                  Color.SlateGray : System.Drawing.Color.LightSteelBlue; 
+
             grillaLineasVenta.DefaultCellStyle.SelectionForeColor =
                 (cambiarColorForm ? Color.WhiteSmoke : System.Drawing.SystemColors.ActiveCaptionText); // o cualquier color que prefieras
 
+            grillaLineasVenta.DefaultCellStyle.BackColor =
+                (cambiarColorForm ? SystemColors.InactiveCaption : System.Drawing.SystemColors.ButtonFace); // o cualquier color que prefieras
+
             foreach (Control ctrl in controles)
             {
-                //ctrl.BackColor = cambiarColorForm ? auxiliarColor : colorUser;
-                //ctrl.ForeColor = cambiarColorForm ? Color.Black : Color.Black; // El texto pasa a plata
-
                 // Si el fondo era ButtonFace, cambiar a ActiveCaption
                 if (cambiarColorForm && ctrl.BackColor == colorUser)
                 {
@@ -3461,6 +3466,19 @@ namespace Presentacion.Caja
                 else if (!cambiarColorForm && ctrl.BackColor == auxiliarColor)
                 {
                     ctrl.BackColor = colorUser;
+                    ctrl.ForeColor = Color.Black; // El texto pasa a plata
+                }
+
+                //Para TextBox
+                // Si el fondo era ButtonFace, cambiar a ActiveCaption
+                if (cambiarColorForm && ctrl.BackColor == SystemColors.ControlLightLight)
+                {
+                    ctrl.BackColor = SystemColors.GradientInactiveCaption;
+                    ctrl.ForeColor = Color.Black; // El texto pasa a plata
+                }
+                else if (!cambiarColorForm && ctrl.BackColor == SystemColors.GradientInactiveCaption)
+                {
+                    ctrl.BackColor = SystemColors.ControlLightLight;
                     ctrl.ForeColor = Color.Black; // El texto pasa a plata
                 }
 
