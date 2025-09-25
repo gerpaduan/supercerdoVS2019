@@ -306,7 +306,7 @@ namespace Presentacion
             checkAutoDesconectar.Visible = false;
             comboConexion.Enabled = false;
             timerInactividadAdmin.Stop();
-            MessageBox.Show("Sesión Cerrada.");
+            //MessageBox.Show("Sesión Cerrada.");
         }
 
         private void FormPrincipal_Load(object sender, EventArgs e)
@@ -1161,6 +1161,7 @@ namespace Presentacion
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
             frmLogin.soloActivos = true;
             frmLogin.ShowDialog(this);
+
             foreach (Form frm in Application.OpenForms)
             {
                 if (frm.GetType() == typeof(formPuntoExpendio))

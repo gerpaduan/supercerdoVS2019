@@ -106,6 +106,7 @@ namespace Negocio
                     case "idIndefinido":
                         Entidades.Parametros.idIndefinido = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
                         break;
+                        ///TODO: eliminar este parametro
                     case "minAccesoUltimaVentaVendedor":
                         Entidades.Parametros.minAccesoUltimaVentaVendedor = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
                         break;

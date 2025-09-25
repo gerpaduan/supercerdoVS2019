@@ -231,26 +231,6 @@ namespace Presentacion.Caja
         {
             try
             {
-                ////valido que la fecha/hora de la venta sea menor al minimo de minutos parametrizado
-                //TimeSpan diffMinutosTime = DateTime.Now - oUltimaVenta.FechaVenta;
-                //int diffMinutos = diffMinutosTime.Minutes;
-
-                ////si no está loguedo, si fecha venta es distinta a hoy y pasaron minino de minutos para el acceso
-                ////if (!oCierreE.UsuarioInicio.Admin && !Presentacion.FormPrincipal.logueado && !((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
-                ////    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)))
-                /////TODO: agregar permiso Ultima Venta para permitir modificar
-                /////y se deberia eliminar la validacion de (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin)
-                //if (!((DateTime.Now.Date == oUltimaVenta.FechaVenta.Date) &&  
-                //    (Entidades.Parametros.minAccesoUltimaVentaVendedor > diffMinutos)) && 
-                //    (FormPrincipal.oUserLogueado == null || !FormPrincipal.oUserLogueado.Admin))
-                //{
-                //    MessageBox.Show("Ya pasó el mínimo de tiempo requerido para poder modificar la Venta.\n\n"+
-                //        "Solicite la asistencia de un usuario con permisos para esta acción.",
-                //        "Tiempo expirado", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //    huboModificaciones = false;
-                //    return;
-                //}
-
                 //Validación que es llamado desde POS
                 if (oCierreE != null)
                 {
@@ -293,6 +273,7 @@ namespace Presentacion.Caja
                     formPagoMixto.pagoMixtoEfectivo = oUltimaVenta.PagoMixtoEfectivo;
                     formPagoMixto.formUltimaVenta = this;
                     formPagoMixto.ShowDialog();
+
                     //si le dio al boton ingresar en form pago mixto continuar sino return false
                     if (!(pagoMixtoEfectivo > 0))
                         return;
