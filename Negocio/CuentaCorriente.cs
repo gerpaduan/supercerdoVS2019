@@ -179,7 +179,7 @@ namespace Negocio
                     // guardar o editar el pago
                     oPagoE = oCtaCteD.addOrEditPago(oPagoE);
 
-                    // crear movimiento
+                    // crear movimiento y egreso de caja
                     crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
 
                     // si todo salió bien, confirmamos
@@ -223,47 +223,70 @@ namespace Negocio
             if ((oCierreCajaE == null || oCierreCajaE.Id == 0))
                 return;
 
-            Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
             ///si es ANULACION recupera se carga el pago del importe en efectivo correspondiente al pago de esta caja abierta
             ///
-            string descripcionEgreso = esRegistroAnulacion ? "ANULACION: " : "";
-            descripcionEgreso += (oPagoE.AProveedor ? "Pago a " : "Cobro a "); 
-            string detalleEgreso = string.Empty;
-            float montoEgreso;
 
-            switch (oPagoE.FormaPago.ToUpper())
-            {
-                case "EFECTIVO":
-                    montoEgreso = oPagoE.AProveedor ? oPagoE.Importe : (-1 * oPagoE.Importe);//se multiplica *-1 para que sume a la caja
-                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("N2");
-                    break;
-
-                case "EFTVO+CHEQUE":
-                    montoEgreso = oPagoE.AProveedor ? oPagoE.Efectivo : (-1 * oPagoE.Efectivo);//se multiplica *-1 para que sume a la caja
-                    detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("N2") + " | EF $" + oPagoE.Efectivo;
-                    break;
-
-                default:
-                    montoEgreso = 0;
-                    detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("N2");
-                    break;
-            }
-            ///si es anulación establezco el monto inverso
-            montoEgreso = esRegistroAnulacion ? montoEgreso * -1 : montoEgreso;
-
-            descripcionEgreso += oPagoE.Persona.razonSocial + " - ID:" + oPagoE.Id.ToString() + detalleEgreso;
-
-            oEgresoCajaE.Fecha = oPagoE.Fecha;
-            oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idPagoCobroEgresoCaja;
-            oEgresoCajaE.Descripcion = descripcionEgreso;
-            oEgresoCajaE.Monto = montoEgreso;
-            oEgresoCajaE.Detalle = oPagoE.Observaciones;
-            oEgresoCajaE.Sucursal = oPagoE.Sucursal;
-            oEgresoCajaE.IdCompra = 0;
-            oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oPagoE.CreadoPor.Id : oCierreCajaE.UsuarioInicio.Id;
-            oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCierreCajaE.UsuarioInicio.Id : 0;
             Negocio.CierreCaja oCierreN = new CierreCaja();
+            ///consulto si existe un egreso de caja para la tabla y id
+            ///si no existe, creo nuevo objeto
+            ///
+            Entidades.EgresoCaja oEgresoCajaE = oCierreN.findEgresoCajaByTablaYId(Entidades.EgresoCaja.tablas.Pagos.ToString(), oPagoE.Id);
+            ///(Si es anulación ó no existe un registro anterior ó existe registro anterior y son 
+            if (oEgresoCajaE == null || oEgresoCajaE.Id == 0)
+                oEgresoCajaE = new Entidades.EgresoCaja();
+
+            //si es anulacion al registro recuperado se lo setea con ID = 0 y se genera el opuesto
+            if (esRegistroAnulacion)
+            {
+                oEgresoCajaE.Id = 0;
+                oEgresoCajaE.Descripcion = "ANULACION: " + oEgresoCajaE.Descripcion;
+                oEgresoCajaE.Monto = oEgresoCajaE.Monto * -1;
+            }
+            else
+            {
+                ///si el monto del pago es diferente al monto del Egreso de caja -> crear nuevo registro
+                ///
+                if (oPagoE.Importe != oEgresoCajaE.Monto)
+                    oEgresoCajaE.Id = 0;
+
+                string descripcionEgreso = (oPagoE.AProveedor ? "Pago a " : "Cobro a ");
+                string detalleEgreso = string.Empty;
+                float montoEgreso;
+
+                switch (oPagoE.FormaPago.ToUpper())
+                {
+                    case "EFECTIVO":
+                        montoEgreso = oPagoE.AProveedor ? oPagoE.Importe : (-1 * oPagoE.Importe);//se multiplica *-1 para que sume a la caja
+                        detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("N2");
+                        break;
+
+                    case "EFTVO+CHEQUE":
+                        montoEgreso = oPagoE.AProveedor ? oPagoE.Efectivo : (-1 * oPagoE.Efectivo);//se multiplica *-1 para que sume a la caja
+                        detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("N2") + " | EF $" + oPagoE.Efectivo;
+                        break;
+
+                    default:
+                        montoEgreso = 0;
+                        detalleEgreso = " | " + oPagoE.FormaPago + " $" + oMovCtaCte.Importe.ToString("N2");
+                        break;
+                }
+
+                descripcionEgreso += oPagoE.Persona.razonSocial + " - ID:" + oPagoE.Id.ToString() + detalleEgreso;
+
+                oEgresoCajaE.Fecha = oPagoE.Fecha;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idPagoCobroEgresoCaja;
+                oEgresoCajaE.Descripcion = descripcionEgreso;
+                oEgresoCajaE.Monto = montoEgreso;
+                oEgresoCajaE.Detalle = oPagoE.Observaciones;
+                oEgresoCajaE.Sucursal = oPagoE.Sucursal;
+                oEgresoCajaE.IdCompra = 0;
+                oEgresoCajaE.Tabla = Entidades.EgresoCaja.tablas.Pagos.ToString();
+                oEgresoCajaE.IdTabla = oPagoE.Id;
+                oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oPagoE.CreadoPor.Id : oCierreCajaE.UsuarioInicio.Id;
+                oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCierreCajaE.UsuarioInicio.Id : 0;
+            }
+            
             oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
         }
 

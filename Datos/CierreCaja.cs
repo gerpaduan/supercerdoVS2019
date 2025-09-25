@@ -289,7 +289,9 @@ namespace Datos
             oEgresoCaja.IdCompra = drEgresoCaja["idCompra"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idCompra"].ToString()) : oEgresoCaja.IdCompra;
             //oEgresoCaja.Tabla = drEgresoCaja["tabla"].ToString();
             //oEgresoCaja.IdTabla = drEgresoCaja["idTabla"] != DBNull.Value ? Convert.ToInt32(drEgresoCaja["idTabla"].ToString()) : oEgresoCaja.IdCompra;
-            oEgresoCaja.Sucursal = oSucD.findById(Convert.ToInt32(drEgresoCaja["idSucursal"].ToString()));
+            Entidades.Sucursal oSucE = new Entidades.Sucursal();
+            oEgresoCaja.Sucursal = oSucE;
+            oEgresoCaja.Sucursal.idSucursal = Convert.ToInt32(drEgresoCaja["idSucursal"].ToString());// oSucD.findById(Convert.ToInt32(drEgresoCaja["idSucursal"].ToString()));
             oEgresoCaja.Creado = drEgresoCaja["creado"].Equals(null) ? (DateTime?)null : Convert.ToDateTime(drEgresoCaja["creado"].ToString());
             oEgresoCaja.CreadoPor = Convert.ToInt32(drEgresoCaja["creadoPor"].ToString());
             DateTime? fechaNull = null;
