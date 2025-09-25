@@ -223,10 +223,8 @@ namespace Negocio
             if ((oCierreCajaE == null || oCierreCajaE.Id == 0))
                 return;
 
-
             ///si es ANULACION recupera se carga el pago del importe en efectivo correspondiente al pago de esta caja abierta
             ///
-
             Negocio.CierreCaja oCierreN = new CierreCaja();
             ///consulto si existe un egreso de caja para la tabla y id
             ///si no existe, creo nuevo objeto
@@ -245,11 +243,6 @@ namespace Negocio
             }
             else
             {
-                ///si el monto del pago es diferente al monto del Egreso de caja -> crear nuevo registro
-                ///
-                if (oPagoE.Importe != oEgresoCajaE.Monto)
-                    oEgresoCajaE.Id = 0;
-
                 string descripcionEgreso = (oPagoE.AProveedor ? "Pago a " : "Cobro a ");
                 string detalleEgreso = string.Empty;
                 float montoEgreso;
@@ -273,6 +266,11 @@ namespace Negocio
                 }
 
                 descripcionEgreso += oPagoE.Persona.razonSocial + " - ID:" + oPagoE.Id.ToString() + detalleEgreso;
+
+                ///si el monto del pago es diferente al monto del Egreso de caja -> crear nuevo registro
+                ///
+                if (montoEgreso != oEgresoCajaE.Monto)
+                    oEgresoCajaE.Id = 0;
 
                 oEgresoCajaE.Fecha = oPagoE.Fecha;
                 oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idPagoCobroEgresoCaja;
