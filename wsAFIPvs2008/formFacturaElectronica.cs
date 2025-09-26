@@ -2505,6 +2505,7 @@ namespace wsAFIPvs2008
                 if (numero == 100)
                 {
                     texto = "cien";
+                    return texto;
                 }
                 else
                 {
