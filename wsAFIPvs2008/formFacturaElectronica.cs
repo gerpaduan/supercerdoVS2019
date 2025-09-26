@@ -814,7 +814,6 @@ namespace wsAFIPvs2008
         private void Button2_Click(object sender, EventArgs e)
         {
             try {
-
                 //DialogResult imprimir1 = MostrarMensaje();
 
                 //List<Entidades.AlicuotaIva> listaali = new List<Entidades.AlicuotaIva> ();
@@ -1058,7 +1057,7 @@ namespace wsAFIPvs2008
                     oFactuElec.TipoDocAfip = doctipo.Desc;
                     oFactuElec.NroDocAfip = DocTX.Text;
                     oFactuElec.RazonSocialAFIP = txtRazonSocial.Text;
-                    oFactuElec.CondicionIvaAFIP = esFacturaA ? "Responsable Inscripto" : comboIva.SelectedText;
+                    oFactuElec.CondicionIvaAFIP = esFacturaA ? "Responsable Inscripto" : comboIva.Text;
                     oFactuElec.DomicilioAFIP = txtDomicilio.Text;
                     oFactuElec.CondicionVenta = oVentaE.EnCtaCte ? "Cuenta Corriente" : "Contado";
                     oFactuElec.FormaPago = formaPago;
@@ -1808,9 +1807,12 @@ namespace wsAFIPvs2008
             // Agregar cada línea usando la función auxiliar
             cell.AddElement(CrearLinea("CUIT", oDocumentoImprimir.NroDocAfip));
             cell.AddElement(CrearLinea("Denominación", oDocumentoImprimir.RazonSocialAFIP.ToUpper()));
-            cell.AddElement(CrearLinea("Cond. IVA", comboIva.Text));
+            cell.AddElement(CrearLinea("Cond. IVA", oDocumentoImprimir.CondicionIvaAFIP.ToUpper()));
             cell.AddElement(CrearLinea("Domicilio", oDocumentoImprimir.DomicilioAFIP.ToUpper()));
-            cell.AddElement(CrearLinea("Cond. Venta", txtFormaPago.Text.ToUpper() + "    " + txtNroFacturaNotaCredito.Text));
+            //para permitir imprimir con la forma de pago modificada desde el formFacturaElectronica
+            string formaPago = string.IsNullOrEmpty(txtFormaPago.Text) ? oDocumentoImprimir.FormaPago : txtFormaPago.Text;
+            formaPago += "    " + txtNroFacturaNotaCredito.Text;
+            cell.AddElement(CrearLinea("Cond. Venta", formaPago.ToUpper()));
 
             // Agregar celda a la tabla
             clienteTable.AddCell(cell);
@@ -1935,6 +1937,17 @@ namespace wsAFIPvs2008
             documento.Add(new Chunk(line));
 
             documento.Add(new iTextSharp.text.Paragraph(" "));
+
+            // Información del CAE
+            // Totales
+            PdfPTable infoRegimenFiscal = new PdfPTable(1);
+            infoRegimenFiscal.WidthPercentage = 100;
+            infoRegimenFiscal.SetWidths(new float[] { 1f });
+            infoRegimenFiscal.AddCell(new PdfPCell(new Phrase($"Régimen de Transparencia Fiscal Al Consumidor(Ley 27.743)", fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            infoRegimenFiscal.AddCell(new PdfPCell(new Phrase($"IVA Contenido: {oDocumentoImprimir.Iva:N2}", fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+            infoRegimenFiscal.AddCell(new PdfPCell(new Phrase($"    ", fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
+
+            documento.Add(infoRegimenFiscal);
 
             // Crear imagen QR
             iTextSharp.text.Image qrImage = iTextSharp.text.Image.GetInstance(GenerateQRCode());
@@ -2354,7 +2367,7 @@ namespace wsAFIPvs2008
                     oNotaCredito.TipoDocAfip = doctipo.Desc;
                     oNotaCredito.NroDocAfip = DocTX.Text;
                     oNotaCredito.RazonSocialAFIP = txtRazonSocial.Text;
-                    oNotaCredito.CondicionIvaAFIP = esFacturaA ? "Responsable Inscripto" : comboIva.SelectedText;
+                    oNotaCredito.CondicionIvaAFIP = esFacturaA ? "Responsable Inscripto" : comboIva.Text;
                     oNotaCredito.DomicilioAFIP = txtDomicilio.Text;
                     oNotaCredito.CondicionVenta = oVentaE.EnCtaCte ? "Cuenta Corriente" : "Contado";
                     oNotaCredito.FormaPago = txtFormaPago.Text;
