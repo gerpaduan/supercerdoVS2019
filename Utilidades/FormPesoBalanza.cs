@@ -14,6 +14,7 @@ namespace Utilidades
     public partial class FormPesoBalanza : Form
     {
         string balanza = ConfigurationManager.AppSettings["balanza"].ToString();
+        bool releerPesoSystel = false;//evitar errores de 5.000 y 3.000 kgs cuando está inestable
         public FormPesoBalanza()
         {
             InitializeComponent();
@@ -114,7 +115,19 @@ namespace Utilidades
                 }
                 peso = new string(nuevoPeso);
 
-                pesoBalanzaLabel.Text = texto.Contains('i') && !texto.Contains("ei") ? peso + " i" : peso;
+                //Systel tiene el error que en  peso inestable manda 5.000 kgs o 3.000 como estable
+                string pesoBalanzaLabel_ = texto.Contains('i') && !texto.Contains("ei") ? peso + " i" : peso;
+                // Validación especial
+                if ((pesoBalanzaLabel_ == "005.000" || pesoBalanzaLabel_ == "003.000") && releerPesoSystel)
+                {
+                    releerPesoSystel = false; // evitar loop infinito
+                    pesoBalanzaLabel.Text = "i";//se envia i para inestable
+                    return; // volver a intentar
+                }
+                else if (pesoBalanzaLabel_ != "005.000" && pesoBalanzaLabel_ != "003.000")
+                    releerPesoSystel = true;
+
+                pesoBalanzaLabel.Text = pesoBalanzaLabel_;
             }
             if (balanza == "Kretz")
             {
