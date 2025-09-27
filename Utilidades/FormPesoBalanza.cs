@@ -14,7 +14,11 @@ namespace Utilidades
     public partial class FormPesoBalanza : Form
     {
         string balanza = ConfigurationManager.AppSettings["balanza"].ToString();
-        bool releerPesoSystel = false;//evitar errores de 5.000 y 3.000 kgs cuando está inestable
+        //evitar errores de 5.000 y 3.000 kgs cuando está inestable
+        //repite tres veces si balanza envía ese peso
+        int releerPesoSystel = 0;
+        int limiteReleerPeso = 3;
+        int timerInverval = 100;
         public FormPesoBalanza()
         {
             InitializeComponent();
@@ -24,10 +28,16 @@ namespace Utilidades
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            timerInverval = timer1.Interval;
             timer1.Start();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
+        {
+            LeerPeso();
+        }
+
+        private void LeerPeso()
         {
             try
             {
@@ -118,14 +128,16 @@ namespace Utilidades
                 //Systel tiene el error que en  peso inestable manda 5.000 kgs o 3.000 como estable
                 string pesoBalanzaLabel_ = texto.Contains('i') && !texto.Contains("ei") ? peso + " i" : peso;
                 // Validación especial
-                if ((pesoBalanzaLabel_ == "005.000" || pesoBalanzaLabel_ == "003.000") && releerPesoSystel)
+                if ((pesoBalanzaLabel_ == "005.000" || pesoBalanzaLabel_ == "003.000") && releerPesoSystel < limiteReleerPeso)
                 {
-                    releerPesoSystel = false; // evitar loop infinito
-                    pesoBalanzaLabel.Text = "i";//se envia i para inestable
+                    releerPesoSystel++; // evitar loop infinito
+                    timer1.Interval = 500;
                     return; // volver a intentar
                 }
                 else if (pesoBalanzaLabel_ != "005.000" && pesoBalanzaLabel_ != "003.000")
-                    releerPesoSystel = true;
+                    releerPesoSystel = 0;
+
+                timer1.Interval = timerInverval;
 
                 pesoBalanzaLabel.Text = pesoBalanzaLabel_;
             }
