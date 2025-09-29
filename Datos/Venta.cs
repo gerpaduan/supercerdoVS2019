@@ -272,17 +272,20 @@ namespace Datos
                     }
                 }
             }
-            Datos.Usuario oUsuarioD = new Usuario();
-            oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
+            if (oVentaE != null)
+            {
+                Datos.Usuario oUsuarioD = new Usuario();
+                oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
 
-            Datos.Sucursal oSucursalD = new Sucursal();
-            oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
+                Datos.Sucursal oSucursalD = new Sucursal();
+                oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
 
-            Datos.Persona oPersonaD = new Datos.Persona();
-            oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
+                Datos.Persona oPersonaD = new Datos.Persona();
+                oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
 
-            oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
-            oVentaE.TotalImporte = getTotalVenta(idVenta);
+                oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
+                oVentaE.TotalImporte = getTotalVenta(idVenta);
+            }
 
             return oVentaE;
         }

@@ -211,6 +211,10 @@ namespace wsAFIPvs2008
 
         public void cargarVenta()
         {
+            //si es solo consulta que se llama desde formNuevaPersona (tiraba error por el obj oVentaE = null)
+            if (oVentaE == null || oVentaE.IdVenta == 0)
+                return;
+
             txtIdVenta.Text = idVenta.ToString();
             oVentaE = !string.IsNullOrEmpty(txtIdVenta.Text) ? oVentaN.getVentaById(Convert.ToInt32(txtIdVenta.Text)) : null;
 
