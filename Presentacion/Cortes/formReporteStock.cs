@@ -317,6 +317,9 @@ namespace Presentacion.Cortes
                         grillaReportes.DataSource = null;
                         dtGrillaReporte = null;
 
+                        if (comboTipoReporte.Text == "Stock Actual")
+                            cargarComboCierreStock();
+
                         string fechaHastaString = stockProgresivo ? txtFechaHastaProgresivo.Text : comboCierreStock.Text;
                         dtGrillaReporte = oCorteN.CierreStock(1, txtDescripcion.Text.Trim(), Convert.ToInt32(comboSucursal.SelectedValue.ToString()),
                             Convert.ToDateTime(comboInicioStock.Text), Convert.ToDateTime(fechaHastaString), null, tipo , idProveedor, idMarca);
@@ -474,6 +477,7 @@ namespace Presentacion.Cortes
                         //fuente = new System.Drawing.Font("Microsoft Sans Serif", 9.50F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
                         //grillaReportes.AlternatingRowsDefaultCellStyle.Font = fuente;
                     }
+                    lblActualizar.Visible = false;
                 }
                 catch (Exception)
                 {
