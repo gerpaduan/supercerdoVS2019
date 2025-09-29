@@ -68,7 +68,7 @@ namespace Presentacion.CuentaCorriente
             }
         }
 
-        private void cargarGrilla()
+        public void cargarGrilla()
         {
             try
             {
@@ -191,6 +191,7 @@ namespace Presentacion.CuentaCorriente
                         break;
                     case Entidades.MovCtaCte.tablas.Pagos:
                         Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
+                        frmAddOrEditPago.frmCtaCtePersona = this;
                         frmAddOrEditPago.idPago = idTabla;
                         frmAddOrEditPago.desdePOS = desdePOS;
                         frmAddOrEditPago.oCierreCajaE = oCierreCajaE;
@@ -247,6 +248,7 @@ namespace Presentacion.CuentaCorriente
         private void menuNuevoPago_Click(object sender, EventArgs e)
         {
             Pagos.formAddOrEditPago frmAddOrEditPago = new Presentacion.Pagos.formAddOrEditPago();
+            frmAddOrEditPago.frmCtaCtePersona = this;
             frmAddOrEditPago.oPersonaE = oPersonaE;
             frmAddOrEditPago.oUsuario = desdePOS ? oUsuario : null;//forzo que fuera de POS se llame al logueo
             frmAddOrEditPago.desdePOS = desdePOS;

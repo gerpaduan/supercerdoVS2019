@@ -18,28 +18,38 @@ namespace Negocio
             {
                 try
                 {
-                    if (oCompraE != null && oCompraE.IdCompra > 0)
-                    {
-                        modificarCompra(oCompraE);
-                    }
-                    else
-                    {
-                        oCompraE.IdCompra = oCompraD.agregarCompra(oCompraE);
-                    }
+                    oCompraE.LineasMediasReses = listaMediaRes;
+                    oCompraE.LineasCortes = listaCortePorCompra;
 
-                    if(tipoCompra == "Media Res")
+                    //if (oCompraE != null && oCompraE.IdCompra > 0)
+                    //{
+                    //    modificarCompra(oCompraE);
+                    //}
+                    //else
+                    //{
+                    //    oCompraE.IdCompra = oCompraD.agregarCompra(oCompraE);
+                    //}
+
+                    oCompraE.IdCompra = oCompraD.addOrEditCompra(oCompraE);
+
+                    if (tipoCompra == Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes))
                     {
                         foreach (Entidades.MediaRes mediaRes in listaMediaRes)
                         {
+                            mediaRes.sucursal = oCompraE.Sucursal;
                             agregarMedias(mediaRes);
                         }
                     }
 
-                    if (tipoCompra == "Cortes" || tipoCompra == "Ingreso Stock")
+                    if (tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                        tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                        tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                        tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                     {
                         Negocio.Corte oCorteN = new Corte();
                         foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                         {
+                            cortePorCompra.Sucursal = oCompraE.Sucursal;
                             agregarCortePorCompra(cortePorCompra);
 
                             //se actualiza el precio del corte
@@ -51,9 +61,19 @@ namespace Negocio
                         }
                     }
 
+                    //Se actualiza el estado del Pesaje
+                    if (oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
+                    {
+                        //se verifica que el pesaje sea de medias
+                        if ((!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) &&
+                            (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
+                        {
+                            actualizarEstadoPesaje(oCompraE.IdCompra, estadoAjusteStock(oCompraE.IdCompra, 0));
+                        }
+                    }
+
                     //Cuenta Corriente
                     crearMovCtaCteCompra(oCompraE);
-
 
                     if (esEgresoCaja)
                     {

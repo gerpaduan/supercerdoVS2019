@@ -47,6 +47,8 @@ namespace Presentacion.Pagos
         bool ultimaValidacion = true;//valida que los ingresos estén correctos antes de ingresar datos al DB
         string ultimaFormaPagoSelected = ""; //guarda la ultima forma de pago seleccionada
         public bool desdePOS = true; //para indicar que es llamado desde el form POS
+        public Presentacion.CuentaCorriente.formCtaCtePersona frmCtaCtePersona; 
+            
         public formAddOrEditPago()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -410,6 +412,9 @@ namespace Presentacion.Pagos
 
                     if (frmPagos != null)
                         frmPagos.cargarGrilla();
+
+                    if (frmCtaCtePersona != null) 
+                        frmCtaCtePersona.cargarGrilla();
 
                     oPagoE = new Entidades.Pago();
                     oPagoSinMod = new Entidades.Pago();

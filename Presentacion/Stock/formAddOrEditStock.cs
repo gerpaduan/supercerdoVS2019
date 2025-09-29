@@ -305,32 +305,35 @@ namespace Presentacion
                     if (validaciónFinal())
                     {
                         cargarCompra();//se cargan datos de la compra
-                        if (accion.Equals(Entidades.Compra.accion.Modificar))
-                        {
-                            oCompraN.modificarCompra(oCompraE);
-                        }
-                        if (accion.Equals(Entidades.Compra.accion.Agregar))
-                        {
-                            oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
-                        }
-                        foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
-                        {
-                            cortePorCompra.Sucursal = oSucursalE;
-                            oCompraN.agregarCortePorCompra(cortePorCompra);
-                        }
 
-                        //Se actualiza el estado del Pesaje
-                        if (oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
-                        {
-                            //se verifica que el pesaje sea de medias
-                            if ( (!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) && 
-                                (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
-                            {
-                                oCompraN.actualizarEstadoPesaje(oCompraE.IdCompra, oCompraN.estadoAjusteStock(oCompraE.IdCompra, 0));
-                                    //(accion.Equals(Entidades.Compra.accion.Agregar) ? 
-                                    //Entidades.Compra.estadoAjusteStock.NoRealizado : Entidades.Compra.estadoAjusteStock.NoActualizado));
-                            }
-                        }
+                        oCompraN.AddOrEditCompra(oCompraE, oCompraE.TipoCompra, null, listaCortePorCompra, false, null);
+
+                        //if (accion.Equals(Entidades.Compra.accion.Modificar))
+                        //{
+                        //    oCompraN.modificarCompra(oCompraE);
+                        //}
+                        //if (accion.Equals(Entidades.Compra.accion.Agregar))
+                        //{
+                        //    oCompraE.IdCompra = oCompraN.agregarCompra(oCompraE);
+                        //}
+                        //foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
+                        //{
+                        //    cortePorCompra.Sucursal = oSucursalE;
+                        //    oCompraN.agregarCortePorCompra(cortePorCompra);
+                        //}
+
+                        ////Se actualiza el estado del Pesaje
+                        //if (oCompraE.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.PesajeCortes)))
+                        //{
+                        //    //se verifica que el pesaje sea de medias
+                        //    if ( (!oCompraE.KgsMedias.Equals(null) && oCompraE.KgsMedias > 0) && 
+                        //        (!oCompraE.CantMedias.Equals(null) && oCompraE.CantMedias > 0))
+                        //    {
+                        //        oCompraN.actualizarEstadoPesaje(oCompraE.IdCompra, oCompraN.estadoAjusteStock(oCompraE.IdCompra, 0));
+                        //            //(accion.Equals(Entidades.Compra.accion.Agregar) ? 
+                        //            //Entidades.Compra.estadoAjusteStock.NoRealizado : Entidades.Compra.estadoAjusteStock.NoActualizado));
+                        //    }
+                        //}
 
                         if (frmStock != null)
                         {

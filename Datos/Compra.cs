@@ -94,6 +94,34 @@ namespace Datos
             return dtCompras;
         }
 
+        public int addOrEditCompra(Entidades.Compra oCompraE)
+        {
+            cmCompra = new SqlCommand();
+            cmCompra.Connection = conn.conectar();
+            cmCompra.CommandType = CommandType.StoredProcedure;
+            cmCompra.CommandText = "addOrEditCompra";
+
+            cmCompra.Parameters.AddWithValue("@idCompra", oCompraE.IdCompra);
+            cmCompra.Parameters.AddWithValue("@nroRemito", oCompraE.NroRemito);
+            cmCompra.Parameters.AddWithValue("@fechaCompra", oCompraE.FechaCompra);
+            cmCompra.Parameters.AddWithValue("@idProveedor", oCompraE.Proveedor.idPersona);
+            cmCompra.Parameters.AddWithValue("@estado", oCompraE.Estado);
+            cmCompra.Parameters.AddWithValue("@observaciones", oCompraE.Observaciones);
+            cmCompra.Parameters.AddWithValue("@tipoCompra", oCompraE.TipoCompra);
+            cmCompra.Parameters.AddWithValue("@cantMedias", oCompraE.CantMedias);
+            cmCompra.Parameters.AddWithValue("@kgsMedias", oCompraE.KgsMedias);
+            cmCompra.Parameters.AddWithValue("@enCtaCte", oCompraE.EnCtaCte);
+            cmCompra.Parameters.AddWithValue("@idSucursal", oCompraE.Sucursal.idSucursal);
+            cmCompra.Parameters.AddWithValue("@creadoPor", oCompraE.CreadoPor.Id);
+            cmCompra.Parameters.AddWithValue("@actualizadoPor", oCompraE.ActualizadoPor != null ? oCompraE.ActualizadoPor.Id : 0);
+
+            cmCompra.Connection.Open();
+            oCompraE.IdCompra = (int)cmCompra.ExecuteScalar();
+            cmCompra.Connection.Close();
+
+            return oCompraE.IdCompra;
+        }
+
         public int agregarCompra(Entidades.Compra oCompraE)
         {            
             cmCompra = new SqlCommand();

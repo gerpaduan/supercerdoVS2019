@@ -708,95 +708,103 @@ namespace Presentacion.Compras
         }
 
         private void modificarCompra()
-        {          
-            if (oUsuario == null)
+        {
+            try
             {
-                Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-                frmLogin.soloActivos = true;
-                frmLogin.ShowDialog(this);
                 if (oUsuario == null)
-                    return; 
-            }
-
-            if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
-                oCompraModificada.IdCompra > 0 ? oCompraModificada.CreadoPor.Id : oUsuario.Id))
-            {
-                Utilidades.Mensajes.ErrorPermisoEdicion();
-                return;
-            }
-
-            if (modificado && Utilidades.Util_Form.validarFecha(txtFechaCompra.Value, "Fecha"))
-            {
-                 DialogResult respuesta = MessageBox.Show("¿Está seguro que desea guardar los cambios realizados?. ", "Modificar Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-                 if (respuesta == DialogResult.Yes)
-                 {  
-                    cargarDatosCompraModificada();
-
-                    oCompraN.modificarCompra(oCompraModificada);
-
-                    if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
-                    {
-                        foreach (Entidades.MediaRes mediaRes in listaMediaResAnterior)
-                        {
-                            if (estadoModificar == "Stock Borrado")
-                            {
-                                oCompraN.quitarStockTeoricoMedia(mediaRes, oCompraModificada.IdCompra);
-                            }
-                            if (estadoModificar == "")
-                            {
-                                oCompraN.quitarStockMedia(mediaRes, oCompraModificada.IdCompra);
-                                oCompraN.quitarStockTeoricoMedia(mediaRes, oCompraModificada.IdCompra);
-                            }
-                        }
-                        foreach (Entidades.MediaRes mediaRes in listaMediaRes)
-                        {
-                            mediaRes.sucursal = oSucursal;
-                            oCompraN.agregarMedias(mediaRes);
-                        }
-                    }
-
-                    if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                        oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                        oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                        oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
-                    {
-
-                        foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompraAnterior)
-                        {
-                            oCompraN.quitarStockCorte(cortePorCompra, oCompraModificada.IdCompra);
-                        }
-                        foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
-                        {
-                            cortePorCompra.sucursal = oSucursal;
-                            oCompraN.agregarCortePorCompra(cortePorCompra);
-                        }
-                    }
-
-                    //Cuenta Corriente
-                    try
-                    {
-                        oCompraN.crearMovCtaCteCompra(oCompraModificada);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Hubo un error al guardar Mov en Cta Cte"+"\n\n"+ex.Source);
-                    }
-
-                     //se establece el estado a vacío
-                    estadoModificar = "";
-                    validarEstado();
-                    if(frmCompras != null) frmCompras.cargarGrilla();
-                    modificado = false;
-                    this.Close();
-                 }
-            }
-            else
-            {
-                if (!modificado)
                 {
-                    MessageBox.Show("No realizó ninguna modificacion. Presione el boton Salir para cerrar la ventana sin realizar cambios", "No realizó cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);                   
+                    Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+                    frmLogin.soloActivos = true;
+                    frmLogin.ShowDialog(this);
+                    if (oUsuario == null)
+                        return; 
                 }
-            }        
+
+                if (!oUsuarioN.tienePermiso(oUsuario, this.Name, txtFechaCompra.Value,
+                    oCompraModificada.IdCompra > 0 ? oCompraModificada.CreadoPor.Id : oUsuario.Id))
+                {
+                    Utilidades.Mensajes.ErrorPermisoEdicion();
+                    return;
+                }
+
+                if (modificado && Utilidades.Util_Form.validarFecha(txtFechaCompra.Value, "Fecha"))
+                {
+                     DialogResult respuesta = MessageBox.Show("¿Está seguro que desea guardar los cambios realizados?. ", "Modificar Compras", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                     if (respuesta == DialogResult.Yes)
+                     {  
+                        cargarDatosCompraModificada();
+
+                        //oCompraN.modificarCompra(oCompraModificada);
+                        oCompraN.AddOrEditCompra(oCompraModificada, oCompraModificada.TipoCompra, listaMediaRes, listaCortePorCompra, false, null);
+
+                        //if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.MediaRes)))
+                        //{
+                        //    //foreach (Entidades.MediaRes mediaRes in listaMediaResAnterior)
+                        //    //{
+                        //    //    if (estadoModificar == "Stock Borrado")
+                        //    //    {
+                        //    //        oCompraN.quitarStockTeoricoMedia(mediaRes, oCompraModificada.IdCompra);
+                        //    //    }
+                        //    //    if (estadoModificar == "")
+                        //    //    {
+                        //    //        oCompraN.quitarStockMedia(mediaRes, oCompraModificada.IdCompra);
+                        //    //        oCompraN.quitarStockTeoricoMedia(mediaRes, oCompraModificada.IdCompra);
+                        //    //    }
+                        //    //}
+                        //    foreach (Entidades.MediaRes mediaRes in listaMediaRes)
+                        //    {
+                        //        mediaRes.sucursal = oSucursal;
+                        //        oCompraN.agregarMedias(mediaRes);
+                        //    }
+                        //}
+
+                        //if (oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                        //    oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                        //    oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                        //    oCompraModificada.TipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                        //{
+
+                        //    //foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompraAnterior)
+                        //    //{
+                        //    //    oCompraN.quitarStockCorte(cortePorCompra, oCompraModificada.IdCompra);
+                        //    //}
+                        //    foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
+                        //    {
+                        //        cortePorCompra.sucursal = oSucursal;
+                        //        oCompraN.agregarCortePorCompra(cortePorCompra);
+                        //    }
+                        //}
+
+                        ////Cuenta Corriente
+                        //try
+                        //{
+                        //    oCompraN.crearMovCtaCteCompra(oCompraModificada);
+                        //}
+                        //catch (Exception ex)
+                        //{
+                        //    MessageBox.Show("Hubo un error al guardar Mov en Cta Cte"+"\n\n"+ex.Source);
+                        //}
+
+                         //se establece el estado a vacío
+                        estadoModificar = "";
+                        validarEstado();
+                        if(frmCompras != null) frmCompras.cargarGrilla();
+                        modificado = false;
+                        this.Close();
+                     }
+                }
+                else
+                {
+                    if (!modificado)
+                    {
+                        MessageBox.Show("No realizó ninguna modificacion. Presione el boton Salir para cerrar la ventana sin realizar cambios", "No realizó cambios", MessageBoxButtons.OK, MessageBoxIcon.Information);                   
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void quitarStockMedia()

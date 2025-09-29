@@ -877,24 +877,6 @@ namespace Presentacion
 
         private void TxtPruebaENTER_KeyPress(object sender, KeyPressEventArgs e)
         {
-            //if (txtPrecioKg.Focused)
-            //{
-            //    //if (e.KeyChar == '*')// (char)(Keys.Multiply))
-            //    //{
-            //    //    e.Handled = true;
-            //    //    checkManualPrecio.Checked = true;
-            //    //    return;
-            //    //}
-            //    if (checkMargen.Checked)
-            //    {
-            //        txtMargenGan.Focus();
-            //    }
-            //    if (checkManualPrecio.Checked)
-            //    {
-            //        txtPrecioFinalVenta.Focus();
-            //    }
-            //}
-
             if (e.KeyChar == (char)(Keys.Enter))
                 {
                 if (txtPrecioKg.Focused)

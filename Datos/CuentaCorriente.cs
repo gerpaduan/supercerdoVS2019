@@ -113,6 +113,16 @@ namespace Datos
 
         public Entidades.MovCtaCte addOrEditMovCtaCte(Entidades.MovCtaCte oMovCtaCteE)
         {
+            // Truncar a segundos la fecha antes de guardarla
+            oMovCtaCteE.Fecha = new DateTime(
+                oMovCtaCteE.Fecha.Year,
+                oMovCtaCteE.Fecha.Month,
+                oMovCtaCteE.Fecha.Day,
+                oMovCtaCteE.Fecha.Hour,
+                oMovCtaCteE.Fecha.Minute,
+                oMovCtaCteE.Fecha.Second
+            );
+
             cmCtaCte = new SqlCommand();
             cmCtaCte.Connection = conn.conectar();
             cmCtaCte.CommandType = CommandType.StoredProcedure;

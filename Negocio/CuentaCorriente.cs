@@ -53,7 +53,7 @@ namespace Negocio
                     oMovCtaCte.Importe.Equals(oMovCtaCte.getImporte(importe,tipoMov))))
                 {
                     oMovCtaCte.Id = 0;
-                    oMovCtaCte.Detalle = "ANULACION";
+                    oMovCtaCte.Detalle = "ANULACION" + " - " +oMovCtaCte.Detalle;
                     oMovCtaCte.Tipo = oMovCtaCte.getTipoMovOpuesto(oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     oMovCtaCte.Importe = oMovCtaCte.getImporte(oMovCtaCte.Importe, oMovCtaCte.getTipoMovEnum(oMovCtaCte.Tipo));
                     //se registra el registro opuesto
