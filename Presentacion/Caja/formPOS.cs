@@ -1216,6 +1216,10 @@ namespace Presentacion.Caja
                     oStockCorteSucursal = null;
                     oStockCorteSucursal = new Entidades.StockCorteSucursal();
 
+                    /// VER: private bool errorCodBarra_IngresarIgual(bool esEAN8)
+                    /// sino resetea el campo CodBarraValidadoEnPos y acá me aseguro de recuperarlo
+                    Entidades.Corte oCorteAntes = oCorteE;
+
                     oCorteE = null;
                     oCorteE = new Entidades.Corte();
 
@@ -1251,6 +1255,10 @@ namespace Presentacion.Caja
                             lblNoHabilitado.Visible = true;
                             return;
                         }
+
+                        //si es el mismo codigo de la validacion del cod barra lo seteo
+                        if (oCorteE.idCorte == oCorteAntes.idCorte)
+                            oCorteE.CodBarraValidadoEnPos = oCorteAntes.CodBarraValidadoEnPos;
 
                         //Se establece el precio segun la forma de pago
                         establecerPrecioCorteSegunFormaPago();
@@ -1974,7 +1982,8 @@ namespace Presentacion.Caja
             int digitoControl = (10 - (sumaTotal % 10)) % 10;
             bool esCorrectoCodBarra = (digitoControl == digitoControlDeCodBarra);
             if(!esCorrectoCodBarra && mostrarMensaje)
-                MessageBox.Show("Error al leer codigo de barra", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                esCorrectoCodBarra = errorCodBarra_IngresarIgual(false);
+                //MessageBox.Show("Error al leer codigo de barra", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
             
             return esCorrectoCodBarra;
 
@@ -2002,9 +2011,42 @@ namespace Presentacion.Caja
 
             bool esCorrectoCodBarra = (digitoControl == digitoControlDeCodBarra);
             if (!esCorrectoCodBarra && mostrarMensaje)
-                MessageBox.Show("Error al leer codigo de barra EAN8", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                esCorrectoCodBarra = errorCodBarra_IngresarIgual(true);
+                //MessageBox.Show("Error al leer codigo de barra EAN8", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
             return esCorrectoCodBarra;
+        }
+
+        /// <summary>
+        /// Validacion cuando el codigo es de 8 u 11 digitos y no valida el digito de control
+        /// entonces si existe codigo se permite ingresarlo
+        /// </summary>
+        /// <param name="esEAN8"></param>
+        /// <returns></returns>
+        private bool errorCodBarra_IngresarIgual(bool esEAN8)
+        {
+            if (oCorteE.CodBarraValidadoEnPos)
+                return true;
+
+            bool ingresarlo = false;
+            string mensaje = "Error al leer codigo de barra " + (esEAN8 ? "EAN8" : "EAN13");
+
+            //si codigo de barra no es valido en el digito de control y tampoco existe prod con ese codigo
+            if (oCorteE == null)
+            {
+                MessageBox.Show("Error al leer codigo de barra EAN8", "", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return ingresarlo;
+            }
+
+            //si codigo barro no es valido pero existe producto. Se consulta si quiere agregarlo
+            mensaje = "El código no valida ser un codigo de barra correcto del tipo " + (esEAN8 ? "EAN8" : "EAN13") +
+                "\n¿Agregarlo de todos modos?";
+            DialogResult resp = MessageBox.Show(mensaje,"Error validación código", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);//, MessageBoxButtons.YesNo, MessageBoxDefaultButton.Button2);
+            if (resp.Equals(DialogResult.Yes))
+                ingresarlo = true;
+
+            oCorteE.CodBarraValidadoEnPos = ingresarlo;
+            return ingresarlo;
         }
 
         private void txtCodigo_KeyDown(object sender, KeyEventArgs e)

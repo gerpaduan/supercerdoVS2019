@@ -40,7 +40,7 @@ namespace Entidades
         private bool pesable;
         private int nivel;
         private int puntoStock;
-
+        private bool codBarraValidadoEnPos = false;
 
         public bool Habilitado
         {
@@ -219,5 +219,6 @@ namespace Entidades
         public int Nivel { get => nivel; set => nivel = value; }
         public int PuntoStock { get => puntoStock; set => puntoStock = value; }
         public Persona Marca { get => marca; set => marca = value; }
+        public bool CodBarraValidadoEnPos { get => codBarraValidadoEnPos; set => codBarraValidadoEnPos = value; }
     }
 }
