@@ -23,14 +23,20 @@ namespace Presentacion.Pruebas
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();
                 ticket.imprimir = true;
                 ticket.LineasEnBlanco(2);
+                ticket.Negrita(true);
                 ticket.TextoExtremos("Fecha: " + DateTime.Now.Date.ToShortDateString(), "Hora: " + DateTime.Now.ToShortTimeString());
+                ticket.Negrita(false);
                 ticket.LineasEnBlanco(1);
                 ticket.TextoCentro(lblTitulo.Text);
+                ticket.FuenteB(false);
                 ticket.LineasEnBlanco(1);
+                ticket.DobleTamanoA();
                 ticket.TextoIzquierda(txtIngreseTexto.Text);
+                ticket.DobleTamanoA(false);
                 ticket.TextoCentro("Fin Prueba!");
                 ticket.LineasEnBlanco(5);
                 ticket.realizarImpresion();
+                ticket.CortaTicket();
             }
             catch (Exception ex)
             {

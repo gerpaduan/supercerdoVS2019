@@ -35,6 +35,7 @@ namespace Presentacion.Ticket
         string impresoraEtiqueta = ConfigurationManager.AppSettings["impresoraEtiqueta"].ToString();//"Epson Stylus COLOR 670 ESC/P 2 (Copiar 1)";//"\\\\FARMACIA-PVENTA\\Generic / Text Only"; // nombre exacto de la impresora como esta en el panel de control
         int max, cort;
         int cantMaxChar = Convert.ToInt32(ConfigurationManager.AppSettings["CantCaracteresTicket"].ToString());
+        int cantMaxCharDefault = Convert.ToInt32(ConfigurationManager.AppSettings["CantCaracteresTicket"].ToString());
         public void LineasEnBlanco(int cantLineas)
         {
             ticket += "\n";
@@ -44,6 +45,45 @@ namespace Presentacion.Ticket
             }
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
+
+        public void Negrita(bool activar = true)
+        {
+            ticket += (activar ? "\x1B\x45\x01" : "\x1B\x45\x00");
+        }
+        public void DobleTamanoA(bool activar = true)
+        {
+            if (cantMaxCharDefault == 32)
+            {
+                cantMaxChar = activar ? 16 : cantMaxCharDefault;
+            }
+            if (cantMaxCharDefault == 48)
+            {
+                cantMaxChar = activar ? 24 : cantMaxCharDefault;
+            }
+            ticket += (activar ? "\x1D\x21\x11" : "\x1D\x21\x00");
+        }
+
+
+        public void DobleTamanoB(bool activar = true)
+        {
+            if (cantMaxCharDefault == 32)
+            {
+                cantMaxChar = activar ? 21 : cantMaxCharDefault;
+            }
+            if (cantMaxCharDefault == 48)
+            {
+                cantMaxChar = activar ? 32 : cantMaxCharDefault;
+            }
+            ticket += (activar ? "\x1D\x21\x11" : "\x1D\x21\x00");
+
+            FuenteB(activar);
+        }
+
+        public void FuenteB(bool activar = true)
+        {
+            ticket += (activar ? "\x1B\x4D\x01" : "\x1B\x4D\x00");
+        }
+
         public void LineasGuion()
         {
             ticket += "--------------------\n";   // agrega lineas separadoras -
@@ -367,9 +407,10 @@ namespace Presentacion.Ticket
         public void CortaTicket()
         {
             string corte = "\x1B" + "m";                  // caracteres de corte
-            string avance = "\x1B" + "d" + "\x09";        // avanza 9 renglones
-            //RawPrinterHelper.SendStringToPrinter(impresora, avance, imprimir); // avanza
-            //RawPrinterHelper.SendStringToPrinter(impresora, corte, imprimir); // corta
+            string avance = "\x1B" + "d" + "\x02";        // avanza 9 renglones
+            //string avance = "\x1B" + "d" + "\x09";        // avanza 9 renglones
+            RawPrinterHelper.SendStringToPrinter(impresora, avance, imprimir); // avanza
+            RawPrinterHelper.SendStringToPrinter(impresora, corte, imprimir); // corta
         }
         public void AbreCajon()
         {

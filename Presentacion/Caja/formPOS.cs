@@ -331,9 +331,13 @@ namespace Presentacion.Caja
                                      
                     //imprimir si está checked
                     ticket.imprimir = checkTicket.Checked;
+                    ticket.DobleTamanoA();
                     ticket.TextoCentro("x");
+                    ticket.DobleTamanoA(false);
                     ticket.NoValidoComoFactura();
+                    ticket.DobleTamanoB();
                     ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
+                    ticket.DobleTamanoB(false);
                     string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
                     string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
                     string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
@@ -371,12 +375,16 @@ namespace Presentacion.Caja
                             Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
 
                         listaLineaVenta[index] = oVentaN.agregarLineaVenta(linea);
-                        ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                        //ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                        ticket.AgregaArticulo(linea.Corte.corte.ToString(),
                             linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
                     }
  
                     ticket.TextoDerecha("-------");
+
+                    ticket.DobleTamanoB();
                     ticket.AgregaTotales("Total", totalVenta);
+                    ticket.DobleTamanoB(false);
                     //si se ingresa la cantidad del pago se imprime
                     if (abona > 0)
                     {
@@ -389,7 +397,6 @@ namespace Presentacion.Caja
                     ticket.GraciasPorSuCompra();
                     ticket.LineasEnBlanco(2);
                     ticket.realizarImpresion();
-
 
                     //se genera el egreso de caja si no es Efectivo
                     //egresoCajaPagoTarjeta(oVentaE); PASADO A CAPA NEGOCIO
@@ -433,6 +440,9 @@ namespace Presentacion.Caja
                     //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
                     if (!oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
                         ingresarFormaPago();
+
+
+                    ticket.CortaTicket();
                 }
                 catch (Exception ex)
                 {
