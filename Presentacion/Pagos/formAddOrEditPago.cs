@@ -609,6 +609,8 @@ namespace Presentacion.Pagos
         {
             if (!comboTipoPago.Text.Equals(""))
             {
+                btnIngresoBilleteEfvo.Enabled = comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Efectivo.ToString());
+
                 if (comboTipoPago.Text.Contains(Entidades.Pago.formasPago.Cheque.ToString()))
                 {
                     if (ultimaFormaPagoSelected != comboTipoPago.Text && ultimaFormaPagoSelected.Contains("Eftvo")  && !(string.IsNullOrEmpty(txtEfectivo.Text) || txtEfectivo.Text.Equals("0")))
@@ -640,8 +642,7 @@ namespace Presentacion.Pagos
                         comboTipoPago.Text = ultimaFormaPagoSelected;
                         return;
                     }
-
-                    btnIngresoBilleteEfvo.Enabled = comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Efectivo.ToString());                    
+                   
                     panelCheque.Enabled = false;
                     txtImporte.ReadOnly = false;
                     txtEfectivo.Text = "";
