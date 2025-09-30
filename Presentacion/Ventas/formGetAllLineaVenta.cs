@@ -72,7 +72,47 @@ namespace Presentacion
                         oVentaN.getAllLineasVenta(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), 
                         Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 
                         txtDescripcion.Text.Trim());
-                    grillaVentas.DataSource = dtVentas;
+
+                    #region Dividir por Venta
+
+                    // Clonamos la estructura para no perder las columnas
+                    DataTable dtConSeparadores = dtVentas.Clone();
+
+                    int? idVentaAnterior = null;
+
+                    foreach (DataRow row in dtVentas.Rows)
+                    {
+                        int idVentaActual = Convert.ToInt32(row["idVenta"]);
+
+                        if (idVentaAnterior != null && idVentaAnterior != idVentaActual)
+                        {
+                            // Agrego fila separadora con fecha
+                            DataRow sepRow = dtConSeparadores.NewRow();
+                            sepRow["fechaVenta"] = row["fechaVenta"]; // solo la fecha
+                                                                      // opcional: poner algún texto en otra col para identificar
+                                                                      // sepRow["razonSocial"] = "---";
+                            dtConSeparadores.Rows.Add(sepRow);
+                        }
+
+                        dtConSeparadores.ImportRow(row);
+                        idVentaAnterior = idVentaActual;
+                    }
+
+                    grillaVentas.DataSource = dtConSeparadores;
+
+                    // Estilo opcional para las filas separadoras
+                    foreach (DataGridViewRow dgRow in grillaVentas.Rows)
+                    {
+                        if (dgRow.Cells["idVenta"].Value == DBNull.Value || dgRow.Cells["idVenta"].Value == null)
+                        {
+                            dgRow.DefaultCellStyle.BackColor = Color.LightBlue;
+                            dgRow.DefaultCellStyle.Font = new System.Drawing.Font(grillaVentas.Font, FontStyle.Bold);
+                        }
+                    }
+                    #endregion
+
+
+                    //grillaVentas.DataSource = dtVentas;
                     grillaVentas.Columns["fechaVenta"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
                     grillaVentas.Columns["fechaVenta"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader;
                     grillaVentas.Columns["cantKg"].DefaultCellStyle.Format = "F3";
@@ -82,29 +122,29 @@ namespace Presentacion
                     grillaVentas.Columns["bonificacion"].DefaultCellStyle.Format = "F2";
                     grillaVentas.Columns["totalCorte"].DefaultCellStyle.Format = "F2";
 
-                    //pintar filas para igual idVenta
-                    if (verUltimasVentasClientes)
-                    {
-                        int ultimoIdVenta = grillaVentas.Rows.Count > 0 ? Convert.ToInt32(grillaVentas.Rows[0].Cells["idVenta"].Value) : 0;
-                        int cantMismoId = 0;
-                        Color ultimoColorFila = Color.LightGray;
-                        for (int i = 0; i < grillaVentas.Rows.Count; i++)
-                        {
-                            if (ultimoIdVenta == Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value))
-                            {
-                                grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
-                                cantMismoId++;
-                            }
-                            else
-                            {
-                                ultimoColorFila = Color.LightGray == ultimoColorFila ? Color.LightGreen : Color.LightGray;
-                                grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
-                                cantMismoId = 0;
-                            }    
-                            //Se setea el ultimo IdVenta
-                            ultimoIdVenta = Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value);
-                        }
-                    }
+                    ////pintar filas para igual idVenta
+                    //if (verUltimasVentasClientes)
+                    //{
+                    //    int ultimoIdVenta = grillaVentas.Rows.Count > 0 ? Convert.ToInt32(grillaVentas.Rows[0].Cells["idVenta"].Value) : 0;
+                    //    int cantMismoId = 0;
+                    //    Color ultimoColorFila = Color.LightGray;
+                    //    for (int i = 0; i < grillaVentas.Rows.Count; i++)
+                    //    {
+                    //        if (ultimoIdVenta == Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value))
+                    //        {
+                    //            grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
+                    //            cantMismoId++;
+                    //        }
+                    //        else
+                    //        {
+                    //            ultimoColorFila = Color.LightGray == ultimoColorFila ? Color.LightGreen : Color.LightGray;
+                    //            grillaVentas.Rows[i].DefaultCellStyle.BackColor = ultimoColorFila;
+                    //            cantMismoId = 0;
+                    //        }    
+                    //        //Se setea el ultimo IdVenta
+                    //        ultimoIdVenta = Convert.ToInt32(grillaVentas.Rows[i].Cells["idVenta"].Value);
+                    //    }
+                    //}
 
                     cargarTotales();
                 } 

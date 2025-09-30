@@ -923,8 +923,6 @@ namespace Presentacion
 
         private void lineasVentaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
-            if (Usuarios.FormValidarPermiso.validarPermiso("formVentas"))
             if (Application.OpenForms["formGetAllLineaVenta"] != null)
             {
                 Application.OpenForms["formGetAllLineaVenta"].Activate();
@@ -932,8 +930,9 @@ namespace Presentacion
 
             }
             else
-            {
-                formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
+                {
+                    if (!ValidarInicioSesion()) return;
+                    formGetAllLineaVenta frmTemporalLineaVenta = new formGetAllLineaVenta();
                 frmTemporalLineaVenta.Show();
             }
         }
