@@ -211,11 +211,11 @@ namespace wsAFIPvs2008
 
         public void cargarVenta()
         {
+            txtIdVenta.Text = idVenta.ToString();
             //si es solo consulta que se llama desde formNuevaPersona (tiraba error por el obj oVentaE = null)
-            if (oVentaE == null || oVentaE.IdVenta == 0)
+            if (idVenta == 0)
                 return;
 
-            txtIdVenta.Text = idVenta.ToString();
             oVentaE = !string.IsNullOrEmpty(txtIdVenta.Text) ? oVentaN.getVentaById(Convert.ToInt32(txtIdVenta.Text)) : null;
 
             label_Sucursal.Text = oSucursalEntidad.getNomSucPorPtoVtaAfip(ptoVtaAfip);

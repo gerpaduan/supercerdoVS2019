@@ -1257,7 +1257,7 @@ namespace Presentacion.Caja
                         }
 
                         //si es el mismo codigo de la validacion del cod barra lo seteo
-                        if (oCorteE.idCorte == oCorteAntes.idCorte)
+                        if (oCorteAntes != null && oCorteE.idCorte == oCorteAntes.idCorte)
                             oCorteE.CodBarraValidadoEnPos = oCorteAntes.CodBarraValidadoEnPos;
 
                         //Se establece el precio segun la forma de pago
