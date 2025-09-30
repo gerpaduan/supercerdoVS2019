@@ -426,6 +426,7 @@ namespace Presentacion.Caja
                     {
                         MessageBox.Show("Error al intentar generar Factura Electonica.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
                     }
+                    ticket.CortaTicket();
                     oVentaE.IdVenta = 0; 
                     limpiarListas();
                     //si es ventada duplicada se cierra la misma
@@ -440,9 +441,6 @@ namespace Presentacion.Caja
                     //Si es Factura no se llama al formFormaPago para que el ShowDialog no dificulte la gestion del usuario
                     if (!oVentaE.ImprimirTipoCbte.Equals(Entidades.Venta.imprimirCbteEnum.Factura.ToString()))
                         ingresarFormaPago();
-
-
-                    ticket.CortaTicket();
                 }
                 catch (Exception ex)
                 {
