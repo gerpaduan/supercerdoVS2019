@@ -54,7 +54,7 @@ namespace Presentacion.Ticket
         {
             if (cantMaxCharDefault == 32)
             {
-                cantMaxChar = activar ? 16 : cantMaxCharDefault;
+                cantMaxChar = activar ? 17 : cantMaxCharDefault;
             }
             if (cantMaxCharDefault == 48)
             {
@@ -68,7 +68,7 @@ namespace Presentacion.Ticket
         {
             if (cantMaxCharDefault == 32)
             {
-                cantMaxChar = activar ? 21 : cantMaxCharDefault;
+                cantMaxChar = activar ? 22 : cantMaxCharDefault;
             }
             if (cantMaxCharDefault == 48)
             {
@@ -111,7 +111,7 @@ namespace Presentacion.Ticket
         }
         public void GraciasPorSuCompra()
         {
-            string texto = "**Gracias por su compra**\n";
+            string texto = "Gracias por su visita\n";
             TextoCentro(texto);
             ////RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }

@@ -47,7 +47,7 @@ namespace Presentacion
                 {
                     if (Convert.ToDecimal(row.Cells["totalS"].Value) == 0)
                     {
-                        row.DefaultCellStyle.BackColor = Color.Orange;// Color.Orange;
+                        row.DefaultCellStyle.BackColor = Color.LightCoral;// Color.Orange;
                     }
                 }
                 cargarTotales();

@@ -349,8 +349,8 @@ namespace Presentacion.Caja
                         ticket.TextoCentro(NegocioAgregado2);
                     if (!(NegocioAgregado3.Equals("-") || string.IsNullOrEmpty(NegocioAgregado3)))
                         ticket.TextoIzquierda(NegocioAgregado3);
-                    if (!(NegocioAgregado4.Equals("-") || string.IsNullOrEmpty(NegocioAgregado4)))
-                        ticket.TextoIzquierda(NegocioAgregado4);
+                    //if (!(NegocioAgregado4.Equals("-") || string.IsNullOrEmpty(NegocioAgregado4)))
+                    //    ticket.TextoIzquierda(NegocioAgregado4);
 
                     ticket.LineasEnBlanco(1);
                     if (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
@@ -382,9 +382,9 @@ namespace Presentacion.Caja
  
                     ticket.TextoDerecha("-------");
 
-                    ticket.DobleTamanoB();
+                    ticket.Negrita();
                     ticket.AgregaTotales("Total", totalVenta);
-                    ticket.DobleTamanoB(false);
+                    ticket.Negrita(false);
                     //si se ingresa la cantidad del pago se imprime
                     if (abona > 0)
                     {
