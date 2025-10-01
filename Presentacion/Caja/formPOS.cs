@@ -324,79 +324,100 @@ namespace Presentacion.Caja
                     //return;
 
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
-
-                    mensajeCatch = "La Venta (egreso de caja y actualización de cta cte, si los hay) se registraron correctamente";
-
-                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();              
-                                     
-                    //imprimir si está checked
-                    ticket.imprimir = checkTicket.Checked;
-                    ticket.DobleTamanoA();
-                    ticket.TextoCentro("x");
-                    ticket.DobleTamanoA(false);
-                    ticket.NoValidoComoFactura();
-                    ticket.DobleTamanoB();
-                    ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
-                    ticket.DobleTamanoB(false);
-                    string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
-                    string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
-                    string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
-                    string NegocioAgregado4 = ConfigurationManager.AppSettings["NegocioAgregado4"].ToString();
-
-                    if (!(NegocioAgregado1.Equals("-") || string.IsNullOrEmpty(NegocioAgregado1)))
-                        ticket.TextoCentro(NegocioAgregado1);
-                    if (!(NegocioAgregado2.Equals("-") || string.IsNullOrEmpty(NegocioAgregado2)))
-                        ticket.TextoCentro(NegocioAgregado2);
-                    if (!(NegocioAgregado3.Equals("-") || string.IsNullOrEmpty(NegocioAgregado3)))
-                        ticket.TextoIzquierda(NegocioAgregado3);
-                    //if (!(NegocioAgregado4.Equals("-") || string.IsNullOrEmpty(NegocioAgregado4)))
-                    //    ticket.TextoIzquierda(NegocioAgregado4);
-
-                    ticket.LineasEnBlanco(1);
-                    if (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
-                        ticket.TextoCentro("A Cta. Cte.");
-                    //ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
-                    ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
-                    string formaPagoImprimir = oVentaE.PagoMixtoEfectivo > 0 ? oVentaE.FormaPago.ToString() + "|Efvo" : oVentaE.FormaPago.ToString();
-                    ticket.TextoIzquierda("Forma Pago: " + formaPagoImprimir);
-                    ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
-                    ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
-                    //ticket.LineasEnBlanco(0);
-                    ticket.LineasGuion();
- 
-                    for (int index = 0; index < listaLineaVenta.Count; index++)
+                    for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
                     {
-                        Entidades.LineaVenta linea = listaLineaVenta[index];
+                        Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
                         //setear por cada linea cantKg <- KgsTotalCalculado
                         linea.CantKg = linea.KgsTotalCalculado;
 
                         //si está anulada la linea se asigna el IdLineaVenta del corte anulado
-                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta : 
+                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
                             Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
 
-                        listaLineaVenta[index] = oVentaN.agregarLineaVenta(linea);
-                        //ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                        ticket.AgregaArticulo(linea.Corte.corte.ToString(),
-                            linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+                        oVentaE.LineasVenta[index] = oVentaN.agregarLineaVenta(linea);
                     }
- 
-                    ticket.TextoDerecha("-------");
 
-                    ticket.Negrita();
-                    ticket.AgregaTotales("Total", totalVenta);
-                    ticket.Negrita(false);
-                    //si se ingresa la cantidad del pago se imprime
-                    if (abona > 0)
+                    mensajeCatch = "La Venta (egreso de caja y actualización de cta cte, si los hay) se registraron correctamente";
+
+                    if (checkTicket.Checked)
                     {
-                        ticket.AgregaTotales("Pago", abona);
-                        ticket.AgregaTotales("Vuelto", cambio);
+                        Ticket.Ticket_X ticket_X = new Ticket.Ticket_X();
+                        ticket_X.oVentaE = oVentaE;
+                        ticket_X.generarTicket_X();
                     }
-                    ticket.LineasEnBlanco(1);
-                    ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);
-                    ticket.TextoIzquierda("Cajero: " + oUsuario.Id);
-                    ticket.GraciasPorSuCompra();
-                    ticket.LineasEnBlanco(2);
-                    ticket.realizarImpresion();
+
+                    #region Ticket 
+                    //Ticket.CreaTicket ticket = new Ticket.CreaTicket();             
+                        
+                    ////imprimir si está checked
+                    //ticket.imprimir = checkTicket.Checked;
+                    //ticket.DobleTamanoA();
+                    //ticket.TextoCentro("x");
+                    //ticket.DobleTamanoA(false);
+                    //ticket.NoValidoComoFactura();
+                    //ticket.DobleTamanoB();
+                    //ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
+                    //ticket.DobleTamanoB(false);
+                    //string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
+                    //string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
+                    //string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
+                    //string NegocioAgregado4 = ConfigurationManager.AppSettings["NegocioAgregado4"].ToString();
+
+                    //if (!(NegocioAgregado1.Equals("-") || string.IsNullOrEmpty(NegocioAgregado1)))
+                    //    ticket.TextoCentro(NegocioAgregado1);
+                    //if (!(NegocioAgregado2.Equals("-") || string.IsNullOrEmpty(NegocioAgregado2)))
+                    //    ticket.TextoCentro(NegocioAgregado2);
+                    //if (!(NegocioAgregado3.Equals("-") || string.IsNullOrEmpty(NegocioAgregado3)))
+                    //    ticket.TextoIzquierda(NegocioAgregado3);
+                    ////if (!(NegocioAgregado4.Equals("-") || string.IsNullOrEmpty(NegocioAgregado4)))
+                    ////    ticket.TextoIzquierda(NegocioAgregado4);
+
+                    //ticket.LineasEnBlanco(1);
+                    //if (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
+                    //    ticket.TextoCentro("A Cta. Cte.");
+                    ////ticket.TextoIzquierda("123456789*123456789*123456789*123456789*123456789*");
+                    //ticket.TextoIzquierda("A " + oVentaE.Persona.razonSocial);
+                    //string formaPagoImprimir = oVentaE.PagoMixtoEfectivo > 0 ? oVentaE.FormaPago.ToString() + "|Efvo" : oVentaE.FormaPago.ToString();
+                    //ticket.TextoIzquierda("Forma Pago: " + formaPagoImprimir);
+                    //ticket.TextoIzquierda("Nro. T. " + oVentaE.IdVenta.ToString());
+                    //ticket.TextoExtremos("Fecha: " + oVentaE.FechaVenta.Date.ToString(), "Hora: " + oVentaE.FechaVenta.TimeOfDay.ToString());
+                    ////ticket.LineasEnBlanco(0);
+                    //ticket.LineasGuion();
+ 
+                    //for (int index = 0; index < listaLineaVenta.Count; index++)
+                    //{
+                    //    Entidades.LineaVenta linea = listaLineaVenta[index];
+                    //    //setear por cada linea cantKg <- KgsTotalCalculado
+                    //    linea.CantKg = linea.KgsTotalCalculado;
+
+                    //    //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                    //    linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? listaLineaVenta[linea.IndexAnulado].IdLineaVenta : 
+                    //        Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                    //    listaLineaVenta[index] = oVentaN.agregarLineaVenta(linea);
+                    //    //ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
+                    //    ticket.AgregaArticulo(linea.Corte.corte.ToString(),
+                    //        linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
+                    //}
+ 
+                    //ticket.TextoDerecha("-------");
+
+                    //ticket.Negrita();
+                    //ticket.AgregaTotales("Total", totalVenta);
+                    //ticket.Negrita(false);
+                    ////si se ingresa la cantidad del pago se imprime
+                    //if (abona > 0)
+                    //{
+                    //    ticket.AgregaTotales("Pago", abona);
+                    //    ticket.AgregaTotales("Vuelto", cambio);
+                    //}
+                    //ticket.LineasEnBlanco(1);
+                    //ticket.TextoIzquierda("Articulos: " + txtCantItems.Text);
+                    //ticket.TextoIzquierda("Cajero: " + oUsuario.Id);
+                    //ticket.GraciasPorSuCompra();
+                    //ticket.LineasEnBlanco(2);
+                    //ticket.realizarImpresion();
+                    #endregion
 
                     //se genera el egreso de caja si no es Efectivo
                     //egresoCajaPagoTarjeta(oVentaE); PASADO A CAPA NEGOCIO
@@ -426,7 +447,10 @@ namespace Presentacion.Caja
                     {
                         MessageBox.Show("Error al intentar generar Factura Electonica.\n\n**La Venta se registró correctamente**\n\n" + ex.Message);
                     }
+
+                    Ticket.CreaTicket ticket = new Ticket.CreaTicket();
                     ticket.CortaTicket();
+
                     oVentaE.IdVenta = 0; 
                     limpiarListas();
                     //si es ventada duplicada se cierra la misma
@@ -674,6 +698,10 @@ namespace Presentacion.Caja
             oVentaE.Cuit = txtCuit.Text;
             oVentaE.Email = txtDomicilio.Text;
             oVentaE.TotalImporte = totalVenta;
+            oVentaE.CantItems = txtCantItems.Text;
+            oVentaE.Abona = abona;
+            oVentaE.Cambio = cambio;
+            
             oVentaE.AcumRedondeoImporte = ganPesosTotRedondeo;
             oVentaE.AcumRedondeoKgs = ganKgsTotRedondeo;
             oVentaE.LineasVenta = listaLineaVenta;

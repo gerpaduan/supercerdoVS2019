@@ -157,7 +157,8 @@ namespace Negocio
 
         public Entidades.Venta getVentaById(int idVenta)
         {
-            return oVentaD.getVentaById(idVenta);
+            Entidades.Venta oVentaE = oVentaD.getVentaById(idVenta);
+            return oVentaE;
         }
 
         public DataTable getVentasVendedorCierreCaja(Entidades.CierreCaja oCierreE, bool soloAnulados)

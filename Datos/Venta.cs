@@ -285,6 +285,7 @@ namespace Datos
 
                 oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
                 oVentaE.TotalImporte = getTotalVenta(idVenta);
+                oVentaE.CantItems = oVentaE.getCantItems(oVentaE).ToString();
             }
 
             return oVentaE;

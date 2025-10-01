@@ -634,6 +634,7 @@
       <DependentUpon>formTipoTicket.cs</DependentUpon>
     </Compile>
     <Compile Include="Ticket\RawPrinterHelper.cs" />
+    <Compile Include="Ticket\Ticket_X.cs" />
     <Compile Include="Usuarios\formSelectUser.cs">
       <SubType>Form</SubType>
     </Compile>

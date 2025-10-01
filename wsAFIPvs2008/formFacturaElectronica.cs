@@ -1220,7 +1220,20 @@ namespace wsAFIPvs2008
 
                 Entidades.FacturaElectronica oDocumentoImprimir = notaCredito ? oNotaCredito : oFactuElec;
 
+                //char letraFactura = oDocumentoImprimir.DescTipoCbteAfip[oDocumentoImprimir.DescTipoCbteAfip.Length - 1];
+                //string letraFacturaEncabezado = "Factura  " + letraFactura;
+                String codFactura = "COD." + (oDocumentoImprimir.CodTipoCbteAfip < 10 ? ("0" + oDocumentoImprimir.CodTipoCbteAfip.ToString()) : oDocumentoImprimir.CodTipoCbteAfip.ToString());
+                string descComprobante = oDocumentoImprimir.DescTipoCbteAfip.Substring(0, oDocumentoImprimir.DescTipoCbteAfip.Length - 1);
+
+                ticket.DobleTamanoA();
+                ticket.TextoCentro(oDocumentoImprimir.DescTipoCbteAfip);
+                ticket.DobleTamanoA(false);
+                ticket.TextoCentro(codFactura);
+                ticket.LineasEnBlanco(1);
+
+                ticket.DobleTamanoB();
                 ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
+                ticket.DobleTamanoB(false);
                 string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
                 string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
                 string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
@@ -1243,15 +1256,23 @@ namespace wsAFIPvs2008
                 ticket.TextoIzquierda(ConfigurationManager.AppSettings["CondicionIVA"].ToString());
                 ticket.LineasGuion();
 
-                if (esFacturaA)
-                    ticket.TextoCentro("Original");
+                //if (esFacturaA)
+                //    ticket.TextoCentro("Original");
 
-                ticket.TextoIzquierda(oDocumentoImprimir.DescTipoCbteAfip + " Electronica");
+                //ticket.TextoIzquierda(oDocumentoImprimir.DescTipoCbteAfip + " Electronica");
+                //ticket.TextoIzquierda("Nro." + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip);
+                //ticket.TextoIzquierda("Fecha:" + oDocumentoImprimir.FechaEmisionAfip);// r.FeDetResp[0].CbteFch);
+                //if (notaCredito)
+                //{
+                //    ticket.TextoIzquierda("Cbte Asoc: " + txtNroFacturaNotaCredito.Text.Replace("Factura ","F"));
+                //}
+
+                //ticket.TextoIzquierda(oDocumentoImprimir.DescTipoCbteAfip + " Electronica");
                 ticket.TextoIzquierda("Nro." + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip);
                 ticket.TextoIzquierda("Fecha:" + oDocumentoImprimir.FechaEmisionAfip);// r.FeDetResp[0].CbteFch);
                 if (notaCredito)
                 {
-                    ticket.TextoIzquierda("Cbte Asoc: " + txtNroFacturaNotaCredito.Text.Replace("Factura ","F"));
+                    ticket.TextoIzquierda("Cbte Asoc: " + txtNroFacturaNotaCredito.Text.Replace("Factura ", "F"));
                 }
                 ticket.TextoIzquierda("Pago: " + oDocumentoImprimir.FormaPago);
                 ticket.LineasGuion();
@@ -1310,15 +1331,21 @@ namespace wsAFIPvs2008
                 //Si Factura A (id = 1)
                 if (esFacturaA)
                 {
-                    ticket.TextoExtremos("Neto s/iva: ", oDocumentoImprimir.ImporteNetoGravado.ToString("F2"));
+                    ticket.TextoExtremos("Neto s/iva: ", oDocumentoImprimir.ImporteNetoGravado.ToString("N2"));
 
                     foreach (Entidades.AlicuotaIva item in oDocumentoImprimir.ListaAlicuota)
                         if (item.Importe != 0)
-                            ticket.TextoExtremos("Iva " + item.Iva + "%:", item.Importe.ToString("F2"));
+                            ticket.TextoExtremos("Iva " + item.Iva + "%:", item.Importe.ToString("N2"));
                 }
 
-                ticket.TextoExtremos("TOTAL: ", oDocumentoImprimir.ImporteTotal.ToString("F2"));
+                ticket.Negrita();
+                ticket.TextoExtremos("TOTAL: ", oDocumentoImprimir.ImporteTotal.ToString("N2"));
+                ticket.Negrita(false);
                 ticket.LineasEnBlanco(1);
+                string regimen = $"Régimen de Transparencia Fiscal Al Consumidor(Ley 27.743)"; 
+                ticket.TextoMuchasLineas(regimen);
+                string ivaContenido = $"IVA Contenido: {oDocumentoImprimir.Iva:N2}";
+                ticket.TextoIzquierda(ivaContenido);
                 ticket.TextoIzquierda("CAE: " + oDocumentoImprimir.CAE1);
                 ticket.TextoIzquierda("Vto: " + oDocumentoImprimir.FecVtoCAE);
                 ticket.LineasEnBlanco(1);

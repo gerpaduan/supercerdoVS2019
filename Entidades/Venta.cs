@@ -104,6 +104,10 @@ namespace Entidades
         private string cantItems;
         private string serialCPU;
         List<Int32> listaExpendios;
+
+        private float abona;
+        private float cambio;
+
          public float TotalImporte
          {
              get { return totalImporte; }
@@ -333,5 +337,7 @@ namespace Entidades
         public int IdVendedor { get => idVendedor; set => idVendedor = value; }
         public int Idpersona { get => idpersona; set => idpersona = value; }
         public int IdSucursal { get => idSucursal; set => idSucursal = value; }
+        public float Abona { get => abona; set => abona = value; }
+        public float Cambio { get => cambio; set => cambio = value; }
     }
 }

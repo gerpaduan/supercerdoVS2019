@@ -34,6 +34,7 @@ namespace wsAFIPvs2008.Ticket
         string impresora = ConfigurationManager.AppSettings["impresora"].ToString();//"Epson Stylus COLOR 670 ESC/P 2 (Copiar 1)";//"\\\\FARMACIA-PVENTA\\Generic / Text Only"; // nombre exacto de la impresora como esta en el panel de control
         int max, cort;
         int cantMaxChar = Convert.ToInt32(ConfigurationManager.AppSettings["CantCaracteresTicket"].ToString());
+        int cantMaxCharDefault = Convert.ToInt32(ConfigurationManager.AppSettings["CantCaracteresTicket"].ToString());
         public void LineasEnBlanco(int cantLineas)
         {
             ticket += "\n";
@@ -43,6 +44,45 @@ namespace wsAFIPvs2008.Ticket
             }
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir); // imprime linea
         }
+
+        public void Negrita(bool activar = true)
+        {
+            ticket += (activar ? "\x1B\x45\x01" : "\x1B\x45\x00");
+        }
+        public void DobleTamanoA(bool activar = true)
+        {
+            if (cantMaxCharDefault == 32)
+            {
+                cantMaxChar = activar ? 17 : cantMaxCharDefault;
+            }
+            if (cantMaxCharDefault == 48)
+            {
+                cantMaxChar = activar ? 24 : cantMaxCharDefault;
+            }
+            ticket += (activar ? "\x1D\x21\x11" : "\x1D\x21\x00");
+        }
+
+
+        public void DobleTamanoB(bool activar = true)
+        {
+            if (cantMaxCharDefault == 32)
+            {
+                cantMaxChar = activar ? 22 : cantMaxCharDefault;
+            }
+            if (cantMaxCharDefault == 48)
+            {
+                cantMaxChar = activar ? 32 : cantMaxCharDefault;
+            }
+            ticket += (activar ? "\x1D\x21\x11" : "\x1D\x21\x00");
+
+            FuenteB(activar);
+        }
+
+        public void FuenteB(bool activar = true)
+        {
+            ticket += (activar ? "\x1B\x4D\x01" : "\x1B\x4D\x00");
+        }
+
         public void LineasGuion()
         {
             ticket += "--------------------\n";   // agrega lineas separadoras -
@@ -196,7 +236,7 @@ namespace wsAFIPvs2008.Ticket
         }
         public void AgregaArticulo(string producto, double cant, double precio, double total)
         {
-            string cantidad = cant.ToString("F3") + " x " + precio.ToString("F2");
+            string cantidad = cant.ToString("F3") + " x " + precio.ToString("N2");
             ticket += cantidad + "\n";
 
             int longProd = producto.Length;
@@ -210,14 +250,14 @@ namespace wsAFIPvs2008.Ticket
             ticket += producto;
 
 
-            int longTotal = total.ToString("F2").Length;
+            int longTotal = total.ToString("N2").Length;
             int espacios = cantMaxChar - longTotal;
 
             for (int i = longProd; i < espacios; i++)
             {
                 ticket += " ";
             }
-            ticket += total.ToString("F2") + "\n";
+            ticket += total.ToString("N2") + "\n";
             //RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
 
         }
