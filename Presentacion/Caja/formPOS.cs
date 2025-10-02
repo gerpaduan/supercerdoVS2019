@@ -2910,7 +2910,8 @@ namespace Presentacion.Caja
                     !oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && checkLeerPeso.Checked) ||
                     ///(!esCodBarraEstandar && !esCodBarraInterno && !FormPrincipal.leerBalanza)) 
                     ///Comentado 23/09/2025 xq si es estandar y balanza puerto 0, debe saltar a txtCantidad kgs
-                    (esCodBarraEstandar && !esCodBarraInterno && !FormPrincipal.leerBalanza))
+                    ///02/10/2025 agrego ó si no es pesable (!FormPrincipal.leerBalanza || )
+                    (esCodBarraEstandar && !esCodBarraInterno && (!FormPrincipal.leerBalanza || !oCorteE.Pesable)))
                 {
                     checkLeerPeso.Checked = false;
                     txtCantKgs.Focus();
