@@ -97,6 +97,12 @@
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormTestBalanza.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormTestBalanza.designer.cs">
+      <DependentUpon>FormTestBalanza.cs</DependentUpon>
+    </Compile>
     <Compile Include="GenerarCodigoBarra.cs" />
     <Compile Include="Mensajes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -128,6 +134,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormTestBalanza.resx">
+      <DependentUpon>FormTestBalanza.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Util_Form.resx">
       <DependentUpon>Util_Form.cs</DependentUpon>

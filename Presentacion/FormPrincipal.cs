@@ -1304,5 +1304,17 @@ namespace Presentacion
         {
             login(true);
         }
+
+        private void testBalanzaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void testBalanzaToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            using (FormTestBalanza f = new FormTestBalanza())
+            {
+                f.ShowDialog();
+            }
+        }
     }
 }

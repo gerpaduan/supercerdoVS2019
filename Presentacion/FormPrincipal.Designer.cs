@@ -81,12 +81,10 @@
             this.stockActualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.balanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.verBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.leerPesoToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
+            this.testBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -780,7 +778,7 @@
             // 
             this.probarToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.imprimirTicketToolStripMenuItem,
-            this.balanzaToolStripMenuItem1});
+            this.testBalanzaToolStripMenuItem1});
             this.probarToolStripMenuItem.ForeColor = System.Drawing.SystemColors.MenuText;
             this.probarToolStripMenuItem.Name = "probarToolStripMenuItem";
             this.probarToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
@@ -789,32 +787,9 @@
             // imprimirTicketToolStripMenuItem
             // 
             this.imprimirTicketToolStripMenuItem.Name = "imprimirTicketToolStripMenuItem";
-            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.imprimirTicketToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
-            // 
-            // balanzaToolStripMenuItem1
-            // 
-            this.balanzaToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.verBalanzaToolStripMenuItem1,
-            this.leerPesoToolStripMenuItem1});
-            this.balanzaToolStripMenuItem1.Name = "balanzaToolStripMenuItem1";
-            this.balanzaToolStripMenuItem1.Size = new System.Drawing.Size(154, 22);
-            this.balanzaToolStripMenuItem1.Text = "Balanza";
-            // 
-            // verBalanzaToolStripMenuItem1
-            // 
-            this.verBalanzaToolStripMenuItem1.Name = "verBalanzaToolStripMenuItem1";
-            this.verBalanzaToolStripMenuItem1.Size = new System.Drawing.Size(133, 22);
-            this.verBalanzaToolStripMenuItem1.Text = "Ver Balanza";
-            this.verBalanzaToolStripMenuItem1.Click += new System.EventHandler(this.verBalanzaToolStripMenuItem1_Click);
-            // 
-            // leerPesoToolStripMenuItem1
-            // 
-            this.leerPesoToolStripMenuItem1.Name = "leerPesoToolStripMenuItem1";
-            this.leerPesoToolStripMenuItem1.Size = new System.Drawing.Size(133, 22);
-            this.leerPesoToolStripMenuItem1.Text = "Leer Peso";
-            this.leerPesoToolStripMenuItem1.Click += new System.EventHandler(this.leerPesoToolStripMenuItem1_Click);
             // 
             // contactoToolStripMenuItem
             // 
@@ -835,6 +810,13 @@
             // 
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
+            // 
+            // testBalanzaToolStripMenuItem1
+            // 
+            this.testBalanzaToolStripMenuItem1.Name = "testBalanzaToolStripMenuItem1";
+            this.testBalanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.testBalanzaToolStripMenuItem1.Text = "Test Balanza";
+            this.testBalanzaToolStripMenuItem1.Click += new System.EventHandler(this.testBalanzaToolStripMenuItem1_Click);
             // 
             // FormPrincipal
             // 
@@ -921,13 +903,11 @@
         private System.Windows.Forms.ToolStripMenuItem stockActualToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem probarToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem imprimirTicketToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem balanzaToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem verBalanzaToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem leerPesoToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem contactoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem celularToolStripMenuItem;
         private System.Windows.Forms.PictureBox pictureBoxUser;
         private System.Windows.Forms.PictureBox adminBotton;
+        private System.Windows.Forms.ToolStripMenuItem testBalanzaToolStripMenuItem1;
     }
 }
 
