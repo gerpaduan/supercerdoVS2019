@@ -1678,6 +1678,13 @@ namespace Presentacion.Caja
 
         private bool salir()
         {
+            if (!string.IsNullOrEmpty(txtCodigo.Text) && oCorteE != null)
+            {
+                string mensaje = "No se puede salir porque hay un producto ingresado.\n\n.";
+                MessageBox.Show(mensaje, "Salir", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtCodigo.Focus();
+                return true;
+            }
             if (grillaLineasVenta.SelectedRows.Count > 0)
             {
                 string mensaje = "No se puede salir porque hay un venta en curso.\n\nFinalice la venta e inténtelo nuevamente.";
@@ -2118,7 +2125,7 @@ namespace Presentacion.Caja
                 else
                 {
 
-                    //20241013 - si hace foco y es vacío se manda un return para evitar el tab
+                    //si hace foco y es vacío se manda un return para evitar el tab
                     if (txtCodigo.Focused && String.IsNullOrEmpty(txtCodigo.Text))
                     {
                         return;
@@ -2126,9 +2133,14 @@ namespace Presentacion.Caja
                         ///la idea es q NO muestre el total del corte sin antes poner la forma pago
                         //Solicitar forma de pago si balanza es distinta a nulo o cero                        
                         
-                        //bool resp = !ingresarFormaPago() ? true: false;
-
-                        
+                        //bool resp = !ingresarFormaPago() ? true: false;                        
+                    }
+                    //si no hay balanza conectada, pasar a cantidad
+                    if(!FormPrincipal.leerBalanza && txtCodigo.Focused)
+                    {
+                        txtCantKgs.Focus();
+                        txtCantKgs.SelectAll();
+                        return;
                     }
                     e.Handled = true;
                     SendKeys.Send("{TAB}");
@@ -2197,7 +2209,17 @@ namespace Presentacion.Caja
                     timer1.Enabled = true;
                 }
                 else
-                {                    
+                {
+                    //si se activa balanza pero puerto es 0
+                    if (checkLeerPeso.Checked && !FormPrincipal.leerBalanza)
+                    {
+                        //timer1.Enabled = true;
+                        lblErrorBalanza.Visible = true;
+                        lblErrorBalanza.Text  = "Balanza desconfigurada (COM = 0)";
+                        return;
+                    }
+                    lblErrorBalanza.Visible = false;
+
                     txtCantKgs.BackColor = SystemColors.Window;
                     txtCantKgs.Text = "";
                     txtCantKgs.ReadOnly = false;
@@ -2276,7 +2298,8 @@ namespace Presentacion.Caja
                 checkBoxRedondeo.Checked = checkBoxRedondeo.Visible = redondeo;
                 dtCortes = oCorteN.cargarDtCortes();
 
-                timer1.Enabled = true;
+                timer1.Enabled = FormPrincipal.leerBalanza;
+                checkLeerPeso.Checked = FormPrincipal.leerBalanza;
                 validarPagoMixto();
 
                 panelExpendios();
@@ -2896,7 +2919,7 @@ namespace Presentacion.Caja
                 {
                     ///todo probar !string.IsNullOrEmpty(txtCodigo.Text)
                     if (!string.IsNullOrEmpty(txtCodigo.Text) && !dejarDeLeerPeso && oCorteE != null && oCorteE.idCorte > 0 && 
-                        oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && !checkLeerPeso.Checked)
+                        oCorteE.Pesable && !esCodBarraEstandar && !esCodBarraInterno && !checkLeerPeso.Checked && FormPrincipal.leerBalanza)
                     {
                         checkLeerPeso.Checked = true;
                         btnAgregar.Focus();
