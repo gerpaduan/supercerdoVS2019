@@ -41,23 +41,24 @@ namespace Negocio
                         }
                     }
 
-                    if (tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
-                        tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
-                        tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
-                        tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                    /// 03-10-2025: comenté el IF xq no cargaba cuando era pesaje o ajuste
+                    /// No se porque ponía esta condición antes de pasar todo a esta capa Negocio
+                    //if (tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.Cortes)) ||
+                    //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.IngresoStock)) ||
+                    //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
+                    //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
+                    
+                    Negocio.Corte oCorteN = new Corte();
+                    foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                     {
-                        Negocio.Corte oCorteN = new Corte();
-                        foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
-                        {
-                            cortePorCompra.Sucursal = oCompraE.Sucursal;
-                            agregarCortePorCompra(cortePorCompra);
+                        cortePorCompra.Sucursal = oCompraE.Sucursal;
+                        agregarCortePorCompra(cortePorCompra);
 
-                            //se actualiza el precio del corte
-                            if (cortePorCompra.PrecioVenta > 0)
-                            {
-                                cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
-                                oCorteN.editPrecioCorte(cortePorCompra.Corte);
-                            }
+                        //se actualiza el precio del corte
+                        if (cortePorCompra.PrecioVenta > 0)
+                        {
+                            cortePorCompra.corte.precioKg = cortePorCompra.PrecioVenta;
+                            oCorteN.editPrecioCorte(cortePorCompra.Corte);
                         }
                     }
 
