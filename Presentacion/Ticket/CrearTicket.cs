@@ -265,6 +265,16 @@ namespace Presentacion.Ticket
 
         public void realizarImpresion()
         {
+            //byte[] densidad = new byte[] { 0x1B, 0x37, 0x00, 0x01, 0x00 };
+            ////{ 0x1B, 0x37, 0x00, 0x20, 0x01 }
+            ////Los bytes 0x00, 0x20, 0x01 son parámetros que puedes variar (por ejemplo cambiar el 0x20 o el 0x01) para ver el efecto
+            ////
+            //// 0x1B 0x37 n1 n2 n3   (prueba distintos valores para n2/n3) Valores más bajos en n2 o n3 → menos calor → impresión más clara.
+            //IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(densidad.Length);
+            //Marshal.Copy(densidad, 0, pUnmanagedBytes, densidad.Length);
+            //RawPrinterHelper.SendBytesToPrinter(impresora, pUnmanagedBytes, densidad.Length);
+            //Marshal.FreeCoTaskMem(pUnmanagedBytes);
+
             RawPrinterHelper.SendStringToPrinter(impresora, ticket, imprimir);
         }
 

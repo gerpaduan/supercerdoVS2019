@@ -1013,6 +1013,25 @@ namespace Presentacion.Caja
                 return false;
             }
 
+            ///VALIDACION INTERNA SUPERCERDO
+            ///SI CORTE TIENE NOMBRE 'PROMO' SE EXIGE QUE NO SEA CONS.FINAL
+            ///VALIDAD QUE LA CANTIDAD DE KGS SEA MAYOR A CERO Y NO ESTÉ ANULADO
+            ///CON ESTO SE PERMITE AL VENDEDOR REGISTRAR LA VENTA XQ CORRIGIÓ EL ERROR
+            if (FormPrincipal.soyYo && Persona.esConsumidorFinal(oCliente))
+            {
+                foreach (var linea in listaLineaVenta)
+                {
+                    if (linea.Corte.corte.Contains("Promo") && linea.CantKg > 0 && linea.IndexAnulado == -1)
+                    {
+                        MessageBox.Show("Las ventas con Productos Promo no pueden ser a Consumidor Final" +
+                                        "\n\nIngrese el cliente correspondiente y vuelva a intentarlo.",
+                                        "Verifique productos promo", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false;
+                    }
+                }
+            }
+
+
             //si es una modificacion y no hay datos en la grilla no valida porque se eliminar la venta
             if (modificar && grillaLineasVenta.Rows.Count == 0)
             {

@@ -77,10 +77,10 @@ namespace Entidades
 
         public float Bonificacion
         {
-          get { return bonificacion; }
-          set { bonificacion = value; }
+            get { return bonificacion; }
+            set { bonificacion = value; }
         }
-    
+
         public int IdPersona
         {
             get
@@ -137,5 +137,11 @@ namespace Entidades
         public Persona Propietario { get => propietario; set => propietario = value; }
 
         DateTime creado;
+
+        public static bool esConsumidorFinal(Entidades.Persona oPersona)
+        {
+            return (oPersona.idPersona == Parametros.idConsumidorFinal);
+        }
+
     }
 }

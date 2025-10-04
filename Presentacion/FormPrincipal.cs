@@ -32,7 +32,7 @@ namespace Presentacion
         /// <summary>
         /// Version del programa dia.mes.año
         /// </summary>
-        string version_nro = "v02.10.25";
+        string version_nro = "v04.10.25";
 
         bool cerrarFormPorError = true;
         public static bool logueado = false;
