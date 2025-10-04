@@ -185,6 +185,7 @@ namespace Presentacion.Caja
                 }
                 ticket.LineasEnBlanco(5);
                 ticket.realizarImpresion();
+                ticket.CortaTicket();
             }
             catch (Exception)
             {

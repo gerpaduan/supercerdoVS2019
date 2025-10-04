@@ -258,13 +258,17 @@ namespace Presentacion
             string tipoAccion = Entidades.Compra.tipoCompraToString(tipoCompra);
             foreach (Form frm in Application.OpenForms)
             {
+
                 if (frm.GetType() == typeof(formAddOrEditStock))
                 {
+                    // Convertimos frm al tipo real del formulario
+                    formAddOrEditStock f = (formAddOrEditStock)frm;
+
                     foreach (Control ctrl in GetAllControls(frm))
                     {
                         if (ctrl is TextBox textBox)
                         {
-                            if (textBox.Name.Equals("txtTipoAccion") && textBox.Text.Equals(tipoAccion))
+                            if (textBox.Name.Equals("txtTipoAccion") && textBox.Text.Equals(tipoAccion) && f.idCompra == 0)
                             {
                                 frm.BringToFront();
                                 formAbierto = true;
