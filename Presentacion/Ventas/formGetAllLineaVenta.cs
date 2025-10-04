@@ -61,7 +61,6 @@ namespace Presentacion
 
                 if (cargar)
                 {
-
                     lblActualizar.Visible = false;
 
                     Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando lineas de ventas", "Cargando...");
@@ -159,7 +158,7 @@ namespace Presentacion
         {
             float totalKgs=0,totalS=0;
 
-            txtCantItems.Text = grillaVentas.Rows.Count.ToString();
+            txtCantItems.Text = dtVentas.Rows.Count.ToString();//grillaVentas.Rows.Count.ToString();
             foreach (DataRow venta in dtVentas.Rows)
             {
                 totalKgs += float.Parse(venta["cantKg"].ToString());
@@ -559,6 +558,11 @@ namespace Presentacion
             }
 
             return null;
+        }
+
+        private void grillaVentas_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            grillaVentas.DataSource = dtVentas;
         }
     }
 }
