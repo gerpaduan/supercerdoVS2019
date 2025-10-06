@@ -32,7 +32,7 @@ namespace Presentacion
         /// <summary>
         /// Version del programa dia.mes.año
         /// </summary>
-        string version_nro = "v04.10.25";
+        string version_nro = "v06.10.25";
 
         bool cerrarFormPorError = true;
         public static bool logueado = false;
@@ -369,7 +369,7 @@ namespace Presentacion
                 else
                 {
                     //DialogResult resp = MessageBox.Show("Esta copia no cuenta con la licencia habilitada. Contactar al proveedor.", "Licencia no habilitada", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    login();
+                    login(true);
                     if (oUserAdmin == null)
                     {
                         MessageBox.Show("No tienes permiso para acceder al area seleccionada.");

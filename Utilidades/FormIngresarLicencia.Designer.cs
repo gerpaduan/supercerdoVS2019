@@ -65,13 +65,13 @@
             // 
             // groupLicencias
             // 
-            this.groupLicencias.Controls.Add(this.lblErrorLicencia);
             this.groupLicencias.Controls.Add(this.txtIdentificacion);
             this.groupLicencias.Controls.Add(this.label4);
             this.groupLicencias.Controls.Add(this.serialHD);
             this.groupLicencias.Controls.Add(this.serialCPU);
             this.groupLicencias.Controls.Add(this.label2);
             this.groupLicencias.Controls.Add(this.label3);
+            this.groupLicencias.Controls.Add(this.lblErrorLicencia);
             this.groupLicencias.Location = new System.Drawing.Point(11, 52);
             this.groupLicencias.Name = "groupLicencias";
             this.groupLicencias.Size = new System.Drawing.Size(259, 116);
@@ -100,11 +100,11 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(6, 22);
+            this.label4.Location = new System.Drawing.Point(15, 22);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(70, 13);
+            this.label4.Size = new System.Drawing.Size(61, 13);
             this.label4.TabIndex = 15;
-            this.label4.Text = "Identificación";
+            this.label4.Text = "Nombre PC";
             // 
             // serialHD
             // 
@@ -159,10 +159,10 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 204);
+            this.Controls.Add(this.groupLicencias);
             this.Controls.Add(this.btnValidar);
             this.Controls.Add(this.btnSalir);
             this.Controls.Add(this.btnAgregar);
-            this.Controls.Add(this.groupLicencias);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "FormIngresarLicencia";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
