@@ -127,17 +127,29 @@ namespace Utilidades
 
                 //Systel tiene el error que en  peso inestable manda 5.000 kgs o 3.000 como estable
                 string pesoBalanzaLabel_ = texto.Contains('i') && !texto.Contains("ei") ? peso + " i" : peso;
-                // Validación especial
-                if ((pesoBalanzaLabel_ == "005.000" || pesoBalanzaLabel_ == "003.000") && releerPesoSystel < limiteReleerPeso)
-                {
-                    releerPesoSystel++; // evitar loop infinito
-                    timer1.Interval = 500;
-                    return; // volver a intentar
-                }
-                else if (pesoBalanzaLabel_ != "005.000" && pesoBalanzaLabel_ != "003.000")
-                    releerPesoSystel = 0;
 
-                timer1.Interval = timerInverval;
+                //// Validación especial -REEMPLAZADO POR LENGTH < 7
+                //if ((pesoBalanzaLabel_ == "005.000" || pesoBalanzaLabel_ == "003.000") && releerPesoSystel < limiteReleerPeso)
+                //{
+                //    releerPesoSystel++; // evitar loop infinito
+                //    timer1.Interval = 500;
+                //    return; // volver a intentar
+                //}
+                //else if (pesoBalanzaLabel_ != "005.000" && pesoBalanzaLabel_ != "003.000")
+                //    releerPesoSystel = 0;
+
+                //timer1.Interval = timerInverval;
+
+                /// Validación especial
+                /// Systel manda 5 ó 3 según pruebas
+                /// Entonces si peso no tiene entre 7 ó mas digitos (por si es negativo son mas de 7 digitos) 
+                /// se setea valor vacío y se retorna a leer nuevamente el peso
+                /// 
+                if (pesoBalanzaLabel_.Length < 7)
+                {
+                    pesoBalanzaLabel.Text = pesoBalanzaLabel_ = "";
+                    return;
+                }
 
                 pesoBalanzaLabel.Text = pesoBalanzaLabel_;
             }

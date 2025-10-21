@@ -171,7 +171,7 @@ namespace Utilidades
 
                 /// Validación especial
                 /// Systel manda 5 ó 3 según pruebas
-                /// Entonces si peso no tiene entre 7 ó mas digitos (por si es negativo) 
+                /// Entonces si peso no tiene entre 7 ó mas digitos (por si es negativo son mas de 7 digitos) 
                 /// se setea valor vacío y se retorna a leer nuevamente el peso
                 /// 
                 if (pesoBalanzaLabel_.Length < 7)
