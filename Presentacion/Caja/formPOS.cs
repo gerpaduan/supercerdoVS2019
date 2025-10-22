@@ -24,6 +24,7 @@ namespace Presentacion.Caja
 {
     public partial class formPOS : Form, InterfaceCorte, InterfacePersona, InterfaceUsuario, InterfaceFormaPago, InterfaceImprimirCbte, InterfaceUsuarioConPermiso
     {
+        bool errorConexionFactura = false;//Si no hay conexion internet o Afip, se informa y evita apertura form Factu Electr.
         bool pesoBalanza = false;
         bool capturarPantallaFinal = false;
         Color colorUser;
@@ -472,6 +473,19 @@ namespace Presentacion.Caja
                 }
             }
         }
+        private async void VerificarConexion()
+        {
+            errorConexionFactura = false;
+            string resultado = await VerificadorConexion.VerificarAsync(produccion: true);
+
+            if (resultado != "OK")
+            {
+                errorConexionFactura = true;
+                //MessageBox.Show("Error: " + resultado);
+                lblErrorConexFactElect.Text = "Error: " + resultado;
+            }
+            lblErrorConexFactElect.Visible = errorConexionFactura;
+        }
 
         private void facturaElectronica()
         {
@@ -503,6 +517,9 @@ namespace Presentacion.Caja
 
             if (!formFactuElec_Abierto)
             {
+                if (errorConexionFactura)
+                    return;
+
                 formFactElec = new wsAFIPvs2008.formFacturaElectronica(() =>
                 {
                     if (!this.IsDisposed && this.IsHandleCreated)
@@ -3015,6 +3032,7 @@ namespace Presentacion.Caja
                 bloquear();
                 timerBloquearCaja.Stop();
             }
+            VerificarConexion();
         }
 
         private void timerTitilar_Tick(object sender, EventArgs e)

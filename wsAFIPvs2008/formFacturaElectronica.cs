@@ -150,7 +150,7 @@ namespace wsAFIPvs2008
         {
             get { return authRequest_; }
             set { authRequest_ = value; }
-        } 
+        }
 
         /// <summary>
         /// *** Pasar idVenta para obtener el objeto ***
