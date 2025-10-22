@@ -325,18 +325,18 @@ namespace Presentacion.Caja
                     //return;
 
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
-                    for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
-                    {
-                        Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
-                        //setear por cada linea cantKg <- KgsTotalCalculado
-                        linea.CantKg = linea.KgsTotalCalculado;
+                    //for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
+                    //{
+                    //    Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
+                    //    //setear por cada linea cantKg <- KgsTotalCalculado
+                    //    linea.CantKg = linea.KgsTotalCalculado;
 
-                        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
-                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
-                            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+                    //    //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                    //    linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
+                    //        Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
 
-                        oVentaE.LineasVenta[index] = oVentaN.agregarLineaVenta(linea);
-                    }
+                    //    oVentaE.LineasVenta[index] = oVentaN.agregarLineaVenta(linea);
+                    //}
 
                     mensajeCatch = "La Venta (egreso de caja y actualización de cta cte, si los hay) se registraron correctamente";
 

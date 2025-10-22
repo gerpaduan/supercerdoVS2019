@@ -136,11 +136,6 @@ namespace Presentacion.Ventas
                 {
                     oVentaN.modificarVenta(oVentaE, SucAnterior, true, null);
 
-                    foreach (Entidades.LineaVenta linea in listaLineaVenta)
-                    {
-                        oVentaN.agregarLineaVenta(linea);
-                    }
-
                     aCtaCte = oVentaE.EnCtaCte;
                 }
                 catch (Exception ex)
@@ -172,54 +167,40 @@ namespace Presentacion.Ventas
 
             //si es modificacion o agregacion
             if (modificar)
+            {
+                //si no pasa validación final
+                if (!modificarVenta())
+                    return;
+            }
+            else
+            {
+                if (grillaLineasVenta.SelectedRows.Count > 0)
                 {
-                    //si no pasa validación final
-                    if (!modificarVenta())
-                        return;
+                    agregarVenta();
                 }
                 else
                 {
-                    if (grillaLineasVenta.SelectedRows.Count > 0)
-                    {
-                        agregarVenta();
-                    }
-                    else
-                    {
-                        MessageBox.Show("No se ha cargado ningún Producto en la venta. ", "No hay Productos cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+                    MessageBox.Show("No se ha cargado ningún Producto en la venta. ", "No hay Productos cargados", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
 
-                try
-                {
-                    //si no se registro la venta se aborta el proceso
-                    if (oVentaE.IdVenta == 0) 
-                        return;
+            try
+            {
+                //si no se registro la venta se aborta el proceso
+                if (oVentaE.IdVenta == 0) 
+                    return;
 
-                    formPOS fVtaCaja = new formPOS();
-                    //se genera el egreso de caja si no es Efectivo
-                    fVtaCaja.egresoCajaPagoTarjeta(oVentaE);
+                if (modificar)
+                    this.Close();
 
-                    //Agregar en Cta Cte
-                    try
-                    {
-                        oVentaN.crearMovCtaCteVenta(oVentaE);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Error al crear el Movimiento en la Cuenta Corriente.\n\n" +
-                            "**La Venta se registró correctamente**\n\n" + ex.Message + "\n" + ex.Source);
-                    }
-
-                    if (modificar)
-                        this.Close();
-
-                    frmVentas.cargarGrilla();
-                    limpiarListas();
-                    txtFechaVenta.Focus();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Hubo un error y no se registró el movimiento en la Cta. Cta\n\n"+ex.Message);
+                MessageBox.Show("La Venta se registró correctamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                frmVentas.cargarGrilla();
+                limpiarListas();
+                txtFechaVenta.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Hubo un error y no se registró el movimiento en la Cta. Cta\n\n"+ex.Message);
                 }    
         }
 
@@ -260,17 +241,6 @@ namespace Presentacion.Ventas
                 try
                 {
                     oVentaE.IdVenta = oVentaN.agregarVenta(oVentaE);
-
-                    foreach (Entidades.LineaVenta linea in listaLineaVenta)
-                    {
-                        oVentaN.agregarLineaVenta(linea);
-                    }
-                    aCtaCte = oVentaE.EnCtaCte; // true;
-
-                    //frmVentas.cargarGrilla();
-                    //limpiarListas();
-                    //txtFechaVenta.Focus();
-
                 }
                 catch (Exception ex)
                 {
@@ -287,7 +257,7 @@ namespace Presentacion.Ventas
                 oCliente = new Entidades.Persona();
                 EnviarPersona(oCliente);
             }
-
+            oVentaE.IdVenta = 0;
             txtNroRemito.Text = "";
             txtObservaciones.Text = "";
             checkCtaCte.Visible = false;
@@ -331,6 +301,8 @@ namespace Presentacion.Ventas
             oVentaE.Email = txtDomicilio.Text;
             oVentaE.AcumRedondeoImporte = 0;//ganPesosTotRedondeo;
             oVentaE.AcumRedondeoKgs = 0;//ganKgsTotRedondeo;
+
+            oVentaE.LineasVenta = listaLineaVenta;
         }
 
         private void cargarTotales()
@@ -499,6 +471,7 @@ namespace Presentacion.Ventas
             oLineaVenta.Venta = oVentaE;
 
             oLineaVenta.CantKg = cantKg;
+            oLineaVenta.KgsTotalCalculado = cantKg;
             oLineaVenta.PrecioKg = precioKg;
             oLineaVenta.IdAlicuotaIva = oCorteE.IdAlicuotaIva;
             oLineaVenta.AlicuotaIva = oCorteE.AlicuotaIva;

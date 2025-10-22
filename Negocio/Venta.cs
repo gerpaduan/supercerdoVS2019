@@ -45,6 +45,20 @@ namespace Negocio
                             oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
                     }
 
+
+                    for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
+                    {
+                        Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
+                        //setear por cada linea cantKg <- KgsTotalCalculado
+                        linea.CantKg = linea.KgsTotalCalculado;
+
+                        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
+                            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                        oVentaE.LineasVenta[index] = agregarLineaVenta(linea);
+                    }
+
                     egresoCajaPagoTarjeta(oVentaE);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
 
                     crearMovCtaCteVenta(oVentaE);
@@ -110,6 +124,14 @@ namespace Negocio
                         foreach (Entidades.LineaVenta lineaNuevoAnulado in lineaNuevosAnulados)
                         {
                             agregarLineaVenta(lineaNuevoAnulado);
+                        }
+                    }
+                    ///Si se llema a eliminar lineas - Desde FormUltimaVenta no se eliminan pero sí en formModificarVenta
+                    if (eliminarLineas)
+                    {
+                        foreach (Entidades.LineaVenta linea in oVentaE.LineasVenta)
+                        {
+                            agregarLineaVenta(linea);
                         }
                     }
 
