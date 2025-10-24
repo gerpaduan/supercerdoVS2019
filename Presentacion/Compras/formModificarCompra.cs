@@ -271,6 +271,7 @@ namespace Presentacion.Compras
             oSucursal = oCompraModificada.Sucursal;
             oProvNuevaCompra = oCompraModificada.Proveedor;
 
+            txtIdCompra.Text = oCompraModificada.IdCompra.ToString();
             txtUsuario.Text = oUsuario != null ? oUsuario.Nombre : "-";
             comboSucursal.SelectedValue = oSucursal.idSucursal;
             txtNroRemito.Text = oCompraModificada.NroRemito;

@@ -117,13 +117,26 @@ namespace Presentacion
             try
             {
                 int idCompra = Convert.ToInt32(grillaCompras.CurrentRow.Cells["idCompra"].Value.ToString());
+                bool formAbierto = false;
 
-                if (Application.OpenForms["formModificarCompra"] != null)
+                foreach (Form frm in Application.OpenForms)
                 {
-                    Application.OpenForms["formModificarCompra"].Activate();
-                    Application.OpenForms["formModificarCompra"].WindowState = FormWindowState.Normal;
+                    if (frm.GetType() == typeof(formModificarCompra))
+                    {
+                        foreach (Control ctrl in frm.Controls)
+                        {
+                            if (ctrl.Name.Equals("txtIdCompra") && ctrl.Text.Equals(idCompra.ToString()))
+                            {
+                                //Application.OpenForms["formModificarCompra"].Activate();
+                                //Application.OpenForms["formModificarCompra"].WindowState = FormWindowState.Normal;
+                                frm.BringToFront();
+                                formAbierto = true;
+                                break;
+                            }
+                        }
+                    }
                 }
-                else
+                if (!formAbierto)
                 {
                     formModificarCompra frmModificarCompra = new formModificarCompra();
                     frmModificarCompra.cargarParametros(this, idCompra);
