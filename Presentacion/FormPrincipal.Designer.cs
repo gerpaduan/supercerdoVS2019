@@ -81,10 +81,10 @@
             this.stockActualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.probarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.imprimirTicketToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.testBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.contactoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.celularToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timerInactividadAdmin = new System.Windows.Forms.Timer(this.components);
-            this.testBalanzaToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -791,6 +791,13 @@
             this.imprimirTicketToolStripMenuItem.Text = "Imprimir Ticket";
             this.imprimirTicketToolStripMenuItem.Click += new System.EventHandler(this.imprimirTicketToolStripMenuItem_Click);
             // 
+            // testBalanzaToolStripMenuItem1
+            // 
+            this.testBalanzaToolStripMenuItem1.Name = "testBalanzaToolStripMenuItem1";
+            this.testBalanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.testBalanzaToolStripMenuItem1.Text = "Test Balanza";
+            this.testBalanzaToolStripMenuItem1.Click += new System.EventHandler(this.testBalanzaToolStripMenuItem1_Click);
+            // 
             // contactoToolStripMenuItem
             // 
             this.contactoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -810,13 +817,6 @@
             // 
             this.timerInactividadAdmin.Interval = 3000000;
             this.timerInactividadAdmin.Tick += new System.EventHandler(this.timerInactividadAdmin_Tick);
-            // 
-            // testBalanzaToolStripMenuItem1
-            // 
-            this.testBalanzaToolStripMenuItem1.Name = "testBalanzaToolStripMenuItem1";
-            this.testBalanzaToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
-            this.testBalanzaToolStripMenuItem1.Text = "Test Balanza";
-            this.testBalanzaToolStripMenuItem1.Click += new System.EventHandler(this.testBalanzaToolStripMenuItem1_Click);
             // 
             // FormPrincipal
             // 

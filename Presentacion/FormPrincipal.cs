@@ -1316,5 +1316,10 @@ namespace Presentacion
                 f.ShowDialog();
             }
         }
+
+        private void gráficasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

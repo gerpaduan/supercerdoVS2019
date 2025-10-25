@@ -592,5 +592,58 @@ namespace Presentacion
 
             return null;
         }
+
+
+        private void clientesPorHoraToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Graficas("clientesPorHora");
+            //Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
+            //frmGrafica.dtVentasDiarias = dtVentas;
+            //frmGrafica.CargarVentasPorHora(null);
+            //frmGrafica.Show();
+        }
+
+        private void cantidadDeVentasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Graficas("cantidadDeVentas");
+
+            //Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
+            //frmGrafica.dtVentasDiarias = dtVentas;
+            //frmGrafica.CargarFormaPago("cantidad");
+            //frmGrafica.Show();
+        }
+
+        private void porMontoDeVentasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Graficas("porMontoDeVentas");
+
+            //Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
+            //frmGrafica.dtVentasDiarias = dtVentas;
+            //frmGrafica.CargarFormaPago("monto");
+            //frmGrafica.Show();
+        }
+
+        private void Graficas(string tipoGrafica)
+        {
+            Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
+            frmGrafica.dtVentasDiarias = dtVentas;
+            frmGrafica.sucursal = comboSucursal.Text;
+            frmGrafica.fechaDesde = fechaDesde.Value;
+            frmGrafica.fechaHasta = fechaHasta.Value;
+            switch (tipoGrafica)
+            {
+                case "clientesPorHora":
+                    frmGrafica.CargarVentasPorHora(null);
+                    break;
+                case "cantidadDeVentas":
+                    frmGrafica.CargarFormaPago("cantidad");
+                    break;
+                case "porMontoDeVentas":
+                    frmGrafica.CargarFormaPago("monto");
+                    break;
+
+            }
+            frmGrafica.Show();
+        }
     }
 }
