@@ -1903,6 +1903,27 @@ namespace Presentacion.Caja
                 return;
             }
 
+            ///Si se ingresa 'x' se toma el numero que lo antecede como cantidad
+            ///si balanza está activada, se desactiva
+            bool ingresarCantidad = (longCodigo >= 1 && char.IsDigit(text[0]) && (text[longCodigo - 1] == 'x' || text[longCodigo - 1] == 'X'));
+            if (ingresarCantidad)
+            {
+                string cantidadX = txtCodigo.Text; 
+                int indiceX = cantidadX.IndexOf('x');
+                if (indiceX < 0)
+                    indiceX = cantidadX.IndexOf('X');
+
+                //si balanza está activada
+                if (checkLeerPeso.Checked)
+                {
+                    txtCodigo.Text = "";
+                    Message msg = new Message(); // No importa el contenido
+                    ProcessCmdKey(ref msg, Keys.Multiply);
+                }
+                txtCantKgs.Text = cantidadX.Substring(0, indiceX);
+                txtCodigo.Text = "";
+                return;
+            }
 
             if (grillaLineasVenta.Rows.Count.Equals(0))
             {
