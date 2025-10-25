@@ -16,7 +16,7 @@ namespace Presentacion.Graficas
     {
         public DataTable dtVentasDiarias;
         public DateTime fechaDesde, fechaHasta;
-        public string sucursal;
+        public string sucursal, vendedor, cliente, descripcion, seleccionadosFormaPago, seleccionadosTipoComprobante, SeleccionadosCondVenta;
         public FormGraficas()
         {
             InitializeComponent();
@@ -32,6 +32,12 @@ namespace Presentacion.Graficas
             CargarComboDias();
             txtFecha.Text = fechaDesde.ToString() + " - " + fechaHasta.ToString();
             txtSucursal.Text = sucursal;
+            txtCliente.Text = cliente;
+            txtVendedor.Text = vendedor;
+            txtDescripcion.Text = descripcion;
+            txtFormaPago.Text = seleccionadosFormaPago;
+            txtTipoComprobantes.Text = seleccionadosTipoComprobante;
+            txtCondVenta.Text = SeleccionadosCondVenta;
         }
 
         // Método para cargar el ComboBox

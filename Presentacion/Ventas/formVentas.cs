@@ -441,8 +441,7 @@ namespace Presentacion
 
             (grillaVentas.DataSource as DataTable).DefaultView.RowFilter = string.Format(consultaRowFilter);
 
-            cargarTotales();
-        
+            cargarTotales();        
         }
 
         private void exportExcel_Click(object sender, EventArgs e)
@@ -625,12 +624,49 @@ namespace Presentacion
 
         private void Graficas(string tipoGrafica)
         {
+            //List<string> seleccionadosFormaPago = new List<string>();
+            string seleccionadosFormaPago = "";
+            foreach (var item in checkListFormaPago.CheckedItems)
+            {
+                seleccionadosFormaPago += item.ToString() +" | ";
+                //seleccionadosFormaPago.Add(item.ToString());
+            }
+            //seleccionadosFormaPago = string.IsNullOrEmpty(seleccionadosFormaPago) ? "Ninguna" : seleccionadosFormaPago;
+            seleccionadosFormaPago = checkListFormaPago.CheckedItems.Count == checkListFormaPago.Items.Count ? "TODAS" : seleccionadosFormaPago;
+
+            //List<string> seleccionadosTipoComprobante = new List<string>();
+            string seleccionadosTipoComprobante = "";
+            foreach (var item in checkListTipoComprobante.CheckedItems)
+            {
+                seleccionadosTipoComprobante += item.ToString() + " | ";
+                //seleccionadosTipoComprobante.Add(item.ToString());
+            }
+            //seleccionadosTipoComprobante = string.IsNullOrEmpty(seleccionadosTipoComprobante) ? "Ninguna" : seleccionadosFormaPago;
+            seleccionadosTipoComprobante = checkListTipoComprobante.CheckedItems.Count == checkListTipoComprobante.Items.Count ? "TODOS" : seleccionadosTipoComprobante;
+
+
+            string SeleccionadosCondVenta = "";
+            foreach (var item in checkListCondVenta.CheckedItems)
+            {
+                SeleccionadosCondVenta += item.ToString() + " | ";
+                //seleccionadosTipoComprobante.Add(item.ToString());
+            }
+            //seleccionadosTipoComprobante = string.IsNullOrEmpty(seleccionadosTipoComprobante) ? "Ninguna" : seleccionadosFormaPago;
+            SeleccionadosCondVenta = checkListCondVenta.CheckedItems.Count == checkListCondVenta.Items.Count ? "TODAS" : SeleccionadosCondVenta;
+
+
             Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
-            frmGrafica.dtVentasDiarias = dtVentas;
+            frmGrafica.dtVentasDiarias = (grillaVentas.DataSource as DataTable).DefaultView.ToTable();// dtVentas;
             frmGrafica.sucursal = comboSucursal.Text;
             frmGrafica.fechaDesde = fechaDesde.Value;
             frmGrafica.fechaHasta = fechaHasta.Value;
-            switch (tipoGrafica)
+            frmGrafica.cliente = txtCliente.Text;
+            frmGrafica.vendedor = comboUsuario.Text;
+            frmGrafica.descripcion = txtDescripcion.Text;
+            frmGrafica.seleccionadosFormaPago = seleccionadosFormaPago;
+            frmGrafica.seleccionadosTipoComprobante = seleccionadosTipoComprobante;
+            frmGrafica.SeleccionadosCondVenta = SeleccionadosCondVenta;
+             switch (tipoGrafica)
             {
                 case "clientesPorHora":
                     frmGrafica.CargarVentasPorHora(null);
