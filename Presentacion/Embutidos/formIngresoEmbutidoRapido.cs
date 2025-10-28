@@ -31,6 +31,7 @@ namespace Presentacion
         Entidades.CortePorEmbutido oCortePorEmbutidoE;
         Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
         public Entidades.Usuario oUsuario;
+        public bool esDesarmeElaborado = false;
 
         Entidades.Usuario oUsuarioNuevoEmbutido;
 
@@ -67,12 +68,11 @@ namespace Presentacion
             bool resp=true;
 
             try
-            {
-                ////Validación para cuando es Merma
-                //if (oCorteE.codigo == 10000 && Utilidades.Util_Form.validarCampoNumerico(txtCantKgs.Text, "Cant. Kgs"))
-                //    return true;      
+            {                
+                //si esDesarme se quita el signo negativo
+                string cantKgsFormat = esDesarmeElaborado ? txtCantKgs.Text.TrimStart('-') : txtCantKgs.Text;
 
-                if (!Utilidades.Util_Form.validarNumeroMayorACero(txtCantKgs.Text, "Cant. Kgs"))
+                if (!Utilidades.Util_Form.validarNumeroMayorACero(cantKgsFormat, "Cant. Kgs"))
                 {
                     resp = false;
                     txtCantKgs.Focus();
@@ -95,7 +95,8 @@ namespace Presentacion
             Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
             oSucursalE.IdSucursal = Convert.ToInt32(comboSucursal.SelectedValue.ToString());
             oEmbutidoE.sucursal = oSucursalE;
-            oEmbutidoE.observaciones = "";
+            //oEmbutidoE.estado = esDesarmeElaborado ? "Desarme" : oEmbutidoE.estado;
+            oEmbutidoE.observaciones = esDesarmeElaborado ? "Desarme" : "";
 
             Entidades.Usuario oUser = new Entidades.Usuario();
             if (oEmbutidoE.idEmbutido.Equals(0))
@@ -123,6 +124,9 @@ namespace Presentacion
 
                 //calcula total sin condimentos
                 float totalKgSinCond = string.IsNullOrEmpty(txtCantKgs.Text) ? 0 : Util_Form.convertFloat(txtCantKgs.Text, false);
+
+                if (esDesarmeElaborado && totalKgSinCond > 0)
+                    totalKgSinCond = totalKgSinCond * -1;
 
                 int cantDecimales = 3;
                 float porcentaje;
@@ -291,6 +295,10 @@ namespace Presentacion
             }
             else
             {
+                if (esDesarmeElaborado)
+                {
+                    this.Text = "Desarme de Elaborado";
+                }
                 timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
                 checkLeerPeso.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["leerPeso"].ToString());
                 cargarComboSucursal();
@@ -519,6 +527,12 @@ namespace Presentacion
 
         private void txtCantKgs_TextChanged(object sender, EventArgs e)
         {
+            // Si está vacío o no empieza con '-', lo corrige
+            if (!txtCantKgs.Text.StartsWith("-"))
+            {
+                txtCantKgs.Text = "-" + txtCantKgs.Text.Replace("-", "");
+                txtCantKgs.SelectionStart = txtCantKgs.Text.Length; // Mantiene el cursor al final
+            }
             calcularFormula();
         }
 

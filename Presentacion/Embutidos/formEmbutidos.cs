@@ -91,6 +91,11 @@ namespace Presentacion
                 {
                     grillaEmbutidos.Rows[index].DefaultCellStyle.BackColor = Color.SandyBrown;
                 }
+                else if (grillaEmbutidos["Observaciones", index].Value.ToString().ToLower().Contains("desarme") &&
+                    grillaEmbutidos["Kgs", index].Value.ToString().Contains("-"))
+                {
+                    grillaEmbutidos.Rows[index].DefaultCellStyle.BackColor = Color.LightBlue;
+                }
             }
             grillaEmbutidos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
 
@@ -270,6 +275,11 @@ namespace Presentacion
 
         private void btnIngrRapido_Click(object sender, EventArgs e)
         {
+            ingresoRapido();
+        }
+
+        private void ingresoRapido(bool esDesarmeElaborado = false)
+        {
             if (Application.OpenForms["formElegirEmbutido"] != null)
             {
 
@@ -282,6 +292,7 @@ namespace Presentacion
                 frmSelectUser.ShowDialog(this);
                 Presentacion.Embutidos.formElegirEmbutido frmElegirEmbutido = new Presentacion.Embutidos.formElegirEmbutido();
                 frmElegirEmbutido.oUsuario = oUsuario;
+                frmElegirEmbutido.esDesarmeElaborado = esDesarmeElaborado;
                 frmElegirEmbutido.frmEmbutidos = this;
                 frmElegirEmbutido.Show();
             }
@@ -306,6 +317,11 @@ namespace Presentacion
                 formFormulas frmmFormulas = new formFormulas();
                 frmmFormulas.Show();
             }
+        }
+
+        private void desarmeElaborado_Click(object sender, EventArgs e)
+        {
+            ingresoRapido(true);
         }
     }
 }

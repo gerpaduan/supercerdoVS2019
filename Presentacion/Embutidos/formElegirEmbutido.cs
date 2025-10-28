@@ -15,6 +15,7 @@ namespace Presentacion.Embutidos
     {
 
         public formEmbutidos frmEmbutidos = new formEmbutidos();
+        public bool esDesarmeElaborado = false;
         Negocio.Sucursal oSucursalN;
         Negocio.Corte oCorteN = new Negocio.Corte();
 
@@ -22,6 +23,7 @@ namespace Presentacion.Embutidos
         public Entidades.Usuario oUsuario;
 
         Entidades.Usuario oUsuarioNuevoEmbutido;
+
 
         public formElegirEmbutido()
         {
@@ -74,6 +76,7 @@ namespace Presentacion.Embutidos
                 formIngresoEmbutidoRapido frmIngresarEmbutidoRapido = new formIngresoEmbutidoRapido();
                 frmIngresarEmbutidoRapido.oUsuario = oUsuario;
                 frmIngresarEmbutidoRapido.oCorteEmbutidoE = oCorteN.findCorteById(idCorteEmbutido, false);
+                frmIngresarEmbutidoRapido.esDesarmeElaborado = esDesarmeElaborado;
                 //frmIngresarEmbutidoRapido.oCorteE = oCorteN.findCorteById(idCorteEn, false);//corte en embutido
                 //frmIngresarEmbutidoRapido.oCorteE2 = oCorteN.findCorteById(idCorteEn2, false);//corte en embutido
                 frmIngresarEmbutidoRapido.frmEmbutidos = this.frmEmbutidos;
