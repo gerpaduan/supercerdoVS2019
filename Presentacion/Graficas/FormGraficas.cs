@@ -17,6 +17,7 @@ namespace Presentacion.Graficas
         public DataTable dtVentasDiarias;
         public DateTime fechaDesde, fechaHasta;
         public string sucursal, vendedor, cliente, descripcion, seleccionadosFormaPago, seleccionadosTipoComprobante, SeleccionadosCondVenta;
+        bool formCargado = false;
         public FormGraficas()
         {
             InitializeComponent();
@@ -38,11 +39,16 @@ namespace Presentacion.Graficas
             txtFormaPago.Text = seleccionadosFormaPago;
             txtTipoComprobantes.Text = seleccionadosTipoComprobante;
             txtCondVenta.Text = SeleccionadosCondVenta;
+
+            formCargado = true;
         }
 
         // Método para cargar el ComboBox
         private void CargarComboDias()
         {
+            if (!formCargado)
+                return;
+
             comboBoxDias.Items.Clear();
 
             // agregamos 'Todos' primero
@@ -88,7 +94,7 @@ namespace Presentacion.Graficas
         }
 
         public void CargarFormaPago(string tipo)
-            {
+        {
             //por cantidad 
             var FormasPagoPorCantidad = dtVentasDiarias.AsEnumerable()
                 .GroupBy(r => r["formaPago"].ToString())
@@ -156,36 +162,114 @@ namespace Presentacion.Graficas
                     DateTime fecha = (DateTime)r["fechaVenta"];
                     int minutos = (fecha.Hour * 60) + fecha.Minute;
                     int bloque = minutos / 15; // cada bloque representa 15 min
-                int hora = bloque / 4;
+                    int hora = bloque / 4;
                     int minInicio = (bloque % 4) * 15;
                     return new TimeSpan(hora, minInicio, 0);
                 })
                 .OrderBy(g => g.Key)
                 .Select(g => new
                 {
-                    Hora = $"{g.Key:hh\\:mm}",
+                    Hora = g.Key,
+                    //$"{g.Key:hh\\:mm}",
                     Cantidad = g.Count()
                 })
                 .ToList();
+
+            //// --- Crear todos los intervalos posibles del día (00:00 a 23:45)
+            //var todosLosBloques = Enumerable.Range(0, 24 * 4) // 24h * 4 bloques/hora = 96 intervalos
+            //    .Select(i => new TimeSpan(0, i * 15, 0))
+            //    .ToList();
+
+            //// --- Unir los intervalos reales con los posibles (rellenar con 0 si no hay datos)
+            //var gruposCompletos = todosLosBloques
+            //    .Select(b =>
+            //    {
+            //        var existente = grupos.FirstOrDefault(g => g.Hora == b);
+            //        return new
+            //        {
+            //            Hora = $"{b:hh\\:mm}",
+            //            Cantidad = existente?.Cantidad ?? 0
+            //        };
+            //    })
+            //    .ToList();
+            // --- Crear todos los intervalos posibles del día (00:00 a 23:45)
+            var todosLosBloques = Enumerable.Range(0, 24 * 4)
+                .Select(i => new TimeSpan(0, i * 15, 0))
+                .ToList();
+
+            // --- Unir los intervalos reales con los posibles (rellenar con 0 si no hay datos)
+            var gruposCompletos = todosLosBloques
+                .Select(b =>
+                {
+                    var existente = grupos.FirstOrDefault(g => g.Hora == b);
+                    return new
+                    {
+                        HoraTS = b,
+                        Hora = $"{b:hh\\:mm}",
+                        Cantidad = existente?.Cantidad ?? 0
+                    };
+                })
+                .ToList();
+
+
             // Configurar gráfico
             chartVentasDiarias.Series.Clear();
             chartVentasDiarias.ChartAreas.Clear();
             chartVentasDiarias.ChartAreas.Add("Area1");
 
-            var serie = new Series("Clientes por horario ("+comboBoxDias.Text+")");
-            serie.ChartType = SeriesChartType.Column;
+
+            var serie = new Series("Clientes por horario (" + comboBoxDias.Text + ")");
+            serie.ChartType = SeriesChartType.Line;
             serie.IsValueShownAsLabel = true;
 
-            foreach (var item in grupos)
+            //foreach (var item in grupos) 
+            //foreach (var item in gruposCompletos)
+            //{
+            //    serie.Points.AddXY(item.Hora, item.Cantidad);
+            //}
+
+            // --- Detectar tramos largos (más de 12 bloques sin clientes)
+            int contadorCeros = 0;
+            bool enBloqueCeroLargo = false;
+
+            foreach (var item in gruposCompletos)
             {
-                serie.Points.AddXY(item.Hora, item.Cantidad);
+                if (item.Cantidad == 0)
+                {
+                    contadorCeros++;
+                    if (contadorCeros > 4 && !enBloqueCeroLargo)
+                    {
+                        // Insertar un punto vacío (corte visual)
+                        serie.Points.AddXY(item.Hora, double.NaN);
+                        enBloqueCeroLargo = true;
+                    }
+
+                    // Mientras esté dentro del bloque largo, no agregamos puntos
+                    if (!enBloqueCeroLargo)
+                        serie.Points.AddXY(item.Hora, 0);
+                }
+                else
+                {
+                    // Si veníamos de un tramo largo de ceros, insertamos otro punto vacío para cortar
+                    if (enBloqueCeroLargo)
+                    {
+                        serie.Points.AddXY(item.Hora, double.NaN);
+                        enBloqueCeroLargo = false;
+                    }
+
+                    serie.Points.AddXY(item.Hora, item.Cantidad);
+                    contadorCeros = 0;
+                }
             }
+
 
             chartVentasDiarias.Series.Add(serie);
             chartVentasDiarias.ChartAreas[0].AxisX.Title = "Horario (rangos de 15 min)";
             chartVentasDiarias.ChartAreas[0].AxisY.Title = "Cantidad de clientes";
-            chartVentasDiarias.ChartAreas[0].AxisX.Interval = 1; // mostrar cada 1h aprox
+            chartVentasDiarias.ChartAreas[0].AxisX.Interval = 2; // mostrar cada 1h aprox
             chartVentasDiarias.ChartAreas[0].AxisX.LabelStyle.Angle = -45;
+            chartVentasDiarias.ChartAreas[0].AxisX.MajorGrid.LineColor = System.Drawing.Color.WhiteSmoke;
+            chartVentasDiarias.ChartAreas[0].AxisY.MajorGrid.LineColor = System.Drawing.Color.WhiteSmoke;
 
             return;
             //chartVentasDiarias.Series.Clear();
