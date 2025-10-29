@@ -18,6 +18,16 @@ namespace Presentacion.Graficas
         public DateTime fechaDesde, fechaHasta;
         public string sucursal, vendedor, cliente, descripcion, seleccionadosFormaPago, seleccionadosTipoComprobante, SeleccionadosCondVenta;
         bool formCargado = false;
+
+        public enum TipoGrafico
+        {
+            VentasPorHora,
+            CantidadDeVentas,
+            MontoDeVentas
+        }
+
+        public TipoGrafico tipoGrafico;
+
         public FormGraficas()
         {
             InitializeComponent();
@@ -89,14 +99,32 @@ namespace Presentacion.Graficas
                 string diaEnIngles = CultureInfo.InvariantCulture.DateTimeFormat.DayNames[index].Substring(0); // placeholder
                                                                                                                // mejor: usamos DayOfWeek
                 DayOfWeek diaSemana = (DayOfWeek)((index + 1) % 7); // domingo = 0
-                CargarVentasPorHora(diaSemana);
+                if (tipoGrafico == TipoGrafico.VentasPorHora)
+                {
+                    CargarVentasPorHora(diaSemana);
+                }
+                else
+                {
+                    CargarFormaPago(diaSemana);
+                }
             }
         }
 
-        public void CargarFormaPago(string tipo)
+        public void CargarFormaPago(DayOfWeek? diaDeSemana)
         {
+            // Filtrar solo sábados
+            var diaSemanaSelected = dtVentasDiarias.AsEnumerable();
+
+            //validar si se eligio un dia de la semana
+            if (diaDeSemana.HasValue)
+            {
+                // Filtrar solo sábados
+                diaSemanaSelected = dtVentasDiarias.AsEnumerable()
+                    .Where(r => ((DateTime)r["fechaVenta"]).DayOfWeek == diaDeSemana);
+            }
+
             //por cantidad 
-            var FormasPagoPorCantidad = dtVentasDiarias.AsEnumerable()
+            var FormasPagoPorCantidad = diaSemanaSelected
                 .GroupBy(r => r["formaPago"].ToString())
                 .Select(g => new
                 {
@@ -107,7 +135,7 @@ namespace Presentacion.Graficas
                 .ToList();
 
             //por monto
-            var FormasPagoPorMonto = dtVentasDiarias.AsEnumerable()
+            var FormasPagoPorMonto = diaSemanaSelected
                 .GroupBy(r => r["formaPago"].ToString())
                 .Select(g => new
                 {
@@ -117,24 +145,30 @@ namespace Presentacion.Graficas
                 .OrderByDescending(x => x.Monto)
                 .ToList();
 
-
             chartVentasDiarias.Series.Clear();
             var serie = new Series();
 
-            if (tipo == "cantidad")
+            if (tipoGrafico == TipoGrafico.CantidadDeVentas)// "cantidad")
             {
                 serie.Name = "Cantidad por forma de pago";
                 serie.ChartType = SeriesChartType.Pie;
                 foreach (var item in FormasPagoPorCantidad)
                     serie.Points.AddXY(item.Forma, item.Cantidad);
+
             }
-            else if (tipo == "monto")
+            else if (tipoGrafico == TipoGrafico.MontoDeVentas)// "monto")
             {
                 serie.Name = "Monto por forma de pago";
                 serie.ChartType = SeriesChartType.Pie;
                 foreach (var item in FormasPagoPorMonto)
                     serie.Points.AddXY(item.Forma, item.Monto);
             }
+
+            // 👇 Mostrar cantidad y porcentaje
+            serie.Label = "#VALX\n#VAL (#PERCENT{P0})";
+            serie.LegendText = "#VALX (#PERCENT{P0})";
+            serie["PieLabelStyle"] = "Outside";
+            serie["PieLineColor"] = "Gray";
 
             serie.IsValueShownAsLabel = true;
             chartVentasDiarias.Series.Add(serie);
@@ -147,7 +181,6 @@ namespace Presentacion.Graficas
             //.Where(r => ((DateTime)r["fechaVenta"]).DayOfWeek == DayOfWeek.Saturday);
 
             //validar si se eligio un dia de la semana
-
             if (diaDeSemana.HasValue)
             {
                 // Filtrar solo sábados
@@ -175,23 +208,6 @@ namespace Presentacion.Graficas
                 })
                 .ToList();
 
-            //// --- Crear todos los intervalos posibles del día (00:00 a 23:45)
-            //var todosLosBloques = Enumerable.Range(0, 24 * 4) // 24h * 4 bloques/hora = 96 intervalos
-            //    .Select(i => new TimeSpan(0, i * 15, 0))
-            //    .ToList();
-
-            //// --- Unir los intervalos reales con los posibles (rellenar con 0 si no hay datos)
-            //var gruposCompletos = todosLosBloques
-            //    .Select(b =>
-            //    {
-            //        var existente = grupos.FirstOrDefault(g => g.Hora == b);
-            //        return new
-            //        {
-            //            Hora = $"{b:hh\\:mm}",
-            //            Cantidad = existente?.Cantidad ?? 0
-            //        };
-            //    })
-            //    .ToList();
             // --- Crear todos los intervalos posibles del día (00:00 a 23:45)
             var todosLosBloques = Enumerable.Range(0, 24 * 4)
                 .Select(i => new TimeSpan(0, i * 15, 0))
@@ -211,7 +227,6 @@ namespace Presentacion.Graficas
                 })
                 .ToList();
 
-
             // Configurar gráfico
             chartVentasDiarias.Series.Clear();
             chartVentasDiarias.ChartAreas.Clear();
@@ -221,12 +236,6 @@ namespace Presentacion.Graficas
             var serie = new Series("Clientes por horario (" + comboBoxDias.Text + ")");
             serie.ChartType = SeriesChartType.Line;
             serie.IsValueShownAsLabel = true;
-
-            //foreach (var item in grupos) 
-            //foreach (var item in gruposCompletos)
-            //{
-            //    serie.Points.AddXY(item.Hora, item.Cantidad);
-            //}
 
             // --- Detectar tramos largos (más de 12 bloques sin clientes)
             int contadorCeros = 0;
@@ -262,7 +271,6 @@ namespace Presentacion.Graficas
                 }
             }
 
-
             chartVentasDiarias.Series.Add(serie);
             chartVentasDiarias.ChartAreas[0].AxisX.Title = "Horario (rangos de 15 min)";
             chartVentasDiarias.ChartAreas[0].AxisY.Title = "Cantidad de clientes";
@@ -270,36 +278,6 @@ namespace Presentacion.Graficas
             chartVentasDiarias.ChartAreas[0].AxisX.LabelStyle.Angle = -45;
             chartVentasDiarias.ChartAreas[0].AxisX.MajorGrid.LineColor = System.Drawing.Color.WhiteSmoke;
             chartVentasDiarias.ChartAreas[0].AxisY.MajorGrid.LineColor = System.Drawing.Color.WhiteSmoke;
-
-            return;
-            //chartVentasDiarias.Series.Clear();
-            //chartVentasDiarias.ChartAreas.Clear();
-
-            //chartVentasDiarias.ChartAreas.Add("Area1");
-
-            //var serie = new Series("Ventas Diarias");
-            //serie.ChartType = SeriesChartType.Line;
-            //serie.BorderWidth = 3;
-            //serie.IsValueShownAsLabel = true;
-
-            ////        var dt = BD.Consultar(@"
-            ////    SELECT CONVERT(varchar(5), fecha, 103) AS Dia,
-            ////           SUM(importe) AS Total
-            ////    FROM Ventas
-            ////    WHERE fecha >= DATEADD(day, -7, GETDATE())
-            ////    GROUP BY CONVERT(varchar(5), fecha, 103)
-            ////    ORDER BY MIN(fecha)
-            ////");
-
-            //dtVentasDiarias.Columns.Add("horaVenta", typeof(string));
-            //foreach (DataRow r in dtVentasDiarias.Rows)
-            //{
-            //    DateTime fecha = Convert.ToDateTime(r["fechaVenta"]);
-            //    r["horaVenta"] = fecha.ToString("HH:mm");
-            //    serie.Points.AddXY(r["horaVenta"], r["totalKg"]);
-            //}
-
-            //chartVentasDiarias.Series.Add(serie);
         }
     }
 }

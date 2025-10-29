@@ -595,34 +595,21 @@ namespace Presentacion
 
         private void clientesPorHoraToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Graficas("clientesPorHora");
-            //Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
-            //frmGrafica.dtVentasDiarias = dtVentas;
-            //frmGrafica.CargarVentasPorHora(null);
-            //frmGrafica.Show();
+            Graficas_(Graficas.FormGraficas.TipoGrafico.VentasPorHora);//("clientesPorHora");
         }
 
         private void cantidadDeVentasToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Graficas("cantidadDeVentas");
+            Graficas_(Graficas.FormGraficas.TipoGrafico.CantidadDeVentas);//("cantidadDeVentas");
 
-            //Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
-            //frmGrafica.dtVentasDiarias = dtVentas;
-            //frmGrafica.CargarFormaPago("cantidad");
-            //frmGrafica.Show();
         }
 
         private void porMontoDeVentasToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Graficas("porMontoDeVentas");
-
-            //Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
-            //frmGrafica.dtVentasDiarias = dtVentas;
-            //frmGrafica.CargarFormaPago("monto");
-            //frmGrafica.Show();
+            Graficas_(Graficas.FormGraficas.TipoGrafico.MontoDeVentas);// "porMontoDeVentas");
         }
 
-        private void Graficas(string tipoGrafica)
+        private void Graficas_(Graficas.FormGraficas.TipoGrafico  tipoGrafica)
         {
             //List<string> seleccionadosFormaPago = new List<string>();
             string seleccionadosFormaPago = "";
@@ -654,7 +641,6 @@ namespace Presentacion
             //seleccionadosTipoComprobante = string.IsNullOrEmpty(seleccionadosTipoComprobante) ? "Ninguna" : seleccionadosFormaPago;
             SeleccionadosCondVenta = checkListCondVenta.CheckedItems.Count == checkListCondVenta.Items.Count ? "TODAS" : SeleccionadosCondVenta;
 
-
             Graficas.FormGraficas frmGrafica = new Graficas.FormGraficas();
             frmGrafica.dtVentasDiarias = (grillaVentas.DataSource as DataTable).DefaultView.ToTable();// dtVentas;
             frmGrafica.sucursal = comboSucursal.Text;
@@ -666,18 +652,18 @@ namespace Presentacion
             frmGrafica.seleccionadosFormaPago = seleccionadosFormaPago;
             frmGrafica.seleccionadosTipoComprobante = seleccionadosTipoComprobante;
             frmGrafica.SeleccionadosCondVenta = SeleccionadosCondVenta;
+            frmGrafica.tipoGrafico = tipoGrafica;
              switch (tipoGrafica)
             {
-                case "clientesPorHora":
+                case Graficas.FormGraficas.TipoGrafico.VentasPorHora://"clientesPorHora":
                     frmGrafica.CargarVentasPorHora(null);
                     break;
-                case "cantidadDeVentas":
-                    frmGrafica.CargarFormaPago("cantidad");
+                case Graficas.FormGraficas.TipoGrafico.CantidadDeVentas://"cantidadDeVentas":
+                    frmGrafica.CargarFormaPago(null);
                     break;
-                case "porMontoDeVentas":
-                    frmGrafica.CargarFormaPago("monto");
+                case Graficas.FormGraficas.TipoGrafico.MontoDeVentas:// "porMontoDeVentas":
+                    frmGrafica.CargarFormaPago(null);
                     break;
-
             }
             frmGrafica.Show();
         }

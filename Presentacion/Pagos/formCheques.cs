@@ -185,7 +185,7 @@ namespace Presentacion.Cheques
             txtFechaDesde.Value = DateTime.Now.AddDays(-30);
             txtFechaHasta.Value = DateTime.Now.AddMonths(12); 
             txtUsuario.Text = oUsuario.Nombre;
-            groupChequeEstado(false || llamadoDesdePago);
+            groupChequeEstado(false || (llamadoDesdePago && txtNroCheque.Text != ""));
 
             // Limpia y carga el combo igual que antes
             comboBanco.Items.Clear();
