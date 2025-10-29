@@ -56,9 +56,6 @@ namespace Presentacion.Graficas
         // Método para cargar el ComboBox
         private void CargarComboDias()
         {
-            if (!formCargado)
-                return;
-
             comboBoxDias.Items.Clear();
 
             // agregamos 'Todos' primero
@@ -77,15 +74,11 @@ namespace Presentacion.Graficas
         // Evento SelectedIndexChanged para convertir a inglés
         private void comboBoxDias_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (comboBoxDias.SelectedItem == null) return;
+            if (comboBoxDias.SelectedItem == null || !formCargado) return;
 
             string seleccionado = comboBoxDias.SelectedItem.ToString();
 
-            if (seleccionado == "Todos los días")
-            {
-                CargarVentasPorHora(null);
-                return;
-            }
+            DayOfWeek? diaSemana = null;
 
             // buscamos el índice del día en español
             string[] diasEsp = CultureInfo.CurrentCulture.DateTimeFormat.DayNames;
@@ -98,15 +91,16 @@ namespace Presentacion.Graficas
                 // obtenemos el nombre en inglés
                 string diaEnIngles = CultureInfo.InvariantCulture.DateTimeFormat.DayNames[index].Substring(0); // placeholder
                                                                                                                // mejor: usamos DayOfWeek
-                DayOfWeek diaSemana = (DayOfWeek)((index + 1) % 7); // domingo = 0
-                if (tipoGrafico == TipoGrafico.VentasPorHora)
-                {
-                    CargarVentasPorHora(diaSemana);
-                }
-                else
-                {
-                    CargarFormaPago(diaSemana);
-                }
+                diaSemana = (DayOfWeek)((index + 1) % 7); // domingo = 0  
+            }
+
+            if (tipoGrafico == TipoGrafico.VentasPorHora)
+            {
+                CargarVentasPorHora(diaSemana);
+            }
+            else
+            {
+                CargarFormaPago(diaSemana);
             }
         }
 
@@ -146,11 +140,12 @@ namespace Presentacion.Graficas
                 .ToList();
 
             chartVentasDiarias.Series.Clear();
+            chartVentasDiarias.Titles.Clear(); // Limpia títulos anteriores
             var serie = new Series();
 
             if (tipoGrafico == TipoGrafico.CantidadDeVentas)// "cantidad")
             {
-                serie.Name = "Cantidad por forma de pago";
+                serie.Name = "Cantidad ventas según forma de pago";
                 serie.ChartType = SeriesChartType.Pie;
                 foreach (var item in FormasPagoPorCantidad)
                     serie.Points.AddXY(item.Forma, item.Cantidad);
@@ -158,20 +153,40 @@ namespace Presentacion.Graficas
             }
             else if (tipoGrafico == TipoGrafico.MontoDeVentas)// "monto")
             {
-                serie.Name = "Monto por forma de pago";
+                serie.Name = "Monto ventas según forma de pago";
                 serie.ChartType = SeriesChartType.Pie;
+                //serie.LabelFormat = "N2"; // <-- formato numérico
+                serie.LabelForeColor = Color.Black;
+                serie.Font = new Font("Segoe UI", 9, FontStyle.Regular);
                 foreach (var item in FormasPagoPorMonto)
-                    serie.Points.AddXY(item.Forma, item.Monto);
+                //serie.Points.AddXY(item.Forma, item.Monto);
+                {
+                    int idx = serie.Points.AddXY(item.Forma, item.Monto);
+                    var punto = serie.Points[idx];
+                    // Muestra: "Efectivo: $12.345,67 (40%)"
+                    punto.Label = $"{item.Forma}: ${item.Monto:N2} (#PERCENT{{P0}})";
+                }
             }
 
             // 👇 Mostrar cantidad y porcentaje
-            serie.Label = "#VALX\n#VAL (#PERCENT{P0})";
+            //serie.Label = "#VALX\n#VAL (#PERCENT{P0})";
+            serie.Label = "#VALX: #PERCENT{P1} (#VALY{N2})";
             serie.LegendText = "#VALX (#PERCENT{P0})";
             serie["PieLabelStyle"] = "Outside";
             serie["PieLineColor"] = "Gray";
 
             serie.IsValueShownAsLabel = true;
             chartVentasDiarias.Series.Add(serie);
+            
+            // 🔹 Agregar título visible arriba del gráfico
+            var titulo = new Title
+            {
+                Text = serie.Name,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.Black,
+                Alignment = ContentAlignment.TopCenter
+            };
+            chartVentasDiarias.Titles.Add(titulo);
         }
 
         public void CargarVentasPorHora(DayOfWeek? diaDeSemana)
