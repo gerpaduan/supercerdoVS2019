@@ -880,6 +880,8 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@importeNetoGravado", oFacturaElectronicaE.ImporteNetoGravado);
             cmVenta.Parameters.AddWithValue("@iva", oFacturaElectronicaE.Iva);
             cmVenta.Parameters.AddWithValue("@importeTotal", oFacturaElectronicaE.ImporteTotal);
+            cmVenta.Parameters.AddWithValue("@PorcentajeFacturacion", oFacturaElectronicaE.PorcentajeFacturacion);
+            cmVenta.Parameters.AddWithValue("@descItemUnitario", oFacturaElectronicaE.DescItemUnitario);
             cmVenta.Parameters.AddWithValue("@idVenta", oFacturaElectronicaE.IdVenta);
             cmVenta.Parameters.AddWithValue("@error", oFacturaElectronicaE.Error);
             cmVenta.Parameters.AddWithValue("@mensajeError", oFacturaElectronicaE.MensajeError);
@@ -946,6 +948,8 @@ namespace Datos
                         oFacturaElectronicaE.ImporteNetoGravado = string.IsNullOrEmpty((drFactuElec["importeNetoGravado"]).ToString()) ? 0 : float.Parse((drFactuElec["importeNetoGravado"]).ToString());
                         oFacturaElectronicaE.Iva = string.IsNullOrEmpty((drFactuElec["iva"]).ToString()) ? 0 : float.Parse((drFactuElec["iva"]).ToString());
                         oFacturaElectronicaE.ImporteTotal = string.IsNullOrEmpty((drFactuElec["importeTotal"]).ToString()) ? 0 : float.Parse((drFactuElec["importeTotal"]).ToString());
+                        oFacturaElectronicaE.PorcentajeFacturacion = string.IsNullOrEmpty((drFactuElec["porcentajeFacturacion"]).ToString()) ? 100 : float.Parse((drFactuElec["porcentajeFacturacion"]).ToString());
+                        oFacturaElectronicaE.DescItemUnitario = Convert.ToString(drFactuElec["descItemUnitario"]);
                         oFacturaElectronicaE.IdVenta = Convert.ToInt32(drFactuElec["idVenta"]);
                         oFacturaElectronicaE.Error = Convert.ToBoolean(drFactuElec["error"]);
                         oFacturaElectronicaE.MensajeError = Convert.ToString(drFactuElec["mensajeError"]);

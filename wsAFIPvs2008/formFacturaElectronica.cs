@@ -219,7 +219,7 @@ namespace wsAFIPvs2008
             ///TODO: si factura parcial es distinto a 100%
             ///falta cargar campo porcentaFacturacion a tabla FActuraElectronica y obtener el valor para cargarlo
             ///en caso qeu ya exista factura
-            if (txtPorcentajeFacturación.Text == "100")
+            if (txtPorcentajeFacturacion.Text == "100")
             {
 
                 oVentaE = !string.IsNullOrEmpty(txtIdVenta.Text) ? oVentaN.getVentaById(Convert.ToInt32(txtIdVenta.Text)) : null;
@@ -246,6 +246,10 @@ namespace wsAFIPvs2008
                 TiposComprobantesCMB.Enabled = idFactuElec == 0;
                 TipoDocCMB.Enabled = idFactuElec == 0;
                 DocTX.ReadOnly = idFactuElec != 0;
+                checkEditarPorcFactura.Visible = true;
+                checkEditarPorcFactura.Checked = idFactuElec != 0 && oFactuElec.PorcentajeFacturacion != 100;
+                checkEditarPorcFactura.Enabled = idFactuElec == 0;
+                checkItemUnitario.Checked = !string.IsNullOrEmpty(oFactuElec.DescItemUnitario);
                 imprimir.Enabled = idFactuElec != 0;
                 pdf_Factura.Enabled = idFactuElec != 0;
 
@@ -253,11 +257,17 @@ namespace wsAFIPvs2008
                 if (cargarDatosAfip)
                     cargaDatosAfipRecibidos();
                 else
-                    inicializaciones(mostrarSeleccionados);           
+                    inicializaciones(mostrarSeleccionados);
+
+                //Se establece ultimo porque sino el txtChanged del txtPorcentajeFacturacion se ejecuta antes de tiempo
+                txtPorcentajeFacturacion.Text = Math.Round(oFactuElec.PorcentajeFacturacion, 2).ToString();
+                txtPorcentajeFacturacion.ReadOnly = idFactuElec != 0;
+                //se actualiza las lineas por si cambió el porcentaje de facturacion
+                oFactuElec.Venta.LineasVenta = oVentaE.LineasVenta;
             }
             else
             {
-                float porcentajeFacturacion = float.Parse(txtPorcentajeFacturación.Text) / 100; 
+                float porcentajeFacturacion = float.Parse(txtPorcentajeFacturacion.Text) / 100; 
                 foreach (var linea in oVentaE.LineasVenta)
                     linea.PrecioKg = linea.PrecioKgOriginal * porcentajeFacturacion;
 
@@ -902,6 +912,7 @@ namespace wsAFIPvs2008
                        {
                            oFactuElec.RazonSocialAFIP = txtRazonSocial.Text;
                            oFactuElec.DomicilioAFIP = txtDomicilio.Text;
+                            oFactuElec.DescItemUnitario = txtDescItemUnitario.Text;
                            //oFactuElec.CondicionIvaAFIP = comboIva.Text;
                            oVentaN.addOrEditFactuElec(oFactuElec);
                            //imprimirTicket(oFactuElec.esFacturaA(TiposComprobantesCMB.SelectedValue.ToString()), respuesta);
@@ -1092,6 +1103,7 @@ namespace wsAFIPvs2008
                     oFactuElec.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
                     oFactuElec.ImporteTotal = Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
+                    oFactuElec.DescItemUnitario = checkItemUnitario.Checked ? txtDescItemUnitario.Text : "";
 
                     oVentaN.addOrEditFactuElec(oFactuElec);
 
@@ -1904,6 +1916,9 @@ namespace wsAFIPvs2008
                 productosTable.AddCell(celda);
             }
 
+            ///TODO: si es descripcion de unitario habria q crear un registro por cada alicuota
+            ///
+
             oDocumentoImprimir.Venta = oDocumentoImprimir.Venta == null ? oVentaE : oDocumentoImprimir.Venta;
 
             foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
@@ -2549,16 +2564,29 @@ namespace wsAFIPvs2008
         private void txtPorcentajeFacturación_TextChanged(object sender, EventArgs e)
         {
             float valor;
-            if (float.TryParse(txtPorcentajeFacturación.Text, out valor))
+            if (float.TryParse(txtPorcentajeFacturacion.Text, out valor))
             {
                 cargarVenta();
-                txtPorcentajeFacturación.Focus();
+                txtPorcentajeFacturacion.Focus();
             }
             else
             {
                 // ❌ el texto no era numérico
                 MessageBox.Show("Ingrese un número válido.");
             }
+        }
+
+        private void checkEditarPorcFactura_CheckedChanged(object sender, EventArgs e)
+        {
+
+            checkEditarPorcFactura.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkEditarPorcFactura.Checked);
+            txtPorcentajeFacturacion.ReadOnly = !checkEditarPorcFactura.Checked;
+        }
+
+        private void checkItemUnitario_CheckedChanged(object sender, EventArgs e)
+        {
+            grillaLineasVenta.Visible = !checkItemUnitario.Checked;
+            panelDescItemUnitario.Visible = checkItemUnitario.Checked;
         }
 
         private string ConvertirCentena(int numero, string[] unidades, string[] decenas, string[] especiales, string[] centenas)

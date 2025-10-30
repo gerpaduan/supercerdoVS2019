@@ -151,65 +151,74 @@ DELETE PROCEDURE [dbo].[buscarPersona]
 agregar tabla Empresas 
 actulaizar tabla Sucursal
 
+/////
+30 oct 2025
 
-//
--- ================================================
--- Template generated from Template Explorer using:
--- Create Procedure (New Menu).SQL
---
--- Use the Specify Values for Template Parameters 
--- command (Ctrl-Shift-M) to fill in the parameter 
--- values below.
---
--- This block of comments will not be included in
--- the definition of the procedure.
--- ================================================
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
--- Author:		<Author,,Name>
--- Create date: <Create Date,,>
--- Description:	<Description,,>
--- =============================================
-CREATE PROCEDURE addOrEditCompra
+agregar campo porcentajaFacturacion en FacturaElectronica
 
-	@idCompra int = 0,--@idCompra
-	@nroRemito nvarchar(50),
-	@fechaCompra datetime,
-	@idProveedor int,
-	@cantMedias int = null,
-	@kgsMedias int = null,
-	@estado nvarchar(50),
-	@observaciones nvarchar(max),
-	@tipoCompra nvarchar(50),
-	@idSucursal int,
-	@creadoPor int = null,
-	@actualizadoPor int = null,
-	@enCtaCte tinyint = 0
+ALTER TABLE FacturaElectronica
+ADD porcentajeFacturacion FLOAT DEFAULT 100;
+
+
+ALTER TABLE FacturaElectronica
+ADD descItemUnitario NVARCHAR(50) NULL;
+
+-------
+
+ALTER PROCEDURE [dbo].[addOrEditFacturaElectronica] 
+	-- Add the parameters for the stored procedure here
+	@id int = null,
+	@ptoVtaAfip nvarchar(50) = null,
+	@fechaEmisionAfip nvarchar(50) = null,
+	@descTipoCbteAfip nvarchar(50) = null,
+	@codTipoCbteAfip int = null,
+	@nroCbteAfip nvarchar(50) = null,
+	@tipoDocAfip nvarchar(50) = null,
+	@nroDocAfip nvarchar(50) = null,
+	@razonSocialAFIP nvarchar(50) = null,
+	@condicionIvaAFIP nvarchar(50) = null,
+	@domicilioAFIP nvarchar(50) = null,
+	@condicionVenta nvarchar(50) = null,
+	@formaPago nvarchar(50) = null,
+	@CAE nvarchar(50) = null,
+	@fecVtoCAE nvarchar(50) = null,
+	@importeNetoGravado float = null,
+	@iva float = null,
+	@importeTotal float = null,
+	@porcentajeFacturacion float = 100,
+	@idVenta int = null,
+	@error tinyint = null,
+	@mensajeError nvarchar(MAX) = null,
+	@fechaError nvarchar(50) = null,
+	@cantErrores int = 0
+
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	IF @idCompra= 0 
-			BEGIN 
-				insert into Compras (nroRemito, fechaCompra, idProveedor, estado, observaciones,tipoCompra, cantMedias, kgsMedias, enCtaCte, idSucursal, creado, creadoPor)
-				values (@nroRemito,@fechaCompra,@idProveedor,@estado,@observaciones,@tipoCompra, @cantMedias, @kgsMedias, @enCtaCte, @idSucursal, SYSDATETIME(), @creadoPor)
-	
-			set @idCompra= SCOPE_IDENTITY()
-			END 
-		ELSE 
-			BEGIN 
-				update Compras set nroRemito=@nroRemito,fechaCompra=@fechaCompra,
-				idProveedor=@idProveedor, cantMedias=@cantMedias, kgsMedias=@kgsMedias,estado=@estado, observaciones=@observaciones, tipoCompra=@tipoCompra, enCtaCte = @enCtaCte, idSucursal=@idSucursal ,actualizado = SYSDATETIME(), actualizadoPor = @actualizadoPor
-				where idCompra=@idCompra
-	
-				delete from CortePorCompra where CortePorCompra.idCompra=@idCompra
-				delete from MediaRes where MediaRes.idCompra=@idCompra
-			END 
 
-	select @idCompra
+		IF @id = 0 
+			BEGIN 
+				INSERT INTO dbo.FacturaElectronica (ptoVtaAfip,fechaEmisionAfip,descTipoCbteAfip, codTipoCbteAfip ,nroCbteAfip, tipoDocAfip, nroDocAfip,razonSocialAFIP,condicionIvaAFIP,domicilioAFIP,condicionVenta,formaPago,CAE,fecVtoCAE,importeNetoGravado,iva,importeTotal, porcentajeFacturacion, descItemUnitario,idVenta,creado,error,mensajeError,fechaError, cantErrores)
+				 VALUES (@ptoVtaAfip, @fechaEmisionAfip,@descTipoCbteAfip, @codTipoCbteAfip,@nroCbteAfip, @tipoDocAfip,@nroDocAfip,@razonSocialAFIP,@condicionIvaAFIP,@domicilioAFIP,@condicionVenta,@formaPago,@CAE,@fecVtoCAE,@importeNetoGravado,@iva,@importeTotal, @porcentajeFacturacion, @descItemUnitario, @idVenta,SYSDATETIME(),@error,@mensajeError, @fechaError, @cantErrores) 
+				set @id = SCOPE_IDENTITY()
+				END 
+			ELSE 
+			BEGIN 
+				set @cantErrores = 0			
+				IF @CAE is null or @CAE like ''
+				BEGIN						
+					SET @cantErrores = (SELECT FacturaElectronica.cantErrores + 1 from FacturaElectronica WHERE id = @id)	
+				END		
+			
+				UPDATE dbo.FacturaElectronica set ptoVtaAfip = @ptoVtaAfip , fechaEmisionAfip = fechaEmisionAfip , descTipoCbteAfip = @descTipoCbteAfip , codTipoCbteAfip = @codTipoCbteAfip, nroCbteAfip = @nroCbteAfip , tipoDocAfip = @tipoDocAfip , nroDocAfip = @nroDocAfip , razonSocialAFIP = @razonSocialAFIP , condicionIvaAFIP = @condicionIvaAFIP , domicilioAFIP = @domicilioAFIP , condicionVenta = @condicionVenta , formaPago = @formaPago , CAE = @CAE , fecVtoCAE = @fecVtoCAE , importeNetoGravado = @importeNetoGravado , iva = @iva , importeTotal = @importeTotal, porcentajeFacturacion = @porcentajeFacturacion, descItemUnitario = @descItemUnitario , idVenta = @idVenta , error = @error , mensajeError = @mensajeError , fechaError = @fechaError, cantErrores=@cantErrores      
+				WHERE id = @id		
+			END 
+		select @id 
 END
-GO
+
+---
+
+
+---

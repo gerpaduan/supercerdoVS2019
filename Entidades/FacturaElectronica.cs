@@ -272,7 +272,12 @@ namespace Entidades
             set { venta = value; }
         }
 
+        float porcentajeFacturacion;
+
+        string descItemUnitario;
         public List<AlicuotaIva> ListaAlicuota { get => listaAlicuota; set => listaAlicuota = value; }
+        public float PorcentajeFacturacion { get => porcentajeFacturacion; set => porcentajeFacturacion = value; }
+        public string DescItemUnitario { get => descItemUnitario; set => descItemUnitario = value; }
 
         private List<Entidades.AlicuotaIva> listaAlicuota;
     }
