@@ -378,14 +378,14 @@
   <data name="menuGraficas.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGaSURBVEhLYxgFdAH/YiuE/0ZVb/0XXWsKFaIuSHGJ7PsU
-        WfXiX0y1B1SIesDaISjZxj5wDpRLOnAOiBXOO3Jwe8zEmbOsHEPUocJgYG0X4GnjELjJ3t6eBSpEGrBx
-        CtGydQo5nnvgwNmkJUv7beyDlgAN3JdXOr1/yvwzC6ztgw7Y24fy/DsYZ/dvf1zMv33xwVCthAHQ2x5A
-        ww7Z2oYoQoXAAGRg3/Sji+etvPPW3z9TFiT2b3/suv8H4v7/OxD7HKwIH/i/P97hw7bYG+HBIUCvh/KA
-        xOrr/zOBMFgBFKxa9Z8ZyiTNgn8Hom2BCo/82xMhDuIvWveoftH6R//BeO0dsfr//5mKjx6VB+HyM2f4
-        wXpIsQAdoFuQd/y4eMHJ4/9BOP/EsTqQGtJ8EFWj+y+63giYpsFhTwsLnv+Prv0PpNeB+KMWYIDhYEHt
-        DaAFH4D0YhB/0foH5QvXP/oAwks3PRXJPXdIFGjwBxAuOHGsDKznQOzi/wdiP/w7EHcDxB8YYOMYYGzt
-        ELibGtjWKdAIauwoIAQYGACaxcuNLb+JbAAAAABJRU5ErkJggg==
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGkSURBVEhLYxgFdAH/YiuE/0ZVbf0XXWsKFaIuSHGJ7PsY
+        WfXiX0y1B1SIesDaISjZxj5wDpRLOnAOiBXOO3Jwe8zEGbOsHEPUocJgYG0X4GnjELjJ3t6eBSpEGrBx
+        CtGydQo5nrt//9mkJUv7beyDltg4BOzLK53eP2X+mQVWdkEH7O1Def4djLP7tz8u5t+++GCoVsIA6G0P
+        oOsO2dqGKEKFwABkYN/0o4vnrbj91t8/UxYk9ndfzLr/B+L+/z0Q8xysCB/4vz/e4f3W2BvhwSFAr4fy
+        gMTq6/8zgTBYARSsWvWfGcokzYJ/B6JtgQqP/NsTIQ7iL1r3qH7R+kf/wXjtHbH6//+Zio8elQfh8jNn
+        +EFqSLIAHaBbkHf8uHjByeP/QTj/xLE6kBrSfBBVo/svut4ImKbBYU91C/5GVT//H137/29kzToQf9QC
+        DDAMLIisvQG04MPfqNrFIP6i9Q/KF65/9AGEl256KpJ77pBo3vGjH0C44MSxMrCeAzGL/x+I/fD3QNwN
+        EH9ggI1jgLGVQ8BuamBbp0AjqLGjgBBgYAAA7bzLCf7UrTAAAAAASUVORK5CYII=
 </value>
   </data>
   <data name="btnBuscarCliente.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
@@ -473,6 +473,9 @@
   </metadata>
   <metadata name="estado.UserAddedColumn" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>51</value>
   </metadata>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>

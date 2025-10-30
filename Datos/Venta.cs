@@ -285,6 +285,7 @@ namespace Datos
 
                 oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
                 oVentaE.TotalImporte = getTotalVenta(idVenta);
+                oVentaE.TotalImporteOriginal = oVentaE.TotalImporte;
                 oVentaE.CantItems = oVentaE.getCantItems(oVentaE).ToString();
             }
 
@@ -358,6 +359,7 @@ namespace Datos
                         oLinea.IdAlicuotaIva = Convert.ToInt32(drLinea["idAlicuotaIva"]);
                         oLinea.AlicuotaIva = float.Parse(drLinea["alicuotaIva"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
+                        oLinea.PrecioKgOriginal = oLinea.PrecioKg;
                         oLinea.KgsAjusteTarj = float.Parse(drLinea["kgsAjusteTarj"].ToString());
                         oLinea.Bonificacion = string.IsNullOrEmpty(drLinea["bonificacion"].ToString()) ? 0 : float.Parse(drLinea["bonificacion"].ToString());
                         oLinea.IndexAnulado = DBNull.Value.Equals(drLinea["idLineaVentaAnulado"]) ? -1 : Convert.ToInt32(drLinea["idLineaVentaAnulado"].ToString());

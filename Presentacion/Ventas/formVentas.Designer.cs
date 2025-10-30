@@ -245,7 +245,7 @@
             // clientesPorHoraToolStripMenuItem
             // 
             this.clientesPorHoraToolStripMenuItem.Name = "clientesPorHoraToolStripMenuItem";
-            this.clientesPorHoraToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.clientesPorHoraToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.clientesPorHoraToolStripMenuItem.Text = "Clientes por Hora";
             this.clientesPorHoraToolStripMenuItem.Click += new System.EventHandler(this.clientesPorHoraToolStripMenuItem_Click);
             // 
@@ -255,7 +255,7 @@
             this.cantidadDeVentasToolStripMenuItem,
             this.porMontoDeVentasToolStripMenuItem});
             this.segunToolStripMenuItem.Name = "segunToolStripMenuItem";
-            this.segunToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.segunToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.segunToolStripMenuItem.Text = "Forma de Pago";
             // 
             // cantidadDeVentasToolStripMenuItem

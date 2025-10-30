@@ -26,7 +26,8 @@ namespace Entidades
         int idLineaVenta;
          float cantKg;
          float precioKg;
-         float bonificacion;
+         float precioKgOriginal;
+        float bonificacion;
          float precioReal;
         private float idAlicuotaIva;
         float alicuotaIva;
@@ -167,5 +168,6 @@ namespace Entidades
         public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
         public float AjustePrecio1 { get => ajustePrecio; set => ajustePrecio = value; }
         public int IdExpendio { get => idExpendio; set => idExpendio = value; }
+        public float PrecioKgOriginal { get => precioKgOriginal; set => precioKgOriginal = value; }
     }
 }

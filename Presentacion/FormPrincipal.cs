@@ -1321,5 +1321,23 @@ namespace Presentacion
         {
 
         }
+
+        private void factura_Click(object sender, EventArgs e)
+        {
+
+            if (Application.OpenForms["formVentas"] != null)
+            {
+                Application.OpenForms["formVentas"].Activate();
+                Application.OpenForms["formVentas"].WindowState = FormWindowState.Normal;
+            }
+            else
+            {
+                if (!ValidarInicioSesion()) return;
+
+                formVentas frmVentas = new formVentas();
+                frmVentas.Logueado = true;
+                frmVentas.Show();
+            }
+        }
     }
 }

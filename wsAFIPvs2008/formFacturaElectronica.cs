@@ -216,38 +216,53 @@ namespace wsAFIPvs2008
             if (idVenta == 0)
                 return;
 
-            oVentaE = !string.IsNullOrEmpty(txtIdVenta.Text) ? oVentaN.getVentaById(Convert.ToInt32(txtIdVenta.Text)) : null;
-
-            label_Sucursal.Text = oSucursalEntidad.getNomSucPorPtoVtaAfip(ptoVtaAfip);
-            facturaPendiente = true;
-            FechaDTP.Enabled = logueado;
-            checkTodosDatos.Enabled = logueado;
-            CargaBtn.Enabled = logueado;
-            mostrarSeleccionados = !checkTodosDatos.Checked;
-            txtFormaPago.Text = oVentaE.FormaPago + (oVentaE.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
-            TotalTx.ReadOnly = mostrarSeleccionados;
-            TotalTx.Text = "";
-            //Si el Obj Venta es nulo se cargaDatosAfip y sale del metodo
-            if (oVentaE == null || oVentaE.IdVenta == 0)
+            ///TODO: si factura parcial es distinto a 100%
+            ///falta cargar campo porcentaFacturacion a tabla FActuraElectronica y obtener el valor para cargarlo
+            ///en caso qeu ya exista factura
+            if (txtPorcentajeFacturación.Text == "100")
             {
-                cargaDatosAfipRecibidos();
-                return;
+
+                oVentaE = !string.IsNullOrEmpty(txtIdVenta.Text) ? oVentaN.getVentaById(Convert.ToInt32(txtIdVenta.Text)) : null;
+
+                label_Sucursal.Text = oSucursalEntidad.getNomSucPorPtoVtaAfip(ptoVtaAfip);
+                facturaPendiente = true;
+                FechaDTP.Enabled = logueado;
+                checkTodosDatos.Enabled = logueado;
+                CargaBtn.Enabled = logueado;
+                mostrarSeleccionados = !checkTodosDatos.Checked;
+                txtFormaPago.Text = oVentaE.FormaPago + (oVentaE.PagoMixtoEfectivo > 0 ? " | Efectivo" : "");
+                TotalTx.ReadOnly = mostrarSeleccionados;
+                TotalTx.Text = "";
+                //Si el Obj Venta es nulo se cargaDatosAfip y sale del metodo
+                if (oVentaE == null || oVentaE.IdVenta == 0)
+                {
+                    cargaDatosAfipRecibidos();
+                    return;
+                }
+
+                idFactuElec = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);
+                oFactuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
+                ///Si la Venta ya fue facturada, se bloquean y habilitan los campos y componentes que no pueden ser modificados
+                TiposComprobantesCMB.Enabled = idFactuElec == 0;
+                TipoDocCMB.Enabled = idFactuElec == 0;
+                DocTX.ReadOnly = idFactuElec != 0;
+                imprimir.Enabled = idFactuElec != 0;
+                pdf_Factura.Enabled = idFactuElec != 0;
+
+                label_Sucursal.Text = oVentaE.Sucursal.sucursal;
+                if (cargarDatosAfip)
+                    cargaDatosAfipRecibidos();
+                else
+                    inicializaciones(mostrarSeleccionados);           
             }
-
-            idFactuElec = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);
-            oFactuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
-            ///Si la Venta ya fue facturada, se bloquean y habilitan los campos y componentes que no pueden ser modificados
-            TiposComprobantesCMB.Enabled = idFactuElec == 0;
-            TipoDocCMB.Enabled = idFactuElec == 0;
-            DocTX.ReadOnly = idFactuElec != 0;
-            imprimir.Enabled = idFactuElec != 0;
-            pdf_Factura.Enabled = idFactuElec != 0;
-
-            label_Sucursal.Text = oVentaE.Sucursal.sucursal;
-            if (cargarDatosAfip)
-                cargaDatosAfipRecibidos();
             else
-                inicializaciones(mostrarSeleccionados);
+            {
+                float porcentajeFacturacion = float.Parse(txtPorcentajeFacturación.Text) / 100; 
+                foreach (var linea in oVentaE.LineasVenta)
+                    linea.PrecioKg = linea.PrecioKgOriginal * porcentajeFacturacion;
+
+                oVentaE.TotalImporte = oVentaE.TotalImporteOriginal * porcentajeFacturacion;
+            }
 
             cambiarIngresoImporte();
             cargarGrilla(); //cambio de lugar - antes estaba arriba de if(cargarDatosAfip)
@@ -362,6 +377,13 @@ namespace wsAFIPvs2008
             listaIdAlicuotaConIva.Clear();
             importeTotal = importeNeto = importeIva = 0;
 
+            //Inicializo valores de las Base Imponible de Alicuotas
+            for (int i = 0; i < listaAlicuotasFactura.Count; i++)
+            {
+                listaAlicuotasFactura[i].BaseImponible = 0;
+                listaAlicuotasFactura[i].Importe = 0;
+            }
+
             foreach (Entidades.LineaVenta lineaE in oVentaE.LineasVenta)
             {
                 lineaVentaP = new Entidades.lineaVentaUnificada();
@@ -398,7 +420,6 @@ namespace wsAFIPvs2008
                         importeIva += lineaVentaP.totalS - baseImponibleLinea;
                         listaAlicuotasFactura[i].BaseImponible += (float)Math.Round(baseImponibleLinea, 2);
                         listaAlicuotasFactura[i].Importe += (float)Math.Round((lineaVentaP.totalS - baseImponibleLinea),2);
-
                     }
                 }
 
@@ -2523,6 +2544,21 @@ namespace wsAFIPvs2008
         {
             if (onCloseCallback != null)
                 onCloseCallback();
+        }
+
+        private void txtPorcentajeFacturación_TextChanged(object sender, EventArgs e)
+        {
+            float valor;
+            if (float.TryParse(txtPorcentajeFacturación.Text, out valor))
+            {
+                cargarVenta();
+                txtPorcentajeFacturación.Focus();
+            }
+            else
+            {
+                // ❌ el texto no era numérico
+                MessageBox.Show("Ingrese un número válido.");
+            }
         }
 
         private string ConvertirCentena(int numero, string[] unidades, string[] decenas, string[] especiales, string[] centenas)

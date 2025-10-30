@@ -97,6 +97,7 @@ namespace Entidades
         private float pagoMixtoEfectivo;
          private string imprimirTipoCbte;//0-SinTicket | 1-Ticket | 2-Factura.
          private float totalImporte;
+        private float totalImporteOriginal;
         //campos para punto de expendio
         private int idExpendio;
         private string identificacionExpendio;
@@ -339,5 +340,6 @@ namespace Entidades
         public int IdSucursal { get => idSucursal; set => idSucursal = value; }
         public float Abona { get => abona; set => abona = value; }
         public float Cambio { get => cambio; set => cambio = value; }
+        public float TotalImporteOriginal { get => totalImporteOriginal; set => totalImporteOriginal = value; }
     }
 }
