@@ -244,8 +244,11 @@ namespace wsAFIPvs2008
                 oFactuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
                 ///Si la Venta ya fue facturada, se bloquean y habilitan los campos y componentes que no pueden ser modificados
                 TiposComprobantesCMB.Enabled = idFactuElec == 0;
+                comboIva.Enabled = idFactuElec == 0;
                 TipoDocCMB.Enabled = idFactuElec == 0;
+                btnBuscarCuit.Visible = false;
                 DocTX.ReadOnly = idFactuElec != 0;
+                FechaDTP.Enabled = idFactuElec == 0;
                 checkEditarPorcFactura.Visible = true;
                 checkEditarPorcFactura.Checked = idFactuElec != 0 && oFactuElec.PorcentajeFacturacion != 100;
                 checkEditarPorcFactura.Enabled = idFactuElec == 0;
