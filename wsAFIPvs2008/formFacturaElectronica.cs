@@ -1916,9 +1916,6 @@ namespace wsAFIPvs2008
                 productosTable.AddCell(celda);
             }
 
-            ///TODO: si es descripcion de unitario habria q crear un registro por cada alicuota
-            ///
-
             oDocumentoImprimir.Venta = oDocumentoImprimir.Venta == null ? oVentaE : oDocumentoImprimir.Venta;
 
             foreach (Entidades.LineaVenta item in oDocumentoImprimir.Venta.LineasVenta)
@@ -1930,7 +1927,6 @@ namespace wsAFIPvs2008
                     productosTable.AddCell(new PdfPCell(new Phrase(item.AlicuotaIva.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
 
                 productosTable.AddCell(new PdfPCell(new Phrase((item.PrecioKg * item.CantKg).ToString("#,##0.00", new CultureInfo("es-AR")), fontNormal)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-
             }
 
             documento.Add(productosTable);
@@ -1947,7 +1943,7 @@ namespace wsAFIPvs2008
             PdfPTable importeTextoTable = new PdfPTable(1);
             importeTextoTable.WidthPercentage = 100;
             importeTextoTable.SetWidths(new float[] { 1f });
-            importeTextoTable.AddCell(new PdfPCell(new Phrase(ConvertirMontoEnTexto(Convert.ToDecimal(oFactuElec.Venta.TotalImporte)), fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
+            importeTextoTable.AddCell(new PdfPCell(new Phrase(ConvertirMontoEnTexto(Convert.ToDecimal(oDocumentoImprimir.ImporteTotal)), fontComments)) { Border = 0, HorizontalAlignment = Element.ALIGN_LEFT });
             documento.Add(importeTextoTable);
 
             // Agregar la línea al documento
@@ -1976,17 +1972,6 @@ namespace wsAFIPvs2008
                         totalTable.AddCell(new PdfPCell(new Phrase(item.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
                     }
                 }
-
-                ///COMENTADO PORQUE OBTENGO LAS ALICUOTAS DE LA BD
-                //foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
-                //{
-                //    if (item.Importe > 0)
-                //    {
-                //        totalTable.AddCell(new PdfPCell(new Phrase("", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                //        totalTable.AddCell(new PdfPCell(new Phrase("Iva " + item.Iva + "%: $", fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                //        totalTable.AddCell(new PdfPCell(new Phrase(item.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), fontNormalBold)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT });
-                //    }
-                //}
             }
             else
             {
