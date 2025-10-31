@@ -21,7 +21,7 @@ using System.Globalization;
 using Presentacion.Embutidos;
 using iTextSharp.text.pdf.draw;
 using System.Xml.Linq;
-
+using System.Diagnostics;
 
 namespace Presentacion.Pagos
 {
@@ -231,7 +231,7 @@ namespace Presentacion.Pagos
         {
             oPersonaE = persona;
             this.txtPersona.Text = oPersonaE.razonSocial;
-            CargarSaldo();
+            CargarSaldo();           
         }
 
         private void CargarSaldo()
@@ -1501,6 +1501,16 @@ namespace Presentacion.Pagos
         private void btnIngresoBilleteEfvo_Click(object sender, EventArgs e)
         {
             CalculoBilletes(true);
+        }
+
+        private void btnTicket_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnWhatsApp_Click(object sender, EventArgs e)
+        {
+            Util_Form.enviarWhatsApp(oPersonaE.Telefono);
         }
     }
 }

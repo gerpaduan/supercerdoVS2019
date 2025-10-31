@@ -28,8 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevaPersona));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnInfo = new System.Windows.Forms.Button();
             this.btnBuscarAfip = new System.Windows.Forms.Button();
             this.btnCopiarRS = new System.Windows.Forms.Button();
             this.lblNombreIdentif = new System.Windows.Forms.Label();
@@ -53,7 +55,7 @@
             this.txtRazonSocial = new System.Windows.Forms.TextBox();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
-            this.btnInfo = new System.Windows.Forms.Button();
+            this.btnWhatsApp = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -72,6 +74,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.btnWhatsApp);
             this.groupBox1.Controls.Add(this.btnInfo);
             this.groupBox1.Controls.Add(this.btnBuscarAfip);
             this.groupBox1.Controls.Add(this.btnCopiarRS);
@@ -102,6 +105,18 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Persona";
+            // 
+            // btnInfo
+            // 
+            this.btnInfo.Font = new System.Drawing.Font("Segoe Print", 8F, System.Drawing.FontStyle.Bold);
+            this.btnInfo.ForeColor = System.Drawing.SystemColors.Highlight;
+            this.btnInfo.Location = new System.Drawing.Point(2, 232);
+            this.btnInfo.Name = "btnInfo";
+            this.btnInfo.Size = new System.Drawing.Size(40, 24);
+            this.btnInfo.TabIndex = 56;
+            this.btnInfo.Text = "info";
+            this.btnInfo.UseVisualStyleBackColor = true;
+            this.btnInfo.Click += new System.EventHandler(this.btnInfo_Click);
             // 
             // btnBuscarAfip
             // 
@@ -338,17 +353,17 @@
             this.btnCancelar.UseVisualStyleBackColor = true;
             this.btnCancelar.Click += new System.EventHandler(this.btnCancelar_Click);
             // 
-            // btnInfo
+            // btnWhatsApp
             // 
-            this.btnInfo.Font = new System.Drawing.Font("Segoe Print", 8F, System.Drawing.FontStyle.Bold);
-            this.btnInfo.ForeColor = System.Drawing.SystemColors.Highlight;
-            this.btnInfo.Location = new System.Drawing.Point(2, 232);
-            this.btnInfo.Name = "btnInfo";
-            this.btnInfo.Size = new System.Drawing.Size(40, 24);
-            this.btnInfo.TabIndex = 56;
-            this.btnInfo.Text = "info";
-            this.btnInfo.UseVisualStyleBackColor = true;
-            this.btnInfo.Click += new System.EventHandler(this.btnInfo_Click);
+            this.btnWhatsApp.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnWhatsApp.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnWhatsApp.Image = ((System.Drawing.Image)(resources.GetObject("btnWhatsApp.Image")));
+            this.btnWhatsApp.Location = new System.Drawing.Point(266, 111);
+            this.btnWhatsApp.Name = "btnWhatsApp";
+            this.btnWhatsApp.Size = new System.Drawing.Size(23, 22);
+            this.btnWhatsApp.TabIndex = 82;
+            this.btnWhatsApp.UseVisualStyleBackColor = true;
+            this.btnWhatsApp.Click += new System.EventHandler(this.btnWhatsApp_Click);
             // 
             // formNuevaPersona
             // 
@@ -400,5 +415,6 @@
         private System.Windows.Forms.Button btnCopiarRS;
         private System.Windows.Forms.Button btnBuscarAfip;
         private System.Windows.Forms.Button btnInfo;
+        private System.Windows.Forms.Button btnWhatsApp;
     }
 }

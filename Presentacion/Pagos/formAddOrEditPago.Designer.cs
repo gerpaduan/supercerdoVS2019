@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditPago));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formAddOrEditPago));
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.txtSucursal = new System.Windows.Forms.TextBox();
             this.txtUsuario = new System.Windows.Forms.TextBox();
@@ -84,6 +84,7 @@
             this.idPagoLabel = new System.Windows.Forms.Label();
             this.btnImprimir = new System.Windows.Forms.Button();
             this.btnTicket = new System.Windows.Forms.Button();
+            this.btnWhatsApp = new System.Windows.Forms.Button();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panelCheque.SuspendLayout();
@@ -165,6 +166,7 @@
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.btnWhatsApp);
             this.groupBox1.Controls.Add(this.btnIngresoBilleteEfvo);
             this.groupBox1.Controls.Add(this.txtSaldo);
             this.groupBox1.Controls.Add(this.label10);
@@ -397,9 +399,9 @@
             this.btnBuscarCheque.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarCheque.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarCheque.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarCheque.Image")));
-            this.btnBuscarCheque.Location = new System.Drawing.Point(256, 5);
+            this.btnBuscarCheque.Location = new System.Drawing.Point(249, 4);
             this.btnBuscarCheque.Name = "btnBuscarCheque";
-            this.btnBuscarCheque.Size = new System.Drawing.Size(24, 21);
+            this.btnBuscarCheque.Size = new System.Drawing.Size(24, 22);
             this.btnBuscarCheque.TabIndex = 38;
             this.btnBuscarCheque.TabStop = false;
             this.btnBuscarCheque.UseVisualStyleBackColor = true;
@@ -610,9 +612,9 @@
             this.btnBuscarProv.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBuscarProv.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarProv.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProv.Image")));
-            this.btnBuscarProv.Location = new System.Drawing.Point(258, 59);
+            this.btnBuscarProv.Location = new System.Drawing.Point(311, 58);
             this.btnBuscarProv.Name = "btnBuscarProv";
-            this.btnBuscarProv.Size = new System.Drawing.Size(24, 21);
+            this.btnBuscarProv.Size = new System.Drawing.Size(24, 23);
             this.btnBuscarProv.TabIndex = 24;
             this.btnBuscarProv.TabStop = false;
             this.btnBuscarProv.UseVisualStyleBackColor = true;
@@ -624,7 +626,7 @@
             this.txtPersona.Location = new System.Drawing.Point(98, 58);
             this.txtPersona.Name = "txtPersona";
             this.txtPersona.ReadOnly = true;
-            this.txtPersona.Size = new System.Drawing.Size(154, 22);
+            this.txtPersona.Size = new System.Drawing.Size(214, 22);
             this.txtPersona.TabIndex = 0;
             this.txtPersona.TabStop = false;
             // 
@@ -782,6 +784,19 @@
             this.btnTicket.TextAlign = System.Drawing.ContentAlignment.TopRight;
             this.btnTicket.UseVisualStyleBackColor = true;
             this.btnTicket.Visible = false;
+            this.btnTicket.Click += new System.EventHandler(this.btnTicket_Click);
+            // 
+            // btnWhatsApp
+            // 
+            this.btnWhatsApp.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnWhatsApp.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnWhatsApp.Image = ((System.Drawing.Image)(resources.GetObject("btnWhatsApp.Image")));
+            this.btnWhatsApp.Location = new System.Drawing.Point(289, 58);
+            this.btnWhatsApp.Name = "btnWhatsApp";
+            this.btnWhatsApp.Size = new System.Drawing.Size(23, 23);
+            this.btnWhatsApp.TabIndex = 81;
+            this.btnWhatsApp.UseVisualStyleBackColor = true;
+            this.btnWhatsApp.Click += new System.EventHandler(this.btnWhatsApp_Click);
             // 
             // formAddOrEditPago
             // 
@@ -870,5 +885,6 @@
         private System.Windows.Forms.Button btnIngresoBilletes;
         private System.Windows.Forms.Button btnIngresoBilleteEfvo;
         protected System.Windows.Forms.Button btnTicket;
+        private System.Windows.Forms.Button btnWhatsApp;
     }
 }

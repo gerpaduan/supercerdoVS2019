@@ -47,6 +47,7 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.menuNuevoPago = new System.Windows.Forms.ToolStripButton();
             this.Imprimir = new System.Windows.Forms.ToolStripButton();
+            this.btnWhatsApp = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grillaMovCtaCte)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.barraControl.SuspendLayout();
@@ -54,8 +55,8 @@
             // 
             // panel1
             // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F);
             this.panel1.Location = new System.Drawing.Point(12, 462);
@@ -93,9 +94,9 @@
             this.grillaMovCtaCte.AllowUserToAddRows = false;
             this.grillaMovCtaCte.AllowUserToDeleteRows = false;
             this.grillaMovCtaCte.AllowUserToResizeRows = false;
-            this.grillaMovCtaCte.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.grillaMovCtaCte.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grillaMovCtaCte.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
@@ -133,9 +134,10 @@
             // 
             // pnlBuscar
             // 
-            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlBuscar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.pnlBuscar.Controls.Add(this.btnWhatsApp);
             this.pnlBuscar.Controls.Add(this.checkSinRegRepetidos);
             this.pnlBuscar.Controls.Add(this.fechaDesdePick);
             this.pnlBuscar.Controls.Add(this.label3);
@@ -195,7 +197,7 @@
             this.lblActualizar.AutoSize = true;
             this.lblActualizar.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblActualizar.ForeColor = System.Drawing.Color.LightSalmon;
-            this.lblActualizar.Location = new System.Drawing.Point(303, 40);
+            this.lblActualizar.Location = new System.Drawing.Point(398, 59);
             this.lblActualizar.Name = "lblActualizar";
             this.lblActualizar.Size = new System.Drawing.Size(69, 15);
             this.lblActualizar.TabIndex = 52;
@@ -220,7 +222,7 @@
             this.txtPersona.Location = new System.Drawing.Point(16, 34);
             this.txtPersona.Name = "txtPersona";
             this.txtPersona.ReadOnly = true;
-            this.txtPersona.Size = new System.Drawing.Size(281, 26);
+            this.txtPersona.Size = new System.Drawing.Size(451, 26);
             this.txtPersona.TabIndex = 0;
             this.txtPersona.Text = "Nombre Persona";
             // 
@@ -272,6 +274,18 @@
             this.Imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.Imprimir.Click += new System.EventHandler(this.Imprimir_Click);
             // 
+            // btnWhatsApp
+            // 
+            this.btnWhatsApp.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnWhatsApp.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnWhatsApp.Image = ((System.Drawing.Image)(resources.GetObject("btnWhatsApp.Image")));
+            this.btnWhatsApp.Location = new System.Drawing.Point(465, 34);
+            this.btnWhatsApp.Name = "btnWhatsApp";
+            this.btnWhatsApp.Size = new System.Drawing.Size(29, 26);
+            this.btnWhatsApp.TabIndex = 82;
+            this.btnWhatsApp.UseVisualStyleBackColor = true;
+            this.btnWhatsApp.Click += new System.EventHandler(this.btnWhatsApp_Click);
+            // 
             // formCtaCtePersona
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -314,5 +328,6 @@
         protected System.Windows.Forms.ToolStripButton menuNuevoPago;
         private System.Windows.Forms.CheckBox checkSinRegRepetidos;
         protected System.Windows.Forms.ToolStripButton Imprimir;
+        private System.Windows.Forms.Button btnWhatsApp;
     }
 }

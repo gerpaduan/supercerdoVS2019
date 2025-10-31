@@ -117,4 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="btnWhatsApp.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAA
+        iAAAAIgB69ySUgAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAH4SURBVDhPbVO/
+        SxxBGF1JoU0iaZQEEwRJERAb/wIxTYqgzTWplBhRMzMeFuvt7hEOKzsLG5tAQkgjxkILU4oJmMLc7Nwh
+        CAcJgpUWJloEsZi8t7sT9xaLB/N9731vvm9+eNbaNlS1ehJo4Uex3Alj+RtoAVvAckWX+4v6tgBFAsK/
+        gAWuQy1NAq7T3GWo1RvPeh1tBkyEsdhMREYeR0a+qP2a6HIirpkjlxqpjTaDKBYzKSE2/SP/riOLIOc2
+        CmIxyZzn18VDJDCrOFk8mO6u/ig/xQ4fZUt2Fg0IaqhljW9kH3ZXC3SMtChRgPVXxph9oljsQG1Sg1ov
+        NOoTg0pj9j5JrA8ZB0bOFgsdqM02+cCCI+CnI7FeS8hYjeSLimANRtG8ujqCU0ekMyZ3f4HuRvNFeWTn
+        0PLQ6goWlof3n2zODyF3CVzxtHlLmHcbs89lfC9rIiPee3h140mQkQ58dch/IZfDOTsMtHzNODDiFVqe
+        f5ySN48jj1CLl+DfAZ8x0mB4UH5AI+CsZmZ6eAujNAhi+fY2gzyi5twjaL9RH2k1xhxPc5EJdLBEk2RW
+        3G+loYZL66U7fObVphwAL6H7Qy3PzZnCQG2kBrfiAuCPzGJx4nbOGcg9fJJddlCty2fJCTfEc+SXgX3y
+        6GwVo07Vvst7+WJrrfcPNTSL3bRpttoAAAAASUVORK5CYII=
+</value>
+  </data>
 </root>

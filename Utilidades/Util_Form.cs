@@ -11,6 +11,7 @@ using System.IO;
 using IWshRuntimeLibrary;
 using System.Drawing.Imaging;
 using System.Management;
+using System.Diagnostics;
 
 namespace Utilidades
 {
@@ -35,7 +36,7 @@ namespace Utilidades
         public static bool validarCampoVacio(string texto, string nombreTextBox)
         {
             bool resp = true;
-           
+
             if (String.IsNullOrEmpty(texto))
             {
                 resp = false;
@@ -65,16 +66,16 @@ namespace Utilidades
             string mensaje = "Complete los siguientes campos";
             for (int fila = 0; fila < textBoxes.GetLength(0); fila++)
             {
-                if (String.IsNullOrEmpty(textBoxes[fila,valorTextBox]))
+                if (String.IsNullOrEmpty(textBoxes[fila, valorTextBox]))
                 {
                     resp = false;
                     mensaje += "\n- " + textBoxes[fila, nombreTextBox];
-                }			 
+                }
             }
             if (!resp)
-	        {
-        		 MessageBox.Show(mensaje, "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
-	        }
+            {
+                MessageBox.Show(mensaje, "Error ingreso", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             return resp;
         }
 
@@ -110,18 +111,18 @@ namespace Utilidades
         public static float convertFloat(string toFloat, bool messageBox)
         {
             float? value = null;
-            try 
-	        {
+            try
+            {
                 toFloat = !toFloat.Contains("..") && toFloat.Contains('.') && toFloat.Contains(',') ? toFloat.Replace(".", "") : toFloat;
                 toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
-        		value =  float.Parse( toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-	        }
-	        catch (Exception ex)
-	        {
-                if(messageBox) MessageBox.Show("Error al convertir a tipo Float\n"+ex.Message, "Convertir a float");
-	        }
+                value = float.Parse(toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+            }
+            catch (Exception ex)
+            {
+                if (messageBox) MessageBox.Show("Error al convertir a tipo Float\n" + ex.Message, "Convertir a float");
+            }
             return (float)value;
-        }        
+        }
 
         public static bool validarNumeroMayorACero(string valor, string nombreTextBox)
         {
@@ -140,7 +141,7 @@ namespace Utilidades
 
         public static bool validarNumeroMayorUnGramo(string texto, string nombreTextBox)
         {
-            double limit = double.Parse("0,001") ;
+            double limit = double.Parse("0,001");
             bool resp = double.TryParse(texto.Replace('.', ','), out double peso) && peso >= limit;
             if (!resp)
             {
@@ -153,7 +154,7 @@ namespace Utilidades
         public static bool validarFecha(DateTime fecha, string nombreTextBox)
         {
             bool resp = fecha > DateTime.Now ? false : true;
-            
+
             if (!resp)
             {
                 MessageBox.Show("-" + nombreTextBox + " debe ser menor o igual a la fecha de hoy.", "Error fecha", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -167,11 +168,11 @@ namespace Utilidades
             try
             {
                 fechaFormateada = fechaParaFormatear.Equals(null) ? "" : DateTime.Parse(fechaParaFormatear.ToString()).ToString("dd/MM/yyyy  HH:mm:ss");
-	        }
-	        catch (Exception)
-	        {
+            }
+            catch (Exception)
+            {
                 fechaFormateada = "Error formato";
-	        }
+            }
             return fechaFormateada;
         }
 
@@ -188,7 +189,7 @@ namespace Utilidades
             {
                 resp = false;
                 MessageBox.Show("No está logueado!.\n\nDebe iniciar sesión como administrador para " +
-                "poder agregar o modificar registros con fecha anterior al día de hoy.\n\nInicie sesión y vuelva a intentar.", "No tiene permiso para cambios", MessageBoxButtons.OK, MessageBoxIcon.Error);                
+                "poder agregar o modificar registros con fecha anterior al día de hoy.\n\nInicie sesión y vuelva a intentar.", "No tiene permiso para cambios", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return resp;
         }
@@ -212,22 +213,22 @@ namespace Utilidades
 
             if (!resp)
             {
-                MessageBox.Show("-" + nombreTextBox + " debe ser igual a la fecha de hoy -" + DateTime.Now.ToShortDateString() + "-.\n\n"  +
+                MessageBox.Show("-" + nombreTextBox + " debe ser igual a la fecha de hoy -" + DateTime.Now.ToShortDateString() + "-.\n\n" +
                     "Debe iniciar sesión como administrador para " +
                     "poder agregar o modificar registros con fecha diferente al día de hoy.\n\nInicie sesión y vuelva a intentar.", "Fecha distinta a hoy", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return resp;
         }
-                
+
         public static int idSucursalAppConfig()
-        {           
+        {
             return Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
         }
 
         public static string errorConexionBD(string exception)
         {
             string lineaDivisoria = "\n------------------\n";
-            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n"+
+            string mensaje = "No se pudo conectar a la base de datos. Verifique que haya elegido la conexión correcta.\n" +
                 "--Si no se conecta posiblemente no haya INTERNET.--\n";
             mensaje = exception.Contains("Error relacionado con la red") ||
                 exception.Contains("Proveedor de TCP") ? mensaje + lineaDivisoria + exception : exception;
@@ -248,7 +249,7 @@ namespace Utilidades
 
         public static string leerPesoBalanza()
         {
-            string peso="";
+            string peso = "";
             bool formAbierto = false;
             foreach (Form frm in Application.OpenForms)
             {
@@ -258,7 +259,7 @@ namespace Utilidades
                     foreach (Control ctrl in frm.Controls)
                     {
                         if (ctrl.Name.Equals("pesoBalanzaLabel"))
-                        {                            
+                        {
                             peso = ctrl.Text;
                             if (peso.Contains("error"))
                             {
@@ -348,7 +349,7 @@ namespace Utilidades
         {
             try
             {
-                Color color = isChecked ? Color.DarkSeaGreen :ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
+                Color color = isChecked ? Color.DarkSeaGreen : ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());
 
                 return color;
             }
@@ -356,6 +357,19 @@ namespace Utilidades
             {
                 return Color.White;
             }
+        }
+
+        public static void enviarWhatsApp(string telefono)
+        {
+            //telefono = "5493413396372"; // con código de país sin '+'
+            string mensaje = Uri.EscapeDataString("Hola!");
+            string url = $"https://wa.me/{telefono}?text={mensaje}";
+
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
         }
 
         public static string GetCPUId()

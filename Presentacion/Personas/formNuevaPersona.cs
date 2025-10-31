@@ -350,5 +350,10 @@ namespace Presentacion.Personas
                    MessageBoxIcon.Information
                );
         }
+
+        private void btnWhatsApp_Click(object sender, EventArgs e)
+        {
+            Util_Form.enviarWhatsApp(txtTelefono.Text);
+        }
     }
 }

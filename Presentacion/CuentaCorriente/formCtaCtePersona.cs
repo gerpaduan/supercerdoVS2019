@@ -364,5 +364,10 @@ namespace Presentacion.CuentaCorriente
                 MessageBox.Show(ex.Message);
             }           
         }
+
+        private void btnWhatsApp_Click(object sender, EventArgs e)
+        {
+            Utilidades.Util_Form.enviarWhatsApp(oPersonaE.Telefono);
+        }
     }
 }
