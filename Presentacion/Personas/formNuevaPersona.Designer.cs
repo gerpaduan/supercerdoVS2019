@@ -121,9 +121,9 @@
             // btnBuscarAfip
             // 
             this.btnBuscarAfip.ForeColor = System.Drawing.Color.Black;
-            this.btnBuscarAfip.Location = new System.Drawing.Point(266, 89);
+            this.btnBuscarAfip.Location = new System.Drawing.Point(260, 90);
             this.btnBuscarAfip.Name = "btnBuscarAfip";
-            this.btnBuscarAfip.Size = new System.Drawing.Size(94, 23);
+            this.btnBuscarAfip.Size = new System.Drawing.Size(94, 22);
             this.btnBuscarAfip.TabIndex = 55;
             this.btnBuscarAfip.Text = "Buscar Cuit Afip";
             this.btnBuscarAfip.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -133,7 +133,7 @@
             // btnCopiarRS
             // 
             this.btnCopiarRS.ForeColor = System.Drawing.Color.Black;
-            this.btnCopiarRS.Location = new System.Drawing.Point(368, 23);
+            this.btnCopiarRS.Location = new System.Drawing.Point(361, 22);
             this.btnCopiarRS.Name = "btnCopiarRS";
             this.btnCopiarRS.Size = new System.Drawing.Size(73, 23);
             this.btnCopiarRS.TabIndex = 54;
@@ -178,7 +178,7 @@
             this.comboIva.FormattingEnabled = true;
             this.comboIva.Location = new System.Drawing.Point(112, 66);
             this.comboIva.Name = "comboIva";
-            this.comboIva.Size = new System.Drawing.Size(150, 23);
+            this.comboIva.Size = new System.Drawing.Size(149, 23);
             this.comboIva.TabIndex = 2;
             // 
             // txtCuit
@@ -358,7 +358,7 @@
             this.btnWhatsApp.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnWhatsApp.ForeColor = System.Drawing.SystemColors.ControlText;
             this.btnWhatsApp.Image = ((System.Drawing.Image)(resources.GetObject("btnWhatsApp.Image")));
-            this.btnWhatsApp.Location = new System.Drawing.Point(266, 111);
+            this.btnWhatsApp.Location = new System.Drawing.Point(260, 111);
             this.btnWhatsApp.Name = "btnWhatsApp";
             this.btnWhatsApp.Size = new System.Drawing.Size(23, 22);
             this.btnWhatsApp.TabIndex = 82;
