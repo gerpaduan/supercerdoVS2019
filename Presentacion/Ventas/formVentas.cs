@@ -465,11 +465,12 @@ namespace Presentacion
 
                 nombreArchivo += ".xlsx";
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
-                string rutaArchivo = @ruta + "\\" + nombreArchivo;
+                string subRuta = @ruta + "\\" + "Ventas";
+                string rutaArchivo = @subRuta + "\\" + nombreArchivo;
 
                 // Verificar si la carpeta existe, si no, crearla
-                if (!Directory.Exists(@ruta))
-                    Directory.CreateDirectory(@ruta);
+                if (!Directory.Exists(@subRuta))
+                    Directory.CreateDirectory(@subRuta);
 
                 // Crear el archivo de Excel
                 FileInfo archivo = new FileInfo(rutaArchivo);

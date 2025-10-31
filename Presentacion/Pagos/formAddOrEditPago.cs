@@ -1451,10 +1451,11 @@ namespace Presentacion.Pagos
         private void imprimirRecibo()
         {
             string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
-            ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), ruta);// "ReciboCheques.pdf");
+            string subRuta = @ruta + "\\" + "Recibos";
+            ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), subRuta);// "ReciboCheques.pdf");
             //GenerarPDFRecibo(oPagoE, ruta);
-            GenerarReciboPDF(ruta);
-            System.Diagnostics.Process.Start(ruta);
+            GenerarReciboPDF(subRuta);
+            System.Diagnostics.Process.Start(subRuta);
         }
 
         private void checkNroRecibo_CheckedChanged(object sender, EventArgs e)

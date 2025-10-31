@@ -416,7 +416,13 @@ namespace Presentacion
 
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
                 DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
-                string rutaArchivo = @ruta + "\\PLU_Systel.csv";
+
+                string subRuta = @ruta + "\\" + "PLU_Systel";
+                string rutaArchivo = @subRuta + "\\PLU_Systel.csv";
+
+                // Verificar si la carpeta existe, si no, crearla
+                if (!Directory.Exists(@subRuta))
+                    Directory.CreateDirectory(@subRuta);
 
                 MessageBox.Show("Se exportarán aquellos productos de la grilla dónde el código esté entre 1-99997 (código soportado por Systel).\n\n"
                     + "Ubicación: "+rutaArchivo, "Exportar lista Systel",
@@ -477,7 +483,8 @@ namespace Presentacion
 
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
                 DataTable dataTable = dtCortesFiltrado;// oCorteN.lista_precios();
-                string rutaArchivo = @ruta + "\\PLU_Systel.csv";
+                string subRuta = @ruta + "\\" + "PLU_Systel";
+                string rutaArchivo = @subRuta + "\\PLU_Systel.csv";
 
                 DialogResult resp = MessageBox.Show("La importación creará productos para codigos nuevos y modificará datos de existentes.\n"+
                     "¿Está seguro de importar lista de productos CSV?\n\n"+ "Ubicación: " + rutaArchivo, "Se perderán las modificaciones",
@@ -491,8 +498,8 @@ namespace Presentacion
 
 
                 // Verificar si la carpeta existe, si no, crearla
-                if (!Directory.Exists(@ruta))
-                    Directory.CreateDirectory(@ruta);
+                if (!Directory.Exists(@subRuta))
+                    Directory.CreateDirectory(@subRuta);
 
                 // Crear el archivo de Excel
                 FileInfo archivo = new FileInfo(rutaArchivo);
@@ -613,11 +620,12 @@ namespace Presentacion
 
                 nombreArchivo += ".xlsx";
                 string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
-                string rutaArchivo = @ruta + "\\" + nombreArchivo;
+                string subRuta = @ruta + "\\" + "Lista_Precio_Productos";
+                string rutaArchivo = @subRuta + "\\" + nombreArchivo;
 
                 // Verificar si la carpeta existe, si no, crearla
-                if (!Directory.Exists(@ruta))
-                    Directory.CreateDirectory(@ruta);
+                if (!Directory.Exists(@subRuta))
+                    Directory.CreateDirectory(@subRuta);
 
                 // Crear el archivo de Excel
                 FileInfo archivo = new FileInfo(rutaArchivo);

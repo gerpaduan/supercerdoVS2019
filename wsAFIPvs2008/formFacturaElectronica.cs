@@ -1736,12 +1736,13 @@ namespace wsAFIPvs2008
             }
 
             string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
-            string rutaPDF = @ruta + "\\" + oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyyMMdd") + " " +
+            string rutaFacturas = @ruta + "\\" + "Facturas";
+            string rutaPDF = @rutaFacturas + "\\" +  oDocumentoImprimir.FechaEmisionAfip?.ToString("yyyyMMdd") + " " +
                 oDocumentoImprimir.DescTipoCbteAfip + " " + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip + ".pdf";
 
             // Verificar si la carpeta existe, si no, crearla
-            if (!Directory.Exists(@ruta))
-                Directory.CreateDirectory(@ruta);
+            if (!Directory.Exists(@rutaFacturas))
+                Directory.CreateDirectory(@rutaFacturas);
 
             #region Factura PDF
             // Crear el documento PDF
