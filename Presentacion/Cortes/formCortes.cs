@@ -22,6 +22,7 @@ using Presentacion.Personas;
 using static System.Net.WebRequestMethods;
 using static iTextSharp.awt.geom.Point2D;
 using static Presentacion.Program;
+using System.Threading.Tasks;
 
 namespace Presentacion
 {
@@ -103,23 +104,25 @@ namespace Presentacion
 
         #region metodos
 
-        public void cargarGrilla()
+        public async void cargarGrilla()
         {
             if (!comboCargado)
                 return;
 
-            Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando productos", "Cargando...");
-            barraProgreso.Show();
-
             lblActualizar.Visible = false;
+            pnlCargando.Visible = true;
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
 
             grillaCortes.AutoGenerateColumns = false;
 
-            dtCortes = oCorteN.buscarCorte(txtBusqueda);
-            grillaCortes.DataSource = dtCortes;
+            //dtCortes = oCorteN.buscarCorte(txtBusqueda);
+            // Ejecutar la carga en segundo plano
+            dtCortes = await Task.Run(() => oCorteN.buscarCorte(txtBusqueda));
+
+            //grillaCortes.DataSource = dtCortes;
             filtarGrilla();
+            pnlCargando.Visible = false;
         }
         
         public void buscarCorte()
@@ -286,7 +289,7 @@ namespace Presentacion
             comboTipo.ValueMember = "tipo";
             comboTipo.SelectedIndex = 0;
             comboCargado = true;
-            //cargarGrilla();
+            cargarGrilla();
             this.txtBuscarCorte.Select();
         }
 
@@ -463,7 +466,9 @@ namespace Presentacion
                 {
                     MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     mostrarMensajeExport = false;
-                }            
+                }
+
+                System.Diagnostics.Process.Start(subRuta);
             }
             catch (Exception ex)
             {
@@ -688,8 +693,12 @@ namespace Presentacion
                     excel.Save();
                     if (mostrarMensajeExport)
                     {
-                        MessageBox.Show("La exportación se realizó correctamente.\n\n", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        DialogResult resp = MessageBox.Show("La exportación se realizó correctamente.\n\n¿Abrir ubicación archivo?", "", MessageBoxButtons.YesNo,  MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
                         mostrarMensajeExport = false;
+                        if (resp == DialogResult.Yes)
+                        {
+                            System.Diagnostics.Process.Start(subRuta);
+                        }
                     }
                 }
             }

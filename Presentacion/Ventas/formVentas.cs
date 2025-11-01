@@ -11,6 +11,7 @@ using Presentacion.Personas;
 using OfficeOpenXml;
 using System.Configuration;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Presentacion
 {
@@ -50,7 +51,7 @@ namespace Presentacion
             oUsuario = usuario;
         }
 
-        public void cargarGrilla()
+        public async void cargarGrilla()
         {
             try
             {
@@ -62,56 +63,169 @@ namespace Presentacion
                         return;
                     }
 
-                    Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando ventas", "Cargando...");
-                    barraProgreso.Show();
+                    //Utilidades.BarraProgreso barraProgreso = new Utilidades.BarraProgreso("Cargando ventas", "Cargando...");
+                    //barraProgreso.Show();
 
                     lblActualizar.Visible = false;
                     panelDetalleTotales.Visible = FormPrincipal.soyYo;
+                    pnlCargando.Visible = true;
                     dtVentas = new DataTable();
-                    dtVentas = oVentaN.obtenerVentas(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), idCliente, 
-                        Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 
-                        txtDescripcion.Text.Trim(), soloAnulados);
+                    //dtVentas = oVentaN.obtenerVentas(Convert.ToInt32(comboSucursal.SelectedValue.ToString()), idCliente, 
+                    //    Convert.ToInt32(comboUsuario.SelectedValue.ToString()), fechaDesde.Value, fechaHasta.Value, 
+                    //    txtDescripcion.Text.Trim(), soloAnulados);
 
-                    grillaVentas.AutoGenerateColumns = false;
-                    grillaVentas.DataSource = null;
+                    int sucursalId = Convert.ToInt32(comboSucursal.SelectedValue);
+                    int usuarioId = Convert.ToInt32(comboUsuario.SelectedValue);
+                    DateTime desde = fechaDesde.Value;
+                    DateTime hasta = fechaHasta.Value;
+                    string descripcion = txtDescripcion.Text.Trim();
+
+                    dtVentas = await Task.Run(() =>
+                        oVentaN.obtenerVentas(sucursalId, idCliente, usuarioId, desde, hasta, descripcion, soloAnulados)
+                    );
+
+
+                    aplicarRowFilter();
+
+                    grillaVentas.SuspendLayout();
                     grillaVentas.DataSource = dtVentas;
                     grillaVentas.Columns["totalKg"].Visible = !soloAnulados;
                     grillaVentas.Columns["totalS"].Visible = !soloAnulados;
-                    cargarTotales();
-                    aplicarRowFilter();
+                    grillaVentas.ResumeLayout();
+
+                    //grillaVentas.AutoGenerateColumns = false;
+                    //grillaVentas.DataSource = null;
+                    //grillaVentas.DataSource = dtVentas;
+                    //grillaVentas.Columns["totalKg"].Visible = !soloAnulados;
+                    //grillaVentas.Columns["totalS"].Visible = !soloAnulados;
+
+                    //cargarTotales();
+                    //aplicarRowFilter();
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Se produjo un error al cargar las ventas.\n\n"+ex.Message);
             }
+            finally
+            {
+                pnlCargando.Visible = false;
+            }
         }
-
-        private void cargarTotales()
+        private async void aplicarRowFilter()
         {
-            float totalKgs = 0, totalS = 0, totComisionTarj = 0, totalKgsAj = 0, totalImpAj = 0;
+            //si panel cargando es false, entonces mostrar y ocultar en este metodo
+            bool pnlCargandoVisible = pnlCargando.Visible;
+            if (!pnlCargandoVisible)
+            {
+                pnlCargando.Visible = true;
+                pnlCargando.Refresh();
+                pictureBox1.Refresh();
+            }
 
-            //foreach (DataRow venta in dtVentas.Rows)
-            foreach (DataGridViewRow row in grillaVentas.Rows)
+
+            consultaRowFilter = "";
+
+            for (int i = 0; i < arrayRowFilter.Length; i++)
             {
-                totComisionTarj += float.Parse(row.Cells["totComTarj"].Value.ToString());
-                totalImpAj += (float.Parse(row.Cells["totAjuste"].Value.ToString()) + 
-                    float.Parse(row.Cells["totalImpAj"].Value.ToString()));
-                totalKgsAj += float.Parse(row.Cells["totalKgAj"].Value.ToString());
-                totalKgs += float.Parse(row.Cells["totalKg"].Value.ToString());
-                totalS += float.Parse(row.Cells["totalS"].Value.ToString());
+                string and = (i != arrayRowFilter.Length - 1) ? " AND " : "";
+                consultaRowFilter += "( " + arrayRowFilter[i] + " )" + and;
             }
-            txtCantItems.Text = grillaVentas.Rows.Count.ToString();
-            txtTotComisionTarj.Text = String.Format("{0:0.00}", totComisionTarj);
-            txtKgsAj.Text = String.Format("{0:0.000}", totalKgsAj);
-            txtTotalSAj.Text = String.Format("{0:0.00}", totalImpAj);
-            totalKgs = totalKgs - totalKgsAj;//resta los kgs del ajuste
-            txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
-            if (logueado)
-            {
-                txtTotalS.Text = String.Format("{0:0.00}", totalS );
-            }
+
+            var dt = grillaVentas.DataSource as DataTable;
+            if (dt == null) return;
+
+            dt.DefaultView.RowFilter = consultaRowFilter;
+
+            await cargarTotales(dt.DefaultView);
+
+            if (!pnlCargandoVisible)
+                pnlCargando.Visible = false;
+
         }
+
+        //private void aplicarRowFilter()
+        //{
+        //    consultaRowFilter = "";
+
+        //    for (int i = 0; i < arrayRowFilter.Length; i++)
+        //    {
+        //        string and = (i != arrayRowFilter.Length - 1) ? " AND " : "";
+        //        consultaRowFilter += "( " + arrayRowFilter[i] + " )" + and;
+        //    }
+
+        //    (grillaVentas.DataSource as DataTable).DefaultView.RowFilter = string.Format(consultaRowFilter);
+
+        //    cargarTotales();        
+        //}
+
+        private async Task cargarTotales(DataView vista)
+        {
+            // Ejecutamos la parte pesada en un hilo secundario
+            var resultado = await Task.Run(() =>
+            {
+                float totalKgs = 0, totalS = 0, totComisionTarj = 0, totalKgsAj = 0, totalImpAj = 0;
+
+                foreach (DataRowView rowView in vista)
+                {
+                    var row = rowView.Row;
+
+                    totComisionTarj += Convert.ToSingle(row["totComTarj"]);
+                    totalImpAj += Convert.ToSingle(row["totAjuste"]) + Convert.ToSingle(row["totalImpAj"]);
+                    totalKgsAj += Convert.ToSingle(row["totalKgAj"]);
+                    totalKgs += Convert.ToSingle(row["totalKg"]);
+                    totalS += Convert.ToSingle(row["totalS"]);
+                }
+
+                totalKgs -= totalKgsAj; // resta los kgs del ajuste
+
+                return new
+                {
+                    Cantidad = vista.Count,
+                    totComisionTarj,
+                    totalImpAj,
+                    totalKgsAj,
+                    totalKgs,
+                    totalS
+                };
+            });
+
+            // Esta parte vuelve al hilo de UI automáticamente gracias al await
+            txtCantItems.Text = resultado.Cantidad.ToString();
+            txtTotComisionTarj.Text = $"{resultado.totComisionTarj:0.00}";
+            txtKgsAj.Text = $"{resultado.totalKgsAj:0.000}";
+            txtTotalSAj.Text = $"{resultado.totalImpAj:0.00}";
+            txtTotalKgs.Text = $"{resultado.totalKgs:0.000}";
+
+            if (logueado)
+                txtTotalS.Text = $"{resultado.totalS:0.00}";
+        }
+
+        //private void cargarTotales()
+        //{
+        //    float totalKgs = 0, totalS = 0, totComisionTarj = 0, totalKgsAj = 0, totalImpAj = 0;
+
+        //    //foreach (DataRow venta in dtVentas.Rows)
+        //    foreach (DataGridViewRow row in grillaVentas.Rows)
+        //    {
+        //        totComisionTarj += float.Parse(row.Cells["totComTarj"].Value.ToString());
+        //        totalImpAj += (float.Parse(row.Cells["totAjuste"].Value.ToString()) + 
+        //            float.Parse(row.Cells["totalImpAj"].Value.ToString()));
+        //        totalKgsAj += float.Parse(row.Cells["totalKgAj"].Value.ToString());
+        //        totalKgs += float.Parse(row.Cells["totalKg"].Value.ToString());
+        //        totalS += float.Parse(row.Cells["totalS"].Value.ToString());
+        //    }
+        //    txtCantItems.Text = grillaVentas.Rows.Count.ToString();
+        //    txtTotComisionTarj.Text = String.Format("{0:0.00}", totComisionTarj);
+        //    txtKgsAj.Text = String.Format("{0:0.000}", totalKgsAj);
+        //    txtTotalSAj.Text = String.Format("{0:0.00}", totalImpAj);
+        //    totalKgs = totalKgs - totalKgsAj;//resta los kgs del ajuste
+        //    txtTotalKgs.Text = String.Format("{0:0.000}", totalKgs);
+        //    if (logueado)
+        //    {
+        //        txtTotalS.Text = String.Format("{0:0.00}", totalS );
+        //    }
+        //}
 
         private void cargarSucursal()
         {
@@ -238,6 +352,10 @@ namespace Presentacion
                 cargarSucursal();
                 cargarComboVendedor();
                 cargar = true;
+
+                grillaVentas.AutoGenerateColumns = false;
+                grillaVentas.VirtualMode = true; // para mejorar rendimiento en muchas filas
+
                 cargarGrilla();
 
                 //Se establecen a checked todos los componentes
@@ -429,20 +547,7 @@ namespace Presentacion
             //aplicarRowFilter();
         }
 
-        private void aplicarRowFilter()
-        {
-            consultaRowFilter = "";
-
-            for (int i = 0; i < arrayRowFilter.Length; i++)
-            {
-                string and = (i != arrayRowFilter.Length - 1) ? " AND " : "";
-                consultaRowFilter += "( " + arrayRowFilter[i] + " )" + and;
-            }
-
-            (grillaVentas.DataSource as DataTable).DefaultView.RowFilter = string.Format(consultaRowFilter);
-
-            cargarTotales();        
-        }
+       
 
         private void exportExcel_Click(object sender, EventArgs e)
         {

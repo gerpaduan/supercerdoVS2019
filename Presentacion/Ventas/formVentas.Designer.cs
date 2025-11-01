@@ -30,16 +30,16 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formVentas));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle41 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle42 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle43 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle44 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle45 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle46 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle47 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle48 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle49 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle50 = new System.Windows.Forms.DataGridViewCellStyle();
             this.label5 = new System.Windows.Forms.Label();
             this.txtTotalS = new System.Windows.Forms.TextBox();
             this.btnSeleccionar = new System.Windows.Forms.Button();
@@ -115,10 +115,14 @@
             this.label15 = new System.Windows.Forms.Label();
             this.txtTotComisionTarj = new System.Windows.Forms.TextBox();
             this.panelDetalleTotales = new System.Windows.Forms.Panel();
+            this.pnlCargando = new System.Windows.Forms.Panel();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.barraControl.SuspendLayout();
             this.pnlBuscar.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).BeginInit();
             this.panelDetalleTotales.SuspendLayout();
+            this.pnlCargando.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // label5
@@ -659,9 +663,9 @@
             // 
             this.fechaVenta.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.fechaVenta.DataPropertyName = "fechaVenta";
-            dataGridViewCellStyle1.Format = "dd/MM/yyyy HH:mm:ss";
-            dataGridViewCellStyle1.NullValue = null;
-            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle41.Format = "dd/MM/yyyy HH:mm:ss";
+            dataGridViewCellStyle41.NullValue = null;
+            this.fechaVenta.DefaultCellStyle = dataGridViewCellStyle41;
             this.fechaVenta.HeaderText = "Fecha Venta";
             this.fechaVenta.MinimumWidth = 6;
             this.fechaVenta.Name = "fechaVenta";
@@ -761,9 +765,9 @@
             // totalKg
             // 
             this.totalKg.DataPropertyName = "totalKg";
-            dataGridViewCellStyle2.Format = "N3";
-            dataGridViewCellStyle2.NullValue = null;
-            this.totalKg.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle42.Format = "N3";
+            dataGridViewCellStyle42.NullValue = null;
+            this.totalKg.DefaultCellStyle = dataGridViewCellStyle42;
             this.totalKg.HeaderText = "Cantidad";
             this.totalKg.MinimumWidth = 6;
             this.totalKg.Name = "totalKg";
@@ -773,9 +777,9 @@
             // totalS
             // 
             this.totalS.DataPropertyName = "totalS";
-            dataGridViewCellStyle3.Format = "N2";
-            dataGridViewCellStyle3.NullValue = null;
-            this.totalS.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle43.Format = "N2";
+            dataGridViewCellStyle43.NullValue = null;
+            this.totalS.DefaultCellStyle = dataGridViewCellStyle43;
             this.totalS.HeaderText = "Total $";
             this.totalS.MinimumWidth = 6;
             this.totalS.Name = "totalS";
@@ -785,8 +789,8 @@
             // totComTarj
             // 
             this.totComTarj.DataPropertyName = "totComTarj";
-            dataGridViewCellStyle4.Format = "F2";
-            this.totComTarj.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle44.Format = "F2";
+            this.totComTarj.DefaultCellStyle = dataGridViewCellStyle44;
             this.totComTarj.HeaderText = "totComTarj";
             this.totComTarj.MinimumWidth = 6;
             this.totComTarj.Name = "totComTarj";
@@ -796,8 +800,8 @@
             // totAjuste
             // 
             this.totAjuste.DataPropertyName = "totAjuste";
-            dataGridViewCellStyle5.Format = "F2";
-            this.totAjuste.DefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle45.Format = "F2";
+            this.totAjuste.DefaultCellStyle = dataGridViewCellStyle45;
             this.totAjuste.HeaderText = "totAjuste";
             this.totAjuste.MinimumWidth = 6;
             this.totAjuste.Name = "totAjuste";
@@ -808,8 +812,8 @@
             // 
             this.totalKgAj.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.totalKgAj.DataPropertyName = "totalKgAj";
-            dataGridViewCellStyle6.Format = "N3";
-            this.totalKgAj.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle46.Format = "N3";
+            this.totalKgAj.DefaultCellStyle = dataGridViewCellStyle46;
             this.totalKgAj.HeaderText = "TotKgsAj";
             this.totalKgAj.MinimumWidth = 6;
             this.totalKgAj.Name = "totalKgAj";
@@ -820,8 +824,8 @@
             // 
             this.TotalImpAj.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.TotalImpAj.DataPropertyName = "totalImpAj";
-            dataGridViewCellStyle7.Format = "N2";
-            this.TotalImpAj.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle47.Format = "N2";
+            this.TotalImpAj.DefaultCellStyle = dataGridViewCellStyle47;
             this.TotalImpAj.HeaderText = "TotImpAj";
             this.TotalImpAj.MinimumWidth = 6;
             this.TotalImpAj.Name = "TotalImpAj";
@@ -850,8 +854,8 @@
             // 
             this.creado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.creado.DataPropertyName = "creado";
-            dataGridViewCellStyle8.Format = "dd/MM/yyyy HH:mm:ss";
-            this.creado.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle48.Format = "dd/MM/yyyy HH:mm:ss";
+            this.creado.DefaultCellStyle = dataGridViewCellStyle48;
             this.creado.HeaderText = "Creado";
             this.creado.MinimumWidth = 6;
             this.creado.Name = "creado";
@@ -862,8 +866,8 @@
             // 
             this.actualizado.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
             this.actualizado.DataPropertyName = "actualizado";
-            dataGridViewCellStyle9.Format = "dd/MM/yyyy HH:mm:ss";
-            this.actualizado.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle49.Format = "dd/MM/yyyy HH:mm:ss";
+            this.actualizado.DefaultCellStyle = dataGridViewCellStyle49;
             this.actualizado.HeaderText = "Actualizado";
             this.actualizado.MinimumWidth = 6;
             this.actualizado.Name = "actualizado";
@@ -891,8 +895,8 @@
             // estado
             // 
             this.estado.DataPropertyName = "estado";
-            dataGridViewCellStyle10.ForeColor = System.Drawing.Color.Red;
-            this.estado.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle50.ForeColor = System.Drawing.Color.Red;
+            this.estado.DefaultCellStyle = dataGridViewCellStyle50;
             this.estado.HeaderText = "Estado";
             this.estado.MinimumWidth = 6;
             this.estado.Name = "estado";
@@ -1031,12 +1035,38 @@
             this.panelDetalleTotales.TabIndex = 58;
             this.panelDetalleTotales.Visible = false;
             // 
+            // pnlCargando
+            // 
+            this.pnlCargando.BackColor = System.Drawing.Color.Transparent;
+            this.pnlCargando.Controls.Add(this.pictureBox1);
+            this.pnlCargando.ForeColor = System.Drawing.Color.Transparent;
+            this.pnlCargando.Location = new System.Drawing.Point(13, 194);
+            this.pnlCargando.Name = "pnlCargando";
+            this.pnlCargando.Size = new System.Drawing.Size(880, 320);
+            this.pnlCargando.TabIndex = 70;
+            this.pnlCargando.Visible = false;
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.pictureBox1.BackColor = System.Drawing.Color.White;
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.InitialImage = ((System.Drawing.Image)(resources.GetObject("pictureBox1.InitialImage")));
+            this.pictureBox1.Location = new System.Drawing.Point(389, 45);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(93, 64);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
+            // 
             // formVentas
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(231)))), ((int)(((byte)(239)))), ((int)(((byte)(250)))));
             this.ClientSize = new System.Drawing.Size(1028, 567);
+            this.Controls.Add(this.pnlCargando);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.txtCantItems);
             this.Controls.Add(this.label5);
@@ -1061,6 +1091,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.grillaVentas)).EndInit();
             this.panelDetalleTotales.ResumeLayout(false);
             this.panelDetalleTotales.PerformLayout();
+            this.pnlCargando.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1143,5 +1175,7 @@
         private System.Windows.Forms.ToolStripMenuItem segunToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cantidadDeVentasToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem porMontoDeVentasToolStripMenuItem;
+        private System.Windows.Forms.Panel pnlCargando;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

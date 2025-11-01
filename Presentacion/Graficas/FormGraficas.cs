@@ -170,7 +170,7 @@ namespace Presentacion.Graficas
 
             // 👇 Mostrar cantidad y porcentaje
             //serie.Label = "#VALX\n#VAL (#PERCENT{P0})";
-            serie.Label = "#VALX: #PERCENT{P1} (#VALY{N2})";
+            serie.Label = (tipoGrafico == TipoGrafico.CantidadDeVentas) ? "#VALX: #PERCENT{P1} (#VALY{N0})" : "#VALX: #PERCENT{P1} (#VALY{N2})";
             serie.LegendText = "#VALX (#PERCENT{P0})";
             serie["PieLabelStyle"] = "Outside";
             serie["PieLineColor"] = "Gray";
