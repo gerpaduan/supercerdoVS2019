@@ -183,7 +183,7 @@ namespace Presentacion.Licencia
             else
             {
                 //MessageBox.Show("Código Incorrecto.\n\nletterday_concat_[trun((y*m*d)/2cuit)]_concat_d\nCuit Cliente:" + FormPrincipal.cuitCliente);
-                MessageBox.Show("Código Incorrecto.\n\nletterday (concat) [(m*d)*2cuit)] (concat) d\nCuit Cliente:" + FormPrincipal.cuitCliente);
+                MessageBox.Show("Código Incorrecto.\n\nletterday (concat) [(m*d)*ult2Cuit)] (concat) d\nCuit Cliente:" + FormPrincipal.cuitCliente);
                 txtClave.Focus();
             }
         }

@@ -97,11 +97,6 @@ namespace Presentacion.Pagos
                         oPagoE = oCtaCteN.getPagoById(idPago);
                         oPersonaE = oPagoE.Persona;
                         oPagoSinMod = oCtaCteN.getPagoById(idPago);
-                        
-                        //oPagoE.EfectivoUltimoPago = oPagoSinMod.FormaPago.Equals(Entidades.Pago.formasPago.EftvoCheque.ToString()) ?
-                        //    oPagoSinMod.Efectivo : (oPagoSinMod.FormaPago.Equals(Entidades.Pago.formasPago.Efectivo.ToString()) ?
-                        //    oPagoSinMod.Importe  : 0);
-                        //oPagoE.AProveddorUltimoValor = oPagoSinMod.AProveedor;
 
                         readOnly = true;
                         checkNroRecibo.Text = "Editar N°Recibo"; //solo cuando es un nuevo recibo se formatea su numero
@@ -330,11 +325,11 @@ namespace Presentacion.Pagos
                     }
 
 
-                    if (readOnly)
+                    if (readOnly)//si se solicitó modificar registro -> sigue en Finally
                     {
-                        formNuevoPago_Load(null, null);
-                        readOnly = false;
-                        setearPropiedadesForm();
+                        //formNuevoPago_Load(null, null);
+                        //readOnly = false;
+                        //setearPropiedadesForm();
                         return;
                     }
 
@@ -378,54 +373,45 @@ namespace Presentacion.Pagos
 
                     bool esModificacion = oPagoE.Id > 0;
 
-
                     ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
-                    oPagoE = oCtaCteN.addOrEditPago(oPagoE, oCierreCajaE, oPagoSinMod);//oCtaCteN.addOrEditPago(oPagoE);
-
-                    /////Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
-                    //oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
+                    oPagoE = oCtaCteN.addOrEditPago(oPagoE, oCierreCajaE, oPagoSinMod);
 
                     DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
                                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 
-                    /////Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
-                    /////
-                    //try
-                    //{
-                    //    oCtaCteN.crearMovCtaCtePago(oPagoE, oCierreCajaE, oPagoSinMod);
-                    //}
-                    //catch (Exception ex)
-                    //{
-                    //    MessageBox.Show("Error al guardar Mov en Cta Cte. \n-El Pago se registró correctamente." + "\n\n" + ex.Source);
-                    //}
-
                     //se actualiza el saldo
-                    CargarSaldo();
-
-                    ////MessageBox.Show("El Pago de registró correctamente.");
-                    //DialogResult resp = MessageBox.Show("El Pago de registró correctamente.\n\n¿Generar Recibo en PDF?", "",
-                    //                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                    //CargarSaldo(); //lo comenté xq es una actualizacion innecesaria si se cierra el form
 
                     if (resp.Equals(DialogResult.Yes))
                         imprimirRecibo();
-
-
-                    if (frmPagos != null)
-                        frmPagos.cargarGrilla();
-
-                    if (frmCtaCtePersona != null) 
-                        frmCtaCtePersona.cargarGrilla();
-
-                    oPagoE = new Entidades.Pago();
-                    oPagoSinMod = new Entidades.Pago();
-                    cargarCampos();
-
-                    //if (esModificacion) 
-                    this.Close();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message);
+                }
+                finally
+                {
+                    if (readOnly)//Si se solicitó modificar el registro
+                    {
+                        formNuevoPago_Load(null, null);
+                        readOnly = false;
+                        setearPropiedadesForm();
+                    }
+                    else
+                    {
+                        if (frmPagos != null)
+                            frmPagos.cargarGrilla();
+
+                        if (frmCtaCtePersona != null)
+                            frmCtaCtePersona.cargarGrilla();
+
+                        oPagoE = new Entidades.Pago();
+                        oPagoSinMod = new Entidades.Pago();
+                        cargarCampos();
+
+                        //if (esModificacion) 
+                        this.Close();
+                    }
                 }
             }
         }
@@ -524,6 +510,18 @@ namespace Presentacion.Pagos
                     txtEfectivo.SelectAll();
                     return false;
                 }
+            }
+            else
+            {
+                if ((!decimal.TryParse(txtImporte.Text, out decimal valor) || valor <= 0))
+                {
+                    MessageBox.Show("Ingrese un importe mayor a 0", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtImporte.Focus();
+                    txtImporte.SelectAll();
+                    return false;
+                }
+                //asigno le valor sin punto
+                txtImporte.Text = valor.ToString();
             }
 
             if (txtNroRecibo.Text == "" || txtPersona.Text == "" || comboTipoPago.Text == ""
@@ -1452,7 +1450,12 @@ namespace Presentacion.Pagos
         {
             string ruta = ConfigurationManager.AppSettings["rutaPDF"].ToString();
             string subRuta = @ruta + "\\" + "Recibos";
-            ruta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), subRuta);// "ReciboCheques.pdf");
+
+            // Verificar si la carpeta existe, si no, crearla
+            if (!Directory.Exists(@subRuta))
+                Directory.CreateDirectory(@subRuta);
+
+            subRuta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), subRuta);// "ReciboCheques.pdf");
             //GenerarPDFRecibo(oPagoE, ruta);
             GenerarReciboPDF(subRuta);
             System.Diagnostics.Process.Start(subRuta);
