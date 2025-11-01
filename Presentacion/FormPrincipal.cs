@@ -340,12 +340,12 @@ namespace Presentacion
 
                 if (diasDiferencia < 5 && diasDiferencia >= 0)
                 {
-                    MessageBox.Show("Su licencia vence en "+diasDiferencia +" dias.", "Vencimiento",MessageBoxButtons.OK,MessageBoxIcon.Information);
+                    MessageBox.Show("Su licencia vence en " + diasDiferencia + " dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else if (diasDiferencia < 0 && diasDiferencia >= -30)
                 {
                     int caduca = 30 + diasDiferencia;
-                    MessageBox.Show("Su licencia está vencida.\nEl Sistema se bloqueará en "+caduca+" dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Su licencia está vencida.\nEl Sistema se bloqueará en " + caduca + " dias.", "Vencimiento", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 else if (diasDiferencia < -31)
                 {
@@ -355,8 +355,6 @@ namespace Presentacion
                 }
 
                 #endregion
-
-
 
                 string CPU = Utilidades.Util_Form.GetCPUId();
                 //string HD = Utilidades.Util_Form.GetHDSerial();
@@ -400,11 +398,9 @@ namespace Presentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Posiblemente no haya conexión al Servidor.\n El Sistema se cerrará..\n\n"+ex.Message);
+                MessageBox.Show("Posiblemente no haya conexión al Servidor.\n El Sistema se cerrará..\n\n" + ex.Message);
                 Application.Exit();
             }
-
-
 
             //public static int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
             Negocio.Sucursal oSucN = new Negocio.Sucursal();
@@ -436,10 +432,14 @@ namespace Presentacion
             oOtrasClasesN.obtenerParametros();
 
             valorTextoMenuEncriptarDesencriptar();
+            ExportarListaPrecioAutomatica();
+        }
 
-            //Se actualiza la lista de precios EXCEL exportable
+        private static void ExportarListaPrecioAutomatica()
+        {
+            //Exporta la lista de precios EXCEL exportable
             formCortes frmCorte = new formCortes();
-            //frmCorte.ExportarDataTableAExcel();
+            frmCorte.ExportarDataTableAExcel(true);
             frmCorte = null;
         }
 

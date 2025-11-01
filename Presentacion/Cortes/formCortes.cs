@@ -597,22 +597,31 @@ namespace Presentacion
             }
         }
 
-        public void ExportarDataTableAExcel()
+        public async void ExportarDataTableAExcel(bool? exportAutomatica = null)
         {
             try
             {
-                if (!Usuarios.FormValidarPermiso.validarPermiso("ExportarListaPrecioExcel"))
+                //si es exportacion automatica si tiene que obtener el datatable
+                if (exportAutomatica.HasValue)
                 {
-                    this.Close();
+                    dtCortesFiltrado = await Task.Run(() => oCorteN.buscarCorte(""));
                 }
-
-                if (dtCortesFiltrado == null || dtCortesFiltrado.Rows.Count == 0)
+                else
                 {
-                    MessageBox.Show("No hay datos para exportar");
-                    return;
+
+                    if (!Usuarios.FormValidarPermiso.validarPermiso("ExportarListaPrecioExcel"))
+                    {
+                        this.Close();
+                    }
+
+                    if (dtCortesFiltrado == null || dtCortesFiltrado.Rows.Count == 0)
+                    {
+                        MessageBox.Show("No hay datos para exportar");
+                        return;
+                    }
                 }
                 // Crear el formulario para pedir el nombre del archivo
-                string nombreArchivo = MostrarDialogoNombreArchivo();
+                string nombreArchivo = MostrarDialogoNombreArchivo(exportAutomatica);
 
                 //si es null se aborta la accion
                 if (nombreArchivo == null)
@@ -648,6 +657,7 @@ namespace Presentacion
                     ExcelWorksheet hoja = excel.Workbook.Worksheets.Add(DateTime.Now.ToShortDateString());
 
                     int indexCol = 1;
+
                     // Agregar encabezados
                     for (int i = 0; i < dataTable.Columns.Count; i++)
                     {
@@ -674,20 +684,14 @@ namespace Presentacion
                                 hoja.Cells[i + 2, indexCol++].Value = dataTable.Rows[i][j];
                         }
                     }
-                    //// Agregar encabezados
-                    //for (int i = 0; i < dataTable.Columns.Count; i++)
-                    //{
-                    //    hoja.Cells[1, i + 1].Value = dataTable.Columns[i].ColumnName;
-                    //}
 
-                    //// Agregar datos
-                    //for (int i = 0; i < dataTable.Rows.Count; i++)
-                    //{
-                    //    for (int j = 0; j < dataTable.Columns.Count; j++)
-                    //    {
-                    //        hoja.Cells[i + 2, j + 1].Value = dataTable.Rows[i][j];
-                    //    }
-                    //}
+                    // --- Aplicar filtro automático a la primera fila ---
+                    var lastColumn = hoja.Dimension.End.Column;
+                    var lastRow = hoja.Dimension.End.Row;
+                    hoja.Cells[1, 1, lastRow, lastColumn].AutoFilter = true;
+
+                    // --- Ajustar ancho de columnas ---
+                    hoja.Cells[hoja.Dimension.Address].AutoFitColumns();
 
                     // Guardar el archivo
                     excel.Save();
@@ -932,8 +936,14 @@ namespace Presentacion
 
         }
 
-        private string MostrarDialogoNombreArchivo()
+        private string MostrarDialogoNombreArchivo(bool? exportAutomatica = null)
         {
+            string fechaFormateada = $"{DateTime.Today:yyyyMMdd}";
+            string nombreEstandar = fechaFormateada + "_ListaPrecio_" + DateTime.Today.ToShortDateString().Replace('/', '-');
+            if (exportAutomatica.HasValue)
+            {
+                return nombreEstandar + "_Auto";
+            }
             // Crear un formulario para ingresar el nombre
             Form dialogo = new Form
             {
@@ -953,7 +963,7 @@ namespace Presentacion
 
             System.Windows.Forms.TextBox txtNombre = new System.Windows.Forms.TextBox
             {
-                Text = "ListaPrecio_" + DateTime.Today.ToShortDateString().Replace('/','-'),
+                Text = nombreEstandar,
                 Top = 40,
                 Left = 10,
                 Width = 360
