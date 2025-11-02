@@ -262,11 +262,14 @@ namespace wsAFIPvs2008
                 else
                     inicializaciones(mostrarSeleccionados);
 
-                //Se establece ultimo porque sino el txtChanged del txtPorcentajeFacturacion se ejecuta antes de tiempo
-                txtPorcentajeFacturacion.Text = Math.Round(oFactuElec.PorcentajeFacturacion, 2).ToString();
-                txtPorcentajeFacturacion.ReadOnly = idFactuElec != 0;
-                //se actualiza las lineas por si cambió el porcentaje de facturacion
-                oFactuElec.Venta.LineasVenta = oVentaE.LineasVenta;
+                if (idFactuElec != 0)
+                {
+                    //Se establece ultimo porque sino el txtChanged del txtPorcentajeFacturacion se ejecuta antes de tiempo
+                    txtPorcentajeFacturacion.Text = Math.Round(oFactuElec.PorcentajeFacturacion, 2).ToString();
+                    txtPorcentajeFacturacion.ReadOnly = idFactuElec != 0;
+                    //se actualiza las lineas por si cambió el porcentaje de facturacion
+                    oFactuElec.Venta.LineasVenta = oVentaE.LineasVenta;
+                }
             }
             else
             {
@@ -895,6 +898,13 @@ namespace wsAFIPvs2008
                 {
                     nuevaPersona = true;
                     personaPadron.IdIva = Convert.ToInt16(comboIva.SelectedValue);
+                }
+
+                if (!Utilidades.Util_Form.validarNumeroMayorACero(txtPorcentajeFacturacion.Text, "Porcentaje Facturación"))
+                {
+                    txtPorcentajeFacturacion.Focus();
+                    txtPorcentajeFacturacion.SelectAll();
+                    return;
                 }
 
                 WSFEHOMO.Service service = getServicio();
@@ -2561,7 +2571,8 @@ namespace wsAFIPvs2008
             else
             {
                 // ❌ el texto no era numérico
-                MessageBox.Show("Ingrese un número válido.");
+                MessageBox.Show("Porcentaje inválido.");
+                txtPorcentajeFacturacion.Focus();
             }
         }
 
