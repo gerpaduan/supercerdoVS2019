@@ -39,6 +39,8 @@ namespace Presentacion
 
         string[] nombreGroupBox = { "Prod. Maestro", "Presentación de" };
         string[] labelPorcentaje = { "% en Prod. M", "Cant.Unidades" };
+
+        bool ignorarCheckBoxChanged = false;
         public formNuevoCorte()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
@@ -114,10 +116,14 @@ namespace Presentacion
             if (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0)
             {
                 if (oCorteE.Presentacion)
+                {
                     checkPresentacion.Checked = true;
+                    checkAsignarMaestro.Enabled = false;
+                }
                 else
                 {
                     checkAsignarMaestro.Checked = true;
+                    checkPresentacion.Enabled = false;
                 }
             }
 
@@ -432,8 +438,7 @@ namespace Presentacion
 
         private void checkAsignarMaestro_CheckedChanged(object sender, EventArgs e)
         {
-            if (checkPresentacion.Checked)
-                checkPresentacion.Checked = false;
+            checkPresentacion.Enabled = !checkAsignarMaestro.Checked;
 
             modo = checkAsignarMaestro.Checked ? AsignarMaestro : null;
             //si cambia a unChecked y tiene corteMaestro se informa
@@ -638,8 +643,7 @@ namespace Presentacion
 
         private void checkPresentacion_CheckedChanged(object sender, EventArgs e)
         {
-            if (checkAsignarMaestro.Checked)
-                checkAsignarMaestro.Checked = false;
+            checkAsignarMaestro.Enabled = !checkPresentacion.Checked;
 
             modo = checkPresentacion.Checked ? Presentacion : null;
             //si cambia a unChecked y tiene corteMaestro se informa
