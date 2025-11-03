@@ -1007,7 +1007,7 @@ namespace Presentacion.Compras
                     else
                     {
                         txtCorteNuevaCompra.Text = "";
-                        MessageBox.Show("El código no existe");                        
+                        //MessageBox.Show("El código no existe");                        
                         txtCodigo.Focus();
                     }
                 }

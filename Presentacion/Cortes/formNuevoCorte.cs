@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Forms;
 using iTextSharp.text.html;
 using Presentacion.Cortes;
+using wsAFIPvs2008.WSPSA4;
 
 
 namespace Presentacion
@@ -32,6 +33,12 @@ namespace Presentacion
         bool huboModificacion = false;
         bool actualizarFormCortes = false;
 
+        string modo;
+        const string AsignarMaestro = "Asignar Maestro";
+        const string Presentacion = "Presentación";
+
+        string[] nombreGroupBox = { "Prod. Maestro", "Presentación" };
+        string[] labelPorcentaje = { "% en Prod. M", "Cant.Unidades" };
         public formNuevoCorte()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;            
@@ -211,6 +218,17 @@ namespace Presentacion
                 mensaje += "\n" + "-Promedio";
             }
 
+            ///TODO: Asignar campo presentacion para producto y calcular con esta formula
+            /////     n = cantidad de unidades por caja
+            //        CorteP.porcentaje = 100;
+            //        CorteP.porcentajeHueso = CorteP.porcentaje * (n - 1)
+            ///
+//            Unidades por caja(n)   Relación porcentajeHueso = porcentaje × (n - 1) Ejemplo(si porcentaje = 100)
+//5   porcentajeHueso = porcentaje × 4    100 → 400
+//10  porcentajeHueso = porcentaje × 9    100 → 900
+//20  porcentajeHueso = porcentaje × 19   100 → 1900
+
+
             oCorteE.PuntoStock = Convert.ToInt32(txtPuntoStock.Text);
             oCorteE.Tipo = comboTipo.Text;
             oCorteE.IdAlicuotaIva = Convert.ToInt32(comboAlicuotaIva.SelectedValue);
@@ -240,7 +258,7 @@ namespace Presentacion
             catch (Exception)
             {
                 resp = false;
-                mensaje += "\n" + "- % Hueso";
+                mensaje += "\n" + "- % Desperdicio";
             }
 
             try
@@ -280,9 +298,9 @@ namespace Presentacion
         private bool validar()
         {
             //validar Corte Maestro
-            if (checkAsignarMaestro.Checked && (oCorteMaestroE == null || oCorteMaestroE.idCorte == 0))
+            if ((checkAsignarMaestro.Checked || checkPresentacion.Checked) && (oCorteMaestroE == null || oCorteMaestroE.idCorte == 0))
             {
-                MessageBox.Show("Debe ingresar el Producto maestro", "Ingrese Producto Maestro",
+                MessageBox.Show("Debe ingresar "+modo, "Ingrese " + modo,
                       MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;
             }
@@ -296,11 +314,28 @@ namespace Presentacion
             }
             else
             {
-                if (checkAsignarMaestro.Checked && this.txtPorcentajeCorteM.Text.Equals("0"))
+                if ((checkAsignarMaestro.Checked || checkPresentacion.Checked) && this.txtPorcentajeCorteM.Text.Equals("0"))
                 {
-                    MessageBox.Show("% en Producto M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Producto Maestro", "Complete los campos",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return false;
+                    float porcentaje;
+
+                    bool esValido = float.TryParse(txtPorcentajeCorteM.Text,
+                                                    System.Globalization.NumberStyles.Float,
+                                                    System.Globalization.CultureInfo.InvariantCulture,
+                                                    out porcentaje);
+
+                    if (modo.Equals(AsignarMaestro) && (!esValido || (porcentaje < 0 || porcentaje > 100)))
+                    {
+                        MessageBox.Show("% en Producto M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Producto Maestro", "Complete los campos",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return false;
+                    }
+                    if(modo.Equals(Presentacion) && !Utilidades.Util_Form.validarCampoNumeroEntero(txtPorcentajeCorteM.Text, lblPorc_Pres.Text))
+                    {
+                        //MessageBox.Show(lblPorc_Pres.Text + " debe ser un número entero", "Complete los campos",
+                        //    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return false;
+                    }
+                    return true;
                 } 
                 else
                 {
@@ -387,6 +422,10 @@ namespace Presentacion
 
         private void checkAsignarMaestro_CheckedChanged(object sender, EventArgs e)
         {
+            if (checkPresentacion.Checked)
+                checkPresentacion.Checked = false;
+
+            modo = checkAsignarMaestro.Checked ? AsignarMaestro : null;
             //si cambia a unChecked y tiene corteMaestro se informa
             if (!checkAsignarMaestro.Checked && oCorteMaestroE != null && oCorteMaestroE.idCorte > 0)
             {
@@ -407,6 +446,10 @@ namespace Presentacion
             }
             groupMaestro.Enabled = checkAsignarMaestro.Checked;
             huboModificacion = true;
+            if (checkAsignarMaestro.Checked)
+            {
+                SetearGroupBox();
+            }
         }
 
         private void txtCodigo_TextChanged(object sender, EventArgs e)
@@ -561,6 +604,66 @@ namespace Presentacion
             }
 
             txtCodigo.Text = (codigoSugerido < 0) ? "" : codigoSugerido.ToString();
+        }
+
+        private void checkedListBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panelDesperdicio_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void groupMaestro_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblPorc_Pres_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkPresentacion_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkAsignarMaestro.Checked)
+                checkAsignarMaestro.Checked = false;
+
+            modo = checkPresentacion.Checked ? Presentacion : null;
+            //si cambia a unChecked y tiene corteMaestro se informa
+            if (!checkPresentacion.Checked && oCorteMaestroE != null && oCorteMaestroE.idCorte > 0)
+            {
+                DialogResult resp = MessageBox.Show("Si quita la asignación se borrará la Presentación del Producto.\n\n¿Desea quitar la Presentación?"
+                    , "Atención", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+                if (resp.Equals(DialogResult.Yes))
+                {
+                    //oCorteMaestroE = oCorteE;
+                    //oCorteE.CorteMaestro = oCorteMaestroE;
+                    oCorteMaestroE = null;
+                    oCorteE.CorteMaestro = oCorteMaestroE;
+                    cargarCampoCorteMaestro();
+                }
+                else
+                {
+                    checkPresentacion.Checked = !checkPresentacion.Checked;
+                }
+            }
+            groupMaestro.Enabled = checkPresentacion.Checked;
+            huboModificacion = true;
+
+            if (checkPresentacion.Checked)
+            {
+                SetearGroupBox();
+            }
+        }
+
+        private void SetearGroupBox()
+        {
+            groupMaestro.Text = modo.Equals(AsignarMaestro) ? nombreGroupBox[0] : nombreGroupBox[1];
+            lblPorc_Pres.Text = modo.Equals(AsignarMaestro) ? labelPorcentaje[0] : labelPorcentaje[1];
+            panelDesperdicio.Visible = modo.Equals(AsignarMaestro);
         }
     }
 }
