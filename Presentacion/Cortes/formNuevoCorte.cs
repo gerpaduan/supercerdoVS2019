@@ -111,7 +111,15 @@ namespace Presentacion
             checkIngresoRapidoEmbutido.Checked = oCorteE.IngresoRapidoEmbutido;
             checkHabilitado.Checked = oCorteE.Habilitado;
             checkEnCierreStock.Checked = oCorteE.EnCierreStock;
-            checkAsignarMaestro.Checked = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0);
+            if (oCorteE.corteMaestro != null && oCorteE.corteMaestro.idCorte > 0)
+            {
+                if (oCorteE.Presentacion)
+                    checkPresentacion.Checked = true;
+                else
+                {
+                    checkAsignarMaestro.Checked = true;
+                }
+            }
 
             oMarca = oCorteE.Marca;
             cargarMarca();
@@ -150,7 +158,7 @@ namespace Presentacion
                     {
                         if (!existeCodigoCorte())
                         {
-                            string mensajeExito = "El corte se " + (oCorteE.idCorte != 0 ? "modificó" : "agregó") +" correctamente.";
+                            string mensajeExito = "El Producto se " + (oCorteE.idCorte != 0 ? "modificó" : "agregó") +" correctamente.";
                             oCorteN.addOrEditCorte(oCorteE);
                             actualizarFormCortes = true;
                             if (oFrmInfoCorte != null)
@@ -218,17 +226,6 @@ namespace Presentacion
                 mensaje += "\n" + "-Promedio";
             }
 
-            ///TODO: Asignar campo presentacion para producto y calcular con esta formula
-            /////     n = cantidad de unidades por caja
-            //        CorteP.porcentaje = 100;
-            //        CorteP.porcentajeHueso = CorteP.porcentaje * (n - 1)
-            ///
-//            Unidades por caja(n)   Relación porcentajeHueso = porcentaje × (n - 1) Ejemplo(si porcentaje = 100)
-//5   porcentajeHueso = porcentaje × 4    100 → 400
-//10  porcentajeHueso = porcentaje × 9    100 → 900
-//20  porcentajeHueso = porcentaje × 19   100 → 1900
-
-
             oCorteE.PuntoStock = Convert.ToInt32(txtPuntoStock.Text);
             oCorteE.Tipo = comboTipo.Text;
             oCorteE.IdAlicuotaIva = Convert.ToInt32(comboAlicuotaIva.SelectedValue);
@@ -241,6 +238,7 @@ namespace Presentacion
 
             oCorteE.Marca = oMarca;
             oCorteE.CorteMaestro = oCorteMaestroE;
+            oCorteE.Presentacion = checkPresentacion.Checked;
 
             try
             {
@@ -314,27 +312,39 @@ namespace Presentacion
             }
             else
             {
-                if ((checkAsignarMaestro.Checked || checkPresentacion.Checked) && this.txtPorcentajeCorteM.Text.Equals("0"))
+                if ((checkAsignarMaestro.Checked || checkPresentacion.Checked))// && this.txtPorcentajeCorteM.Text.Equals("0"))
                 {
-                    float porcentaje;
-
-                    bool esValido = float.TryParse(txtPorcentajeCorteM.Text,
-                                                    System.Globalization.NumberStyles.Float,
-                                                    System.Globalization.CultureInfo.InvariantCulture,
-                                                    out porcentaje);
-
-                    if (modo.Equals(AsignarMaestro) && (!esValido || (porcentaje < 0 || porcentaje > 100)))
+                    if (modo.Equals(AsignarMaestro))
                     {
-                        MessageBox.Show("% en Producto M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Producto Maestro", "Complete los campos",
+                        float porcentaje;
+                        float desperdicio = 0;
+
+                        bool esValido = float.TryParse(txtPorcentajeCorteM.Text,
+                                                        System.Globalization.NumberStyles.Float,
+                                                        System.Globalization.CultureInfo.InvariantCulture,
+                                                        out porcentaje);
+                        if (porcentaje <= 0 || porcentaje > 100)
+                        {
+                            MessageBox.Show("% en Producto M no puede ser 0. Ingrese el porcentaje entre 1 y 100 que corresponde al Producto Maestro", "Complete los campos",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return false;
+                        }
+                        if (desperdicio < 0 || desperdicio > 100)
+                        {
+                            MessageBox.Show("% desperdicio no puede ser menor a 0 ni mayor a 100. Ingrese el porcentaje correcto.", "Complete los campos",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return false;
+                        }
+                        return true;
+                    }
+
+                    if(modo.Equals(Presentacion) && !Utilidades.Util_Form.validarCampoNumeroEntero(txtPorcentajeCorteM.Text, lblPorc_Pres.Text))
+                    {
+                        MessageBox.Show(lblPorc_Pres.Text + " debe ser un número entero", "Complete los campos",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return false;
                     }
-                    if(modo.Equals(Presentacion) && !Utilidades.Util_Form.validarCampoNumeroEntero(txtPorcentajeCorteM.Text, lblPorc_Pres.Text))
-                    {
-                        //MessageBox.Show(lblPorc_Pres.Text + " debe ser un número entero", "Complete los campos",
-                        //    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return false;
-                    }
+
                     return true;
                 } 
                 else

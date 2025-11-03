@@ -220,5 +220,50 @@ namespace Entidades
         public int PuntoStock { get => puntoStock; set => puntoStock = value; }
         public Persona Marca { get => marca; set => marca = value; }
         public bool CodBarraValidadoEnPos { get => codBarraValidadoEnPos; set => codBarraValidadoEnPos = value; }
+        public bool Presentacion { get => presentacion; set => presentacion = value; }
+
+        bool presentacion;
+
+        ///Si porcentajeDesperdicio es mayor a 100 significa que es presentacion <summary>
+        /// Si porcentajeDesperdicio es mayor a 100 significa que es presentacion porque Corte Maestro no admite valor mayor a 100
+        /// </summary>
+        /// <param name="porcentajeDesperdicio"></param>
+        /// <returns></returns>
+        public bool EsPresentacion(float porcentajeDesperdicio) { return porcentajeDesperdicio > 100; }
+
+
+        /////     n = cantidad de unidades por caja
+        //        CorteP.porcentaje = 100;
+        //        CorteP.porcentajeHueso = CorteP.porcentaje * (n - 1)
+        ///
+        //            Unidades por caja(n)   Relación porcentajeHueso = porcentaje × (n - 1) Ejemplo(si porcentaje = 100)
+        //5   porcentajeHueso = porcentaje × 4    100 → 400
+        //10  porcentajeHueso = porcentaje × 9    100 → 900
+        //20  porcentajeHueso = porcentaje × 19   100 → 1900
+
+
+        /// <summary>
+        /// Obtiene los valores para los campos PorcentajeCorteM y PorcentajeDesperdicio
+        /// </summary>
+        /// <param name="cantPresentacion">Pasar la cant unidad de la presentacion - En addOrEdit es el valor del porcentaja del CorteM.</param>
+        /// <returns>Devuelve array en pos0 (porc Corte M) = 100 / pos1 (porc Desperdicio) = 100 * (cantPresentacion - 1) .</returns>
+        public float[] SetearValoresPresentacion (float cantPresentacion)
+        {
+            float[] valoresPresentacion = new float[1];
+            valoresPresentacion[0] = 100;
+            valoresPresentacion[1] = 100 * (cantPresentacion - 1);
+            return valoresPresentacion;
+        }
+
+        /// <summary>
+        /// Obtiene la cantidad de la presentacion para cargar el campo - Pasando como param el porcDesperdicio del Producto
+        /// </summary>
+        /// <param name="porcDesperdicio"></param>
+        /// <returns></returns>
+        public float getCantPresentacion(float porcDesperdicio)
+        {
+            float cantPresentacion = (porcDesperdicio + 1) / 100;
+            return cantPresentacion;
+        }
     }
 }

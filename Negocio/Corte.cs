@@ -38,6 +38,12 @@ namespace Negocio
             ///FIN CARGA EXHAUSITIVA
             ///
 
+            if (oCorteE.Presentacion)
+            {
+                float[] valoresPresentacion = oCorteE.SetearValoresPresentacion(oCorteE.porcentaje);
+                oCorteE.porcentaje = valoresPresentacion[0];
+                oCorteE.porcentajeHueso = valoresPresentacion[1];
+            }
 
             oCorteD.addOrEditCorte(oCorteE);
         }

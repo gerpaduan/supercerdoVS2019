@@ -59,6 +59,13 @@ namespace Datos
                         oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
                         oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
                         oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
+
+                        ///se valida si es presentacion
+                        oCorteE.Presentacion = oCorteE.EsPresentacion(oCorteE.porcentajeHueso);
+                        if (oCorteE.Presentacion)
+                        {
+                            oCorteE.porcentaje = oCorteE.getCantPresentacion(oCorteE.porcentajeHueso);
+                        }
                     }
                     return oCorteE;
                 }
