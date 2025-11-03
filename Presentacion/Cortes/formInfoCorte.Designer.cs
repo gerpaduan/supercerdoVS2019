@@ -28,12 +28,18 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formInfoCorte));
             this.btnSalir = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblPresentacion = new System.Windows.Forms.Label();
+            this.panelDesperdicio = new System.Windows.Forms.Panel();
+            this.label12 = new System.Windows.Forms.Label();
+            this.label18 = new System.Windows.Forms.Label();
+            this.txtPorcHueso = new System.Windows.Forms.MaskedTextBox();
+            this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
             this.checkPesable = new System.Windows.Forms.CheckBox();
             this.label10 = new System.Windows.Forms.Label();
             this.txtMarca = new System.Windows.Forms.TextBox();
@@ -57,9 +63,7 @@
             this.label15 = new System.Windows.Forms.Label();
             this.txtIdCorte = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
-            this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
             this.label9 = new System.Windows.Forms.Label();
-            this.txtPorcHueso = new System.Windows.Forms.MaskedTextBox();
             this.txtPorcentajeCorte = new System.Windows.Forms.MaskedTextBox();
             this.txtPrecioKg = new System.Windows.Forms.MaskedTextBox();
             this.label5 = new System.Windows.Forms.Label();
@@ -75,16 +79,15 @@
             this.barraControl = new System.Windows.Forms.ToolStrip();
             this.modificar = new System.Windows.Forms.ToolStripButton();
             this.eliminar = new System.Windows.Forms.ToolStripButton();
-            this.panelDesperdicio = new System.Windows.Forms.Panel();
-            this.label12 = new System.Windows.Forms.Label();
-            this.label18 = new System.Windows.Forms.Label();
-            this.lblPresentacion = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.panelDesperdicio.SuspendLayout();
             this.groupProveedores.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.grillaProveedores)).BeginInit();
             this.barraControl.SuspendLayout();
-            this.panelDesperdicio.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnSalir
@@ -114,6 +117,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(43)))), ((int)(((byte)(77)))), ((int)(((byte)(129)))));
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.label7);
+            this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.lblPresentacion);
             this.groupBox1.Controls.Add(this.panelDesperdicio);
             this.groupBox1.Controls.Add(this.checkPesable);
@@ -157,6 +163,70 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Prod.";
             // 
+            // lblPresentacion
+            // 
+            this.lblPresentacion.AutoSize = true;
+            this.lblPresentacion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPresentacion.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblPresentacion.Location = new System.Drawing.Point(347, 134);
+            this.lblPresentacion.Name = "lblPresentacion";
+            this.lblPresentacion.Size = new System.Drawing.Size(96, 15);
+            this.lblPresentacion.TabIndex = 64;
+            this.lblPresentacion.Text = "Presentación de";
+            // 
+            // panelDesperdicio
+            // 
+            this.panelDesperdicio.Controls.Add(this.label12);
+            this.panelDesperdicio.Controls.Add(this.label18);
+            this.panelDesperdicio.Controls.Add(this.txtPorcHueso);
+            this.panelDesperdicio.Controls.Add(this.txtDesvioEstandar);
+            this.panelDesperdicio.Location = new System.Drawing.Point(339, 182);
+            this.panelDesperdicio.Name = "panelDesperdicio";
+            this.panelDesperdicio.Size = new System.Drawing.Size(193, 51);
+            this.panelDesperdicio.TabIndex = 63;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label12.Location = new System.Drawing.Point(8, 32);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(96, 15);
+            this.label12.TabIndex = 41;
+            this.label12.Text = "Desvío Estandar";
+            // 
+            // label18
+            // 
+            this.label18.AutoSize = true;
+            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label18.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label18.Location = new System.Drawing.Point(17, 5);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(87, 15);
+            this.label18.TabIndex = 40;
+            this.label18.Text = "% Desperdicio";
+            // 
+            // txtPorcHueso
+            // 
+            this.txtPorcHueso.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtPorcHueso.Location = new System.Drawing.Point(110, 2);
+            this.txtPorcHueso.Name = "txtPorcHueso";
+            this.txtPorcHueso.ReadOnly = true;
+            this.txtPorcHueso.Size = new System.Drawing.Size(75, 21);
+            this.txtPorcHueso.TabIndex = 27;
+            this.txtPorcHueso.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // txtDesvioEstandar
+            // 
+            this.txtDesvioEstandar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtDesvioEstandar.Location = new System.Drawing.Point(110, 29);
+            this.txtDesvioEstandar.Name = "txtDesvioEstandar";
+            this.txtDesvioEstandar.ReadOnly = true;
+            this.txtDesvioEstandar.Size = new System.Drawing.Size(75, 21);
+            this.txtDesvioEstandar.TabIndex = 31;
+            this.txtDesvioEstandar.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
             // checkPesable
             // 
             this.checkPesable.AutoSize = true;
@@ -164,11 +234,10 @@
             this.checkPesable.Checked = true;
             this.checkPesable.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkPesable.Enabled = false;
-            this.checkPesable.Location = new System.Drawing.Point(22, 182);
+            this.checkPesable.Location = new System.Drawing.Point(80, 183);
             this.checkPesable.Name = "checkPesable";
-            this.checkPesable.Size = new System.Drawing.Size(71, 19);
+            this.checkPesable.Size = new System.Drawing.Size(15, 14);
             this.checkPesable.TabIndex = 62;
-            this.checkPesable.Text = "Pesable";
             this.checkPesable.UseVisualStyleBackColor = true;
             // 
             // label10
@@ -229,8 +298,8 @@
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle11.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle11;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
             this.dataGridViewTextBoxColumn3.HeaderText = "Razon Social";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
@@ -240,8 +309,8 @@
             // ultimoPrecio
             // 
             this.ultimoPrecio.DataPropertyName = "ultimoPrecio";
-            dataGridViewCellStyle4.Format = "F2";
-            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle12.Format = "F2";
+            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle12;
             this.ultimoPrecio.HeaderText = "Ultimo Precio";
             this.ultimoPrecio.MinimumWidth = 6;
             this.ultimoPrecio.Name = "ultimoPrecio";
@@ -313,12 +382,11 @@
             this.checkIngresoRapidoEmbutido.AutoSize = true;
             this.checkIngresoRapidoEmbutido.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkIngresoRapidoEmbutido.Enabled = false;
-            this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(296, 23);
+            this.checkIngresoRapidoEmbutido.Location = new System.Drawing.Point(445, 23);
             this.checkIngresoRapidoEmbutido.Name = "checkIngresoRapidoEmbutido";
-            this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(164, 19);
+            this.checkIngresoRapidoEmbutido.Size = new System.Drawing.Size(15, 14);
             this.checkIngresoRapidoEmbutido.TabIndex = 44;
             this.checkIngresoRapidoEmbutido.TabStop = false;
-            this.checkIngresoRapidoEmbutido.Text = "IngresoRapidoElaborado";
             this.checkIngresoRapidoEmbutido.UseVisualStyleBackColor = true;
             this.checkIngresoRapidoEmbutido.Paint += new System.Windows.Forms.PaintEventHandler(this.checkIngresoRapidoEmbutido_Paint);
             // 
@@ -361,11 +429,10 @@
             this.checkHabilitado.AutoSize = true;
             this.checkHabilitado.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkHabilitado.Enabled = false;
-            this.checkHabilitado.Location = new System.Drawing.Point(378, 96);
+            this.checkHabilitado.Location = new System.Drawing.Point(445, 102);
             this.checkHabilitado.Name = "checkHabilitado";
-            this.checkHabilitado.Size = new System.Drawing.Size(82, 19);
+            this.checkHabilitado.Size = new System.Drawing.Size(15, 14);
             this.checkHabilitado.TabIndex = 41;
-            this.checkHabilitado.Text = "Habilitado";
             this.checkHabilitado.UseVisualStyleBackColor = true;
             this.checkHabilitado.Paint += new System.Windows.Forms.PaintEventHandler(this.checkIngresoRapidoEmbutido_Paint);
             // 
@@ -422,16 +489,6 @@
             this.label13.TabIndex = 33;
             this.label13.Text = "Id Prod.";
             // 
-            // txtDesvioEstandar
-            // 
-            this.txtDesvioEstandar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtDesvioEstandar.Location = new System.Drawing.Point(110, 29);
-            this.txtDesvioEstandar.Name = "txtDesvioEstandar";
-            this.txtDesvioEstandar.ReadOnly = true;
-            this.txtDesvioEstandar.Size = new System.Drawing.Size(75, 21);
-            this.txtDesvioEstandar.TabIndex = 31;
-            this.txtDesvioEstandar.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
             // label9
             // 
             this.label9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -443,16 +500,6 @@
             this.label9.Size = new System.Drawing.Size(118, 15);
             this.label9.TabIndex = 30;
             this.label9.Text = "Prod. Independiente";
-            // 
-            // txtPorcHueso
-            // 
-            this.txtPorcHueso.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtPorcHueso.Location = new System.Drawing.Point(110, 2);
-            this.txtPorcHueso.Name = "txtPorcHueso";
-            this.txtPorcHueso.ReadOnly = true;
-            this.txtPorcHueso.Size = new System.Drawing.Size(75, 21);
-            this.txtPorcHueso.TabIndex = 27;
-            this.txtPorcHueso.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // txtPorcentajeCorte
             // 
@@ -614,49 +661,38 @@
             this.eliminar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.eliminar.Click += new System.EventHandler(this.eliminar_Click);
             // 
-            // panelDesperdicio
+            // label2
             // 
-            this.panelDesperdicio.Controls.Add(this.label12);
-            this.panelDesperdicio.Controls.Add(this.label18);
-            this.panelDesperdicio.Controls.Add(this.txtPorcHueso);
-            this.panelDesperdicio.Controls.Add(this.txtDesvioEstandar);
-            this.panelDesperdicio.Location = new System.Drawing.Point(339, 182);
-            this.panelDesperdicio.Name = "panelDesperdicio";
-            this.panelDesperdicio.Size = new System.Drawing.Size(193, 51);
-            this.panelDesperdicio.TabIndex = 63;
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label2.Location = new System.Drawing.Point(380, 100);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(63, 15);
+            this.label2.TabIndex = 42;
+            this.label2.Text = "Habilitado";
             // 
-            // label12
+            // label7
             // 
-            this.label12.AutoSize = true;
-            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label12.Location = new System.Drawing.Point(8, 32);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(96, 15);
-            this.label12.TabIndex = 41;
-            this.label12.Text = "Desvío Estandar";
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label7.Location = new System.Drawing.Point(292, 23);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(151, 15);
+            this.label7.TabIndex = 65;
+            this.label7.Text = "Ingreso Rápido Elaborado";
             // 
-            // label18
+            // label3
             // 
-            this.label18.AutoSize = true;
-            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label18.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label18.Location = new System.Drawing.Point(17, 5);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(87, 15);
-            this.label18.TabIndex = 40;
-            this.label18.Text = "% Desperdicio";
-            // 
-            // lblPresentacion
-            // 
-            this.lblPresentacion.AutoSize = true;
-            this.lblPresentacion.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPresentacion.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblPresentacion.Location = new System.Drawing.Point(347, 134);
-            this.lblPresentacion.Name = "lblPresentacion";
-            this.lblPresentacion.Size = new System.Drawing.Size(96, 15);
-            this.lblPresentacion.TabIndex = 64;
-            this.lblPresentacion.Text = "Presentación de";
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label3.Location = new System.Drawing.Point(22, 182);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(52, 15);
+            this.label3.TabIndex = 66;
+            this.label3.Text = "Pesable";
             // 
             // formInfoCorte
             // 
@@ -675,12 +711,12 @@
             this.pnlBuscar.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.panelDesperdicio.ResumeLayout(false);
+            this.panelDesperdicio.PerformLayout();
             this.groupProveedores.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.grillaProveedores)).EndInit();
             this.barraControl.ResumeLayout(false);
             this.barraControl.PerformLayout();
-            this.panelDesperdicio.ResumeLayout(false);
-            this.panelDesperdicio.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -736,5 +772,8 @@
         protected System.Windows.Forms.Label label12;
         protected System.Windows.Forms.Label label18;
         protected System.Windows.Forms.Label lblPresentacion;
+        protected System.Windows.Forms.Label label3;
+        protected System.Windows.Forms.Label label7;
+        protected System.Windows.Forms.Label label2;
     }
 }
