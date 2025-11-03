@@ -43,8 +43,11 @@ namespace Datos
                         oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
                         oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
                         oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
-                        if (cargarMaestro) 
+                        if (cargarMaestro)
+                        {
                             oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
+
+                        }
                         oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
                         oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
                         oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());

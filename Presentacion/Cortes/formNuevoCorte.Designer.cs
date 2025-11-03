@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(formNuevoCorte));
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
@@ -70,6 +70,7 @@
             this.checkIngresoRapidoEmbutido = new System.Windows.Forms.CheckBox();
             this.checkAsignarMaestro = new System.Windows.Forms.CheckBox();
             this.groupMaestro = new System.Windows.Forms.GroupBox();
+            this.lblUnidades = new System.Windows.Forms.Label();
             this.panelDesperdicio = new System.Windows.Forms.Panel();
             this.txtDesvioEstandar = new System.Windows.Forms.MaskedTextBox();
             this.label9 = new System.Windows.Forms.Label();
@@ -89,7 +90,6 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtDescCorte = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.lblUnidades = new System.Windows.Forms.Label();
             this.pnlBuscar.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupProveedores.SuspendLayout();
@@ -388,8 +388,8 @@
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.DataPropertyName = "razonSocial";
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle1;
             this.dataGridViewTextBoxColumn3.FillWeight = 113.0288F;
             this.dataGridViewTextBoxColumn3.HeaderText = "Razon Social";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 6;
@@ -399,8 +399,8 @@
             // ultimoPrecio
             // 
             this.ultimoPrecio.DataPropertyName = "ultimoPrecio";
-            dataGridViewCellStyle4.Format = "F2";
-            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Format = "F2";
+            this.ultimoPrecio.DefaultCellStyle = dataGridViewCellStyle2;
             this.ultimoPrecio.HeaderText = "Ultimo Precio";
             this.ultimoPrecio.MinimumWidth = 6;
             this.ultimoPrecio.Name = "ultimoPrecio";
@@ -615,6 +615,18 @@
             this.groupMaestro.Text = "Prod. Maestro";
             this.groupMaestro.Enter += new System.EventHandler(this.groupMaestro_Enter);
             // 
+            // lblUnidades
+            // 
+            this.lblUnidades.AutoSize = true;
+            this.lblUnidades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblUnidades.ForeColor = System.Drawing.Color.Cornsilk;
+            this.lblUnidades.Location = new System.Drawing.Point(190, 52);
+            this.lblUnidades.Name = "lblUnidades";
+            this.lblUnidades.Size = new System.Drawing.Size(60, 15);
+            this.lblUnidades.TabIndex = 39;
+            this.lblUnidades.Text = "Unidades";
+            this.lblUnidades.Visible = false;
+            // 
             // panelDesperdicio
             // 
             this.panelDesperdicio.Controls.Add(this.txtDesvioEstandar);
@@ -822,18 +834,6 @@
             this.label4.Size = new System.Drawing.Size(36, 15);
             this.label4.TabIndex = 2;
             this.label4.Text = "Prod.";
-            // 
-            // lblUnidades
-            // 
-            this.lblUnidades.AutoSize = true;
-            this.lblUnidades.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblUnidades.ForeColor = System.Drawing.Color.Cornsilk;
-            this.lblUnidades.Location = new System.Drawing.Point(190, 52);
-            this.lblUnidades.Name = "lblUnidades";
-            this.lblUnidades.Size = new System.Drawing.Size(60, 15);
-            this.lblUnidades.TabIndex = 39;
-            this.lblUnidades.Text = "Unidades";
-            this.lblUnidades.Visible = false;
             // 
             // formNuevoCorte
             // 

@@ -37,7 +37,7 @@ namespace Presentacion
         const string AsignarMaestro = "Asignar Maestro";
         const string Presentacion = "Presentación";
 
-        string[] nombreGroupBox = { "Prod. Maestro", "Presentación" };
+        string[] nombreGroupBox = { "Prod. Maestro", "Presentación de" };
         string[] labelPorcentaje = { "% en Prod. M", "Cant.Unidades" };
         public formNuevoCorte()
         {
@@ -242,12 +242,12 @@ namespace Presentacion
 
             try
             {
-                oCorteE.Porcentaje = checkAsignarMaestro.Checked ? Utilidades.Util_Form.convertFloat(txtPorcentajeCorteM.Text, false) : 100;
+                oCorteE.Porcentaje = (checkAsignarMaestro.Checked || checkPresentacion.Checked ) ? Utilidades.Util_Form.convertFloat(txtPorcentajeCorteM.Text, false) : 100;
             }
             catch (Exception)
             {
                 resp = false;
-                mensaje += "\n" + "- % Corte M";
+                mensaje += "\n" + "- " + lblPorc_Pres;
             }
             try
             {

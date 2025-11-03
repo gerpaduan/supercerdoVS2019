@@ -17,6 +17,12 @@ namespace Presentacion
         public formCortes oFrmCortes;
         DataTable dtCorte;
 
+        string modo;
+        const string AsignarMaestro = "Asignar Maestro";
+        const string Presentacion = "Presentación";
+
+        string[] nombreGroupBox = { "Prod. Maestro", "Presentación" };
+        string[] labelPorcentaje = { "% en Prod. M", "Cant.Unidades" };
         public formInfoCorte()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;           
@@ -64,10 +70,26 @@ namespace Presentacion
                 checkEnCierreStock.Checked = oCorteE.EnCierreStock;
                 txtIndependiente.Checked = oCorteE.independiente.Equals(1);
                 checkHabilitado.Checked = oCorteE.Habilitado;
-                txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null) ? oCorteE.corteMaestro.corte : "-";
-                txtPorcentajeCorte.Text = Convert.ToString(oCorteE.porcentaje);
-                txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
-                txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
+                txtCorteMaestro.Text = "-";
+                //txtPorcentajeCorte.Text = Convert.ToString(oCorteE.porcentaje);
+                //txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+                //txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
+
+                if ((oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null))
+                {
+                    txtCorteMaestro.Text = (oCorteE.corteMaestro != null && oCorteE.corteMaestro.corte != null) ? oCorteE.corteMaestro.corte : "-";
+                    txtPorcentajeCorte.Text = Convert.ToString(oCorteE.porcentaje);
+                    txtDesvioEstandar.Text = oCorteE.desvioEstandar.ToString();
+                    txtPorcHueso.Text = oCorteE.porcentajeHueso.ToString();
+
+                    lblPresentacion.Visible = oCorteE.Presentacion;
+                    if (oCorteE.Presentacion)
+                    {                        
+                        lblPorc_Pres.Text = labelPorcentaje[1];
+                        panelDesperdicio.Visible = false;
+                    }
+                    
+                }
 
                 grillaProveedores.DataSource = oCorteN.obtenerCorteProveedor(idCorte);
             }

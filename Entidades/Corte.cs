@@ -249,7 +249,7 @@ namespace Entidades
         /// <returns>Devuelve array en pos0 (porc Corte M) = 100 / pos1 (porc Desperdicio) = 100 * (cantPresentacion - 1) .</returns>
         public float[] SetearValoresPresentacion (float cantPresentacion)
         {
-            float[] valoresPresentacion = new float[1];
+            float[] valoresPresentacion = new float[2];
             valoresPresentacion[0] = 100;
             valoresPresentacion[1] = 100 * (cantPresentacion - 1);
             return valoresPresentacion;
@@ -262,7 +262,8 @@ namespace Entidades
         /// <returns></returns>
         public float getCantPresentacion(float porcDesperdicio)
         {
-            float cantPresentacion = (porcDesperdicio + 1) / 100;
+            float porcentaje = 100f;
+            float cantPresentacion = ((porcentaje + porcDesperdicio) / 100);
             return cantPresentacion;
         }
     }
