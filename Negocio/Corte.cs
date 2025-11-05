@@ -166,6 +166,11 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
+        public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
+        {
+            return oCorteD.findAllCortes(buscarMaestro);
+        }
+
         public DataTable obtenerCorteProveedor(int idCorte)
         {
             return oCorteD.obtenerCorteProveedor(idCorte);

@@ -22,11 +22,26 @@ namespace Utilidades
             servidor
         }
         public static tipoConexion tipoConn;
-        public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
-        public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-        string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
-        public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
-        public static int timeOut = Convert.ToInt32(ConfigurationManager.AppSettings["timeOut"].ToString());
+        //public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
+        //public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
+        //string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
+        //public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
+        //public static int timeOut = Convert.ToInt32(ConfigurationManager.AppSettings["timeOut"].ToString());
+
+        // Lee el nombre de la cadena desde AppSettings
+        public static string connStringActual = ConfigurationManager.AppSettings["connString"];
+
+        // Usa ese nombre para buscar la cadena real en ConnectionStrings
+        public static string conString = ConfigurationManager
+                                            .ConnectionStrings[connStringActual]
+                                            .ConnectionString;
+
+        public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"]);
+
+        public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"] == "20306210786";
+
+        public static int timeOut = Convert.ToInt32(ConfigurationManager.AppSettings["timeOut"]);
+
 
         SqlConnection conn;
         public SqlConnection conectar()
