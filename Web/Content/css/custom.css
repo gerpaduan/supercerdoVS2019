@@ -1,0 +1,43 @@
+﻿#content-wrapper,
+#content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.container-fluid {
+    max-width: 98% !important;
+    margin: 0 auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* TODAS LAS CELDAS DEBEN PERMITIR MÚLTIPLES LÍNEAS */
+.table td,
+.table th {
+    white-space: normal !important;
+    word-break: break-word !important;
+    height: auto !important;
+    vertical-align: top !important;
+}
+
+/* FORZAR QUE CADA COLUMNA TENGA UN MÁXIMO DE ANCHO */
+.col-codigo {
+    max-width: 80px !important;
+}
+
+.col-producto {
+    max-width: 150px !important;
+}
+
+.col-precio {
+    max-width: 90px !important;
+}
+
+.col-tipo {
+    max-width: 90px !important;
+}
+
+/* IMPIDE QUE BOOTSTRAP INTENTE FORZAR UNA SOLA LÍNEA EN TABLAS RESPONSIVE */
+.table-responsive {
+    overflow-x: visible !important;
+}

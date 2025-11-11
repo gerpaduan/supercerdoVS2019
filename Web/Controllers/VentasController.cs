@@ -1,0 +1,22 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace Web.Controllers
+{
+    public class VentasController : Controller
+    {
+        Negocio.Venta oVentaN = new Negocio.Venta();
+        // GET: Ventas
+        public ActionResult Index()
+        {
+            int idVenta = 452698;
+            Entidades.Venta oVentaE = oVentaN.getVentaById(idVenta);
+            List<Entidades.Venta> ventas = new List<Entidades.Venta>();
+            ventas.Add(oVentaE);
+            return View(ventas);
+        }
+    }
+}

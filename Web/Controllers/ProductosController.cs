@@ -29,5 +29,6 @@ namespace Web.Controllers
         public ActionResult Crear() => View();
         public ActionResult Editar(int id) => View();
         public ActionResult Eliminar(int id) => View();
+
     }
 }

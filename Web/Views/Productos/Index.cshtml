@@ -12,34 +12,138 @@
         <i class="fas fa-plus"></i> Nuevo Producto
     </a>
 
-    <table class="table table-bordered table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Código</th>
-                <th>Producto</th>
-                <th>Tipo</th>
-                <th>Precio x Kg</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Codigo</td>
-                    <td>@item.CorteDesc</td>
-                    <td>@item.Tipo</td>
-                    <td>@item.PrecioKg.ToString("C")</td>
-                    <td>
-                        <a href="@Url.Action("Editar", new { id = item.Codigo })" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="@Url.Action("Eliminar", new { id = item.Codigo })" class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <!-- 🔍 Buscador -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" id="buscador" class="form-control" placeholder="Buscar por código o nombre...">
+                <div class="input-group-append">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+
+        <div class="mb-2">
+            <span id="contadorProductos" class="text-secondary font-weight-bold"></span>
+        </div>
+
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <label class="mb-0 mr-2">Zoom:</label>
+                <input type="range" id="zoomRange" min="0.5" max="1.5" step="0.1" value="1" style="width: 120px;">
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <!-- ⭐ NUEVO SISTEMA SCROLL + ZOOM ⭐ -->
+            <div id="zoomTableContainer" class="tabla-full">
+                <div id="zoomWrapper" style="transform-origin: top left; transition: transform 0.2s; display: inline-block;">
+
+                    <table class="table table-bordered table-striped" style="min-width: 900px;">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Tipo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                            <tr>
+                                <td class="col-codigo">@item.Codigo</td>
+                                <td class="col-producto">@item.CorteDesc</td>
+                                <td class="col-precio">@item.PrecioKg.ToString("C")</td>
+                                <td class="col-tipo">@item.Tipo</td>
+
+                                <td>
+                                    <a href="@Url.Action("Editar", new { id = item.Codigo })" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="@Url.Action("Eliminar", new { id = item.Codigo })" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <!-- ⭐ FIN SISTEMA NUEVO ⭐ -->
+
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        const buscador = document.getElementById("buscador");
+        const filas = document.querySelectorAll("table tbody tr");
+        const contador = document.getElementById("contadorProductos");
+
+        actualizarContador();
+
+        buscador.addEventListener("keyup", function () {
+            const valor = this.value.toLowerCase();
+            let visibles = 0;
+
+            filas.forEach(fila => {
+                const codigo = fila.children[0]?.textContent.toLowerCase() || "";
+                const producto = fila.children[1]?.textContent.toLowerCase() || "";
+                const coincide = codigo.includes(valor) || producto.includes(valor);
+                fila.style.display = coincide ? "" : "none";
+                if (coincide) visibles++;
+            });
+
+            actualizarContador(visibles);
+        });
+
+        function actualizarContador(cantidadVisible) {
+            const total = filas.length;
+            const cantidad = cantidadVisible !== undefined ? cantidadVisible : total;
+            contador.textContent = `Mostrando ${cantidad} de ${total} productos`;
+        }
+
+        // Zoom
+        const range = document.getElementById('zoomRange');
+        const zoomWrapper = document.getElementById('zoomWrapper');
+
+        range.addEventListener('input', () => {
+            const scale = parseFloat(range.value);
+            zoomWrapper.style.transform = `scale(${scale})`;
+        });
+    </script>
+
 </div>
+
+<style>
+    /* Hace que el contenedor pueda scrollear horizontalmente */
+    .tabla-full {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Evita que Chrome rompa las columnas en móvil */
+    table {
+        white-space: nowrap;
+    }
+
+    /* Ajusta padding en móvil para más espacio */
+    @@media (max-width: 768px) {
+        .card-body {
+            padding: 5px !important;
+        }
+    }
+</style>

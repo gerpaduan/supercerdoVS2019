@@ -3,22 +3,86 @@
     padding-bottom: 20px;
 }
 
-/* Set padding to keep content from hitting the edges */
+/* Espaciado general */
 .body-content {
     padding-left: 15px;
     padding-right: 15px;
 }
 
-/* Override the default bootstrap behavior where horizontal description lists 
-   will truncate terms that are too long to fit in the left column 
-*/
+/* Descripción larga */
 .dl-horizontal dt {
     white-space: normal;
 }
 
-/* Set width on the form input elements since they're 100% wide by default */
+/* ✅ Adaptar inputs y selects al ancho disponible */
 input,
 select,
 textarea {
-    max-width: 280px;
+    width: 100%;
+    max-width: none;
+}
+
+/* 🔹 Vista de Ventas y Productos: ocupar todo el ancho en móvil */
+@media (max-width: 768px) {
+
+    body,
+    html {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Elimina márgenes laterales del contenedor */
+    .container-fluid {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Tarjetas principales (buscador y lista de ventas) */
+    .buscador-card,
+    .ventas-card {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    /* Ajustar el padding interno */
+    .card-body {
+        padding: 0.75rem !important;
+    }
+
+    /* Filtros y buscadores */
+    .filters {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+
+        .filters .form-control,
+        .buscador-card input.form-control {
+            width: 100% !important;
+            margin-right: 0 !important;
+            margin-bottom: 10px !important;
+        }
+
+    /* Ajuste de la lista de ventas */
+    #listaVentas {
+        width: 100% !important;
+        border-radius: 0 !important;
+    }
+
+    .list-group-item {
+        border-left: none !important;
+        border-right: none !important;
+    }
+
+    /* Asegurar que las tarjetas usen toda la pantalla */
+    .card {
+        width: 100% !important;
+        margin: 0 auto !important;
+    }
 }
