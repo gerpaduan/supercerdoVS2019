@@ -196,7 +196,7 @@ namespace Presentacion
             {
                     oCortePorEmbutidoE = new Entidades.CortePorEmbutido();
                     oCortePorEmbutidoE.embutido = oEmbutidoE;
-                    oCortePorEmbutidoE.corte = oCorteN.getCorteById(Convert.ToInt32(dtFormula.Rows[i]["idCorte"]), false);
+                    oCortePorEmbutidoE.corte = oCorteN.findCorteById(Convert.ToInt32(dtFormula.Rows[i]["idCorte"]), false);
                     oCortePorEmbutidoE.kgUtilizado = Util_Form.convertFloat(dtFormula.Rows[i]["kgs"].ToString(), false);
                     oCortePorEmbutidoE.PesoBalanza = false;
 

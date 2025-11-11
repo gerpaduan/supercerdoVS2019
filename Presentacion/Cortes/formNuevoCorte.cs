@@ -418,7 +418,7 @@ namespace Presentacion
                 checkSugerirCodigo.Visible = !(idCorte > 0);//solo visible para altas de productos
                 if (idCorte > 0)
                 {
-                    oCorteE = oCorteN.getCorteById(idCorte, true);
+                    oCorteE = oCorteN.findCorteById(idCorte, true);
                     cargarCampos();
                 }
 

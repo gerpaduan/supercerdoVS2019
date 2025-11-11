@@ -353,7 +353,7 @@ namespace Datos
 
                         oLinea.Venta=oVenta;
 
-                        oLinea.Corte = oCorteD.getCorteById(Convert.ToInt32(drLinea["idCorte"]), false); //oCorte;
+                        oLinea.Corte = oCorteD.findCorteById(Convert.ToInt32(drLinea["idCorte"]), false); //oCorte;
 
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.IdAlicuotaIva = Convert.ToInt32(drLinea["idAlicuotaIva"]);
@@ -752,7 +752,7 @@ namespace Datos
                         Entidades.LineaVenta oLinea = new Entidades.LineaVenta();
 
                         oLinea.IdLineaVenta = Convert.ToInt32(drLinea["idLineaExpendio"]);
-                        oLinea.Corte = oCorteD.getCorteById(Convert.ToInt32(drLinea["idCorte"]), false);
+                        oLinea.Corte = oCorteD.findCorteById(Convert.ToInt32(drLinea["idCorte"]), false);
                         oLinea.CantKg = float.Parse(drLinea["cantKg"].ToString());
                         oLinea.PrecioKg = float.Parse(drLinea["precioKg"].ToString());
                         try

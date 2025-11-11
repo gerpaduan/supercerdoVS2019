@@ -16,69 +16,182 @@ namespace Datos
         Utilidades.Conexion conn=new Utilidades.Conexion();
         private SqlDataAdapter daCorte;
 
-        public Entidades.Corte getCorteById(int id, bool cargarMaestro)
+        private Entidades.Corte MapCorte(SqlDataReader drCorte, bool cargarMaestro)
         {
-            cmCorte = new SqlCommand();
-            cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
-            cmCorte.CommandText = "Select Corte.* from Corte where idCorte = " + id;
             Entidades.Corte oCorteE = new Entidades.Corte();
-            try
+
+            oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
+            oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
+            oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
+            if (drCorte["idMarca"] != DBNull.Value)
             {
-                cmCorte.Connection.Open();
-                SqlDataReader drCorte = cmCorte.ExecuteReader();
-                using (drCorte)
+                Datos.Persona oPersonaD = new Datos.Persona();
+                oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));
+            }
+            oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
+            oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+            oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
+            oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
+            if (cargarMaestro)
+            {
+                oCorteE.CorteMaestro = findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
+
+            }
+            oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
+            oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
+            oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
+            oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
+            oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
+            oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
+            oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
+            oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
+            oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+            oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+            oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+            oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
+            oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
+            oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
+
+            ///se valida si es presentacion
+            oCorteE.Presentacion = oCorteE.EsPresentacion(oCorteE.porcentajeHueso);
+            if (oCorteE.Presentacion)
+            {
+                oCorteE.porcentaje = oCorteE.getCantPresentacion(oCorteE.porcentajeHueso);
+            }
+
+            return oCorteE;
+            //idCorte = Convert.ToInt32(dr["idCorte"]),
+            //codigo = Convert.ToInt64(dr["codigo"]),
+            //corte = dr["corte"].ToString(),
+            //tipo = dr["tipo"].ToString(),
+            //Promedio = float.Parse(dr["promedio"].ToString()),
+            //PuntoStock = Convert.ToInt32(dr["puntoStock"]),
+            //Nivel = Convert.ToInt32(dr["nivel"]),
+            //CorteMaestro = buscarMaestro && dr["idCorteMaestro"] != DBNull.Value
+            //    ? findCorteById(Convert.ToInt32(dr["idCorteMaestro"]), false)
+            //    : null,
+            //precioKg = float.Parse(dr["precioKg"].ToString()),
+            //IngresoRapidoEmbutido = Convert.ToBoolean(dr["ingresoRapidoEmbutido"]),
+            //EnCierreStock = Convert.ToBoolean(dr["enCierreStock"]),
+            //independiente = Convert.ToInt32(dr["independiente"]),
+            //porcentaje = float.Parse(dr["porcentaje"].ToString()),
+            //desvioEstandar = float.Parse(dr["desvioEstandar"].ToString()),
+            //porcentajeHueso = float.Parse(dr["porcentajeHueso"].ToString()),
+            //Creado = Convert.ToDateTime(dr["creado"]),
+            //Actualizado = dr["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(dr["actualizado"]),
+            //IdAlicuotaIva = Convert.ToInt32(dr["idAlicuotaIva"]),
+            //AlicuotaIva = float.Parse(dr["alicuotaIva"].ToString()),
+            //Pesable = Convert.ToBoolean(dr["pesable"])
+        }
+        public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
+        {
+            var lista = new List<Entidades.Corte>();
+
+            using (var connSql = conn.conectar())
+            using (var cmd = new SqlCommand("SELECT * FROM Corte ORDER BY codigo ASC", connSql))
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = conn.TimeOut();
+
+                connSql.Open();
+                using (var dr = cmd.ExecuteReader())
                 {
-                    while (drCorte.Read())
+                    while (dr.Read())
                     {
-                        oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
-                        oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
-                        oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
-                        if (drCorte["idMarca"] != DBNull.Value)
-                        {
-                            Datos.Persona oPersonaD = new Datos.Persona();
-                            oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));
-                        }
-                        oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
-                        oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
-                        oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
-                        oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
-                        if (cargarMaestro)
-                        {
-                            oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
-
-                        }
-                        oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
-                        oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
-                        oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
-                        oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
-                        oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
-                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
-                        oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
-                        oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
-                        oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
-                        oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
-                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
-                        oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
-                        oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
-                        oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
-
-                        ///se valida si es presentacion
-                        oCorteE.Presentacion = oCorteE.EsPresentacion(oCorteE.porcentajeHueso);
-                        if (oCorteE.Presentacion)
-                        {
-                            oCorteE.porcentaje = oCorteE.getCantPresentacion(oCorteE.porcentajeHueso);
-                        }
+                        lista.Add(MapCorte(dr, buscarMaestro));
                     }
-                    return oCorteE;
                 }
             }
-            finally
-            {
-                cmCorte.Connection.Close();
-                oCorteE = null;
-            }
+
+            return lista;
         }
+
+        public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
+        {
+            using (var connSql = conn.conectar())
+            using (var cmd = new SqlCommand("SELECT * FROM Corte WHERE idCorte = @idCorte", connSql))
+            {
+                cmd.Parameters.AddWithValue("@idCorte", idCorte);
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = conn.TimeOut();
+
+                connSql.Open();
+                using (var dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        return MapCorte(dr, buscarMaestro);
+                    }
+                }
+            }
+
+            return null; // No se encontró
+        }
+
+
+        //public Entidades.Corte getCorteById(int id, bool cargarMaestro)
+        //{
+        //    cmCorte = new SqlCommand();
+        //    cmCorte.Connection = conn.conectar();
+        //    cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
+        //    cmCorte.CommandText = "Select Corte.* from Corte where idCorte = " + id;
+        //    Entidades.Corte oCorteE = new Entidades.Corte();
+        //    try
+        //    {
+        //        cmCorte.Connection.Open();
+        //        SqlDataReader drCorte = cmCorte.ExecuteReader();
+        //        using (drCorte)
+        //        {
+        //            while (drCorte.Read())
+        //            {
+        //                oCorteE.IdCorte = Convert.ToInt32(drCorte["idCorte"]);
+        //                oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
+        //                oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
+        //                if (drCorte["idMarca"] != DBNull.Value)
+        //                {
+        //                    Datos.Persona oPersonaD = new Datos.Persona();
+        //                    oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));
+        //                }
+        //                oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);
+        //                oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+        //                oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
+        //                oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
+        //                if (cargarMaestro)
+        //                {
+        //                    oCorteE.CorteMaestro = getCorteById(Convert.ToInt32(drCorte["idCorteMaestro"]), false);
+
+        //                }
+        //                oCorteE.Porcentaje = float.Parse(drCorte["porcentaje"].ToString());
+        //                oCorteE.PrecioKg = float.Parse(drCorte["precioKg"].ToString());
+        //                oCorteE.PrecioKgReferencia = float.Parse(drCorte["precioKg"].ToString());
+        //                oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
+        //                oCorteE.Habilitado = Convert.ToBoolean(drCorte["habilitado"]);
+        //                oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
+        //                oCorteE.PorcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
+        //                oCorteE.Independiente = Convert.ToInt32(drCorte["independiente"]);
+        //                oCorteE.DesvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+        //                oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+        //                oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+        //                oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
+        //                oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
+        //                oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
+
+        //                ///se valida si es presentacion
+        //                oCorteE.Presentacion = oCorteE.EsPresentacion(oCorteE.porcentajeHueso);
+        //                if (oCorteE.Presentacion)
+        //                {
+        //                    oCorteE.porcentaje = oCorteE.getCantPresentacion(oCorteE.porcentajeHueso);
+        //                }
+        //            }
+        //            return oCorteE;
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        cmCorte.Connection.Close();
+        //        oCorteE = null;
+        //    }
+        //}
 
         public void editPrecioCorte(Entidades.Corte oCorteE)
         {
@@ -359,104 +472,104 @@ namespace Datos
         }
 
 
-        public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
-        {
-            cmCorte = new SqlCommand();
-            cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
-            cmCorte.CommandText = "Select Corte.* from Corte order by codigo asc";
-            List<Entidades.Corte> listaCortes = new List<Entidades.Corte>();
-            Entidades.Corte oCorteE;// = new Entidades.Corte();
-            try
-            {
-                cmCorte.Connection.Open();
-                SqlDataReader drCorte = cmCorte.ExecuteReader();
+        //public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
+        //{
+        //    cmCorte = new SqlCommand();
+        //    cmCorte.Connection = conn.conectar();
+        //    cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
+        //    cmCorte.CommandText = "Select Corte.* from Corte order by codigo asc";
+        //    List<Entidades.Corte> listaCortes = new List<Entidades.Corte>();
+        //    Entidades.Corte oCorteE;// = new Entidades.Corte();
+        //    try
+        //    {
+        //        cmCorte.Connection.Open();
+        //        SqlDataReader drCorte = cmCorte.ExecuteReader();
 
-                using (drCorte)
-                {
-                    while (drCorte.Read())
-                    {
-                        oCorteE = new Entidades.Corte();
-                        oCorteE.idCorte = Convert.ToInt32(drCorte["idCorte"].ToString());
-                        oCorteE.codigo = Convert.ToInt64(drCorte["codigo"].ToString());
-                        oCorteE.corte = drCorte["corte"].ToString();
-                        oCorteE.tipo = drCorte["tipo"].ToString();
-                        oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
-                        oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
-                        oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
-                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
-                        oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
-                        oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
-                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
-                        oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
-                        oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
-                        oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
-                        oCorteE.porcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
-                        oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
-                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
-                        oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
-                        oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
-                        oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
+        //        using (drCorte)
+        //        {
+        //            while (drCorte.Read())
+        //            {
+        //                oCorteE = new Entidades.Corte();
+        //                oCorteE.idCorte = Convert.ToInt32(drCorte["idCorte"].ToString());
+        //                oCorteE.codigo = Convert.ToInt64(drCorte["codigo"].ToString());
+        //                oCorteE.corte = drCorte["corte"].ToString();
+        //                oCorteE.tipo = drCorte["tipo"].ToString();
+        //                oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+        //                oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
+        //                oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
+        //                oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
+        //                oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
+        //                oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
+        //                oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
+        //                oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
+        //                oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
+        //                oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+        //                oCorteE.porcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
+        //                oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+        //                oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+        //                oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
+        //                oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
+        //                oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
 
-                        listaCortes.Add(oCorteE);
-                    }
-                    return listaCortes;
-                }
-            }
-            finally
-            {
-                cmCorte.Connection.Close();
-                oCorteE = null;
-            }
-        }
+        //                listaCortes.Add(oCorteE);
+        //            }
+        //            return listaCortes;
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        cmCorte.Connection.Close();
+        //        oCorteE = null;
+        //    }
+        //}
 
-        public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
-        {
-            cmCorte = new SqlCommand();
-            cmCorte.Connection = conn.conectar();
-            cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
-            cmCorte.CommandText = "Select Corte.* from Corte where idCorte =" + idCorte;
+        //public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
+        //{
+        //    cmCorte = new SqlCommand();
+        //    cmCorte.Connection = conn.conectar();
+        //    cmCorte.CommandType = CommandType.Text; cmCorte.CommandTimeout = conn.TimeOut();
+        //    cmCorte.CommandText = "Select Corte.* from Corte where idCorte =" + idCorte;
 
-            Entidades.Corte oCorteE = new Entidades.Corte();
-            try
-            {
-                cmCorte.Connection.Open();
-                SqlDataReader drCorte = cmCorte.ExecuteReader();
+        //    Entidades.Corte oCorteE = new Entidades.Corte();
+        //    try
+        //    {
+        //        cmCorte.Connection.Open();
+        //        SqlDataReader drCorte = cmCorte.ExecuteReader();
 
-                using (drCorte)
-                {
-                    while (drCorte.Read())
-                    {
-                        oCorteE.idCorte = Convert.ToInt32(drCorte["idCorte"].ToString());
-                        oCorteE.codigo = Convert.ToInt64(drCorte["codigo"].ToString());
-                        oCorteE.corte = drCorte["corte"].ToString();
-                        oCorteE.tipo = drCorte["tipo"].ToString();
-                        oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
-                        oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
-                        oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
-                        oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
-                        oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
-                        oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
-                        oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
-                        oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
-                        oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
-                        oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
-                        oCorteE.porcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
-                        oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
-                        oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
-                        oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
-                        oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
-                        oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
-                    }
-                    return oCorteE;
-                }
-            }
-            finally
-            {
-                cmCorte.Connection.Close();
-                oCorteE = null;
-            }
-        }
+        //        using (drCorte)
+        //        {
+        //            while (drCorte.Read())
+        //            {
+        //                oCorteE.idCorte = Convert.ToInt32(drCorte["idCorte"].ToString());
+        //                oCorteE.codigo = Convert.ToInt64(drCorte["codigo"].ToString());
+        //                oCorteE.corte = drCorte["corte"].ToString();
+        //                oCorteE.tipo = drCorte["tipo"].ToString();
+        //                oCorteE.Promedio = float.Parse(drCorte["promedio"].ToString());
+        //                oCorteE.PuntoStock = Convert.ToInt32(drCorte["puntoStock"]);
+        //                oCorteE.Nivel = Convert.ToInt32(drCorte["nivel"]);
+        //                oCorteE.CorteMaestro = buscarMaestro ? findCorteById(Convert.ToInt32(drCorte["idCorteMaestro"].ToString()), false) : null;
+        //                oCorteE.precioKg = float.Parse(drCorte["precioKg"].ToString());
+        //                oCorteE.IngresoRapidoEmbutido = Convert.ToBoolean(drCorte["ingresoRapidoEmbutido"]);
+        //                oCorteE.EnCierreStock = Convert.ToBoolean(drCorte["enCierreStock"]);
+        //                oCorteE.independiente = Convert.ToInt32(drCorte["independiente"].ToString());
+        //                oCorteE.porcentaje = float.Parse(drCorte["porcentaje"].ToString());
+        //                oCorteE.desvioEstandar = float.Parse(drCorte["desvioEstandar"].ToString());
+        //                oCorteE.porcentajeHueso = float.Parse(drCorte["porcentajeHueso"].ToString());
+        //                oCorteE.Creado = Convert.ToDateTime(drCorte["creado"]);
+        //                oCorteE.Actualizado = drCorte["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drCorte["actualizado"]);
+        //                oCorteE.IdAlicuotaIva = Convert.ToInt32(drCorte["idAlicuotaIva"]);
+        //                oCorteE.AlicuotaIva = float.Parse(drCorte["alicuotaIva"].ToString());
+        //                oCorteE.Pesable = Convert.ToBoolean(drCorte["pesable"]);
+        //            }
+        //            return oCorteE;
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        cmCorte.Connection.Close();
+        //        oCorteE = null;
+        //    }
+        //}
 
         public DataTable obtenerCorteProveedor(int idCorte)
         {

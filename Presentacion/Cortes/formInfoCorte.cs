@@ -149,7 +149,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
 
-                oCorteE = oCorteN.getCorteById(idCorte, true);
+                oCorteE = oCorteN.findCorteById(idCorte, true);
                 //cargarCorte();
                 cargarCampos();
             }

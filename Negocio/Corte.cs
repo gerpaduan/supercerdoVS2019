@@ -11,9 +11,18 @@ namespace Negocio
     {
         Datos.Corte oCorteD=new Datos.Corte();
 
+        //Mantuve el metodo con este nombre getCorteById para no modificar toda la capa presentacion
         public Entidades.Corte getCorteById(int id, bool cargarMaestro)
         {
-            return oCorteD.getCorteById(id, cargarMaestro);
+            return findCorteById(id, cargarMaestro);
+        }
+        public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
+        {
+            return oCorteD.findCorteById(idCorte, buscarMaestro);
+        }
+        public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
+        {
+            return oCorteD.findAllCortes(buscarMaestro);
         }
 
         public void editPrecioCorte(Entidades.Corte oCorteE)
@@ -162,14 +171,6 @@ namespace Negocio
             return dtCorte;
         }
 
-        public Entidades.Corte findCorteById(int idCorte, bool buscarMaestro)
-        {
-            return oCorteD.findCorteById(idCorte, buscarMaestro);
-        }
-        public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
-        {
-            return oCorteD.findAllCortes(buscarMaestro);
-        }
 
         public DataTable obtenerCorteProveedor(int idCorte)
         {
