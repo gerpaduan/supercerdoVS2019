@@ -16,6 +16,130 @@ namespace Datos
         SqlCommand cmVenta;
         SqlDataAdapter daVenta;
 
+        private Entidades.Venta MapVenta(SqlDataReader drVenta, bool cargarLineas = true)
+        {
+            var oVentaE = new Entidades.Venta
+            {
+                IdVenta = Convert.ToInt32(drVenta["idVenta"]),
+                FechaVenta = Convert.ToDateTime(drVenta["fechaVenta"]),
+                Turno = Convert.ToString(drVenta["turno"]),
+                DiaFestivo = Convert.ToString(drVenta["diaFestivo"]),
+                Observaciones = Convert.ToString(drVenta["observaciones"]),
+                NroRemito = Convert.ToString(drVenta["nroRemito"]),
+                Estado = Convert.ToString(drVenta["estado"]),
+                EnCtaCte = Convert.ToBoolean(drVenta["enCtaCte"]),
+                Cuit = ColumnaExiste(drVenta, "cuit") && drVenta["cuit"] != DBNull.Value
+                        ? Convert.ToString(drVenta["cuit"])
+                        : "",
+                Email = ColumnaExiste(drVenta, "email") && drVenta["email"] != DBNull.Value
+                        ? Convert.ToString(drVenta["email"])
+                        : "",
+                FormaPago = Convert.ToString(drVenta["formaPago"]),
+                TipoComprobante = Convert.ToChar(drVenta["tipoComprobante"]),
+                Creado = Convert.ToDateTime(drVenta["creado"]),
+                Actualizado = drVenta["actualizado"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(drVenta["actualizado"]),
+                PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"] == DBNull.Value ? 0f : float.Parse(drVenta["pagoMixtoEfectivo"].ToString()),
+                IdVendedor = Convert.ToInt32(drVenta["idVendedor"]),
+                IdSucursal = Convert.ToInt32(drVenta["idSucursal"]),
+                Idpersona = Convert.ToInt32(drVenta["idPersona"])
+            };
+
+            // Cargar datos relacionados
+            Datos.Usuario oUsuarioD = new Usuario();
+            oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
+
+            Datos.Sucursal oSucursalD = new Sucursal();
+            oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
+
+            Datos.Persona oPersonaD = new Datos.Persona();
+            oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
+
+            if (cargarLineas)
+            {
+                oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
+                oVentaE.CantItems = oVentaE.getCantItems(oVentaE).ToString();
+            }
+
+            oVentaE.TotalImporte = getTotalVenta(oVentaE.IdVenta);
+            oVentaE.TotalImporteOriginal = oVentaE.TotalImporte;
+
+            return oVentaE;
+        }
+
+        private bool ColumnaExiste(SqlDataReader dr, string columna)
+        {
+            try
+            {
+                return dr.GetOrdinal(columna) >= 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public Entidades.Venta getVentaById(int idVenta)
+        {
+            using (SqlConnection connSql = this.conn.conectar())
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Ventas WHERE idVenta = @idVenta", connSql))
+            {
+                cmd.Parameters.AddWithValue("@idVenta", idVenta);
+                connSql.Open();
+
+                using (SqlDataReader drVenta = cmd.ExecuteReader())
+                {
+                    if (drVenta.Read())
+                    {
+                        return MapVenta(drVenta);
+                    }
+                }
+            }
+
+            return null; // No se encontró
+        }
+
+        public List<Entidades.Venta> getAllVentas(
+                                            DateTime fechaDesde,
+                                            DateTime fechaHasta,
+                                            string texto,
+                                            int? idVendedor,
+                                            int? idCliente,
+                                            int? idSucursal,
+                                            bool soloAnulados,
+                                            bool cargarLineas)
+        {
+            var listaVentas = new List<Entidades.Venta>();
+
+            using (SqlConnection connSql = this.conn.conectar())
+            using (SqlCommand cmVenta = new SqlCommand("obtenerVentas", connSql))
+            {
+                cmVenta.CommandType = CommandType.StoredProcedure;
+                //cmVenta.CommandTimeout = conn.TimeOut();
+
+                // Parámetros
+                cmVenta.Parameters.AddWithValue("@fechaDesde", DateTime.Now.AddMonths(-1));
+                //fechaDesde);
+                cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
+                cmVenta.Parameters.AddWithValue("@texto", texto ?? (object)DBNull.Value);
+                cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor ?? (object)DBNull.Value);
+                cmVenta.Parameters.AddWithValue("@idCliente", idCliente ?? (object)DBNull.Value);
+                cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal ?? (object)DBNull.Value);
+                cmVenta.Parameters.AddWithValue("@soloAnulados", soloAnulados);
+
+                connSql.Open();
+
+                using (SqlDataReader drVenta = cmVenta.ExecuteReader())
+                {
+                    while (drVenta.Read())
+                    {
+                        listaVentas.Add(MapVenta(drVenta, cargarLineas));
+                    }
+                }
+            }
+
+            return listaVentas;
+        }
+
         public int agregarVenta(Entidades.Venta oVentaE)
         {
             cmVenta = new SqlCommand();
@@ -233,64 +357,64 @@ namespace Datos
             return oLineaE;
         }
 
-        public Entidades.Venta getVentaById(int idVenta)
-        {
-            Entidades.Venta oVentaE = null;
+        //public Entidades.Venta getVentaById(int idVenta)
+        //{
+        //    Entidades.Venta oVentaE = null;
 
-            using (SqlConnection conn = this.conn.conectar())
-            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Ventas WHERE idVenta = @idVenta", conn))
-            {
-                cmd.Parameters.AddWithValue("@idVenta", idVenta);
+        //    using (SqlConnection conn = this.conn.conectar())
+        //    using (SqlCommand cmd = new SqlCommand("SELECT * FROM Ventas WHERE idVenta = @idVenta", conn))
+        //    {
+        //        cmd.Parameters.AddWithValue("@idVenta", idVenta);
 
-                conn.Open();
-                using (SqlDataReader drVenta = cmd.ExecuteReader())
-                {
-                    if (drVenta.Read())
-                    {
-                        oVentaE = new Entidades.Venta(); // se crea el objeto solo si hay datos
-                        oVentaE.IdVenta = Convert.ToInt32(drVenta["idVenta"]);
-                        oVentaE.FechaVenta = Convert.ToDateTime(drVenta["fechaVenta"]);
-                        oVentaE.Turno = Convert.ToString(drVenta["turno"]);
-                        oVentaE.DiaFestivo = Convert.ToString(drVenta["diaFestivo"]);
-                        oVentaE.Observaciones = Convert.ToString(drVenta["observaciones"]);
-                        oVentaE.NroRemito = Convert.ToString(drVenta["nroRemito"]);
-                        oVentaE.Estado = Convert.ToString(drVenta["estado"]);
-                        oVentaE.EnCtaCte = Convert.ToBoolean(drVenta["enCtaCte"]);
-                        oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
-                        oVentaE.Email = Convert.ToString(drVenta["email"]);
-                        oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
-                        oVentaE.FormaPago = Convert.ToString(drVenta["formaPago"]);
-                        oVentaE.TipoComprobante = Convert.ToChar(drVenta["tipoComprobante"]);
-                        oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
-                        oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
+        //        conn.Open();
+        //        using (SqlDataReader drVenta = cmd.ExecuteReader())
+        //        {
+        //            if (drVenta.Read())
+        //            {
+        //                oVentaE = new Entidades.Venta(); // se crea el objeto solo si hay datos
+        //                oVentaE.IdVenta = Convert.ToInt32(drVenta["idVenta"]);
+        //                oVentaE.FechaVenta = Convert.ToDateTime(drVenta["fechaVenta"]);
+        //                oVentaE.Turno = Convert.ToString(drVenta["turno"]);
+        //                oVentaE.DiaFestivo = Convert.ToString(drVenta["diaFestivo"]);
+        //                oVentaE.Observaciones = Convert.ToString(drVenta["observaciones"]);
+        //                oVentaE.NroRemito = Convert.ToString(drVenta["nroRemito"]);
+        //                oVentaE.Estado = Convert.ToString(drVenta["estado"]);
+        //                oVentaE.EnCtaCte = Convert.ToBoolean(drVenta["enCtaCte"]);
+        //                oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
+        //                oVentaE.Email = Convert.ToString(drVenta["email"]);
+        //                oVentaE.Cuit = Convert.ToString(drVenta["cuit"]);
+        //                oVentaE.FormaPago = Convert.ToString(drVenta["formaPago"]);
+        //                oVentaE.TipoComprobante = Convert.ToChar(drVenta["tipoComprobante"]);
+        //                oVentaE.Creado = Convert.ToDateTime(drVenta["creado"]);
+        //                oVentaE.Actualizado = drVenta["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(drVenta["actualizado"]);
 
-                        oVentaE.PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"].Equals(DBNull.Value) ? 0f : float.Parse(drVenta["pagoMixtoEfectivo"].ToString());
+        //                oVentaE.PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"].Equals(DBNull.Value) ? 0f : float.Parse(drVenta["pagoMixtoEfectivo"].ToString());
 
-                        oVentaE.IdVendedor = Convert.ToInt32(drVenta["idVendedor"]);
-                        oVentaE.IdSucursal = Convert.ToInt32(drVenta["idSucursal"]);
-                        oVentaE.Idpersona = Convert.ToInt32(drVenta["idPersona"]);
-                    }
-                }
-            }
-            if (oVentaE != null)
-            {
-                Datos.Usuario oUsuarioD = new Usuario();
-                oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
+        //                oVentaE.IdVendedor = Convert.ToInt32(drVenta["idVendedor"]);
+        //                oVentaE.IdSucursal = Convert.ToInt32(drVenta["idSucursal"]);
+        //                oVentaE.Idpersona = Convert.ToInt32(drVenta["idPersona"]);
+        //            }
+        //        }
+        //    }
+        //    if (oVentaE != null)
+        //    {
+        //        Datos.Usuario oUsuarioD = new Usuario();
+        //        oVentaE.Vendedor = oUsuarioD.getUsuarioById(oVentaE.IdVendedor);
 
-                Datos.Sucursal oSucursalD = new Sucursal();
-                oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
+        //        Datos.Sucursal oSucursalD = new Sucursal();
+        //        oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
 
-                Datos.Persona oPersonaD = new Datos.Persona();
-                oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
+        //        Datos.Persona oPersonaD = new Datos.Persona();
+        //        oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
 
-                oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
-                oVentaE.TotalImporte = getTotalVenta(idVenta);
-                oVentaE.TotalImporteOriginal = oVentaE.TotalImporte;
-                oVentaE.CantItems = oVentaE.getCantItems(oVentaE).ToString();
-            }
+        //        oVentaE.LineasVenta = obtenerLineasVenta(oVentaE.IdVenta);
+        //        oVentaE.TotalImporte = getTotalVenta(idVenta);
+        //        oVentaE.TotalImporteOriginal = oVentaE.TotalImporte;
+        //        oVentaE.CantItems = oVentaE.getCantItems(oVentaE).ToString();
+        //    }
 
-            return oVentaE;
-        }
+        //    return oVentaE;
+        //}
 
         public Entidades.Venta getUltimaVentaVendedor(Entidades.CierreCaja oCierreE)
         {

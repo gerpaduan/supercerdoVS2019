@@ -13,6 +13,24 @@ namespace Negocio
     {
         Datos.Venta oVentaD = new Datos.Venta();
 
+        public Entidades.Venta getVentaById(int idVenta)
+        {
+            Entidades.Venta oVentaE = oVentaD.getVentaById(idVenta);
+            return oVentaE;
+        }
+        public List<Entidades.Venta> getAllVentas(
+                                            DateTime fechaDesde,
+                                            DateTime fechaHasta,
+                                            string texto,
+                                            int? idVendedor,
+                                            int? idCliente,
+                                            int? idSucursal,
+                                            bool soloAnulados,
+                                            bool cargarLineas)
+        {
+            return oVentaD.getAllVentas(fechaDesde, fechaHasta, texto, idVendedor, idCliente, idSucursal, soloAnulados, cargarLineas);
+        }
+
         public int agregarVenta(Entidades.Venta oVentaE)
         {
             using (TransactionScope scope = new TransactionScope())
@@ -177,11 +195,6 @@ namespace Negocio
             return oVentaD.obtenerVentas(idSucursal, idCliente, idVendedor, fechaDesde, fechaHasta, texto, soloAnulados);
         }
 
-        public Entidades.Venta getVentaById(int idVenta)
-        {
-            Entidades.Venta oVentaE = oVentaD.getVentaById(idVenta);
-            return oVentaE;
-        }
 
         public DataTable getVentasVendedorCierreCaja(Entidades.CierreCaja oCierreE, bool soloAnulados)
         {
