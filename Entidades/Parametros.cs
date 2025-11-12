@@ -6,7 +6,7 @@ using System.Data;
 
 namespace Entidades
 {
-    public class Parametros
+    public static class Parametros
     {
         public static float	porcAjEfectivo;//	Porcentaje diferencia al precio de lista EFECTIVO
         public static float porcAjDebito;//	Porcentaje diferencia al precio de lista DEBITO
