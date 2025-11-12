@@ -61,7 +61,55 @@
 
                     foreach (var venta in ventaAgrupada)
                     {
-                        <li class="list-group-item d-flex justify-content-between align-items-center venta-item flex-wrap w-100">
+                        <li class="list-group-item venta-item">
+                            <div class="venta-icono">
+                                @if (!string.IsNullOrEmpty(venta.FormaPago))
+                                {
+                                    switch (venta.FormaPago.ToLower())
+                                    {
+                                        case "efectivo":
+                                            <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                                            break;
+                                        case "qr":
+                                            <i class="fas fa-qrcode fa-2x text-primary"></i>
+                                            break;
+                                        case "debito":
+                                        case "credito":
+                                            <i class="fas fa-credit-card fa-2x text-info"></i>
+                                            break;
+                                        case "ctacte":
+                                            <i class="fas fa-university fa-2x text-warning"></i>
+                                            break;
+                                        case "transferencia":
+                                            <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
+                                            break;
+                                        default:
+                                            <i class="fas fa-money-check fa-2x text-muted"></i>
+                                            break;
+                                    }
+                                }
+                            </div>
+
+                            <div class="venta-info">
+                                <div class="venta-tipo-persona font-weight-bold">
+                                    @venta.TipoComprobante - @venta.FormaPago
+                                </div>
+                                @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
+                                {
+                                    <div class="venta-tipo-persona font-weight-bold">
+                                        a @venta.Persona.razonSocial
+                                    </div>
+                                }
+                                <div class="venta-id">idVenta @venta.IdVenta</div>
+                            </div>
+
+                            <div class="venta-total">
+                                <div class="importe">+ @venta.TotalImporte.ToString("C")</div>
+                                <div class="text-muted small">@venta.FechaVenta.ToString("HH:mm") hs</div>
+                            </div>
+                        </li>
+
+                        @*<li class="list-group-item d-flex justify-content-between align-items-center venta-item flex-wrap w-100">
                             <div class="d-flex align-items-center mb-2 mb-md-0">
                                 <div class="icono mr-3">
                                     @if (!string.IsNullOrEmpty(venta.FormaPago))
@@ -99,7 +147,7 @@
                                 <div class="text-success font-weight-bold">+ @venta.TotalImporte.ToString("C")</div>
                                 <div class="text-muted small">@venta.FechaVenta.ToString("HH:mm") hs</div>
                             </div>
-                        </li>
+                        </li>*@
                     }
                 }
             </ul>
@@ -122,6 +170,46 @@
 </script>
 
 <style>
+    .venta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;  /* Permite que elementos bajen si la pantalla es muy chica */
+    padding: 10px 15px;
+    }
+
+    .venta-icono {
+        flex: 0 0 auto;  /* El icono no crece ni se reduce */
+        margin-right: 10px;
+    }
+
+    .venta-info {
+        flex: 1 1 auto;  /* Texto puede crecer/reducirse */
+        min-width: 0;     /* Necesario para que text-overflow funcione dentro de flex */
+    }
+
+    .venta-tipo-persona {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .venta-id {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .venta-total {
+        text-align: right;
+        flex: 0 0 auto;   /* Totales no crecen */
+    }
+
+    .venta-total .importe {
+        font-weight: bold;
+        color: #28a745;
+    }
+
+
     .filters select {
         min-width: 130px;
     }
@@ -139,8 +227,17 @@
         text-align: center;
     }
 
+    .venta-icono i {
+        color: #000; /* negro */
+        filter: grayscale(100%); /* opcional: hace todos en escala de grises */
+    }
+
     /* ✅ Estilo responsive */
     @@media (max-width: 768px) {
+
+        .venta-tipo-persona {
+            max-width: 180px;
+        }
         .buscador-card,
         .ventas-card {
             border-radius: 0;
@@ -167,5 +264,10 @@
             padding-left: 0 !important;
             padding-right: 0 !important;
         }
+    }
+
+    @@media (max-width: 576px) {
+    .venta-tipo-persona {
+        max-width: 140px;
     }
 </style>
