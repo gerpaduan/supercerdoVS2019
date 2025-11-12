@@ -1824,9 +1824,14 @@ namespace Presentacion.Caja
             if (linkVerCtaCte.Visible)
             {
                 Negocio.CuentaCorriente ctacteN = new Negocio.CuentaCorriente();
-                float saldoF = float.Parse(ctacteN.getCtaCteByIdPersona(oCliente.idPersona, DateTime.Now).Rows[0]["Saldo"].ToString());
+                DataTable ctaCtePersona = ctacteN.getCtaCteByIdPersona(oCliente.idPersona, DateTime.Now);
+                float saldoF = 0f;
+                if (ctaCtePersona.Rows.Count > 0)
+                {
+                    saldoF = float.Parse(ctaCtePersona.Rows[0]["Saldo"].ToString());
+                }
                 //string saldoS 
-                lblSaldo.Text = "Saldo: $" + saldoF.ToString("N2");
+                lblSaldo.Text = "Saldo: $" + (saldoF == 0f ? "-" : saldoF.ToString("N2"));
                 lblSaldo.ForeColor = saldoF >= 0 ? Color.SeaGreen : Color.Crimson;
             }
 

@@ -722,11 +722,21 @@ namespace Presentacion.Pagos
             Entidades.Cheque oCheque = oCtaCteN.getChequePorIDorNro(0, txtNroCheque.Text);
             if (oCheque != null)
             {
+
                 if (oPagoE.Cheques.Any(c => c.NroCheque == oCheque.NroCheque))
                 {
                     MessageBox.Show("El Cheque ya ha sido asignado al Pago actual");
                     return;
                 }
+
+                //se verifica que el cheque a entregar haya sido recibido o sea Propio
+                if (checkAProveedor.Checked && (oCheque.Propio || (oCheque.PagoDe != null && oCheque.PagoDe.Id > 0)))
+                {
+                    MessageBox.Show("El Cheque a entregar debe de Propio o haber sido recibido en un cobro"+
+                        "\nUd. está tratando de asignar un cheque que no tiene un origen.");
+                    return;
+                }
+
                 //se verifica que el mismo cheque no se asignado a dos pagos diferentes
                 if (checkAProveedor.Checked && oCheque.PagoA != null && oCheque.PagoA.Id > 0 && oCheque.PagoA.Id != oPagoE.Id)
                 {
