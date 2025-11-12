@@ -2276,9 +2276,9 @@ namespace wsAFIPvs2008
                 oNotaCredito = new Entidades.FacturaElectronica();
 
                 //Cambiando . por , para convertir a double
-                ImpIvaTx.Text = ImpIvaTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
-                NetoTX.Text = NetoTX.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
-                TotalTx.Text = TotalTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                //ImpIvaTx.Text = ImpIvaTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                //NetoTX.Text = NetoTX.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
+                //TotalTx.Text = TotalTx.Text.Replace(".", System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
 
                 CbteTipo cm = (CbteTipo)TiposComprobantesCMB.SelectedItem;
                 FECAERequest req = new FECAERequest(); ///Request para obtener CAE
@@ -2463,6 +2463,9 @@ namespace wsAFIPvs2008
                     errorEgresoCaja = "\n-Error al generar el Egreso de caja", errorCtaCte = "\n-Error al generar registro de Cta Cte.";
                     try
                     {
+                        //TODO: ver como agregar la anulacion de la venta por Cuenta corriente
+                        //Venta mal a Abastecedora 08/11 a las 19:30
+                        //tipo comprobante -> añadir NC ND
                         Entidades.Venta oVentaAnularPorNotaCredito = oVentaE;
                         oVentaAnularPorNotaCredito.IdVenta = 0;
                         oVentaAnularPorNotaCredito.NroRemito += "Nota Credito";
