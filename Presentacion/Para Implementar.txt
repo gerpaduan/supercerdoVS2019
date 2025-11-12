@@ -19,26 +19,6 @@
 ##
 
 
-
-
-/////////////////
-
-28/08
-
-ALTER TABLE Personas
-ADD creado DATETIME;
-ALTER TABLE Personas
-ADD modificado DATETIME;
-
-copiar de SM
-ALTER PROCEDURE [dbo].[addOrEditPersona] 
-
-UPDATE Personas
-SET creado = DATEADD(YEAR, -5, GETDATE());
-
-UPDATE Personas
-SET modificado = DATEADD(YEAR, -5, GETDATE());
-
 *********
 
 BEGIN TRANSACTION;
@@ -58,93 +38,8 @@ actualiar desde SM
 
 [addOrEditUser]
 ****
-////////////////////////////////////////////
-
-ALTER TABLE Personas
-ADD marca BIT NOT NULL DEFAULT 0,
-    idPropietario INT NULL;
-
-    
-UPDATE Personas
-SET marca = 0,
-    idPropietario = NULL;
-
-	ALTER TABLE Personas
-ADD CONSTRAINT FK_Personas_Propietario
-FOREIGN KEY (idPropietario) REFERENCES Personas(idPersona);
-
-------
-/////////////////////////////////
-
-
-ALTER PROCEDURE [dbo].[addOrEditPersona]
-	-- Add the parameters for the stored procedure here
-	
-	@idPersona  int = null,
-	@identificacion nvarchar(50) = null,
-	@razonSocial nvarchar(50) = null,
-	@idIva  int = null,
-	@cuit nvarchar(50) = null,
-	@telefono nvarchar(50) = null,
-	@domicilio nvarchar(50) = null,
-	@ciudad	nvarchar(50) = null,
-	@otrosDatos nvarchar(200) = null,
-	@tipo nvarchar(50) = null,
-	@ctaCte tinyint  = null,
-	@bonificacion float  = null,
-	@marca tinyint = 0,
-    @idPropietario int = NULL
-	
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-
-    -- Insert statements for procedure here
-	IF @idPersona = 0 
-			BEGIN 
-				Insert into Personas (identificacion, razonSocial, idIva, cuit, telefono, domicilio, ciudad, 
-				otrosDatos, tipo, ctaCte, bonificacion, marca, idPropietario, creado) values (@identificacion, @razonSocial, 
-				@idIva, @cuit, @telefono, @domicilio, @ciudad, @otrosDatos, @tipo, @ctaCte, @bonificacion, @marca, @idPropietario, GETDATE()) 
-				set @idPersona = SCOPE_IDENTITY()
-			END 
-		ELSE 
-		BEGIN 
-			update Personas set identificacion=@identificacion, razonSocial=@razonSocial, idIva=@idIva, cuit = @cuit, telefono = @telefono, 
-				domicilio = @domicilio, ciudad = @ciudad, tipo=@tipo, otrosDatos= @otrosDatos,
-				ctaCte = @ctaCte, bonificacion = @bonificacion, marca = @marca, idPropietario = @idPropietario, modificado = GETDATE() 
-			where idPersona =@idPersona 		
-		END 
-	select @idPersona 
-END
-
-
-
-
-//////////////////
-ALTER PROCEDURE [dbo].[buscarPersona]
-	-- Add the parameters for the stored procedure here
-	@texto nvarchar(50)
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-
-    -- Insert statements for procedure here
-	select  idPersona, identificacion as nombreIdentif, razonSocial, dbo.Iva.abrev as iva, 
-	cuit, telefono, ctaCte, bonificacion, domicilio, ciudad, otrosDatos, marca, idPropietario
-	 FROM  dbo.Iva RIGHT OUTER JOIN
-                      dbo.Personas ON dbo.Iva.id = dbo.Personas.idIva
-	where identificacion like '%'+@texto+'%' or razonSocial like '%'+@texto+'%' or cuit like '%'+@texto+'%'
-END
 
 //////////////
-
-DELETE PROCEDURE [dbo].[buscarPersona]
-
-
 
 /////////////////
 
@@ -152,73 +47,3 @@ agregar tabla Empresas
 actulaizar tabla Sucursal
 
 /////
-30 oct 2025
-
-agregar campo porcentajaFacturacion en FacturaElectronica
-
-ALTER TABLE FacturaElectronica
-ADD porcentajeFacturacion FLOAT DEFAULT 100;
-
-
-ALTER TABLE FacturaElectronica
-ADD descItemUnitario NVARCHAR(50) NULL;
-
--------
-
-ALTER PROCEDURE [dbo].[addOrEditFacturaElectronica] 
-	-- Add the parameters for the stored procedure here
-	@id int = null,
-	@ptoVtaAfip nvarchar(50) = null,
-	@fechaEmisionAfip nvarchar(50) = null,
-	@descTipoCbteAfip nvarchar(50) = null,
-	@codTipoCbteAfip int = null,
-	@nroCbteAfip nvarchar(50) = null,
-	@tipoDocAfip nvarchar(50) = null,
-	@nroDocAfip nvarchar(50) = null,
-	@razonSocialAFIP nvarchar(50) = null,
-	@condicionIvaAFIP nvarchar(50) = null,
-	@domicilioAFIP nvarchar(50) = null,
-	@condicionVenta nvarchar(50) = null,
-	@formaPago nvarchar(50) = null,
-	@CAE nvarchar(50) = null,
-	@fecVtoCAE nvarchar(50) = null,
-	@importeNetoGravado float = null,
-	@iva float = null,
-	@importeTotal float = null,
-	@porcentajeFacturacion float = 100,
-	@idVenta int = null,
-	@error tinyint = null,
-	@mensajeError nvarchar(MAX) = null,
-	@fechaError nvarchar(50) = null,
-	@cantErrores int = 0
-
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-
-		IF @id = 0 
-			BEGIN 
-				INSERT INTO dbo.FacturaElectronica (ptoVtaAfip,fechaEmisionAfip,descTipoCbteAfip, codTipoCbteAfip ,nroCbteAfip, tipoDocAfip, nroDocAfip,razonSocialAFIP,condicionIvaAFIP,domicilioAFIP,condicionVenta,formaPago,CAE,fecVtoCAE,importeNetoGravado,iva,importeTotal, porcentajeFacturacion, descItemUnitario,idVenta,creado,error,mensajeError,fechaError, cantErrores)
-				 VALUES (@ptoVtaAfip, @fechaEmisionAfip,@descTipoCbteAfip, @codTipoCbteAfip,@nroCbteAfip, @tipoDocAfip,@nroDocAfip,@razonSocialAFIP,@condicionIvaAFIP,@domicilioAFIP,@condicionVenta,@formaPago,@CAE,@fecVtoCAE,@importeNetoGravado,@iva,@importeTotal, @porcentajeFacturacion, @descItemUnitario, @idVenta,SYSDATETIME(),@error,@mensajeError, @fechaError, @cantErrores) 
-				set @id = SCOPE_IDENTITY()
-				END 
-			ELSE 
-			BEGIN 
-				set @cantErrores = 0			
-				IF @CAE is null or @CAE like ''
-				BEGIN						
-					SET @cantErrores = (SELECT FacturaElectronica.cantErrores + 1 from FacturaElectronica WHERE id = @id)	
-				END		
-			
-				UPDATE dbo.FacturaElectronica set ptoVtaAfip = @ptoVtaAfip , fechaEmisionAfip = fechaEmisionAfip , descTipoCbteAfip = @descTipoCbteAfip , codTipoCbteAfip = @codTipoCbteAfip, nroCbteAfip = @nroCbteAfip , tipoDocAfip = @tipoDocAfip , nroDocAfip = @nroDocAfip , razonSocialAFIP = @razonSocialAFIP , condicionIvaAFIP = @condicionIvaAFIP , domicilioAFIP = @domicilioAFIP , condicionVenta = @condicionVenta , formaPago = @formaPago , CAE = @CAE , fecVtoCAE = @fecVtoCAE , importeNetoGravado = @importeNetoGravado , iva = @iva , importeTotal = @importeTotal, porcentajeFacturacion = @porcentajeFacturacion, descItemUnitario = @descItemUnitario , idVenta = @idVenta , error = @error , mensajeError = @mensajeError , fechaError = @fechaError, cantErrores=@cantErrores      
-				WHERE id = @id		
-			END 
-		select @id 
-END
-
----
-
-
----
