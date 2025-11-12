@@ -31,7 +31,7 @@ namespace Negocio
             return oVentaD.getAllVentas(fechaDesde, fechaHasta, texto, idVendedor, idCliente, idSucursal, soloAnulados, cargarLineas);
         }
 
-        public int agregarVenta(Entidades.Venta oVentaE)
+        public int agregarVenta(Entidades.Venta oVentaE, bool esNotaCredito = false)
         {
             using (TransactionScope scope = new TransactionScope())
             {
@@ -63,19 +63,62 @@ namespace Negocio
                             oVentaD.asignarVentaEnExpendio(oVentaE.IdVenta, item);
                     }
 
+                    /////para no repetir lineas, se multiplica por el multiplicador 
+                    /////esto cuando es NC, lo hace el signo inverso
+                    /////
+                    //int multiplicador = esNotaCredito ? -1 : 1;
 
-                    for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
+                    //if (esNotaCredito)
+                    //{
+                    //    for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
+                    //    {
+                    //        oVentaE.LineasVenta[i].Venta = oVentaE;
+                    //        oVentaE.LineasVenta[i].CantKg *= -1;
+                    //        oVentaE.LineasVenta[i].KgsTotalCalculado *= -1;
+                    //        oVentaE.LineasVenta[i] = agregarLineaVenta(oVentaE.LineasVenta[i]);
+                    //    }
+                    //}
+                    //else
+                    //{
+
+                    //    for (int index = 0; index < oVentaE.LineasVenta.Count; index++)
+                    //    {
+                    //        Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
+                    //        //setear por cada linea cantKg <- KgsTotalCalculado
+                    //        linea.CantKg = linea.KgsTotalCalculado;
+
+                    //        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
+                    //        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
+                    //            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+
+                    //        oVentaE.LineasVenta[index] = agregarLineaVenta(linea);
+                    //    }
+                    //}
+
+                    for (int i = 0; i < oVentaE.LineasVenta.Count; i++)
                     {
-                        Entidades.LineaVenta linea = oVentaE.LineasVenta[index];
-                        //setear por cada linea cantKg <- KgsTotalCalculado
-                        linea.CantKg = linea.KgsTotalCalculado;
+                        var linea = oVentaE.LineasVenta[i];
+                        linea.Venta = oVentaE;
 
-                        //si está anulada la linea se asigna el IdLineaVenta del corte anulado
-                        linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado) ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta :
-                            Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+                        if (esNotaCredito)
+                        {
+                            linea.CantKg *= -1;
+                            linea.KgsTotalCalculado *= -1;
+                        }
+                        else
+                        {
+                            // setear por cada línea cantKg <- KgsTotalCalculado
+                            linea.CantKg = linea.KgsTotalCalculado;
 
-                        oVentaE.LineasVenta[index] = agregarLineaVenta(linea);
+                            // si está anulada la línea se asigna el IdLineaVenta del corte anulado
+                            linea.IndexAnulado = Entidades.LineaVenta.esAnulado(linea.Estado)
+                                ? oVentaE.LineasVenta[linea.IndexAnulado].IdLineaVenta
+                                : Entidades.LineaVenta.getIdEstado(Entidades.LineaVenta.estados.NoAnulado);
+                        }
+
+                        oVentaE.LineasVenta[i] = agregarLineaVenta(linea);
                     }
+
 
                     egresoCajaPagoTarjeta(oVentaE);//(oVentaE.IdVenta, oVentaE.Vendedor, oVentaE.PagoMixtoEfectivo);
 

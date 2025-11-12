@@ -1115,6 +1115,7 @@ namespace wsAFIPvs2008
                     oFactuElec.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false);
                     oFactuElec.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
                     oFactuElec.ImporteTotal = Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
+                    oFactuElec.PorcentajeFacturacion = Util_Form.convertFloat(txtPorcentajeFacturacion.Text, false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
                     oFactuElec.DescItemUnitario = checkItemUnitario.Checked ? txtDescItemUnitario.Text : "";
 
@@ -2412,6 +2413,11 @@ namespace wsAFIPvs2008
                 Resultado.Text = "";
                 if (r.FeCabResp.Resultado.Equals("A"))
                 {
+                    DialogResult imprimir = MessageBox.Show("La Nota de Credito se generó correctamente!.\n\n¿Imprimir ticket?.",
+                       "Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.None, MessageBoxDefaultButton.Button1);
+                    Resultado.Text = "Hora Mensaje: " + DateTime.Now.ToLocalTime() +
+                        "\n\n || La Nota de Credito se genero correctamente." + "\n || Importe: $ " + TotalTx.Text;
+
                     facturaPendiente = false;
                     txtCAE.Text = r.FeDetResp[0].CAE;
                     txtVTO.Text = r.FeDetResp[0].CAEFchVto;
@@ -2443,13 +2449,12 @@ namespace wsAFIPvs2008
                     oNotaCredito.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
                     oNotaCredito.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
                     oNotaCredito.IdVenta = oVentaE.IdVenta;
+                    oNotaCredito.PorcentajeFacturacion = oFactuElec.PorcentajeFacturacion;
+                    oNotaCredito.DescItemUnitario = oFactuElec.DescItemUnitario;
 
                     oVentaN.addOrEditFactuElec(oNotaCredito);
 
-                    DialogResult imprimir = MessageBox.Show("La Nota de Credito se generó correctamente!.\n\n¿Imprimir ticket?.",
-                       "Imprimir Ticket", MessageBoxButtons.YesNo, MessageBoxIcon.None, MessageBoxDefaultButton.Button1);
-                    Resultado.Text = "Hora Mensaje: " + DateTime.Now.ToLocalTime() +
-                        "\n\n || La Nota de Credito se genero correctamente." + "\n || Importe: $ " + TotalTx.Text;
+                    
                     #region mostrar datos en AreaText
                     string salto = "\r\n";
                     #endregion
@@ -2470,20 +2475,20 @@ namespace wsAFIPvs2008
                         oVentaAnularPorNotaCredito.IdVenta = 0;
                         oVentaAnularPorNotaCredito.NroRemito += "Nota Credito";
                         oVentaAnularPorNotaCredito.Observaciones += "**Venta anulada por Nota de Credito**";
-                        oVentaAnularPorNotaCredito.IdVenta = oVentaN.agregarVenta(oVentaAnularPorNotaCredito);
-                        errorVenta = "-La Venta se registró ok.";
-                        for (int i = 0; i < oVentaAnularPorNotaCredito.LineasVenta.Count; i++)
-                        {
-                            oVentaAnularPorNotaCredito.LineasVenta[i].Venta = oVentaAnularPorNotaCredito;
-                            oVentaAnularPorNotaCredito.LineasVenta[i].CantKg *= -1;
-                            oVentaAnularPorNotaCredito.LineasVenta[i].KgsTotalCalculado *= -1;
-                            oVentaN.agregarLineaVenta(oVentaAnularPorNotaCredito.LineasVenta[i]);
-                        }
-                        errorLinea = "-Las lineas de venta se registraron ok.";
-                        oVentaN.egresoCajaPagoTarjeta(oVentaAnularPorNotaCredito);//(oVentaAnularPorNotaCredito.IdVenta, oVentaAnularPorNotaCredito.Vendedor, oVentaAnularPorNotaCredito.PagoMixtoEfectivo);
-                        errorEgresoCaja = "-El egreso de caja se registró ok.";
-                        oVentaN.crearMovCtaCteVenta(oVentaAnularPorNotaCredito);
-                        errorCtaCte = "-El registro de Cta Cte ok.";
+                        oVentaAnularPorNotaCredito.IdVenta = oVentaN.agregarVenta(oVentaAnularPorNotaCredito, true);
+                        //errorVenta = "-La Venta se registró ok.";
+                        //for (int i = 0; i < oVentaAnularPorNotaCredito.LineasVenta.Count; i++)
+                        //{
+                        //    oVentaAnularPorNotaCredito.LineasVenta[i].Venta = oVentaAnularPorNotaCredito;
+                        //    oVentaAnularPorNotaCredito.LineasVenta[i].CantKg *= -1;
+                        //    oVentaAnularPorNotaCredito.LineasVenta[i].KgsTotalCalculado *= -1;
+                        //    oVentaN.agregarLineaVenta(oVentaAnularPorNotaCredito.LineasVenta[i]);
+                        //}
+                        //errorLinea = "-Las lineas de venta se registraron ok.";
+                        //oVentaN.egresoCajaPagoTarjeta(oVentaAnularPorNotaCredito);//(oVentaAnularPorNotaCredito.IdVenta, oVentaAnularPorNotaCredito.Vendedor, oVentaAnularPorNotaCredito.PagoMixtoEfectivo);
+                        //errorEgresoCaja = "-El egreso de caja se registró ok.";
+                        //oVentaN.crearMovCtaCteVenta(oVentaAnularPorNotaCredito);
+                        //errorCtaCte = "-El registro de Cta Cte ok.";
                     }
                     catch (Exception ex)
                     {

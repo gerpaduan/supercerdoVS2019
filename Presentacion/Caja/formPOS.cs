@@ -679,6 +679,7 @@ namespace Presentacion.Caja
             grillaLineasVenta.DataSource = null;
             oVentaE.ListaExpendios.Clear();
             txtBuscarExpendio.Text = "";
+            setearTxtObservaciones();
 
             oUsuarioConPermisos = null; //quito los permiso provisorio bonificacion y/o eliminacion
         }
@@ -702,7 +703,7 @@ namespace Presentacion.Caja
             oVentaE.NroRemito = txtNroRemito.Text.Trim();
             oVentaE.Turno = "";
             oVentaE.DiaFestivo = "";
-            oVentaE.Observaciones = txtObservaciones.Text.Trim();
+            oVentaE.Observaciones = txtObservaciones.Text == "Observaciones" ? "" : txtObservaciones.Text.Trim();
             oVentaE.Estado = estadoVenta;
             oVentaE.EnCtaCte = checkCtaCte.Checked;
             //Si no es factura y FormaPago <> (Efectivo && CTACTE) y TipoCombrobante es 'X' entonces establecer tipoComprobante 'B'            
@@ -2412,7 +2413,11 @@ namespace Presentacion.Caja
                     txtClave.PasswordChar = '\0'; // Mostrar texto plano
                 }
             };
+            setearTxtObservaciones();
+        }
 
+        private void setearTxtObservaciones()
+        {
             //observaciones
             txtObservaciones.ForeColor = Color.Gray;
             txtObservaciones.Text = "Observaciones";
@@ -2431,7 +2436,7 @@ namespace Presentacion.Caja
                 if (string.IsNullOrWhiteSpace(txtClave.Text))
                 {
                     txtObservaciones.ForeColor = Color.Gray;
-                    txtClave.Text = "Observaciones";
+                    txtObservaciones.Text = "Observaciones";
                 }
             };
         }
