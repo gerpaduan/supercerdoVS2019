@@ -93,7 +93,7 @@
             this.checkActivo.Location = new System.Drawing.Point(60, 136);
             this.checkActivo.Name = "checkActivo";
             this.checkActivo.Size = new System.Drawing.Size(64, 20);
-            this.checkActivo.TabIndex = 4;
+            this.checkActivo.TabIndex = 5;
             this.checkActivo.Text = "Activo";
             this.checkActivo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkActivo.UseVisualStyleBackColor = true;
@@ -119,7 +119,7 @@
             this.checkAdmin.Location = new System.Drawing.Point(14, 110);
             this.checkAdmin.Name = "checkAdmin";
             this.checkAdmin.Size = new System.Drawing.Size(110, 20);
-            this.checkAdmin.TabIndex = 3;
+            this.checkAdmin.TabIndex = 4;
             this.checkAdmin.Text = "Administrador";
             this.checkAdmin.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.checkAdmin.UseVisualStyleBackColor = true;
@@ -143,7 +143,7 @@
             this.btnGuardarDatos.Location = new System.Drawing.Point(110, 218);
             this.btnGuardarDatos.Name = "btnGuardarDatos";
             this.btnGuardarDatos.Size = new System.Drawing.Size(202, 27);
-            this.btnGuardarDatos.TabIndex = 6;
+            this.btnGuardarDatos.TabIndex = 7;
             this.btnGuardarDatos.Text = "Guardar &Datos";
             this.btnGuardarDatos.UseVisualStyleBackColor = true;
             this.btnGuardarDatos.Click += new System.EventHandler(this.btnGuardarDatos_Click);
@@ -155,7 +155,7 @@
             this.txtClave.Name = "txtClave";
             this.txtClave.PasswordChar = '*';
             this.txtClave.Size = new System.Drawing.Size(202, 22);
-            this.txtClave.TabIndex = 5;
+            this.txtClave.TabIndex = 6;
             // 
             // txtNombre
             // 
@@ -182,7 +182,7 @@
             this.txtEmail.Location = new System.Drawing.Point(110, 79);
             this.txtEmail.Name = "txtEmail";
             this.txtEmail.Size = new System.Drawing.Size(202, 22);
-            this.txtEmail.TabIndex = 8;
+            this.txtEmail.TabIndex = 3;
             // 
             // FormNuevoUsuario
             // 
