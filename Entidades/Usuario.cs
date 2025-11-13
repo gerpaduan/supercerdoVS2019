@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net.Mail;
 
 namespace Entidades
 {
@@ -11,8 +12,8 @@ namespace Entidades
 
         public int Id
         {
-          get { return id; }
-          set { id = value; }
+            get { return id; }
+            set { id = value; }
         }
         string nombre;
 
@@ -57,5 +58,23 @@ namespace Entidades
 
         // Lista de permisos asociados a este usuario
         public List<PermisosUsuarios> Permisos { get; set; } = new List<PermisosUsuarios>();
+
+        //[Required(ErrorMessage = "El email es obligatorio")]
+        //[EmailAddress(ErrorMessage = "El formato del email no es válido")]
+        public bool EsEmailValido(string email)
+        {
+            try
+            {
+                var addr = new MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public string Email { get => email; set => email = value; }
+
+        string email;
     }
 }

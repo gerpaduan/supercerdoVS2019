@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.ComponentModel.DataAnnotations;
 
 namespace Presentacion.Usuario
 {
@@ -44,7 +45,15 @@ namespace Presentacion.Usuario
             if (string.IsNullOrEmpty(txtUsuario.Text) || string.IsNullOrEmpty(txtNombre.Text) || string.IsNullOrEmpty(txtClave.Text))
             {
                 errores = true;
-                mensaje += "-Complete todos los campos.\n";
+                mensaje += "-Complete todos los campos.(email no es obligatorio)\n";
+            }
+
+            oUsuarioE = new Entidades.Usuario();
+
+            if (!string.IsNullOrEmpty(txtEmail.Text) && !oUsuarioE.EsEmailValido(txtEmail.Text))
+            {
+                errores = true;
+                mensaje += "Email inválido.\n";
             }
 
             if (errores)
@@ -53,11 +62,11 @@ namespace Presentacion.Usuario
                 return;
             }
 
-            oUsuarioE = new Entidades.Usuario();
             oUsuarioE.User = txtUsuario.Text;
             oUsuarioE.Nombre = txtNombre.Text;
             oUsuarioE.Admin = checkAdmin.Checked;
             oUsuarioE.Activo = checkActivo.Checked;
+            oUsuarioE.Email = txtEmail.Text;
             oUsuarioE.Clave = txtClave.Text;
             oUsuarioE.ColorForm = "SteelBlue";
             addOrEditUser();

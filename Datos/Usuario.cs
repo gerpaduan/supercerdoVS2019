@@ -72,6 +72,7 @@ namespace Datos
                                 Nombre = drUsuario["nombre"]?.ToString(),
                                 User = drUsuario["usuario"]?.ToString(),
                                 Clave = drUsuario["clave"]?.ToString(),
+                                Email = drUsuario["email"] != DBNull.Value ? drUsuario["email"]?.ToString() : "",
                                 Admin = drUsuario["admin"] != DBNull.Value && Convert.ToBoolean(drUsuario["admin"]),
                                 Activo = drUsuario["activo"] != DBNull.Value && Convert.ToBoolean(drUsuario["activo"]),
                                 ColorForm = drUsuario["colorForm"]?.ToString()
@@ -109,6 +110,7 @@ namespace Datos
                         oUsuarioE.Nombre = Convert.ToString(drUsuario["nombre"]);
                         oUsuarioE.User = Convert.ToString(drUsuario["usuario"]);
                         oUsuarioE.Clave = Convert.ToString(drUsuario["clave"]);
+                        oUsuarioE.Email = Convert.ToString(drUsuario["email"]);
                         oUsuarioE.Admin = Convert.ToBoolean(drUsuario["admin"]);
                         oUsuarioE.Activo = Convert.ToBoolean(drUsuario["activo"]);
                         oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);
@@ -130,6 +132,7 @@ namespace Datos
             cmUsuario.Parameters.AddWithValue("@id", oUsuarioE.Id);
             cmUsuario.Parameters.AddWithValue("@nombre", oUsuarioE.Nombre);
             cmUsuario.Parameters.AddWithValue("@usuario", oUsuarioE.User);
+            cmUsuario.Parameters.AddWithValue("@email", oUsuarioE.Email);
             cmUsuario.Parameters.AddWithValue("@clave", oUsuarioE.Clave);
             cmUsuario.Parameters.AddWithValue("@admin", oUsuarioE.Admin);
             cmUsuario.Parameters.AddWithValue("@activo", oUsuarioE.Activo);

@@ -57,6 +57,7 @@ namespace Negocio
                     user.Nombre = Convert.ToString(drUsuario["nombre"]);
                     user.User = Convert.ToString(drUsuario["usuario"]);
                     user.Clave = Convert.ToString(drUsuario["clave"]);
+                    user.Email = Convert.ToString(drUsuario["email"]);
                     user.Admin = Convert.ToBoolean(drUsuario["admin"]);
                     user.Activo = Convert.ToBoolean(drUsuario["activo"]);
                     user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
@@ -74,6 +75,14 @@ namespace Negocio
             return convertDatatableToList();
         }
 
+        /// <summary>
+        /// validar si existe usuario. El valor del parametro puede ser el nombre de usuario o el email
+        /// valida los dos
+        /// </summary>
+        /// <param name="usuario">usuario o email</param>
+        /// <param name="clave"></param>
+        /// <param name="soloNombreUsuario"></param>
+        /// <returns></returns>
         public Entidades.Usuario validarUsuario(string usuario, string clave, bool soloNombreUsuario)
         {
             Entidades.Usuario userEncontrado = null;
@@ -85,7 +94,7 @@ namespace Negocio
             {
                 if (soloNombreUsuario)
                 {
-                    if (user.User.Equals(usuario))
+                    if (user.User.Equals(usuario) || user.Email.Equals(usuario))
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
@@ -94,7 +103,7 @@ namespace Negocio
                 }
                 else
                 {
-                    if (user.User.Equals(usuario) && user.Clave.Equals(clave))
+                    if ((user.User.Equals(usuario) || user.Email.Equals(usuario)) && user.Clave.Equals(clave))
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
