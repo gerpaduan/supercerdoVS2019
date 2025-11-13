@@ -58,6 +58,8 @@
             this.btnAceptar = new System.Windows.Forms.Button();
             this.btnCancelar = new System.Windows.Forms.Button();
             this.pnlBuscar = new System.Windows.Forms.Panel();
+            this.txtIdCompra = new System.Windows.Forms.TextBox();
+            this.label20 = new System.Windows.Forms.Label();
             this.checkCtaCte = new System.Windows.Forms.CheckBox();
             this.groupCantMedias = new System.Windows.Forms.GroupBox();
             this.label14 = new System.Windows.Forms.Label();
@@ -120,8 +122,6 @@
             this.label19 = new System.Windows.Forms.Label();
             this.txtCreadoPor = new System.Windows.Forms.TextBox();
             this.txtCreado = new System.Windows.Forms.TextBox();
-            this.txtIdCompra = new System.Windows.Forms.TextBox();
-            this.label20 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaCortePorCompra)).BeginInit();
             this.pnlBuscar.SuspendLayout();
             this.groupCantMedias.SuspendLayout();
@@ -370,6 +370,26 @@
             this.pnlBuscar.Size = new System.Drawing.Size(925, 165);
             this.pnlBuscar.TabIndex = 17;
             // 
+            // txtIdCompra
+            // 
+            this.txtIdCompra.Location = new System.Drawing.Point(761, 7);
+            this.txtIdCompra.Name = "txtIdCompra";
+            this.txtIdCompra.ReadOnly = true;
+            this.txtIdCompra.Size = new System.Drawing.Size(152, 20);
+            this.txtIdCompra.TabIndex = 58;
+            this.txtIdCompra.TabStop = false;
+            // 
+            // label20
+            // 
+            this.label20.AutoSize = true;
+            this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label20.ForeColor = System.Drawing.Color.Cornsilk;
+            this.label20.Location = new System.Drawing.Point(691, 8);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(64, 15);
+            this.label20.TabIndex = 57;
+            this.label20.Text = "Id.Compra";
+            // 
             // checkCtaCte
             // 
             this.checkCtaCte.Appearance = System.Windows.Forms.Appearance.Button;
@@ -380,7 +400,7 @@
             this.checkCtaCte.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkCtaCte.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.checkCtaCte.ForeColor = System.Drawing.Color.Cornsilk;
-            this.checkCtaCte.Location = new System.Drawing.Point(564, 59);
+            this.checkCtaCte.Location = new System.Drawing.Point(606, 59);
             this.checkCtaCte.Name = "checkCtaCte";
             this.checkCtaCte.Size = new System.Drawing.Size(96, 30);
             this.checkCtaCte.TabIndex = 56;
@@ -515,7 +535,7 @@
             this.groupBox1.ForeColor = System.Drawing.Color.Cornsilk;
             this.groupBox1.Location = new System.Drawing.Point(13, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(545, 78);
+            this.groupBox1.Size = new System.Drawing.Size(584, 78);
             this.groupBox1.TabIndex = 9;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Remito";
@@ -526,7 +546,7 @@
             this.txtFechaCompra.Enabled = false;
             this.txtFechaCompra.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
             this.txtFechaCompra.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.txtFechaCompra.Location = new System.Drawing.Point(402, 22);
+            this.txtFechaCompra.Location = new System.Drawing.Point(441, 22);
             this.txtFechaCompra.Name = "txtFechaCompra";
             this.txtFechaCompra.Size = new System.Drawing.Size(137, 21);
             this.txtFechaCompra.TabIndex = 54;
@@ -537,7 +557,7 @@
             this.btnBuscarProv.AccessibleDescription = "";
             this.btnBuscarProv.ForeColor = System.Drawing.Color.Black;
             this.btnBuscarProv.Image = ((System.Drawing.Image)(resources.GetObject("btnBuscarProv.Image")));
-            this.btnBuscarProv.Location = new System.Drawing.Point(276, 47);
+            this.btnBuscarProv.Location = new System.Drawing.Point(331, 47);
             this.btnBuscarProv.Name = "btnBuscarProv";
             this.btnBuscarProv.Size = new System.Drawing.Size(28, 23);
             this.btnBuscarProv.TabIndex = 0;
@@ -551,7 +571,7 @@
             this.txtProveedor.Location = new System.Drawing.Point(81, 48);
             this.txtProveedor.Name = "txtProveedor";
             this.txtProveedor.ReadOnly = true;
-            this.txtProveedor.Size = new System.Drawing.Size(196, 21);
+            this.txtProveedor.Size = new System.Drawing.Size(251, 21);
             this.txtProveedor.TabIndex = 9;
             this.txtProveedor.TabStop = false;
             // 
@@ -568,7 +588,7 @@
             // 
             // txtNroRemito
             // 
-            this.txtNroRemito.Location = new System.Drawing.Point(402, 48);
+            this.txtNroRemito.Location = new System.Drawing.Point(441, 48);
             this.txtNroRemito.Name = "txtNroRemito";
             this.txtNroRemito.ReadOnly = true;
             this.txtNroRemito.Size = new System.Drawing.Size(137, 21);
@@ -581,7 +601,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label2.Location = new System.Drawing.Point(326, 51);
+            this.label2.Location = new System.Drawing.Point(365, 51);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(70, 15);
             this.label2.TabIndex = 6;
@@ -616,7 +636,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label3.Location = new System.Drawing.Point(355, 22);
+            this.label3.Location = new System.Drawing.Point(394, 22);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(41, 15);
             this.label3.TabIndex = 4;
@@ -1155,26 +1175,6 @@
             this.txtCreado.Size = new System.Drawing.Size(134, 21);
             this.txtCreado.TabIndex = 57;
             this.txtCreado.TabStop = false;
-            // 
-            // txtIdCompra
-            // 
-            this.txtIdCompra.Location = new System.Drawing.Point(761, 7);
-            this.txtIdCompra.Name = "txtIdCompra";
-            this.txtIdCompra.ReadOnly = true;
-            this.txtIdCompra.Size = new System.Drawing.Size(152, 20);
-            this.txtIdCompra.TabIndex = 58;
-            this.txtIdCompra.TabStop = false;
-            // 
-            // label20
-            // 
-            this.label20.AutoSize = true;
-            this.label20.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label20.ForeColor = System.Drawing.Color.Cornsilk;
-            this.label20.Location = new System.Drawing.Point(691, 8);
-            this.label20.Name = "label20";
-            this.label20.Size = new System.Drawing.Size(64, 15);
-            this.label20.TabIndex = 57;
-            this.label20.Text = "Id.Compra";
             // 
             // formModificarCompra
             // 
