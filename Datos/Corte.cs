@@ -1378,6 +1378,32 @@ namespace Datos
             return dtReporteTeoricoReal;
         }
 
+        public DateTime fechaUltimoCierreStock_Sucursal(int idSucursal)
+        {
+            DateTime fecha = DateTime.MinValue;
+
+            string sql = @"
+                        SELECT TOP 1 fechaCompra
+                        FROM Compras
+                        WHERE tipoCompra = 'Cierre Stock'
+                          AND idSucursal = @idSucursal
+                        ORDER BY fechaCompra DESC";
+
+            using (SqlConnection con = conn.conectar())
+            using (SqlCommand cmd = new SqlCommand(sql, con))
+            {
+                cmd.Parameters.AddWithValue("@idSucursal", idSucursal);
+
+                con.Open();
+                object result = cmd.ExecuteScalar();
+
+                if (result != null && result != DBNull.Value)
+                    fecha = Convert.ToDateTime(result);
+            }
+
+            return fecha;
+        }
+
         public DataTable CierreStock(int nroCierre,string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal, string tipo, int idProveedor, int idMarca)
         {
             DataTable dtCierreStock = new DataTable();

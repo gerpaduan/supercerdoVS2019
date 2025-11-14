@@ -12,8 +12,6 @@ namespace Web.Controllers
         // GET: Ventas
         public ActionResult Index()
         {
-            int idVenta = 452698;
-            //Entidades.Venta oVentaE = oVentaN.getVentaById(idVenta);
             List<Entidades.Venta> ventas = oVentaN.getAllVentas(DateTime.Now.AddYears(-1), DateTime.Now, "", -1, -1, -1, false, false); //new List<Entidades.Venta>();
             //ventas.Add(oVentaE);
             return View(ventas);

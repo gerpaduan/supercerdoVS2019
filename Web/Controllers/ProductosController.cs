@@ -20,7 +20,8 @@ namespace Web.Controllers
 
         public ActionResult Index()
         {
-            List<Entidades.Corte> productos = oCorteN.findAllCortes(false);
+            int idSucursal = 2;
+            List<Entidades.Corte> productos = oCorteN.findAllCortes(false, idSucursal, true);
             // Pasamos el DataTable directamente a la vista
             return View(productos);
         }

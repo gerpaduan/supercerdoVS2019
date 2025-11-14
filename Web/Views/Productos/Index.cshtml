@@ -51,7 +51,7 @@
                                 <th>Código</th>
                                 <th>Producto</th>
                                 <th>Precio</th>
-                                <th>Tipo</th>
+                                <th>Stock</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -62,7 +62,7 @@
                                 <td class="col-codigo">@item.Codigo</td>
                                 <td class="col-producto">@item.CorteDesc</td>
                                 <td class="col-precio">@item.PrecioKg.ToString("C")</td>
-                                <td class="col-tipo">@item.Tipo</td>
+                                <td class="col-tipo">@item.Stock_EnString</td>
 
                                 <td>
                                     <a href="@Url.Action("Editar", new { id = item.Codigo })" class="btn btn-sm btn-warning">

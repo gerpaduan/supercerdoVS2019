@@ -20,9 +20,39 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
-        public List<Entidades.Corte> findAllCortes(bool buscarMaestro)
+        public List<Entidades.Corte> findAllCortes(bool buscarMaestro, int idSucursal, bool conStock = false)
         {
-            return oCorteD.findAllCortes(buscarMaestro);
+            List<Entidades.Corte> listaCortes = oCorteD.findAllCortes(buscarMaestro);
+            if (conStock)
+            {
+                DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
+                DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);
+                // Crear diccionario: id -> stock
+                var dictStocks = dtCortesStock.AsEnumerable()
+                    .ToDictionary(
+                        row => row.Field<int>("idCorte"),
+                        row => row["DIF"] == DBNull.Value ? null : row["DIF"].ToString()
+                    );
+
+                // Actualizar los cortes
+                foreach (var corte in listaCortes)
+                {
+                    if (dictStocks.TryGetValue(corte.idCorte, out var stock))
+                    {
+                        if (double.TryParse(stock, out double stockNum))
+                        {
+                            corte.Stock_EnString = corte.Pesable
+                                ? stockNum.ToString("N3")  // 3 decimales
+                                : stockNum.ToString("N0"); // entero
+                        }
+                    }
+                    else
+                    {
+                        corte.Stock_EnString = "-"; // si no está en el DataTable
+                    }
+                }
+            }
+            return listaCortes;
         }
 
         public void editPrecioCorte(Entidades.Corte oCorteE)
@@ -358,6 +388,7 @@ namespace Negocio
              return oCorteD.reporteTeoricoReal(texto, idSucursal, fechaDesde, fechaHasta);
 
          }
+
 
          public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal, string tipo, int idProveedor, int idMarca)
          {

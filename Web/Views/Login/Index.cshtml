@@ -1,51 +1,156 @@
 ﻿@{
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="utf-8" />
-    <title>Login - CarniSys</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>CarniSysWeb - Login</title>
+
+    <!-- Fuentes y estilos SB Admin 2 -->
+    <link href="~/Content/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900"
+          rel="stylesheet">
+
+    <!-- Estilos principales -->
     <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet" />
+
+    <!-- Imagen de fondo izquierda (opcional) -->
+    <style>
+        .bg-login-image {
+            background: url('/Content/img/CarniSys_Logo_sinSlogan.png');
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+        }   
+    </style>
 </head>
+
 <body class="bg-gradient-primary">
 
     <div class="container">
+
+        <!-- ROW CENTRAL -->
         <div class="row justify-content-center">
-            <div class="col-xl-5 col-lg-6 col-md-8">
+
+            <div class="col-xl-10 col-lg-12 col-md-9">
+
                 <div class="card o-hidden border-0 shadow-lg my-5">
-                    <div class="card-body p-5">
-                        <div class="text-center mb-4">
-                            <h1 class="h4 text-gray-900 mb-2">Iniciar sesión</h1>
+                    <div class="card-body p-0">
+
+                        <!-- ROW INTERNA -->
+                        <div class="row">
+
+                            <!-- COLUMNA IZQUIERDA: IMAGEN -->
+                            <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+
+                            <!-- COLUMNA DERECHA: FORMULARIO -->
+                            <div class="col-lg-6">
+                                <div class="p-5">
+
+                                    <div class="text-center">
+                                        <h1 class="h4 text-gray-900 mb-4">Iniciar sesión</h1>
+                                    </div>
+
+                                    @* Mostrar error si lo hay *@
+                                    @if (ViewBag.Error != null)
+                                    {
+                                        <div class="alert alert-danger text-center">
+                                            @ViewBag.Error
+                                        </div>
+                                    }
+
+                                    @using (Html.BeginForm("Index", "Login", FormMethod.Post, new { @class = "user" }))
+                                    {
+                                        <div class="form-group">
+                                            <input type="text" name="usuario"
+                                                   class="form-control form-control-user"
+                                                   placeholder="Usuario o Email" required />
+                                        </div>
+
+                                        <div class="form-group">
+                                            <input type="password" name="clave"
+                                                   class="form-control form-control-user"
+                                                   placeholder="Contraseña" required />
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary btn-user btn-block">
+                                            Ingresar
+                                        </button>
+                                    }
+
+                                </div>
+                            </div>
+
                         </div>
+                    </div>
+                </div>
 
-                        @if (ViewBag.Error != null)
-                        {
-                            <div class="alert alert-danger">@ViewBag.Error</div>
-                        }
+            </div>
 
-                        @using (Html.BeginForm("Index", "Login", FormMethod.Post))
-                        {
-                            <div class="form-group">
-                                <input type="text" name="usuario" class="form-control form-control-user" placeholder="Usuario" required />
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/Content/vendor/jquery/jquery.min.js"></script>
+    <script src="~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Content/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="~/Content/js/sb-admin-2.min.js"></script>
+
+</body>
+
+</html>
+
+@*<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <title>Login - CarniSys</title>
+        <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet" />
+    </head>
+    <body class="bg-gradient-primary">
+
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-5 col-lg-6 col-md-8">
+                    <div class="card o-hidden border-0 shadow-lg my-5">
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <h1 class="h4 text-gray-900 mb-2">Iniciar sesión</h1>
                             </div>
-                            <div class="form-group">
-                                <input type="password" name="clave" class="form-control form-control-user" placeholder="Contraseña" required />
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-user btn-block">
-                                Ingresar
-                            </button>
-                        }
 
+                            @if (ViewBag.Error != null)
+                            {
+                                <div class="alert alert-danger">@ViewBag.Error</div>
+                            }
+
+                            @using (Html.BeginForm("Index", "Login", FormMethod.Post))
+                            {
+                                <div class="form-group">
+                                    <input type="text" name="usuario" class="form-control form-control-user" placeholder="Usuario" required />
+                                </div>
+                                <div class="form-group">
+                                    <input type="password" name="clave" class="form-control form-control-user" placeholder="Contraseña" required />
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-user btn-block">
+                                    Ingresar
+                                </button>
+                            }
+
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="~/Scripts/jquery.min.js"></script>
-    <script src="~/Scripts/bootstrap.bundle.min.js"></script>
-    <script src="~/Scripts/sb-admin-2.min.js"></script>
-</body>
-</html>
+        <script src="~/Scripts/jquery.min.js"></script>
+        <script src="~/Scripts/bootstrap.bundle.min.js"></script>
+        <script src="~/Scripts/sb-admin-2.min.js"></script>
+    </body>
+    </html>*@
+
