@@ -1,0 +1,259 @@
+﻿@model Entidades.Corte
+
+@{
+    bool esNuevo = Model.IdCorte == 0;
+    ViewBag.Title = esNuevo ? "Nuevo Producto" : "Modificar Producto";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+<div class="container-fluid">
+    <h1 class="h3 mb-3 text-gray-800">
+        @(esNuevo ? "Nuevo Producto" : "Modificar Producto")
+    </h1>
+
+    @using (Html.BeginForm("AddOrEdit", "Productos", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.IdCorte)
+
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="row">
+
+                    <!-- =======================================
+                         COLUMNA IZQUIERDA
+                    ======================================== -->
+                    <div class="col-lg-6">
+
+                        <div class="form-group row">
+
+                            <label class="col-sm-3 col-form-label">Código</label>
+                            <div class="col-sm-3">
+                                @{
+                                    var htmlAttributes = new Dictionary<string, object>
+                                                        {
+                                        { "class", "form-control" }
+                                    };
+
+                                    if (!esNuevo)
+                                    {
+                                        htmlAttributes.Add("readonly", "readonly");
+                                    }
+                                }
+
+                                @Html.TextBoxFor(m => m.Codigo, htmlAttributes)
+                            </div>
+
+                            <label class="col-sm-3 col-form-label">Ingreso Rápido</label>
+                            <div class="col-sm-3">
+                                @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido)
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Prod.</label>
+                            @Html.TextBoxFor(m => m.CorteDesc, new { @class = "form-control", placeholder = "Nombre del producto" })
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Precio Kg/Un</label>
+                            <div class="col-sm-8">
+                                @Html.TextBoxFor(m => m.PrecioKg, new { @class = "form-control numero-format", id = "PrecioKg" })
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Marca</label>
+                            <div class="col-sm-7">
+
+                                @Html.DropDownList("Marca",
+                                    ViewBag.Marcas as IEnumerable<SelectListItem>,
+                                    "-- Seleccionar --",
+                                    new { @class = "form-control", id = "MarcaId" })
+
+                            </div>
+                            <div class="col-sm-2">
+                                <button type="button" class="btn btn-light btn-sm" id="btnBuscarMarca">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Tipo</label>
+                            <div class="col-sm-9">
+
+                                @Html.DropDownListFor(
+                                    m => m.Tipo,
+                                    ViewBag.Tipos as IEnumerable<SelectListItem>,
+                                    "-- Seleccionar --",
+                                    new { @class = "form-control" })
+
+                            </div>
+                        </div>
+
+                        <div class="form-group form-check">
+                            @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "chkPesable" })
+                            <label class="form-check-label" for="chkPesable">Pesable</label>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label>Promedio</label>
+                                @Html.TextBoxFor(m => m.Promedio, new { @class = "form-control numero-format", id = "Promedio" })
+                            </div>
+
+                            <div class="form-group col-md-4">
+                                <label>Punto Stock</label>
+                                @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", type = "number" })
+                            </div>
+
+                            <div class="form-group col-md-4">
+                                <label>Alícuota IVA</label>
+                                @Html.TextBoxFor(m => m.AlicuotaIva, new { @class = "form-control numero-format", id = "AlicuotaIva" })
+                            </div>
+                        </div>
+
+                        <div class="form-group form-check">
+                            @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input" })
+                            <label class="form-check-label">Habilitado</label>
+
+                            &nbsp;&nbsp;
+
+                            @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input" })
+                            <label class="form-check-label">En Cierre Stock</label>
+
+                            &nbsp;&nbsp;
+
+                            @Html.CheckBoxFor(m => m.Presentacion, new { @class = "form-check-input" })
+                            <label class="form-check-label">Presentación</label>
+                        </div>
+
+                    </div>
+
+                    <!-- =======================================
+                         COLUMNA DERECHA
+                    ======================================== -->
+                    <div class="col-lg-6">
+
+                        <div class="card mb-3">
+                            <div class="card-header">Prod. Maestro</div>
+                            <div class="card-body">
+
+                                <div class="form-group row">
+                                    <label class="col-sm-3 col-form-label">Producto</label>
+                                    <div class="col-sm-7">
+
+                                        @Html.TextBox("CorteMaestroDesc",
+                                            Model?.CorteMaestro?.CorteDesc,
+                                            new { @class = "form-control", @readonly = "readonly", id = "CorteMaestroDesc" })
+
+                                        @Html.Hidden("CorteMaestroId",
+                                            Model?.CorteMaestro?.IdCorte ?? 0)
+
+                                    </div>
+
+                                    <div class="col-sm-2">
+                                        <button type="button" class="btn btn-light btn-sm" id="btnBuscarCorteMaestro">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-4">
+                                        <label>% en Prod. M</label>
+                                        <input id="PorcEnProdM" class="form-control" readonly />
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label>% Desperdicio</label>
+                                        <input id="PorcDesperdicio" class="form-control" readonly />
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label>Desvío Estándar</label>
+                                        <input id="DesvioEstandar" class="form-control" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="mt-3 text-right">
+                    <a href="@Url.Action("Index", "Productos")" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+
+            </div>
+        </div>
+
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Helper: parse número con separador local
+            function parseNumber(val) {
+                if (!val) return NaN;
+                // Quitar espacios y miles
+                var clean = val.toString().replace(/\s/g, '').replace(/,/g, '.');
+                clean = clean.replace(/[^0-9\.\-]/g, '');
+                var n = parseFloat(clean);
+                return isNaN(n) ? NaN : n;
+            }
+
+            // Formatear según pesable: 3 decimales si true, 0 si false
+            function formatStockInput(selector, pesable) {
+                var el = document.querySelector(selector);
+                if (!el) return;
+                var n = parseNumber(el.value);
+                if (isNaN(n)) {
+                    el.value = "";
+                    return;
+                }
+                if (pesable) el.value = n.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                else el.value = n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+
+            // Aplicar formato inicial a Promedio y PrecioKg segun Pesable
+            var chkPesable = document.getElementById("chkPesable");
+            var promedioEl = document.getElementById("Promedio");
+            var precioEl = document.getElementById("PrecioKg");
+
+            function aplicarFormatoSegunPesable() {
+                var pesable = chkPesable.checked;
+                // Promedio: si pesable mostrar 3 decimales, si no 0
+                if (promedioEl) {
+                    var n = parseNumber(promedioEl.value);
+                    if (!isNaN(n)) {
+                        if (pesable) promedioEl.value = n.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+                        else promedioEl.value = n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    }
+                }
+                // Precio no se toca pero podés formatearlo si querés
+            }
+
+            if (chkPesable) {
+                chkPesable.addEventListener('change', function () {
+                    aplicarFormatoSegunPesable();
+                });
+            }
+
+            // Inicial
+            aplicarFormatoSegunPesable();
+
+            // Botones de búsqueda (placeholders)
+            document.getElementById("btnBuscarMarca").addEventListener('click', function () {
+                // Abrir modal o popup para elegir marca.
+                alert("Abrir búsqueda de Marca (implementá modal).");
+            });
+
+            document.getElementById("btnBuscarCorteMaestro").addEventListener('click', function () {
+                // Abrir modal o popup para elegir Corte Maestro.
+                alert("Abrir búsqueda de Corte Maestro (implementá modal).");
+            });
+        })();
+    </script>
+}
