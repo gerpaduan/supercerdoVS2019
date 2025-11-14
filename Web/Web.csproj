@@ -121,8 +121,11 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
+    <Compile Include="Filters\PermisoFormularioAttribute.cs" />
+    <Compile Include="Filters\RequirePermissionAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -2001,6 +2004,8 @@
     <Content Include="Views\Productos\Index.cshtml" />
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
+    <Content Include="Views\Login\Index.cshtml" />
+    <Content Include="Views\Home\AccesoDenegado.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

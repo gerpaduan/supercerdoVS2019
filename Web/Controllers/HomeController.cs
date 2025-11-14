@@ -26,5 +26,9 @@ namespace Web.Controllers
 
             return View();
         }
+        public ActionResult AccesoDenegado()
+        {
+            return View();
+        }
     }
 }

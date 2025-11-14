@@ -1,4 +1,12 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var user = Session["Usuario"] as Entidades.Usuario;
+
+    if (user == null)
+    {
+        Response.Redirect("~/Login/Index");
+    }
+}
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -20,6 +28,8 @@
     <link href="~/Content/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css" />
     <link href="~/Content/css/sb-admin-2.min.css" rel="stylesheet" />
     <link href="~/Content/css/custom.css" rel="stylesheet" />
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+
 
     <style>
         @@media (max-width: 992px) {
@@ -105,17 +115,17 @@
                     <span>Ventas</span>
                 </a>
                 @*<a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseVentas"
-           aria-expanded="true" aria-controls="collapseVentas">
-            <i class="fas fa-fw fa-cog"></i>
-            <span>Ventas</span>
-        </a>
-        <div id="collapseVentas" class="collapse" aria-labelledby="headingVentas" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Custom Components:</h6>
-                <a class="collapse-item" href="buttons.html">Buttons</a>
-                <a class="collapse-item" href="cards.html">Cards</a>
-            </div>
-        </div>*@
+                       aria-expanded="true" aria-controls="collapseVentas">
+                        <i class="fas fa-fw fa-cog"></i>
+                        <span>Ventas</span>
+                    </a>
+                    <div id="collapseVentas" class="collapse" aria-labelledby="headingVentas" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <h6 class="collapse-header">Custom Components:</h6>
+                            <a class="collapse-item" href="buttons.html">Buttons</a>
+                            <a class="collapse-item" href="cards.html">Cards</a>
+                        </div>
+                    </div>*@
             </li>
 
             <!-- Productos -->
@@ -418,9 +428,14 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Douglas McGee</span>
-                                <img class="img-profile rounded-circle"
-                                     src="img/undraw_profile.svg">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                                    @(Session["Usuario"] != null
+                                    ? ((Entidades.Usuario)Session["Usuario"]).Nombre
+                                    : "")
+                                </span>
+
+                                <i class="fas fa-user-circle fa-2x text-gray-600"></i>
+
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -481,7 +496,7 @@
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
+                    <a class="btn btn-primary" href="@Url.Action("Logout", "Login")">Logout</a>
                 </div>
             </div>
         </div>
