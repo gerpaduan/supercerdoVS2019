@@ -85,6 +85,9 @@ namespace Negocio
         /// <returns></returns>
         public Entidades.Usuario validarUsuario(string usuario, string clave, bool soloNombreUsuario)
         {
+            usuario = usuario.ToLower();
+            clave = clave.ToLower();
+
             Entidades.Usuario userEncontrado = null;
             if (listUsuarios == null)
             {
@@ -94,7 +97,7 @@ namespace Negocio
             {
                 if (soloNombreUsuario)
                 {
-                    if (user.User.Equals(usuario) || user.Email.Equals(usuario))
+                    if (user.User.ToLower().Equals(usuario) || user.Email.ToLower().Equals(usuario))
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
@@ -103,7 +106,8 @@ namespace Negocio
                 }
                 else
                 {
-                    if ((user.User.Equals(usuario) || user.Email.Equals(usuario)) && user.Clave.Equals(clave))
+                    if ((user.User.ToLower().Equals(usuario) || user.Email.ToLower().Equals(usuario)) 
+                        && user.Clave.ToLower().Equals(clave))
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
