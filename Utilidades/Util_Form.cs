@@ -23,6 +23,8 @@ namespace Utilidades
         public static Color checkedColor = Color.DarkSeaGreen;
         public static float escalaPantalla = convertFloat(ConfigurationManager.AppSettings["escalaPantalla"].ToString(), false);
 
+        private static bool _enEdicion = false;
+
         public Util_Form()
         {
             InitializeComponent();
@@ -31,6 +33,72 @@ namespace Utilidades
         private void Util_Form_Load(object sender, EventArgs e)
         {
 
+        }
+
+
+        /// <summary>
+        /// Formatea un TextBox de importe mientras se escribe:
+        /// - convierte punto a coma
+        /// - agrega separador de miles automáticamente
+        /// - mantiene el cursor en la posición correcta
+        /// </summary>
+        public static void VAlidarImporte(TextBox txt)
+        {
+            if (txt == null) return;
+
+            // recordar posición del cursor
+            int sel = txt.SelectionStart;
+
+            string texto = txt.Text;
+            if (string.IsNullOrWhiteSpace(texto)) return;
+
+            // ----- Si el último carácter es '.' convertirlo en ',' -----
+            if (texto.Length > 0 && texto[texto.Length - 1] == '.')
+            {
+                texto = texto.Substring(0, texto.Length - 1) + ",";
+            }
+
+            // Normalizar: quitar puntos (ingresados manualmente) pero mantener coma
+            texto = texto.Replace(".", ""); // eliminamos puntos previos
+                                            // (los puntos de miles se volverán a agregar)
+                                            // Nota: no reemplazamos la coma aquí
+
+            // Mantener sólo dígitos y una coma (si existe)
+            var sb = new System.Text.StringBuilder();
+            bool comaEncontrada = false;
+            foreach (char c in texto)
+            {
+                if (char.IsDigit(c)) sb.Append(c);
+                else if (c == ',' && !comaEncontrada) { sb.Append(','); comaEncontrada = true; }
+            }
+            string limpio = sb.ToString();
+
+            // Separar parte entera y decimal
+            string entera, dec = "";
+            int pos = limpio.IndexOf(',');
+            if (pos >= 0)
+            {
+                entera = limpio.Substring(0, pos);
+                if (limpio.Length > pos + 1) dec = limpio.Substring(pos + 1);
+            }
+            else
+            {
+                entera = limpio;
+            }
+
+            // Formatear parte entera con miles (si está vacía dejar vacío)
+            string entFmt = string.IsNullOrEmpty(entera) ? "" : long.Parse(entera).ToString("N0");
+
+            // Reconstruir resultado
+            string nuevo = entFmt + (pos >= 0 ? "," + dec : "");
+
+            // Asignar y restaurar cursor (ajustando por cambio de longitud)
+            int diff = nuevo.Length - txt.Text.Length;
+            txt.Text = nuevo;
+            int nuevaPos = sel + diff;
+            if (nuevaPos < 0) nuevaPos = 0;
+            if (nuevaPos > txt.Text.Length) nuevaPos = txt.Text.Length;
+            txt.SelectionStart = nuevaPos;
         }
 
         public static bool validarCampoVacio(string texto, string nombreTextBox)
@@ -114,6 +182,7 @@ namespace Utilidades
             try
             {
                 toFloat = !toFloat.Contains("..") && toFloat.Contains('.') && toFloat.Contains(',') ? toFloat.Replace(".", "") : toFloat;
+                toFloat = toFloat.Replace(".", "");
                 toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
                 value = float.Parse(toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
             }

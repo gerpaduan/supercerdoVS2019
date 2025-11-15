@@ -120,17 +120,17 @@
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="btnWhatsApp.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAAAIgAAACIAevcklIAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwa
-        AAAB+ElEQVQ4T21Tv0scQRhdSaFNImmUBBMESREQG/8CMU2KoM01qZQYUTMzHhbr7e4RDis7CxubQEJI
-        I8ZCC1OKCZjC3OzcIQgHCYKVFiZaBLGYvLe7E/cWiwfzfe99b75vfnjW2jZUtXoSaOFHsdwJY/kbaAFb
-        wHJFl/uL+rYARQLCv4AFrkMtTQKu09xlqNUbz3odbQZMhLHYTERGHkdGvqj9muhyIq6ZI5caqY02gygW
-        MykhNv0j/64jiyDnNgpiMcmc59fFQyQwqzhZPJjurv4oP8UOH2VLdhYNCGqoZY1vZB92Vwt0jLQoUYD1
-        V8aYfaJY7EBtUoNaLzTqE4NKY/Y+SawPGQdGzhYLHajNNvnAgiPgpyOxXkvIWI3ki4pgDUbRvLo6glNH
-        pDMmd3+B7kbzRXlk59Dy0OoKFpaH959szg8hdwlc8bR5S5h3G7PPZXwvayIj3nt4deNJkJEOfHXIfyGX
-        wzk7DLR8zTgw4hVann+ckjePI49Qi5fg3wGfMdJgeFB+QCPgrGZmengLozQIYvn2NoM8oubcI2i/UR9p
-        NcYcT3ORCXSwRJNkVtxvpaGGS+ulO3zm1aYcAC+h+0Mtz82ZwkBtpAa34gLgj8xiceJ2zhnIPXySXXZQ
-        rctnyQk3xHPkl4F98uhsFaNO1b7Le/lia633DzU0i920abbaAAAAAElFTkSuQmCC
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAA
+        iAAAAIgB69ySUgAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAH4SURBVDhPbVO/
+        SxxBGF1JoU0iaZQEEwRJERAb/wIxTYqgzTWplBhRMzMeFuvt7hEOKzsLG5tAQkgjxkILU4oJmMLc7Nwh
+        CAcJgpUWJloEsZi8t7sT9xaLB/N9731vvm9+eNbaNlS1ehJo4Uex3Alj+RtoAVvAckWX+4v6tgBFAsK/
+        gAWuQy1NAq7T3GWo1RvPeh1tBkyEsdhMREYeR0a+qP2a6HIirpkjlxqpjTaDKBYzKSE2/SP/riOLIOc2
+        CmIxyZzn18VDJDCrOFk8mO6u/ig/xQ4fZUt2Fg0IaqhljW9kH3ZXC3SMtChRgPVXxph9oljsQG1Sg1ov
+        NOoTg0pj9j5JrA8ZB0bOFgsdqM02+cCCI+CnI7FeS8hYjeSLimANRtG8ujqCU0ekMyZ3f4HuRvNFeWTn
+        0PLQ6goWlof3n2zODyF3CVzxtHlLmHcbs89lfC9rIiPee3h140mQkQ58dch/IZfDOTsMtHzNODDiFVqe
+        f5ySN48jj1CLl+DfAZ8x0mB4UH5AI+CsZmZ6eAujNAhi+fY2gzyi5twjaL9RH2k1xhxPc5EJdLBEk2RW
+        3G+loYZL66U7fObVphwAL6H7Qy3PzZnCQG2kBrfiAuCPzGJx4nbOGcg9fJJddlCty2fJCTfEc+SXgX3y
+        6GwVo07Vvst7+WJrrfcPNTSL3bRpttoAAAAASUVORK5CYII=
 </value>
   </data>
   <data name="btnBuscarCheque.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">

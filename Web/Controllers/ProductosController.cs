@@ -76,11 +76,12 @@ namespace Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult AddOrEdit(Entidades.Corte model)
         {
-            if (!ModelState.IsValid)
-            {
-                CargarCombos(model.IdCorte);
-                return View("AddOrEdit", model);
-            }
+            //TODO: validar los datos ingresados
+            //if (!ModelState.IsValid)
+            //{
+            //    CargarCombos(model.IdCorte);
+            //    return View("AddOrEdit", model);
+            //}
 
             try
             {

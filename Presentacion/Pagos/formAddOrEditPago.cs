@@ -513,7 +513,8 @@ namespace Presentacion.Pagos
             }
             else
             {
-                if ((!decimal.TryParse(txtImporte.Text, out decimal valor) || valor <= 0))
+                if ((!decimal.TryParse(txtImporte.Text, out decimal valor) || 
+                    (comboTipoPago.Text != Pago.formasPago.Otro.ToString() && valor <= 0)))
                 {
                     MessageBox.Show("Ingrese un importe mayor a 0", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     txtImporte.Focus();
@@ -521,7 +522,7 @@ namespace Presentacion.Pagos
                     return false;
                 }
                 //asigno le valor sin punto
-                txtImporte.Text = valor.ToString();
+                //txtImporte.Text = valor.ToString();
             }
 
             if (txtNroRecibo.Text == "" || txtPersona.Text == "" || comboTipoPago.Text == ""
@@ -671,6 +672,7 @@ namespace Presentacion.Pagos
             if (readOnly)
                 return;
 
+            validarImporte(sender);
             if (!string.IsNullOrEmpty(txtEfectivo.Text) && !Utilidades.Util_Form.validarCampoNumerico(txtEfectivo.Text, "Importe Efectivo"))
             {
                 txtImporte.Text = "";
@@ -1524,6 +1526,17 @@ namespace Presentacion.Pagos
         private void btnWhatsApp_Click(object sender, EventArgs e)
         {
             Util_Form.enviarWhatsApp(oPersonaE.Telefono);
+        }
+
+        private void txtImporte_TextChanged(object sender, EventArgs e)
+        {
+            validarImporte(sender);
+        }
+
+        private static void validarImporte(object sender)
+        {
+            TextBox txt = sender as TextBox;
+            Util_Form.VAlidarImporte((TextBox)sender);
         }
     }
 }
