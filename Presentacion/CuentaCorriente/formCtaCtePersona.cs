@@ -177,6 +177,12 @@ namespace Presentacion.CuentaCorriente
                 string tabla = grillaMovCtaCte.CurrentRow.Cells["tabla"].Value.ToString();
                 int idTabla = Convert.ToInt32(grillaMovCtaCte.CurrentRow.Cells["idTabla"].Value.ToString());
 
+                if (idTabla == 0)
+                {
+                    MessageBox.Show("Seleccione un registro válido");
+                    return;
+                }
+
                 Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
                 Entidades.MovCtaCte.tablas tablaEnum = oMovCtaCteE.getTablaEnum(tabla);
                 switch (tablaEnum)

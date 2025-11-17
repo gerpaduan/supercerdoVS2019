@@ -848,7 +848,7 @@
             this.MinimizeBox = true;
             this.Name = "formNuevoCorte";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Nuevo Prod.";
+            this.Text = "Nuevo Producto";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.formNuevoCorte_FormClosed);
             this.Load += new System.EventHandler(this.formNuevoCorte_Load);
             this.pnlBuscar.ResumeLayout(false);

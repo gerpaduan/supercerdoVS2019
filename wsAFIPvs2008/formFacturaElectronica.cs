@@ -838,7 +838,7 @@ namespace wsAFIPvs2008
                 float ivaval = float.Parse(desc);
 
 
-                float total = Utilidades.Util_Form.convertFloat(TotalTx.Text, false);
+                float total = Utilidades.Util_Form.convertFloat(TotalTx.Text, false, false);
                 float totalImporte = float.Parse(TotalTx.Text);
                 float neto = importeNeto;// (total / iva_a_multiplicar);
                 float imp_iva = importeIva;
@@ -1112,10 +1112,10 @@ namespace wsAFIPvs2008
                     oFactuElec.FormaPago = formaPago;
                     oFactuElec.CAE1 = txtCAE.Text;
                     oFactuElec.FecVtoCAE = txtVTO.Text;
-                    oFactuElec.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false);
-                    oFactuElec.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
-                    oFactuElec.ImporteTotal = Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
-                    oFactuElec.PorcentajeFacturacion = Util_Form.convertFloat(txtPorcentajeFacturacion.Text, false);
+                    oFactuElec.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false, false);
+                    oFactuElec.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false, false);
+                    oFactuElec.ImporteTotal = Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false, false);
+                    oFactuElec.PorcentajeFacturacion = Util_Form.convertFloat(txtPorcentajeFacturacion.Text, false, false);
                     oFactuElec.IdVenta = oVentaE.IdVenta;
                     oFactuElec.DescItemUnitario = checkItemUnitario.Checked ? txtDescItemUnitario.Text : "";
 
@@ -2445,9 +2445,9 @@ namespace wsAFIPvs2008
                     oNotaCredito.FormaPago = txtFormaPago.Text;
                     oNotaCredito.CAE1 = txtCAE.Text;
                     oNotaCredito.FecVtoCAE = txtVTO.Text;
-                    oNotaCredito.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false);
-                    oNotaCredito.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false);
-                    oNotaCredito.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false);
+                    oNotaCredito.ImporteNetoGravado = Utilidades.Util_Form.convertFloat(det.ImpNeto.ToString("F2"), false, false);
+                    oNotaCredito.Iva = Utilidades.Util_Form.convertFloat(det.ImpIVA.ToString("F2"), false, false);
+                    oNotaCredito.ImporteTotal = Utilidades.Util_Form.convertFloat(det.ImpTotal.ToString("F2"), false, false);
                     oNotaCredito.IdVenta = oVentaE.IdVenta;
                     oNotaCredito.PorcentajeFacturacion = oFactuElec.PorcentajeFacturacion;
                     oNotaCredito.DescItemUnitario = oFactuElec.DescItemUnitario;
@@ -2570,6 +2570,7 @@ namespace wsAFIPvs2008
 
         private void txtPorcentajeFacturación_TextChanged(object sender, EventArgs e)
         {
+            Util_Form.ValidarImporte((System.Windows.Forms.TextBox)sender);
             float valor;
             if (float.TryParse(txtPorcentajeFacturacion.Text, out valor))
             {

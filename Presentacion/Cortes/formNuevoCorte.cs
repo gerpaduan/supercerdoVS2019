@@ -98,7 +98,7 @@ namespace Presentacion
 
         private void cargarCampos()
         {
-            this.Text = "Modificar Corte";
+            this.Text = "Modificar Producto";
             modificar = true;
 
             txtCodigo.Text = Convert.ToString(oCorteE.codigo);

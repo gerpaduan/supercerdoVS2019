@@ -998,7 +998,7 @@ namespace Presentacion.Compras
                             oCorteNuevaCompra.idCorte = Convert.ToInt32(fila["idCorte"].ToString());
                             oCorteNuevaCompra.codigo = Convert.ToInt64(fila["codigo"].ToString());
                             oCorteNuevaCompra.corte = fila["corte"].ToString();
-                            oCorteNuevaCompra.precioKg = Util_Form.convertFloat(fila["precioKG"].ToString(), false);
+                            oCorteNuevaCompra.precioKg = Util_Form.convertFloat(fila["precioKG"].ToString(), false, false);
                         }
                         //se cargan los datos del corte
                         txtCorteNuevaCompra.Text = oCorteNuevaCompra.corte;
@@ -1178,6 +1178,11 @@ namespace Presentacion.Compras
         private void checkCtaCte_CheckedChanged(object sender, EventArgs e)
         {
             checkCtaCte.BackColor = Utilidades.Util_Form.getBackColorCheckBox(checkCtaCte.Checked);
+        }
+
+        private void txtPrecioKg_TextChanged(object sender, EventArgs e)
+        {
+            Util_Form.ValidarImporte((TextBox)sender);
         }
     }
 }

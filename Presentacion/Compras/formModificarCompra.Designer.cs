@@ -673,6 +673,7 @@
             this.txtPrecioKg.TabIndex = 5;
             this.txtPrecioKg.TabStop = false;
             this.txtPrecioKg.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtPrecioKg.TextChanged += new System.EventHandler(this.txtPrecioKg_TextChanged);
             this.txtPrecioKg.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TxtPruebaENTER_KeyPress);
             // 
             // label7

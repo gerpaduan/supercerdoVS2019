@@ -372,7 +372,7 @@ namespace Presentacion.Caja
                 huboModificacion = !(oEgresoCajaE.Fecha.Equals(txtFechaEgresoCaja.Value) &&
                     oEgresoCajaE.IdTipoEgresoCaja.Equals((int)comboTipoEgresoCaja.SelectedValue) &&
                     oEgresoCajaE.Descripcion.Equals(txtDescripcion.Text) &&
-                    oEgresoCajaE.Monto.Equals(Utilidades.Util_Form.convertFloat(txtMonto.Text, false)) &&
+                    oEgresoCajaE.Monto.Equals(Utilidades.Util_Form.convertFloat(txtMonto.Text, false, false)) &&
                     oEgresoCajaE.Detalle.Equals(txtDetalle.Text) &&
                     oEgresoCajaE.Sucursal.idSucursal.Equals(oSucursalE.idSucursal)
                     );
@@ -384,7 +384,7 @@ namespace Presentacion.Caja
             oEgresoCajaE.TipoEgresoCaja = comboTipoEgresoCaja.Text;
             oEgresoCajaE.Descripcion = comboTipoEgresoCaja.Text;
             oEgresoCajaE.Descripcion = txtDescripcion.Text;
-            oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true);
+            oEgresoCajaE.Monto = Utilidades.Util_Form.convertFloat(txtMonto.Text, true, false);
             oEgresoCajaE.Detalle = txtDetalle.Text;
             oEgresoCajaE.Sucursal = oSucursalE;
             oEgresoCajaE.CreadoPor = oEgresoCajaE.Id > 0 ? oEgresoCajaE.CreadoPor : oUsuario.Id;
@@ -448,6 +448,11 @@ namespace Presentacion.Caja
                 resultado = string.IsNullOrEmpty(textoReemplazo) && resultado.Contains("///") ? resultado.Replace("///", "") : resultado;
                 txtDetalle.Text = resultado;
             }
+        }
+
+        private void txtMonto_TextChanged(object sender, EventArgs e)
+        {
+            Utilidades.Util_Form.ValidarImporte((System.Windows.Forms.TextBox)sender);
         }
     }
 }

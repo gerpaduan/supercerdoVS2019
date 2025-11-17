@@ -399,6 +399,7 @@
             this.txtTotalProd.TabIndex = 52;
             this.txtTotalProd.TabStop = false;
             this.txtTotalProd.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtTotalProd.TextChanged += new System.EventHandler(this.txtTotalProd_TextChanged);
             // 
             // label26
             // 

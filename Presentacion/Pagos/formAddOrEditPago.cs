@@ -429,8 +429,8 @@ namespace Presentacion.Pagos
                 oPagoE.FormaPago = comboTipoPago.Text.Trim();
                 oPagoE.Fecha = txtFechaPago.Value;
                 oPagoE.AProveedor = checkAProveedor.Checked;
-                oPagoE.Importe = Utilidades.Util_Form.convertFloat(txtImporte.Text, false);
-                oPagoE.Efectivo = !string.IsNullOrEmpty(txtEfectivo.Text) ? Utilidades.Util_Form.convertFloat(txtEfectivo.Text, false) : 0;
+                oPagoE.Importe = Utilidades.Util_Form.convertFloat(txtImporte.Text, false, false);
+                oPagoE.Efectivo = !string.IsNullOrEmpty(txtEfectivo.Text) ? Utilidades.Util_Form.convertFloat(txtEfectivo.Text, false, false) : 0;
 
                 if (comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Efectivo.ToString()) ||
                     comboTipoPago.Text.Equals(Entidades.Pago.formasPago.Otro.ToString()))
@@ -694,7 +694,7 @@ namespace Presentacion.Pagos
                 float efectivo = 0;
                 float totalCheques = 0;
 
-                efectivo = !string.IsNullOrEmpty(txtEfectivo.Text) ? Util_Form.convertFloat(txtEfectivo.Text, false) : 0;
+                efectivo = !string.IsNullOrEmpty(txtEfectivo.Text) ? Util_Form.convertFloat(txtEfectivo.Text, false, false) : 0;
                 float.TryParse(txtTotalCheques.Text, out totalCheques);
 
                 float total = efectivo + totalCheques;
@@ -1536,7 +1536,7 @@ namespace Presentacion.Pagos
         private static void validarImporte(object sender)
         {
             TextBox txt = sender as TextBox;
-            Util_Form.VAlidarImporte((TextBox)sender);
+            Util_Form.ValidarImporte((TextBox)sender);
         }
     }
 }

@@ -170,7 +170,7 @@
             this.btnIngresoBilletes.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnIngresoBilletes.ForeColor = System.Drawing.Color.Black;
             this.btnIngresoBilletes.Image = ((System.Drawing.Image)(resources.GetObject("btnIngresoBilletes.Image")));
-            this.btnIngresoBilletes.Location = new System.Drawing.Point(256, 109);
+            this.btnIngresoBilletes.Location = new System.Drawing.Point(249, 108);
             this.btnIngresoBilletes.Name = "btnIngresoBilletes";
             this.btnIngresoBilletes.Size = new System.Drawing.Size(36, 24);
             this.btnIngresoBilletes.TabIndex = 54;
@@ -242,6 +242,7 @@
             this.txtMonto.Name = "txtMonto";
             this.txtMonto.Size = new System.Drawing.Size(158, 22);
             this.txtMonto.TabIndex = 2;
+            this.txtMonto.TextChanged += new System.EventHandler(this.txtMonto_TextChanged);
             // 
             // lblDescripcion
             // 

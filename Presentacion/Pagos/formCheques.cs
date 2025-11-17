@@ -283,7 +283,7 @@ namespace Presentacion.Cheques
                 oCheque.Propio = checkPropio.Checked;
                 oCheque.FechaEmision = txtFechaEmision.Text.Trim();
                 oCheque.FechaPago = txtFechaPago.Value;
-                oCheque.Importe = Utilidades.Util_Form.convertFloat(txtImporteCheque.Text,false);
+                oCheque.Importe = Utilidades.Util_Form.convertFloat(txtImporteCheque.Text,false, false);
                 oCheque.Estado = comboEstado.Text.Trim();
                 oCheque.Titular = txtTitular.Text.Trim();
                 oCheque.Observaciones = txtObservaciones.Text.Trim();
@@ -539,5 +539,11 @@ namespace Presentacion.Cheques
                 e.Cancel = true; // Cancela la salida del control
             }
         }
+
+        private void txtImporteCheque_TextChanged(object sender, EventArgs e)
+        {
+            Utilidades.Util_Form.ValidarImporte((System.Windows.Forms.TextBox)sender);
+        }
+
     }
 }

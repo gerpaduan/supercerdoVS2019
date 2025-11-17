@@ -42,64 +42,184 @@ namespace Utilidades
         /// - agrega separador de miles automáticamente
         /// - mantiene el cursor en la posición correcta
         /// </summary>
-        public static void VAlidarImporte(TextBox txt)
+        /// 
+        public static void ValidarImporte(TextBox txt, bool aceptarNegativo = false)
         {
             if (txt == null) return;
 
-            // recordar posición del cursor
-            int sel = txt.SelectionStart;
+            int cursor = txt.SelectionStart;
+            string input = txt.Text ?? string.Empty;
 
-            string texto = txt.Text;
-            if (string.IsNullOrWhiteSpace(texto)) return;
+            if (input.Length == 0) return;
 
-            // ----- Si el último carácter es '.' convertirlo en ',' -----
-            if (texto.Length > 0 && texto[texto.Length - 1] == '.')
+            bool negativo = false;
+
+            // -------------------------------
+            // 1) Procesar signo negativo
+            // -------------------------------
+            if (aceptarNegativo)
             {
-                texto = texto.Substring(0, texto.Length - 1) + ",";
-            }
+                if (input == "-")
+                {
+                    // dejar exactamente "-" y posicionar cursor al final
+                    txt.Text = "-";
+                    txt.SelectionStart = txt.Text.Length;
+                    return;
+                }
 
-            // Normalizar: quitar puntos (ingresados manualmente) pero mantener coma
-            texto = texto.Replace(".", ""); // eliminamos puntos previos
-                                            // (los puntos de miles se volverán a agregar)
-                                            // Nota: no reemplazamos la coma aquí
+                if (input.StartsWith("-"))
+                {
+                    negativo = true;
+                    input = input.Substring(1); // quitar signo para procesar números
+                }
 
-            // Mantener sólo dígitos y una coma (si existe)
-            var sb = new System.Text.StringBuilder();
-            bool comaEncontrada = false;
-            foreach (char c in texto)
-            {
-                if (char.IsDigit(c)) sb.Append(c);
-                else if (c == ',' && !comaEncontrada) { sb.Append(','); comaEncontrada = true; }
-            }
-            string limpio = sb.ToString();
-
-            // Separar parte entera y decimal
-            string entera, dec = "";
-            int pos = limpio.IndexOf(',');
-            if (pos >= 0)
-            {
-                entera = limpio.Substring(0, pos);
-                if (limpio.Length > pos + 1) dec = limpio.Substring(pos + 1);
+                // quitar "-" en cualquier otra posición
+                input = input.Replace("-", "");
             }
             else
             {
-                entera = limpio;
+                // eliminar cualquier '-'
+                input = input.Replace("-", "");
             }
 
-            // Formatear parte entera con miles (si está vacía dejar vacío)
-            string entFmt = string.IsNullOrEmpty(entera) ? "" : long.Parse(entera).ToString("N0");
+            // -------------------------------
+            // 2) Normalizar puntos/decimales
+            // -------------------------------
+            if (input.EndsWith(".")) input = input.Substring(0, input.Length - 1) + ",";
+            input = input.Replace(".", "");
 
-            // Reconstruir resultado
-            string nuevo = entFmt + (pos >= 0 ? "," + dec : "");
+            // -------------------------------
+            // 3) Mantener solo números y UNA coma
+            // -------------------------------
+            var sb = new System.Text.StringBuilder();
+            bool coma = false;
 
-            // Asignar y restaurar cursor (ajustando por cambio de longitud)
-            int diff = nuevo.Length - txt.Text.Length;
-            txt.Text = nuevo;
-            int nuevaPos = sel + diff;
-            if (nuevaPos < 0) nuevaPos = 0;
-            if (nuevaPos > txt.Text.Length) nuevaPos = txt.Text.Length;
-            txt.SelectionStart = nuevaPos;
+            foreach (char c in input)
+            {
+                if (char.IsDigit(c)) sb.Append(c);
+                else if (c == ',' && !coma)
+                {
+                    sb.Append(',');
+                    coma = true;
+                }
+            }
+
+            string limpio = sb.ToString();
+
+            if (string.IsNullOrEmpty(limpio))
+            {
+                // si no quedó nada, permitimos "-" si corresponde, o dejamos vacío
+                txt.Text = negativo ? "-" : "";
+                txt.SelectionStart = txt.Text.Length;
+                return;
+            }
+
+            // -------------------------------
+            // 4) Separar entero / decimal
+            // -------------------------------
+            string ent = limpio;
+            string dec = "";
+            int idx = limpio.IndexOf(',');
+            if (idx >= 0)
+            {
+                ent = limpio.Substring(0, idx);
+                if (idx + 1 < limpio.Length) dec = limpio.Substring(idx + 1);
+            }
+
+            // -------------------------------
+            // 5) Formatear miles (con fallback si el número es muy grande)
+            // -------------------------------
+            string entFmt;
+            if (string.IsNullOrEmpty(ent))
+            {
+                entFmt = "";
+            }
+            else if (long.TryParse(ent, out long entVal))
+            {
+                // "N0" respeta la cultura actual (separador de miles)
+                entFmt = entVal.ToString("N0");
+            }
+            else
+            {
+                // fallback: si no puede parsear (número muy grande o raro), usar tal cual
+                entFmt = ent;
+            }
+
+            string result = entFmt + (idx >= 0 ? "," + dec : "");
+
+            if (negativo && aceptarNegativo)
+                result = "-" + result;
+
+            // -------------------------------
+            // 6) Aplicar resultado + cursor
+            // -------------------------------
+            int diff = result.Length - txt.Text.Length;
+            txt.Text = result;
+
+            int newPos = cursor + diff;
+            if (newPos < 0) newPos = 0;
+            if (newPos > txt.Text.Length) newPos = txt.Text.Length;
+            txt.SelectionStart = newPos;
         }
+
+        //public static void ValidarImporte(TextBox txt)
+        //{
+        //    if (txt == null) return;
+
+        //    // recordar posición del cursor
+        //    int sel = txt.SelectionStart;
+
+        //    string texto = txt.Text;
+        //    if (string.IsNullOrWhiteSpace(texto)) return;
+
+        //    // ----- Si el último carácter es '.' convertirlo en ',' -----
+        //    if (texto.Length > 0 && texto[texto.Length - 1] == '.')
+        //    {
+        //        texto = texto.Substring(0, texto.Length - 1) + ",";
+        //    }
+
+        //    // Normalizar: quitar puntos (ingresados manualmente) pero mantener coma
+        //    texto = texto.Replace(".", ""); // eliminamos puntos previos
+        //                                    // (los puntos de miles se volverán a agregar)
+        //                                    // Nota: no reemplazamos la coma aquí
+
+        //    // Mantener sólo dígitos y una coma (si existe)
+        //    var sb = new System.Text.StringBuilder();
+        //    bool comaEncontrada = false;
+        //    foreach (char c in texto)
+        //    {
+        //        if (char.IsDigit(c)) sb.Append(c);
+        //        else if (c == ',' && !comaEncontrada) { sb.Append(','); comaEncontrada = true; }
+        //    }
+        //    string limpio = sb.ToString();
+
+        //    // Separar parte entera y decimal
+        //    string entera, dec = "";
+        //    int pos = limpio.IndexOf(',');
+        //    if (pos >= 0)
+        //    {
+        //        entera = limpio.Substring(0, pos);
+        //        if (limpio.Length > pos + 1) dec = limpio.Substring(pos + 1);
+        //    }
+        //    else
+        //    {
+        //        entera = limpio;
+        //    }
+
+        //    // Formatear parte entera con miles (si está vacía dejar vacío)
+        //    string entFmt = string.IsNullOrEmpty(entera) ? "" : long.Parse(entera).ToString("N0");
+
+        //    // Reconstruir resultado
+        //    string nuevo = entFmt + (pos >= 0 ? "," + dec : "");
+
+        //    // Asignar y restaurar cursor (ajustando por cambio de longitud)
+        //    int diff = nuevo.Length - txt.Text.Length;
+        //    txt.Text = nuevo;
+        //    int nuevaPos = sel + diff;
+        //    if (nuevaPos < 0) nuevaPos = 0;
+        //    if (nuevaPos > txt.Text.Length) nuevaPos = txt.Text.Length;
+        //    txt.SelectionStart = nuevaPos;
+        //}
 
         public static bool validarCampoVacio(string texto, string nombreTextBox)
         {
@@ -176,13 +296,19 @@ namespace Utilidades
 
         }
 
-        public static float convertFloat(string toFloat, bool messageBox)
+        public static float convertFloat(string toFloat, bool messageBox, bool esPesaje = true)
         {
             float? value = null;
             try
             {
+                //Si contiene '.' y ',' 
                 toFloat = !toFloat.Contains("..") && toFloat.Contains('.') && toFloat.Contains(',') ? toFloat.Replace(".", "") : toFloat;
-                toFloat = toFloat.Replace(".", "");
+
+                //si no es Pesaje -> es importe
+                if (!esPesaje)
+                {
+                    toFloat = toFloat.Replace(".", "");
+                }
                 toFloat = toFloat.Contains(',') ? toFloat.Replace(',', '.') : toFloat;
                 value = float.Parse(toFloat, System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
             }

@@ -286,7 +286,7 @@ namespace Presentacion
             oCompraE.Estado = "";
             oCompraE.CantMedias = string.IsNullOrEmpty(txtCantMedias.Text) ? null : (int?)Convert.ToInt32(txtCantMedias.Text);
             oCompraE.KgsMedias = string.IsNullOrEmpty(txtTotalKg.Text) || tipoCompra == "Cortes" ? null :
-                (float?)Utilidades.Util_Form.convertFloat(txtTotalKg.Text, false); //(int?)Convert.ToInt32(txtTotalKg.Text);
+                (float?)Utilidades.Util_Form.convertFloat(txtTotalKg.Text, false, false); //(int?)Convert.ToInt32(txtTotalKg.Text);
             oCompraE.Observaciones = txtObservaciones.Text.Trim();
             oCompraE.TipoCompra = tipoCompra;// FormPrincipal.soyYo ? tipoCompra : (oCompraE.CantMedias == null ? "Cortes" : "Media Res");
             oCompraE.Sucursal = oSucursalE;
@@ -1096,6 +1096,12 @@ namespace Presentacion
 
         private void txtNumerico_TextChanged(object sender, EventArgs e)
         {
+            //permitir valor negativo en margen ganancia
+            TextBox txt = sender as TextBox;
+            bool aceptarNegativo = txt != null && txt.Name == "txtMargenGan";
+
+            validarImporte(sender, aceptarNegativo);
+
             if (sender is TextBox)
             {
                 TextBox txtNumerico = (TextBox)sender;
@@ -1229,13 +1235,15 @@ namespace Presentacion
             if (validarCampoNumerico(txtBoxPrecioNeto.Text, "$") && validarCampoNumerico(txtBoxDescuento.Text,"%") &&
                 validarCampoNumerico(txtIva.Text,"Iva") )
             {
-                txtPrecioKg.Text = ((Util_Form.convertFloat(txtBoxPrecioNeto.Text, false) *
-                    ((100 + Util_Form.convertFloat(txtBoxDescuento.Text, false)) / 100)) * (1 + (Util_Form.convertFloat(txtIva.Text, false) / 100))).ToString("F2");
+                txtPrecioKg.Text = ((Util_Form.convertFloat(txtBoxPrecioNeto.Text, false, false) *
+                    ((100 + Util_Form.convertFloat(txtBoxDescuento.Text, false, false)) / 100)) * (1 + (Util_Form.convertFloat(txtIva.Text, false, false) / 100))).ToString("F2");
             }
         }
 
         private void txtBoxPrecioNeto_TextChanged(object sender, EventArgs e)
         {
+            validarImporte(sender, true);
+
             if (string.IsNullOrEmpty(txtBoxPrecioNeto.Text) ||
                 (txtBoxDescuento.Text.Length == 1 && txtBoxDescuento.Text.Equals("-")))
                 return;
@@ -1272,6 +1280,7 @@ namespace Presentacion
 
         private void txtPrecioFinalVenta_TextChanged(object sender, EventArgs e)
         {
+            validarImporte(sender);
             CalcularMargen();
         }
 
@@ -1281,8 +1290,11 @@ namespace Presentacion
                 return;
 
             // Validar que ambos TextBox contengan valores numéricos
-            if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
-                float.TryParse(txtPrecioFinalVenta.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioFinalVenta))
+            //if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
+            //    float.TryParse(txtPrecioFinalVenta.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioFinalVenta))
+            float precioKg = string.IsNullOrEmpty(txtPrecioKg.Text) ? 0f : Util_Form.convertFloat(txtPrecioKg.Text, false, false);
+            float precioFinalVenta = string.IsNullOrEmpty(txtPrecioFinalVenta.Text) ? 0f : Util_Form.convertFloat(txtPrecioFinalVenta.Text, false, false);
+            if (precioKg > 0 && precioFinalVenta > 0)
             {
                 // Realizar la multiplicación
                 float margenGan = ((precioFinalVenta / precioKg) - 1) * 100;
@@ -1308,23 +1320,32 @@ namespace Presentacion
             //Calcular el total del producto Cant * precioFinal
             try
             {
-                float.TryParse(txtCantKgs.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cant);
-                float precioKgIncluido = Util_Form.convertFloat(txtPrecioKg.Text, false);
+                float cant = Util_Form.convertFloat(txtCantKgs.Text, false, false); // float.TryParse(txtCantKgs.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cant);
+                float precioKgIncluido = Util_Form.convertFloat(txtPrecioKg.Text, false, false);
                 txtTotalProd.Text = (precioKgIncluido * cant).ToString("0.00");
+
+                if (FormPrincipal.soyYo && radioMediaRes.Checked &&
+                    float.TryParse(txtKgMedia.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cantKgMedia))
+                {
+                    txtTotalProd.Text = (precioKgIncluido * cantKgMedia).ToString("0.00");
+                }
 
                 if (!(checkMargen.Checked && (txtPrecioKg.Focused || txtMargenGan.Focused)))
                     return;
 
                 // Validar que ambos TextBox contengan valores numéricos
-                if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
-                    float.TryParse(txtMargenGan.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float margenGan))
+                //if (float.TryParse(txtPrecioKg.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float precioKg) &&
+                //    float.TryParse(txtMargenGan.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float margenGan))
+                float precioKg = string.IsNullOrEmpty(txtPrecioKg.Text) ? 0f : Util_Form.convertFloat(txtPrecioKg.Text, false, false);
+                float margenGan = string.IsNullOrEmpty(txtMargenGan.Text) ? 0f : Util_Form.convertFloat(txtMargenGan.Text, false, false);
+                if (precioKg > 0 && margenGan > 0)
                 {
                     // Realizar la multiplicación
                     float precioFinalVenta = precioKg * (1 + (margenGan / 100));
 
                     // Mostrar el resultado en txtPrecioFinalVenta
                     txtPrecioFinalVenta.Text = precioFinalVenta.ToString("0.00"); // Formato con 2 decimales
-                    txtTotalProd.Text = (precioFinalVenta * cant).ToString("0.00");                
+                    //txtTotalProd.Text = (precioFinalVenta * cant).ToString("0.00");                
                 }
                 else
                 {
@@ -1346,6 +1367,16 @@ namespace Presentacion
             {
                 textBox.SelectAll();
             }
+        }
+        private static void validarImporte(object sender, bool aceptarNegativo = false)
+        {
+            TextBox txt = sender as TextBox;
+            Util_Form.ValidarImporte((TextBox)sender, aceptarNegativo);
+        }
+
+        private void txtTotalProd_TextChanged(object sender, EventArgs e)
+        {
+            validarImporte(sender);
         }
     }
 }
