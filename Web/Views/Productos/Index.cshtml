@@ -41,7 +41,6 @@
 
         <div class="card-body">
 
-            <!-- ⭐ NUEVO SISTEMA SCROLL + ZOOM ⭐ -->
             <div id="zoomTableContainer" class="tabla-full">
                 <div id="zoomWrapper" style="transform-origin: top left; transition: transform 0.2s; display: inline-block;">
 
@@ -58,89 +57,202 @@
                         <tbody>
                             @foreach (var item in Model)
                             {
-                            <tr>
-                                <td class="col-codigo">@item.Codigo</td>
-                                <td class="col-producto">@item.CorteDesc</td>
-                                <td class="col-precio">@item.PrecioKg.ToString("C")</td>
-                                <td class="col-tipo">@item.Stock_EnString</td>
+                                <tr id="fila_@item.idCorte">
+                                    <td class="col-codigo">@item.Codigo</td>
+                                    <td class="col-producto">@item.CorteDesc</td>
+                                    <td class="col-precio" id="precio_@item.idCorte">@item.PrecioKg.ToString("C")</td>
+                                    <td class="col-tipo">@item.Stock_EnString</td>
 
-                                <td>
-                                    <a href="@Url.Action("Editar", new { id = item.Codigo })" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="@Url.Action("Eliminar", new { id = item.Codigo })" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </td>
-                            </tr>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-warning"
+                                                onclick="abrirPopupPrecio(@item.idCorte, '@item.CorteDesc', '@item.PrecioKg')">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </button>
+
+                                        <a href="@Url.Action("AddOrEdit", new { id = item.idCorte })" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
                             }
                         </tbody>
                     </table>
 
                 </div>
             </div>
-            <!-- ⭐ FIN SISTEMA NUEVO ⭐ -->
 
         </div>
+
+        <!-- ⭐ MODAL PARA EDITAR PRECIO ⭐ -->
+        <form id="formPrecio" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="modal fade" id="modalPrecio" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-sm" role="document">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">Modificar precio</h5>
+
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+
+                        </div>
+
+                        <div class="modal-body">
+
+                            <input type="hidden" id="IdCorte" name="IdCorte" />
+
+                            <div class="form-group">
+                                <label>Producto</label>
+                                <input type="text" id="CorteDesc" class="form-control" readonly>
+                            </div>
+
+                            <div class="form-group mt-2">
+                                <label>Nuevo precio</label>
+                                <input type="number" id="PrecioKg" name="PrecioKg" class="form-control" min="1" step="0.01">
+                                <small id="errorPrecio" class="text-danger d-none">El precio ingresado es inválido.</small>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button type="button" class="btn btn-success" onclick="guardarPrecio()">Guardar</button>
+
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                Cancelar
+                            </button>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </form>
+
     </div>
-
-    <!-- JS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <script>
-        const buscador = document.getElementById("buscador");
-        const filas = document.querySelectorAll("table tbody tr");
-        const contador = document.getElementById("contadorProductos");
-
-        actualizarContador();
-
-        buscador.addEventListener("keyup", function () {
-            const valor = this.value.toLowerCase();
-            let visibles = 0;
-
-            filas.forEach(fila => {
-                const codigo = fila.children[0]?.textContent.toLowerCase() || "";
-                const producto = fila.children[1]?.textContent.toLowerCase() || "";
-                const coincide = codigo.includes(valor) || producto.includes(valor);
-                fila.style.display = coincide ? "" : "none";
-                if (coincide) visibles++;
-            });
-
-            actualizarContador(visibles);
-        });
-
-        function actualizarContador(cantidadVisible) {
-            const total = filas.length;
-            const cantidad = cantidadVisible !== undefined ? cantidadVisible : total;
-            contador.textContent = `Mostrando ${cantidad} de ${total} productos`;
-        }
-
-        // Zoom
-        const range = document.getElementById('zoomRange');
-        const zoomWrapper = document.getElementById('zoomWrapper');
-
-        range.addEventListener('input', () => {
-            const scale = parseFloat(range.value);
-            zoomWrapper.style.transform = `scale(${scale})`;
-        });
-    </script>
 
 </div>
 
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+
+    // ============================
+    // BUSCADOR
+    // ============================
+    const buscador = document.getElementById("buscador");
+    const filas = document.querySelectorAll("table tbody tr");
+    const contador = document.getElementById("contadorProductos");
+
+    actualizarContador();
+
+    buscador.addEventListener("keyup", function () {
+        const valor = this.value.toLowerCase();
+        let visibles = 0;
+
+        filas.forEach(fila => {
+            const codigo = fila.children[0]?.textContent.toLowerCase() || "";
+            const producto = fila.children[1]?.textContent.toLowerCase() || "";
+            const coincide = codigo.includes(valor) || producto.includes(valor);
+            fila.style.display = coincide ? "" : "none";
+            if (coincide) visibles++;
+        });
+
+        actualizarContador(visibles);
+    });
+
+    function actualizarContador(cantidadVisible) {
+        const total = filas.length;
+        const cantidad = cantidadVisible !== undefined ? cantidadVisible : total;
+        contador.textContent = `Mostrando ${cantidad} de ${total} productos`;
+    }
+
+    // ============================
+    // ZOOM
+    // ============================
+    const range = document.getElementById('zoomRange');
+    const zoomWrapper = document.getElementById('zoomWrapper');
+
+    range.addEventListener('input', () => {
+        const scale = parseFloat(range.value);
+        zoomWrapper.style.transform = `scale(${scale})`;
+    });
+
+
+    // ============================
+    // POPUP PRECIO
+    // ============================
+    function abrirPopupPrecio(id, nombre, precio) {
+        $("#errorPrecio").addClass("d-none");
+        $("#IdCorte").val(id);
+        $("#CorteDesc").val(nombre);
+        $("#PrecioKg").val(precio);
+        $("#modalPrecio").modal("show");
+    }
+    function guardarPrecio() {
+
+        let precioRaw = $("#PrecioKg").val().trim();
+
+        if (precioRaw === "") {
+            $("#errorPrecio").removeClass("d-none");
+            return;
+        }
+
+        let precioNormalizado = precioRaw.replace(",", ".");
+        let numero = parseFloat(precioNormalizado);
+
+        if (isNaN(numero) || numero <= 0) {
+            $("#errorPrecio").removeClass("d-none");
+            return;
+        }
+
+        $("#PrecioKg").val(precioNormalizado);
+
+        $.ajax({
+            url: '/Productos/EditPrecioCorte',
+            type: 'POST',
+            data: $("#formPrecio").serialize(),
+            success: function (resp) {
+
+                // resp.id     → id del corte modificado
+                // resp.precio → precio actualizado
+
+                // Formato moneda local
+                let precioFormateado = numero.toLocaleString("es-AR", {
+                    style: "currency",
+                    currency: "ARS"
+                });
+
+                // Actualiza SOLO esa celda
+                $("#precio_" + resp.id).text(precioFormateado);
+
+                // Cerrar modal sin recargar nada
+                $("#modalPrecio").modal("hide");
+            },
+            error: function () {
+                alert("Error al actualizar el precio.");
+            }
+        });
+    }
+
+
+</script>
+
 <style>
-    /* Hace que el contenedor pueda scrollear horizontalmente */
     .tabla-full {
         width: 100% !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Evita que Chrome rompa las columnas en móvil */
     table {
         white-space: nowrap;
     }
 
-    /* Ajusta padding en móvil para más espacio */
     @@media (max-width: 768px) {
         .card-body {
             padding: 5px !important;

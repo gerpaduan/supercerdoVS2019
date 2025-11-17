@@ -47,3 +47,27 @@ agregar tabla Empresas
 actulaizar tabla Sucursal
 
 /////
+
+agregar idCorte
+
+ALTER PROCEDURE [dbo].[a_CierreStock]
+	-- Add the parameters for the stored procedure here
+	@texto nvarchar(50),
+	@idsucursal int,
+	@fechaDesde datetime,
+	@fechaHasta datetime,
+	@tipo nvarchar(50),
+	@idProveedor int,
+	@idMarca int
+	
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+	
+	--se verifica si texto es un numero entero
+	
+	Declare @esNumero int = (SELECT ISNUMERIC(@texto));
+    
+	select allCortes.idCorte,

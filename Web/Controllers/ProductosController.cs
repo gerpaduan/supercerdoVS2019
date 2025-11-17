@@ -5,6 +5,8 @@ using System.Linq;
 using System.Web.Mvc;
 using Negocio;
 using Entidades;
+using Datos;
+using System.Globalization;
 
 namespace Web.Controllers
 {
@@ -87,7 +89,7 @@ namespace Web.Controllers
             {
                 oCorteN.addOrEditCorte(model);
 
-                TempData["Success"] = "Corte guardado correctamente.";
+                TempData["Success"] = "Producto guardado correctamente.";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -96,6 +98,20 @@ namespace Web.Controllers
                 CargarCombos(model.IdCorte);
                 return View("AddOrEdit", model);
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult EditPrecioCorte(Entidades.Corte model)
+        {
+            oCorteN.editPrecioCorte(model);
+
+            // Devuelve JSON con datos para actualizar la UI
+            return Json(new
+            {
+                id = model.IdCorte,
+                precio = model.PrecioKg
+            });
         }
 
         // ===============================
