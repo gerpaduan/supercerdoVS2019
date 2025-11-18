@@ -6,11 +6,24 @@
 }
 
 <div class="container-fluid">
+
     <h1 class="h3 mb-4 text-gray-800">Listado de Productos</h1>
 
     <a href="@Url.Action("AddOrEdit", "Productos")" class="btn btn-primary mb-3">
         <i class="fas fa-plus"></i> Nuevo Producto
     </a>
+
+    <form method="get" id="formStock" class="mb-3">
+        <label class="font-weight-bold">
+            <input type="checkbox" name="conStock"
+                   value="true"
+                   @( (ViewBag.ConStock ?? false) ? "checked" : "" )
+                   onchange="document.getElementById('formStock').submit()" />
+            Mostrar Stock
+        </label>
+    </form>
+
+
 
     <!-- 🔍 Buscador -->
     <div class="row mb-3">
@@ -111,7 +124,7 @@
 
                             <div class="form-group mt-2">
                                 <label>Nuevo precio</label>
-                                <input type="number" id="PrecioKg" name="PrecioKg" class="form-control" min="1" step="0.01">
+                                <input type="text" id="PrecioKg" name="PrecioKg" class="form-control" autocomplete="off">
                                 <small id="errorPrecio" class="text-danger d-none">El precio ingresado es inválido.</small>
                             </div>
 
@@ -182,27 +195,107 @@
         zoomWrapper.style.transform = `scale(${scale})`;
     });
 
+    // =========================
+    // FORMATEO EN VIVO (miles + coma decimal)
+    // =========================
 
-    // ============================
-    // POPUP PRECIO
-    // ============================
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const inputPrecio = document.getElementById("PrecioKg");
+
+        if (inputPrecio) {
+
+            inputPrecio.addEventListener("input", function () {
+
+                let v = this.value;
+
+                // Quitar todo excepto números y coma
+                v = v.replace(/[^\d,]/g, "");
+
+                // Evitar más de una coma
+                let partes = v.split(",");
+                if (partes.length > 2) {
+                    v = partes[0] + "," + partes[1];
+                }
+
+                let [entero, decimal] = v.split(",");
+
+                // Limitar a 2 decimales
+                if (decimal !== undefined && decimal.length > 2) {
+                    decimal = decimal.substring(0, 2);
+                }
+
+                // Eliminar ceros adelante del entero
+                if (entero) {
+                    entero = entero.replace(/^0+(?=\d)/, "");
+                }
+
+                // Formatear miles
+                if (entero) {
+                    entero = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+
+                this.value = decimal !== undefined ? `${entero},${decimal}` : entero;
+            });
+        }
+    });
+
+    // =========================
+    // FORMATEAR AL ABRIR MODAL
+    // =========================
+
+    function formatearPrecioInicial(precio) {
+        if (!precio) return "";
+
+        let numero = parseFloat(precio.replace(",", "."));
+
+        if (isNaN(numero)) return "";
+
+        return numero.toLocaleString("es-AR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
     function abrirPopupPrecio(id, nombre, precio) {
+
         $("#errorPrecio").addClass("d-none");
         $("#IdCorte").val(id);
         $("#CorteDesc").val(nombre);
-        $("#PrecioKg").val(precio);
+
+        // Formatear precio a ARS automáticamente (1.234,56)
+        $("#PrecioKg").val(formatearPrecioInicial(precio));
+
         $("#modalPrecio").modal("show");
     }
+
+    // =========================
+    // LIMPIAR AL CERRAR MODAL
+    // =========================
+
+    $('#modalPrecio').on('hidden.bs.modal', function () {
+        $("#PrecioKg").val("");
+    });
+
+    // =========================
+    // GUARDAR PRECIO
+    // =========================
     function guardarPrecio() {
 
         let precioRaw = $("#PrecioKg").val().trim();
 
+        // Validación básica: campo vacío
         if (precioRaw === "") {
             $("#errorPrecio").removeClass("d-none");
             return;
         }
 
-        let precioNormalizado = precioRaw.replace(",", ".");
+        // Normalización solo para validar en el cliente (opcional)
+        let precioNormalizado = precioRaw
+            .replace(/\./g, "")
+            .replace(",", ".");
+
+        // Validación numérica mínima
         let numero = parseFloat(precioNormalizado);
 
         if (isNaN(numero) || numero <= 0) {
@@ -210,7 +303,8 @@
             return;
         }
 
-        $("#PrecioKg").val(precioNormalizado);
+        // IMPORTANTE: enviar al servidor el STRING original
+        $("#PrecioKg").val(precioRaw);
 
         $.ajax({
             url: '/Productos/EditPrecioCorte',
@@ -218,19 +312,9 @@
             data: $("#formPrecio").serialize(),
             success: function (resp) {
 
-                // resp.id     → id del corte modificado
-                // resp.precio → precio actualizado
+                // Mostrar el precio formateado devuelto por el servidor
+                $("#precio_" + resp.id).text(resp.precioFormateado);
 
-                // Formato moneda local
-                let precioFormateado = numero.toLocaleString("es-AR", {
-                    style: "currency",
-                    currency: "ARS"
-                });
-
-                // Actualiza SOLO esa celda
-                $("#precio_" + resp.id).text(precioFormateado);
-
-                // Cerrar modal sin recargar nada
                 $("#modalPrecio").modal("hide");
             },
             error: function () {
@@ -238,7 +322,6 @@
             }
         });
     }
-
 
 </script>
 

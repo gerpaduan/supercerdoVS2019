@@ -17,12 +17,23 @@ namespace Web.Controllers
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
         // LISTADO
-        public ActionResult Index()
+        //public ActionResult Index()
+        //{
+        //    int idSucursal = 2;
+        //    var productos = oCorteN.findAllCortes(false, idSucursal, true);
+        //    return View(productos);
+        //}
+        public ActionResult Index(bool conStock = false)
         {
             int idSucursal = 2;
-            var productos = oCorteN.findAllCortes(false, idSucursal, true);
+
+            var productos = oCorteN.findAllCortes(false, idSucursal, conStock);
+
+            ViewBag.ConStock = conStock;   // <-- Para mantener el check
+
             return View(productos);
         }
+
 
         // ===============================
         // GET: CREAR
@@ -100,19 +111,53 @@ namespace Web.Controllers
             }
         }
 
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public ActionResult EditPrecioCorte(Entidades.Corte model)
+        //{
+        //    oCorteN.editPrecioCorte(model);
+
+        //    // Devuelve JSON con datos para actualizar la UI
+        //    return Json(new
+        //    {
+        //        id = model.IdCorte,
+        //        precio = model.PrecioKg
+        //    });
+        //}
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult EditPrecioCorte(Entidades.Corte model)
+        public ActionResult EditPrecioCorte(int IdCorte, string PrecioKg)
         {
+            // PrecioKg llega así: "10.254,60"
+
+            if (string.IsNullOrWhiteSpace(PrecioKg))
+                return Json(new { error = "Precio vacío" });
+
+            // Normalizar: quitar miles y pasar coma a punto
+            string normalizado = PrecioKg
+                .Replace(".", "")
+                .Replace(",", ".");
+
+            if (!float.TryParse(
+                    normalizado,
+                    NumberStyles.Any,
+                    CultureInfo.InvariantCulture,
+                    out float precioDecimal))
+            {
+                return Json(new { error = "Formato de precio inválido" });
+            }
+            Entidades.Corte model = new Entidades.Corte();
+            model.idCorte = IdCorte;
+            model.precioKg = precioDecimal;
             oCorteN.editPrecioCorte(model);
 
-            // Devuelve JSON con datos para actualizar la UI
             return Json(new
             {
-                id = model.IdCorte,
-                precio = model.PrecioKg
+                id = IdCorte,
+                precio = precioDecimal,
+                precioFormateado = "$ "+precioDecimal.ToString("N2", new CultureInfo("es-AR"))
             });
         }
+
 
         // ===============================
         // CARGA DE COMBOS
