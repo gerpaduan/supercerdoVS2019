@@ -20,10 +20,10 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
-        public List<Entidades.Corte> findAllCortes(bool buscarMaestro, int idSucursal, bool conStock = false)
+        public List<Entidades.Corte> findAllCortes(bool buscarMaestro, int idSucursal)
         {
             List<Entidades.Corte> listaCortes = oCorteD.findAllCortes(buscarMaestro);
-            if (conStock)
+            if (idSucursal > 0)
             {
                 DateTime fechaUltimoCierreStock = oCorteD.fechaUltimoCierreStock_Sucursal(idSucursal);
                 DataTable dtCortesStock = CierreStock(1, "", idSucursal, fechaUltimoCierreStock, DateTime.Now, null, "", 0, 0);

@@ -32,6 +32,12 @@ namespace Negocio
             oSucursalD = new Datos.Sucursal();
             return oSucursalD.findById(id);
         }
+        public List<Entidades.Sucursal> findAll()
+        {
+            oSucursalD = new Datos.Sucursal();
+            return oSucursalD.findAll();
+        }
+
         public DataTable obtenerSucursalSanMartin()
         {
             oSucursalD = new Datos.Sucursal();

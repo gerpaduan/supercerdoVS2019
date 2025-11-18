@@ -22,7 +22,7 @@
 
 /* FORZAR QUE CADA COLUMNA TENGA UN MÁXIMO DE ANCHO */
 .col-codigo {
-    max-width: 80px !important;
+    max-width: 77px !important;
 }
 
 .col-producto {
@@ -30,11 +30,11 @@
 }
 
 .col-precio {
-    max-width: 90px !important;
+    max-width: 60px !important;
 }
 
 .col-tipo {
-    max-width: 90px !important;
+    max-width: 70px !important;
 }
 
 /* IMPIDE QUE BOOTSTRAP INTENTE FORZAR UNA SOLA LÍNEA EN TABLAS RESPONSIVE */

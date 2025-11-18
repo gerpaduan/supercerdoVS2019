@@ -21,12 +21,37 @@ namespace Datos
             return dtSucursal;
         }
 
+        //public Entidades.Sucursal findById(int id)
+        //{
+        //    Entidades.Sucursal oSucursalE = null;
+
+        //    using (SqlConnection conn = this.conn.conectar())
+        //    using (SqlCommand cmd = new SqlCommand("SELECT idSucursal, sucursal FROM sucursal WHERE idSucursal = @id", conn))
+        //    {
+        //        cmd.Parameters.AddWithValue("@id", id);
+
+        //        conn.Open();
+        //        using (SqlDataReader dr = cmd.ExecuteReader())
+        //        {
+        //            if (dr.Read())
+        //            {
+        //                oSucursalE = new Entidades.Sucursal
+        //                {
+        //                    idSucursal = Convert.ToInt32(dr["idSucursal"]),
+        //                    sucursal = dr["sucursal"].ToString()
+        //                };
+        //            }
+        //        }
+        //    }
+
+        //    return oSucursalE;
+        //}
         public Entidades.Sucursal findById(int id)
         {
             Entidades.Sucursal oSucursalE = null;
 
             using (SqlConnection conn = this.conn.conectar())
-            using (SqlCommand cmd = new SqlCommand("SELECT idSucursal, sucursal FROM sucursal WHERE idSucursal = @id", conn))
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM sucursal WHERE idSucursal = @id", conn))
             {
                 cmd.Parameters.AddWithValue("@id", id);
 
@@ -35,17 +60,50 @@ namespace Datos
                 {
                     if (dr.Read())
                     {
-                        oSucursalE = new Entidades.Sucursal
-                        {
-                            idSucursal = Convert.ToInt32(dr["idSucursal"]),
-                            sucursal = dr["sucursal"].ToString()
-                        };
+                        oSucursalE = mapSucursal(dr);
                     }
                 }
             }
 
             return oSucursalE;
         }
+
+        public List<Entidades.Sucursal> findAll()
+        {
+            List<Entidades.Sucursal> lista = new List<Entidades.Sucursal>();
+
+            using (SqlConnection conn = this.conn.conectar())
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM sucursal", conn))
+            {
+                conn.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        lista.Add(mapSucursal(dr));
+                    }
+                }
+            }
+
+            return lista;
+        }
+
+
+        private Entidades.Sucursal mapSucursal(SqlDataReader dr)
+        {
+            return new Entidades.Sucursal
+            {
+                IdSucursal = dr["idSucursal"] != DBNull.Value ? Convert.ToInt32(dr["idSucursal"]) : 0,
+                SucursalNombre = dr["sucursal"] != DBNull.Value ? dr["sucursal"].ToString() : string.Empty,
+                IdEmpresa = dr["idEmpresa"] != DBNull.Value ? Convert.ToInt32(dr["idEmpresa"]) : 0,
+                CodPtoVentaARCA = dr["codPtoVentaARCA"] != DBNull.Value ? Convert.ToInt32(dr["codPtoVentaARCA"]) : 0,
+                Direccion = dr["direccion"] != DBNull.Value ? dr["direccion"].ToString() : string.Empty,
+                Localidad = dr["localidad"] != DBNull.Value ? dr["localidad"].ToString() : string.Empty,
+                Provincia = dr["provincia"] != DBNull.Value ? dr["provincia"].ToString() : string.Empty,
+                Pais = dr["pais"] != DBNull.Value ? dr["pais"].ToString() : string.Empty
+            };
+        }
+
 
         public DataTable obtenerSucursalSanMartin()
         {

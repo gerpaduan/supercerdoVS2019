@@ -10,6 +10,14 @@ namespace Entidades
         public int idSucursal;
         public string sucursal;
 
+        // Nuevos campos
+        public int IdEmpresa { get; set; }
+        public int CodPtoVentaARCA { get; set; }
+        public string Direccion { get; set; }
+        public string Localidad { get; set; }
+        public string Provincia { get; set; }
+        public string Pais { get; set; }
+
         public int IdSucursal
         {
             get

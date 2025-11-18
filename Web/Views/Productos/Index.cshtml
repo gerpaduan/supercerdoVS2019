@@ -13,16 +13,35 @@
         <i class="fas fa-plus"></i> Nuevo Producto
     </a>
 
+    @*<form method="get" id="formStock" class="mb-3">
+            <label class="font-weight-bold">
+                <input type="checkbox" name="conStock"
+                       value="true"
+                       @( (ViewBag.ConStock ?? false) ? "checked" : "" )
+                       onchange="document.getElementById('formStock').submit()" />
+                Mostrar Stock
+            </label>
+        </form>*@
     <form method="get" id="formStock" class="mb-3">
-        <label class="font-weight-bold">
-            <input type="checkbox" name="conStock"
-                   value="true"
-                   @( (ViewBag.ConStock ?? false) ? "checked" : "" )
-                   onchange="document.getElementById('formStock').submit()" />
-            Mostrar Stock
-        </label>
-    </form>
 
+        <!-- COMBO SUCURSALES -->
+        <div class="form-group">
+            <label class="font-weight-bold">Seleccione una sucursal para mostrar el stock</label>
+            <select class="form-control" id="SucursalId" name="SucursalId"
+                    onchange="document.getElementById('formStock').submit()">
+                <option value="">- Seleccione sucursal -</option>
+
+                @foreach (var s in (List<Entidades.Sucursal>)ViewBag.Sucursales)
+                {
+                    <option value="@s.IdSucursal"
+                            @(ViewBag.SucursalId != null && ViewBag.SucursalId == s.IdSucursal ? "selected" : "")>
+                        @s.SucursalNombre
+                    </option>
+                }
+            </select>
+        </div>
+
+    </form>
 
 
     <!-- 🔍 Buscador -->
@@ -196,82 +215,57 @@
     });
 
     // =========================
-    // FORMATEO EN VIVO (miles + coma decimal)
+    // ABRIR MODAL + FOCO
     // =========================
+    function abrirPopupPrecio(id, nombreTabla, precioTabla) {
 
-    document.addEventListener("DOMContentLoaded", function () {
+        $("#errorPrecio").addClass("d-none");
 
-        const inputPrecio = document.getElementById("PrecioKg");
+        // Cargar ID y desc por si la consulta demora
+        $("#IdCorte").val(id);
+        $("#CorteDesc").val(nombreTabla);
+        $("#PrecioKg").val(precioTabla);
 
-        if (inputPrecio) {
+        // Mostrar el modal YA
+        $("#modalPrecio").modal("show");
 
-            inputPrecio.addEventListener("input", function () {
+        // Luego consultar el valor real desde BD
+        $.ajax({
+            url: '/Productos/findCorteById',
+            type: 'GET',
+            data: { id: id },
+            success: function (resp) {
 
-                let v = this.value;
+                // Cargar datos reales desde la BD
+                $("#CorteDesc").val(resp.descripcion);
+                $("#PrecioKg").val(resp.precio);
 
-                // Quitar todo excepto números y coma
-                v = v.replace(/[^\d,]/g, "");
+                // Foco en el input con selección
+                setTimeout(() => {
+                    const inp = document.getElementById("PrecioKg");
+                    inp.focus();
+                    inp.select();
+                }, 80);
+            },
+            error: function () {
+                // Si falla, sigo usando los datos pasados por la tabla
+                console.warn("No se pudo obtener el precio desde la BD.");
 
-                // Evitar más de una coma
-                let partes = v.split(",");
-                if (partes.length > 2) {
-                    v = partes[0] + "," + partes[1];
-                }
-
-                let [entero, decimal] = v.split(",");
-
-                // Limitar a 2 decimales
-                if (decimal !== undefined && decimal.length > 2) {
-                    decimal = decimal.substring(0, 2);
-                }
-
-                // Eliminar ceros adelante del entero
-                if (entero) {
-                    entero = entero.replace(/^0+(?=\d)/, "");
-                }
-
-                // Formatear miles
-                if (entero) {
-                    entero = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                }
-
-                this.value = decimal !== undefined ? `${entero},${decimal}` : entero;
-            });
-        }
-    });
-
-    // =========================
-    // FORMATEAR AL ABRIR MODAL
-    // =========================
-
-    function formatearPrecioInicial(precio) {
-        if (!precio) return "";
-
-        let numero = parseFloat(precio.replace(",", "."));
-
-        if (isNaN(numero)) return "";
-
-        return numero.toLocaleString("es-AR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+                setTimeout(() => {
+                    const inp = document.getElementById("PrecioKg");
+                    inp.focus();
+                    inp.select();
+                }, 80);
+            }
         });
     }
 
-    function abrirPopupPrecio(id, nombre, precio) {
 
-        $("#errorPrecio").addClass("d-none");
-        $("#IdCorte").val(id);
-        $("#CorteDesc").val(nombre);
-
-        // Formatear precio a ARS automáticamente (1.234,56)
-        $("#PrecioKg").val(formatearPrecioInicial(precio));
-
-        $("#modalPrecio").modal("show");
-    }
-
-    // =========================
-    // LIMPIAR AL CERRAR MODAL
-    // =========================
+    $('#modalPrecio').on('shown.bs.modal', function () {
+        const inp = document.getElementById("PrecioKg");
+        inp.focus();
+        inp.select();
+    });
 
     $('#modalPrecio').on('hidden.bs.modal', function () {
         $("#PrecioKg").val("");
@@ -284,18 +278,16 @@
 
         let precioRaw = $("#PrecioKg").val().trim();
 
-        // Validación básica: campo vacío
         if (precioRaw === "") {
             $("#errorPrecio").removeClass("d-none");
             return;
         }
 
-        // Normalización solo para validar en el cliente (opcional)
-        let precioNormalizado = precioRaw
-            .replace(/\./g, "")
-            .replace(",", ".");
+        // Convertir punto a coma
+        precioRaw = precioRaw.replace(".", ",");
 
-        // Validación numérica mínima
+        // Para validar: convertir coma a punto
+        let precioNormalizado = precioRaw.replace(",", ".");
         let numero = parseFloat(precioNormalizado);
 
         if (isNaN(numero) || numero <= 0) {
@@ -303,24 +295,66 @@
             return;
         }
 
-        // IMPORTANTE: enviar al servidor el STRING original
-        $("#PrecioKg").val(precioRaw);
+        $("#PrecioKg").val(precioRaw); // enviar tal cual
 
         $.ajax({
             url: '/Productos/EditPrecioCorte',
             type: 'POST',
             data: $("#formPrecio").serialize(),
             success: function (resp) {
-
-                // Mostrar el precio formateado devuelto por el servidor
                 $("#precio_" + resp.id).text(resp.precioFormateado);
-
                 $("#modalPrecio").modal("hide");
             },
             error: function () {
                 alert("Error al actualizar el precio.");
             }
         });
+    }
+
+    // =========================
+    // INPUT SIMPLE: punto y coma = coma
+    // =========================
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const input = document.getElementById("PrecioKg");
+        if (!input) return;
+
+        // ENTER
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                guardarPrecio();
+            }
+        });
+
+        // No formatear, solo limpiar y manejar decimal
+        input.addEventListener("input", function () {
+
+            let v = this.value;
+
+            // Reemplazar punto → coma
+            v = v.replace(/\./g, ",");
+
+            // Dejar solo números y coma
+            v = v.replace(/[^\d,]/g, "");
+
+            // Permitir solo una coma
+            let partes = v.split(",");
+            if (partes.length > 2) {
+                v = partes[0] + "," + partes[1];
+            }
+
+            this.value = v;
+        });
+    });
+
+    // =========================
+    // SUCURSAL CAMBIO AUTO
+    // =========================
+
+    function onSucursalChange() {
+        document.getElementById('formStock').submit();
     }
 
 </script>

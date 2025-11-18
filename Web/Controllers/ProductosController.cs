@@ -23,13 +23,16 @@ namespace Web.Controllers
         //    var productos = oCorteN.findAllCortes(false, idSucursal, true);
         //    return View(productos);
         //}
-        public ActionResult Index(bool conStock = false)
+        public ActionResult Index(int SucursalId = 0)
         {
-            int idSucursal = 2;
+           // int SucursalId = 2;
 
-            var productos = oCorteN.findAllCortes(false, idSucursal, conStock);
+            var productos = oCorteN.findAllCortes(false, SucursalId);
 
-            ViewBag.ConStock = conStock;   // <-- Para mantener el check
+            var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
+
+            ViewBag.Sucursales = sucursales;
+            ViewBag.SucursalId = SucursalId;
 
             return View(productos);
         }
@@ -111,19 +114,23 @@ namespace Web.Controllers
             }
         }
 
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult EditPrecioCorte(Entidades.Corte model)
-        //{
-        //    oCorteN.editPrecioCorte(model);
+        [HttpGet]
+        public ActionResult findCorteById(int id)
+        {
+            var corte = oCorteN.findCorteById(id, true);  // ← tu método para buscar
 
-        //    // Devuelve JSON con datos para actualizar la UI
-        //    return Json(new
-        //    {
-        //        id = model.IdCorte,
-        //        precio = model.PrecioKg
-        //    });
-        //}
+            if (corte == null)
+                return HttpNotFound();
+
+
+            return Json(new
+            {
+                id = corte.IdCorte,
+                descripcion = corte.CorteDesc,
+                precio = corte.PrecioKg
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         [HttpPost]
         public ActionResult EditPrecioCorte(int IdCorte, string PrecioKg)
         {
