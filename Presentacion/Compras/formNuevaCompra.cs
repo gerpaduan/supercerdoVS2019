@@ -472,8 +472,8 @@ namespace Presentacion
                 oCortePorCompra.compra = oCompraE;
                 try
                 {
-                    oCortePorCompra.cantKgs = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                    oCortePorCompra.precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                    oCortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text, false,true); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                    oCortePorCompra.precioKg = Util_Form.convertFloat(txtPrecioKg.Text, false, false); //float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 
                 }
                 catch (Exception)
@@ -560,9 +560,8 @@ namespace Presentacion
 
             try
             {
-                oMediaRes.kgMedia = float.Parse(txtKgMedia.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                oMediaRes.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-
+                oMediaRes.kgMedia = Util_Form.convertFloat(txtKgMedia.Text, false, true); // float.Parse(txtKgMedia.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                oMediaRes.precioMedia = Util_Form.convertFloat(txtPrecioKg.Text, false, false);// float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
             }
             catch (Exception)
             {
@@ -1100,7 +1099,11 @@ namespace Presentacion
             TextBox txt = sender as TextBox;
             bool aceptarNegativo = txt != null && txt.Name == "txtMargenGan";
 
-            validarImporte(sender, aceptarNegativo);
+            //validarImporte(sender, aceptarNegativo);
+            bool esImporte = txt.Name != "txtCantKgs";
+
+            if (esImporte)
+                validarImporte(sender, aceptarNegativo);
 
             if (sender is TextBox)
             {
@@ -1320,7 +1323,7 @@ namespace Presentacion
             //Calcular el total del producto Cant * precioFinal
             try
             {
-                float cant = Util_Form.convertFloat(txtCantKgs.Text, false, false); // float.TryParse(txtCantKgs.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cant);
+                float cant = Util_Form.convertFloat(txtCantKgs.Text, false, true); // float.TryParse(txtCantKgs.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float cant);
                 float precioKgIncluido = Util_Form.convertFloat(txtPrecioKg.Text, false, false);
                 txtTotalProd.Text = (precioKgIncluido * cant).ToString("0.00");
 

@@ -501,7 +501,7 @@ namespace Presentacion.Compras
 
                 try
                 {
-                    cortePorCompra.cantKgs = float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                    cortePorCompra.cantKgs = Util_Form.convertFloat(txtCantKgs.Text, false, true); //float.Parse(txtCantKgs.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                 }
                 catch (Exception)
                 {
@@ -510,7 +510,7 @@ namespace Presentacion.Compras
                 }
                 try
                 {
-                    cortePorCompra.precioKg = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                    cortePorCompra.precioKg = Util_Form.convertFloat(txtPrecioKg.Text, false, false); //float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
                 }
                 catch (Exception)
                 {
@@ -615,8 +615,8 @@ namespace Presentacion.Compras
 
             try
             {
-                mediaPorCompra.kgMedia = float.Parse(txtKgMedia.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
-                mediaPorCompra.precioMedia = float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                mediaPorCompra.kgMedia = Util_Form.convertFloat(txtKgMedia.Text, false, true);// float.Parse(txtKgMedia.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
+                mediaPorCompra.precioMedia = Util_Form.convertFloat(txtPrecioKg.Text, false, false); //float.Parse(txtPrecioKg.Text.Trim(), System.Globalization.NumberStyles.Float, new System.Globalization.CultureInfo("en-US"));
 
             }
             catch (Exception)
