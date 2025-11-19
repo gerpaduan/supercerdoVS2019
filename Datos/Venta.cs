@@ -117,7 +117,7 @@ namespace Datos
                 //cmVenta.CommandTimeout = conn.TimeOut();
 
                 // Parámetros
-                cmVenta.Parameters.AddWithValue("@fechaDesde", DateTime.Now.AddMonths(-1));
+                cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
                 //fechaDesde);
                 cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
                 cmVenta.Parameters.AddWithValue("@texto", texto ?? (object)DBNull.Value);

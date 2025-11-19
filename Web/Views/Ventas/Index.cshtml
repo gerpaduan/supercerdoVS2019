@@ -3,56 +3,97 @@
 @{
     ViewBag.Title = "Ventas";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    // Valores por defecto si el modelo viene vacío
+    var fechaHoy = DateTime.Now.ToString("yyyy-MM-dd");
 }
 
 <div class="container-fluid p-0">
 
-    <!-- 🔍 Buscador y filtros -->
-    @*<div class="card mb-3 shadow-sm buscador-card w-100">
-            <div class="card-body d-flex flex-wrap justify-content-between align-items-center filters">
-                <div class="flex-grow-1 mr-3 mb-2 w-100 w-md-auto">
-                    <input type="text" id="buscador" class="form-control w-100" placeholder="Buscar cliente, operación o tipo de venta..." />
+    <!-- 🗓 Filtro por fechas y Sucursal -->
+    <div class="card mb-3 shadow-sm p-3">
+        <form method="get" action="@Url.Action("Index")" class="w-100">
+
+            <!-- ⭐ FILA 1: Fechas + Botón -->
+            <div class="form-inline mb-3">
+
+                <div class="form-group mr-3">
+                    <label for="fechaDesde" class="mr-1">Desde:</label>
+                    <input type="date" id="fechaDesde" name="fechaDesde" class="form-control"
+                           value="@(string.IsNullOrEmpty(Request["fechaDesde"]) ? fechaHoy : Request["fechaDesde"])" />
                 </div>
 
-                <div class="filters d-flex flex-wrap align-items-center w-100 w-md-auto">
-                    <select id="periodo" class="form-control mr-2 mb-2 w-100 w-md-auto">
-                        <option value="">Período</option>
-                        <option value="hoy">Hoy</option>
-                        <option value="ayer">Ayer</option>
-                        <option value="semana">Últimos 7 días</option>
-                        <option value="mes">Últimos 30 días</option>
-                    </select>
-
-                    <select id="estado" class="form-control mr-2 mb-2 w-100 w-md-auto">
-                        <option value="">Estado</option>
-                        <option value="pagado">Pagado</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="cancelado">Cancelado</option>
-                    </select>
-
-                    <select id="formaPago" class="form-control mr-2 mb-2 w-100 w-md-auto" multiple>
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Debito">Débito</option>
-                        <option value="Credito">Crédito</option>
-                        <option value="Qr">QR</option>
-                        <option value="Transferencia">Transferencia</option>
-                        <option value="CtaCte">Cuenta Corriente</option>
-                    </select>
-
-                    <select id="tipoComprobante" class="form-control mb-2 w-100 w-md-auto" multiple>
-                        <option value="X">X</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                    </select>
+                <div class="form-group mr-3">
+                    <label for="fechaHasta" class="mr-1">Hasta:</label>
+                    <input type="date" id="fechaHasta" name="fechaHasta" class="form-control"
+                           value="@(string.IsNullOrEmpty(Request["fechaHasta"]) ? fechaHoy : Request["fechaHasta"])" />
                 </div>
+
+                <button type="submit"
+                        id="btnFiltrarFechas"
+                        class="btn btn-secondary"
+                        disabled>
+                    Filtrar fechas
+                </button>
             </div>
-        </div>*@
 
-    <!-- 🧾 Listado -->
+            <!-- ⭐ FILA 2: Sucursal y Cliente -->
+            <div class="form-inline">
+
+                <!-- Sucursal -->
+                <div class="form-group mr-3">
+                    <label for="idSucursal" class="mr-1">Sucursal:</label>
+                    <select id="idSucursal" name="idSucursal" class="form-control"
+                            onchange="this.form.submit()">
+                        <option value="">— Todas —</option>
+
+                        @foreach (var s in ViewBag.Sucursales)
+                        {
+                            <option value="@s.IdSucursal"
+                                    @(ViewBag.IdSucursalSeleccionada == s.IdSucursal ? "selected" : "")>
+                                @s.SucursalNombre
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Cliente -->
+                <div class="form-group flex-grow-1">
+                    <input type="text" id="buscadorCliente" class="form-control w-100"
+                           placeholder="Buscar cliente..." />
+                </div>
+
+            </div>
+
+        </form>
+    </div>
+
+
+
+    <!-- 🧮 Total del período -->
+
+    @if (ViewBag.TotalFiltrado != null)
+    {
+        <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
+            <div class="text-right m-0">
+                <h5 class="text-muted" style="font-weight: 500; margin: 0;">
+                    Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
+                </h5>
+            </div>
+        </div>
+    }
+
+    <!-- 🧾 Listado de ventas -->
     <div class="card shadow-sm ventas-card w-100">
         <div class="card-body p-0">
             <ul id="listaVentas" class="list-group list-group-flush">
+                @if (Model.Count == 0)
+                {
+                    <li class="list-group-item text-center text-muted py-4">
+                        <i class="fas fa-search fa-2x mb-2"></i><br />
+                        No hay coincidencias
+                    </li>
+                }
                 @foreach (var ventaAgrupada in Model.GroupBy(v => v.FechaVenta.Date))
                 {
                     <li class="list-group-item bg-light font-weight-bold">
@@ -61,7 +102,7 @@
 
                     foreach (var venta in ventaAgrupada)
                     {
-                        <li class="list-group-item venta-item">
+                        <li class="list-group-item venta-item" data-cliente="@venta.Persona.razonSocial">
                             <div class="venta-icono">
                                 @if (!string.IsNullOrEmpty(venta.FormaPago))
                                 {
@@ -109,46 +150,6 @@
                                 <div class="text-muted small">@venta.FechaVenta.ToString("HH:mm") hs</div>
                             </div>
                         </li>
-
-                        @*<li class="list-group-item d-flex justify-content-between align-items-center venta-item flex-wrap w-100">
-                                <div class="d-flex align-items-center mb-2 mb-md-0">
-                                    <div class="icono mr-3">
-                                        @if (!string.IsNullOrEmpty(venta.FormaPago))
-                                        {
-                                            switch (venta.FormaPago.ToLower())
-                                            {
-                                                case "efectivo":
-                                                    <i class="fas fa-money-bill-wave fa-2x text-success"></i>
-                                                    break;
-                                                case "qr":
-                                                    <i class="fas fa-qrcode fa-2x text-primary"></i>
-                                                    break;
-                                                case "debito":
-                                                case "credito":
-                                                    <i class="fas fa-credit-card fa-2x text-info"></i>
-                                                    break;
-                                                case "ctacte":
-                                                    <i class="fas fa-university fa-2x text-warning"></i>
-                                                    break;
-                                                case "transferencia":
-                                                    <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
-                                                    break;
-                                                default:
-                                                    <i class="fas fa-money-check fa-2x text-muted"></i>
-                                                    break;
-                                            }
-                                        }
-                                    </div>
-                                    <div>
-                                        <div class="font-weight-bold">@venta.TipoComprobante - @venta.FormaPago a @venta.Persona.razonSocial</div>
-                                        <div class="text-muted small">idVenta @venta.IdVenta</div>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-success font-weight-bold">+ @venta.TotalImporte.ToString("C")</div>
-                                    <div class="text-muted small">@venta.FechaVenta.ToString("HH:mm") hs</div>
-                                </div>
-                            </li>*@
                     }
                 }
             </ul>
@@ -156,37 +157,79 @@
     </div>
 </div>
 
+
 <script>
     const buscador = document.getElementById("buscador");
     const lista = document.getElementById("listaVentas");
     const filas = lista.querySelectorAll(".venta-item");
 
-    buscador.addEventListener("input", () => {
+    buscador?.addEventListener("input", () => {
         const texto = buscador.value.toLowerCase();
         filas.forEach(fila => {
             const contenido = fila.textContent.toLowerCase();
             fila.style.display = contenido.includes(texto) ? "" : "none";
         });
     });
+
+
+    const buscadorCliente = document.getElementById("buscadorCliente");
+    const ventas = document.querySelectorAll(".venta-item");
+
+    buscadorCliente.addEventListener("input", () => {
+        const texto = buscadorCliente.value.toLowerCase();
+
+        ventas.forEach(v => {
+            const cliente = (v.dataset.cliente || "").toLowerCase();
+            v.style.display = cliente.includes(texto) ? "" : "none";
+        });
+    });
+
+    const fechaDesde = document.getElementById("fechaDesde");
+    const fechaHasta = document.getElementById("fechaHasta");
+    const btnFiltrar = document.getElementById("btnFiltrarFechas");
+
+    // Guardar valores originales
+    const fechaDesdeInicial = fechaDesde.value;
+    const fechaHastaInicial = fechaHasta.value;
+
+    function verificarCambios() {
+    const modificado =
+    (fechaDesde.value !== fechaDesdeInicial) ||
+    (fechaHasta.value !== fechaHastaInicial);
+
+    if (modificado) {
+        btnFiltrar.disabled = false;
+    btnFiltrar.classList.remove("btn-secondary");
+    btnFiltrar.classList.add("btn-primary");
+    } else {
+        btnFiltrar.disabled = true;
+    btnFiltrar.classList.remove("btn-primary");
+    btnFiltrar.classList.add("btn-secondary");
+    }
+}
+
+    fechaDesde.addEventListener("change", verificarCambios);
+    fechaHasta.addEventListener("change", verificarCambios);
 </script>
 
 <style>
+    /* Mantengo tus estilos actuales */
     .venta-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        flex-wrap: wrap; /* Permite que elementos bajen si la pantalla es muy chica */
+        flex-wrap: wrap;
         padding: 10px 15px;
     }
 
     .venta-icono {
-        flex: 0 0 auto; /* El icono no crece ni se reduce */
+        flex: 0 0 auto;
         margin-right: 10px;
     }
 
     .venta-info {
-        flex: 1 1 auto; /* Texto puede crecer/reducirse */
-        min-width: 0; /* Necesario para que text-overflow funcione dentro de flex */
+        flex: 1 1 auto;
+        min-width: 0;
     }
 
     .venta-tipo-persona {
@@ -202,7 +245,7 @@
 
     .venta-total {
         text-align: right;
-        flex: 0 0 auto; /* Totales no crecen */
+        flex: 0 0 auto;
     }
 
         .venta-total .importe {
@@ -210,66 +253,7 @@
             color: #28a745;
         }
 
-
-    .filters select {
-        min-width: 130px;
-    }
-
-    select[multiple] {
-        height: 80px;
-    }
-
     .venta-item:hover {
         background-color: #f8f9fc;
     }
-
-    .icono i {
-        width: 32px;
-        text-align: center;
-    }
-
-    .venta-icono i {
-        color: #000; /* negro */
-        filter: grayscale(100%); /* opcional: hace todos en escala de grises */
-    }
-
-    /* ✅ Estilo responsive */
-    @@media (max-width: 768px) {
-
-        .venta-tipo-persona {
-            max-width: 180px;
-        }
-
-        .buscador-card,
-        .ventas-card {
-            border-radius: 0;
-            box-shadow: none;
-            margin: 0;
-        }
-
-        .card-body {
-            padding: 10px !important;
-        }
-
-        .filters {
-            flex-direction: column !important;
-            align-items: stretch !important;
-        }
-
-            .filters select,
-            #buscador {
-                width: 100% !important;
-                margin-right: 0 !important;
-            }
-
-        .container-fluid {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .venta-tipo-persona {
-            max-width: 140px;
-        }
 </style>
