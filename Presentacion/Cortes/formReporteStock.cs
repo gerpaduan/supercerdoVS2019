@@ -534,6 +534,11 @@ namespace Presentacion.Cortes
                 grillaReportes.DataSource = dtGrillaReporte;
             }
 
+            if (grillaReportes.Columns.Contains("idCorte"))
+            {
+                grillaReportes.Columns["idCorte"].Visible = false;
+            }
+
             ///StockIngresoEgreso
             if (comboTipoReporte.Text.Equals("Ingreso - Egreso"))
             {

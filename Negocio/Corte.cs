@@ -20,6 +20,13 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
+
+        /// <summary>
+        /// Listado Productos desde WEB
+        /// </summary>
+        /// <param name="buscarMaestro"></param>
+        /// <param name="idSucursal"></param>
+        /// <returns></returns>
         public List<Entidades.Corte> findAllCortes(bool buscarMaestro, int idSucursal)
         {
             List<Entidades.Corte> listaCortes = oCorteD.findAllCortes(buscarMaestro);

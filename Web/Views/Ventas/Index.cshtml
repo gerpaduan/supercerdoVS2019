@@ -42,10 +42,10 @@
 
                 <!-- Sucursal -->
                 <div class="form-group mr-3">
-                    <label for="idSucursal" class="mr-1">Sucursal:</label>
+                    @*<label for="idSucursal" class="mr-1">Sucursal:</label>*@
                     <select id="idSucursal" name="idSucursal" class="form-control"
                             onchange="this.form.submit()">
-                        <option value="">— Todas —</option>
+                        <option value="">— Sucursal (todas) —</option>
 
                         @foreach (var s in ViewBag.Sucursales)
                         {
@@ -74,13 +74,17 @@
 
     @if (ViewBag.TotalFiltrado != null)
     {
-        <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
-            <div class="text-right m-0">
-                <h5 id="totalFiltrado" class="text-muted" style="font-weight: 500; margin: 0;">
-                    Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
-                </h5>
-            </div>
+    <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
+        <div class="d-flex justify-content-between">
+            <h5 class="text-muted m-0" style="font-weight: 500;">
+                Cant.: @Model.Count
+            </h5>
+
+            <h5 class="text-muted m-0" style="font-weight: 500;">
+                Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
+            </h5>
         </div>
+    </div>
     }
 
     <!-- 🧾 Listado de ventas -->

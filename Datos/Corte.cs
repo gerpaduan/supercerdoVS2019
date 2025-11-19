@@ -1413,7 +1413,7 @@ namespace Datos
             cmCorte.Connection = string.IsNullOrEmpty(conexionSucursal) ? conn.conectar() : conn.conectar(conexionSucursal);
 
             cmCorte.Connection.Open();
-            cmCorte.CommandType = CommandType.StoredProcedure; cmCorte.CommandTimeout = conn.TimeOut();
+            cmCorte.CommandType = CommandType.StoredProcedure; //cmCorte.CommandTimeout = conn.TimeOut();
             if (nroCierre==1)
             {
                 //cmCorte.CommandText = "a_InicioCierreStock";
@@ -1438,9 +1438,9 @@ namespace Datos
                 daCorte.Fill(dtCierreStock);
                 cmCorte.Connection.Close();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                string d = ex.Message;
                 cmCorte.Connection.Close();
             }
 

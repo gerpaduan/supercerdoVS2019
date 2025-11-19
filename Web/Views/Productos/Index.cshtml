@@ -7,21 +7,6 @@
 
 <div class="container-fluid">
 
-    <h1 class="h3 mb-4 text-gray-800">Listado de Productos</h1>
-
-    <a href="@Url.Action("AddOrEdit", "Productos")" class="btn btn-primary mb-3">
-        <i class="fas fa-plus"></i> Nuevo Producto
-    </a>
-
-    @*<form method="get" id="formStock" class="mb-3">
-            <label class="font-weight-bold">
-                <input type="checkbox" name="conStock"
-                       value="true"
-                       @( (ViewBag.ConStock ?? false) ? "checked" : "" )
-                       onchange="document.getElementById('formStock').submit()" />
-                Mostrar Stock
-            </label>
-        </form>*@
     <form method="get" id="formStock" class="mb-3">
 
         <!-- COMBO SUCURSALES -->
@@ -83,25 +68,34 @@
                                 <th>Producto</th>
                                 <th>Precio</th>
                                 <th>Stock</th>
+                                @*@if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
+                                {
+                                    <th>Stock</th>
+                                }*@
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var item in Model)
                             {
-                                <tr id="fila_@item.idCorte">
-                                    <td class="col-codigo">@item.Codigo</td>
-                                    <td class="col-producto">@item.CorteDesc</td>
-                                    <td class="col-precio" id="precio_@item.idCorte">@item.PrecioKg.ToString("C")</td>
+                            <tr id="fila_@item.idCorte">
+                                <td class="col-codigo">@item.Codigo</td>
+                                <td class="col-producto">@item.CorteDesc</td>
+                                <td class="col-precio" id="precio_@item.idCorte">@item.PrecioKg.ToString("C")</td>
+                                <td class="col-tipo">@item.Stock_EnString</td>
+
+                                @*@if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
+                                {
                                     <td class="col-tipo">@item.Stock_EnString</td>
 
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-warning"
-                                                onclick="abrirPopupPrecio(@item.idCorte, '@item.CorteDesc', '@item.PrecioKg')">
-                                            <i class="fas fa-dollar-sign"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                }*@
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-warning"
+                                            onclick="abrirPopupPrecio(@item.idCorte, '@item.CorteDesc', '@item.PrecioKg')">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </button>
+                                </td>
+                            </tr>
                             }
                         </tbody>
                     </table>
