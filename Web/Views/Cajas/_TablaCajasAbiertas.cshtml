@@ -1,0 +1,32 @@
+﻿@model System.Data.DataTable
+
+<table class="table table-bordered table-striped" id="tablaCajas">
+    <thead class="thead-dark">
+        <tr>
+            <th>ID</th>
+            <th>Vendedor</th>
+            <th>Fecha Inicio</th>
+            <th>Caja Inicial $</th>
+            <th>Cerrar</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (System.Data.DataRow row in Model.Rows)
+        {
+            <tr>
+                <td>@row["id"]</td>
+                <td>@row["vendedor"]</td>
+                <td>@row["fechaHoraInicio"]</td>
+                <td>@row["cajaInicio"]</td>
+
+                <td>
+                    <button class="btn btn-sm btn-danger btnCerrar"
+                            data-id="@row["id"]">
+                        Cerrar
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

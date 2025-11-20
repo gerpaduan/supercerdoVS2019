@@ -1,0 +1,117 @@
+﻿@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "Cajas Abiertas";
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal>;
+    int? idSucursal = ViewBag.IdSucursal;
+    string buscar = ViewBag.Buscar ?? "";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+}
+
+<div class="container-fluid">
+
+    <!-- Filtros -->
+    <form id="formFiltros">
+        <div class="row mb-3">
+
+            <!-- Combo sucursal -->
+            <div class="col-md-3">
+                <select name="idSucursal" id="idSucursal" class="form-control">
+                    <option value="">-- Seleccione una sucursal --</option>
+
+                    @foreach (var s in sucursales)
+                    {
+                        <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>
+                            @s.SucursalNombre
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Buscar vendedor -->
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input type="text"
+                           name="buscar"
+                           id="buscarVendedor"
+                           value="@buscar"
+                           class="form-control"
+                           placeholder="buscar vendedor"
+                           onkeyup="filtrar()" />
+
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" onclick="filtrar()">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- BOTÓN CIERRE MULTIPLE (NO IMPLEMENTADO AÚN) -->
+    <button id="btnCerrarMultiple" class="btn btn-danger mb-3" style="display:none;">
+        Cerrar Cajas Seleccionadas
+    </button>
+
+    <!-- Área que se actualiza con AJAX -->
+    <div id="tablaResultado">
+        @Html.Partial("_TablaCajasAbiertas", Model)
+    </div>
+
+</div>
+@section Scripts {
+    <script>
+
+        // Cerrar caja individual
+        $(document).on("click", ".btnCerrar", function () {
+
+            let id = $(this).data("id");
+
+            if (!confirm("¿Cerrar esta caja?")) return;
+
+            $.post("/Cajas/CerrarCaja", { id: id }, function (r) {
+                if (r.ok) filtrar();   // recarga solo la tabla, no la página
+                else alert(r.msg);
+            });
+        });
+
+
+        function filtrar() {
+
+            let idSucursal = $("#idSucursal").val();
+            let buscar = $("#buscarVendedor").val();
+
+            // guardar posición del cursor
+            let txt = document.getElementById("buscarVendedor");
+            let pos = txt.selectionStart;
+
+            $.ajax({
+                url: '/Cajas/CajasAbiertas',
+                type: 'GET',
+                data: {
+                    idSucursal: idSucursal,
+                    buscar: buscar,
+                    ajax: true
+                },
+                success: function (html) {
+                    $("#tablaResultado").html(html);
+
+                    setTimeout(() => {
+                        const input = document.getElementById("buscarVendedor");
+                        if (input) {
+                            input.focus();
+                            input.setSelectionRange(pos, pos);
+                        }
+                    }, 30);
+                }
+            });
+        }
+
+        // Cambiar sucursal → filtrar automáticamente
+        $("#idSucursal").change(function () {
+            filtrar();
+        });
+
+    </script>
+}
