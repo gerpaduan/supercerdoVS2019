@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Web.Mvc;
 using Entidades;
 using System.Data;
+using System.Globalization;
 
 namespace Web.Controllers
 {
@@ -65,30 +66,6 @@ namespace Web.Controllers
             return View("~/Views/Cajas/CajasAbiertas.cshtml", dt);
         }
 
-
-        //// POST: Cerrar Caja Individual (botón)
-        //[HttpPost]
-        //public ActionResult CerrarCaja(int id)
-        //{
-        //    // Validar usuario que cierra
-        //    var usuario = Session["UsuarioActual"] as Entidades.Usuario;
-        //    if (usuario == null)
-        //        return Json(new { ok = false, msg = "Debe iniciar sesión." });
-
-        //    if (!oUsuarioN.tienePermiso(usuario, "formCerrarCaja",
-        //        DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-        //    {
-        //        return Json(new { ok = false, msg = "No tiene permisos." });
-        //    }
-
-        //    // Cierra la caja
-        //    Entidades.CierreCaja cierre = new Entidades.CierreCaja();
-        //    cierre.Id = id;
-
-        //   // oCierreN.cerrarCaja(cierre, usuario);
-
-        //    return Json(new { ok = true });
-        //}
         public ActionResult ObtenerDatosCierre(int id)
         {
             Entidades.CierreCaja oCierreE = new CierreCaja();
@@ -100,17 +77,36 @@ namespace Web.Controllers
             return Json(new
             {
                 id = caja.Id,
-                caja = caja.UsuarioInicio.Nombre,
+                vendedor = caja.UsuarioInicio.Nombre,
+                cajaInicial = caja.CajaInicio,
                 fechaApertura = caja.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm"),
                 usuario = caja.UsuarioCierre.Nombre,
-                totalSistema = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
-                        oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString()
+                ventas = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
+                        oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString(),
+                egresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE)
         }, JsonRequestBehavior.AllowGet);
         }
-
-        [HttpPost]
-        public ActionResult CerrarCaja(Entidades.CierreCaja model)
+        public ActionResult CerrarCaja(
+                int Id,
+                string CajaCierre,
+                string Diferencia,
+                string ImporteRetirado,
+                string CajaInicioSiguiente
+            )
         {
+            Entidades.CierreCaja model = oCierreN.findByIdOrLast(
+                new CierreCaja { Id = Id },
+                Entidades.CierreCaja.tipoBusqueda.FindById,
+                ""
+            );
+
+            model.CajaCierre = ParseFloat(CajaCierre);
+            model.Diferencia = ParseFloat(Diferencia);
+            model.ImporteRetirado = ParseFloat(ImporteRetirado);
+            model.CajaInicioSiguiente = ParseFloat(CajaInicioSiguiente);
+            model.UsuarioCierre = (Entidades.Usuario)Session["Usuario"];
+            model.FechaHoraCierre = model.FechaHoraCierre != null ? model.FechaHoraCierre : DateTime.Now;
+
             var result = oCierreN.addOrEditCierreCaja_Result(model);
 
             if (!result.Ok)
@@ -120,33 +116,19 @@ namespace Web.Controllers
         }
 
 
-        // POST: Cerrar múltiples cajas
-        [HttpPost]
-        public ActionResult CerrarMultiple(int idCajero, List<int> ids)
+        private float ParseFloat(string value)
         {
-            var usuario = Session["UsuarioActual"] as Entidades.Usuario;
-            if (usuario == null)
-                return Json(new { ok = false, msg = "Debe iniciar sesión." });
+            if (string.IsNullOrWhiteSpace(value))
+                return 0;
 
-            if (!oUsuarioN.tienePermiso(usuario, "formCerrarCaja",
-                DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
-            {
-                return Json(new { ok = false, msg = "No tiene permisos." });
-            }
+            value = value.Replace(",", "."); // unifica formato
 
-            // Armar entidad del cajero seleccionado
-            CierreCaja cierreCajero = new CierreCaja();
-            cierreCajero.Id = idCajero;
+            float result;
+            if (float.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+                return result;
 
-            // Armamos la lista
-            List<CierreCaja> lista = new List<CierreCaja>();
-            foreach (var id in ids)
-                lista.Add(new CierreCaja { Id = id });
-
-            // Ejecutar negocio
-            // oCierreN.cerrarCajasMultiples(cierreCajero, lista, usuario);
-
-            return Json(new { ok = true });
+            return 0;
         }
+
     }
 }

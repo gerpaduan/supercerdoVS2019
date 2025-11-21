@@ -24,13 +24,18 @@ namespace Datos
             switch (tipoBusquedaParam)
             {
                 case Entidades.CierreCaja.tipoBusqueda.FindAll:
-                    selectText = "select CierreCaja.id, Usuarios.nombre as Iniciada_Por, fechaHoraInicio as Inicio, fechaHoraCierre as Cierre, " +
-                        "round(cajaInicio, 2) as Caja_Inicial, round(ventas, 2) as Ventas, round(gastos, 2) as EgresosCaja, round(cajaCierre, 2) as Caja_Cierre, round(diferencia, 2) as Diferencia, " +
-                        "round(cajaInicioSiguiente, 2) as Caja_Ini_Sig, round(importeRetirado, 2) as Retirado, " +
-                        "UsuarioCierre.nombre as Cerrada_Por from CierreCaja, Usuarios, Usuarios as UsuarioCierre " +
-                        "where CierreCaja.usuarioInicio = Usuarios.id and CierreCaja.usuarioCierre = UsuarioCierre.id and idSucursal = "
-                        + oCierreParam.Sucursal.idSucursal + " and fechaHoraInicio > " + fechaDesdeConver + 
-                        " and Usuarios.nombre like '%" + texto + "%' order by CierreCaja.id desc ";
+                    selectText =
+                            "select CierreCaja.id, Usuarios.nombre as Iniciada_Por, fechaHoraInicio as Inicio, fechaHoraCierre as Cierre, " +
+                            "round(cajaInicio, 2) as Caja_Inicial, round(ventas, 2) as Ventas, round(gastos, 2) as EgresosCaja, round(cajaCierre, 2) as Caja_Cierre, round(diferencia, 2) as Diferencia, " +
+                            "round(cajaInicioSiguiente, 2) as Caja_Ini_Sig, round(importeRetirado, 2) as Retirado, " +
+                            "UsuarioCierre.nombre as Cerrada_Por " +
+                            "from CierreCaja " +
+                            "inner join Usuarios on CierreCaja.usuarioInicio = Usuarios.id " +
+                            "inner join Usuarios as UsuarioCierre on CierreCaja.usuarioCierre = UsuarioCierre.id " +
+                            "where idSucursal = @sucursal " +
+                            "and fechaHoraInicio > @fechaDesde " +
+                            "and Usuarios.nombre like @texto " +
+                            "order by CierreCaja.id desc";
                     break;
                 case Entidades.CierreCaja.tipoBusqueda.FindOpen:
                     selectText = "select CierreCaja.id, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, fechaHoraInicio, " +
@@ -50,11 +55,49 @@ namespace Datos
                             " and id < " + oCierreParam.Id + " order by id desc";
                         break;
             }
+            //DataTable dtCierreCaja = new DataTable();
+            //SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
+            //daCierreCaja.Fill(dtCierreCaja);           
+            //conn.cerraConexion();
             DataTable dtCierreCaja = new DataTable();
-            SqlDataAdapter daCierreCaja = new SqlDataAdapter(selectText, conn.conectar());
-            daCierreCaja.Fill(dtCierreCaja);           
-            conn.cerraConexion();
 
+            using (SqlConnection cn = conn.conectar())
+            {
+                using (SqlCommand cmd = new SqlCommand(selectText, cn))
+                {
+                    cmd.CommandType = CommandType.Text;
+
+                    switch (tipoBusquedaParam)
+                    {
+                        case Entidades.CierreCaja.tipoBusqueda.FindAll:
+                            cmd.Parameters.AddWithValue("@sucursal", oCierreParam.Sucursal.idSucursal);
+                            cmd.Parameters.AddWithValue("@fechaDesde", fechaDesde);
+                            cmd.Parameters.AddWithValue("@texto", "%" + texto + "%");
+                            break;
+
+                        case Entidades.CierreCaja.tipoBusqueda.FindOpen:
+                            // ESTA QUERY NO USA PARÁMETROS, pero deberías parametrizarla también
+                            break;
+
+                        case Entidades.CierreCaja.tipoBusqueda.FindById:
+                            // recomendación: parametrizar también
+                            break;
+
+                        case Entidades.CierreCaja.tipoBusqueda.FindLast:
+                            // idem
+                            break;
+
+                        case Entidades.CierreCaja.tipoBusqueda.FindLastOpen:
+                            // idem
+                            break;
+                    }
+
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dtCierreCaja);
+                    }
+                }
+            }
             return dtCierreCaja;
         }
 

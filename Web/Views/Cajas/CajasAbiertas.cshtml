@@ -78,54 +78,81 @@
 
                 <form id="formCerrarCaja">
 
-                    <!-- CAMBIO CLAVE: el hidden debe ser Id -->
+                    <!-- ID oculto -->
                     <input type="hidden" id="Id" name="Id" />
 
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label>Caja</label>
                             <input type="text" id="CajaDesc" class="form-control" readonly />
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-5">
                             <label>Apertura</label>
                             <input type="text" id="FechaApertura" class="form-control" readonly />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label>Usuario</label>
-                            <input type="text" id="Usuario" class="form-control" readonly />
                         </div>
                     </div>
 
                     <hr />
 
                     <div class="row">
-                        <div class="col-md-4">
-                            <label>Total Sistema</label>
-                            <input type="text" id="TotalSistema" class="form-control" readonly />
+                        <div class="col-md-5">
+                            <label>Caja Inicial</label>
+                            <input type="text" id="CajaInicial" class="form-control" readonly />
                         </div>
 
-                        <div class="col-md-4">
-                            <label>Total Cargado</label>
-                            <input type="text" id="TotalCargado" class="form-control" />
+                        <div class="col-md-5">
+                            <input type="hidden" id="Usuario" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Ventas</label>
+                            <input type="text" id="Ventas" class="form-control" readonly />
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-5">
+                            <label>EgresosCaja</label>
+                            <input type="number" step="0.01" id="EgresosCaja" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Caja Cierre</label>
+                            <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                        </div>
+
+                        <div class="col-md-5">
                             <label>Diferencia</label>
-                            <input type="text" id="Diferencia" class="form-control" readonly />
+                            <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Importe Retirado</label>
+                            <input type="text" id="ImporteRetirado" name="ImporteRetirado" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                        </div>
+                        <div class="col-md-5">
+                            <label>Queda en Caja</label>
+                            <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly />
+
                         </div>
                     </div>
 
                 </form>
-
 
             </div>
 
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
-
             </div>
 
         </div>
@@ -134,21 +161,6 @@
 
 @section Scripts {
     <script>
-
-        //// Cerrar caja individual
-        //$(document).on("click", ".btnCerrar", function () {
-
-        //    let id = $(this).data("id");
-
-        //    if (!confirm("¿Cerrar esta caja?")) return;
-
-        //    $.post("/Cajas/CerrarCaja", { id: id }, function (r) {
-        //        if (r.ok) filtrar();   // recarga solo la tabla, no la página
-        //        else alert(r.msg);
-        //    });
-        //});
-
-
         function filtrar() {
 
             let idSucursal = $("#idSucursal").val();
@@ -199,12 +211,13 @@
                     // CAMBIO CLAVE AQUÍ
                     $("#Id").val(data.id);
 
-                    $("#CajaDesc").val(data.caja);
+                    $("#CajaDesc").val(data.vendedor);
                     $("#FechaApertura").val(data.fechaApertura);
+                    $("#CajaInicial").val(data.cajaInicial);
                     $("#Usuario").val(data.usuario);
 
-                    $("#TotalSistema").val(data.totalSistema);
-                    $("#TotalCargado").val("");
+                    $("#Ventas").val(data.ventas);
+                    $("#EgresosCaja").val(data.egresosCaja);
                     $("#Diferencia").val("");
 
                     $("#modalCerrarCaja").modal("show");
@@ -213,18 +226,24 @@
         }
 
 
-            $("#TotalCargado").on("input", function () {
-                let sistema = parseFloat($("#TotalSistema").val()) || 0;
-            let cargado = parseFloat($("#TotalCargado").val()) || 0;
-
-            $("#Diferencia").val((cargado - sistema).toFixed(2));
-        });
+        function esNumeroValido(v) {
+            return /^-?\d*(\.\d+)?$/.test(v);
+        }
 
         function guardarCierreCaja() {
+
+            let data = {
+                Id: $("#Id").val(),                     // ← CAMBIADO
+                CajaCierre: $("#CajaCierre").val(),
+                Diferencia: $("#Diferencia").val(),
+                ImporteRetirado: $("#ImporteRetirado").val(),
+                CajaInicioSiguiente: $("#CajaInicioSiguiente").val()
+            };
+
             $.ajax({
                 url: '/Cajas/CerrarCaja',
                 type: 'POST',
-                data: $("#formCerrarCaja").serialize(),
+                data: data,
                 success: function (resp) {
 
                     if (!resp.ok) {
@@ -232,10 +251,84 @@
                         return;
                     }
 
-                    // recargar tabla
                     location.reload();
                 }
             });
+        }
+
+
+        //function guardarCierreCaja() {
+
+        //    if (!esNumeroValido($("#CajaCierre").val()) ||
+        //        !esNumeroValido($("#ImporteRetirado").val())) {
+
+        //        $("#cerrarCajaError").removeClass("d-none")
+        //            .text("Ingrese valores numéricos válidos.");
+        //        return;
+        //    }
+
+        //    $.ajax({
+        //        url: '/Cajas/CerrarCaja',
+        //        type: 'POST',
+        //        data: $("#formCerrarCaja").serialize(),
+        //        success: function (resp) {
+
+        //            if (!resp.ok) {
+        //                $("#cerrarCajaError").removeClass("d-none").text(resp.error);
+        //                return;
+        //            }
+
+        //            // recargar tabla
+        //            location.reload();
+        //        }
+        //    });
+        //}
+
+        function toFloat(value) {
+            let v = value.trim();
+            if (v === "") return 0;
+            v = v.replace(",", "."); // por si ingresan coma
+            return parseFloat(v) || 0;
+        }
+
+        function validarNumero(input) {
+            let v = input.value;
+
+            // Solo dígitos, coma o punto
+            v = v.replace(/[^\d.,]/g, "");
+
+            // Reemplazar coma por punto (unifica formato)
+            v = v.replace(",", ".");
+
+            // Evitar más de 1 punto
+            const partes = v.split(".");
+            if (partes.length > 2) {
+                v = partes[0] + "." + partes[1]; // corta el excedente
+            }
+
+            input.value = v;
+        }
+
+
+        function recalcularCierre() {
+
+            let cajaInicial = toFloat($("#CajaInicial").val());
+            let ventas = toFloat($("#Ventas").val());
+            let gastos = toFloat($("#EgresosCaja").val());
+            let cajaCierre = toFloat($("#CajaCierre").val());
+            let importeRetirado = toFloat($("#ImporteRetirado").val());
+
+            // Calcula diferencia
+            let diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
+
+            if ($("#CajaCierre").val().length > 0)
+                $("#Diferencia").val(diferencia.toFixed(2));
+            else
+                $("#Diferencia").val("");
+
+            // Calcula caja para el siguiente inicio
+            let cajaInicioSiguiente = cajaCierre - importeRetirado;
+            $("#CajaInicioSiguiente").val(cajaInicioSiguiente.toFixed(2));
         }
 
 
