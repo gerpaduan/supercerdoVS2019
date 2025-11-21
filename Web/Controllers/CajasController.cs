@@ -66,29 +66,59 @@ namespace Web.Controllers
         }
 
 
-        // POST: Cerrar Caja Individual (botón)
-        [HttpPost]
-        public ActionResult CerrarCaja(int id)
+        //// POST: Cerrar Caja Individual (botón)
+        //[HttpPost]
+        //public ActionResult CerrarCaja(int id)
+        //{
+        //    // Validar usuario que cierra
+        //    var usuario = Session["UsuarioActual"] as Entidades.Usuario;
+        //    if (usuario == null)
+        //        return Json(new { ok = false, msg = "Debe iniciar sesión." });
+
+        //    if (!oUsuarioN.tienePermiso(usuario, "formCerrarCaja",
+        //        DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+        //    {
+        //        return Json(new { ok = false, msg = "No tiene permisos." });
+        //    }
+
+        //    // Cierra la caja
+        //    Entidades.CierreCaja cierre = new Entidades.CierreCaja();
+        //    cierre.Id = id;
+
+        //   // oCierreN.cerrarCaja(cierre, usuario);
+
+        //    return Json(new { ok = true });
+        //}
+        public ActionResult ObtenerDatosCierre(int id)
         {
-            // Validar usuario que cierra
-            var usuario = Session["UsuarioActual"] as Entidades.Usuario;
-            if (usuario == null)
-                return Json(new { ok = false, msg = "Debe iniciar sesión." });
+            Entidades.CierreCaja oCierreE = new CierreCaja();
+            oCierreE.Id = id;
+            var caja = oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");// oCajasN.obtenerDatosCierre(id);
 
-            if (!oUsuarioN.tienePermiso(usuario, "formCerrarCaja",
-                DateTime.Today, Utilidades.ValoresParametrosMetodos.IdCreadorNulo()))
+            bool esModificarCaja = false;
+
+            return Json(new
             {
-                return Json(new { ok = false, msg = "No tiene permisos." });
-            }
+                id = caja.Id,
+                caja = caja.UsuarioInicio.Nombre,
+                fechaApertura = caja.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm"),
+                usuario = caja.UsuarioCierre.Nombre,
+                totalSistema = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
+                        oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString()
+        }, JsonRequestBehavior.AllowGet);
+        }
 
-            // Cierra la caja
-            Entidades.CierreCaja cierre = new Entidades.CierreCaja();
-            cierre.Id = id;
+        [HttpPost]
+        public ActionResult CerrarCaja(Entidades.CierreCaja model)
+        {
+            var result = oCierreN.addOrEditCierreCaja_Result(model);
 
-           // oCierreN.cerrarCaja(cierre, usuario);
+            if (!result.Ok)
+                return Json(new { ok = false, error = result.Mensaje });
 
             return Json(new { ok = true });
         }
+
 
         // POST: Cerrar múltiples cajas
         [HttpPost]

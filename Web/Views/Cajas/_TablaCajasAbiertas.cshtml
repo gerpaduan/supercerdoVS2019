@@ -21,10 +21,15 @@
                 <td>@row["cajaInicio"]</td>
 
                 <td>
-                    <button class="btn btn-sm btn-danger btnCerrar"
-                            data-id="@row["id"]">
-                        Cerrar
+                    <button class="btn btn-danger btn-sm"
+                            onclick="abrirModalCerrarCaja(@row["id"])">
+                        <i class="fas fa-lock"></i> Cerrar
                     </button>
+
+                    @*<button class="btn btn-sm btn-danger btnCerrar"
+                data-id="@row["id"]">
+            Cerrar
+        </button>*@
                 </td>
             </tr>
         }

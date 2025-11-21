@@ -60,21 +60,93 @@
     </div>
 
 </div>
+<!-- Modal Cerrar Caja -->
+<div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cerrar Caja</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
+
+                <form id="formCerrarCaja">
+
+                    <!-- CAMBIO CLAVE: el hidden debe ser Id -->
+                    <input type="hidden" id="Id" name="Id" />
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Caja</label>
+                            <input type="text" id="CajaDesc" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Apertura</label>
+                            <input type="text" id="FechaApertura" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Usuario</label>
+                            <input type="text" id="Usuario" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Total Sistema</label>
+                            <input type="text" id="TotalSistema" class="form-control" readonly />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Total Cargado</label>
+                            <input type="text" id="TotalCargado" class="form-control" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label>Diferencia</label>
+                            <input type="text" id="Diferencia" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                </form>
+
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
 
-        // Cerrar caja individual
-        $(document).on("click", ".btnCerrar", function () {
+        //// Cerrar caja individual
+        //$(document).on("click", ".btnCerrar", function () {
 
-            let id = $(this).data("id");
+        //    let id = $(this).data("id");
 
-            if (!confirm("¿Cerrar esta caja?")) return;
+        //    if (!confirm("¿Cerrar esta caja?")) return;
 
-            $.post("/Cajas/CerrarCaja", { id: id }, function (r) {
-                if (r.ok) filtrar();   // recarga solo la tabla, no la página
-                else alert(r.msg);
-            });
-        });
+        //    $.post("/Cajas/CerrarCaja", { id: id }, function (r) {
+        //        if (r.ok) filtrar();   // recarga solo la tabla, no la página
+        //        else alert(r.msg);
+        //    });
+        //});
 
 
         function filtrar() {
@@ -112,6 +184,60 @@
         $("#idSucursal").change(function () {
             filtrar();
         });
+
+
+        //SCRIPT PARA ABRIR MODAL CERRAR CAJA
+        function abrirModalCerrarCaja(Id) {
+            $("#cerrarCajaError").addClass("d-none").text("");
+
+            $.ajax({
+                url: '/Cajas/ObtenerDatosCierre',
+                type: 'GET',
+                data: { id: Id },
+                success: function (data) {
+
+                    // CAMBIO CLAVE AQUÍ
+                    $("#Id").val(data.id);
+
+                    $("#CajaDesc").val(data.caja);
+                    $("#FechaApertura").val(data.fechaApertura);
+                    $("#Usuario").val(data.usuario);
+
+                    $("#TotalSistema").val(data.totalSistema);
+                    $("#TotalCargado").val("");
+                    $("#Diferencia").val("");
+
+                    $("#modalCerrarCaja").modal("show");
+                }
+            });
+        }
+
+
+            $("#TotalCargado").on("input", function () {
+                let sistema = parseFloat($("#TotalSistema").val()) || 0;
+            let cargado = parseFloat($("#TotalCargado").val()) || 0;
+
+            $("#Diferencia").val((cargado - sistema).toFixed(2));
+        });
+
+        function guardarCierreCaja() {
+            $.ajax({
+                url: '/Cajas/CerrarCaja',
+                type: 'POST',
+                data: $("#formCerrarCaja").serialize(),
+                success: function (resp) {
+
+                    if (!resp.ok) {
+                        $("#cerrarCajaError").removeClass("d-none").text(resp.error);
+                        return;
+                    }
+
+                    // recargar tabla
+                    location.reload();
+                }
+            });
+        }
+
 
     </script>
 }

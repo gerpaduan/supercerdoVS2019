@@ -78,6 +78,25 @@ namespace Negocio
         {
             oCierreD.addOrEditCierreCaja(oCierreE);
         }
+        public Entidades.CierreCaja.ResultadoOperacion addOrEditCierreCaja_Result(Entidades.CierreCaja oCierreE)
+        {
+
+            var result = new Entidades.CierreCaja.ResultadoOperacion();
+            try
+            {
+                addOrEditCierreCaja(oCierreE);
+
+                result.Ok = true;
+                result.Mensaje = "Cierre de caja registrado correctamente.";
+            }
+            catch (Exception ex)
+            {
+                result.Ok = false;
+                result.Mensaje = ex.Message; // o un mensaje personalizado
+            }
+
+            return result;
+        }
 
         public DataTable findCierreCajaMultiples(List<Entidades.CierreCaja> listaCierreCaja)
         {

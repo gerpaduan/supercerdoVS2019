@@ -120,5 +120,10 @@ namespace Entidades
             get { return actualizado; }
             set { actualizado = value; }
         }
+        public class ResultadoOperacion
+        {
+            public bool Ok { get; set; }
+            public string Mensaje { get; set; }
+        }
     }
 }
