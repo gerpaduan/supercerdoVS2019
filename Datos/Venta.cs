@@ -110,21 +110,24 @@ namespace Datos
         {
             var listaVentas = new List<Entidades.Venta>();
 
+            string consultaSQL = @"SELECT * FROM Ventas
+                                    WHERE fechaVenta >= @fechaDesde
+                                      AND fechaVenta <= @fechaHasta
+                                      AND (@idVendedor = -1 OR idVendedor = @idVendedor)
+                                      AND (@idCliente = -1 OR idPersona = @idCliente)
+                                      AND (@idSucursal = -1 OR idSucursal = @idSucursal)
+                                    ORDER BY fechaVenta DESC;
+                                    ";
             using (SqlConnection connSql = this.conn.conectar())
-            using (SqlCommand cmVenta = new SqlCommand("obtenerVentas", connSql))
+            using (SqlCommand cmVenta = new SqlCommand(consultaSQL, connSql))
             {
-                cmVenta.CommandType = CommandType.StoredProcedure;
-                //cmVenta.CommandTimeout = conn.TimeOut();
-
                 // Parámetros
                 cmVenta.Parameters.AddWithValue("@fechaDesde", fechaDesde);
-                //fechaDesde);
                 cmVenta.Parameters.AddWithValue("@fechaHasta", fechaHasta);
                 cmVenta.Parameters.AddWithValue("@texto", texto ?? (object)DBNull.Value);
                 cmVenta.Parameters.AddWithValue("@idVendedor", idVendedor ?? (object)DBNull.Value);
                 cmVenta.Parameters.AddWithValue("@idCliente", idCliente ?? (object)DBNull.Value);
                 cmVenta.Parameters.AddWithValue("@idSucursal", idSucursal ?? (object)DBNull.Value);
-                cmVenta.Parameters.AddWithValue("@soloAnulados", soloAnulados);
 
                 connSql.Open();
 
