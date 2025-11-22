@@ -128,7 +128,7 @@
 
                         <div class="col-md-5">
                             <label>Diferencia</label>
-                            <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly />
+                            <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
                         </div>
                     </div>
 
@@ -141,8 +141,7 @@
                         </div>
                         <div class="col-md-5">
                             <label>Queda en Caja</label>
-                            <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly />
-
+                            <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
                         </div>
                     </div>
 
@@ -151,7 +150,7 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
                 <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
             </div>
 
@@ -225,6 +224,21 @@
             });
         }
 
+        // Cuando se cierra el modal, limpiar inputs editables
+        $('#modalCerrarCaja').on('hidden.bs.modal', function () {
+
+            // Limpia todos los inputs dentro del modal excepto los hidden
+            $(this).find('input:not([type="hidden"])').val('');
+
+            // Limpia textareas
+            $(this).find('textarea').val('');
+
+            // Limpia selects
+            $(this).find('select').prop('selectedIndex', 0);
+
+            // Si usás mensajes de error, ocultarlos
+            $('.text-danger').addClass('d-none').text('');
+        });
 
         function esNumeroValido(v) {
             return /^-?\d*(\.\d+)?$/.test(v);
@@ -251,38 +265,22 @@
                         return;
                     }
 
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Caja cerrada',
+                        text: 'La caja se cerró correctamente',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#4e73df'
+                    }).then(() => {
+
+                        let idSucursal = $("#SucursalId").val(); // el combo que ya tenés
+
+                        // ⬅️ Recarga PERO mantiene el filtro
+                        window.location.href = '/Cajas/CajasAbiertas?idSucursal=' + idSucursal +'&buscar=';
+                    });
                 }
             });
         }
-
-
-        //function guardarCierreCaja() {
-
-        //    if (!esNumeroValido($("#CajaCierre").val()) ||
-        //        !esNumeroValido($("#ImporteRetirado").val())) {
-
-        //        $("#cerrarCajaError").removeClass("d-none")
-        //            .text("Ingrese valores numéricos válidos.");
-        //        return;
-        //    }
-
-        //    $.ajax({
-        //        url: '/Cajas/CerrarCaja',
-        //        type: 'POST',
-        //        data: $("#formCerrarCaja").serialize(),
-        //        success: function (resp) {
-
-        //            if (!resp.ok) {
-        //                $("#cerrarCajaError").removeClass("d-none").text(resp.error);
-        //                return;
-        //            }
-
-        //            // recargar tabla
-        //            location.reload();
-        //        }
-        //    });
-        //}
 
         function toFloat(value) {
             let v = value.trim();
@@ -329,6 +327,30 @@
             // Calcula caja para el siguiente inicio
             let cajaInicioSiguiente = cajaCierre - importeRetirado;
             $("#CajaInicioSiguiente").val(cajaInicioSiguiente.toFixed(2));
+
+            colorearDiferencia();
+        }
+        function colorearDiferencia() {
+
+            let valor = parseFloat($("#Diferencia").val().replace(",", "."));
+
+            if (isNaN(valor)) {
+                $("#Diferencia").css("background-color", "white");
+                return;
+            }
+
+            // Verde claro → entre -100 y 100
+            if (valor >= -100 && valor <= 100) {
+                $("#Diferencia").css("background-color", "#c8f7c5");
+            }
+            // Amarillo claro → entre -300 y -100 | 100 y 300
+            else if ((valor > 100 && valor <= 300) || (valor < -100 && valor >= -300)) {
+                $("#Diferencia").css("background-color", "#fff3b0");
+            }
+            // Rojo claro → fuera de esos rangos
+            else {
+                $("#Diferencia").css("background-color", "#f7c6c6");
+            }
         }
 
 

@@ -86,6 +86,7 @@ namespace Web.Controllers
                 egresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE)
         }, JsonRequestBehavior.AllowGet);
         }
+
         public ActionResult CerrarCaja(
                 int Id,
                 string CajaCierre,
@@ -100,19 +101,24 @@ namespace Web.Controllers
                 ""
             );
 
+            bool esModificarCaja = false;
+
             model.CajaCierre = ParseFloat(CajaCierre);
             model.Diferencia = ParseFloat(Diferencia);
             model.ImporteRetirado = ParseFloat(ImporteRetirado);
             model.CajaInicioSiguiente = ParseFloat(CajaInicioSiguiente);
             model.UsuarioCierre = (Entidades.Usuario)Session["Usuario"];
             model.FechaHoraCierre = model.FechaHoraCierre != null ? model.FechaHoraCierre : DateTime.Now;
+            model.Ventas = oCierreN.obtenerTotalVentas(model.UsuarioInicio.Id, model.Sucursal.idSucursal,
+                    model.FechaHoraInicio, esModificarCaja ? model.FechaHoraCierre : DateTime.Now);
+            model.EgresosCaja = oCierreN.getMontoEgresosCajaVendedor(model);
 
             var result = oCierreN.addOrEditCierreCaja_Result(model);
 
             if (!result.Ok)
                 return Json(new { ok = false, error = result.Mensaje });
 
-            return Json(new { ok = true });
+            return Json(new { ok = true, result.Mensaje });
         }
 
 
