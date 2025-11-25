@@ -41,6 +41,13 @@ namespace Negocio
                         row => row["DIF"] == DBNull.Value ? null : row["DIF"].ToString()
                     );
 
+                // id -> Stock.Un
+                var dictStockUn = dtCortesStock.AsEnumerable()
+                    .ToDictionary(
+                        row => row.Field<int>("idCorte"),
+                        row => row["Stock.Un"] == DBNull.Value ? null : row["Stock.Un"].ToString()
+                    );
+
                 // Actualizar los cortes
                 foreach (var corte in listaCortes)
                 {
@@ -51,11 +58,17 @@ namespace Negocio
                             corte.Stock_EnString = corte.Pesable
                                 ? stockNum.ToString("N3")  // 3 decimales
                                 : stockNum.ToString("N0"); // entero
+
+                            if (dictStockUn.TryGetValue(corte.idCorte, out string stockUn))
+                            {
+                                corte.StockUnidades = stockUn.Contains("u") ? " (" + stockUn + ")" : "";
+                            }
                         }
                     }
                     else
                     {
                         corte.Stock_EnString = "-"; // si no está en el DataTable
+                        corte.StockUnidades = "";
                     }
                 }
             }

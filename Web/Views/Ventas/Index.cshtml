@@ -100,71 +100,69 @@
                 }
                 @foreach (var ventaAgrupada in Model.GroupBy(v => v.FechaVenta.Date))
                 {
+                    if (ventaAgrupada.Any())   // ✅ solo imprime si hay ventas
+                    {
                     <li class="list-group-item bg-light font-weight-bold">
                         @ventaAgrupada.Key.ToString("dd/MM/yyyy")
                     </li>
 
-                    foreach (var venta in ventaAgrupada)
-                    {
-            <li class="list-group-item venta-item" data-cliente="@venta.Persona.razonSocial">
-                <div class="venta-icono">
-                    @if (!string.IsNullOrEmpty(venta.FormaPago))
-                    {
-                        switch (venta.FormaPago.ToLower())
+                        foreach (var venta in ventaAgrupada)
                         {
-                            case "efectivo":
-                                <i class="fas fa-money-bill-wave fa-2x text-success"></i>
-                                break;
-                            case "qr":
-                                <i class="fas fa-qrcode fa-2x text-primary"></i>
-                                break;
-                            case "debito":
-                            case "credito":
-                                <i class="fas fa-credit-card fa-2x text-info"></i>
-                                break;
-                            case "ctacte":
-                                <i class="fas fa-university fa-2x text-warning"></i>
-                                break;
-                            case "transferencia":
-                                <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
-                                break;
-                            default:
-                                <i class="fas fa-money-check fa-2x text-muted"></i>
-                                break;
+                        <li class="list-group-item venta-item" data-cliente="@venta.Persona.razonSocial">
+                            <div class="venta-icono">
+                                @if (!string.IsNullOrEmpty(venta.FormaPago))
+                                {
+                                    switch (venta.FormaPago.ToLower())
+                                    {
+                                        case "efectivo":
+                                            <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                                            break;
+                                        case "qr":
+                                            <i class="fas fa-qrcode fa-2x text-primary"></i>
+                                            break;
+                                        case "debito":
+                                        case "credito":
+                                            <i class="fas fa-credit-card fa-2x text-info"></i>
+                                            break;
+                                        case "ctacte":
+                                            <i class="fas fa-university fa-2x text-warning"></i>
+                                            break;
+                                        case "transferencia":
+                                            <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
+                                            break;
+                                        default:
+                                            <i class="fas fa-money-check fa-2x text-muted"></i>
+                                            break;
+                                    }
+                                }
+                            </div>
+
+                            <div class="venta-info">
+                                <div class="venta-tipo-persona font-weight-bold">
+                                    @venta.TipoComprobante - @venta.FormaPago
+                                </div>
+                                @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
+                                {
+                                    <div class="venta-tipo-persona font-weight-bold">
+                                        a @venta.Persona.razonSocial
+                                    </div>
+                                }
+                                <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
+                                <div class="venta-id">idVenta @venta.IdVenta</div>
+                            </div>
+
+                            <div class="venta-total">
+                                <div class="importe @(venta.TotalImporte <= 0 ? "text-danger font-weight-bold" : "")"
+                                     data-valor="@venta.TotalImporte">
+                                    @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
+                                </div>
+
+                                <div class="text-muted small">
+                                    @venta.FechaVenta.ToString("HH:mm") hs
+                                </div>
+                            </div>
+                        </li>
                         }
-                    }
-                </div>
-
-                <div class="venta-info">
-                    <div class="venta-tipo-persona font-weight-bold">
-                        @venta.TipoComprobante - @venta.FormaPago
-                    </div>
-                    @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
-                    {
-                        <div class="venta-tipo-persona font-weight-bold">
-                            a @venta.Persona.razonSocial
-                        </div>
-                    }
-                    <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
-                    <div class="venta-id">idVenta @venta.IdVenta</div>
-                </div>
-
-                <div class="venta-total">
-                    <div class="importe @(venta.TotalImporte <= 0 ? "text-danger font-weight-bold" : "")"
-                         data-valor="@venta.TotalImporte">
-                        @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
-                    </div>
-
-                    <div class="text-muted small">
-                        @venta.FechaVenta.ToString("HH:mm") hs
-                    </div>
-                </div>
-
-                @*<div class="venta-total">
-            <div class="importe" data-valor="@venta.TotalImporte">+ @venta.TotalImporte.ToString("C")</div>
-            <div class="text-muted small">@venta.FechaVenta.ToString("HH:mm") hs</div>
-        </div>*@
-            </li>
                     }
                 }
             </ul>
@@ -278,10 +276,21 @@
         min-width: 0;
     }
 
+        /* Estilo general para escritorio */
     .venta-tipo-persona {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        word-wrap: break-word;       /* permite cortar palabras largas */
+        overflow-wrap: break-word;   /* asegura compatibilidad */
+    }
+
+    /* En pantallas pequeñas (celulares) */
+    @@media (max-width: 576px) {
+        .venta-tipo-persona {
+            white-space: nowrap;     /* evita salto de línea */
+            overflow: hidden;        /* oculta lo que no entra */
+            text-overflow: ellipsis; /* agrega "..." al final */
+            display: block;
+            max-width: 100%;         /* asegura que se ajuste al ancho */
+        }
     }
 
     .venta-id {

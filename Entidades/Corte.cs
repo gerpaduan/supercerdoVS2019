@@ -42,6 +42,7 @@ namespace Entidades
         private int puntoStock;
         private bool codBarraValidadoEnPos = false;
         private string stock_EnString;
+        private string stockUnidades;
 
         public bool Habilitado
         {
@@ -223,6 +224,7 @@ namespace Entidades
         public bool CodBarraValidadoEnPos { get => codBarraValidadoEnPos; set => codBarraValidadoEnPos = value; }
         public bool Presentacion { get => presentacion; set => presentacion = value; }
         public string Stock_EnString { get => stock_EnString; set => stock_EnString = value; }
+        public string StockUnidades { get => stockUnidades; set => stockUnidades = value; }
 
         bool presentacion;
 

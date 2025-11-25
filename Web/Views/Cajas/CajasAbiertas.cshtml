@@ -10,15 +10,12 @@
 
 <div class="container-fluid">
 
-    <!-- Filtros -->
     <form id="formFiltros">
         <div class="row mb-3">
-
             <!-- Combo sucursal -->
             <div class="col-md-3">
                 <select name="idSucursal" id="idSucursal" class="form-control">
                     <option value="">-- Seleccione una sucursal --</option>
-
                     @foreach (var s in sucursales)
                     {
                         <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>
@@ -49,10 +46,7 @@
         </div>
     </form>
 
-    <!-- BOTÓN CIERRE MULTIPLE (NO IMPLEMENTADO AÚN) -->
-    <button id="btnCerrarMultiple" class="btn btn-danger mb-3" style="display:none;">
-        Cerrar Cajas Seleccionadas
-    </button>
+
 
     <!-- Área que se actualiza con AJAX -->
     <div id="tablaResultado">
@@ -60,149 +54,165 @@
     </div>
 
 </div>
-<!-- Modal Cerrar Caja -->
-<div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
+    <!-- Modal Cerrar Caja -->
+    <div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
 
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Cerrar Caja</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Cerrar Caja</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
+
+                    <form id="formCerrarCaja">
+
+                        <!-- ID oculto -->
+                        <input type="hidden" id="Id" name="Id" />
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label>Caja</label>
+                                <input type="text" id="CajaDesc" class="form-control" readonly />
+                            </div>
+
+                            <div class="col-md-5">
+                                <label>Apertura</label>
+                                <input type="text" id="FechaApertura" class="form-control" readonly />
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label>Caja Inicial</label>
+                                <input type="text" id="CajaInicial" class="form-control" readonly />
+                            </div>
+
+                            <div class="col-md-5">
+                                <input type="hidden" id="Usuario" class="form-control" readonly />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label>Ventas</label>
+                                <input type="text" id="Ventas" class="form-control" readonly />
+                            </div>
+
+                            <div class="col-md-5">
+                                <label>EgresosCaja</label>
+                                <input type="number" step="0.01" id="EgresosCaja" class="form-control" readonly />
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label>Caja Cierre</label>
+                                <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                            </div>
+
+                            <div class="col-md-5">
+                                <label>Diferencia</label>
+                                <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label>Importe Retirado</label>
+                                <input type="text" id="ImporteRetirado" name="ImporteRetirado" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                            </div>
+                            <div class="col-md-5">
+                                <label>Queda en Caja</label>
+                                <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
+                    <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
+                </div>
+
             </div>
-
-            <div class="modal-body">
-
-                <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
-
-                <form id="formCerrarCaja">
-
-                    <!-- ID oculto -->
-                    <input type="hidden" id="Id" name="Id" />
-
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label>Caja</label>
-                            <input type="text" id="CajaDesc" class="form-control" readonly />
-                        </div>
-
-                        <div class="col-md-5">
-                            <label>Apertura</label>
-                            <input type="text" id="FechaApertura" class="form-control" readonly />
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label>Caja Inicial</label>
-                            <input type="text" id="CajaInicial" class="form-control" readonly />
-                        </div>
-
-                        <div class="col-md-5">
-                            <input type="hidden" id="Usuario" class="form-control" readonly />
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label>Ventas</label>
-                            <input type="text" id="Ventas" class="form-control" readonly />
-                        </div>
-
-                        <div class="col-md-5">
-                            <label>EgresosCaja</label>
-                            <input type="number" step="0.01" id="EgresosCaja" class="form-control" readonly />
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label>Caja Cierre</label>
-                            <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
-                        </div>
-
-                        <div class="col-md-5">
-                            <label>Diferencia</label>
-                            <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
-                        </div>
-                    </div>
-
-                    <hr />
-
-                    <div class="row">
-                        <div class="col-md-5">
-                            <label>Importe Retirado</label>
-                            <input type="text" id="ImporteRetirado" name="ImporteRetirado" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
-                        </div>
-                        <div class="col-md-5">
-                            <label>Queda en Caja</label>
-                            <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
-                        </div>
-                    </div>
-
-                </form>
-
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
-            </div>
-
         </div>
     </div>
-</div>
 
 @section Scripts {
     <script>
         function filtrar() {
+            const idSucursal = $("#idSucursal").val() || "";
+            const buscar = $("#buscarVendedor").val() || "";
 
-            let idSucursal = $("#idSucursal").val();
-            let buscar = $("#buscarVendedor").val();
-
-            // guardar posición del cursor
-            let txt = document.getElementById("buscarVendedor");
-            let pos = txt.selectionStart;
+            // guardar posición del cursor solo si el input existe y tiene foco
+            let pos = 0;
+            const txt = document.getElementById("buscarVendedor");
+            if (txt && document.activeElement === txt && typeof txt.selectionStart === "number") {
+                pos = txt.selectionStart;
+            }
 
             $.ajax({
-                url: '/Cajas/CajasAbiertas',
+                url: baseUrl + 'Cajas/CajasAbiertas', // baseUrl ya termina con "/" normalmente
                 type: 'GET',
                 data: {
                     idSucursal: idSucursal,
                     buscar: buscar,
                     ajax: true
                 },
+                cache: false, // evita respuestas cacheadas
                 success: function (html) {
                     $("#tablaResultado").html(html);
 
-                    setTimeout(() => {
-                        const input = document.getElementById("buscarVendedor");
-                        if (input) {
-                            input.focus();
-                            input.setSelectionRange(pos, pos);
-                        }
-                    }, 30);
+                    // restaurar foco/posición solo si corresponde
+                    if (txt) {
+                        setTimeout(() => {
+                            txt.focus();
+                            try {
+                                txt.setSelectionRange(pos, pos);
+                            } catch (e) { /* ignora si no aplica */ }
+                        }, 30);
+                    }
                 }
             });
         }
 
-        // Cambiar sucursal → filtrar automáticamente
-        $("#idSucursal").change(function () {
+        // Delegación: asegura que el evento sobreviva a reemplazos de HTML
+        $(document).on('change', '#idSucursal', function () {
+            filtrar();
+        });
+
+        // Disparo inicial al cargar la página (respeta la sucursal ya seleccionada)
+        $(function () {
             filtrar();
         });
 
 
+
+
         //SCRIPT PARA ABRIR MODAL CERRAR CAJA
         function abrirModalCerrarCaja(Id) {
+            console.log("abrirModalCerrarCaja", Id);
+
             $("#cerrarCajaError").addClass("d-none").text("");
 
             $.ajax({
-                url: '/Cajas/ObtenerDatosCierre',
+                url: '@Url.Action("ObtenerDatosCierre", "Cajas")',
+
+                //url: baseUrl + '/Cajas/ObtenerDatosCierre',
                 type: 'GET',
                 data: { id: Id },
                 success: function (data) {
@@ -255,7 +265,8 @@
             };
 
             $.ajax({
-                url: '/Cajas/CerrarCaja',
+                url: '@Url.Action("CerrarCaja", "Cajas")',
+                //url: baseUrl +  '/Cajas/CerrarCaja',
                 type: 'POST',
                 data: data,
                 success: function (resp) {

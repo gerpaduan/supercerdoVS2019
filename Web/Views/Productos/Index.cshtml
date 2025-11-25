@@ -7,7 +7,7 @@
 
 <div class="container-fluid">
 
-    <form method="get" id="formStock" class="mb-3">
+    <form method="get" id="formStock" class="mb-3" action="@Url.Action("Index","Productos")">
 
         <!-- COMBO SUCURSALES -->
         <div class="form-group">
@@ -67,11 +67,11 @@
                                 <th>Código</th>
                                 <th>Producto</th>
                                 <th>Precio</th>
-                                <th>Stock</th>
-                                @*@if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
+                                @*<th>Stock</th>*@
+                                @if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
                                 {
                                     <th>Stock</th>
-                                }*@
+                                }
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -82,13 +82,12 @@
                                 <td class="col-codigo">@item.Codigo</td>
                                 <td class="col-producto">@item.CorteDesc</td>
                                 <td class="col-precio" id="precio_@item.idCorte">@item.PrecioKg.ToString("C")</td>
-                                <td class="col-tipo">@item.Stock_EnString</td>
+                                @*<td class="col-tipo">@item.Stock_EnString</td>*@
 
-                                @*@if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
+                                @if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
                                 {
-                                    <td class="col-tipo">@item.Stock_EnString</td>
-
-                                }*@
+                                    <td class="col-tipo">@item.Stock_EnString @item.StockUnidades</td>
+                                }
                                 <td>
                                     <button type="button" class="btn btn-sm btn-warning"
                                             onclick="abrirPopupPrecio(@item.idCorte, '@item.CorteDesc', '@item.PrecioKg')">
@@ -221,7 +220,8 @@
 
         // Luego consultar el valor real desde BD
         $.ajax({
-            url: '/Productos/findCorteById',
+            url: '@Url.Action("findCorteById", "Productos")',
+            //url: baseUrl + '/Productos/findCorteById',
             type: 'GET',
             data: { id: id },
             success: function (resp) {
@@ -288,7 +288,8 @@
         $("#PrecioKg").val(precioRaw); // enviar tal cual
 
         $.ajax({
-            url: '/Productos/EditPrecioCorte',
+            //url: baseUrl + '/Productos/EditPrecioCorte',
+            url: '@Url.Action("EditPrecioCorte", "Productos")',
             type: 'POST',
             data: $("#formPrecio").serialize(),
             success: function (resp) {
