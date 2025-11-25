@@ -22,14 +22,13 @@
     <!-- Imagen de fondo izquierda (opcional) -->
     <style>
         .bg-login-image {
-            background: url('/Content/img/CarniSys_Logo_sinSlogan.png');
+            background: url('@Url.Content("~/Content/img/CarniSys_Logo_sinSlogan.png")');
             background-position: center;
             background-size: cover;
             background-repeat: no-repeat;
-        }   
+        }
     </style>
 </head>
-
 <body class="bg-gradient-primary">
 
     <div class="container">
@@ -37,56 +36,46 @@
         <!-- ROW CENTRAL -->
         <div class="row justify-content-center">
 
-            <div class="col-xl-10 col-lg-12 col-md-9">
+            <div class="col-xl-6 col-lg-7 col-md-9">
 
                 <div class="card o-hidden border-0 shadow-lg my-5">
-                    <div class="card-body p-0">
+                    <div class="card-body p-5">
 
-                        <!-- ROW INTERNA -->
-                        <div class="row">
+                        <!-- CONTENIDO IZQUIERDA -->
 
-                            <!-- COLUMNA IZQUIERDA: IMAGEN -->
-                            <div class="col-lg-6 d-none d-lg-block bg-login-image"></div>
+                        <img src="@Url.Content("~/Content/img/CarniSys_Login.png")"
+                             alt="Logo"
+                             style="max-width: 250px; display:block; margin-bottom: 20px;" />
 
-                            <!-- COLUMNA DERECHA: FORMULARIO -->
-                            <div class="col-lg-6">
-                                <div class="p-5">
+                        <h1 class="h4 text-gray-900 mb-4">Iniciar sesión</h1>
 
-                                    <div class="text-center">
-                                        <h1 class="h4 text-gray-900 mb-4">Iniciar sesión</h1>
-                                    </div>
+                        @* Mostrar error *@
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="alert alert-danger">
+                                @ViewBag.Error
+                            </div>
+                        }
 
-                                    @* Mostrar error si lo hay *@
-                                    @if (ViewBag.Error != null)
-                                    {
-                                        <div class="alert alert-danger text-center">
-                                            @ViewBag.Error
-                                        </div>
-                                    }
-
-                                    @using (Html.BeginForm("Index", "Login", FormMethod.Post, new { @class = "user" }))
-                                    {
-                                        <div class="form-group">
-                                            <input type="text" name="usuario"
-                                                   class="form-control form-control-user"
-                                                   placeholder="Usuario o Email" required />
-                                        </div>
-
-                                        <div class="form-group">
-                                            <input type="password" name="clave"
-                                                   class="form-control form-control-user"
-                                                   placeholder="Contraseña" required />
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary btn-user btn-block">
-                                            Ingresar
-                                        </button>
-                                    }
-
-                                </div>
+                        @using (Html.BeginForm("Index", "Login", FormMethod.Post, new { @class = "user" }))
+                        {
+                            <div class="form-group">
+                                <input type="text" name="usuario"
+                                       class="form-control form-control-user"
+                                       placeholder="Usuario o Email" required />
                             </div>
 
-                        </div>
+                            <div class="form-group">
+                                <input type="password" name="clave"
+                                       class="form-control form-control-user"
+                                       placeholder="Contraseña" required />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-user btn-block">
+                                Ingresar
+                            </button>
+                        }
+
                     </div>
                 </div>
 
@@ -96,13 +85,8 @@
 
     </div>
 
-    <!-- Scripts -->
-    <script src="~/Content/vendor/jquery/jquery.min.js"></script>
-    <script src="~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="~/Content/vendor/jquery-easing/jquery.easing.min.js"></script>
-    <script src="~/Content/js/sb-admin-2.min.js"></script>
-
 </body>
+
 
 </html>
 

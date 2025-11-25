@@ -67,7 +67,6 @@
                                 <th>Código</th>
                                 <th>Producto</th>
                                 <th>Precio</th>
-                                @*<th>Stock</th>*@
                                 @if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
                                 {
                                     <th>Stock</th>
@@ -82,7 +81,6 @@
                                 <td class="col-codigo">@item.Codigo</td>
                                 <td class="col-producto">@item.CorteDesc</td>
                                 <td class="col-precio" id="precio_@item.idCorte">@item.PrecioKg.ToString("C")</td>
-                                @*<td class="col-tipo">@item.Stock_EnString</td>*@
 
                                 @if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
                                 {

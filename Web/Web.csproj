@@ -141,6 +141,7 @@
     <Content Include="Content\css\custom.css" />
     <Content Include="Content\css\sb-admin-2.css" />
     <Content Include="Content\css\sb-admin-2.min.css" />
+    <Content Include="Content\img\CarniSys_Login.png" />
     <Content Include="Content\img\CarniSys_Logo_sinSlogan.png" />
     <Content Include="Content\img\undraw_posting_photo.svg" />
     <Content Include="Content\img\undraw_profile.svg" />
