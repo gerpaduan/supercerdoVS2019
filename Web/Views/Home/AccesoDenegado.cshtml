@@ -1,19 +1,24 @@
 ﻿@{
     ViewBag.Title = "Acceso Denegado";
-    Layout = "~/Views/Shared/_LayoutBase.cshtml";  // Ajustá si tu layout se llama distinto
+    Layout =  "~/Views/Shared/_LayoutBase.cshtml";
 }
 
-<div class="container-fluid mt-5">
+<div class="container text-center mt-5">
+    <h1 class="text-danger">Acceso denegado</h1>
+    <p>No tienes permisos para realizar esta acción.</p>
+</div>
 
-    <!-- 404 Error Text -->
+<!--<div class="container-fluid mt-5">
+
     <div class="text-center">
         <div class="error mx-auto" data-text="403">403</div>
+
         <p class="lead text-gray-800 mb-5">Acceso Denegado</p>
-        <p class="text-gray-500 mb-4">No tenés permisos para acceder a esta sección.</p>
+        <p class="text-gray-500 mb-4">No tenés permisos para acceder a esta sección.</p>-->
 
-        <a href="@Url.Action("Index", "Home")">
+        @*<a href="@Url.Action("Index", "Home")">
             <i class="fas fa-arrow-left"></i> Volver al inicio
-        </a>
-    </div>
+        </a>*@
+    <!--</div>
 
-</div>
+</div>-->

@@ -25,7 +25,8 @@ namespace Web.Controllers
         //}
         public ActionResult Index(int SucursalId = 0)
         {
-           // int SucursalId = 2;
+            var user = Session["Usuario"] as Entidades.Usuario;
+            ViewBag.PuedeEditarPrecios = oUsuarioN.tienePermiso(user, Permisos.Producto.ModificarPrecios, DateTime.Today, -1);
 
             var productos = oCorteN.findAllCortes(false, SucursalId);
 
@@ -138,7 +139,8 @@ namespace Web.Controllers
 
             if (!oUsuarioN.tienePermiso(user, Permisos.Producto.ModificarPrecios, DateTime.Today, -1))
             {
-                return Json(new { error = "No tienes permisos" });
+                //return Json(new { error = "No tienes permisos" });
+                return Json(new { ok = false, permiso = false, error = "No tienes permisos" });
             }
 
             if (string.IsNullOrWhiteSpace(PrecioKg))

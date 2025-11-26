@@ -88,6 +88,7 @@
                                 }
                                 <td>
                                     <button type="button" class="btn btn-sm btn-warning"
+                                            @( (ViewBag.PuedeEditarPrecios ?? false) ? "" : "disabled" )
                                             onclick="abrirPopupPrecio(@item.idCorte, '@item.CorteDesc', '@item.PrecioKg')">
                                         <i class="fas fa-dollar-sign"></i>
                                     </button>
@@ -262,43 +263,47 @@
     // =========================
     // GUARDAR PRECIO
     // =========================
-    function guardarPrecio() {
+  function guardarPrecio() {
 
-        let precioRaw = $("#PrecioKg").val().trim();
+    let precioRaw = $("#PrecioKg").val().trim();
 
-        if (precioRaw === "") {
-            $("#errorPrecio").removeClass("d-none");
-            return;
-        }
-
-        // Convertir punto a coma
-        precioRaw = precioRaw.replace(".", ",");
-
-        // Para validar: convertir coma a punto
-        let precioNormalizado = precioRaw.replace(",", ".");
-        let numero = parseFloat(precioNormalizado);
-
-        if (isNaN(numero) || numero <= 0) {
-            $("#errorPrecio").removeClass("d-none");
-            return;
-        }
-
-        $("#PrecioKg").val(precioRaw); // enviar tal cual
-
-        $.ajax({
-            //url: baseUrl + '/Productos/EditPrecioCorte',
-            url: '@Url.Action("EditPrecioCorte", "Productos")',
-            type: 'POST',
-            data: $("#formPrecio").serialize(),
-            success: function (resp) {
-                $("#precio_" + resp.id).text(resp.precioFormateado);
-                $("#modalPrecio").modal("hide");
-            },
-            error: function () {
-                alert("Error al actualizar el precio.");
-            }
-        });
+    if (precioRaw === "") {
+        $("#errorPrecio").removeClass("d-none");
+        return;
     }
+
+    // Normalización numérica
+    precioRaw = precioRaw.replace(".", ",");
+    let numero = parseFloat(precioRaw.replace(",", "."));
+
+    if (isNaN(numero) || numero <= 0) {
+        $("#errorPrecio").removeClass("d-none");
+        return;
+    }
+
+    $("#PrecioKg").val(precioRaw);
+
+    $.ajax({
+        url: '@Url.Action("EditPrecioCorte", "Productos")',
+        type: 'POST',
+        data: $("#formPrecio").serialize(),
+        success: function (resp) {
+
+            // ⭐ Detectar si el backend devolvió "no tiene permisos"
+            if (!manejarPermiso(resp)) return;
+
+            // ⭐ OK – Actualizar precio en la grilla
+            $("#precio_" + resp.id).text(resp.precioFormateado);
+
+            $("#modalPrecio").modal("hide");
+        },
+        error: function () {
+            Swal.fire("Error", "Error al actualizar el precio.", "error");
+        }
+    });
+}
+
+
 
     // =========================
     // INPUT SIMPLE: punto y coma = coma
