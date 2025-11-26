@@ -64,6 +64,7 @@
     <Compile Include="lineaVentaUnificada.cs" />
     <Compile Include="MovCtaCte.cs" />
     <Compile Include="Parametros.cs" />
+    <Compile Include="Permisos.cs" />
     <Compile Include="PermisosUsuarios.cs" />
     <Compile Include="TemporalLineaVenta.cs" />
     <Compile Include="Corte.cs" />
