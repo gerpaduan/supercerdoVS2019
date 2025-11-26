@@ -102,7 +102,6 @@
             <li class="nav-item sidebar-heading">
                 <span>Interface</span>
             </li>
-
             <!-- Compras -->
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCompras"
@@ -146,57 +145,56 @@
                     <span>Productos</span>
                 </a>
             </li>
-            @if (ViewBag.PuedeVerCierreCaja)
-            {
-                <li class="nav-item">
-                    <a class="nav-link" href="@Url.Action("CajasAbiertas", "Cajas")">
-                        <i class="fas fa-fw fa-file-invoice-dollar"></i>
-                        <span>Cierre de Caja</span>
-                    </a>
-                </li>
-            }
-                <li class="nav-item">
-                    <a class="nav-link" href="@Url.Action("Index","PuntoVenta")">
-                        <i class="fas fa-fw fa-store"></i>
-                        <span>Punto de Venta</span>
-                    </a>
-                </li>
 
-                <!-- Finanzas -->
-                <li class="nav-item">
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                       aria-expanded="true" aria-controls="collapseTwo">
-                        <i class="fas fa-fw fa-cog"></i>
-                        <span>Finanzas</span>
-                    </a>
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="buttons.html">Cuentas Corrientes</a>
-                            <a class="collapse-item" href="cards.html">Pagos</a>
-                            <a class="collapse-item" href="cards.html">Cheques</a>
-                        </div>
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("CajasAbiertas", "Cajas")">
+                    <i class="fas fa-fw fa-file-invoice-dollar"></i>
+                    <span>Cierre de Caja</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("Index","PuntoVenta")">
+                    <i class="fas fa-fw fa-store"></i>
+                    <span>Punto de Venta</span>
+                </a>
+            </li>
+
+            <!-- Finanzas -->
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                   aria-expanded="true" aria-controls="collapseTwo">
+                    <i class="fas fa-fw fa-cog"></i>
+                    <span>Finanzas</span>
+                </a>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="buttons.html">Cuentas Corrientes</a>
+                        <a class="collapse-item" href="cards.html">Pagos</a>
+                        <a class="collapse-item" href="cards.html">Cheques</a>
                     </div>
-                </li>
+                </div>
+            </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="@Url.Action("Index","Reportes")">
-                        <i class="fas fa-fw fa-chart-line"></i>
-                        <span>Reportes</span>
-                    </a>
-                </li>
+            <li class="nav-item">
+                <a class="nav-link" href="@Url.Action("Index","Reportes")">
+                    <i class="fas fa-fw fa-chart-line"></i>
+                    <span>Reportes</span>
+                </a>
+            </li>
 
-                <!-- Divider -->
-                <li class="nav-item">
-                    <hr class="sidebar-divider">
-                </li>
+            <!-- Divider -->
+            <li class="nav-item">
+                <hr class="sidebar-divider">
+            </li>
 
-                <!-- Sidebar Toggler -->
-                <li class="nav-item text-center d-none d-md-inline">
-                    <button class="rounded-circle border-0" id="sidebarToggle"></button>
-                </li>
+            <!-- Sidebar Toggler -->
+            <li class="nav-item text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </li>
 
 
-            </ul>
+        </ul>
 
         <!-- End of Sidebar -->
         <!-- Content Wrapper -->

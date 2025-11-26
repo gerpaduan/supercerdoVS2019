@@ -7,6 +7,7 @@ using Negocio;
 using Entidades;
 using Datos;
 using System.Globalization;
+using Web.Helpers;
 
 namespace Web.Controllers
 {
@@ -16,18 +17,8 @@ namespace Web.Controllers
         public Negocio.Corte oCorteN = new Negocio.Corte();
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
 
-        // LISTADO
-        //public ActionResult Index()
-        //{
-        //    int idSucursal = 2;
-        //    var productos = oCorteN.findAllCortes(false, idSucursal, true);
-        //    return View(productos);
-        //}
         public ActionResult Index(int SucursalId = 0)
         {
-            var user = Session["Usuario"] as Entidades.Usuario;
-            ViewBag.PuedeEditarPrecios = oUsuarioN.tienePermiso(user, Permisos.Producto.ModificarPrecios, DateTime.Today, -1);
-
             var productos = oCorteN.findAllCortes(false, SucursalId);
 
             var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
@@ -67,6 +58,13 @@ namespace Web.Controllers
         // ===============================
         public ActionResult AddOrEdit(int id = 0)
         {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+            {
+                ViewBag.Seccion = "Agregar/Modificar Productos";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             Entidades.Corte model;
 
             if (id == 0)
@@ -86,34 +84,6 @@ namespace Web.Controllers
             return View(model);  // Busca Views/Productos/AddOrEdit.cshtml
         }
 
-        // ===============================
-        // POST: CREATE / EDIT
-        // ===============================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult AddOrEdit(Entidades.Corte model)
-        {
-            //TODO: validar los datos ingresados
-            //if (!ModelState.IsValid)
-            //{
-            //    CargarCombos(model.IdCorte);
-            //    return View("AddOrEdit", model);
-            //}
-
-            try
-            {
-                oCorteN.addOrEditCorte(model);
-
-                TempData["Success"] = "Producto guardado correctamente.";
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", "Error al guardar: " + ex.Message);
-                CargarCombos(model.IdCorte);
-                return View("AddOrEdit", model);
-            }
-        }
 
         [HttpGet]
         public ActionResult findCorteById(int id)
@@ -132,15 +102,17 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+        // ===============================
+        // GET: modificar Precio
+        // ===============================
         [HttpPost]
         public ActionResult EditPrecioCorte(int IdCorte, string PrecioKg)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
-
-            if (!oUsuarioN.tienePermiso(user, Permisos.Producto.ModificarPrecios, DateTime.Today, -1))
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.ModificarPrecios, null))
             {
-                //return Json(new { error = "No tienes permisos" });
-                return Json(new { ok = false, permiso = false, error = "No tienes permisos" });
+                ViewBag.Seccion = "Productos - Modificar Precios";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
 
             if (string.IsNullOrWhiteSpace(PrecioKg))

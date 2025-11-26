@@ -182,6 +182,8 @@ namespace Negocio
         {
             bool permisoVer = false, permisoEditar = false;
 
+            nombreForm = nombreForm.ToUpper();
+
             if (oUser == null)
                 return false;
 
@@ -200,9 +202,17 @@ namespace Negocio
                         bool d = false;
                     }
 
-                    permisoEditar = (permiso.Formulario.FormEdicion.Contains(nombreForm) ||
-                        permiso.Formulario.FormEdicionExtra1.Contains(nombreForm) ||
-                        permiso.Formulario.FormEdicionExtra2.Contains(nombreForm)) &&
+                    //permisoEditar = (permiso.Formulario.FormEdicion.Contains(nombreForm) ||
+                    //    permiso.Formulario.FormEdicionExtra1.Contains(nombreForm) ||
+                    //    permiso.Formulario.FormEdicionExtra2.Contains(nombreForm)) &&
+                    //    DateTime.Today.AddDays(-permiso.DiasPermitidosEditar) <= fechaDesde;
+                    
+
+                    //Actualizacion: 26/11/2025 No sé porque habia puesto contains en vez de equal
+                    //la actualizacion pasa todo a minusculas y equals
+                    permisoEditar = (permiso.Formulario.FormEdicion.ToUpper().Equals(nombreForm) ||
+                        permiso.Formulario.FormEdicionExtra1.ToUpper().Equals(nombreForm) ||
+                        permiso.Formulario.FormEdicionExtra2.ToUpper().Equals(nombreForm)) &&
                         DateTime.Today.AddDays(-permiso.DiasPermitidosEditar) <= fechaDesde;
 
                     //si permisoEditar es TRUE, se verifica q sea que permita editar todos ó haya creado el registro
@@ -214,8 +224,13 @@ namespace Negocio
                 }
                 else
                 {
-                    permisoVer = permiso.Formulario.FormConsulta.Contains(nombreForm) &&
+                    permisoVer = permiso.Formulario.FormConsulta.ToUpper().Equals(nombreForm) &&
                         DateTime.Today.AddDays(-permiso.DiasPermitidosVer) <= fechaDesde;
+
+                    if (permisoVer)
+                    {
+                        string d = ";";
+                    }
                 }
                 
                 //si idCreador mayor o igual a 0 se debe validar la edicion

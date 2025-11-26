@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Web.Helpers;
 
 namespace Web.Controllers
 {
@@ -17,6 +19,14 @@ namespace Web.Controllers
             // Si no envían fechas, por defecto usar hoy
             DateTime desde = fechaDesde ?? DateTime.Today;
             DateTime hasta = fechaHasta ?? DateTime.Today;
+
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Venta.VerVentas, desde))
+            {
+                ViewBag.Seccion = "Ventas";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
 
             //si ambas fechas son iguales se suma 24 horas a fechaHasta
             if (desde == hasta && desde.Hour == 0)

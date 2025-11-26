@@ -4,6 +4,7 @@ using System.Web.Mvc;
 using Entidades;
 using System.Data;
 using System.Globalization;
+using Web.Helpers;
 
 namespace Web.Controllers
 {
@@ -16,6 +17,13 @@ namespace Web.Controllers
         // GET: Cajas/CajasAbiertas
         public ActionResult CajasAbiertas(int? idSucursal, string buscar = "", bool ajax = false)
         {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Caja.CierresDeCaja, null))
+            {
+                ViewBag.Seccion = "Cierres de Caja";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             // Modelo inicial vacío
             var dt = new DataTable();
 
@@ -68,6 +76,13 @@ namespace Web.Controllers
 
         public ActionResult ObtenerDatosCierre(int id)
         {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Caja.CerrarCaja, null))
+            {
+                ViewBag.Seccion = "Cierrar Caja";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             Entidades.CierreCaja oCierreE = new CierreCaja();
             oCierreE.Id = id;
             var caja = oCierreE = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindById, "");// oCajasN.obtenerDatosCierre(id);
@@ -84,7 +99,7 @@ namespace Web.Controllers
                 ventas = oCierreN.obtenerTotalVentas(oCierreE.UsuarioInicio.Id, oCierreE.Sucursal.idSucursal,
                         oCierreE.FechaHoraInicio, esModificarCaja ? oCierreE.FechaHoraCierre : DateTime.Now).ToString(),
                 egresosCaja = oCierreN.getMontoEgresosCajaVendedor(oCierreE)
-        }, JsonRequestBehavior.AllowGet);
+            }, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult CerrarCaja(
@@ -95,6 +110,14 @@ namespace Web.Controllers
                 string CajaInicioSiguiente
             )
         {
+
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Caja.CerrarCaja, null))
+            {
+                ViewBag.Seccion = "Cierrar Caja";
+                return View("~/Views/Shared/AccesoDenegado.cshtml");
+            }
+
             Entidades.CierreCaja model = oCierreN.findByIdOrLast(
                 new CierreCaja { Id = Id },
                 Entidades.CierreCaja.tipoBusqueda.FindById,

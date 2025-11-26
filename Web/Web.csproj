@@ -131,6 +131,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\PermisosHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -2009,7 +2010,7 @@
     <Content Include="Views\Shared\_LayoutBase.cshtml" />
     <Content Include="Views\Ventas\Index.cshtml" />
     <Content Include="Views\Login\Index.cshtml" />
-    <Content Include="Views\Home\AccesoDenegado.cshtml" />
+    <Content Include="Views\Shared\AccesoDenegado.cshtml" />
     <Content Include="Views\Productos\AddOrEdit.cshtml" />
     <Content Include="Views\Cajas\CajasAbiertas.cshtml" />
     <Content Include="Views\Cajas\_TablaCajasAbiertas.cshtml" />
