@@ -134,7 +134,12 @@ namespace Web.Controllers
         [HttpPost]
         public ActionResult EditPrecioCorte(int IdCorte, string PrecioKg)
         {
-            // PrecioKg llega así: "10.254,60"
+            var user = Session["Usuario"] as Entidades.Usuario;
+
+            if (!oUsuarioN.tienePermiso(user, Permisos.Producto.ModificarPrecios, DateTime.Today, -1))
+            {
+                return Json(new { error = "No tienes permisos" });
+            }
 
             if (string.IsNullOrWhiteSpace(PrecioKg))
                 return Json(new { error = "Precio vacío" });
