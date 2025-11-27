@@ -21,12 +21,19 @@
 
     <!-- Imagen de fondo izquierda (opcional) -->
     <style>
-        .bg-login-image {
+        @*.bg-login-image {
             background: url('@Url.Content("~/Content/img/CarniSys_Logo_sinSlogan.png")');
             background-position: center;
             background-size: cover;
             background-repeat: no-repeat;
+        }*@
+        .login-logo {
+            width: 100%; /* MISMO ancho que los inputs */
+            max-width: 100%; /* Evita que se achique más */
+            display: block;
+            margin-bottom: 20px;
         }
+
     </style>
 </head>
 <body class="bg-gradient-primary">
@@ -43,10 +50,12 @@
 
                         <!-- CONTENIDO IZQUIERDA -->
 
+                        @*<img src="@Url.Content("~/Content/img/CarniSys_Login.png")"
+                             alt="Logo"
+                             style="max-width: 250px; display:block; margin-bottom: 20px;" />*@
                         <img src="@Url.Content("~/Content/img/CarniSys_Login.png")"
                              alt="Logo"
-                             style="max-width: 250px; display:block; margin-bottom: 20px;" />
-
+                             class="login-logo" />
                         <h1 class="h4 text-gray-900 mb-4">Iniciar sesión</h1>
 
                         @* Mostrar error *@
