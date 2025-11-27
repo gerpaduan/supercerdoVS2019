@@ -1,32 +1,65 @@
 ﻿@model System.Data.DataTable
-
-<table class="table table-bordered table-striped" id="tablaCajas">
-    <thead class="thead-dark">
-        <tr>
-            <th>ID</th>
-            <th>Vendedor</th>
-            <th>Fecha Inicio</th>
-            <th>Caja Inicial $</th>
-            <th>Cerrar</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach (System.Data.DataRow row in Model.Rows)
-        {
+<div class="table-responsive">
+    <table class="table table-bordered table-striped" id="tablaCajas">
+        <thead class="thead-dark">
             <tr>
-                <td>@row["id"]</td>
-                <td>@row["vendedor"]</td>
-                <td>@row["fechaHoraInicio"]</td>
-                <td>@row["cajaInicio"]</td>
-
-                <td>
-                    <button class="btn btn-danger btn-sm"
-                            onclick="abrirModalCerrarCaja(@row["id"])">
-                        <i class="fas fa-lock"></i> Cerrar
-                    </button>
-                </td>
+                <th>ID</th>
+                <th>Vendedor</th>
+                <th>Fecha Inicio</th>
+                <th>Caja Inicial $</th>
+                <th>Cerrar</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["id"]</td>
+                    <td>@row["vendedor"]</td>
+                    <td>@row["fechaHoraInicio"]</td>
+                    <td>@row["cajaInicio"]</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                onclick="abrirModalCerrarCaja(@row["id"])">
+                            <i class="fas fa-lock"></i> Cerrar
+                        </button>
+                    </td>
+                </tr>
+       }
+        </tbody>
+    </table>
+</div>
+
+
+@*
+
+    <table class="table table-bordered table-striped" id="tablaCajas">
+        <thead class="thead-dark">
+            <tr>
+                <th>ID</th>
+                <th>Vendedor</th>
+                <th>Fecha Inicio</th>
+                <th>Caja Inicial $</th>
+                <th>Cerrar</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["id"]</td>
+                    <td>@row["vendedor"]</td>
+                    <td>@row["fechaHoraInicio"]</td>
+                    <td>@row["cajaInicio"]</td>
+
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                onclick="abrirModalCerrarCaja(@row["id"])">
+                            <i class="fas fa-lock"></i> Cerrar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>*@

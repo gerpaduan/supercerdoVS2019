@@ -13,6 +13,7 @@
 /* Contenedor responsive: permite scroll horizontal si es necesario */
 .table-responsive {
     overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch; /* scroll suave en móviles */
 }
 
 /* Tabla: layout fijo para respetar anchos de colgroup */

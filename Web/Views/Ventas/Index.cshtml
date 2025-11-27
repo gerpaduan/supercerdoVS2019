@@ -108,7 +108,9 @@
 
                         foreach (var venta in ventaAgrupada)
                         {
-                        <li class="list-group-item venta-item" data-cliente="@venta.Persona.razonSocial">
+                        <li class="list-group-item venta-item" 
+                            data-cliente="@venta.Persona.razonSocial"
+                            data-identificacion="@venta.Persona.Identificacion">
                             <div class="venta-icono">
                                 @if (!string.IsNullOrEmpty(venta.FormaPago))
                                 {
@@ -188,23 +190,16 @@
     const buscadorCliente = document.getElementById("buscadorCliente");
     const ventas = document.querySelectorAll(".venta-item");
 
-    //buscadorCliente.addEventListener("input", () => {
-    //    const texto = buscadorCliente.value.toLowerCase();
-
-    //    ventas.forEach(v => {
-    //        const cliente = (v.dataset.cliente || "").toLowerCase();
-    //        v.style.display = cliente.includes(texto) ? "" : "none";
-    //    });
-
-
-    //});
     buscadorCliente.addEventListener("input", () => {
         const texto = buscadorCliente.value.toLowerCase();
         let total = 0;
 
         ventas.forEach(v => {
             const cliente = (v.dataset.cliente || "").toLowerCase();
-            const coincide = cliente.includes(texto);
+            const identificacion = (v.dataset.identificacion || "").toLowerCase();
+
+            // coincide si el texto está en cliente o en identificación
+            const coincide = cliente.includes(texto) || identificacion.includes(texto);
 
             // mostrar u ocultar
             v.style.display = coincide ? "" : "none";
@@ -278,18 +273,19 @@
 
         /* Estilo general para escritorio */
     .venta-tipo-persona {
-        word-wrap: break-word;       /* permite cortar palabras largas */
-        overflow-wrap: break-word;   /* asegura compatibilidad */
+        word-wrap: break-word; /* permite cortar palabras largas */
+        /*overflow-wrap: break-word*/; /* asegura compatibilidad */
+        white-space: normal;
     }
 
     /* En pantallas pequeñas (celulares) */
     @@media (max-width: 576px) {
         .venta-tipo-persona {
-            white-space: nowrap;     /* evita salto de línea */
-            overflow: hidden;        /* oculta lo que no entra */
-            text-overflow: ellipsis; /* agrega "..." al final */
+            max-width: 17ch;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             display: block;
-            max-width: 100%;         /* asegura que se ajuste al ancho */
         }
     }
 
