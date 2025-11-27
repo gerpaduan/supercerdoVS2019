@@ -4,7 +4,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
     var index = 1; }
 
-<div class="card shadow mb-4 w-50 mx-auto">
+<div class="card shadow mb-4 w-100 w-md-50 mx-auto">
     <!-- Encabezado -->
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Detalle de Venta</h6>
@@ -29,26 +29,26 @@
         <div class="venta-lineas bg-white">
             @foreach (var linea in Model.LineasVenta)
             {
-<div class="mb-3">
-    <!-- Nombre del producto en negrita -->
-    <div class="font-weight-bold">
-        @linea.Corte.CorteDesc
-    </div>
+            <div class="mb-3">
+                <!-- Nombre del producto en negrita -->
+                <div>
+                    #@index <strong>@linea.Corte.CorteDesc</strong> (cod: @linea.Corte.codigo)&nbsp;&nbsp;
+                </div>
 
-    <!-- Enumeración + código + detalle -->
-    <div class="d-flex justify-content-between">
-        <!-- Parte izquierda -->
-        <div>
-            #@index (cod: @linea.Corte.codigo)&nbsp;&nbsp;
-            @linea.CantKg.ToString("0.###") kg x @linea.PrecioKg.ToString("C")
-        </div>
 
-        <!-- Parte derecha: total -->
-        <div class="text-right font-weight-bold">
-            @((linea.CantKg * linea.PrecioKg).ToString("C"))
-        </div>
-    </div>
-</div>          index++;
+                <!-- Enumeración + código + detalle -->
+                <div class="d-flex justify-content-between">
+                    <!-- Parte izquierda -->
+                    <div>
+                        &nbsp;&nbsp;&nbsp;&nbsp; @linea.CantKg.ToString("0.###") x @linea.PrecioKg.ToString("C")
+                    </div>
+
+                    <!-- Parte derecha: total -->
+                    <div class="text-right font-weight-bold">
+                        @((linea.CantKg * linea.PrecioKg).ToString("C"))
+                    </div>
+                </div>
+            </div>          index++;
 }
         </div>
 

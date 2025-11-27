@@ -49,6 +49,7 @@ namespace Entidades
             public const string VerCheques = "formCheques";
             public const string VerPagos = "formPagos";
             public const string AddOrEditPago = "formAddOrEditPago";
+            public const string VerCtasCtes = "formCtasCtes";
             public const string VerCtaCtePersona = "formCtaCtePersona";
         }
 
