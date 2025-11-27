@@ -1,0 +1,90 @@
+﻿@model Entidades.Venta
+
+@{ ViewBag.Title = "Detalle Ventas";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    var index = 1; }
+
+<div class="card shadow mb-4 w-50 mx-auto">
+    <!-- Encabezado -->
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Detalle de Venta</h6>
+        <span class="badge badge-info">#@Model.IdVenta</span>
+    </div>
+
+    <div class="card-body bg-white">
+        <!-- Cliente y forma de pago -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <h5 class="font-weight-bold text-dark">
+                    Cliente: <span class="text-muted">@Model.Persona.razonSocial</span>
+                </h5>
+            </div>
+            <div class="col-md-6 text-md-right">
+                <h5 class="font-weight-bold text-dark">
+                    Forma de pago: <span class="text-muted">@Model.FormaPago</span>
+                </h5>
+            </div>
+        </div>
+
+        <!-- Líneas de productos enumeradas -->
+        <div class="venta-lineas">
+            @foreach (var linea in Model.LineasVenta)
+            {
+<div class="mb-3">
+    <!-- Nombre del producto -->
+    <div class="font-weight-bold">
+        #@index&nbsp;&nbsp; @linea.Corte.CorteDesc&nbsp;&nbsp;(cod: @linea.Corte.codigo)
+    </div>
+
+    <!-- Enumeración y detalle -->
+    <div>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@linea.CantKg.ToString("0.###") kg x @linea.PrecioKg.ToString("C")&nbsp;&nbsp;
+        <span class="font-weight-bold text-success">
+            @((linea.CantKg * linea.PrecioKg).ToString("C"))
+        </span>
+    </div>
+</div>          index++;
+}
+        </div>
+
+        <!-- Total -->
+        <div class="row mt-3">
+            <div class="col text-right">
+                <h4 class="font-weight-bold">
+                    Total Venta: <span class="text-success">@Model.TotalImporte.ToString("C")</span>
+                </h4>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="row mt-4">
+            <div class="col d-flex justify-content-between flex-wrap">
+                <button class="btn btn-danger mb-2">
+                    <i class="fas fa-ban"></i> Anular Venta
+                </button>
+                <button class="btn btn-warning mb-2">
+                    <i class="fas fa-sync-alt"></i> Cambiar Forma de Pago
+                </button>
+                <button class="btn btn-primary mb-2">
+                    <i class="fas fa-print"></i> Imprimir Factura
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .venta-lineas {
+        background-color: #fff; /* fondo blanco */
+    }
+
+        .venta-lineas .mb-3 {
+            padding: .5rem 0;
+            border: none; /* sin bordes */
+        }
+
+        .venta-lineas .font-weight-bold {
+            margin-bottom: .25rem;
+        }
+</style>

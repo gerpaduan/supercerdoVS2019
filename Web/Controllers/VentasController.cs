@@ -46,5 +46,28 @@ namespace Web.Controllers
             //ventas.Add(oVentaE);
             return View(ventas);
         }
+
+        // GET: Ventas/DetalleVenta/5
+        public ActionResult DetalleVenta(int id)
+        {
+            // Buscar la venta por ID
+            var venta = oVentaN.getVentaById(id);
+            //_context.Ventas
+            //    .Include("Persona")
+            //    .Include("Vendedor")
+            //    .Include("Lineas.Producto")
+            //    .FirstOrDefault(v => v.IdVenta == id);
+
+            if (venta == null)
+            {
+                return HttpNotFound();
+            }
+
+            // Pasar la venta a la vista
+            return View(venta);
+        }
+
+
+
     }
 }

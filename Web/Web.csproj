@@ -2014,6 +2014,7 @@
     <Content Include="Views\Productos\AddOrEdit.cshtml" />
     <Content Include="Views\Cajas\CajasAbiertas.cshtml" />
     <Content Include="Views\Cajas\_TablaCajasAbiertas.cshtml" />
+    <Content Include="Views\Ventas\DetalleVenta.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

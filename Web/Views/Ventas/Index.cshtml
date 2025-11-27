@@ -110,7 +110,8 @@
                         {
                         <li class="list-group-item venta-item" 
                             data-cliente="@venta.Persona.razonSocial"
-                            data-identificacion="@venta.Persona.Identificacion">
+                            data-identificacion="@venta.Persona.Identificacion" 
+                            onclick="location.href='@Url.Action("DetalleVenta","Ventas", new { id = venta.IdVenta })'">
                             <div class="venta-icono">
                                 @if (!string.IsNullOrEmpty(venta.FormaPago))
                                 {
