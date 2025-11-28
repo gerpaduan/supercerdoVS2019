@@ -5,6 +5,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
 
     string buscar = ViewBag.Buscar ?? "";
+    string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";
 }
 
 <div class="container-fluid">
@@ -16,9 +17,14 @@
             <div class="form-inline">
 
                 <div class="form-group mr-2">
-                    <label for="txtBuscar" class="mr-2 font-weight-bold">Buscar</label>
-                    <input type="text" id="txtBuscar" class="form-control"
-                           placeholder="Razón social o identificación..." autocomplete="off" />
+                    <div class="input-group">
+                        <input type="text" id="txtBuscar" class="form-control" placeholder="Buscar por Razón social o identificación...">
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -34,12 +40,30 @@
                 <table class="table table-bordered table-hover" id="tablaCtasCtes" width="100%" cellspacing="0">
                     <thead class="thead-dark">
                         <tr>
+
                             @foreach (System.Data.DataColumn col in Model.Columns)
                             {
-                                <th>@col.ColumnName</th>
+                                if (col.ColumnName.ToLower() == "saldo")
+                                {
+                                    <th>
+                                        @col.ColumnName
+
+                                        <!-- Botón ordenar -->
+                                        <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC" })"
+                                           class="btn btn-sm btn-light ml-2">
+                                            @(ordenSaldo == "ASC" ? "↓" : "↑")
+                                        </a>
+                                    </th>
+                                }
+                                else
+                                {
+                                    <th>@col.ColumnName</th>
+                                }
                             }
+
                         </tr>
                     </thead>
+
                     <tbody id="tbodyCtas">
                         @foreach (System.Data.DataRow row in Model.Rows)
                         {
@@ -62,7 +86,7 @@
 <script>
 
     // ==============================
-    // FORMATEAR COLUMNA "SALDO" A 2 DECIMALES
+    // FORMATEAR COLUMNA SALDO
     // ==============================
     window.addEventListener("DOMContentLoaded", function () {
 
@@ -70,9 +94,8 @@
             let cabeceras = document.querySelectorAll("#tablaCtasCtes thead th");
             let indiceSaldo = -1;
 
-            // Buscar índice de la columna Saldo
             cabeceras.forEach((th, i) => {
-                if (th.innerText.trim().toLowerCase() === "saldo") {
+                if (th.innerText.trim().toLowerCase().startsWith("saldo")) {
                     indiceSaldo = i;
                 }
             });
@@ -96,11 +119,12 @@
     });
 
     // ==============================
-    // REDIRECCIÓN AL HACER CLICK EN FILA
+    // REDIRECCIÓN AL HACER CLICK
     // ==============================
     function irACtaCte(row) {
         let id = row.children[0].innerText.trim();
-        window.location.href = "/Finanzas/CuentaCorriente?id=" + id;
+        let url = '@Url.Action("CuentaCorriente", "Finanzas")' + '?id=' + id;
+        window.location.href = url;
     }
 
     // ==============================
@@ -128,3 +152,16 @@
     });
 
 </script>
+
+<style>
+    #txtBuscar {
+        min-width: 350px;
+    }
+
+    @@media (max-width: 576px) {
+        .input-group {
+            width: 100% !important;
+            display: flex;
+        }
+    }
+</style>

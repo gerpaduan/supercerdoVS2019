@@ -32,7 +32,7 @@ namespace Web.Controllers
         // ============================================================
         // GET: /Finanzas/CtasCtes
         // ============================================================
-        public ActionResult CtasCtes(string buscar = "")
+        public ActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC")
         {
             try
             {
@@ -49,13 +49,20 @@ namespace Web.Controllers
                     }
                 }
 
+                ViewBag.Buscar = buscar;
+                ViewBag.DesdePOS = DesdePOS;
+                ViewBag.OrdenSaldo = ordenSaldo;
+
                 // ==============================
                 // Obtener DataTable como WinForms
                 // ==============================
                 DataTable dt = oCtaCteN.obtenerCtasCtes(buscar, null);
 
-                ViewBag.Buscar = buscar;
-                ViewBag.DesdePOS = DesdePOS;
+
+                // Ordenar por saldo
+                DataView dv = dt.DefaultView;
+                dv.Sort = $"Saldo {ordenSaldo}";
+                dt = dv.ToTable();
 
                 return View("CtasCtes", dt); // usa la vista que generamos antes
             }
