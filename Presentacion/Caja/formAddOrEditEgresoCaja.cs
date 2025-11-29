@@ -346,9 +346,13 @@ namespace Presentacion.Caja
                 ticket.TextoIzquierda("Id: " + oEgresoCajaE.Id.ToString());
                 ticket.TextoIzquierda("Fecha: " + Utilidades.Util_Form.fechaFormato24Horas(oEgresoCajaE.Fecha));
                 ticket.LineasGuion();
+                ticket.Negrita();
                 ticket.TextoIzquierda("Tipo: " + oEgresoCajaE.TipoEgresoCaja);
+                ticket.Negrita(false);
                 ticket.TextoMuchasLineas("Descripción: " + oEgresoCajaE.Descripcion);
+                ticket.Negrita();
                 ticket.TextoIzquierda("Monto: " + oEgresoCajaE.Monto);
+                ticket.Negrita(false);
                 ticket.TextoMuchasLineas("Detalle: " + oEgresoCajaE.Detalle);
                 DateTime? creado = oEgresoCajaE.Id.Equals(0) ? DateTime.Now : oEgresoCajaE.Creado;
                 ticket.TextoIzquierda("Creado: " + Utilidades.Util_Form.fechaFormato24Horas(creado));

@@ -237,6 +237,9 @@ namespace Presentacion.Movimientos
         {
             this.BringToFront();
             Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
+            frmLogin.soloActivos = true;
+            frmLogin.usuarioConPermiso = true;
+            frmLogin.soloAdmin = false;
             frmLogin.ShowDialog(this);
             return (oUsuario != null);
         }

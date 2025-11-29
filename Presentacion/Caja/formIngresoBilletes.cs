@@ -174,7 +174,9 @@ namespace Presentacion.Caja
                 ticket.TextoIzquierda("Fecha: " + DateTime.Now.ToString());
                 ticket.LineasGuion();
                 ticket.LineasEnBlanco(1);
+                ticket.Negrita();
                 ticket.TextoIzquierda("Total $: " + txtTotal.Text);
+                ticket.Negrita(false);
                 ticket.LineasEnBlanco(1);
                 //limpiar detalle
                 //ticket.TextoMuchasLineas(detalleCantBilletes);
