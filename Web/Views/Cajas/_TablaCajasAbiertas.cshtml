@@ -3,22 +3,34 @@
     <table class="table table-bordered table-striped" id="tablaCajas">
         <thead class="thead-dark">
             <tr>
-                <th>ID</th>
+                @*<th>ID</th>*@
                 <th>Vendedor</th>
                 <th>Fecha Inicio</th>
                 <th>Caja Inicial $</th>
-                <th>Cerrar</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             @foreach (System.Data.DataRow row in Model.Rows)
             {
                 <tr>
-                    <td>@row["id"]</td>
+                    @*<td>@row["id"]</td>*@
                     <td>@row["vendedor"]</td>
                     <td>@row["fechaHoraInicio"]</td>
                     <td>@row["cajaInicio"]</td>
                     <td>
+                        <button class="btn btn-success btn-sm"
+                                onclick="abrirModalVentas(@row["id"])">
+                            <i class="fas fa-shopping-cart"></i> Ventas
+                        </button>
+                        <button class="btn btn-warning btn-sm"
+                                onclick="abrirModalEgresos(@row["id"])">
+                            <i class="fas fa-money-bill-wave"></i> Egresos
+                        </button>
+                        <button class="btn btn-info btn-sm"
+                                onclick="abrirModalCerrarCaja(@row["id"])">
+                            <i class="fas fa-history"></i> Actividad
+                        </button>
                         <button class="btn btn-danger btn-sm"
                                 onclick="abrirModalCerrarCaja(@row["id"])">
                             <i class="fas fa-lock"></i> Cerrar
