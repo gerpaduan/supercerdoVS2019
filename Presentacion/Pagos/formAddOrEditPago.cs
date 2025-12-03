@@ -732,9 +732,9 @@ namespace Presentacion.Pagos
                 }
 
                 //se verifica que el cheque a entregar haya sido recibido o sea Propio
-                if (checkAProveedor.Checked && (!oCheque.Propio || (oCheque.PagoDe != null && oCheque.PagoDe.Id > 0)))
+                if (checkAProveedor.Checked && !(oCheque.Propio || (oCheque.PagoDe != null && oCheque.PagoDe.Id > 0)))
                 {
-                    MessageBox.Show("El Cheque a entregar debe de Propio o haber sido recibido de un cobro."+
+                    MessageBox.Show("El Cheque a entregar debe ser Propio o haber sido recibido de un cobro."+
                         "\n\nUd. está tratando de asignar un cheque que no tiene un origen.", "", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
