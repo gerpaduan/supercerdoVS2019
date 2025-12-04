@@ -1037,6 +1037,9 @@
             // 
             // pnlCargando
             // 
+            this.pnlCargando.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlCargando.BackColor = System.Drawing.Color.Transparent;
             this.pnlCargando.Controls.Add(this.pictureBox1);
             this.pnlCargando.ForeColor = System.Drawing.Color.Transparent;

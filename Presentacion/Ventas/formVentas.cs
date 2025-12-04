@@ -84,8 +84,7 @@ namespace Presentacion
                         oVentaN.obtenerVentas(sucursalId, idCliente, usuarioId, desde, hasta, descripcion, soloAnulados)
                     );
 
-
-                    aplicarRowFilter();
+                    //aplicarRowFilter(); 04/12/2025 se paso abajo porque no filtraba al cargar
 
                     grillaVentas.SuspendLayout();
                     grillaVentas.DataSource = dtVentas;
@@ -93,14 +92,9 @@ namespace Presentacion
                     grillaVentas.Columns["totalS"].Visible = !soloAnulados;
                     grillaVentas.ResumeLayout();
 
-                    //grillaVentas.AutoGenerateColumns = false;
-                    //grillaVentas.DataSource = null;
-                    //grillaVentas.DataSource = dtVentas;
-                    //grillaVentas.Columns["totalKg"].Visible = !soloAnulados;
-                    //grillaVentas.Columns["totalS"].Visible = !soloAnulados;
+                    // 04/12/2025 lo pasé debajo. No sé por qué estaba antes de la carga de grilla
+                    aplicarRowFilter();
 
-                    //cargarTotales();
-                    //aplicarRowFilter();
                 }
             }
             catch (Exception ex)

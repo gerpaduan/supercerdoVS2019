@@ -67,6 +67,12 @@ namespace Web.Controllers
             return View(venta);
         }
 
+        // GET: Ventas/DetalleVenta/5
+        public ActionResult POS()
+        {
+            // Pasar la venta a la vista
+            return View();
+        }
 
 
     }
