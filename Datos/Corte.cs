@@ -127,6 +127,27 @@ namespace Datos
 
             return null; // No se encontró
         }
+        public Entidades.Corte findCorteByCodigo(Int64 codigo, bool buscarMaestro)
+        {
+            using (var connSql = conn.conectar())
+            using (var cmd = new SqlCommand("SELECT * FROM Corte WHERE codigo = @codigo", connSql))
+            {
+                cmd.Parameters.AddWithValue("@codigo", codigo);
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = conn.TimeOut();
+
+                connSql.Open();
+                using (var dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        return MapCorte(dr, buscarMaestro);
+                    }
+                }
+            }
+
+            return null; // No se encontró
+        }
 
 
         //public Entidades.Corte getCorteById(int id, bool cargarMaestro)

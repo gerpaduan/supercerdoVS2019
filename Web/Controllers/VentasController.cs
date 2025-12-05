@@ -67,13 +67,113 @@ namespace Web.Controllers
             return View(venta);
         }
 
-        // GET: Ventas/DetalleVenta/5
+
         public ActionResult POS()
         {
-            // Pasar la venta a la vista
-            return View();
+            var venta = Session["VentaActiva"] as Venta;
+
+            if (venta == null)
+                venta = new Venta { LineasVenta = new List<LineaVenta>() };
+
+            return View(venta);
+        }
+        // ======================================================
+        // GET /Ventas/BuscarProducto?codigo=123
+        // ======================================================
+        public JsonResult BuscarProducto(Int64 codigo)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(codigo.ToString()))
+                    return Json(new { error = "Código vacío" }, JsonRequestBehavior.AllowGet);
+
+                // Buscar producto (Corte)
+                // Reemplazar por tu método real para obtener productos
+                var gestorCortes = new Negocio.Corte();
+                var corte = gestorCortes.findCorteByCodigo(codigo, false);
+
+                if (corte == null)
+                    return Json(new { error = "Producto no encontrado" }, JsonRequestBehavior.AllowGet);
+
+                // Respuesta JSON
+                return Json(new
+                {
+                    id = corte.IdCorte,
+                    nombre = corte.CorteDesc,
+                    precioKg = corte.PrecioKg,
+                    codigo = corte.codigo,
+                    pesable = corte.Pesable
+                },
+                JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
 
+
+        // ======================================================
+        // POST /Ventas/AgregarProducto    (AJAX)
+        // ======================================================
+        [HttpPost]
+        public JsonResult AgregarProducto(int idCorte, float cantidadKg)
+        {
+            try
+            {
+                // Recuperar o crear venta activa desde la Session
+                var venta = Session["VentaActiva"] as Venta;
+
+                if (venta == null)
+                {
+                    venta = new Venta
+                    {
+                        //Fecha = DateTime.Now,
+                        LineasVenta = new System.Collections.Generic.List<LineaVenta>()
+                    };
+
+                    Session["VentaActiva"] = venta;
+                }
+
+                // Obtener el producto
+                var gestorCortes = new  Negocio.Corte();
+                var corte = gestorCortes.findCorteById(idCorte, false);
+
+                if (corte == null)
+                    return Json(new { error = "Producto no encontrado por ID" });
+
+                // Crear la línea
+                var linea = new LineaVenta
+                {
+                    Corte = corte,
+                    PrecioKg = corte.PrecioKg,
+                    CantKg = cantidadKg
+                };
+
+                venta.LineasVenta.Add(linea);
+
+                // Respuesta con la venta actualizada
+                return Json(new
+                {
+                    ok = true,
+                    total = venta.LineasVenta.Sum(x => x.CantKg * x.PrecioKg),
+                    lineas = venta.LineasVenta.Select((x, i) => new
+                    {
+                        index = i + 1,
+                        producto = x.Corte.CorteDesc,
+                        codigo = x.Corte.codigo,
+                        cant = x.CantKg.ToString("0.###"),
+                        precio = x.PrecioKg.ToString("C"),
+                        subtotal = (x.CantKg * x.PrecioKg).ToString("C")
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { error = ex.Message });
+            }
+        }
     }
+
 }

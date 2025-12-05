@@ -2018,6 +2018,7 @@
     <Content Include="Views\Ventas\DetalleVenta.cshtml" />
     <Content Include="Views\Finanzas\CtasCtes.cshtml" />
     <Content Include="Views\Ventas\POS.cshtml" />
+    <Content Include="Views\Shared\_LayoutPOS.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -1,7 +1,10 @@
 ﻿@{
     var user = Session["Usuario"] as Entidades.Usuario;
+    
+    var controller = HttpContext.Current.Request.RequestContext.RouteData.Values["controller"].ToString();
+    var action = HttpContext.Current.Request.RequestContext.RouteData.Values["action"].ToString();
 
-    if (user == null)
+    if (user == null && !(controller == "Login" && action == "Index"))
     {
         Response.Redirect("~/Login/Index");
     }

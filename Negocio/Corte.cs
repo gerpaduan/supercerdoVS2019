@@ -20,6 +20,10 @@ namespace Negocio
         {
             return oCorteD.findCorteById(idCorte, buscarMaestro);
         }
+        public Entidades.Corte findCorteByCodigo(Int64 codigo, bool buscarMaestro)
+        {
+            return oCorteD.findCorteByCodigo(codigo, buscarMaestro);
+        }
 
         /// <summary>
         /// Listado Productos desde WEB
