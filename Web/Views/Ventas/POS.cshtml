@@ -1,43 +1,105 @@
-﻿@model dynamic
-@{
-    Layout = "~/Views/Shared/_LayoutBase.cshtml";
-    var cajaId = Model?.CajaId ?? 1;
+﻿@model Entidades.Venta
+
+@{ ViewBag.Title = "CarniSys web | Punto de Venta";
+    Layout = "~/Views/Shared/_LayoutPOS.cshtml";
 }
+
+
 
 <!-- Vista: Punto de Venta (CSHTML) - SB Admin 2 estilo -->
 <div class="container-fluid p-2" id="pos-app">
 
     <div class="card shadow-lg border-0">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="m-0">Punto de Venta - <small class="text-light">@ViewBag.Tienda ?? "Mi Tienda"</small></h4>
-            </div>
-            <div class="d-flex align-items-center">
-                <span class="me-3">Caja <strong>@cajaId</strong></span>
-                <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
-                <button class="btn btn-sm btn-outline-light" id="btn-cerrar-caja">Cerrar Caja</button>
-            </div>
-        </div>
 
+        <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
         <div class="card-body" style="min-height:600px;">
             <div class="row h-100">
-                <!-- IZQUIERDA: Interacción / lector -->
-                <div class="col-lg-7 d-flex flex-column">
 
-                    <div class="text-center mb-3">
-                        <img src="~/images/barcode-example.png" alt="lector" width="260" />
-                        <h5 class="mt-2">Pase el código del producto por el lector</h5>
+                <!-- ===================== -->
+                <!-- LISTA DE PRODUCTOS / CARRITO -->
+                <!-- ===================== -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <div class="card shadow mb-3">
+                        <div class="card-body p-2">
+
+                            <table class="table table-sm tabla-productos">
+                                <tbody id="tablaItems">
+
+                                    <!-- Estado vacío -->
+                                    <tr id="filaVacia">
+                                        <td class="text-muted text-center py-3">
+                                            No hay productos agregados
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+
+                        </div>
                     </div>
+                </div>
 
+
+                <!--  Interacción / lector -->
+                <div class="col-lg-6 d-flex flex-column">
+                    <!-- ====================== -->
+                    <!--   CÓDIGO DE PRODUCTO   -->
+                    <!-- ====================== -->
                     <div class="row g-2 mb-3">
                         <div class="col-12">
                             <div class="input-group input-group-lg">
-                                <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                                <input type="text" id="inputCodigo" class="form-control" placeholder="Esperando lectura..." autofocus />
-                                <button class="btn btn-outline-secondary" id="btnAgregarManual" data-bs-toggle="modal" data-bs-target="#modalDigitarCodigo">Digitar</button>
+                                <span class="input-group-text">
+                                    <i class="fas fa-barcode"></i>
+                                </span>
+
+                                <!-- ESTE INPUT ES EL TUYO ORIGINAL -->
+                                <input type="text" id="inputCodigo" class="form-control"
+                                       placeholder="Esperando lectura..." autocomplete="off" autofocus />
+
+                                <!-- Botón para abrir modal de digitar -->
+                                <button class="btn btn-outline-secondary"
+                                        id="btnAgregarManual"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalDigitarCodigo">
+                                    Digitar
+                                </button>
                             </div>
                         </div>
                     </div>
+
+
+                    <!-- ====================== -->
+                    <!--   INFO DEL PRODUCTO   -->
+                    <!-- ====================== -->
+                    <div id="producto-info" class="p-3 rounded bg-light border">
+
+                        <!-- Nombre y Precio -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 id="prodNombre" class="fw-bold text-muted m-0">Info producto...</h4>
+                            <div id="prodPrecio" class="fw-bold text-muted m-0"></div>
+                        </div>
+
+                        <!-- Cantidad y Subtotal -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="w-50 me-2">
+                                <label class="form-label">Cantidad / Peso (kg)</label>
+                                <input type="text" id="inputCantidad" class="form-control form-control-lg" disabled />
+                            </div>
+
+                            <div class="text-end w-50">
+                                <label class="form-label d-block">Subtotal</label>
+                                <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
+                            </div>
+                        </div>
+
+                        <!-- Botón agregar -->
+                        <button id="btnAgregarProducto" class="btn btn-success btn-lg w-100" disabled>
+                            ➕ Agregar a la venta
+                        </button>
+
+                    </div>
+
+
 
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div>
@@ -74,48 +136,6 @@
                     </div>
 
                 </div>
-
-                <!-- DERECHA: Tabla items -->
-                <div class="col-lg-5 d-flex flex-column">
-                    <div class="card border-0 shadow-sm mb-2">
-                        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                            <h5 class="m-0">Productos agregados</h5>
-                            <div><small id="lblItemsCount">0 items</small></div>
-                        </div>
-                        <div class="card-body p-0" style="max-height:460px; overflow:auto;">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Producto</th>
-                                        <th class="text-end">Cant.</th>
-                                        <th class="text-end">Precio</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaItems">
-                                    <tr id="fila-vacia"><td colspan="3" class="text-center text-muted py-4">No hay productos</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="card-footer d-flex justify-content-between align-items-center">
-                            <div>
-                                <button class="btn btn-sm btn-outline-secondary" id="btn-switch-dark">Modo oscuro</button>
-                            </div>
-                            <div class="text-end">
-                                <strong>Total: </strong> <span id="lblTotal">$ 0,00</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Panel cliente / segunda pantalla -->
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-info text-white">Pantalla Cliente</div>
-                        <div class="card-body">
-                            <div id="clientePantalla">Bienvenido - Pase un producto</div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
@@ -169,147 +189,281 @@
 
 @section Scripts {
     <script>
-        // Variables internas
-        let items = [];
-        let subtotal = 0;
 
-        // Formateo simple de moneda (adaptar a cultura si hace falta)
-        function fmtCurrency(n) { return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS'}).format(n); }
+        let typingTimer = null;
+        let productoSeleccionado = null;
+        let precioActual = 0;
 
-        function renderTabla() {
-            const tbody = document.getElementById('tablaItems');
-            tbody.innerHTML = '';
-            if (items.length===0) {
-                tbody.innerHTML = '<tr id="fila-vacia"><td colspan="3" class="text-center text-muted py-4">No hay productos</td></tr>';
-                document.getElementById('lblItemsCount').innerText = '0 items';
-                document.getElementById('lblSubtotal').innerText = fmtCurrency(0);
-                document.getElementById('lblTotal').innerText = fmtCurrency(0);
-                document.getElementById('clientePantalla').innerText = 'Bienvenido - Pase un producto';
-                return;
-            }
-            items.forEach((it, idx)=>{
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${it.nombre}</td><td class="text-end">${it.cantidad}</td><td class="text-end">${fmtCurrency(it.total)}</td>`;
-                tbody.appendChild(tr);
-            });
-            const total = items.reduce((s,i)=>s+i.total,0);
-            document.getElementById('lblItemsCount').innerText = items.length + ' items';
-            document.getElementById('lblSubtotal').innerText = fmtCurrency(total);
-            document.getElementById('lblTotal').innerText = fmtCurrency(total);
-            document.getElementById('clientePantalla').innerText = items[items.length-1].nombre + ' - ' + fmtCurrency(items[items.length-1].total);
-        }
-
-        // Simula llamada al servidor para obtener producto por código
-        async function fetchProductoPorCodigo(codigo) {
-            // Reemplazar por fetch real: /Productos/GetByBarcode?codigo=...
-            // Ejemplo de respuesta:
-            // { ok:true, data: { id:1, nombre:'Carne x', precioKg:1200, esPesable:true } }
-            return new Promise(resolve=>{
-                setTimeout(()=>{
-                    // datos simulados
-                    const esPesable = codigo.endsWith('9'); // solo ejemplo
-                    resolve({ ok:true, data: { id: codigo, nombre: 'Producto ' + codigo, precioKg: 1200, precioUnitario:250, esPesable: esPesable } });
-                },200);
-            });
-        }
-
-        // Agregar producto (no pesable)
-        function agregarProducto(producto, cantidad=1, peso=null) {
-            let total = producto.esPesable && peso ? producto.precioKg * parseFloat(peso) : (producto.precioUnitario || producto.precioKg) * cantidad;
-            items.push({ id: producto.id, nombre: producto.nombre, cantidad: producto.esPesable? peso : cantidad, total: total });
-            renderTabla();
-            playBeep();
-        }
-
-        // Beep al agregar
-        function playBeep() {
-            try{
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.type = 'sine'; o.frequency.value = 1000; g.gain.value=0.05;
-                o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{o.stop();},80);
-            }catch(e){ console.log('beep no soportado'); }
-        }
-
-        // Eventos entrada codigo
-        document.addEventListener('DOMContentLoaded', ()=>{
-            const inputCodigo = document.getElementById('inputCodigo');
-            inputCodigo.addEventListener('keydown', async (e)=>{
-                if (e.key === 'Enter') {
-                    const codigo = inputCodigo.value.trim();
-                    if (!codigo) return;
-                    const res = await fetchProductoPorCodigo(codigo);
-                    if (!res.ok) { alert('Producto no encontrado'); return; }
-                    const prod = res.data;
-                    if (prod.esPesable) {
-                        // abrir modal pesable y mostrar peso de balanza si existe
-                        const modal = new bootstrap.Modal(document.getElementById('modalPesable'));
-                        document.getElementById('txtPesoPesable').value = '';
-                        // si se dispone endpoint /peso usarlo para llenar peso automáticamente
-                        leerPesoUnaVez().then(p=>{ if(p) document.getElementById('txtPesoPesable').value = p; });
-                        document.getElementById('btnAgregarPesable').onclick = ()=>{ agregarProducto(prod,1,document.getElementById('txtPesoPesable').value); modal.hide(); };
-                        modal.show();
-                    } else {
-                        agregarProducto(prod,1,null);
-                    }
-                    inputCodigo.value = '';
-                }
-            });
-
-            // Modal digitar: teclas
-            document.querySelectorAll('.num-key').forEach(b=>{
-                b.addEventListener('click',(ev)=>{
-                    const v = ev.target.innerText;
-                    document.getElementById('txtCodigoManual').value += v;
-                });
-            });
-            document.getElementById('key-back').addEventListener('click', ()=>{
-                const t = document.getElementById('txtCodigoManual'); t.value = t.value.slice(0,-1);
-            });
-            document.getElementById('key-ok').addEventListener('click', async ()=>{
-                const codigo = document.getElementById('txtCodigoManual').value.trim();
-                if (!codigo) return;
-                const res = await fetchProductoPorCodigo(codigo);
-                if (!res.ok) { alert('No encontrado'); return; }
-                const prod = res.data;
-                if (prod.esPesable) {
-                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPesable')).show();
-                } else {
-                    agregarProducto(prod,1,null);
-                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDigitarCodigo')).hide();
-                }
-                document.getElementById('txtCodigoManual').value = '';
-            });
-
-            // Fullscreen toggle
-            document.getElementById('btn-toggle-fullscreen').addEventListener('click', ()=>{
-                if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen();
-            });
-
-            // Conexión a balanza: polling cada 800ms (ajustar según tu endpoint)
-            setInterval(async ()=>{
-                try{
-                    const resp = await fetch('/peso'); // endpoint local que devolvía el usuario
-                    if (!resp.ok) throw 'no ok';
-                    const data = await resp.json();
-                    const peso = data.peso || data; // según implementación
-                    document.getElementById('estadoBalanza').innerText = peso + ' kg';
-                    document.getElementById('barraBalanza').style.width = '100%';
-                }catch(e){
-                    document.getElementById('estadoBalanza').innerText = 'Desconectada';
-                    document.getElementById('barraBalanza').style.width = '10%';
-                }
-            }, 1200);
-
+        // ================================
+        // BÚSQUEDA EN VIVO
+        // ================================
+        $("#inputCodigo").on("keyup", function () {
+            let cod = $(this).val().trim();
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => terminarEscritura(cod), 250);
         });
 
-        // Leer peso una sola vez (para modal)
-        async function leerPesoUnaVez(){
-            try{
-                const r = await fetch('/peso'); const j = await r.json(); return j.peso || j;
-            }catch(e){ return null; }
+        function terminarEscritura(codigo) {
+
+            if (codigo === "") {
+                mostrarEsperando();
+                return;
+            }
+
+            $.ajax({
+                url: "/Ventas/BuscarProducto",
+                method: "GET",
+                data: { codigo: codigo },
+
+                success: function (data) {
+                    if (!data || data.error) {
+                        mostrarSinCoincidencia();
+                        return;
+                    }
+
+                    mostrarProducto(data);
+                    productoSeleccionado = data;
+                },
+
+                error: function () {
+                    mostrarSinCoincidencia();
+                }
+            });
         }
+
+        // --------------------------------------------------------------------
+        //  ESTADOS DEL PANEL
+        // --------------------------------------------------------------------
+
+        // PRODUCTO ENCONTRADO
+        function mostrarProducto(p) {
+
+            $("#prodNombre")
+                .text(p.nombre)
+                .removeClass("text-muted")
+                .addClass("fw-bold");
+
+            $("#prodPrecio")
+                .text("$ " + p.precioKg.toLocaleString("es-AR"))
+                .removeClass("text-muted")
+                .addClass("fw-bold");
+
+            precioActual = p.precioKg;
+
+            $("#inputCantidad")
+                .prop("disabled", false)
+                //.val(p.pesable ? obtenerPesoBalanza() : "")
+                .focus();
+
+            $("#prodSubtotal").text("$ 0,00");
+            calcularSubtotal();
+
+            $("#btnAgregarProducto").prop("disabled", false);
+        }
+
+
+        // NO HAY COINCIDENCIA
+        function mostrarSinCoincidencia() {
+
+            productoSeleccionado = null;
+            precioActual = 0;
+
+            $("#prodNombre")
+                .text("Sin coincidencia")
+                .removeClass("fw-bold")
+                .addClass("text-muted");
+
+            $("#prodPrecio")
+                .text("")
+                .addClass("text-muted");
+
+            $("#prodSubtotal").text("$ 0,00");
+
+            $("#inputCantidad")
+                .prop("disabled", true)
+                .val("");
+
+            $("#btnAgregarProducto").prop("disabled", true);
+        }
+
+
+        // ESTADO INICIAL
+        function mostrarEsperando() {
+
+            productoSeleccionado = null;
+            precioActual = 0;
+
+            $("#prodNombre")
+                .text("Esperando código…")
+                .removeClass("fw-bold")
+                .addClass("text-muted");
+
+            $("#prodPrecio").text("");
+
+            $("#prodSubtotal").text("$ 0,00");
+
+            $("#inputCantidad")
+                .prop("disabled", true)
+                .val("");
+
+            $("#btnAgregarProducto").prop("disabled", true);
+        }
+
+
+        // --------------------------------------------------------------------
+        // CALCULAR SUBTOTAL EN VIVO
+        // --------------------------------------------------------------------
+        $("#inputCantidad").on("input", calcularSubtotal);
+
+        function calcularSubtotal() {
+
+            let cant = parseFloat($("#inputCantidad").val().replace(",", "."));
+
+            if (isNaN(cant) || cant <= 0 || precioActual <= 0) {
+                $("#prodSubtotal").text("$ 0,00");
+                $("#btnAgregarProducto").prop("disabled", true);
+                return;
+            }
+
+            let subtotal = cant * precioActual;
+
+            $("#prodSubtotal").text(
+                "$ " + subtotal.toLocaleString("es-AR", {
+                    minimumFractionDigits: 2
+                })
+            );
+
+            $("#btnAgregarProducto").prop("disabled", false);
+        }
+
+
+        // ====================================================
+        // BUSCAR PRODUCTO (ya lo usás)
+        // ====================================================
+        function seleccionarProducto(data) {
+            productoSeleccionado = data;
+        }
+
+        // ====================================================
+        // AGREGAR CUANDO PRESIONA ENTER EN CANTIDAD
+        // ====================================================
+        $("#inputCantidad").on("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                agregarProducto();
+            }
+        });
+
+        $("#btnAgregarProducto").on("click", function () {
+            agregarProducto();
+        });
+
+        // ====================================================
+        // FUNCIÓN PRINCIPAL PARA AGREGAR
+        // ====================================================
+        function agregarProducto() {
+
+            if (!productoSeleccionado) {
+                alert("Selecciona un producto primero");
+                return;
+            }
+
+            let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
+
+            if (isNaN(cantidad) || cantidad <= 0) {
+                alert("Cantidad inválida");
+                return;
+            }
+
+            $.ajax({
+                url: "/Ventas/AgregarProducto",
+                method: "POST",
+                data: {
+                    idCorte: productoSeleccionado.id,
+                    cantidadKg: cantidad
+                },
+                success: function (r) {
+
+                    if (!r.ok) {
+                        alert(r.error ?? "Error al agregar");
+                        return;
+                    }
+
+                    renderTablaProductos(r.lineas);
+
+                    // limpiar campos
+                    $("#inputCodigo").val("").focus();
+                    $("#inputCantidad").val("");
+                    $("#prodSubtotal").text("$ 0,00");
+
+                    productoSeleccionado = null;
+                }
+            });
+        }
+
+        // ====================================================
+        // RENDER DE LA TABLA (mantiene tu diseño)
+        // ====================================================
+        function renderTablaProductos(lineas) {
+
+            let tbody = $("#tablaItems");
+            tbody.empty();
+
+            if (!lineas || lineas.length === 0) {
+                tbody.append(`
+                <tr id="filaVacia">
+                    <td class="text-muted text-center py-3">
+                        No hay productos agregados
+                    </td>
+                </tr>
+            `);
+                return;
+            }
+
+            lineas.forEach(l => {
+                tbody.append(`
+                <tr data-id="${l.index}" class="fila-item">
+                    <td>
+                        <div class="fw-bold">
+                            #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
+                        </div>
+
+                        <div class="d-flex justify-content-between item-detalle">
+                            <span>${l.cant} x ${l.precio}</span>
+                            <span class="fw-bold">${l.subtotal}</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+            });
+        }
+
+        // Fullscreen toggle
+        document.getElementById('btn-toggle-fullscreen').addEventListener('click', () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        });
 
     </script>
 }
+
+<style>
+    .fila-item {
+        cursor: pointer;
+    }
+
+        .fila-item:hover {
+            background: #f2f2f2;
+        }
+
+    .tabla-productos td {
+        border: none;
+        padding-bottom: 1rem;
+        padding-top: 0.5rem;
+    }
+
+    .item-detalle {
+        font-size: 0.95rem;
+        color: #444;
+    }
+</style>

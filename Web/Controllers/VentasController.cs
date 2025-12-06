@@ -68,6 +68,7 @@ namespace Web.Controllers
         }
 
 
+        #region POS
         public ActionResult POS()
         {
             var venta = Session["VentaActiva"] as Venta;
@@ -174,6 +175,8 @@ namespace Web.Controllers
                 return Json(new { error = ex.Message });
             }
         }
+
+        #endregion
     }
 
 }
