@@ -9,8 +9,7 @@
     string fechaDesde = ViewBag.FechaDesde ?? "";
 }
 
-<div class="container-fluid p-3" style="height:100vh; display:flex; flex-direction:column;">
-
+<div class="container-fluid p-0" style="height:100vh; display:flex; flex-direction:column;">
     <!-- =======================
          CABECERA PERSONA + SALDO
          ======================= -->
@@ -19,7 +18,7 @@
             <h5 class="mb-0"><strong>@persona</strong></h5>
         </div>
         <div>
-            <h4 class="mb-0">
+            <h5 class="mb-0">
                 Saldo:
                 @if (saldo >= 0)
                 {
@@ -29,7 +28,7 @@
                 {
                     <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
                 }
-            </h4>
+            </h5>
         </div>
     </div>
 
@@ -39,42 +38,71 @@
     <div class="card shadow mb-3">
         <div class="card-body">
 
-            <form method="get" action="@Url.Action("CtaCtePersona", "Finanzas")" class="form-inline">
+            <form method="get" action="@Url.Action("CtaCtePersona", "Finanzas")">
 
                 <input type="hidden" name="idPersona" value="@ViewBag.IdPersona" />
 
-                <div class="form-group mr-2">
-                    <label class="mr-1">Desde:</label>
+                <!-- FECHA + FILTRAR: usamos input-group para que queden SIEMPRE en la misma línea -->
+                <div class="input-group mb-3" style="max-width: 520px;">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Desde</span>
+                    </div>
                     <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary ml-2">
-                    <i class="fas fa-filter"></i> Filtrar
-                </button>
-
-                <!-- BOTONES ACCIÓN -->
-                <div class="ml-auto">
-
+                <!-- BOTONES PARA DESKTOP (md+) -->
+                <div class="d-none d-md-flex justify-content-end align-items-center">
                     <a href="@Url.Action("AgregarPagoCobro", "Finanzas", new { idPersona = ViewBag.IdPersona })"
                        class="btn btn-success mr-2">
                         <i class="fas fa-plus"></i> Agregar Pago / Cobro
                     </a>
 
-                    <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
-                       class="btn btn-outline-success mr-2">
-                        <i class="fas fa-file-excel"></i> Excel
-                    </a>
-
                     <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
-                       class="btn btn-outline-danger">
+                       class="btn btn-outline-danger mr-2">
                         <i class="fas fa-file-pdf"></i> PDF
                     </a>
+
+                    <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
+                       class="btn btn-outline-success">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </a>
+                </div>
+
+                <!-- BOTONES PARA MOBILE (xs - sm) -->
+                <div class="d-md-none mt-3">
+                    <!-- Agregar Pago / Cobro 100% -->
+                    <a href="@Url.Action("AgregarPagoCobro", "Finanzas", new { idPersona = ViewBag.IdPersona })"
+                       class="btn btn-success btn-block mb-2">
+                        <i class="fas fa-plus"></i> Agregar Pago / Cobro
+                    </a>
+
+                    <!-- PDF y EXCEL: en la misma línea, 50% cada uno -->
+                    <div class="row no-gutters">
+                        <div class="col-6 pr-1">
+                            <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
+                               class="btn btn-outline-danger btn-block">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </a>
+                        </div>
+                        <div class="col-6 pl-1">
+                            <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
+                               class="btn btn-outline-success btn-block">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
             </form>
 
         </div>
     </div>
+
 
     <!-- =======================
          TABLA CON SCROLL
