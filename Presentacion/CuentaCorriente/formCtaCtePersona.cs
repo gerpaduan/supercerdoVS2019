@@ -292,6 +292,27 @@ namespace Presentacion.CuentaCorriente
             //tipoTicket.ctaCtePersona(oPersonaE, dtMov);
             try
             {
+                DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesdePick.Value);
+
+                // Obtener persona y saldo igual que en la vista
+                string persona = oPersonaE.razonSocial;
+
+                foreach (char c in Path.GetInvalidFileNameChars())
+                {
+                    persona = persona.Replace(c, '_');
+                }
+
+                byte[] pdfBytes = Utilidades.GenerarDocs.GenerarPdfCtaCtePersona(dtMov, fechaDesdePick.Value); // GenerarPdfPersona(dtMov, persona, saldo, fechaD);
+
+                // 2. Guardar el PDF en una ruta temporal automática
+                string tempPath = Path.Combine(Path.GetTempPath(), $"{persona}_CuentaCorriente.pdf");
+                File.WriteAllBytes(tempPath, pdfBytes);
+
+                // 3. Abrir el PDF
+                System.Diagnostics.Process.Start(tempPath);
+
+                return;
+
                 //Creating iTextSharp Table from the DataTable data
                 PdfPTable pdfTable = new PdfPTable(6);//grillaMovCtaCte.ColumnCount);
                 pdfTable.DefaultCell.Padding = 3;

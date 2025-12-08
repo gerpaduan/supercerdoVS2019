@@ -122,8 +122,21 @@
     // REDIRECCIÓN AL HACER CLICK
     // ==============================
     function irACtaCte(row) {
+
         let id = row.children[0].innerText.trim();
-        let url = '@Url.Action("CuentaCorriente", "Finanzas")' + '?id=' + id;
+
+        // Fecha de hoy menos 1 mes
+        let hoy = new Date();
+        hoy.setMonth(hoy.getMonth() - 1);
+
+        // Convertir a yyyy-MM-dd
+        let fechaDesde = hoy.toISOString().split('T')[0];
+
+        // Armamos la URL con ambos parámetros
+        let url = '@Url.Action("CtaCtePersona", "Finanzas")'
+                  + '?idPersona=' + id
+                  + '&fechaDesde=' + fechaDesde;
+
         window.location.href = url;
     }
 

@@ -1,0 +1,151 @@
+﻿@model System.Data.DataTable
+
+@{
+    ViewBag.Title = "Cuenta Corriente";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    string persona = ViewBag.Persona.RazonSocial;
+    decimal saldo = ViewBag.SaldoPersona;
+    string fechaDesde = ViewBag.FechaDesde ?? "";
+}
+
+<div class="container-fluid p-3" style="height:100vh; display:flex; flex-direction:column;">
+
+    <!-- =======================
+         CABECERA PERSONA + SALDO
+         ======================= -->
+    <div class="alert alert-primary d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0"><strong>@persona</strong></h5>
+        </div>
+        <div>
+            <h4 class="mb-0">
+                Saldo:
+                @if (saldo >= 0)
+                {
+                    <span class="text-success font-weight-bold">$ @saldo.ToString("N2")</span>
+                }
+                else
+                {
+                    <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
+                }
+            </h4>
+        </div>
+    </div>
+
+    <!-- =======================
+         FILTROS: SOLO FECHA DESDE
+         ======================= -->
+    <div class="card shadow mb-3">
+        <div class="card-body">
+
+            <form method="get" action="@Url.Action("CtaCtePersona", "Finanzas")" class="form-inline">
+
+                <input type="hidden" name="idPersona" value="@ViewBag.IdPersona" />
+
+                <div class="form-group mr-2">
+                    <label class="mr-1">Desde:</label>
+                    <input type="date" name="fechaDesde" value="@fechaDesde" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-primary ml-2">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+
+                <!-- BOTONES ACCIÓN -->
+                <div class="ml-auto">
+
+                    <a href="@Url.Action("AgregarPagoCobro", "Finanzas", new { idPersona = ViewBag.IdPersona })"
+                       class="btn btn-success mr-2">
+                        <i class="fas fa-plus"></i> Agregar Pago / Cobro
+                    </a>
+
+                    <a href="@Url.Action("ExportarExcelPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
+                       class="btn btn-outline-success mr-2">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </a>
+
+                    <a href="@Url.Action("ExportarPdfPersona", "Finanzas", new { idPersona = ViewBag.IdPersona, fechaDesde = fechaDesde })"
+                       class="btn btn-outline-danger">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <!-- =======================
+         TABLA CON SCROLL
+         ======================= -->
+    <div class="card shadow" style="flex:1 1 auto; overflow:hidden;">
+        <div class="card-body p-2" style="height:100%; overflow:hidden;">
+
+            <div style="height:100%; overflow-y:auto;">
+
+                <table class="table table-bordered table-hover" id="tablaPersona" width="100%" cellspacing="0">
+
+                    <thead class="thead-dark">
+                        <tr>
+
+                            <!-- ID oculto -->
+                            <th style="display:none;">ID</th>
+
+                            <th>Fecha</th>
+                            <th>Tabla</th>
+                            <th>Detalle</th>
+                            <th style="text-align:right;">Importe</th>
+                            <th style="text-align:right;">Saldo</th>
+                            <th>Sucursal</th>
+
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (System.Data.DataRow row in Model.Rows)
+                        {
+                            <tr onclick="verMovimiento(@row[0])" style="cursor:pointer;">
+
+                                <!-- ID oculto -->
+                                <td style="display:none;">@row["ID"]</td>
+
+                                <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
+                                <td>@row["Tabla"]</td>
+                                <td>@row["Detalle"]</td>
+
+                                <td style="text-align:right; color:@(Convert.ToDecimal(row["Importe"]) >= 0 ? "green" : "red"); font-weight:bold;">
+                                    @Convert.ToDecimal(row["Importe"]).ToString("N2")
+                                </td>
+
+                                <td style="text-align:right;">
+                                    @Convert.ToDecimal(row["Saldo"]).ToString("N2")
+                                </td>
+
+                                <td>@row["Sucursal"]</td>
+
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function verMovimiento(id) {
+        let url = '@Url.Action("MovimientoDetalle", "Finanzas")' + '?id=' + id;
+        window.location.href = url;
+    }
+</script>
+
+<style>
+    #tablaPersona td, #tablaPersona th {
+        white-space: nowrap;
+    }
+</style>
