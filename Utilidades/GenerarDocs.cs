@@ -105,7 +105,7 @@ namespace Utilidades
             12f  // Sucursal
                 });
 
-                string[] cols = { "Fecha", "Tabla", "Detalle", "Importe", "Saldo", "Sucursal" };
+                string[] cols = { "Fecha", "Operacion", "Detalle", "Importe", "Saldo", "Sucursal" };
 
                 // -------- ENCABEZADOS --------
                 foreach (var c in cols)

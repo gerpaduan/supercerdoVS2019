@@ -83,6 +83,13 @@ namespace Web.Controllers
         {
             try
             {
+                var user = Session["Usuario"] as Entidades.Usuario;
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtaCtePersona, null))
+                {
+                    ViewBag.Seccion = "Cuenta Corriente Persona";
+                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                }
+
                 // Fecha por defecto = hoy
                 if (!fechaDesde.HasValue)
                     fechaDesde = DateTime.Now.Date;

@@ -148,6 +148,7 @@ namespace Presentacion.CuentaCorriente
                 grillaMovCtaCte.Columns["detalle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 
                 //formato
+                grillaMovCtaCte.Columns["tabla"].HeaderText = "Operacion";
                 grillaMovCtaCte.Columns["importe"].DefaultCellStyle.Format = "N2";
                 grillaMovCtaCte.Columns["Saldo"].DefaultCellStyle.Format = "N2";
 
