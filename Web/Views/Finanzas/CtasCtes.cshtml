@@ -11,13 +11,13 @@
 <div class="container-fluid">
 
     <!-- PANEL SUPERIOR DE BÚSQUEDA -->
+    <!-- tu HTML (sin cambios importantes) -->
     <div class="card shadow mb-4">
         <div class="card-body">
-
             <div class="form-inline">
-
-                <div class="form-group mr-2">
-                    <div class="input-group">
+                <div class="form-group mr-2 w-100">
+                    <!-- w-100 para que ocupe todo -->
+                    <div class="input-group w-100">
                         <input type="text" id="txtBuscar" class="form-control" placeholder="Buscar por Razón social o identificación...">
                         <div class="input-group-append">
                             <span class="input-group-text">
@@ -26,11 +26,10 @@
                         </div>
                     </div>
                 </div>
-
             </div>
-
         </div>
     </div>
+
 
     <!-- GRILLA -->
     <div class="card shadow">
@@ -167,14 +166,37 @@
 </script>
 
 <style>
+
+    /* CSS corregido */
     #txtBuscar {
-        min-width: 350px;
+      min-width: 0;         /* importante: evitar min-width forzante */
+      width: 100%;          /* que el input use el espacio disponible */
+      box-sizing: border-box;
     }
 
     @@media (max-width: 576px) {
-        .input-group {
-            width: 100% !important;
-            display: flex;
-        }
-    }
+      .form-inline {        /* aseguramos que no rompa el flujo */
+        display: block;
+        width: 100%;
+      }
+
+  .input-group,
+  .form-group {
+    width: 100% !important;
+  }
+
+  /* evitar que el icono salte de línea */
+  .input-group {
+    display: flex;
+    flex-wrap: nowrap;   /* evita que el icono baje */
+    align-items: stretch;
+  }
+
+  .input-group .form-control {
+    min-width: 0;        /* permite que el input se encoja dentro del flex */
+    flex: 1 1 auto;
+  }
+}
+
+
 </style>
