@@ -161,7 +161,7 @@ namespace Presentacion.Pagos
                     txtNroRecibo.Focus();
                     return;
                 }
-                string nroRemitoFormateado = oSucursalE.idSucursal.ToString("D3") + "-" + (oCtaCteN.getUltimoIdPago() + 1).ToString("D8");
+                string nroRemitoFormateado = oCtaCteN.getNroReciboAutomatico(oSucursalE.idSucursal);// oSucursalE.idSucursal.ToString("D3") + "-" + (oCtaCteN.getUltimoIdPago() + 1).ToString("D8");
 
                 txtNroRecibo.Text = oPagoE.Id > 0 ? txtNroRecibo.Text : nroRemitoFormateado;// (oCtaCteN.getUltimoIdPago() + 1).ToString();
             }

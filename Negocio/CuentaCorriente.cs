@@ -6,6 +6,7 @@ using System.Data;
 using Entidades;
 using System.Data.SqlClient;
 using System.Transactions;
+using Datos;
 
 namespace Negocio
 {
@@ -149,6 +150,11 @@ namespace Negocio
         #endregion
 
         #region Pagos
+
+        public string getNroReciboAutomatico(int idSucursal)
+        {
+            return idSucursal.ToString("D3") + "-" + (getUltimoIdPago() + 1).ToString("D8");
+        }
 
         public int getUltimoIdPago()
         {

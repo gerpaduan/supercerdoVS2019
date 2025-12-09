@@ -9,12 +9,14 @@ using System.Globalization;
 using System.IO;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
+using Datos;
+using System.Collections.Generic;
 
 namespace Web.Controllers
 {
     public class FinanzasController : Controller
     {
-        private CuentaCorriente oCtaCteN = new CuentaCorriente();
+        private Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
         private Usuario oUsuarioN = new Usuario();
         private readonly Negocio.Persona oPersonasN = new Negocio.Persona();
 
@@ -192,163 +194,6 @@ namespace Web.Controllers
         }
 
 
-
-        private byte[] GenerarPdfPersona(DataTable dt, string persona, decimal saldo, DateTime fechaDesde)
-        {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                var doc = new Document(PageSize.A4, 25, 25, 25, 25);
-                PdfWriter writer = PdfWriter.GetInstance(doc, ms);
-                doc.Open();
-
-                // =====================================================================
-                // FUENTES
-                // =====================================================================
-                var fontTitulo = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
-                var fontNormal = new Font(Font.FontFamily.HELVETICA, 9, Font.NORMAL);
-                var fontHeader = new Font(Font.FontFamily.HELVETICA, 9, Font.BOLD, new BaseColor(80, 80, 80));
-                var fontImportePos = new Font(Font.FontFamily.HELVETICA, 9, Font.NORMAL, new BaseColor(0, 120, 0));
-                var fontImporteNeg = new Font(Font.FontFamily.HELVETICA, 9, Font.NORMAL, new BaseColor(180, 0, 0));
-
-                // =====================================================================
-                // CABECERA PERSONA + SALDO
-                // =====================================================================
-                PdfPTable headerTable = new PdfPTable(2);
-                headerTable.WidthPercentage = 100;
-                headerTable.SetWidths(new float[] { 60f, 40f });
-
-                PdfPCell personaCell = new PdfPCell(new Phrase(persona, fontTitulo));
-                personaCell.Border = Rectangle.NO_BORDER;
-                personaCell.VerticalAlignment = Element.ALIGN_MIDDLE;
-                headerTable.AddCell(personaCell);
-
-                BaseColor colorSaldo = saldo >= 0 ? new BaseColor(0, 120, 0) : new BaseColor(180, 0, 0);
-                PdfPCell saldoCell = new PdfPCell(new Phrase("Saldo: " + saldo.ToString("N2"),
-                                         new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, colorSaldo)));
-                saldoCell.Border = Rectangle.NO_BORDER;
-                saldoCell.HorizontalAlignment = Element.ALIGN_RIGHT;
-                saldoCell.VerticalAlignment = Element.ALIGN_MIDDLE;
-                headerTable.AddCell(saldoCell);
-
-                doc.Add(headerTable);
-                doc.Add(new Paragraph("\n", fontNormal));
-
-                // =====================================================================
-                // FECHA DESDE
-                // =====================================================================
-                doc.Add(new Paragraph($"Desde: {fechaDesde:dd/MM/yyyy}\n\n", fontNormal));
-
-
-                // =====================================================================
-                // TABLA PRINCIPAL (sin bordes, solo líneas suaves entre filas)
-                // =====================================================================
-                PdfPTable table = new PdfPTable(6);
-                table.WidthPercentage = 100;
-
-                table.SetWidths(new float[]
-                {
-            14f, // Fecha
-            14f, // Tabla
-            36f, // Detalle
-            14f, // Importe (16 caracteres aprox)
-            14f, // Saldo   (16 caracteres aprox)
-            12f  // Sucursal
-                });
-
-                string[] cols = { "Fecha", "Tabla", "Detalle", "Importe", "Saldo", "Sucursal" };
-
-                // -------- ENCABEZADOS --------
-                foreach (var c in cols)
-                {
-                    PdfPCell h = new PdfPCell(new Phrase(c, fontHeader));
-                    h.BackgroundColor = new BaseColor(240, 240, 240); // gris clarito
-                    h.HorizontalAlignment = Element.ALIGN_CENTER;
-                    h.Padding = 5;
-
-                    // Sin líneas alrededor
-                    h.BorderWidth = 0;
-                    h.BorderWidthBottom = 0.5f;
-                    h.BorderColorBottom = new BaseColor(200, 200, 200);
-
-                    table.AddCell(h);
-                }
-
-                // =====================================================================
-                // FILAS
-                // =====================================================================
-                foreach (DataRow row in dt.Rows)
-                {
-                    BaseColor lineColor = new BaseColor(220, 220, 220);
-
-                    // FECHA
-                    PdfPCell celF = new PdfPCell(new Phrase(
-                        Convert.ToDateTime(row["fecha"]).ToString("dd/MM/yyyy"), fontNormal));
-                    celF.Padding = 5;
-                    celF.Border = Rectangle.NO_BORDER;
-                    celF.BorderWidthBottom = 0.5f;
-                    celF.BorderColorBottom = lineColor;
-                    table.AddCell(celF);
-
-                    // TABLA
-                    PdfPCell celT = new PdfPCell(new Phrase(row["tabla"].ToString(), fontNormal));
-                    celT.Padding = 5;
-                    celT.Border = Rectangle.NO_BORDER;
-                    celT.BorderWidthBottom = 0.5f;
-                    celT.BorderColorBottom = lineColor;
-                    table.AddCell(celT);
-
-                    // DETALLE (permite salto de línea)
-                    PdfPCell celDet = new PdfPCell(new Phrase(row["nroDoc"].ToString() +" "+ row["detalle"].ToString(), fontNormal));
-                    celDet.Padding = 5;
-                    celDet.NoWrap = false; // permitir salto
-                    celDet.Border = Rectangle.NO_BORDER;
-                    celDet.BorderWidthBottom = 0.5f;
-                    celDet.BorderColorBottom = lineColor;
-                    table.AddCell(celDet);
-
-                    // IMPORTE (sin salto, derecha)
-                    decimal imp = Convert.ToDecimal(row["importe"]);
-                    PdfPCell celImp = new PdfPCell(new Phrase(
-                        imp.ToString("N2"),
-                        imp >= 0 ? fontImportePos : fontImporteNeg
-                    ));
-                    celImp.HorizontalAlignment = Element.ALIGN_RIGHT;
-                    celImp.NoWrap = true;
-                    celImp.Padding = 5;
-                    celImp.Border = Rectangle.NO_BORDER;
-                    celImp.BorderWidthBottom = 0.5f;
-                    celImp.BorderColorBottom = lineColor;
-                    table.AddCell(celImp);
-
-                    // SALDO (sin salto, derecha)
-                    PdfPCell celSal = new PdfPCell(new Phrase(
-                        Convert.ToDecimal(row["Saldo"]).ToString("N2"),
-                        fontNormal
-                    ));
-                    celSal.HorizontalAlignment = Element.ALIGN_RIGHT;
-                    celSal.NoWrap = true;
-                    celSal.Padding = 5;
-                    celSal.Border = Rectangle.NO_BORDER;
-                    celSal.BorderWidthBottom = 0.5f;
-                    celSal.BorderColorBottom = lineColor;
-                    table.AddCell(celSal);
-
-                    // SUCURSAL
-                    PdfPCell celSuc = new PdfPCell(new Phrase(row["Sucursal"].ToString(), fontNormal));
-                    celSuc.Padding = 5;
-                    celSuc.Border = Rectangle.NO_BORDER;
-                    celSuc.BorderWidthBottom = 0.5f;
-                    celSuc.BorderColorBottom = lineColor;
-                    table.AddCell(celSuc);
-                }
-
-                doc.Add(table);
-
-                doc.Close();
-                return ms.ToArray();
-            }
-        }
-
         // ============================================================
         //  DETALLE DE MOVIMIENTO (placeholder)
         // ============================================================
@@ -362,10 +207,106 @@ namespace Web.Controllers
         // ============================================================
         //  AGREGAR COBRO / PAGO (placeholder)
         // ============================================================
-        public ActionResult AgregarPagoCobro(int idPersona)
+        public ActionResult AddOrEditPago(int idPersona, int idPago = 0)
         {
+            // Obtengo movimientos desde la base
+            DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
+
+            decimal saldo = 0;
+            if (dtMov != null && dtMov.Rows.Count > 0)
+            {
+                DataRow ultimaFila = dtMov.Rows[dtMov.Rows.Count - 1];
+
+                if (ultimaFila["Saldo"] != DBNull.Value)
+                    saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
+            }
+
+            // Datos para la vista
             ViewBag.IdPersona = idPersona;
-            return View();
+            ViewBag.Persona = oPersonasN.findById(idPersona);
+            ViewBag.SaldoPersona = saldo;
+
+            Pago model;
+
+            if (idPago == 0)
+            {
+                model = new Pago();          // ← IMPORTANTE
+                model.Fecha = DateTime.Now;  // valores por defecto
+            }
+            else
+            {
+                model = oCtaCteN.getPagoById(idPago);
+                if (model == null)
+                    return HttpNotFound();
+            }
+
+            return View(model);
+        }
+
+        public JsonResult BuscarCheque(string nroCheque)
+        {
+            var cheque = oCtaCteN.getChequePorIDorNro(0, nroCheque);
+            //var cheque = db.Cheques
+            //    .Where(c => c.NroCheque == nroCheque)
+            //    .Select(c => new
+            //    {
+            //        c.Id,
+            //        c.NroCheque,
+            //        c.Banco,
+            //        c.Importe,
+            //        Fecha = c.Fecha.ToString("yyyy-MM-dd"),
+            //        FechaCobro = c.FechaCobro.ToString("yyyy-MM-dd")
+            //    })
+            //    .FirstOrDefault();
+
+            if (cheque == null)
+                return Json(new { encontrado = false }, JsonRequestBehavior.AllowGet);
+
+            return Json(new { encontrado = true, cheque }, JsonRequestBehavior.AllowGet);
+        }
+
+
+        public JsonResult GetCheques(string estado, string nroCheque, string desde)
+        {
+            // fecha desde: si viene vacía
+            DateTime fechaDesde = DateTime.Today.AddMonths(-1);
+
+            if (!string.IsNullOrEmpty(desde))
+                fechaDesde = DateTime.Parse(desde);
+
+            // fecha hasta: incluimos todos los cheques hacia adelante
+            DateTime fechaHasta = DateTime.Today.AddYears(1);
+
+            // tu filtro por descripción (número cheque)
+            string descripcion = nroCheque ?? "";
+
+            // propio = false porque no lo pediste desde el modal (lo podés agregar si querés)
+            bool propio = false;
+
+            // 👉 ESTE método devuelve un DataTable
+            DataTable dt = oCtaCteN.obtenerCheques(descripcion, fechaDesde, fechaHasta, propio, estado);
+
+
+            //List<Entidades.Cheque> listaCheques = new List<Entidades.Cheque>();
+            List<object> listaCheques = new List<object>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                listaCheques.Add(new
+                {
+                    Id = row["id"]?.ToString(),
+                    Propio = row["propio"]?.ToString(),
+                    Origen = row["Origen"]?.ToString(),
+                    NroCheque = row["nroCheque"]?.ToString(),
+                    Banco = row["banco"]?.ToString(),
+                    Importe = Convert.ToDouble(row["importe"] ?? 0),
+                    FechaPago = row["fechaPago"] == DBNull.Value ? "" :
+                                Convert.ToDateTime(row["fechaPago"]).ToString("yyyy-MM-dd"),
+                    Estado = row["estado"]?.ToString()
+                });
+            }
+
+            return Json(listaCheques, JsonRequestBehavior.AllowGet);
         }
     }
 }

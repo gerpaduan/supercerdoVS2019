@@ -9,12 +9,18 @@ namespace Entidades
     {
         public enum formasPago
         {
+
             Efectivo,
+            Debito,
+            Credito,
+            Qr,
+            Transferencia, 
             Cheque,
             EftvoCheque,
-            Transferencia,
-            Otro,
+            Otro
         }
+        public formasPago FormaPago_ { get; set; }
+
 
         private int id;
 

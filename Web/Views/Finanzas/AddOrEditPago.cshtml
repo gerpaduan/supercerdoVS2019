@@ -1,0 +1,495 @@
+﻿@model Entidades.Pago
+
+@{
+    ViewBag.Title = "Agregar / Editar Pago";
+    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    string persona = ViewBag.Persona.RazonSocial;
+    decimal saldo = ViewBag.SaldoPersona;
+}
+
+<div class="container-fluid">
+
+    <div class="row">
+        <div class="col-12 col-lg-6 mx-auto">
+            <!-- =======================
+             CABECERA PERSONA + SALDO
+             ======================= -->
+            <div class="alert alert-primary d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0"><strong>@persona</strong></h5>
+                </div>
+                <div>
+                    <h5 class="mb-0">
+                        Saldo:
+                        @if (saldo >= 0)
+                        {
+                            <span class="text-success font-weight-bold">$ @saldo.ToString("N2")</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger font-weight-bold">$ @saldo.ToString("N2")</span>
+                        }
+                    </h5>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-body">
+
+                    @using (Html.BeginForm("AddOrEditPago", "Pagos", FormMethod.Post, new { @id = "formPago" }))
+                    {
+                        @Html.HiddenFor(m => m.Id)
+
+                        <!-- Tipo Operación -->
+                        <div class="form-group">
+                            <label>Tipo de Operación</label>
+                            <select id="tipoOperacion" name="TipoOperacion" class="form-control">
+                                <option value="Pago">Pago</option>
+                                <option value="Cobro">Cobro</option>
+                            </select>
+                        </div>
+
+                        <!-- Fecha -->
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Fecha)
+                            @Html.TextBoxFor(m => m.Fecha, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
+                        </div>
+
+                        <!-- nroRecibo -->
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.NroRecibo)
+                            @Html.TextBoxFor(m => m.NroRecibo, new { @class = "form-control", type = "nroRecibo" })
+                        </div>
+
+                        <!-- Forma de Pago -->
+                        <div class="form-group">
+                            @Html.Label("Forma de pago")
+                            @Html.EnumDropDownListFor(m => m.FormaPago_, new { @class = "form-control", id = "formaPago" })
+                        </div>
+
+                        <!-- Importe -->
+                        <div class="form-group importe-destacado">
+                            <label>Importe</label>
+                            @Html.TextBoxFor(m => m.Importe, new { @class = "form-control", id = "importe" })
+                        </div>
+
+                        <!-- Efectivo (solo Efectivo + Cheque) -->
+                        <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
+                            <div class="form-group">
+                                <label>Efectivo</label>
+                                <input type="number" id="importeEfectivo" class="form-control" value="0">
+                            </div>
+                        </div>
+
+                        <!-- BLOQUE DE CHEQUES -->
+                        <div id="bloqueCheques" class="bloque-pago" style="display:none;">
+
+                            <h5 class="mt-1 mb-3 text-primary">Cheques</h5>
+
+                            <div class="form-group">
+                                <label>Número de Cheque</label>
+
+                                <div class="input-group">
+                                    <input type="text" id="txtNroCheque" class="form-control" placeholder="Ingrese número de cheque...">
+
+                                    <div class="input-group-append">
+                                        <button type="button" id="btnAgregarCheque" class="btn btn-primary">Agregar</button>
+                                        <button type="button" id="btnBuscarCheques" class="btn btn-info">Buscar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla de cheques agregados -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="tablaCheques">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Número</th>
+                                            <th>Banco</th>
+                                            <th>Fecha Pago</th>
+                                            <th>Importe</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <!-- Total de cheques -->
+                            <div class="form-group">
+                                <label>Total Cheques</label>
+                                <input type="text" id="txtTotalCheques" class="form-control" readonly value="0">
+                            </div>
+
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="form-group">
+                            @Html.LabelFor(m => m.Observaciones)
+                            @Html.TextAreaFor(m => m.Observaciones, new { @class = "form-control", rows = 3 })
+                        </div>
+
+                        <button type="submit" onclick="desactivarProteccionSalida()" class="btn btn-success">Guardar</button>
+                    }
+                </div>
+            </div>
+        </div>
+
+
+        <!-- *************************************************************** -->
+        <!-- ********************   MODAL BUSCAR CHEQUES   ***************** -->
+        <!-- *************************************************************** -->
+        <!-- MODAL BUSCAR CHEQUES -->
+        <div class="modal fade" id="modalBuscarCheques" tabindex="-1" role="dialog" aria-labelledby="modalBuscarChequesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+
+                    <!-- Header -->
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Buscar Cheques</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body">
+
+                        <!-- Filtros -->
+                        <div class="row mb-3">
+
+                            <div class="col-md-3">
+                                <label>Estado</label>
+                                <select id="filtroEstado" class="form-control">
+                                    <option value="">-- Todos --</option>
+                                    <option value="PENDIENTE">Pendiente</option>
+                                    <option value="ENTREGADO">Entregado</option>
+                                    <option value="DEPOSITADO">Depositado</option>
+                                    <option value="ACREDITADO">Acreditado</option>
+                                    <option value="RECHAZADO">Rechazado</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>N° Cheque</label>
+                                <input type="text" id="filtroNroCheque" class="form-control" placeholder="Buscar por número">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>Fecha desde</label>
+                                <input type="date" id="filtroDesde" class="form-control">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label>&nbsp;</label>
+                                <button class="btn btn-primary btn-block" id="btnFiltrarCheques">
+                                    Buscar
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <!-- Tabla de Cheques -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" id="tablaModalCheques">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>N° Cheque</th>
+                                        <th>Banco</th>
+                                        <th>Importe</th>
+                                        <th>Fecha Pago</th>
+                                        <th>Estado</th>
+                                        <th>Titular</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Se llenará por AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- *************************************************************** -->
+        <!-- ************************   SCRIPTS   *************************** -->
+        <!-- *************************************************************** -->
+        @section Scripts{
+            <script>
+
+                // SI HUBO UN CAMBIO SE ACTIVA PROTECCION DE SALIDA
+                $("input, select, textarea").on("change keyup", function () {
+                    activarProteccionSalida();
+                });
+
+                $(document).ready(function () {
+
+                    /******************************************************
+                     * MOSTRAR / OCULTAR BLOQUES SEGÚN FORMA DE PAGO
+                     ******************************************************/
+                    function actualizarVisibilidad() {
+
+                        let fp = $("#formaPago option:selected").text();
+
+                        if (fp === "Cheque" || fp === "EftvoCheque") {
+
+                            $("#bloqueCheques").show();
+                            $("#importe").prop("readonly", true);
+
+                            if (fp === "EftvoCheque") {
+                                $("#bloqueEfectivo").show();
+                            } else {
+                                $("#bloqueEfectivo").hide();
+                                $("#importeEfectivo").val(0);
+                            }
+
+                            actualizarImporte();
+
+                        } else {
+                            $("#bloqueCheques").hide();
+                            $("#bloqueEfectivo").hide();
+                            $("#importe").prop("readonly", false);
+
+                            $("#tablaCheques tbody").empty();
+                            $("#txtTotalCheques").val(0);
+                        }
+                    }
+
+                    $("#formaPago").on("change", actualizarVisibilidad);
+                    actualizarVisibilidad();
+
+
+
+                    /******************************************************
+                     * ENTER → BUSCAR CHEQUE POR NÚMERO
+                     ******************************************************/
+                    $("#txtNroCheque").on("keypress", function (e) {
+                        if (e.which === 13) {
+                            e.preventDefault();
+                            buscarChequePorNumero();
+                        }
+                    });
+
+                    $("#btnAgregarCheque").on("click", buscarChequePorNumero);
+
+                    function buscarChequePorNumero() {
+
+                        var nro = $("#txtNroCheque").val().trim();
+                        if (nro === "") return;
+
+                        $.get("/Cheques/BuscarPorNumero", { numero: nro }, function (data) {
+
+                            if (data.encontrado) {
+                                agregarChequeATabla(
+                                    data.cheque.Id,
+                                    data.cheque.NroCheque,
+                                    data.cheque.Banco,
+                                    data.cheque.FechaPago,
+                                    data.cheque.Importe
+                                );
+                            } else {
+                                alert("No existe un cheque con ese número.");
+                            }
+                        });
+                    }
+
+
+
+                    /******************************************************
+                     * INICIAR MODAL FILTRO DESDE = HOY - 31 DÍAS
+                     ******************************************************/
+                    let fecha = new Date();
+                    fecha.setDate(fecha.getDate() - 31);
+                    let a = fecha.getFullYear();
+                    let m = ("0" + (fecha.getMonth() + 1)).slice(-2);
+                    let d = ("0" + fecha.getDate()).slice(-2);
+                    $("#filtroDesde").val(`${a}-${m}-${d}`);
+
+
+                    /******************************************************
+                     * BOTÓN BUSCAR → ABRE MODAL
+                     ******************************************************/
+                    $("#btnBuscarCheques").click(function () {
+                        $("#modalBuscarCheques").modal("show");
+                        cargarCheques();
+                    });
+
+                    $("#btnFiltrarCheques").click(function () {
+                        cargarCheques();
+                    });
+
+
+                    /******************************************************
+                     * CARGAR CHEQUES EN EL MODAL
+                     ******************************************************/
+                    function cargarCheques() {
+
+                        let estado = $("#filtroEstado").val();
+                        let nroCheque = $("#filtroNroCheque").val();
+                        let desde = $("#filtroDesde").val();
+
+                        $.ajax({
+                            url: '/Finanzas/GetCheques',
+                            type: 'GET',
+                            data: { estado, nroCheque, desde },
+                            success: function (lista) {
+
+                                let tbody = $("#tablaModalCheques tbody");
+                                tbody.empty();
+
+                                lista.forEach(c => {
+
+                                    let fila = `
+                                                        <tr
+                                                            data-id="${c.Id}"
+                                                            data-nro="${c.NroCheque}"
+                                                            data-banco="${c.Banco}"
+                                                            data-fechapago="${c.FechaPago}"
+                                                            data-importe="${c.Importe}"
+                                                        >
+                                                            <td>${c.Id}</td>
+                                                            <td>${c.NroCheque}</td>
+                                                            <td>${c.Banco}</td>
+                                                            <td>$${c.Importe.toFixed(2)}</td>
+                                                            <td>${c.FechaPago}</td>
+                                                            <td>${c.Estado}</td>
+                                                            <td>${c.Titular}</td>
+                                                        </tr>
+                                                    `;
+
+                                    tbody.append(fila);
+                                });
+                            }
+                        });
+                    }
+
+
+                    /******************************************************
+                     * DOBLE CLIC → AGREGAR CHEQUE A LA VISTA PRINCIPAL
+                     ******************************************************/
+                    $("#tablaModalCheques").on("dblclick", "tr", function () {
+
+                        let id = $(this).data("id");
+                        let nro = $(this).data("nro");
+                        let banco = $(this).data("banco");
+                        let fechapago = $(this).data("fechapago");
+                        let importe = parseFloat($(this).data("importe"));
+
+                        agregarChequeATabla(id, nro, banco, fechapago, importe);
+
+                        $("#modalBuscarCheques").modal("hide");
+                    });
+
+
+                    /******************************************************
+                     * AGREGAR CHEQUE A TABLA PRINCIPAL
+                     ******************************************************/
+                    function agregarChequeATabla(id, nro, banco, fechapago, importe) {
+
+                        // evitar duplicados
+                        if ($("#tablaCheques tbody tr[data-id='" + id + "']").length > 0) {
+                            Swal.fire("Aviso", "Este cheque ya fue agregado.", "info");
+                            return;
+                        }
+
+                        let fila = `
+                                            <tr data-id="${id}">
+                                                <td>${nro}</td>
+                                                <td>${banco}</td>
+                                                <td>${fechapago}</td>
+                                                <td class="imp">$${importe.toFixed(2)}</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">
+                                                        Quitar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+
+                        $("#tablaCheques tbody").append(fila);
+
+                        actualizarImporte();
+                    }
+
+
+
+                    /******************************************************
+                     * ELIMINAR CHEQUE
+                     ******************************************************/
+                    $("#tablaCheques").on("click", ".btnQuitarCheque", function () {
+                        $(this).closest("tr").remove();
+                        actualizarImporte();
+                    });
+
+                    /******************************************************
+                     * ACTUALIZAR IMPORTES
+                     ******************************************************/
+                    function actualizarImporte() {
+
+                        let totalCheques = 0;
+
+                        $("#tablaCheques tbody tr").each(function () {
+
+                            let texto = $(this).find(".imp").text()
+                                .replace("$", "")
+                                //.replace(/\./g, "")
+                                //.replace(",", ".")
+                                .trim();
+
+                            let valor = parseFloat(texto);
+
+                            if (!isNaN(valor)) totalCheques += valor;
+                        });
+
+                        $("#txtTotalCheques").val(totalCheques.toFixed(2));
+
+                        let efectivo = parseFloat(
+                            ($("#importeEfectivo").val() || "")
+                            //.replace(/\./g, "")
+                            //.replace(",", ".")
+                        ) || 0;
+
+                        $("#importe").val((totalCheques + efectivo).toFixed(2));
+                    }
+
+                    $("#importeEfectivo").on("input", actualizarImporte);
+
+                }); // FIN READY
+
+
+            </script>
+
+        }
+
+
+        <style>
+            .importe-destacado label {
+                font-weight: bold;
+                font-size: 1.1rem;
+            }
+
+            .importe-destacado input {
+                font-weight: bold;
+                font-size: 1.3rem;
+            }
+
+            .bloque-pago {
+                background: #f7f7f7; /* Fondo sutil */
+                border: 1px solid #e0e0e0; /* Borde fino */
+                border-radius: 6px; /* Esquinas redondeadas */
+                padding: 12px; /* Espaciado interno */
+                margin-bottom: 12px; /* Separación entre bloques */
+            }
+
+        </style>
