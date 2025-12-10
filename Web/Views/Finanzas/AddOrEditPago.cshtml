@@ -107,7 +107,7 @@
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
                             <div class="form-group">
                                 <label>Efectivo</label>
-                                <input type="number" id="importeEfectivo" class="form-control solo-decimal" value="0">
+                                <input type="text" id="importeEfectivo" name="importeEfectivo" class="form-control solo-decimal">
                             </div>
                         </div>
 
@@ -520,7 +520,6 @@
 
             // Asignar valor normalizado
             $("#importeEfectivo").val(impEf);
-
 
             let lista = [];
 

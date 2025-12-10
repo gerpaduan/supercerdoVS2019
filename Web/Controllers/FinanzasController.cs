@@ -262,7 +262,11 @@ namespace Web.Controllers
             oPagoE.Persona = oPersonasN.findById(idPersona);
 
             if (!string.IsNullOrEmpty(ChequesJson))
+            {
                 oPagoE.Cheques = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Cheque>>(ChequesJson);
+                for (int index = 0; index < oPagoE.Cheques.Count; index++)
+                    oPagoE.Cheques[index] = oCtaCteN.getChequePorIDorNro(oPagoE.Cheques[index].Id, "");
+            }
             else
                 oPagoE.Cheques = new List<Cheque>();
 
