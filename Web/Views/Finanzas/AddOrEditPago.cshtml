@@ -95,7 +95,7 @@
                     <label>Importe</label>
                     @Html.TextBoxFor(m => m.Importe, new
                     {
-                        @class = "form-control",
+                        @class = "form-control solo-decimal",
                         id = "importe",
                         type = "text",           // ← IMPORTANTE: evitar type="number"
                         autocomplete = "off"
@@ -107,7 +107,7 @@
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
                             <div class="form-group">
                                 <label>Efectivo</label>
-                                <input type="number" id="importeEfectivo" class="form-control" value="0">
+                                <input type="number" id="importeEfectivo" class="form-control solo-decimal" value="0">
                             </div>
                         </div>
 
@@ -148,7 +148,7 @@
                             <!-- Total de cheques -->
                             <div class="form-group">
                                 <label>Total Cheques</label>
-                                <input type="text" id="txtTotalCheques" class="form-control" readonly value="0">
+                                <input type="text" id="txtTotalCheques" class="form-control solo-decimal" readonly value="0">
                             </div>
 
                         </div>
@@ -507,13 +507,20 @@
          ******************************************************/
         $("#formPago").on("submit", function () {
 
-            // Normalizar importe
+            // NORMALIZAR IMPORTE
             let imp = $("#importe").val().trim();
-
-            // Reemplaza coma por punto
-            imp = imp.replace(",", ".");
-
             $("#importe").val(imp);
+
+            let impEf = $("#importeEfectivo").val().trim();
+
+            // Si está vacío → poner 0
+            if (impEf === "" || impEf === null) {
+                impEf = "0";
+            }
+
+            // Asignar valor normalizado
+            $("#importeEfectivo").val(impEf);
+
 
             let lista = [];
 

@@ -249,7 +249,12 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult AddOrEditPagoPost(Pago oPagoE, int SucursalId, int idPersona, string ChequesJson)
+        public ActionResult AddOrEditPagoPost(Pago oPagoE,
+            int SucursalId,
+            int idPersona,
+            string importe,
+            string importeEfectivo,
+            string ChequesJson)
         {
 
             // reconstruís los objetos completos
@@ -269,6 +274,8 @@ namespace Web.Controllers
 
             //oPagoE.AProveedor = checkAProveedor.Checked;
 
+            oPagoE.Importe = ParseFloat(importe);
+            oPagoE.Efectivo = importeEfectivo == null ? 0 : ParseFloat(importeEfectivo);
             oPagoE.Banco = "";// txtBanco.Text;
             oPagoE.NroCheque = "";// txtNroCheque.Text;
             oPagoE.TitularCheque = "";// txtTitular.Text;
@@ -364,6 +371,20 @@ namespace Web.Controllers
             }
 
             return Json(listaCheques, JsonRequestBehavior.AllowGet);
+        }
+
+        private float ParseFloat(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return 0;
+
+            value = value.Replace(",", "."); // unifica formato
+
+            float result;
+            if (float.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+                return result;
+
+            return 0;
         }
     }
 }

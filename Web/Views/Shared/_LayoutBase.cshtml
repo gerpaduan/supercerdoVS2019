@@ -395,14 +395,68 @@
                 }
             });
         });
+
+            /* ======================================================
+            REGLA GLOBAL PARA INPUTS CON DECIMALES
+            Clase: solo-decimal
+            ====================================================== */
+
+            $(document).on("input", ".solo-decimal", function () {
+                let v = $(this).val();
+
+            // 1) Quitar todo excepto números, puntos y comas
+            v = v.replace(/[^0-9.,]/g, "");
+
+            // 2) Si tiene coma y punto → eliminar puntos (miles)
+            if (v.includes(",") && v.includes(".")) {
+                v = v.replace(/\./g, ""); // saco miles
+        }
+
+            // 3) Reemplazar coma por punto
+            v = v.replace(/,/g, ".");
+
+            // 4) Permitir solo UN punto
+            let partes = v.split(".");
+        if (partes.length > 2) {
+                v = partes[0] + "." + partes.slice(1).join("");
+        }
+
+            $(this).val(v);
+});
+
+
+            // ======================================================
+            // OPCIONAL: Al pegar texto, limpiar automáticamente
+            // ======================================================
+            $(document).on("paste", ".solo-decimal", function (e) {
+                let t = (e.originalEvent || e).clipboardData.getData("text");
+
+            // misma lógica del input
+            t = t.replace(/[^0-9.,]/g, "");
+
+            if (t.includes(",") && t.includes(".")) {
+                t = t.replace(/\./g, "");
+        }
+
+            t = t.replace(/,/g, ".");
+
+            let partes = t.split(".");
+        if (partes.length > 2) {
+                t = partes[0] + "." + partes.slice(1).join("");
+        }
+
+            // Reemplaza el pegado con contenido limpio
+            e.preventDefault();
+            $(this).val(t).trigger("input");
+});
     </script>
 
     @*<style>
-        /* Posición intermedia */
-        .swal2-popup-mid {
-            margin-top: 120px !important;
-        }
-    </style>*@
+            /* Posición intermedia */
+            .swal2-popup-mid {
+                margin-top: 120px !important;
+            }
+        </style>*@
 
 
 
