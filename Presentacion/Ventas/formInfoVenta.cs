@@ -152,6 +152,7 @@ namespace Presentacion.Ventas
                 oVentaE = oVentaN.getVentaById(idVenta);
                 cargarCamposVenta();
                 cargarGrilla();
+                notaCredito.Enabled = oVentaN.existeFactuElectParaVenta(oVentaE.IdVenta) > 0;
                 idVentaLabel.Text = oVentaE.IdVenta.ToString();//asigno el idVenta para identificar formulario
             }
             catch (Exception ex)
