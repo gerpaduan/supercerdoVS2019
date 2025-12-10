@@ -17,6 +17,7 @@ namespace Web.Controllers
     public class FinanzasController : Controller
     {
         private Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         private Usuario oUsuarioN = new Usuario();
         private readonly Negocio.Persona oPersonasN = new Negocio.Persona();
 
@@ -51,7 +52,7 @@ namespace Web.Controllers
                     var user = Session["Usuario"] as Entidades.Usuario;
                     if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtasCtes, null))
                     {
-                        ViewBag.Seccion = "Agregar/Modificar Productos";
+                        ViewBag.Seccion = "Cuenta Corriente";
                         return View("~/Views/Shared/AccesoDenegado.cshtml");
                     }
                 }
@@ -209,6 +210,10 @@ namespace Web.Controllers
         // ============================================================
         public ActionResult AddOrEditPago(int idPersona, int idPago = 0)
         {
+            var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
+
+            ViewBag.Sucursales = sucursales;
+
             // Obtengo movimientos desde la base
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
 
@@ -242,6 +247,58 @@ namespace Web.Controllers
 
             return View(model);
         }
+
+        [HttpPost]
+        public ActionResult AddOrEditPagoPost(Pago oPagoE, int SucursalId, int idPersona, string ChequesJson)
+        {
+
+            // reconstruís los objetos completos
+            oPagoE.Sucursal = oSucursalN.findById(SucursalId);
+            oPagoE.Persona = oPersonasN.findById(idPersona);
+
+            if (!string.IsNullOrEmpty(ChequesJson))
+                oPagoE.Cheques = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Cheque>>(ChequesJson);
+            else
+                oPagoE.Cheques = new List<Cheque>();
+
+            //oPagoE.Sucursal = oSucursalE;
+
+            //setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
+
+            //oPagoE.NroRecibo = setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
+
+            //oPagoE.AProveedor = checkAProveedor.Checked;
+
+            oPagoE.Banco = "";// txtBanco.Text;
+            oPagoE.NroCheque = "";// txtNroCheque.Text;
+            oPagoE.TitularCheque = "";// txtTitular.Text;
+            
+
+
+            oPagoE.CreadoPor = oPagoE.Id > 0 ? oPagoE.CreadoPor : Session["Usuario"] as Entidades.Usuario; ;
+            oPagoE.ActualizadoPor = oPagoE.Id > 0 ? Session["Usuario"] as Entidades.Usuario : oPagoE.ActualizadoPor;
+
+            oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
+
+            ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
+            _ = oCtaCteN.addOrEditPago(oPagoE, null, null);//, oCierreCajaE, oPagoSinMod);
+
+
+            //// ✔ Ahora pago.Cheques tiene la lista completa
+            //// Guardás el pago...
+            //int idPago = repo.InsertarPago(pago);
+
+            //// Guardás los cheques asociados
+            //foreach (var ch in pago.Cheques)
+            //{
+            //    ch.IdCreadoPor = pago.IdCreadoPor;
+            //    ch.PagoDe = pago;
+            //    repoCheques.Insertar(ch);
+            //}
+
+            return RedirectToAction("CtasCtes");
+        }
+
 
         public JsonResult BuscarCheque(string nroCheque)
         {
