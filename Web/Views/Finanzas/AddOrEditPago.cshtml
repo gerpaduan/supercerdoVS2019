@@ -54,9 +54,10 @@
                                     @foreach (var s in (List<Entidades.Sucursal>)ViewBag.Sucursales)
                                     {
                                         <option value="@s.IdSucursal"
-                                                @(ViewBag.SucursalId != null && ViewBag.SucursalId == s.IdSucursal ? "selected" : "")>
+                                                @( (Model.Sucursal?.IdSucursal == s.IdSucursal || ViewBag.SucursalId == s.IdSucursal) ? "selected" : "" )>
                                             @s.SucursalNombre
                                         </option>
+
                                     }
                                 </select>
                             </div>
@@ -106,8 +107,15 @@
                         <!-- Efectivo (solo Efectivo + Cheque) -->
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
                             <div class="form-group">
-                                <label>Efectivo</label>
-                                <input type="text" id="importeEfectivo" name="importeEfectivo" class="form-control solo-decimal">
+                                <h5 class="text-primary">Efectivo</h5>
+                                @Html.TextBoxFor(m => m.Efectivo, new
+                                {
+                                    @class = "form-control solo-decimal",
+                                    id = "Efectivo",
+                                    type = "text",           // ← IMPORTANTE: evitar type="number"
+                                    autocomplete = "off"
+                                })
+                                @*<input type="text" id="EfectivoDec" name="EfectivoDec" class="form-control solo-decimal">*@
                             </div>
                         </div>
 
@@ -284,7 +292,7 @@
                         $("#bloqueEfectivo").show();
                     } else {
                         $("#bloqueEfectivo").hide();
-                        $("#importeEfectivo").val(0);
+                        $("#Efectivo").val(0);
                     }
 
                     actualizarImporte();
@@ -305,25 +313,43 @@
 
 
             /******************************************************
-             * ENTER → BUSCAR CHEQUE POR NÚMERO
+             * ENTER → BUSCAR CHEQUE
              ******************************************************/
             $("#txtNroCheque").on("keypress", function (e) {
-                if (e.which === 13) {
+                if (e.which === 13) {   // 13 = ENTER
                     e.preventDefault();
                     buscarChequePorNumero();
                 }
             });
 
+            /******************************************************
+             * CLICK → BUSCAR CHEQUE
+             ******************************************************/
             $("#btnAgregarCheque").on("click", buscarChequePorNumero);
 
+            /******************************************************
+             * FUNCIÓN PRINCIPAL
+             ******************************************************/
             function buscarChequePorNumero() {
 
                 var nro = $("#txtNroCheque").val().trim();
+                var idPago = $("#Id").val() || 0;
                 if (nro === "") return;
 
-                $.get("/Cheques/BuscarPorNumero", { numero: nro }, function (data) {
+                $.get("/Finanzas/BuscarChequePorNro",
+                    {
+                        numero: nro,
+                        pagoId: $("#Id").val(),        // ← NOMBRE CORRECTO
+                        esAProveedor: $("#aProveedor").val() === "True"
+                    },
+                    function (data) {
 
-                    if (data.encontrado) {
+                        console.log("LLEGO:", data);
+                        if (!data.ok) {
+                            Swal.fire("Atención", data.mensaje, "error");
+                            return;
+                        }
+
                         agregarChequeATabla(
                             data.cheque.Id,
                             data.cheque.NroCheque,
@@ -331,12 +357,9 @@
                             data.cheque.FechaPago,
                             data.cheque.Importe
                         );
-                    } else {
-                        alert("No existe un cheque con ese número.");
-                    }
-                });
-            }
+                    });
 
+            }
 
 
             /******************************************************
@@ -435,20 +458,50 @@
                     Swal.fire("Aviso", "Este cheque ya fue agregado.", "info");
                     return;
                 }
+                let index = $("#tablaCheques tbody tr").length; // índice automático
 
                 let fila = `
-                                                <tr data-id="${id}">
-                                                    <td>${nro}</td>
-                                                    <td>${banco}</td>
-                                                    <td>${fechapago}</td>
-                                                    <td class="imp">$${importe.toFixed(2)}</td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">
-                                                            Quitar
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            `;
+                        <tr data-id="${id}">
+                            <td>
+                                ${nro}
+                                <input type="hidden" name="Cheques[${index}].Numero" value="${nro}">
+                            </td>
+
+                            <td>
+                                ${banco}
+                                <input type="hidden" name="Cheques[${index}].Banco" value="${banco}">
+                            </td>
+
+                            <td>
+                                ${fechapago}
+                                <input type="hidden" name="Cheques[${index}].FechaPago" value="${fechapago}">
+                            </td>
+
+                            <td class="imp">
+                                $${importe.toFixed(2)}
+                                <input type="hidden" name="Cheques[${index}].Importe" value="${importe}">
+                            </td>
+
+                            <td>
+                                <input type="hidden" name="Cheques[${index}].Id" value="${id}">
+                                <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">Quitar</button>
+                            </td>
+                        </tr>
+                        `;
+
+                //let fila = `
+                //                                <tr data-id="${id}">
+                //                                    <td>${nro}</td>
+                //                                    <td>${banco}</td>
+                //                                    <td>${fechapago}</td>
+                //                                    <td class="imp">$${importe.toFixed(2)}</td>
+                //                                    <td>
+                //                                        <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">
+                //                                            Quitar
+                //                                        </button>
+                //                                    </td>
+                //                                </tr>
+                //                            `;
 
                 $("#tablaCheques tbody").append(fila);
 
@@ -462,8 +515,19 @@
              ******************************************************/
             $("#tablaCheques").on("click", ".btnQuitarCheque", function () {
                 $(this).closest("tr").remove();
+                reindexarCheques();
                 actualizarImporte();
             });
+
+            function reindexarCheques() {
+                $("#tablaCheques tbody tr").each(function (i) {
+                    $(this).find("input").each(function () {
+                        let name = $(this).attr("name");
+                        name = name.replace(/\[\d+\]/, `[${i}]`);
+                        $(this).attr("name", name);
+                    });
+                });
+            }
 
             /******************************************************
              * ACTUALIZAR IMPORTES
@@ -488,7 +552,7 @@
                 $("#txtTotalCheques").val(totalCheques.toFixed(2));
 
                 let efectivo = parseFloat(
-                    ($("#importeEfectivo").val() || "")
+                    ($("#Efectivo").val() || "")
                     //.replace(/\./g, "")
                     //.replace(",", ".")
                 ) || 0;
@@ -496,7 +560,26 @@
                 $("#importe").val((totalCheques + efectivo).toFixed(2));
             }
 
-            $("#importeEfectivo").on("input", actualizarImporte);
+            $("#Efectivo").on("input", actualizarImporte);
+
+
+
+            // Cargar cheques existentes si el pago ya existe
+            @if (Model != null && Model.Id > 0 && Model.Cheques != null)
+            {
+                foreach (var c in Model.Cheques)
+                {
+                    <text>
+                        agregarChequeATabla(
+                            @c.Id,
+                            "@c.NroCheque",
+                            "@c.Banco",
+                            "@c.FechaPago.ToString("yyyy-MM-dd")",
+                            @c.Importe
+                        );
+                    </text>
+                }
+            }
 
         }); // FIN READY
 
@@ -511,7 +594,7 @@
             let imp = $("#importe").val().trim();
             $("#importe").val(imp);
 
-            let impEf = $("#importeEfectivo").val().trim();
+            let impEf = $("#Efectivo").val().trim();
 
             // Si está vacío → poner 0
             if (impEf === "" || impEf === null) {
@@ -519,7 +602,7 @@
             }
 
             // Asignar valor normalizado
-            $("#importeEfectivo").val(impEf);
+            $("#Efectivo").val(impEf);
 
             let lista = [];
 

@@ -710,7 +710,7 @@
             "Qr",
             "Trasferencia",
             "Cheque",
-            "Eftvo+Cheque",
+            "EftvoCheque",
             "Otro"});
             this.comboTipoPago.Location = new System.Drawing.Point(98, 140);
             this.comboTipoPago.Name = "comboTipoPago";

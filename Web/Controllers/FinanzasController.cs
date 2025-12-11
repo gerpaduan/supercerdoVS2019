@@ -198,11 +198,26 @@ namespace Web.Controllers
         // ============================================================
         //  DETALLE DE MOVIMIENTO (placeholder)
         // ============================================================
-        public ActionResult MovimientoDetalle(int id)
+        public ActionResult verMovimientoCtaCte(int idPersona, string tabla, int idTabla = 0)
         {
-            // Acá mostrás detalle del movimiento si querés
-            ViewBag.IdMovimiento = id;
-            return View();
+            Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
+            Entidades.MovCtaCte.tablas tablaEnum = oMovCtaCteE.getTablaEnum(tabla);
+
+            switch (tablaEnum)
+            {
+                case Entidades.MovCtaCte.tablas.Ventas:
+                    return RedirectToAction("InfoVenta", "Finanzas", new { id = idTabla });
+
+                case Entidades.MovCtaCte.tablas.Compras:
+                    return RedirectToAction("ModificarCompra", "Compras", new { id = idTabla });
+
+                case Entidades.MovCtaCte.tablas.Pagos:
+                    return RedirectToAction("AddOrEditPago", "Finanzas",
+                        new { idPersona = idPersona, idPago = idTabla });
+
+                default:
+                    return HttpNotFound();
+            }
         }
 
         // ============================================================
@@ -237,10 +252,10 @@ namespace Web.Controllers
             {
                 model = new Pago();          // ← IMPORTANTE
                 model.Fecha = DateTime.Now;  // valores por defecto
-            }
+            }   
             else
             {
-                model = oCtaCteN.getPagoById(idPago);
+                model = oCtaCteN.getPagoById(idPago);                
                 if (model == null)
                     return HttpNotFound();
             }
@@ -253,7 +268,7 @@ namespace Web.Controllers
             int SucursalId,
             int idPersona,
             string importe,
-            string importeEfectivo,
+            string Efectivo,
             string ChequesJson)
         {
 
@@ -270,23 +285,18 @@ namespace Web.Controllers
             else
                 oPagoE.Cheques = new List<Cheque>();
 
-            //oPagoE.Sucursal = oSucursalE;
-
             //setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
-
             //oPagoE.NroRecibo = setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
 
-            //oPagoE.AProveedor = checkAProveedor.Checked;
-
             oPagoE.Importe = ParseFloat(importe);
-            oPagoE.Efectivo = importeEfectivo == null ? 0 : ParseFloat(importeEfectivo);
+            oPagoE.Efectivo = Efectivo == null ? 0 : ParseFloat(Efectivo);
             oPagoE.Banco = "";// txtBanco.Text;
             oPagoE.NroCheque = "";// txtNroCheque.Text;
             oPagoE.TitularCheque = "";// txtTitular.Text;
             
-
-
-            oPagoE.CreadoPor = oPagoE.Id > 0 ? oPagoE.CreadoPor : Session["Usuario"] as Entidades.Usuario; ;
+            oPagoE.CreadoPor = oPagoE.Id > 0 ? 
+                oCtaCteN.getPagoById(oPagoE.Id).CreadoPor : 
+                Session["Usuario"] as Entidades.Usuario; ;
             oPagoE.ActualizadoPor = oPagoE.Id > 0 ? Session["Usuario"] as Entidades.Usuario : oPagoE.ActualizadoPor;
 
             oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
@@ -294,44 +304,52 @@ namespace Web.Controllers
             ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
             _ = oCtaCteN.addOrEditPago(oPagoE, null, null);//, oCierreCajaE, oPagoSinMod);
 
-
-            //// ✔ Ahora pago.Cheques tiene la lista completa
-            //// Guardás el pago...
-            //int idPago = repo.InsertarPago(pago);
-
-            //// Guardás los cheques asociados
-            //foreach (var ch in pago.Cheques)
-            //{
-            //    ch.IdCreadoPor = pago.IdCreadoPor;
-            //    ch.PagoDe = pago;
-            //    repoCheques.Insertar(ch);
-            //}
-
             return RedirectToAction("CtasCtes");
         }
 
-
-        public JsonResult BuscarCheque(string nroCheque)
+        [HttpGet]
+        public JsonResult BuscarChequePorNro(string numero, int pagoId = 0, bool esAProveedor = true)
         {
-            var cheque = oCtaCteN.getChequePorIDorNro(0, nroCheque);
-            //var cheque = db.Cheques
-            //    .Where(c => c.NroCheque == nroCheque)
-            //    .Select(c => new
-            //    {
-            //        c.Id,
-            //        c.NroCheque,
-            //        c.Banco,
-            //        c.Importe,
-            //        Fecha = c.Fecha.ToString("yyyy-MM-dd"),
-            //        FechaCobro = c.FechaCobro.ToString("yyyy-MM-dd")
-            //    })
-            //    .FirstOrDefault();
+            try
+            {
 
-            if (cheque == null)
-                return Json(new { encontrado = false }, JsonRequestBehavior.AllowGet);
+            var pagoActual = oCtaCteN.getPagoById(pagoId);
 
-            return Json(new { encontrado = true, cheque }, JsonRequestBehavior.AllowGet);
+            if (pagoActual == null)
+                pagoActual = new Pago { Cheques = new List<Cheque>() };
+
+            if (pagoActual.Cheques == null)
+                pagoActual.Cheques = new List<Cheque>();
+
+
+            //var pagoActual = pagoId > 0
+            //    ? oCtaCteN.getPagoById(pagoId)
+            //    : new Pago() { Cheques = new List<Cheque>() };
+
+            var (ok, mensaje, cheque) = oCtaCteN.ValidarChequeParaPago(numero, pagoActual, esAProveedor);
+
+            return Json(new
+            {
+                ok,
+                mensaje,
+                cheque = ok ? new
+                {
+                    cheque.Id,
+                    cheque.NroCheque,
+                    cheque.Banco,
+                    FechaPago = cheque.FechaPago.ToString("yyyy-MM-dd"),
+                    //cheque.FechaPago,
+                    cheque.Importe
+                } : null
+            }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
+
 
 
         public JsonResult GetCheques(string estado, string nroCheque, string desde)

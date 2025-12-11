@@ -100,6 +100,8 @@ namespace Entidades
             get { return efectivo; }
             set { efectivo = value; }
         }
+        public decimal ImporteDec { get; set; }
+        public decimal EfectivoDec { get; set; }
 
         /// <summary>
         /// se guarda el último importe en efectivo para hacer la cancelación en los Egresos de Caja

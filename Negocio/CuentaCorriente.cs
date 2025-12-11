@@ -163,7 +163,14 @@ namespace Negocio
 
         public Entidades.Pago getPagoById(int idPago)
         {
-            return oCtaCteD.getPagoById(idPago);
+            Pago oPagoE = oCtaCteD.getPagoById(idPago);
+            if (oPagoE != null)
+            {
+                oPagoE.FormaPago_ = (Pago.formasPago)Enum.Parse(typeof(Pago.formasPago), oPagoE.FormaPago);
+                oPagoE.ImporteDec = (decimal)oPagoE.Importe;
+                oPagoE.EfectivoDec = (decimal)oPagoE.Efectivo;
+            }
+            return oPagoE;
         }
 
         public Entidades.Pago addOrEditPago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoSinMod)
@@ -293,6 +300,50 @@ namespace Negocio
             
             oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
         }
+
+        #endregion
+
+        #region VALIDACION_CHEQUES
+        public (bool ok, string mensaje, Cheque cheque) ValidarChequeParaPago(
+                                                                        string nroCheque,
+                                                                        Pago pagoActual,
+                                                                        bool esAProveedor)
+        {
+            if (pagoActual == null)
+                pagoActual = new Pago();
+
+            if (pagoActual.Cheques == null)
+                pagoActual.Cheques = new List<Cheque>();
+
+
+            var oCheque = getChequePorIDorNro(0, nroCheque);
+
+            if (oCheque == null)
+                return (false, "No existe un cheque con ese número.", null);
+
+            // Duplicado dentro del mismo pago
+            if (pagoActual.Cheques.Any(c => c.NroCheque == oCheque.NroCheque))
+                return (false, "El cheque ya está asignado a este pago.", null);
+
+            // Pagar proveedor → debe ser propio o recibido
+            if (esAProveedor && !(oCheque.Propio || (oCheque.PagoDe?.Id > 0)))
+                return (false, "El cheque debe ser propio o provenir de un cobro.", null);
+
+            // Ya asignado a otro pago destino
+            if (esAProveedor && oCheque.PagoA?.Id > 0 && oCheque.PagoA.Id != pagoActual.Id)
+                return (false, $"El cheque ya fue asignado al pago ID {oCheque.PagoA.Id}.", null);
+
+            // Ya asignado a otro pago origen (cliente)
+            if (!esAProveedor && oCheque.PagoDe?.Id > 0 && oCheque.PagoDe.Id != pagoActual.Id)
+                return (false, $"El cheque ya está asignado al pago ID {oCheque.PagoDe.Id}.", null);
+
+            // Vencido
+            if (oCheque.FechaPago.AddDays(30) < DateTime.Today)
+                return (false, $"El cheque está vencido (Fecha Pago: {oCheque.FechaPago:dd/MM/yyyy}).", null);
+
+            return (true, "", oCheque);
+        }
+
 
         #endregion
     }
