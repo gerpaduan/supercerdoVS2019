@@ -312,36 +312,30 @@ namespace Web.Controllers
         {
             try
             {
+                var pagoActual = oCtaCteN.getPagoById(pagoId);
 
-            var pagoActual = oCtaCteN.getPagoById(pagoId);
+                if (pagoActual == null)
+                    pagoActual = new Pago { Cheques = new List<Cheque>() };
 
-            if (pagoActual == null)
-                pagoActual = new Pago { Cheques = new List<Cheque>() };
+                if (pagoActual.Cheques == null)
+                    pagoActual.Cheques = new List<Cheque>();
 
-            if (pagoActual.Cheques == null)
-                pagoActual.Cheques = new List<Cheque>();
+                var (ok, mensaje, cheque) = oCtaCteN.ValidarChequeParaPago(numero, pagoActual, esAProveedor);
 
-
-            //var pagoActual = pagoId > 0
-            //    ? oCtaCteN.getPagoById(pagoId)
-            //    : new Pago() { Cheques = new List<Cheque>() };
-
-            var (ok, mensaje, cheque) = oCtaCteN.ValidarChequeParaPago(numero, pagoActual, esAProveedor);
-
-            return Json(new
-            {
-                ok,
-                mensaje,
-                cheque = ok ? new
+                return Json(new
                 {
-                    cheque.Id,
-                    cheque.NroCheque,
-                    cheque.Banco,
-                    FechaPago = cheque.FechaPago.ToString("yyyy-MM-dd"),
-                    //cheque.FechaPago,
-                    cheque.Importe
-                } : null
-            }, JsonRequestBehavior.AllowGet);
+                    ok,
+                    mensaje,
+                    cheque = ok ? new
+                    {
+                        cheque.Id,
+                        cheque.NroCheque,
+                        cheque.Banco,
+                        FechaPago = cheque.FechaPago.ToString("yyyy-MM-dd"),
+                        //cheque.FechaPago,
+                        cheque.Importe
+                    } : null
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {

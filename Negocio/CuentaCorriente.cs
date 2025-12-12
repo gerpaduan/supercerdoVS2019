@@ -318,8 +318,20 @@ namespace Negocio
 
             var oCheque = getChequePorIDorNro(0, nroCheque);
 
+            //NO CAMBIAR MENSAJE PORQUE ROMPE MODAL ALTA CHEQUE EN WEB
             if (oCheque == null)
                 return (false, "No existe un cheque con ese número.", null);
+            //NO CAMBIAR MENSAJE PORQUE ROMPE MODAL ALTA CHEQUE EN WEB
+
+            //infoCheque
+            string infoCheque = "\nInfo Cheque:" +
+                "\nNúmero: " + oCheque.NroCheque +
+                "\nBanco: " + oCheque.Banco +
+                "\nFecha Pago: " + oCheque.FechaPago +
+                "\nImporte: " + oCheque.Importe +
+                "\nTitular: " + oCheque.Titular +
+                "\nRecibido de: " + (oCheque.Propio ? "Propio" : (oCheque.PagoDe != null ? oCheque.PagoDe.Persona.RazonSocial : "-")) +
+                "\nEntregado a: " + (oCheque.PagoA != null ? oCheque.PagoA.Persona.RazonSocial : "-");
 
             // Duplicado dentro del mismo pago
             if (pagoActual.Cheques.Any(c => c.NroCheque == oCheque.NroCheque))
@@ -331,15 +343,15 @@ namespace Negocio
 
             // Ya asignado a otro pago destino
             if (esAProveedor && oCheque.PagoA?.Id > 0 && oCheque.PagoA.Id != pagoActual.Id)
-                return (false, $"El cheque ya fue asignado al pago ID {oCheque.PagoA.Id}.", null);
+                return (false, $"El cheque ya fue asignado al pago ID {oCheque.PagoA.Id}."+ infoCheque, null);
 
             // Ya asignado a otro pago origen (cliente)
             if (!esAProveedor && oCheque.PagoDe?.Id > 0 && oCheque.PagoDe.Id != pagoActual.Id)
-                return (false, $"El cheque ya está asignado al pago ID {oCheque.PagoDe.Id}.", null);
+                return (false, $"El cheque ya está asignado al pago ID {oCheque.PagoDe.Id}."+ infoCheque, null);
 
             // Vencido
             if (oCheque.FechaPago.AddDays(30) < DateTime.Today)
-                return (false, $"El cheque está vencido (Fecha Pago: {oCheque.FechaPago:dd/MM/yyyy}).", null);
+                return (false, $"El cheque está vencido (Fecha Pago: {oCheque.FechaPago:dd/MM/yyyy})."+ infoCheque, null);
 
             return (true, "", oCheque);
         }

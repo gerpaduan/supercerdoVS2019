@@ -622,7 +622,9 @@ namespace Datos
                             Fecha = Convert.ToDateTime(drPago["fecha"]),
                             NroRecibo = Convert.ToString(drPago["nroRecibo"]),
                             AProveedor = drPago["aProveedor"] != DBNull.Value && Convert.ToBoolean(drPago["aProveedor"]),
-                            FormaPago = Convert.ToString(drPago["formaPago"]),
+                            //11/12/2025 cambie la forma de pago Eftvo+Cheque por EftvoCheque
+                            FormaPago = Convert.ToString(drPago["formaPago"]).Equals("Eftvo+Cheque") ? 
+                                            "EftvoCheque" : Convert.ToString(drPago["formaPago"]),
                             Banco = Convert.ToString(drPago["banco"]),
                             NroCheque = Convert.ToString(drPago["nroCheque"]),
                             TitularCheque = Convert.ToString(drPago["titularCheque"]),

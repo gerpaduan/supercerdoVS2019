@@ -68,8 +68,8 @@
                         <div class="form-group">
                             <label>Tipo de Operación</label>
                             <select id="aProveedor" name="AProveedor" class="form-control">
-                                <option value="True">Pagar</option>
-                                <option value="False">Cobrar</option>
+                                <option value="True">Pagar (egreso)</option>
+                                <option value="False">Cobrar (ingreso)</option>
                             </select>
                         </div>
 
@@ -92,17 +92,17 @@
                         </div>
 
                         <!-- Importe -->
-                <div class="form-group importe-destacado">
-                    <label>Importe</label>
-                    @Html.TextBoxFor(m => m.Importe, new
-                    {
-                        @class = "form-control solo-decimal",
-                        id = "importe",
-                        type = "text",           // ← IMPORTANTE: evitar type="number"
-                        autocomplete = "off"
-                    })
+                        <div class="form-group importe-destacado">
+                            <label>Importe</label>
+                            @Html.TextBoxFor(m => m.Importe, new
+                            {
+                                @class = "form-control solo-decimal",
+                                id = "importe",
+                                type = "text",           // ← IMPORTANTE: evitar type="number"
+                                autocomplete = "off"
+                            })
 
-                </div>
+                        </div>
 
                         <!-- Efectivo (solo Efectivo + Cheque) -->
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
@@ -262,6 +262,11 @@
 </div>
 
 
+<!-- *************************************************************** -->
+<!-- MODAL ALTA CHEQUE (NEW) -->
+<!-- *************************************************************** -->
+@Html.Partial("_ModalAltaCheque")
+
 
 <!-- *************************************************************** -->
 <!-- ************************   SCRIPTS   *************************** -->
@@ -343,12 +348,38 @@
                         esAProveedor: $("#aProveedor").val() === "True"
                     },
                     function (data) {
-
-                        console.log("LLEGO:", data);
                         if (!data.ok) {
-                            Swal.fire("Atención", data.mensaje, "error");
+
+                            // CASO ESPECIAL → No existe el cheque
+                            if (data.mensaje.includes("No existe un cheque con ese número")) {
+
+                                Swal.fire({
+                                    title: "No existe un cheque con ese número",
+                                    text: "¿Desea darlo de alta?",
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Sí, agregar",
+                                    cancelButtonText: "No"
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        abrirModalAltaCheque(nro);
+                                    }
+                                });
+
+
+                                return;
+                            }
+
+                            // OTROS ERRORES
+                            Swal.fire({
+                                title: "Atención",
+                                html: data.mensaje.replace(/\n/g, "<br>"),
+                                icon: "error"
+                            });
+
                             return;
                         }
+
 
                         agregarChequeATabla(
                             data.cheque.Id,
@@ -436,16 +467,21 @@
              ******************************************************/
             $("#tablaModalCheques").on("dblclick", "tr", function () {
 
-                let id = $(this).data("id");
                 let nro = $(this).data("nro");
-                let banco = $(this).data("banco");
-                let fechapago = $(this).data("fechapago");
-                let importe = parseFloat($(this).data("importe"));
 
-                agregarChequeATabla(id, nro, banco, fechapago, importe);
+                // asignar número en el input
+                $("#txtNroCheque").val(nro);
 
+                // cerrar modal
                 $("#modalBuscarCheques").modal("hide");
+
+                // cuando termine de cerrar, buscar cheque
+                $("#modalBuscarCheques").one("hidden.bs.modal", function () {
+                    buscarChequePorNumero();
+                });
+
             });
+
 
 
             /******************************************************
@@ -489,23 +525,12 @@
                         </tr>
                         `;
 
-                //let fila = `
-                //                                <tr data-id="${id}">
-                //                                    <td>${nro}</td>
-                //                                    <td>${banco}</td>
-                //                                    <td>${fechapago}</td>
-                //                                    <td class="imp">$${importe.toFixed(2)}</td>
-                //                                    <td>
-                //                                        <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">
-                //                                            Quitar
-                //                                        </button>
-                //                                    </td>
-                //                                </tr>
-                //                            `;
-
                 $("#tablaCheques tbody").append(fila);
 
                 actualizarImporte();
+
+                // limpiar el input
+                $("#txtNroCheque").val("");
             }
 
 
@@ -590,6 +615,13 @@
          ******************************************************/
         $("#formPago").on("submit", function () {
 
+            var suc = document.getElementById("SucursalId").value;
+
+            if (suc === "" || suc === null) {
+                Swal.fire("Atención", "Debe seleccionar una sucursal antes de guardar.", "warning");
+                return false; // ❌ Bloquea el envío
+            }
+
             // NORMALIZAR IMPORTE
             let imp = $("#importe").val().trim();
             $("#importe").val(imp);
@@ -619,6 +651,41 @@
             $("#ChequesJson").val(JSON.stringify(lista));
         });
 
+        // Abrir modal y precargar el número de cheque
+        function abrirModalAltaCheque(nroCheque) {
+            $("#NroCheque").val(nroCheque);
+            $("#ChequeId").val(0);
+
+            $("#modalAltaCheque").modal("show");
+        }
+
+        // Guardar Cheque (AJAX)
+        $("#btnGuardarCheque").on("click", function () {
+
+            let datos = $("#formAltaCheque").serialize();
+
+            $.post("/Finanzas/GuardarCheque", datos, function (resp) {
+
+                if (!resp.ok) {
+                    Swal.fire("Error", resp.mensaje, "error");
+                    return;
+                }
+
+                Swal.fire("Éxito", "Cheque guardado correctamente.", "success");
+
+                $("#modalAltaCheque").modal("hide");
+
+                // Actualizar en la vista actual
+                agregarChequeATabla(
+                    resp.cheque.Id,
+                    resp.cheque.NroCheque,
+                    resp.cheque.Banco,
+                    resp.cheque.FechaPago,
+                    resp.cheque.Importe
+                );
+
+            });
+        });
 
     </script>
 
