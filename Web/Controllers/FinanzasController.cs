@@ -244,7 +244,8 @@ namespace Web.Controllers
             // Datos para la vista
             ViewBag.IdPersona = idPersona;
             ViewBag.Persona = oPersonasN.findById(idPersona);
-            ViewBag.SaldoPersona = saldo;
+            ViewBag.SaldoPersona = saldo; 
+            ViewBag.Bancos = oCtaCteN.getBancos();
 
             Pago model;
 
@@ -402,5 +403,45 @@ namespace Web.Controllers
 
             return 0;
         }
+        [HttpPost]
+        public JsonResult GuardarCheque(Cheque cheque, string importe)
+        {
+            try
+            {
+
+                var user = Session["Usuario"] as Entidades.Usuario;
+                //busco el creador de cheque si id > 0
+                int idUserCreador = cheque.Id > 0 ? (oCtaCteN.getChequePorIDorNro(cheque.Id, "").CreadoPor.Id) : user.Id;
+
+                if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCheques, null,idUserCreador))
+                {
+                    ViewBag.Seccion = "Cheques";
+                    //return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    return Json(new { success = false, message = "No tienes permisos para esta acción." });
+                }
+
+                cheque.Importe = ParseFloat(importe);
+
+                if (cheque.Id == 0)
+                {
+                    cheque.Creado = DateTime.Now;
+                    cheque.CreadoPor = user;
+                }
+                else
+                {
+                    cheque.Actualizado = DateTime.Now;
+                    cheque.ActualizadoPor = user;
+                }
+
+                oCtaCteN.AddOrEditCheque(cheque);
+
+                return Json(new { ok = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message });
+            }
+        }
     }
+    
 }

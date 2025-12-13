@@ -272,6 +272,7 @@
 <!-- ************************   SCRIPTS   *************************** -->
 <!-- *************************************************************** -->
 @section Scripts{
+    <script src="~/Scripts/app/modal-cheque.js"></script>
     <script>
 
         // SI HUBO UN CAMBIO SE ACTIVA PROTECCION DE SALIDA
@@ -362,10 +363,9 @@
                                     cancelButtonText: "No"
                                 }).then((result) => {
                                     if (result.isConfirmed) {
-                                        abrirModalAltaCheque(nro);
+                                        ModalAltaCheque.abrir(nro);
                                     }
                                 });
-
 
                                 return;
                             }
@@ -380,7 +380,6 @@
                             return;
                         }
 
-
                         agregarChequeATabla(
                             data.cheque.Id,
                             data.cheque.NroCheque,
@@ -392,6 +391,15 @@
 
             }
 
+
+            /******************************************************
+             * CARGO EL CHEQUE CREADO
+             ******************************************************/
+            $(document).on("chequeCreado", function (e, cheque) {
+
+                $("#txtNroCheque").val(cheque.NroCheque);
+                buscarChequePorNumero(); // reutilizás tu flujo actual
+            });
 
             /******************************************************
              * INICIAR MODAL FILTRO DESDE = HOY - 31 DÍAS
@@ -649,42 +657,6 @@
             });
 
             $("#ChequesJson").val(JSON.stringify(lista));
-        });
-
-        // Abrir modal y precargar el número de cheque
-        function abrirModalAltaCheque(nroCheque) {
-            $("#NroCheque").val(nroCheque);
-            $("#ChequeId").val(0);
-
-            $("#modalAltaCheque").modal("show");
-        }
-
-        // Guardar Cheque (AJAX)
-        $("#btnGuardarCheque").on("click", function () {
-
-            let datos = $("#formAltaCheque").serialize();
-
-            $.post("/Finanzas/GuardarCheque", datos, function (resp) {
-
-                if (!resp.ok) {
-                    Swal.fire("Error", resp.mensaje, "error");
-                    return;
-                }
-
-                Swal.fire("Éxito", "Cheque guardado correctamente.", "success");
-
-                $("#modalAltaCheque").modal("hide");
-
-                // Actualizar en la vista actual
-                agregarChequeATabla(
-                    resp.cheque.Id,
-                    resp.cheque.NroCheque,
-                    resp.cheque.Banco,
-                    resp.cheque.FechaPago,
-                    resp.cheque.Importe
-                );
-
-            });
         });
 
     </script>

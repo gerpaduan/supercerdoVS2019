@@ -1,86 +1,95 @@
-﻿@* ===============================================
-    MODAL DE ALTA DE CHEQUE
-    Archivo: Views/Finanzas/_ModalAltaCheque.cshtml
-    Estilo: SB Admin 2
-    Reutilizable en cualquier vista
-    =============================================== *@
+﻿@using Entidades
 
-<div class="modal fade" id="modalAltaCheque" tabindex="-1" role="dialog" aria-labelledby="tituloAltaCheque" aria-hidden="true">
+<div class="modal fade" id="modalAltaCheque" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
 
             <!-- HEADER -->
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="tituloAltaCheque">
-                    <i class="fas fa-money-check-alt mr-2"></i> Alta de Cheque
+                <h5 class="modal-title">
+                    <i class="fas fa-money-check-alt mr-2"></i>
+                    <span id="tituloModalCheque">Alta de Cheque</span>
                 </h5>
-                <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
+                <button class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
                 </button>
             </div>
 
             <!-- BODY -->
             <div class="modal-body">
 
-                <form id="formAltaCheque">
+                <form id="formCheque">
 
-                    <input type="hidden" id="ChequeId" name="Id" value="0" />
+                    <input type="hidden" id="ChequeId" value="0" />
 
                     <div class="row">
                         <!-- NRO CHEQUE -->
                         <div class="col-md-6 mb-3">
                             <label>Número de Cheque</label>
-                            <input type="text" class="form-control" id="NroCheque" name="NroCheque" required />
+                            <input type="text" class="form-control"
+                                   id="NroCheque" />
                         </div>
 
                         <!-- BANCO -->
                         <div class="col-md-6 mb-3">
                             <label>Banco</label>
-                            <input type="text" class="form-control" id="Banco" name="Banco" required />
+                            <select class="form-control" id="Banco">
+                                <option value="">-- Seleccione --</option>
+                                @foreach (var banco in (List<string>)ViewBag.Bancos)
+                                {
+                                    <option value="@banco">@banco</option>
+                                }
+                            </select>
                         </div>
                     </div>
 
                     <div class="row">
-                        <!-- IMPORTE -->
                         <div class="col-md-4 mb-3">
                             <label>Importe</label>
-                            <input type="text" class="form-control solo-decimal" id="Importe" name="Importe" required />
+                            <input type="text" class="form-control solo-decimal" id="Importe" autocomplete = "off"/>
                         </div>
 
-                        <!-- FECHA EMISIÓN -->
                         <div class="col-md-4 mb-3">
                             <label>Fecha Emisión</label>
-                            <input type="date" class="form-control" id="FechaEmision" name="FechaEmision" required />
+                            <input type="date" class="form-control" id="FechaEmision" />
                         </div>
 
-                        <!-- FECHA PAGO -->
                         <div class="col-md-4 mb-3">
-                            <label>Fecha de Pago</label>
-                            <input type="date" class="form-control" id="FechaPago" name="FechaPago" required />
+                            <label>Fecha Pago</label>
+                            <input type="date" class="form-control" id="FechaPago" />
                         </div>
                     </div>
 
                     <div class="row">
-                        <!-- TITULAR -->
+                        <!-- ESTADO -->
                         <div class="col-md-6 mb-3">
-                            <label>Titular</label>
-                            <input type="text" class="form-control" id="Titular" name="Titular" />
+                            <label>Estado</label>
+                            <select class="form-control" id="Estado">
+                                @foreach (Cheque.EstadoEnum e in Enum.GetValues(typeof(Cheque.EstadoEnum)))
+                                {
+                                    <option value="@e">@e</option>
+                                }
+                            </select>
                         </div>
 
                         <!-- PROPIO -->
                         <div class="col-md-6 mb-3">
                             <label>Propio</label>
-                            <select class="form-control" id="Propio" name="Propio">
+                            <select class="form-control" id="Propio">
                                 <option value="false">No</option>
                                 <option value="true">Sí</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- OBSERVACIONES -->
+                    <div class="form-group">
+                        <label>Titular</label>
+                        <input type="text" class="form-control" id="Titular" />
+                    </div>
+
                     <div class="form-group">
                         <label>Observaciones</label>
-                        <textarea class="form-control" id="Observaciones" name="Observaciones" rows="2"></textarea>
+                        <textarea class="form-control" id="Observaciones"></textarea>
                     </div>
 
                 </form>
@@ -89,12 +98,9 @@
 
             <!-- FOOTER -->
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    Cancelar
-                </button>
-
-                <button type="button" class="btn btn-primary" id="btnGuardarCheque">
-                    <i class="fas fa-save mr-1"></i> Guardar Cheque
+                <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" id="btnGuardarCheque">
+                    <i class="fas fa-save mr-1"></i> Guardar
                 </button>
             </div>
 
