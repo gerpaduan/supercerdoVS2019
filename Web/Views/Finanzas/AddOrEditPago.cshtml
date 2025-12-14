@@ -1,4 +1,5 @@
 ﻿@model Entidades.Pago
+@using System.Globalization
 
 @{
     ViewBag.Title = "Agregar / Editar Pago";
@@ -38,6 +39,7 @@
 
                     @using (Html.BeginForm("AddOrEditPagoPost", "Finanzas", FormMethod.Post, new { @id = "formPago" }))
                     {
+                        <input type="hidden" id="returnUrl" name="returnUrl" value="@ViewBag.ReturnUrl" />
                         @Html.HiddenFor(m => m.Id)
 
 
@@ -65,13 +67,18 @@
                         </div>
 
                         <!-- Tipo Operación -->
-                        <div class="form-group">
-                            <label>Tipo de Operación</label>
-                            <select id="aProveedor" name="AProveedor" class="form-control">
-                                <option value="True">Pagar (egreso)</option>
-                                <option value="False">Cobrar (ingreso)</option>
-                            </select>
-                        </div>
+                <div class="form-group">
+                    <label>Tipo de Operación</label>
+                        @Html.DropDownListFor(
+                            m => m.AProveedor,
+                            new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "Pagar (egreso)", Value = "true" },
+                                new SelectListItem { Text = "Cobrar (ingreso)", Value = "false" }
+                            },
+                            new { @class = "form-control" }
+                        )
+                </div>
 
                         <!-- Fecha -->
                         <div class="form-group">
@@ -108,14 +115,18 @@
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
                             <div class="form-group">
                                 <h5 class="text-primary">Efectivo</h5>
-                                @Html.TextBoxFor(m => m.Efectivo, new
-                                {
-                                    @class = "form-control solo-decimal",
-                                    id = "Efectivo",
-                                    type = "text",           // ← IMPORTANTE: evitar type="number"
-                                    autocomplete = "off"
-                                })
-                                @*<input type="text" id="EfectivoDec" name="EfectivoDec" class="form-control solo-decimal">*@
+
+                                @Html.TextBox(
+                                    "Efectivo",
+                                    Model.Efectivo.ToString("0.00", CultureInfo.InvariantCulture),
+                                    new
+                                    {
+                                        @class = "form-control solo-decimal",
+                                        id = "Efectivo",
+                                        type = "text"
+                                    }
+                                )
+
                             </div>
                         </div>
 
@@ -451,7 +462,7 @@
                                                                 data-nro="${c.NroCheque}"
                                                                 data-banco="${c.Banco}"
                                                                 data-fechapago="${c.FechaPago}"
-                                                                data-importe="${c.Importe}"
+                                                                data-importe="${c.Importe.toFixed(2)}"
                                                             >
                                                                 <td>${c.Id}</td>
                                                                 <td>${c.NroCheque}</td>
@@ -520,10 +531,9 @@
                                 ${fechapago}
                                 <input type="hidden" name="Cheques[${index}].FechaPago" value="${fechapago}">
                             </td>
-
                             <td class="imp">
                                 $${importe.toFixed(2)}
-                                <input type="hidden" name="Cheques[${index}].Importe" value="${importe}">
+                                <input type="hidden" name="Cheques[${index}].Importe" value="${importe.toFixed(2)}">
                             </td>
 
                             <td>
@@ -608,7 +618,7 @@
                             "@c.NroCheque",
                             "@c.Banco",
                             "@c.FechaPago.ToString("yyyy-MM-dd")",
-                            @c.Importe
+                            @c.Importe.ToString(System.Globalization.CultureInfo.InvariantCulture)
                         );
                     </text>
                 }

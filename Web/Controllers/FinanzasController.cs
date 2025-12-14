@@ -11,6 +11,7 @@ using iTextSharp.text.pdf;
 using iTextSharp.text;
 using Datos;
 using System.Collections.Generic;
+using System.Web;
 
 namespace Web.Controllers
 {
@@ -198,10 +199,11 @@ namespace Web.Controllers
         // ============================================================
         //  DETALLE DE MOVIMIENTO (placeholder)
         // ============================================================
-        public ActionResult verMovimientoCtaCte(int idPersona, string tabla, int idTabla = 0)
+        public ActionResult verMovimientoCtaCte(int idPersona, string returnUrl, string tabla, int idTabla = 0)
         {
             Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
             Entidades.MovCtaCte.tablas tablaEnum = oMovCtaCteE.getTablaEnum(tabla);
+            returnUrl = HttpUtility.UrlDecode(returnUrl);
 
             switch (tablaEnum)
             {
@@ -213,7 +215,7 @@ namespace Web.Controllers
 
                 case Entidades.MovCtaCte.tablas.Pagos:
                     return RedirectToAction("AddOrEditPago", "Finanzas",
-                        new { idPersona = idPersona, idPago = idTabla });
+                        new { idPersona = idPersona, returnUrl = returnUrl, idPago = idTabla });
 
                 default:
                     return HttpNotFound();
@@ -223,11 +225,12 @@ namespace Web.Controllers
         // ============================================================
         //  AGREGAR COBRO / PAGO (placeholder)
         // ============================================================
-        public ActionResult AddOrEditPago(int idPersona, int idPago = 0)
+        public ActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0)
         {
             var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
 
             ViewBag.Sucursales = sucursales;
+            ViewBag.ReturnUrl = returnUrl;
 
             // Obtengo movimientos desde la base
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
@@ -253,6 +256,7 @@ namespace Web.Controllers
             {
                 model = new Pago();          // ← IMPORTANTE
                 model.Fecha = DateTime.Now;  // valores por defecto
+                model.AProveedor = true; // 👈 por defecto "Pagar"
             }   
             else
             {
@@ -266,6 +270,7 @@ namespace Web.Controllers
 
         [HttpPost]
         public ActionResult AddOrEditPagoPost(Pago oPagoE,
+            string returnUrl,
             int SucursalId,
             int idPersona,
             string importe,
@@ -304,6 +309,9 @@ namespace Web.Controllers
 
             ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
             _ = oCtaCteN.addOrEditPago(oPagoE, null, null);//, oCierreCajaE, oPagoSinMod);
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
 
             return RedirectToAction("CtasCtes");
         }

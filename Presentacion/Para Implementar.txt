@@ -41,6 +41,18 @@ actualiar desde SM
 
 //////////////
 
+
+ALTER TABLE TuTabla ADD Importe_tmp DECIMAL(18,2);
+
+UPDATE TuTabla
+SET Importe_tmp = CAST(Importe AS DECIMAL(18,2));
+
+ALTER TABLE TuTabla DROP COLUMN Importe;
+
+EXEC sp_rename 'TuTabla.Importe_tmp', 'Importe', 'COLUMN';
+
+
+
 /////////////////
 
 agregar tabla Empresas 
