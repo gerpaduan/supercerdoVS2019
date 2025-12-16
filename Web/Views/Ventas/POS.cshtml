@@ -115,10 +115,21 @@
                     </div>
 
                     <!-- TOTAL FIJO -->
+                    <!-- TOTAL FIJO -->
                     <div class="zona-total">
-                        <h3 class="m-0" style="color:#adb5bd;">Total</h3>
-                        <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">$ 0,00</h1>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="m-0" style="color:#adb5bd;">Total</h3>
+                            <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">
+                                $ 0,00
+                            </h1>
+                        </div>
                     </div>
+
+
+                    @*<div class="zona-total">
+            <h3 class="m-0" style="color:#adb5bd;">Total</h3>
+            <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">$ 0,00</h1>
+        </div>*@
 
                     <!-- BOTONES FIJOS -->
                     <div class="zona-botones">
@@ -163,30 +174,121 @@
 
                     <!-- INFO PRODUCTO -->
                     <div id="producto-info" class="p-3 rounded bg-light border mb-3">
+                        <div class="row">
 
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h4 id="prodNombre" class="fw-bold text-muted m-0">Info producto...</h4>
-                            <div id="prodPrecio" class="fw-bold text-muted m-0"></div>
-                        </div>
+                            <!-- COLUMNA IZQUIERDA -->
+                            <!-- COLUMNA IZQUIERDA -->
+                            <div class="col-6">
 
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                <!-- NOMBRE PRODUCTO -->
+                                <h4 id="prodNombre"
+                                    class="fw-bold text-muted mb-2">
+                                    Info producto...
+                                </h4>
 
-                            <div class="w-50 me-2">
-                                <label class="form-label">Cantidad / Peso (kg)</label>
-                                <input type="text" id="inputCantidad"
-                                       class="form-control form-control-lg" disabled />
+                                <!-- PRECIO -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label">Precio</label>
+                                        <div id="prodPrecio"
+                                             class="fw-bold text-muted mb-3 fs-5">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="prodPrecio"
+                                     class="fw-bold text-muted mb-3 fs-5">
+                                </div>
+
+                                <!-- CANTIDAD -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                        <input id="inputCantidad"
+                                               class="form-control"
+                                               autocomplete="off"
+                                               inputmode="decimal">
+                                    </div>
+                                </div>
+
+                                <!-- SUBTOTAL -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label m-0">Subtotal</label>
+                                        <h4 id="prodSubtotal"
+                                            class="fw-bold text-muted m-0">
+                                            $ 0,00
+                                        </h4>
+                                    </div>
+                                </div>
+
+
+                                <!-- BOTÓN AGREGAR -->
+                                <button id="btnAgregarProducto"
+                                        class="btn btn-success btn-lg w-100 btn-agregar-pos"
+                                        disabled>
+                                    ➕ Agregar a la venta
+                                </button>
+
                             </div>
 
-                            <div class="text-end w-50">
-                                <label class="form-label d-block">Subtotal</label>
-                                <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
+                            @*<div class="col-6">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 id="prodNombre" class="fw-bold text-muted m-0">Info producto...</h4>
+                <div id="prodPrecio" class="fw-bold text-muted m-0"></div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="w-50 me-2">
+                    <label class="form-label">Cantidad / Peso (kg)</label>
+                    <input id="inputCantidad"
+                           class="form-control"
+                           autocomplete="off"
+                           inputmode="decimal">
+                </div>
+
+                <div class="text-end w-50">
+                    <label class="form-label d-block">Subtotal</label>
+                    <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
+                </div>
+            </div>
+
+            <button id="btnAgregarProducto"
+                class="btn btn-success btn-lg w-100 btn-agregar-pos"
+                disabled>
+                ➕ Agregar a la venta
+            </button>
+
+        </div>*@
+
+                            <!-- COLUMNA DERECHA - TECLADO -->
+                            <div class="col-6">
+                                <div class="keyboard-grid">
+                                    <button class="btn btn-light btn-key">7</button>
+                                    <button class="btn btn-light btn-key">8</button>
+                                    <button class="btn btn-light btn-key">9</button>
+                                    <button class="btn btn-warning btn-key">←</button>
+
+                                    <button class="btn btn-light btn-key">4</button>
+                                    <button class="btn btn-light btn-key">5</button>
+                                    <button class="btn btn-light btn-key">6</button>
+                                    <button class="btn btn-secondary btn-key">×</button>
+
+                                    <button class="btn btn-light btn-key">1</button>
+                                    <button class="btn btn-light btn-key">2</button>
+                                    <button class="btn btn-light btn-key">3</button>
+
+                                    <!-- ENTER ocupa 2 filas -->
+                                    <button class="btn btn-success btn-enter btn-key">Enter</button>
+
+                                    <button class="btn btn-light btn-key key-zero">0</button>
+                                    <button class="btn btn-light btn-key">.</button>
+                                </div>
+
+
                             </div>
 
                         </div>
-
-                        <button id="btnAgregarProducto" class="btn btn-success btn-lg w-100" disabled>
-                            ➕ Agregar a la venta
-                        </button>
 
                     </div>
 
@@ -269,6 +371,10 @@
         let typingTimer = null;
         let productoSeleccionado = null;
         let precioActual = 0;
+        // ===== ESTADO POS EN MEMORIA =====
+        let carrito = [];
+        let indexLinea = 1;
+        let ingresoCantidadX = false;
 
         // ================================
         // BÚSQUEDA EN VIVO
@@ -329,7 +435,7 @@
             $("#inputCantidad")
                 .prop("disabled", false)
                 //.val(p.pesable ? obtenerPesoBalanza() : "")
-                .focus();
+                //.focus();
 
             $("#prodSubtotal").text("$ 0,00");
             calcularSubtotal();
@@ -413,6 +519,40 @@
         }
 
 
+        // --------------------------------------------------------------------
+        // CALCULAR TOTAL EN VIVO
+        // --------------------------------------------------------------------
+        function recalcularTotal() {
+            let total = 0;
+
+            carrito.forEach(l => {
+                // l.subtotal viene como "$ 123.45"
+                const valor = parseFloat(
+                    l.subtotal.replace("$", "").replace(",", ".")
+                );
+
+                if (!isNaN(valor)) {
+                    total += valor;
+                }
+            });
+
+            $("#lblSubtotal").text(
+                `$ ${total.toFixed(2).replace(".", ",")}`
+            );
+        }
+
+
+        // ====================================================
+        // FOCO EN CANTIDAD TODO: VALIDAR SI EL PRODUCTO EXISTE
+        // ====================================================
+        $("#inputCodigo").on("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                pasarAFocoCantidad();
+                //$("#inputCantidad").focus().select();
+            }
+        });
+
         // ====================================================
         // BUSCAR PRODUCTO (ya lo usás)
         // ====================================================
@@ -450,31 +590,64 @@
                 alert("Cantidad inválida");
                 return;
             }
+            // ===== SIMULACIÓN BACKEND =====
 
-            $.ajax({
-                url: "/Ventas/AgregarProducto",
-                method: "POST",
-                data: {
-                    idCorte: productoSeleccionado.id,
-                    cantidadKg: cantidad
-                },
-                success: function (r) {
+            const subtotal = cantidad * productoSeleccionado.precioKg;
 
-                    if (!r.ok) {
-                        alert(r.error ?? "Error al agregar");
-                        return;
-                    }
+            const linea = {
+                index: indexLinea++,
+                producto: productoSeleccionado.nombre,
+                codigo: productoSeleccionado.codigo,
+                cant: cantidad.toFixed(3),
+                precio: `$ ${productoSeleccionado.precioKg.toFixed(2)}`,
+                subtotal: `$ ${(subtotal).toFixed(2)}`
+            };
 
-                    renderTablaProductos(r.lineas);
+            carrito.push(linea);
 
-                    // limpiar campos
-                    $("#inputCodigo").val("").focus();
-                    $("#inputCantidad").val("");
-                    $("#prodSubtotal").text("$ 0,00");
+            // simula respuesta del backend
+            const r = {
+                ok: true,
+                lineas: carrito
+            };
 
-                    productoSeleccionado = null;
-                }
-            });
+            // mismo flujo que AJAX success
+            renderTablaProductos(r.lineas);
+
+            // recalcular total
+            recalcularTotal();
+
+            // limpiar campos
+            $("#inputCodigo").val("").focus();
+            $("#inputCantidad").val("");
+            $("#prodSubtotal").text("$ 0,00");
+
+            productoSeleccionado = null;
+
+            //$.ajax({
+            //    url: "/Ventas/AgregarProducto",
+            //    method: "POST",
+            //    data: {
+            //        idCorte: productoSeleccionado.id,
+            //        cantidadKg: cantidad
+            //    },
+            //    success: function (r) {
+
+            //        if (!r.ok) {
+            //            alert(r.error ?? "Error al agregar");
+            //            return;
+            //        }
+
+            //        renderTablaProductos(r.lineas);
+
+            //        // limpiar campos
+            //        $("#inputCodigo").val("").focus();
+            //        $("#inputCantidad").val("");
+            //        $("#prodSubtotal").text("$ 0,00");
+
+            //        productoSeleccionado = null;
+            //    }
+            //});
         }
 
         // ====================================================
@@ -505,7 +678,7 @@
                                         </div>
 
                                         <div class="d-flex justify-content-between item-detalle">
-                                            <span>${l.cant} x ${l.precio}</span>
+                                            <span >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio}</span>
                                             <span class="fw-bold">${l.subtotal}</span>
                                         </div>
                                     </td>
@@ -520,6 +693,128 @@
             else document.exitFullscreen();
         });
 
+        ////TECLADO
+        let inputActivo = null;
+
+        document.addEventListener("focusin", e => {
+            if (e.target.tagName === "INPUT") {
+                inputActivo = e.target;
+            }
+        });
+
+        // Manejo de teclas del teclado virtual
+        document.querySelectorAll(".btn-key").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tecla = btn.innerText.trim();
+                if (!inputActivo) return;
+
+                switch (tecla) {
+                    case "←":
+                        borrarCaracter();
+                        break;
+
+                    case "Enter":
+                        manejarEnter();
+                        break;
+
+                    case "×":
+                        escribirX();
+                        break;
+
+                    default:
+                        escribirCaracter(tecla);
+                        break;
+                }
+            });
+        });
+
+        function volverACodigo() {
+            $("#inputCodigo").focus().select();
+        }
+
+        function pasarAFocoCantidad() {
+            $("#inputCantidad").focus().select();
+        }
+
+        function escribirCaracter(valor) {
+            if (!inputActivo) return;
+
+            if (inputActivo.id === "inputCantidad") {
+
+                // solo números o punto
+                if (!/^[0-9.]$/.test(valor)) return;
+
+                // evitar doble punto
+                if (valor === "." && inputActivo.value.includes(".")) return;
+
+                // si empieza con punto, anteponer 0
+                if (valor === "." && inputActivo.value === "") {
+                    inputActivo.value = "0";
+                }
+            }
+
+            inputActivo.value += valor;
+            //si cantidad tiene el foco
+            if (inputActivo.id === "inputCantidad")
+                calcularSubtotal();
+            else
+                terminarEscritura(inputActivo.value);
+        }
+
+        function escribirX() {
+            if (inputActivo.id !== "inputCodigo") return;
+
+            // Solo una X
+            if (inputActivo.value.includes("X")) return;
+
+            inputActivo.value += "X";
+        }
+
+        function borrarCaracter() {
+            if (!inputActivo) return;
+
+            inputActivo.value = inputActivo.value.slice(0, -1);
+            terminarEscritura(inputActivo.value);
+        }
+
+
+        function manejarEnter() {
+            if (inputActivo.id === "inputCodigo") {
+                procesarCodigoConCantidad();
+                if (ingresoCantidadX) {
+                    agregarProducto();
+                    ingresoCantidadX = false;
+                    return;
+                }
+                pasarAFocoCantidad();  
+                return;
+            }
+
+            if (inputActivo.id === "inputCantidad") {
+                agregarProducto();
+                //document.getElementById("btnAgregarProducto").click();
+            }
+        }
+
+        function procesarCodigoConCantidad() {
+            const codigoInput = document.getElementById("inputCodigo");
+            const valor = codigoInput.value.toUpperCase();
+
+            if (!valor.includes("X")) return;
+
+            const partes = valor.split("X");
+            if (partes.length !== 2) return;
+
+            const cantidad = partes[0];
+            const codigo = partes[1];
+
+            if (!cantidad || !codigo) return;
+
+            document.getElementById("inputCantidad").value = cantidad;
+            codigoInput.value = codigo;
+            terminarEscritura(codigo);
+            ingresoCantidadX = true;
+        }
     </script>
 }
 
@@ -542,4 +837,63 @@
         font-size: 0.95rem;
         color: #444;
     }
+
+
+    .keyboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 60px);
+        gap: 8px;
+    }
+
+    /* Botones normales */
+    .btn-key {
+        height: 100%;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    /* ENTER ocupa 2 filas */
+    .btn-enter {
+        grid-row: span 2;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+
+    /* El 0 ocupa 2 columnas */
+    .key-zero {
+        grid-column: span 2;
+    }
+
+
+    /* Línea delicada de separación vertical */
+    .key-separator {
+        border-left: 1px solid rgba(0, 0, 0, 0.1);
+        padding-left: 8px;
+    }
+
+    /* ===== BOTÓN POS ===== */
+    .btn-agregar-pos {
+        height: 56px;
+        white-space: nowrap; /* NO se parte */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    /* Ajuste en pantallas chicas */
+    @@media (max-width: 576px) {
+        .btn-key,
+        .btn-enter {
+            font-size: 1.2rem;
+            padding: 14px 0;
+        }
+        .btn-agregar-pos {
+            height: 52px; /* misma sensación táctil */
+            font-size: 1rem;
+        }
+    }
+
 </style>
