@@ -384,6 +384,16 @@
 
             let cod = this.value.trim().toUpperCase();
 
+            // ⌨️ ENTER → cancelar debounce y pasar a cantidad
+            if (e.key === "Enter") {
+                clearTimeout(typingTimer);
+                terminarEscritura(cod, function () {
+                    // 👇 se ejecuta CUANDO el producto YA está cargado
+                    pasarAFocoCantidad();
+                });
+                return;
+            }
+
             // ⛔ Si tiene X, no buscar (se procesa con Enter)
             if (cod.includes("X")) {
                 mostrarSinCoincidencia();
@@ -643,6 +653,7 @@
             $("#prodSubtotal").text("$ 0,00");
 
             productoSeleccionado = null;
+            mostrarEsperando();
                       
         }
 
