@@ -446,7 +446,8 @@
                 let desde = $("#filtroDesde").val();
 
                 $.ajax({
-                    url: '/Finanzas/GetCheques',
+                    url: '@Url.Action("CajasAbiertas", "Cajas")',
+                    /*url: '/Finanzas/GetCheques',*/
                     type: 'GET',
                     data: { estado, nroCheque, desde },
                     success: function (lista) {

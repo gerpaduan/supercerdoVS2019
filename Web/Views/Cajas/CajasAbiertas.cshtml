@@ -166,7 +166,8 @@
             }
 
             $.ajax({
-                url: baseUrl + 'Cajas/CajasAbiertas', // baseUrl ya termina con "/" normalmente
+                url: '@Url.Action("CajasAbiertas", "Cajas")',
+                //url: baseUrl + 'Cajas/CajasAbiertas', // baseUrl ya termina con "/" normalmente
                 type: 'GET',
                 data: {
                     idSucursal: idSucursal,

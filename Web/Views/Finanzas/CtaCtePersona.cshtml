@@ -79,9 +79,9 @@
                 <!-- BOTONES PARA MOBILE (xs - sm) -->
                 <div class="d-md-none mt-3">
                     <!-- Agregar Pago / Cobro 100% -->
-                    <a href="@Url.Action(" ", "Finanzas", 
+                    <a href="@Url.Action("AddOrEditPago", "Finanzas",
                             new { idPersona = ViewBag.IdPersona,
-                                    returnUrl = Request.RawUrl })"
+                                    returnUrl = returnUrl })"
                        class="btn btn-success btn-block mb-2">
                         <i class="fas fa-plus"></i> Agregar Pago / Cobro
                     </a>

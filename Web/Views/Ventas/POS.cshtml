@@ -375,17 +375,30 @@
         let carrito = [];
         let indexLinea = 1;
         let ingresoCantidadX = false;
+        let enterDesdeTecladoVirtual = false;
 
         // ================================
         // BÚSQUEDA EN VIVO
         // ================================
-        $("#inputCodigo").on("keyup", function () {
-            let cod = $(this).val().trim();
+        $("#inputCodigo").on("keyup", function (e) {
+
+            let cod = this.value.trim().toUpperCase();
+
+            // ⛔ Si tiene X, no buscar (se procesa con Enter)
+            if (cod.includes("X")) {
+                mostrarSinCoincidencia();
+                clearTimeout(typingTimer);
+                return;
+            }
+
             clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => terminarEscritura(cod), 250);
+            typingTimer = setTimeout(() => {
+                terminarEscritura(cod);
+            }, 250);
         });
 
-        function terminarEscritura(codigo) {
+
+        function terminarEscritura(codigo, callback = null) {
 
             if (codigo === "") {
                 mostrarEsperando();
@@ -393,7 +406,8 @@
             }
 
             $.ajax({
-                url: "/Ventas/BuscarProducto",
+                url: '@Url.Action("BuscarProducto", "Ventas")',
+                //url: "/Ventas/BuscarProducto",
                 method: "GET",
                 data: { codigo: codigo },
 
@@ -405,6 +419,9 @@
 
                     mostrarProducto(data);
                     productoSeleccionado = data;
+
+                    // 🔥 ACÁ está la magia
+                    if (callback) callback();
                 },
 
                 error: function () {
@@ -548,10 +565,12 @@
         $("#inputCodigo").on("keydown", function (e) {
             if (e.key === "Enter") {
                 e.preventDefault();
-                pasarAFocoCantidad();
-                //$("#inputCantidad").focus().select();
+                clearTimeout(typingTimer); // 🔥 CLAVE (cancelar debounce)
+                enterDesdeTecladoVirtual = false;
+                manejarEnter();
             }
         });
+
 
         // ====================================================
         // BUSCAR PRODUCTO (ya lo usás)
@@ -581,6 +600,7 @@
 
             if (!productoSeleccionado) {
                 alert("Selecciona un producto primero");
+                volverACodigo();
                 return;
             }
 
@@ -623,31 +643,7 @@
             $("#prodSubtotal").text("$ 0,00");
 
             productoSeleccionado = null;
-
-            //$.ajax({
-            //    url: "/Ventas/AgregarProducto",
-            //    method: "POST",
-            //    data: {
-            //        idCorte: productoSeleccionado.id,
-            //        cantidadKg: cantidad
-            //    },
-            //    success: function (r) {
-
-            //        if (!r.ok) {
-            //            alert(r.error ?? "Error al agregar");
-            //            return;
-            //        }
-
-            //        renderTablaProductos(r.lineas);
-
-            //        // limpiar campos
-            //        $("#inputCodigo").val("").focus();
-            //        $("#inputCantidad").val("");
-            //        $("#prodSubtotal").text("$ 0,00");
-
-            //        productoSeleccionado = null;
-            //    }
-            //});
+                      
         }
 
         // ====================================================
@@ -714,6 +710,7 @@
                         break;
 
                     case "Enter":
+                        enterDesdeTecladoVirtual = true;
                         manejarEnter();
                         break;
 
@@ -754,6 +751,7 @@
             }
 
             inputActivo.value += valor;
+
             //si cantidad tiene el foco
             if (inputActivo.id === "inputCantidad")
                 calcularSubtotal();
@@ -777,26 +775,35 @@
             terminarEscritura(inputActivo.value);
         }
 
-
+        
         function manejarEnter() {
-            if (inputActivo.id === "inputCodigo") {
-                procesarCodigoConCantidad();
-                if (ingresoCantidadX) {
-                    agregarProducto();
-                    ingresoCantidadX = false;
-                    return;
-                }
-                pasarAFocoCantidad();  
-                return;
-            }
+
+            if (!inputActivo) return;
 
             if (inputActivo.id === "inputCantidad") {
                 agregarProducto();
-                //document.getElementById("btnAgregarProducto").click();
+                enterDesdeTecladoVirtual = false;
+                return;
             }
+
+            if (enterDesdeTecladoVirtual || inputActivo.id === "inputCodigo") {
+                procesarCodigoConCantidad();
+
+                if (ingresoCantidadX) {
+                    ingresoCantidadX = false;
+                    enterDesdeTecladoVirtual = false;
+                    return;
+                }
+
+                pasarAFocoCantidad();
+                return;
+            }
+
         }
 
+
         function procesarCodigoConCantidad() {
+
             const codigoInput = document.getElementById("inputCodigo");
             const valor = codigoInput.value.toUpperCase();
 
@@ -810,11 +817,18 @@
 
             if (!cantidad || !codigo) return;
 
-            document.getElementById("inputCantidad").value = cantidad;
+            $("#inputCantidad").val(cantidad);
             codigoInput.value = codigo;
-            terminarEscritura(codigo);
+
+            terminarEscritura(codigo, function () {
+                // 👇 se ejecuta CUANDO el producto YA está cargado
+                agregarProducto();
+                mostrarEsperando();
+            });
+
             ingresoCantidadX = true;
         }
+
     </script>
 }
 
