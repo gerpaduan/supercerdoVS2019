@@ -39,7 +39,7 @@
 
                     @using (Html.BeginForm("AddOrEditPagoPost", "Finanzas", FormMethod.Post, new { @id = "formPago" }))
                     {
-                        <input type="hidden" id="returnUrl" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                        <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
                         @Html.HiddenFor(m => m.Id)
 
 
@@ -67,18 +67,18 @@
                         </div>
 
                         <!-- Tipo Operación -->
-                <div class="form-group">
-                    <label>Tipo de Operación</label>
-                        @Html.DropDownListFor(
-                            m => m.AProveedor,
-                            new List<SelectListItem>
-                            {
-                                new SelectListItem { Text = "Pagar (egreso)", Value = "true" },
-                                new SelectListItem { Text = "Cobrar (ingreso)", Value = "false" }
-                            },
-                            new { @class = "form-control" }
-                        )
-                </div>
+                        <div class="form-group">
+                            <label>Tipo de Operación</label>
+                            @Html.DropDownListFor(
+                                m => m.AProveedor,
+                                new List<SelectListItem>
+                                {
+                                    new SelectListItem { Text = "Pagar (egreso)", Value = "true" },
+                                    new SelectListItem { Text = "Cobrar (ingreso)", Value = "false" }
+                                },
+                                new { @class = "form-control" }
+                            )
+                        </div>
 
                         <!-- Fecha -->
                         <div class="form-group">
@@ -179,7 +179,13 @@
                         </div>
 
                         <input type="hidden" id="ChequesJson" name="ChequesJson" />
-                        <button type="submit" onclick="desactivarProteccionSalida()" class="btn btn-success">Guardar</button>
+                        <button type="submit"
+                                onclick="desactivarProteccionSalida()"
+                                class="btn btn-success btn-block">
+                            Guardar
+                        </button>
+
+
                     }
                 </div>
             </div>
@@ -283,8 +289,17 @@
 <!-- ************************   SCRIPTS   *************************** -->
 <!-- *************************************************************** -->
 @section Scripts{
+
+    <script>
+    window.urls = {
+        guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")',
+    };
+    </script>
     <script src="~/Scripts/app/modal-cheque.js"></script>
     <script>
+
+        const urlBuscarCheque = '@Url.Action("BuscarChequePorNro", "Finanzas")';
+        const urlValidarChequeParaPago = '@Url.Action("ValidarChequeParaPago", "Finanzas")';
 
         // SI HUBO UN CAMBIO SE ACTIVA PROTECCION DE SALIDA
         $("input, select, textarea").on("change keyup", function () {
@@ -353,11 +368,11 @@
                 var idPago = $("#Id").val() || 0;
                 if (nro === "") return;
 
-                $.get("/Finanzas/BuscarChequePorNro",
+                $.get(urlBuscarCheque,
                     {
                         numero: nro,
                         pagoId: $("#Id").val(),        // ← NOMBRE CORRECTO
-                        esAProveedor: $("#aProveedor").val() === "True"
+                        esAProveedor: $("#AProveedor").val() === "true"
                     },
                     function (data) {
                         if (!data.ok) {
@@ -396,13 +411,17 @@
                             data.cheque.NroCheque,
                             data.cheque.Banco,
                             data.cheque.FechaPago,
-                            data.cheque.Importe
+                            data.cheque.Importe,
+                            true
                         );
                     });
 
             }
 
-
+            // 👂 Cuando el modal avisa que guardó un cheque
+            $(document).on("cheque:guardado", function () {
+                buscarChequePorNumero();
+            });
             /******************************************************
              * CARGO EL CHEQUE CREADO
              ******************************************************/
@@ -446,7 +465,7 @@
                 let desde = $("#filtroDesde").val();
 
                 $.ajax({
-                    url: '@Url.Action("CajasAbiertas", "Cajas")',
+                    url: '@Url.Action("GetCheques", "Finanzas")',
                     /*url: '/Finanzas/GetCheques',*/
                     type: 'GET',
                     data: { estado, nroCheque, desde },
@@ -507,49 +526,69 @@
             /******************************************************
              * AGREGAR CHEQUE A TABLA PRINCIPAL
              ******************************************************/
-            function agregarChequeATabla(id, nro, banco, fechapago, importe) {
+            function agregarChequeATabla(id, nro, banco, fechapago, importe, validarCheque = false) {
 
                 // evitar duplicados
                 if ($("#tablaCheques tbody tr[data-id='" + id + "']").length > 0) {
                     Swal.fire("Aviso", "Este cheque ya fue agregado.", "info");
                     return;
                 }
-                let index = $("#tablaCheques tbody tr").length; // índice automático
+                $.get(urlValidarChequeParaPago, {
+                    numero: nro,
+                    pagoActual: $("#Id").val(),
+                    esAProveedor: $("#AProveedor").val() === "true",
+                    validarCheque: validarCheque
+                })
+                .done(function (resp) {
 
-                let fila = `
-                        <tr data-id="${id}">
-                            <td>
-                                ${nro}
-                                <input type="hidden" name="Cheques[${index}].Numero" value="${nro}">
-                            </td>
+                    if (!resp.ok) {
+                        Swal.fire("No se puede agregar", resp.mensaje, "warning");
+                        return;
+                    }
 
-                            <td>
-                                ${banco}
-                                <input type="hidden" name="Cheques[${index}].Banco" value="${banco}">
-                            </td>
+                    // ✅ PASÓ VALIDACIÓN → AGREGAR A LA TABLA
+                    let index = $("#tablaCheques tbody tr").length; // índice automático
 
-                            <td>
-                                ${fechapago}
-                                <input type="hidden" name="Cheques[${index}].FechaPago" value="${fechapago}">
-                            </td>
-                            <td class="imp">
-                                $${importe.toFixed(2)}
-                                <input type="hidden" name="Cheques[${index}].Importe" value="${importe.toFixed(2)}">
-                            </td>
+                    let fila = `
+                            <tr data-id="${id}">
+                                <td>
+                                    ${nro}
+                                    <input type="hidden" name="Cheques[${index}].Numero" value="${nro}">
+                                </td>
 
-                            <td>
-                                <input type="hidden" name="Cheques[${index}].Id" value="${id}">
-                                <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">Quitar</button>
-                            </td>
-                        </tr>
-                        `;
+                                <td>
+                                    ${banco}
+                                    <input type="hidden" name="Cheques[${index}].Banco" value="${banco}">
+                                </td>
 
-                $("#tablaCheques tbody").append(fila);
+                                <td>
+                                    ${fechapago}
+                                    <input type="hidden" name="Cheques[${index}].FechaPago" value="${fechapago}">
+                                </td>
+                                <td class="imp">
+                                    $${importe.toFixed(2)}
+                                    <input type="hidden" name="Cheques[${index}].Importe" value="${importe.toFixed(2)}">
+                                </td>
 
-                actualizarImporte();
+                                <td>
+                                    <input type="hidden" name="Cheques[${index}].Id" value="${id}">
+                                    <button type="button" class="btn btn-danger btn-sm btnQuitarCheque">Quitar</button>
+                                </td>
+                            </tr>
+                            `;
 
-                // limpiar el input
-                $("#txtNroCheque").val("");
+                    $("#tablaCheques tbody").append(fila);
+
+                    actualizarImporte();
+
+                    // limpiar el input
+                        $("#txtNroCheque").val("");
+
+
+                    })
+                .fail(function () {
+                    Swal.fire("Error", "Error al validar el cheque.", "error");
+                });
             }
 
 
@@ -632,29 +671,36 @@
         /******************************************************
          * ADD OR EDIT PAGO
          ******************************************************/
-        $("#formPago").on("submit", function () {
+        $("#formPago").on("submit", function (e) {
+            e.preventDefault(); // 🔴 siempre frenamos el submit tradicional
 
-            var suc = document.getElementById("SucursalId").value;
+            // ===============================
+            // VALIDACIÓN CLIENTE (antes de AJAX)
+            // ===============================
+            var suc = $("#SucursalId").val();
 
-            if (suc === "" || suc === null) {
-                Swal.fire("Atención", "Debe seleccionar una sucursal antes de guardar.", "warning");
-                return false; // ❌ Bloquea el envío
+            if (!suc) {
+                Swal.fire(
+                    "Atención",
+                    "Debe seleccionar una sucursal antes de guardar.",
+                    "warning"
+                );
+                return;
             }
 
-            // NORMALIZAR IMPORTE
-            let imp = $("#importe").val().trim();
+            // ===============================
+            // NORMALIZAR IMPORTES
+            // ===============================
+            let imp = $("#importe").val()?.trim() ?? "";
             $("#importe").val(imp);
 
-            let impEf = $("#Efectivo").val().trim();
-
-            // Si está vacío → poner 0
-            if (impEf === "" || impEf === null) {
-                impEf = "0";
-            }
-
-            // Asignar valor normalizado
+            let impEf = $("#Efectivo").val()?.trim();
+            if (!impEf) impEf = "0";
             $("#Efectivo").val(impEf);
 
+            // ===============================
+            // ARMAR LISTA DE CHEQUES
+            // ===============================
             let lista = [];
 
             $("#tablaCheques tbody tr").each(function () {
@@ -663,12 +709,89 @@
                     NroCheque: $(this).find("td:eq(0)").text().trim(),
                     Banco: $(this).find("td:eq(1)").text().trim(),
                     FechaPago: $(this).find("td:eq(2)").text().trim(),
-                    Importe: parseFloat($(this).find("td:eq(3)").text().replace("$", "").trim())
+                    Importe: parseFloat(
+                        $(this).find("td:eq(3)")
+                            .text()
+                            .replace("$", "")
+                            .trim()
+                    )
                 });
             });
 
             $("#ChequesJson").val(JSON.stringify(lista));
+
+            // ===============================
+            // ENVÍO AJAX
+            // ===============================
+            $.ajax({
+                url: this.action,
+                type: "POST",
+                data: $(this).serialize(),
+                success: function (resp) {
+
+                    if (!resp.ok) {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Validación",
+                            text: resp.mensaje
+                        });
+                        return;
+                    }
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Pago guardado correctamente"
+                    }).then(() => {
+                        window.location.href = resp.redirectUrl ?? location.href;
+                    });
+                },
+                error: function () {
+                    Swal.fire(
+                        "Error",
+                        "Ocurrió un error inesperado al guardar el pago.",
+                        "error"
+                    );
+                }
+            });
         });
+
+        //$("#formPago").on("submit", function () {
+
+        //    var suc = document.getElementById("SucursalId").value;
+
+        //    if (suc === "" || suc === null) {
+        //        Swal.fire("Atención", "Debe seleccionar una sucursal antes de guardar.", "warning");
+        //        return false; // ❌ Bloquea el envío
+        //    }
+
+        //    // NORMALIZAR IMPORTE
+        //    let imp = $("#importe").val().trim();
+        //    $("#importe").val(imp);
+
+        //    let impEf = $("#Efectivo").val().trim();
+
+        //    // Si está vacío → poner 0
+        //    if (impEf === "" || impEf === null) {
+        //        impEf = "0";
+        //    }
+
+        //    // Asignar valor normalizado
+        //    $("#Efectivo").val(impEf);
+
+        //    let lista = [];
+
+        //    $("#tablaCheques tbody tr").each(function () {
+        //        lista.push({
+        //            Id: $(this).data("id") || 0,
+        //            NroCheque: $(this).find("td:eq(0)").text().trim(),
+        //            Banco: $(this).find("td:eq(1)").text().trim(),
+        //            FechaPago: $(this).find("td:eq(2)").text().trim(),
+        //            Importe: parseFloat($(this).find("td:eq(3)").text().replace("$", "").trim())
+        //        });
+        //    });
+
+        //    $("#ChequesJson").val(JSON.stringify(lista));
+        //});
 
     </script>
 

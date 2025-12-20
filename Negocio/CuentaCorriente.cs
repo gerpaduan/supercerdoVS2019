@@ -267,7 +267,7 @@ namespace Negocio
                         detalleEgreso = " | " + oPagoE.FormaPago + " $" + oPagoE.Importe.ToString("N2");
                         break;
 
-                    case "EFTVO+CHEQUE":
+                    case "EFTVOCHEQUE":
                         montoEgreso = oPagoE.AProveedor ? oPagoE.Efectivo : (-1 * oPagoE.Efectivo);//se multiplica *-1 para que sume a la caja
                         detalleEgreso = " | Cheques $" + (oPagoE.Importe - oPagoE.Efectivo).ToString("N2") + " | EF $" + oPagoE.Efectivo;
                         break;
@@ -300,6 +300,92 @@ namespace Negocio
             
             oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
         }
+
+
+        public (bool ok, string mensaje) ValidarPago(Entidades.Pago oPagoE)
+        {
+            if (oPagoE == null)
+                return (false, "No se recibió información del pago.");
+
+            // ===============================
+            // PERSONA
+            // ===============================
+            if (oPagoE.Persona == null ||
+                oPagoE.Persona.idPersona == Entidades.Parametros.idConsumidorFinal)
+            {
+                return (false,
+                    "Debe seleccionar una persona válida y diferente a Consumidor Final.\n" +
+                    "No pueden asignarse pagos/cobros a CF.");
+            }
+
+            // ===============================
+            // FECHA
+            // ===============================
+            if (oPagoE.Fecha == DateTime.MinValue)
+                return (false, "La fecha del pago no es válida.");
+
+            if (oPagoE.Fecha > DateTime.Now)
+                return (false, "La fecha del pago debe ser menor a la fecha y hora actual.");
+
+            // ===============================
+            // FORMA DE PAGO
+            // ===============================
+            if (string.IsNullOrWhiteSpace(oPagoE.FormaPago))
+                return (false, "Debe seleccionar una forma de pago.");
+
+            // ===============================
+            // EFTVO + CHEQUE
+            // ===============================
+            if (oPagoE.FormaPago == "EftvoCheque")
+            {
+                if (oPagoE.Cheques == null || !oPagoE.Cheques.Any())
+                {
+                    return (false,
+                        "Debe ingresar el/los cheques que forman parte del pago.");
+                }
+
+                if (oPagoE.Efectivo <= 0)
+                {
+                    return (false,
+                        "Ingrese un importe en efectivo mayor a 0.");
+                }
+            }
+            else
+            {
+                // ===============================
+                // IMPORTE
+                // ===============================
+                if (oPagoE.FormaPago != Pago.formasPago.Otro.ToString() &&
+                    oPagoE.Importe <= 0)
+                {
+                    return (false, "Ingrese un importe mayor a 0.");
+                }
+            }
+
+            // ===============================
+            // CAMPOS OBLIGATORIOS
+            // ===============================
+            var faltantes = new List<string>();
+
+            if (oPagoE.Persona == null)
+                faltantes.Add("Persona");
+
+            if (string.IsNullOrWhiteSpace(oPagoE.FormaPago))
+                faltantes.Add("Forma de Pago");
+
+            if (oPagoE.Importe <= 0 && oPagoE.FormaPago != "EftvoCheque")
+                faltantes.Add("Importe");
+
+            if (faltantes.Any())
+            {
+                return (false,
+                    "Complete los siguientes campos:\n- " +
+                    string.Join("\n- ", faltantes));
+            }
+
+            return (true, string.Empty);
+        }
+
 
         #endregion
 
@@ -339,7 +425,7 @@ namespace Negocio
 
             // Pagar proveedor → debe ser propio o recibido
             if (esAProveedor && !(oCheque.Propio || (oCheque.PagoDe?.Id > 0)))
-                return (false, "El cheque debe ser propio o provenir de un cobro.", null);
+                return (false, "El cheque debe ser propio o provenir de un cobro para ser asignado a un Pago.", null);
 
             // Ya asignado a otro pago destino
             if (esAProveedor && oCheque.PagoA?.Id > 0 && oCheque.PagoA.Id != pagoActual.Id)

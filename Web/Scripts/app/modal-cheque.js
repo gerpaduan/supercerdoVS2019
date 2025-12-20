@@ -1,37 +1,62 @@
 ﻿// ===============================
-// MODAL ALTA CHEQUE (REUTILIZABLE)
+// MODAL ALTA / EDICIÓN CHEQUE
 // ===============================
 
-var ModalAltaCheque = {
+const ModalAltaCheque = (function () {
 
-    abrir: function (nroCheque, cheque = null) {
+    const urlGuardarCheque = window.urls.guardarCheque;
+
+    function abrir(nroCheque = "", cheque = null) {
 
         $("#formCheque")[0].reset();
 
-        $("#ChequeId").val(cheque?.Id || 0);
-        $("#NroCheque").val(cheque?.NroCheque || nroCheque || "");
-        $("#BancoId").val(cheque?.Banco || "");
-        $("#Importe").val(cheque?.Importe || "");
-        $("#FechaEmision").val(cheque?.FechaEmision || "");
-        $("#FechaPago").val(cheque?.FechaPago || "");
-        $("#Estado").val(cheque?.Estado || "PENDIENTE");
+        $("#ChequeId").val(cheque?.Id ?? 0);
+        $("#NroCheque").val(cheque?.NroCheque ?? nroCheque);
+        $("#Banco").val(cheque?.Banco ?? "");
+        $("#Importe").val(cheque?.Importe ?? "");
+        $("#FechaEmision").val(cheque?.FechaEmision ?? "");
+        $("#FechaPago").val(cheque?.FechaPago ?? "");
+        $("#Estado").val(cheque?.Estado ?? "PENDIENTE");
         $("#Propio").val(cheque?.Propio ? "true" : "false");
-        $("#Titular").val(cheque?.Titular || "");
-        $("#Observaciones").val(cheque?.Observaciones || "");
+        $("#Titular").val(cheque?.Titular ?? "");
+        $("#Observaciones").val(cheque?.Observaciones ?? "");
 
-        $("#tituloModalCheque").text(cheque ? "Editar Cheque" : "Alta de Cheque");
+        $("#tituloModalCheque").text(
+            cheque ? "Editar Cheque" : "Alta de Cheque"
+        );
 
         $("#modalAltaCheque").modal("show");
     }
-};
 
-$(document).ready(function () {
+    function validar() {
 
-    // Cuando se hace clic en "Guardar Cheque" en el modal
-    $("#btnGuardarCheque").on("click", function () {
-        // NORMALIZAR IMPORTE
-        let imp = $("#importe").val().trim();
-        $("#importe").val(imp);
+        let errores = [];
+
+        let importe = $("#Importe").val();
+        if (!importe || importe === "0") {
+            errores.push("Ingrese un importe válido.");
+        }
+
+        let fechaPago = $("#FechaPago").val();
+        if (!fechaPago) {
+            errores.push("Ingrese una fecha de pago.");
+        }
+
+        if (errores.length > 0) {
+            Swal.fire({
+                title: "Error",
+                html: errores.join("<br>"),
+                icon: "error"
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    function guardar() {
+
+        if (!validar()) return;
 
         let cheque = {
             Id: $("#ChequeId").val(),
@@ -46,54 +71,43 @@ $(document).ready(function () {
             Observaciones: $("#Observaciones").val()
         };
 
-        $.post("/Finanzas/GuardarCheque", cheque, function (resp) {
+        $.post(urlGuardarCheque, cheque)
+            .done(function (resp) {
 
-            var mensajeValidacion = "";
+                if (!resp.ok) {
+                    Swal.fire("Error", resp.message, "error");
+                    return;
+                }
 
-            var Importe = $("#Importe").val();
-            if (Importe === "" || Importe === null || Importe === "0") {
-                mensajeValidacion += "\n-Ingrese un importe válido.";
-                //Swal.fire("Atención", "Ingrese una fecha de pago.", "warning");
-                //return false; // ❌ Bloquea el envío
-            }
+                $("#modalAltaCheque").modal("hide");
 
-            var FechaPago = $("#FechaPago").val();
-            if (FechaPago === "" || FechaPago === null) {
-                mensajeValidacion += "\n-Ingrese una fecha de pago.";
-                //Swal.fire("Atención", "Ingrese una fecha de pago.", "warning");
-                //return false; // ❌ Bloquea el envío
-            }
+                // 🔔 Emitir evento (sin saber quién escucha)
+                $(document).trigger("cheque:guardado", resp);
 
-            if (mensajeValidacion != "") {
-                Swal.fire({
-                    title: "Error",
-                    html: mensajeValidacion.replace(/\n/g, "<br>"),
-                    icon: "error"
-                });
-                return false;
-            }
+                Swal.fire("OK", "Cheque guardado correctamente", "success");
 
-            if (!resp.ok) {
-                //Swal.fire("Error", resp.mensaje, "error");
-                Swal.fire({
-                    title: "Error",
-                    html: resp.message,//.replace(/\n/g, "<br>"),
-                    icon: "error"
-                });
-                return;
-            }
+            })
+            .fail(function () {
+                Swal.fire("Error", "No se pudo guardar el cheque", "error");
+            });
+    }
 
-            $("#modalAltaCheque").modal("hide");
+    return {
+        abrir,
+        guardar
+    };
 
-                //// opcional → agregar directo a la tabla de pago
-                //agregarChequeATabla(
-                //    resp.cheque.Id,
-                //    resp.cheque.NroCheque,
-                //    resp.cheque.Banco,
-                //    resp.cheque.FechaPago,
-                //    resp.cheque.Importe
-                //);
-        });
+})();
+
+
+// ===============================
+// EVENTOS
+// ===============================
+
+$(document).ready(function () {
+
+    $("#btnGuardarCheque").on("click", function () {
+        ModalAltaCheque.guardar();
     });
 
 });

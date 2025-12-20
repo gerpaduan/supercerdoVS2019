@@ -708,7 +708,7 @@
             "Debito",
             "Credito",
             "Qr",
-            "Trasferencia",
+            "Transferencia",
             "Cheque",
             "EftvoCheque",
             "Otro"});

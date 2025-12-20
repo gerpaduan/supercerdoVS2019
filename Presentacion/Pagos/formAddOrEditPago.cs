@@ -495,7 +495,7 @@ namespace Presentacion.Pagos
 
             ///validar qeu si es Efvo y Cheque. Ambos tengan campos cargados
             ///
-            if (comboTipoPago.Text.Equals("Eftvo+Cheque"))
+            if (comboTipoPago.Text.Equals("EftvoCheque"))
             {
                 if (grilla.Rows.Count == 0)
                 {

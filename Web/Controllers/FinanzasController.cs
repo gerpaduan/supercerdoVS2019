@@ -203,7 +203,14 @@ namespace Web.Controllers
         {
             Entidades.MovCtaCte oMovCtaCteE = new Entidades.MovCtaCte();
             Entidades.MovCtaCte.tablas tablaEnum = oMovCtaCteE.getTablaEnum(tabla);
-            returnUrl = HttpUtility.UrlDecode(returnUrl);
+            string decodedReturnUrl = "";
+
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                decodedReturnUrl = System.Text.Encoding.UTF8.GetString(
+                    Convert.FromBase64String(returnUrl)
+                );
+            }
 
             switch (tablaEnum)
             {
@@ -215,7 +222,7 @@ namespace Web.Controllers
 
                 case Entidades.MovCtaCte.tablas.Pagos:
                     return RedirectToAction("AddOrEditPago", "Finanzas",
-                        new { idPersona = idPersona, returnUrl = returnUrl, idPago = idTabla });
+                        new { idPersona = idPersona, returnUrl = decodedReturnUrl, idPago = idTabla });
 
                 default:
                     return HttpNotFound();
@@ -229,8 +236,17 @@ namespace Web.Controllers
         {
             var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
 
-            ViewBag.Sucursales = sucursales;
+            ViewBag.Sucursales = sucursales;            
+
             ViewBag.ReturnUrl = returnUrl;
+
+            if (!string.IsNullOrEmpty(returnUrl) && idPago == 0)
+            {
+                ViewBag.ReturnUrl = System.Text.Encoding.UTF8.GetString(
+                    Convert.FromBase64String(returnUrl)
+                );
+            }
+
 
             // Obtengo movimientos desde la base
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
@@ -307,11 +323,20 @@ namespace Web.Controllers
 
             oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
 
+            ///VALIDAR PAGO
+            var (ok, mensaje) = oCtaCteN.ValidarPago(oPagoE);
+
+            if (!ok)
+            {
+                return Json(new { ok = false, mensaje });
+            }
+
             ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
             _ = oCtaCteN.addOrEditPago(oPagoE, null, null);//, oCierreCajaE, oPagoSinMod);
+                                   
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl);
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Json(new { ok = true, redirectUrl = returnUrl });
 
             return RedirectToAction("CtasCtes");
         }
@@ -416,7 +441,6 @@ namespace Web.Controllers
         {
             try
             {
-
                 var user = Session["Usuario"] as Entidades.Usuario;
                 //busco el creador de cheque si id > 0
                 int idUserCreador = cheque.Id > 0 ? (oCtaCteN.getChequePorIDorNro(cheque.Id, "").CreadoPor.Id) : user.Id;
@@ -450,6 +474,54 @@ namespace Web.Controllers
                 return Json(new { ok = false, message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// validarCheque si se quiere validar para la carga. Se pasa false al cargar la pagina xq valida a si mismo
+        /// y tira error
+        /// </summary>
+        /// <param name="numero"></param>
+        /// <param name="pagoId"></param>
+        /// <param name="esAProveedor"></param>
+        /// <param name="validarCheque"></param>
+        /// <returns></returns>
+        public JsonResult ValidarChequeParaPago(string numero, int pagoId = 0, bool esAProveedor = true, bool validarCheque = false)
+        {
+            try
+            {
+                var pagoActual = oCtaCteN.getPagoById(pagoId);
+
+                if (pagoActual == null)
+                    pagoActual = new Pago { Cheques = new List<Cheque>() };
+
+                if (pagoActual.Cheques == null)
+                    pagoActual.Cheques = new List<Cheque>();
+
+                var (ok, mensaje, cheque) = validarCheque ? 
+                        oCtaCteN.ValidarChequeParaPago(numero, pagoActual, esAProveedor) :
+                        (true, "", null);
+
+                return Json(new
+                {
+                    ok,
+                    mensaje,
+                    cheque = ok && cheque != null ? new
+                    {
+                        cheque.Id,
+                        cheque.NroCheque,
+                        cheque.Banco,
+                        FechaPago = cheque.FechaPago.ToString("yyyy-MM-dd"),
+                        cheque.Importe
+                    } : null
+
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, mensaje = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
     }
     
 }

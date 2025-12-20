@@ -6,8 +6,10 @@
 
     string persona = ViewBag.Persona.RazonSocial;
     decimal saldo = ViewBag.SaldoPersona;
-    string fechaDesde = ViewBag.FechaDesde ?? "";
-    var returnUrl = HttpUtility.UrlEncode(Request.RawUrl);
+    string fechaDesde = ViewBag.FechaDesde ?? ""; 
+    var returnUrl = Convert.ToBase64String(
+         System.Text.Encoding.UTF8.GetBytes(Request.RawUrl)
+     );
 }
 
 <div class="container-fluid p-0" style="height:100vh; display:flex; flex-direction:column;">
@@ -58,9 +60,9 @@
 
                 <!-- BOTONES PARA DESKTOP (md+) -->
                 <div class="d-none d-md-flex justify-content-end align-items-center">
-                    <a href="@Url.Action("AddOrEditPago", "Finanzas", 
+                    <a href="@Url.Action("AddOrEditPago", "Finanzas",
                             new { idPersona = ViewBag.IdPersona,
-                                    returnUrl = returnUrl })"
+                                    returnUrl = @returnUrl })"
                        class="btn btn-success mr-2">
                         <i class="fas fa-plus"></i> Agregar Pago / Cobro
                     </a>
@@ -160,8 +162,8 @@
                                 <td>@row["Sucursal"]</td>
 
                             </tr>
-                            }
-                        </tbody>
+                        }
+                    </tbody>
 
                 </table>
 
@@ -174,7 +176,7 @@
 
 <script>
 
-    const returnUrl = '@returnUrl';
+    @*const returnUrl = '@returnUrl';
     function verMovimientoCtaCte(tabla, idTabla) {
         let url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
                                                                     + '&returnUrl=' + returnUrl
@@ -182,7 +184,20 @@
                                                                     + '&idTabla=' + idTabla;
 
         window.location.href = url;
+    }*@
+    const returnUrl = '@returnUrl';
+
+    function verMovimientoCtaCte(tabla, idTabla) {
+        let url = '@Url.Action("verMovimientoCtaCte", "Finanzas", new { idPersona = ViewBag.IdPersona })'
+                    + '&returnUrl=' + returnUrl
+                    + '&tabla=' + tabla
+                    + '&idTabla=' + idTabla;
+
+        window.location.href = url;
     }
+</script>
+
+}
 </script>
 
 <style>
