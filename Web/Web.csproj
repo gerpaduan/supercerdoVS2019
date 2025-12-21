@@ -131,6 +131,7 @@
     <Compile Include="Controllers\FinanzasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\LoginController.cs" />
+    <Compile Include="Controllers\PersonasController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
@@ -1837,6 +1838,7 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\app\modal-cheque.js" />
+    <Content Include="Scripts\app\persona-buscar.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js.map" />
@@ -2029,6 +2031,7 @@
     <Content Include="Views\Finanzas\CtaCtePersona.cshtml" />
     <Content Include="Views\Finanzas\AddOrEditPago.cshtml" />
     <Content Include="Views\Finanzas\_ModalAltaCheque.cshtml" />
+    <Content Include="Views\Personas\_BuscarPersona.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

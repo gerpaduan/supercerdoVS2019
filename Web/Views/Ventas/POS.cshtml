@@ -7,37 +7,21 @@
 
 <style>
     /* =============================
-   FIX REAL PARA SB ADMIN 2 POS
-   ============================= */
+    FIX REAL PARA SB ADMIN 2 POS
+    ============================= */
 
-    html, body {
-        height: 100%;
-        overflow: hidden;
-    }
-
-    #wrapper {
-        height: 100vh !important;
-    }
-
-    #content-wrapper {
-        height: 100% !important;
-    }
-
-    #content {
-        height: 100% !important;
-        display: flex;
-        flex-direction: column;
-    }
 
     #pos-app {
-        flex: 1;
+        height: 85vh;
         display: flex;
         flex-direction: column;
-        min-height: 0;
     }
+
 
         /* Card del POS */
         #pos-app > .card {
+            /*flex: 1;
+             overflow: auto;*/
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -61,7 +45,7 @@
         #pos-app .carrito-col {
             display: flex;
             flex-direction: column;
-            flex: 1;
+            height: 100%;
             min-height: 0;
         }
 
@@ -78,13 +62,64 @@
         flex-shrink: 0;
     }
 
+    @@media (max-width: 992px) {
+        /* La app deja de forzar altura */
+        #pos-app {
+            height: auto !important;
+            min-height: auto !important;
+        }
 
+        #content {
+            height: auto !important;
+            min-height: auto !important;
+        }
+        /* La columna carrito deja de ser flex rígido */
+        .carrito-col {
+            display: block !important;
+            height: auto !important;
+            min-height: auto !important;
+        }
+        /* 🚫 SIN SCROLL interno */
+        .zona-tabla {
+            flex: none !important;
+            overflow: visible !important;
+            max-height: none !important;
+            height: auto !important;
+        }
+        /* Total y botones pasan a flujo normal */
+        .zona-total,
+        .zona-botones {
+            position: static !important;
+        }
+    }
 </style>
 
 
 <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
 <!-- Vista: Punto de Venta (SB Admin 2) -->
 <div class="container-fluid p-2" id="pos-app">
+
+    <div class="form-group">
+        <div class="input-group">
+            <input type="hidden" id="idPersona" />
+            <input type="text"
+                   class="form-control"
+                   id="razonSocial"
+                   placeholder="Cliente"
+                   readonly>
+
+            <input type="hidden" id="idPersona">
+
+            <div class="input-group-append">
+                <button type="button"
+                        class="btn btn-primary"
+                        id="btnBuscarPersona">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <div class="card shadow-lg border-0 pos-panel">
 
@@ -115,34 +150,12 @@
                     </div>
 
                     <!-- TOTAL FIJO -->
-                    <!-- TOTAL FIJO -->
                     <div class="zona-total">
                         <div class="d-flex justify-content-between align-items-center">
                             <h3 class="m-0" style="color:#adb5bd;">Total</h3>
                             <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">
                                 $ 0,00
                             </h1>
-                        </div>
-                    </div>
-
-
-                    @*<div class="zona-total">
-            <h3 class="m-0" style="color:#adb5bd;">Total</h3>
-            <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">$ 0,00</h1>
-        </div>*@
-
-                    <!-- BOTONES FIJOS -->
-                    <div class="zona-botones">
-                        <div class="row g-2">
-                            <div class="col-4">
-                                <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar ítem</button>
-                            </div>
-                            <div class="col-4">
-                                <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Limpiar</button>
-                            </div>
-                            <div class="col-4">
-                                <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
-                            </div>
                         </div>
                     </div>
 
@@ -224,42 +237,12 @@
 
                                 <!-- BOTÓN AGREGAR -->
                                 <button id="btnAgregarProducto"
-                                        class="btn btn-success btn-lg w-100 btn-agregar-pos"
+                                        class="btn btn-outline-success btn-lg w-100 btn-agregar-pos"
                                         disabled>
                                     ➕ Agregar a la venta
                                 </button>
 
                             </div>
-
-                            @*<div class="col-6">
-
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h4 id="prodNombre" class="fw-bold text-muted m-0">Info producto...</h4>
-                <div id="prodPrecio" class="fw-bold text-muted m-0"></div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="w-50 me-2">
-                    <label class="form-label">Cantidad / Peso (kg)</label>
-                    <input id="inputCantidad"
-                           class="form-control"
-                           autocomplete="off"
-                           inputmode="decimal">
-                </div>
-
-                <div class="text-end w-50">
-                    <label class="form-label d-block">Subtotal</label>
-                    <h4 id="prodSubtotal" class="fw-bold text-muted m-0">$ 0,00</h4>
-                </div>
-            </div>
-
-            <button id="btnAgregarProducto"
-                class="btn btn-success btn-lg w-100 btn-agregar-pos"
-                disabled>
-                ➕ Agregar a la venta
-            </button>
-
-        </div>*@
 
                             <!-- COLUMNA DERECHA - TECLADO -->
                             <div class="col-6">
@@ -279,7 +262,7 @@
                                     <button class="btn btn-light btn-key">3</button>
 
                                     <!-- ENTER ocupa 2 filas -->
-                                    <button class="btn btn-success btn-enter btn-key">Enter</button>
+                                    <button class="btn btn-info btn-enter btn-key">Enter</button>
 
                                     <button class="btn btn-light btn-key key-zero">0</button>
                                     <button class="btn btn-light btn-key">.</button>
@@ -293,14 +276,37 @@
                     </div>
 
                     <!-- BOTONES FINALES -->
-                    <div class="text-end mb-3">
-                        <button class="btn btn-warning btn-lg me-2">Frutas y Frescos</button>
-                        <button class="btn btn-info btn-lg me-2" id="btn-comentario">Ingresar Comentario</button>
-                        <button class="btn btn-success btn-lg" id="btnFinalizar">Finalizar y Pagar</button>
+                    <div class="mb-3">
+                        <!-- BOTONES FINALES -->
+                        <div class="mb-3">
+                            <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
+                                <i class="fas fa-credit-card mr-2"></i>
+
+                                Finalizar y Pagar
+                            </button>
+                        </div>
+
+
                     </div>
+
 
                     <!-- ESTADO BALANZA -->
                     <div class="mt-auto">
+
+                        <!-- BOTONES FIJOS -->
+                        <div class="zona-botones">
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
+                                </div>
+                                <div class="col-4">
+                                    <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
+                                </div>
+                                <div class="col-4">
+                                    <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                                </div>
+                            </div>
+                        </div>
                         <small class="text-muted">
                             Conexión balanza: <span id="estadoBalanza">Desconocida</span>
                         </small>
@@ -365,6 +371,10 @@
     </div>
 </div>
 
+
+@Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
+
+
 @section Scripts {
     <script>
 
@@ -376,6 +386,13 @@
         let indexLinea = 1;
         let ingresoCantidadX = false;
         let enterDesdeTecladoVirtual = false;
+
+
+
+        $('#btnBuscarPersona').on('click', function () {
+            $('#modalBuscarPersona').modal('show');
+        });
+
 
         // ================================
         // BÚSQUEDA EN VIVO
@@ -644,6 +661,8 @@
             // mismo flujo que AJAX success
             renderTablaProductos(r.lineas);
 
+            scrollTablaAlFinal();
+
             // recalcular total
             recalcularTotal();
 
@@ -654,7 +673,7 @@
 
             productoSeleccionado = null;
             mostrarEsperando();
-                      
+
         }
 
         // ====================================================
@@ -699,6 +718,16 @@
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
             else document.exitFullscreen();
         });
+
+        function scrollTablaAlFinal() {
+            const zonaTabla = document.querySelector('.zona-tabla');
+            if (!zonaTabla) return;
+
+            zonaTabla.scrollTo({
+                top: zonaTabla.scrollHeight,
+                behavior: 'smooth' // podés usar 'auto' si no querés animación
+            });
+        }
 
         ////TECLADO
         let inputActivo = null;
@@ -786,7 +815,7 @@
             terminarEscritura(inputActivo.value);
         }
 
-        
+
         function manejarEnter() {
 
             if (!inputActivo) return;
@@ -915,10 +944,10 @@
             font-size: 1.2rem;
             padding: 14px 0;
         }
+
         .btn-agregar-pos {
             height: 52px; /* misma sensación táctil */
             font-size: 1rem;
         }
     }
-
 </style>

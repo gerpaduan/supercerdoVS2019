@@ -5,6 +5,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
+using static Entidades.Venta;
 
 namespace Web.Controllers
 {
@@ -39,6 +40,27 @@ namespace Web.Controllers
 
             ViewBag.Sucursales = sucursales;
             ViewBag.IdSucursalSeleccionada = idSucursal;
+
+            // 1️⃣ Enum → lista (sin Nulo)
+            var formasPago = Enum.GetValues(typeof(formaPagoEnum))
+                                 .Cast<formaPagoEnum>()
+                                 .Where(f => f != formaPagoEnum.Nulo)
+                                 .ToList();
+
+            // 2️⃣ Todas seleccionadas por defecto
+            var seleccionadas = formasPago;
+
+            // 3️⃣ Armar MultiSelectList
+            ViewBag.FormasPago = new MultiSelectList(
+                formasPago.Select(f => new
+                {
+                    Value = f.ToString().ToLower(), // para usar en data-forma-pago
+                    Text = f.ToString()
+                }),
+                "Value",
+                "Text",
+                seleccionadas.Select(f => f.ToString().ToLower())
+            );
 
             List<Entidades.Venta> ventas = oVentaN.getAllVentas(desde, hasta, "", -1, -1, idSucursal, false, false); //new List<Entidades.Venta>();
 

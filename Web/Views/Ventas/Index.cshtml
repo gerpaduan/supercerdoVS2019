@@ -8,6 +8,7 @@
     var fechaHoy = DateTime.Now.ToString("yyyy-MM-dd");
 }
 
+
 <div class="container-fluid p-0">
 
     <!-- 🗓 Filtro por fechas y Sucursal -->
@@ -19,14 +20,24 @@
 
                 <div class="form-group mr-3">
                     <label for="fechaDesde" class="mr-1">Desde:</label>
-                    <input type="date" id="fechaDesde" name="fechaDesde" class="form-control"
-                           value="@(string.IsNullOrEmpty(Request["fechaDesde"]) ? fechaHoy : Request["fechaDesde"])" />
+                    <input type="datetime-local"
+                           id="fechaDesde"
+                           name="fechaDesde"
+                           class="form-control"
+                           value="@(string.IsNullOrEmpty(Request["fechaDesde"])
+                    ? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
+                    : Request["fechaDesde"])" />
                 </div>
 
                 <div class="form-group mr-3">
                     <label for="fechaHasta" class="mr-1">Hasta:</label>
-                    <input type="date" id="fechaHasta" name="fechaHasta" class="form-control"
-                           value="@(string.IsNullOrEmpty(Request["fechaHasta"]) ? fechaHoy : Request["fechaHasta"])" />
+                    <input type="datetime-local"
+                           id="fechaHasta"
+                           name="fechaHasta"
+                           class="form-control"
+                           value="@(string.IsNullOrEmpty(Request["fechaHasta"])
+                    ? DateTime.Today.ToString("yyyy-MM-ddT23:59")
+                    : Request["fechaHasta"])" />
                 </div>
 
                 <button type="submit"
@@ -63,6 +74,19 @@
                            placeholder="Buscar cliente..." />
                 </div>
 
+                <!-- Forma de pago -->
+                <!--<div class="form-group ml-3" style="min-width:220px">
+                    <select id="formasPagoSeleccionadas"
+                            class="form-control"
+                            multiple="multiple">
+                        foreach (SelectListItem fp in (MultiSelectList)ViewBag.FormasPago)
+                        {
+                            <option value="fp.Value" selected>fp.Text</option>
+                        }
+                    </select>
+                </div>-->
+
+
             </div>
 
         </form>
@@ -74,17 +98,17 @@
 
     @if (ViewBag.TotalFiltrado != null)
     {
-    <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
-        <div class="d-flex justify-content-between">
-            <h5 class="text-muted m-0" style="font-weight: 500;">
-                Cant.: @Model.Count
-            </h5>
+        <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
+            <div class="d-flex justify-content-between">
+                <h5 class="text-muted m-0" style="font-weight: 500;">
+                    Cant.: @Model.Count
+                </h5>
 
-            <h5 class="text-muted m-0" style="font-weight: 500;">
-                Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
-            </h5>
+                <h5 class="text-muted m-0" style="font-weight: 500;">
+                    Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
+                </h5>
+            </div>
         </div>
-    </div>
     }
 
     <!-- 🧾 Listado de ventas -->
@@ -102,69 +126,70 @@
                 {
                     if (ventaAgrupada.Any())   // ✅ solo imprime si hay ventas
                     {
-                    <li class="list-group-item bg-light font-weight-bold">
-                        @ventaAgrupada.Key.ToString("dd/MM/yyyy")
-                    </li>
+                        <li class="list-group-item bg-light font-weight-bold fecha-grupo">
+                            @ventaAgrupada.Key.ToString("dd/MM/yyyy")
+                        </li>
 
                         foreach (var venta in ventaAgrupada)
                         {
-                        <li class="list-group-item venta-item" 
-                            data-cliente="@venta.Persona.razonSocial"
-                            data-identificacion="@venta.Persona.Identificacion" 
-                            onclick="location.href='@Url.Action("DetalleVenta","Ventas", new { id = venta.IdVenta })'">
-                            <div class="venta-icono">
-                                @if (!string.IsNullOrEmpty(venta.FormaPago))
-                                {
-                                    switch (venta.FormaPago.ToLower())
+                            <li class="list-group-item venta-item"
+                                data-forma-pago="@venta.FormaPago?.ToLower()"
+                                data-cliente="@venta.Persona.razonSocial"
+                                data-identificacion="@venta.Persona.Identificacion"
+                                onclick="location.href='@Url.Action("DetalleVenta","Ventas", new { id = venta.IdVenta })'">
+                                <div class="venta-icono">
+                                    @if (!string.IsNullOrEmpty(venta.FormaPago))
                                     {
-                                        case "efectivo":
-                                            <i class="fas fa-money-bill-wave fa-2x text-success"></i>
-                                            break;
-                                        case "qr":
-                                            <i class="fas fa-qrcode fa-2x text-primary"></i>
-                                            break;
-                                        case "debito":
-                                        case "credito":
-                                            <i class="fas fa-credit-card fa-2x text-info"></i>
-                                            break;
-                                        case "ctacte":
-                                            <i class="fas fa-university fa-2x text-warning"></i>
-                                            break;
-                                        case "transferencia":
-                                            <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
-                                            break;
-                                        default:
-                                            <i class="fas fa-money-check fa-2x text-muted"></i>
-                                            break;
+                                        switch (venta.FormaPago.ToLower())
+                                        {
+                                            case "efectivo":
+                                                <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                                                break;
+                                            case "qr":
+                                                <i class="fas fa-qrcode fa-2x text-primary"></i>
+                                                break;
+                                            case "debito":
+                                            case "credito":
+                                                <i class="fas fa-credit-card fa-2x text-info"></i>
+                                                break;
+                                            case "ctacte":
+                                                <i class="fas fa-university fa-2x text-warning"></i>
+                                                break;
+                                            case "transferencia":
+                                                <i class="fas fa-exchange-alt fa-2x text-secondary"></i>
+                                                break;
+                                            default:
+                                                <i class="fas fa-money-check fa-2x text-muted"></i>
+                                                break;
+                                        }
                                     }
-                                }
-                            </div>
-
-                            <div class="venta-info">
-                                <div class="venta-tipo-persona font-weight-bold">
-                                    @venta.TipoComprobante - @venta.FormaPago
                                 </div>
-                                @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
-                                {
+
+                                <div class="venta-info">
                                     <div class="venta-tipo-persona font-weight-bold">
-                                        a @venta.Persona.razonSocial
+                                        @venta.TipoComprobante - @venta.FormaPago
                                     </div>
-                                }
-                                <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
-                                <div class="venta-id">idVenta @venta.IdVenta</div>
-                            </div>
-
-                            <div class="venta-total">
-                                <div class="importe @(venta.TotalImporte <= 0 ? "text-danger font-weight-bold" : "")"
-                                     data-valor="@venta.TotalImporte">
-                                    @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
+                                    @if (!@Entidades.Persona.esConsumidorFinal(@venta.Persona))
+                                    {
+                                        <div class="venta-tipo-persona font-weight-bold">
+                                            a @venta.Persona.razonSocial
+                                        </div>
+                                    }
+                                    <div class="venta-id">Caja: @venta.Vendedor.Nombre</div>
+                                    <div class="venta-id">idVenta @venta.IdVenta</div>
                                 </div>
 
-                                <div class="text-muted small">
-                                    @venta.FechaVenta.ToString("HH:mm") hs
+                                <div class="venta-total">
+                                    <div class="importe @(venta.TotalImporte <= 0 ? "text-danger font-weight-bold" : "")"
+                                         data-valor="@venta.TotalImporte">
+                                        @((venta.TotalImporte > 0 ? "+ " : "") + venta.TotalImporte.ToString("C"))
+                                    </div>
+
+                                    <div class="text-muted small">
+                                        @venta.FechaVenta.ToString("HH:mm") hs
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
+                            </li>
                         }
                     }
                 }
@@ -173,6 +198,8 @@
     </div>
 </div>
 
+<!-- Select2 (después de jQuery) -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
     const buscador = document.getElementById("buscador");
@@ -233,22 +260,81 @@
 
     function verificarCambios() {
         const modificado =
-        (fechaDesde.value !== fechaDesdeInicial) ||
-        (fechaHasta.value !== fechaHastaInicial);
+            (fechaDesde.value !== fechaDesdeInicial) ||
+            (fechaHasta.value !== fechaHastaInicial);
 
         if (modificado) {
             btnFiltrar.disabled = false;
-        btnFiltrar.classList.remove("btn-secondary");
-        btnFiltrar.classList.add("btn-primary");
+            btnFiltrar.classList.remove("btn-secondary");
+            btnFiltrar.classList.add("btn-primary");
         } else {
             btnFiltrar.disabled = true;
-        btnFiltrar.classList.remove("btn-primary");
-        btnFiltrar.classList.add("btn-secondary");
+            btnFiltrar.classList.remove("btn-primary");
+            btnFiltrar.classList.add("btn-secondary");
         }
     }
 
     fechaDesde.addEventListener("change", verificarCambios);
     fechaHasta.addEventListener("change", verificarCambios);
+
+
+    $(document).ready(function () {
+
+        $('#formasPagoSeleccionadas').select2({
+            placeholder: "Forma de pago",
+            closeOnSelect: false,   // 🔑 no se cierra al tildar
+            width: '100%',
+            allowClear: true
+        });
+
+        // filtrar en vivo
+        $('#formasPagoSeleccionadas').on('change', function () {
+            filtrarPorFormaPago();
+        });
+
+    });
+
+    function filtrarPorFormaPago() {
+
+        const seleccionadas = $('#formasPagoSeleccionadas').val();
+        // ej: ["efectivo", "debito"]
+
+        document.querySelectorAll(".venta-item").forEach(venta => {
+
+            const formaPago = venta.dataset.formaPago;
+
+            if (!seleccionadas || seleccionadas.includes(formaPago)) {
+                venta.style.display = "";
+            } else {
+                venta.style.display = "none";
+            }
+        });
+
+        // ocultar fechas sin ventas visibles
+        document.querySelectorAll(".fecha-grupo").forEach(fecha => {
+
+            let siguiente = fecha.nextElementSibling;
+            let hayVisible = false;
+
+            while (siguiente && !siguiente.classList.contains("fecha-grupo")) {
+                if (siguiente.style.display !== "none") {
+                    hayVisible = true;
+                    break;
+                }
+                siguiente = siguiente.nextElementSibling;
+            }
+
+            fecha.style.display = hayVisible ? "" : "none";
+        });
+    }
+
+    $(function () {
+        $('#formasPagoSeleccionadas').select2({
+            placeholder: "Formas de pago",
+            closeOnSelect: false,
+            width: '100%'
+        });
+    });
 
 </script>
 
@@ -272,7 +358,7 @@
         min-width: 0;
     }
 
-        /* Estilo general para escritorio */
+    /* Estilo general para escritorio */
     .venta-tipo-persona {
         word-wrap: break-word; /* permite cortar palabras largas */
         /*overflow-wrap: break-word*/; /* asegura compatibilidad */
