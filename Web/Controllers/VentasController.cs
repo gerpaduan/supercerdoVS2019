@@ -14,6 +14,7 @@ namespace Web.Controllers
         Negocio.Venta oVentaN = new Negocio.Venta();
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Persona oPersonaN = new Negocio.Persona();
         // GET: Ventas
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
         {
@@ -96,10 +97,23 @@ namespace Web.Controllers
             var venta = Session["VentaActiva"] as Venta;
 
             if (venta == null)
-                venta = new Venta { LineasVenta = new List<LineaVenta>() };
+            {
+                venta = new Venta
+                {
+                    LineasVenta = new List<LineaVenta>()
+                };
+            }
+
+            var oCliente = oPersonaN.getConsumidorFinal();
+
+            venta.Persona = oCliente;
+
+            Session["VentaActiva"] = venta;
 
             return View(venta);
         }
+
+
         // ======================================================
         // GET /Ventas/BuscarProducto?codigo=123
         // ======================================================

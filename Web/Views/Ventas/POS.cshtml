@@ -98,17 +98,21 @@
 <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
 <!-- Vista: Punto de Venta (SB Admin 2) -->
 <div class="container-fluid p-2" id="pos-app">
+    <div class="d-flex justify-content-end mb-2">
+        <span id="fechaHoraPOS" class="text-muted font-weight-bold"></span>
+    </div>
 
     <div class="form-group">
         <div class="input-group">
-            <input type="hidden" id="idPersona" />
-            <input type="text"
-                   class="form-control"
-                   id="razonSocial"
-                   placeholder="Cliente"
-                   readonly>
 
-            <input type="hidden" id="idPersona">
+            <input type="hidden" id="idPersona" value="@Model.Persona.IdPersona" />
+
+            <input type="text"
+                   id="razonSocial"
+                   class="form-control"
+                   value="@(Model.Persona?.RazonSocial ?? "Error al cargar cliente")"
+                   readonly />
+
 
             <div class="input-group-append">
                 <button type="button"
@@ -117,6 +121,16 @@
                     <i class="fas fa-search"></i>
                 </button>
             </div>
+
+            <!-- Consumidor Final -->
+            <!-- Consumidor Final -->
+            <button type="button"
+                    class="btn btn-secondary ml-2"
+                    id="btnConsumidorFinal"
+                    title="Consumidor Final">
+                CF
+            </button>
+
         </div>
     </div>
 
@@ -164,158 +178,158 @@
 
                 <!-- ===================== -->
                 <!-- COLUMNA DERECHA -->
-                <!-- ===================== -->
-                <div class="col-lg-6 d-flex flex-column">
+                    <!-- ===================== -->
+                    <div class="col-lg-6 d-flex flex-column">
 
-                    <!-- BUSCADOR -->
-                    <div class="row g-2 mb-3">
-                        <div class="col-12">
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                                <input type="text" id="inputCodigo" class="form-control"
-                                       placeholder="Esperando lectura..." autocomplete="off" autofocus />
+                        <!-- BUSCADOR -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                    <input type="text" id="inputCodigo" class="form-control"
+                                           placeholder="Esperando codigo..." autocomplete="off" autofocus />
 
-                                <button class="btn btn-outline-secondary"
-                                        id="btnAgregarManual"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalDigitarCodigo">
-                                    Digitar
-                                </button>
+                                    <button class="btn btn-outline-secondary"
+                                            id="btnAgregarManual"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalDigitarCodigo">
+                                        Digitar
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- INFO PRODUCTO -->
-                    <div id="producto-info" class="p-3 rounded bg-light border mb-3">
-                        <div class="row">
+                        <!-- INFO PRODUCTO -->
+                        <div id="producto-info" class="p-3 rounded bg-light border mb-3">
+                            <div class="row">
 
-                            <!-- COLUMNA IZQUIERDA -->
-                            <!-- COLUMNA IZQUIERDA -->
-                            <div class="col-6">
+                                <!-- COLUMNA IZQUIERDA -->
+                                <!-- COLUMNA IZQUIERDA -->
+                                <div class="col-6">
 
-                                <!-- NOMBRE PRODUCTO -->
-                                <h4 id="prodNombre"
-                                    class="fw-bold text-muted mb-2">
-                                    Info producto...
-                                </h4>
+                                    <!-- NOMBRE PRODUCTO -->
+                                    <h4 id="prodNombre"
+                                        class="fw-bold text-muted mb-2">
+                                        Info producto...
+                                    </h4>
 
-                                <!-- PRECIO -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label">Precio</label>
-                                        <div id="prodPrecio"
-                                             class="fw-bold text-muted mb-3 fs-5">
+                                    <!-- PRECIO -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label">Precio</label>
+                                            <div id="prodPrecio"
+                                                 class="fw-bold text-muted mb-3 fs-5">
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div id="prodPrecio"
-                                     class="fw-bold text-muted mb-3 fs-5">
-                                </div>
-
-                                <!-- CANTIDAD -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                                        <input id="inputCantidad"
-                                               class="form-control"
-                                               autocomplete="off"
-                                               inputmode="decimal">
+                                    <div id="prodPrecio"
+                                         class="fw-bold text-muted mb-3 fs-5">
                                     </div>
-                                </div>
 
-                                <!-- SUBTOTAL -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label m-0">Subtotal</label>
-                                        <h4 id="prodSubtotal"
-                                            class="fw-bold text-muted m-0">
-                                            $ 0,00
-                                        </h4>
+                                    <!-- CANTIDAD -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                            <input id="inputCantidad"
+                                                   class="form-control"
+                                                   autocomplete="off"
+                                                   inputmode="decimal">
+                                        </div>
                                     </div>
+
+                                    <!-- SUBTOTAL -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label m-0">Subtotal</label>
+                                            <h4 id="prodSubtotal"
+                                                class="fw-bold text-muted m-0">
+                                                $ 0,00
+                                            </h4>
+                                        </div>
+                                    </div>
+
+
+                                    <!-- BOTÓN AGREGAR -->
+                                    <button id="btnAgregarProducto"
+                                            class="btn btn-outline-success btn-lg w-100 btn-agregar-pos"
+                                            disabled>
+                                        ➕ Agregar a la venta
+                                    </button>
+
                                 </div>
 
+                                <!-- COLUMNA DERECHA - TECLADO -->
+                                <div class="col-6">
+                                    <div class="keyboard-grid">
+                                        <button class="btn btn-light btn-key">7</button>
+                                        <button class="btn btn-light btn-key">8</button>
+                                        <button class="btn btn-light btn-key">9</button>
+                                        <button class="btn btn-warning btn-key">←</button>
 
-                                <!-- BOTÓN AGREGAR -->
-                                <button id="btnAgregarProducto"
-                                        class="btn btn-outline-success btn-lg w-100 btn-agregar-pos"
-                                        disabled>
-                                    ➕ Agregar a la venta
-                                </button>
+                                        <button class="btn btn-light btn-key">4</button>
+                                        <button class="btn btn-light btn-key">5</button>
+                                        <button class="btn btn-light btn-key">6</button>
+                                        <button class="btn btn-secondary btn-key">×</button>
 
-                            </div>
+                                        <button class="btn btn-light btn-key">1</button>
+                                        <button class="btn btn-light btn-key">2</button>
+                                        <button class="btn btn-light btn-key">3</button>
 
-                            <!-- COLUMNA DERECHA - TECLADO -->
-                            <div class="col-6">
-                                <div class="keyboard-grid">
-                                    <button class="btn btn-light btn-key">7</button>
-                                    <button class="btn btn-light btn-key">8</button>
-                                    <button class="btn btn-light btn-key">9</button>
-                                    <button class="btn btn-warning btn-key">←</button>
+                                        <!-- ENTER ocupa 2 filas -->
+                                        <button class="btn btn-info btn-enter btn-key">Enter</button>
 
-                                    <button class="btn btn-light btn-key">4</button>
-                                    <button class="btn btn-light btn-key">5</button>
-                                    <button class="btn btn-light btn-key">6</button>
-                                    <button class="btn btn-secondary btn-key">×</button>
+                                        <button class="btn btn-light btn-key key-zero">0</button>
+                                        <button class="btn btn-light btn-key">.</button>
+                                    </div>
 
-                                    <button class="btn btn-light btn-key">1</button>
-                                    <button class="btn btn-light btn-key">2</button>
-                                    <button class="btn btn-light btn-key">3</button>
 
-                                    <!-- ENTER ocupa 2 filas -->
-                                    <button class="btn btn-info btn-enter btn-key">Enter</button>
-
-                                    <button class="btn btn-light btn-key key-zero">0</button>
-                                    <button class="btn btn-light btn-key">.</button>
                                 </div>
-
 
                             </div>
 
                         </div>
 
-                    </div>
-
-                    <!-- BOTONES FINALES -->
-                    <div class="mb-3">
                         <!-- BOTONES FINALES -->
                         <div class="mb-3">
-                            <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
-                                <i class="fas fa-credit-card mr-2"></i>
+                            <!-- BOTONES FINALES -->
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
+                                    <i class="fas fa-credit-card mr-2"></i>
 
-                                Finalizar y Pagar
-                            </button>
+                                    Finalizar y Pagar
+                                </button>
+                            </div>
+
+
                         </div>
 
 
-                    </div>
+                        <!-- ESTADO BALANZA -->
+                        <div class="mt-auto">
 
-
-                    <!-- ESTADO BALANZA -->
-                    <div class="mt-auto">
-
-                        <!-- BOTONES FIJOS -->
-                        <div class="zona-botones">
-                            <div class="row g-2">
-                                <div class="col-4">
-                                    <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
-                                </div>
-                                <div class="col-4">
-                                    <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
-                                </div>
-                                <div class="col-4">
-                                    <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                            <!-- BOTONES FIJOS -->
+                            <div class="zona-botones">
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                                    </div>
                                 </div>
                             </div>
+                            <small class="text-muted">
+                                Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                            </small>
+                            <div class="progress mt-1" style="height:8px;">
+                                <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
                         </div>
-                        <small class="text-muted">
-                            Conexión balanza: <span id="estadoBalanza">Desconocida</span>
-                        </small>
-                        <div class="progress mt-1" style="height:8px;">
-                            <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
-                        </div>
-                    </div>
 
-                </div>
+                    </div>
 
             </div>
 
@@ -341,7 +355,7 @@
                         { <text>
                                 <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">@r</button></div>
                         </text>;
-                    } }
+                        } }
                     <div class="col-4"><button class="btn btn-outline-dark w-100 py-3" id="key-back">←</button></div>
                     <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">0</button></div>
                     <div class="col-4"><button class="btn btn-success w-100 py-3" id="key-ok">OK</button></div>
@@ -374,6 +388,9 @@
 
 @Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
 
+@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
+
+
 
 @section Scripts {
     <script>
@@ -387,12 +404,45 @@
         let ingresoCantidadX = false;
         let enterDesdeTecladoVirtual = false;
 
+        (function () {
 
+            const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            function actualizarFechaHora() {
+                const ahora = new Date();
+
+                const diaSemana = dias[ahora.getDay()];
+                const dia = ahora.getDate();
+                const mes = meses[ahora.getMonth()];
+                const anio = ahora.getFullYear();
+
+                const hora = String(ahora.getHours()).padStart(2, '0');
+                const minutos = String(ahora.getMinutes()).padStart(2, '0');
+
+                const formato = `${diaSemana} ${dia} de ${mes}, ${anio} · ${hora}:${minutos}`;
+
+                const span = document.getElementById('fechaHoraPOS');
+                if (span) {
+                    span.innerText = formato;
+                }
+            }
+
+            actualizarFechaHora();
+            setInterval(actualizarFechaHora, 60000); // refresca cada minuto
+
+        })();
 
         $('#btnBuscarPersona').on('click', function () {
             $('#modalBuscarPersona').modal('show');
         });
 
+        $('#btnConsumidorFinal').on('click', function () {
+
+            $('#idPersona').val('@Entidades.Parametros.idConsumidorFinal');
+            $('#razonSocial').val('Consumidor Final');
+
+        });
 
         // ================================
         // BÚSQUEDA EN VIVO
@@ -520,7 +570,7 @@
             precioActual = 0;
 
             $("#prodNombre")
-                .text("Esperando código…")
+                .text("Info producto...")
                 .removeClass("fw-bold")
                 .addClass("text-muted");
 
@@ -868,6 +918,38 @@
 
             ingresoCantidadX = true;
         }
+
+
+        $('#btnFinalizar').on('click', function () {
+            $('#modalFormaPago').modal('show');
+        });
+
+
+
+        function esPantallaChica() {
+            return window.innerWidth < 768; // Bootstrap md breakpoint
+        }
+
+        function configurarInputsPOS() {
+            if (esPantallaChica()) {
+                // Bloquea teclado nativo
+                $('#inputCodigo, #inputCantidad')
+                    .attr('readonly', true)
+                    .attr('inputmode', 'none');
+            } else {
+                // Permite teclado normal
+                $('#inputCodigo, #inputCantidad')
+                    .removeAttr('readonly')
+                    .removeAttr('inputmode');
+            }
+        }
+
+        // Ejecutar al cargar la página
+        $(document).ready(configurarInputsPOS);
+
+        // Reconfigurar al cambiar tamaño de pantalla
+        $(window).on('resize', configurarInputsPOS);
+
 
     </script>
 }

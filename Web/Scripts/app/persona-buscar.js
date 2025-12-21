@@ -25,37 +25,41 @@ $(document).on('keydown', '#filtroPersona', function (e) {
         $('#tablaPersonas button:first').click();
     }
 });
-
 function cargarPersonas() {
     let filtro = $('#filtroPersona').val();
 
-
-    //$.get(personaUrls.listar, { filtro: filtro }, function (data) {
-    $.get('/Personas/Listar', { filtro: filtro }, function (data) {
+    $.get(personaUrls.listar, { filtro: filtro }, function (data) {
 
         let html = '';
 
         data.forEach(p => {
             html += `
-                <tr>
-                    <td>${p.razonSocial}</td>
+                <tr class="fila-persona"
+                    data-id="${p.idPersona}"
+                    data-razon="${p.razonSocial}">
                     <td>${p.cuit ?? ''}</td>
+                    <td>${p.razonSocial}</td>
                     <td>${p.identificacion ?? ''}</td>
-                    <td class="text-right">
-                        <button class="btn btn-sm btn-success"
-                                onclick="seleccionarPersona(${p.idPersona}, '${p.razonSocial.replace(/'/g, "\\'")}')">
-                            <i class="fas fa-check"></i>
-                        </button>
-                    </td>
-                `;
+                </tr>
+            `;
         });
 
         $('#tablaPersonas').html(html);
     });
 }
 
+$(document).on('dblclick', '#tablaPersonas tr.fila-persona', function () {
+    let idPersona = $(this).data('id');
+    let razonSocial = $(this).data('razon');
+
+    seleccionarPersona(idPersona, razonSocial);
+});
+
+
 function seleccionarPersona(idPersona, razonSocial) {
     $('#idPersona').val(idPersona);
-    $('#txtPersona').val(razonSocial);
+    $('#razonSocial').val(razonSocial);
+
     $('#modalBuscarPersona').modal('hide');
 }
+

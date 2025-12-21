@@ -2,20 +2,18 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
 
-            <!-- HEADER -->
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
-                    <i class="fas fa-user-search"></i> Buscar Persona
+                    <i class="fas fa-user"></i> Buscar Persona
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
 
-            <!-- BODY -->
             <div class="modal-body">
 
-                <!-- Filtro único -->
+                <!-- Filtro -->
                 <div class="form-group mb-3">
                     <input type="text"
                            id="filtroPersona"
@@ -23,15 +21,14 @@
                            placeholder="Buscar por razón social, CUIT o identificación">
                 </div>
 
-                <!-- Tabla personas -->
+                <!-- Tabla -->
                 <div class="table-responsive">
                     <table class="table table-hover table-sm">
                         <thead class="thead-light">
                             <tr>
-                                <th>Razón Social</th>
                                 <th>CUIT</th>
+                                <th>Razón Social</th>
                                 <th>Identificación</th>
-                                <th class="text-right">Seleccionar</th>
                             </tr>
                         </thead>
                         <tbody id="tablaPersonas"></tbody>

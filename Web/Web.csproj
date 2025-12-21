@@ -1838,6 +1838,7 @@
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\app\modal-cheque.js" />
+    <Content Include="Scripts\app\forma-pago.js" />
     <Content Include="Scripts\app\persona-buscar.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
@@ -2032,6 +2033,7 @@
     <Content Include="Views\Finanzas\AddOrEditPago.cshtml" />
     <Content Include="Views\Finanzas\_ModalAltaCheque.cshtml" />
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
+    <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

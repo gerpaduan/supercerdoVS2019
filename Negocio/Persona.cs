@@ -41,6 +41,11 @@ namespace Negocio
             return oPersonaE;
         }
 
+        public Entidades.Persona getConsumidorFinal()
+        {
+            return findById(Entidades.Parametros.idConsumidorFinal);
+        }
+
         public bool personaTieneCompras_Ventas(int idPersona)
         {
             oPersonaD = new Datos.Persona();
