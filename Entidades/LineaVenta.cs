@@ -164,6 +164,8 @@ namespace Entidades
             }
         }
 
+
+        public int Codigo { get ; set ; }
         public float AlicuotaIva { get => alicuotaIva; set => alicuotaIva = value; }
         public float IdAlicuotaIva { get => idAlicuotaIva; set => idAlicuotaIva = value; }
         public float AjustePrecio1 { get => ajustePrecio; set => ajustePrecio = value; }

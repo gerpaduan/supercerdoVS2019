@@ -89,50 +89,59 @@ namespace Web.Controllers
             // Pasar la venta a la vista
             return View(venta);
         }
-
         [HttpPost]
         public JsonResult FinalizarVenta(
             string formaPago,
             bool esPagoMixto,
-            float efectivo
+            float efectivo,
+            List<LineaVenta> lineasVenta
 )
         {
             try
             {
                 var venta = Session["VentaActiva"] as Venta;
 
-                if (venta == null || !venta.LineasVenta.Any())
+                if (venta == null)
+                    return Json(new { ok = false, msg = "No hay venta activa" });
+
+                if (lineasVenta == null || !lineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
 
-                // Forma de pago
+                Negocio.Corte oCorteN = new Negocio.Corte(); 
+                for (int index = 0; index < lineasVenta.Count; index++)
+                {
+                    lineasVenta[index].Corte = oCorteN.findCorteByCodigo(lineasVenta[index].Codigo, false);
+                }
+                // ===============================
+                // FORMAS DE PAGO
+                // ===============================
                 venta.FormaPago = formaPago;
-
-                // Cuenta corriente
                 venta.EnCtaCte = formaPago == formaPagoEnum.CtaCte.ToString();
-
-                // Pago mixto
                 venta.PagoMixtoEfectivo = esPagoMixto ? efectivo : 0;
 
-                // Guardar
+                // ===============================
+                // LINEAS DE VENTA (CLAVE)
+                // ===============================
+                venta.LineasVenta = lineasVenta;
+
                 oVentaN.agregarVenta(venta);
 
-                // Limpiar sesión
                 Session.Remove("VentaActiva");
 
                 return Json(new { ok = true });
             }
             catch (Exception ex)
             {
-                // ⚠️ Acá podés loguear el error si tenés logger
-                // Logger.Error(ex);
-
                 return Json(new
                 {
                     ok = false,
-                    msg = "Ocurrió un error al finalizar la venta. Intente nuevamente."
+                    msg = "Error al finalizar la venta",
+                    error = ex.Message
                 });
             }
         }
+
+
 
 
 
