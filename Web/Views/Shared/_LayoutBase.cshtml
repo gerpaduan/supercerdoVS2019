@@ -264,18 +264,26 @@
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
                                 @*<a class="dropdown-item" href="#">
-                                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Profile
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Settings
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Activity Log
-                                    </a>*@
-                                @*<div class="dropdown-divider"></div>*@
+            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+            Profile
+        </a>
+        <a class="dropdown-item" href="#">
+            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+            Settings
+        </a>
+        <a class="dropdown-item" href="#">
+            <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+            Activity Log
+        </a>*@
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalSucursales">
+                                    <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    <strong id="lblSucursalActual">
+                                        @(Session["Usuario"] != null
+                                    ? ((Entidades.Usuario)Session["Usuario"]).SucursalNombre
+                                    : "")
+                                    </strong>
+                                </a>
+                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Logout
@@ -325,6 +333,8 @@
         </div>
     </div>
 
+    @Html.Partial("_ModalSucursales")
+
     <!-- Scripts -->
     <script src="@Url.Content("~/Content/vendor/jquery/jquery.min.js")"></script>
     <script src="@Url.Content("~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js")"></script>
@@ -333,6 +343,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="@Url.Content("~/Scripts/app/persona-buscar.js")"></script>
     <script src="@Url.Content("~/Scripts/app/forma-pago.js")"></script>
+
+    <script>
+        const urlCambiarSucursal = '@Url.Action("CambiarSucursal", "Login")';
+    </script>
+
+    <script src="@Url.Content("~/Scripts/app/modal-sucursales.js")"></script>
 
 
     @RenderSection("Scripts", required: false)

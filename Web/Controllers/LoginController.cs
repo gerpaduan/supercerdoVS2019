@@ -13,6 +13,7 @@ namespace Web.Controllers
     {
         // GET: Login
         private readonly Negocio.Usuario _usuarioNegocio = new Negocio.Usuario();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         [HttpGet]
         public ActionResult Index()
@@ -51,6 +52,30 @@ namespace Web.Controllers
 
             return RedirectToAction("Index", "Login");
         }
+
+        [HttpPost]
+        public JsonResult CambiarSucursal(int idSucursal)
+        {
+            var usuario = Session["Usuario"] as Entidades.Usuario;
+
+            if (usuario == null)
+                return Json(new { ok = false, msg = "Sesión expirada" });
+
+            usuario.IdSucursal = idSucursal;
+
+            // Opcional: actualizar nombre de sucursal
+            usuario.SucursalNombre = oSucursalN.findById(idSucursal).SucursalNombre;
+
+            Session["Usuario"] = usuario;
+
+            return Json(new
+            {
+                ok = true,
+                sucursalNombre = usuario.SucursalNombre,
+                idSucursal = usuario.IdSucursal
+            });
+        }
+
 
     }
 }

@@ -76,5 +76,8 @@ namespace Entidades
         public string Email { get => email; set => email = value; }
 
         string email;
+
+        public int IdSucursal { get; set; }
+        public string SucursalNombre { get; set; }
     }
 }
