@@ -90,6 +90,51 @@ namespace Web.Controllers
             return View(venta);
         }
 
+        [HttpPost]
+        public JsonResult FinalizarVenta(
+            string formaPago,
+            bool esPagoMixto,
+            float efectivo
+)
+        {
+            try
+            {
+                var venta = Session["VentaActiva"] as Venta;
+
+                if (venta == null || !venta.LineasVenta.Any())
+                    return Json(new { ok = false, msg = "No hay productos en la venta" });
+
+                // Forma de pago
+                venta.FormaPago = formaPago;
+
+                // Cuenta corriente
+                venta.EnCtaCte = formaPago == formaPagoEnum.CtaCte.ToString();
+
+                // Pago mixto
+                venta.PagoMixtoEfectivo = esPagoMixto ? efectivo : 0;
+
+                // Guardar
+                oVentaN.agregarVenta(venta);
+
+                // Limpiar sesión
+                Session.Remove("VentaActiva");
+
+                return Json(new { ok = true });
+            }
+            catch (Exception ex)
+            {
+                // ⚠️ Acá podés loguear el error si tenés logger
+                // Logger.Error(ex);
+
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Ocurrió un error al finalizar la venta. Intente nuevamente."
+                });
+            }
+        }
+
+
 
         #region POS
         public ActionResult POS()

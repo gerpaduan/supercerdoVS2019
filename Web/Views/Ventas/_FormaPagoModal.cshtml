@@ -28,70 +28,103 @@
                 <!-- Botones -->
                 <div class="row text-center">
 
+                    <!-- BOTONES FORMAS DE PAGO -->
                     <div class="col-4 mb-3">
-                        <button class="btn btn-success btn-block btn-forma-pago"
-                                data-tipo="Efectivo">
+                        <button class="btn btn-success btn-block btn-forma-pago" data-tipo="Efectivo">
                             <i class="fas fa-money-bill"></i><br>Efectivo
                         </button>
                     </div>
 
                     <div class="col-4 mb-3">
-                        <button class="btn btn-info btn-block btn-forma-pago"
-                                data-tipo="Débito">
+                        <button class="btn btn-info btn-block btn-forma-pago" data-tipo="Débito">
                             <i class="fas fa-credit-card"></i><br>Débito
                         </button>
                     </div>
 
                     <div class="col-4 mb-3">
-                        <button class="btn btn-warning btn-block btn-forma-pago"
-                                data-tipo="Crédito">
+                        <button class="btn btn-warning btn-block btn-forma-pago" data-tipo="Crédito">
                             <i class="fas fa-credit-card"></i><br>Crédito
                         </button>
                     </div>
 
                     <div class="col-4 mb-3">
-                        <button class="btn btn-secondary btn-block btn-forma-pago"
-                                data-tipo="Cuenta Corriente">
+                        <button class="btn btn-secondary btn-block btn-forma-pago" data-tipo="Cuenta Corriente">
                             <i class="fas fa-university"></i><br>Cta. Cte.
                         </button>
                     </div>
 
                     <div class="col-4 mb-3">
-                        <button class="btn btn-dark btn-block btn-forma-pago"
-                                data-tipo="QR">
+                        <button class="btn btn-dark btn-block btn-forma-pago" data-tipo="QR">
                             <i class="fas fa-qrcode"></i><br>QR
                         </button>
                     </div>
 
                     <div class="col-4 mb-3">
-                        <button class="btn btn-primary btn-block btn-forma-pago"
-                                data-tipo="Transferencia">
+                        <button class="btn btn-primary btn-block btn-forma-pago" data-tipo="Transferencia">
                             <i class="fas fa-exchange-alt"></i><br>Transferencia
+                        </button>
+                    </div>
+
+                    <!-- TOTAL VENTA -->
+                    <div class="col-12 mt-3">
+                        <div class="form-group text-center">
+                            <label class="text-primary mb-1" style="font-size:1.1rem;">
+                                Total de la Venta
+                            </label>
+
+                            <input type="text"
+                                   id="totalVenta"
+                                   class="form-control form-control-lg text-center text-primary mx-auto"
+                                   style="width:50%; font-size:1.1rem;"
+                                   readonly>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- Bloque Pago Mixto -->
+                <div id="bloquePagoMixto"
+                     class="border-top pt-4 mt-4 text-center"
+                     style="display:none;">
+
+                    <!-- EFECTIVO -->
+                    <div class="form-group">
+                        <label>Efectivo</label>
+                        <input type="number"
+                               id="montoEfectivo"
+                               class="form-control mx-auto"
+                               style="width:50%;"
+                               min="0"
+                               step="0.01"
+                               placeholder="Monto en efectivo">
+                    </div>
+
+                    <!-- OTRO MEDIO -->
+                    <div class="form-group">
+                        <label id="labelOtroPago">Otro Medio</label>
+                        <input type="number"
+                               id="montoOtroPago"
+                               class="form-control mx-auto"
+                               style="width:50%;"
+                               min="0"
+                               step="0.01"
+                               placeholder="Monto">
+                    </div>
+
+                    <!-- FINALIZAR -->
+                    <div class="mt-4">
+                        <button id="btnFinalizarPagoMixto"
+                                class="btn btn-success btn-lg mx-auto"
+                                style="width:100%;">
+                            <i class="fas fa-check mr-1"></i>
+                            Finalizar Pago
                         </button>
                     </div>
 
                 </div>
 
-                <!-- Bloque Pago Mixto -->
-                <div id="bloquePagoMixto" class="border-top pt-3 mt-3" style="display:none;">
 
-                    <div class="form-group">
-                        <label>Efectivo</label>
-                        <input type="number"
-                               class="form-control"
-                               id="montoEfectivo"
-                               placeholder="Monto en efectivo">
-                    </div>
-
-                    <div class="form-group">
-                        <label id="labelOtroPago">Otro Medio</label>
-                        <input type="number"
-                               class="form-control"
-                               id="montoOtroPago"
-                               placeholder="Monto">
-                    </div>
-
-                </div>
 
             </div>
 
