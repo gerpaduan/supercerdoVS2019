@@ -15,10 +15,14 @@ namespace Web.Controllers
     {
 
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         public ActionResult Index()
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             ViewBag.PuedeVerCierreCaja = oUsuarioN.tienePermiso(user, Permisos.Caja.CierresDeCaja, DateTime.Today, -1);
+
+            var sucursales = oSucursalN.findAll();
+            ViewBag.Sucursales = sucursales;
 
             return View();
         }

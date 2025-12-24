@@ -159,7 +159,7 @@ namespace Datos
             cmVenta.Parameters.AddWithValue("@diaFestivo",oVentaE.DiaFestivo);
             cmVenta.Parameters.AddWithValue("@observaciones",oVentaE.Observaciones);
             cmVenta.Parameters.AddWithValue("@idPersona",oVentaE.Persona.idPersona);
-            cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito);
+            cmVenta.Parameters.AddWithValue("@nroRemito", oVentaE.NroRemito ?? "");
             cmVenta.Parameters.AddWithValue("@enCtaCte", oVentaE.EnCtaCte);
             cmVenta.Parameters.AddWithValue("@formaPago", oVentaE.FormaPago);
             cmVenta.Parameters.AddWithValue("@cuit", oVentaE.Cuit);

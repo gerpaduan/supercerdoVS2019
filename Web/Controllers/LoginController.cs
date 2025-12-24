@@ -26,6 +26,7 @@ namespace Web.Controllers
         {
             var user = _usuarioNegocio.validarUsuario(usuario, clave, false);
 
+            ///TODO: recuperar idSucursal de Usuario y cargarla al nav
             if (user != null && user.Activo)
             {
                 Session["Usuario"] = user;
@@ -61,6 +62,8 @@ namespace Web.Controllers
             if (usuario == null)
                 return Json(new { ok = false, msg = "Sesión expirada" });
 
+            ///TODO: Actualizar la Sucursal Actual en tabla Usuario idSucursal
+            ///donde va a guardar el valor de la ultima sucursal visitada
             usuario.IdSucursal = idSucursal;
 
             // Opcional: actualizar nombre de sucursal

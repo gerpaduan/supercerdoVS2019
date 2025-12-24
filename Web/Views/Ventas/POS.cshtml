@@ -98,8 +98,10 @@
 <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
 <!-- Vista: Punto de Venta (SB Admin 2) -->
 <div class="container-fluid p-2" id="pos-app">
+
     <div class="d-flex justify-content-end mb-2">
         <span id="fechaHoraPOS" class="text-muted font-weight-bold"></span>
+        <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
     </div>
 
     <div class="form-group">
@@ -401,6 +403,7 @@
         let carrito = [];
         // Alias global
         window.lineasVenta = carrito;
+        window.fechaVenta = new Date();
         let indexLinea = 1;
         let ingresoCantidadX = false;
         let enterDesdeTecladoVirtual = false;
@@ -411,7 +414,20 @@
             const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
             function actualizarFechaHora() {
+
+                //Actualiza Hora al registrar el primer producto o si no tiene
+                if (!(carrito.length === 0 || carrito.length === 1))
+                    return;
+
                 const ahora = new Date();
+
+                const fechaSql = ahora.toISOString().slice(0, 19);
+                // → "2025-12-24T11:42:30"
+
+                $('#fechaVenta').val(fechaSql);
+
+                //window.fechaVenta = '2025-12-12';
+                //$('#fechaVenta').val(ahora);
 
                 const diaSemana = dias[ahora.getDay()];
                 const dia = ahora.getDate();

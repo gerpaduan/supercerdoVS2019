@@ -107,17 +107,27 @@ namespace Web.Controllers
                 if (lineasVenta == null || !lineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
 
-                Negocio.Corte oCorteN = new Negocio.Corte(); 
-                for (int index = 0; index < lineasVenta.Count; index++)
-                {
-                    lineasVenta[index].Corte = oCorteN.findCorteByCodigo(lineasVenta[index].Codigo, false);
-                }
+                Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+                var user = Session["Usuario"] as Entidades.Usuario;
+                venta.Sucursal = oSucursalN.findById(user.IdSucursal);
+
+                venta.Observaciones = venta.Observaciones ?? "";
+
                 // ===============================
                 // FORMAS DE PAGO
                 // ===============================
                 venta.FormaPago = formaPago;
                 venta.EnCtaCte = formaPago == formaPagoEnum.CtaCte.ToString();
                 venta.PagoMixtoEfectivo = esPagoMixto ? efectivo : 0;
+
+                Negocio.Corte oCorteN = new Negocio.Corte(); 
+                for (int index = 0; index < lineasVenta.Count; index++)
+                {
+                    lineasVenta[index].Corte = oCorteN.findCorteByCodigo(lineasVenta[index].Codigo, false);
+
+                    // En Negocio hace la asignacion inversa 'no recuerdo xq hice esto, posiblente por redondeo'
+                    lineasVenta[index].KgsTotalCalculado = lineasVenta[index].CantKg;
+                }
 
                 // ===============================
                 // LINEAS DE VENTA (CLAVE)
@@ -128,21 +138,20 @@ namespace Web.Controllers
 
                 Session.Remove("VentaActiva");
 
-                return Json(new { ok = true });
+                return Json(new { ok = true }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
+                Response.StatusCode = 500;
+
                 return Json(new
                 {
                     ok = false,
                     msg = "Error al finalizar la venta",
                     error = ex.Message
-                });
+                }, JsonRequestBehavior.AllowGet);
             }
         }
-
-
-
 
 
         #region POS
@@ -161,6 +170,8 @@ namespace Web.Controllers
             var oCliente = oPersonaN.getConsumidorFinal();
 
             venta.Persona = oCliente;
+            venta.Vendedor = Session["Usuario"] as Entidades.Usuario;
+            venta.FechaVenta = DateTime.Now;
 
             Session["VentaActiva"] = venta;
 

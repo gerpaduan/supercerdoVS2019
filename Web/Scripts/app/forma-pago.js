@@ -26,7 +26,7 @@ $('#chkPagoMixto').on('change', function () {
         $('#bloquePagoMixto').slideDown();
 
         $('.btn-forma-pago[data-tipo="Efectivo"]').prop('disabled', true);
-        $('.btn-forma-pago[data-tipo="Cuenta Corriente"]').prop('disabled', true);
+        $('.btn-forma-pago[data-tipo="CtaCte"]').prop('disabled', true);
 
     } else {
 
@@ -153,8 +153,20 @@ function finalizarVenta(data) {
         url: api.venta.finalizar,
         type: 'POST',
         contentType: 'application/json',
+        dataType: 'json', // 🔥 CLAVE
         data: JSON.stringify(payload),
         success: function (resp) {
+
+            if (!resp.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: resp.msg || 'No se pudo finalizar la venta'
+                });
+                ventaEnProceso = false;
+                return;
+            }
+
             Swal.fire({
                 icon: 'success',
                 title: 'Venta finalizada',
@@ -165,15 +177,16 @@ function finalizarVenta(data) {
             $('#modalFormaPago').modal('hide');
             setTimeout(() => location.reload(), 1600);
         },
-        error: function () {
-            ventaEnProceso = false;
+        error: function (xhr) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'No se pudo finalizar la venta'
+                text: xhr.responseJSON?.msg || 'Error del servidor'
             });
+            ventaEnProceso = false;
         }
     });
+
 }
 
 
@@ -214,9 +227,9 @@ $(document).ready(function () {
         // ---- NORMAL ----
         switch (e.key) {
             case '1': seleccionarFormaPago('Efectivo'); break;
-            case '2': seleccionarFormaPago('Débito'); break;
-            case '3': seleccionarFormaPago('Crédito'); break;
-            case '4': seleccionarFormaPago('Cuenta Corriente'); break;
+            case '2': seleccionarFormaPago('Debito'); break;
+            case '3': seleccionarFormaPago('Credito'); break;
+            case '4': seleccionarFormaPago('CtaCte'); break;
             case '5': seleccionarFormaPago('QR'); break;
             case '6': seleccionarFormaPago('Transferencia'); break;
         }

@@ -14,17 +14,20 @@
 
             <div class="modal-body">
 
-                @foreach (var s in ViewBag.Sucursales as List<Entidades.Sucursal>)
+                @if (ViewBag.Sucursales != null && usuario != null && usuario.IdSucursal != null)
                 {
-                    bool activa = s.IdSucursal == usuario.IdSucursal;
+                    foreach (var s in ViewBag.Sucursales as List<Entidades.Sucursal>)
+                    {
+                        bool activa = s.IdSucursal == usuario.IdSucursal;
 
-                    <button class="btn btn-block mb-2 btnSucursal
-                             @(activa ? "btn-primary" : "btn-outline-secondary")"
-                            data-id="@s.IdSucursal"
-                            data-nombre="@s.SucursalNombre"
-                            @(activa ? "disabled" : "")>
-                        @s.SucursalNombre
-                    </button>
+                        <button class="btn btn-block mb-2 btnSucursal
+                                 @(activa ? "btn-primary" : "btn-outline-secondary")"
+                                data-id="@s.IdSucursal"
+                                data-nombre="@s.SucursalNombre"
+                                @(activa ? "disabled" : "")>
+                            @s.SucursalNombre
+                        </button>
+                    }
                 }
 
             </div>
