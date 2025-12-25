@@ -2,6 +2,8 @@
 
 @{ ViewBag.Title = "CarniSys web | Punto de Venta";
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
+
+    bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
 }
 
 
@@ -93,242 +95,245 @@
         }
     }
 </style>
+@if (cajaAbierta && Model != null)
+{
 
+    <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
+    <!-- Vista: Punto de Venta (SB Admin 2) -->
+    <div class="container-fluid p-2" id="pos-app">
 
-<button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
-<!-- Vista: Punto de Venta (SB Admin 2) -->
-<div class="container-fluid p-2" id="pos-app">
-
-    <div class="d-flex justify-content-end mb-2">
-        <span id="fechaHoraPOS" class="text-muted font-weight-bold"></span>
-        <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
-    </div>
-
-    <div class="form-group">
-        <div class="input-group">
-
-            <input type="hidden" id="idPersona" value="@Model.Persona.IdPersona" />
-
-            <input type="text"
-                   id="razonSocial"
-                   class="form-control"
-                   value="@(Model.Persona?.RazonSocial ?? "Error al cargar cliente")"
-                   readonly />
-
-
-            <div class="input-group-append">
-                <button type="button"
-                        class="btn btn-primary"
-                        id="btnBuscarPersona">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-
-            <!-- Consumidor Final -->
-            <!-- Consumidor Final -->
-            <button type="button"
-                    class="btn btn-secondary ml-2"
-                    id="btnConsumidorFinal"
-                    title="Consumidor Final">
-                CF
-            </button>
-
+        <div class="d-flex justify-content-end mb-2">
+            <span id="fechaHoraPOS" class="text-muted font-weight-bold"></span>
+            <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
         </div>
-    </div>
+
+        <div class="form-group">
+            <div class="input-group">
+
+                <input type="hidden" id="idPersona" value="@Model.Persona.IdPersona" />
+
+                <input type="text"
+                       id="razonSocial"
+                       class="form-control"
+                       value="@(Model.Persona?.RazonSocial ?? "Error al cargar cliente")"
+                       readonly />
 
 
-    <div class="card shadow-lg border-0 pos-panel">
-
-        <div class="card-body p-2 d-flex flex-column">
-
-            <div class="row flex-grow-1  h-100">
-
-                <!-- ===================== -->
-                <!-- COLUMNA IZQUIERDA: CARRITO -->
-                <!-- ===================== -->
-                <!-- COLUMNA IZQUIERDA - CARRITO -->
-                <div class="col-lg-6 carrito-col">
-
-                    <!-- ZONA SCROLLEABLE -->
-                    <div class="zona-tabla mb-2">
-                        <table class="table table-sm tabla-productos mb-0">
-                            <tbody id="tablaItems">
-
-                                <!-- Estado vacío -->
-                                <tr id="filaVacia">
-                                    <td class="text-muted text-center py-3">
-                                        No hay productos agregados
-                                    </td>
-                                </tr>
-
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- TOTAL FIJO -->
-                    <div class="zona-total">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="m-0" style="color:#adb5bd;">Total</h3>
-                            <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">
-                                $ 0,00
-                            </h1>
-                        </div>
-                    </div>
-
+                <div class="input-group-append">
+                    <button type="button"
+                            class="btn btn-primary"
+                            id="btnBuscarPersona">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
 
+                <!-- Consumidor Final -->
+                <!-- Consumidor Final -->
+                <button type="button"
+                        class="btn btn-secondary ml-2"
+                        id="btnConsumidorFinal"
+                        title="Consumidor Final">
+                    CF
+                </button>
 
-                <!-- ===================== -->
-                <!-- COLUMNA DERECHA -->
-                <!-- ===================== -->
-                <div class="col-lg-6 d-flex flex-column">
+            </div>
+        </div>
 
-                    <!-- BUSCADOR -->
-                    <div class="row g-2 mb-3">
-                        <div class="col-12">
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text"><i class="fas fa-barcode"></i></span>
-                                <input type="text" id="inputCodigo" class="form-control"
-                                       placeholder="Esperando codigo..." autocomplete="off" autofocus />
 
-                                <button class="btn btn-outline-secondary"
-                                        id="btnAgregarManual"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#modalDigitarCodigo">
-                                    Digitar
-                                </button>
+        <div class="card shadow-lg border-0 pos-panel">
+
+            <div class="card-body p-2 d-flex flex-column">
+
+                <div class="row flex-grow-1  h-100">
+
+                    <!-- ===================== -->
+                    <!-- COLUMNA IZQUIERDA: CARRITO -->
+                    <!-- ===================== -->
+                    <!-- COLUMNA IZQUIERDA - CARRITO -->
+                    <div class="col-lg-6 carrito-col">
+
+                        <!-- ZONA SCROLLEABLE -->
+                        <div class="zona-tabla mb-2">
+                            <table class="table table-sm tabla-productos mb-0">
+                                <tbody id="tablaItems">
+
+                                    <!-- Estado vacío -->
+                                    <tr id="filaVacia">
+                                        <td class="text-muted text-center py-3">
+                                            No hay productos agregados
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- TOTAL FIJO -->
+                        <div class="zona-total">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h3 class="m-0" style="color:#adb5bd;">Total</h3>
+                                <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">
+                                    $ 0,00
+                                </h1>
                             </div>
                         </div>
+
                     </div>
 
-                    <!-- INFO PRODUCTO -->
-                    <div id="producto-info" class="p-3 rounded bg-light border mb-3">
-                        <div class="row">
 
-                            <!-- COLUMNA IZQUIERDA -->
-                            <!-- COLUMNA IZQUIERDA -->
-                            <div class="col-6">
+                    <!-- ===================== -->
+                    <!-- COLUMNA DERECHA -->
+                    <!-- ===================== -->
+                    <div class="col-lg-6 d-flex flex-column">
 
-                                <!-- NOMBRE PRODUCTO -->
-                                <h4 id="prodNombre"
-                                    class="fw-bold text-muted mb-2">
-                                    Info producto...
-                                </h4>
+                        <!-- BUSCADOR -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-12">
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                    <input type="text" id="inputCodigo" class="form-control"
+                                           placeholder="Esperando codigo..." autocomplete="off" autofocus />
 
-                                <!-- PRECIO -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label">Precio</label>
-                                        <div id="prodPrecio"
-                                             class="fw-bold text-muted mb-3 fs-5">
+                                    <button class="btn btn-outline-secondary"
+                                            id="btnAgregarManual"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalDigitarCodigo">
+                                        Digitar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INFO PRODUCTO -->
+                        <div id="producto-info" class="p-3 rounded bg-light border mb-3">
+                            <div class="row">
+
+                                <!-- COLUMNA IZQUIERDA -->
+                                <!-- COLUMNA IZQUIERDA -->
+                                <div class="col-6">
+
+                                    <!-- NOMBRE PRODUCTO -->
+                                    <h4 id="prodNombre"
+                                        class="fw-bold text-muted mb-2">
+                                        Info producto...
+                                    </h4>
+
+                                    <!-- PRECIO -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label">Precio</label>
+                                            <div id="prodPrecio"
+                                                 class="fw-bold text-muted mb-3 fs-5">
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div id="prodPrecio"
-                                     class="fw-bold text-muted mb-3 fs-5">
-                                </div>
-
-                                <!-- CANTIDAD -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                                        <input id="inputCantidad"
-                                               class="form-control"
-                                               autocomplete="off"
-                                               inputmode="decimal">
+                                    <div id="prodPrecio"
+                                         class="fw-bold text-muted mb-3 fs-5">
                                     </div>
-                                </div>
 
-                                <!-- SUBTOTAL -->
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label m-0">Subtotal</label>
-                                        <h4 id="prodSubtotal"
-                                            class="fw-bold text-muted m-0">
-                                            $ 0,00
-                                        </h4>
+                                    <!-- CANTIDAD -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                            <input id="inputCantidad"
+                                                   class="form-control"
+                                                   autocomplete="off"
+                                                   inputmode="decimal">
+                                        </div>
                                     </div>
+
+                                    <!-- SUBTOTAL -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label class="form-label m-0">Subtotal</label>
+                                            <h4 id="prodSubtotal"
+                                                class="fw-bold text-muted m-0">
+                                                $ 0,00
+                                            </h4>
+                                        </div>
+                                    </div>
+
+
+                                    <!-- BOTÓN AGREGAR -->
+                                    <button id="btnAgregarProducto"
+                                            class="btn btn-outline-success btn-lg w-100 btn-agregar-pos"
+                                            disabled>
+                                        ➕ Agregar a la venta
+                                    </button>
+
                                 </div>
 
+                                <!-- COLUMNA DERECHA - TECLADO -->
+                                <div class="col-6">
+                                    <div class="keyboard-grid">
+                                        <button class="btn btn-light btn-key">7</button>
+                                        <button class="btn btn-light btn-key">8</button>
+                                        <button class="btn btn-light btn-key">9</button>
+                                        <button class="btn btn-warning btn-key">←</button>
 
-                                <!-- BOTÓN AGREGAR -->
-                                <button id="btnAgregarProducto"
-                                        class="btn btn-outline-success btn-lg w-100 btn-agregar-pos"
-                                        disabled>
-                                    ➕ Agregar a la venta
-                                </button>
+                                        <button class="btn btn-light btn-key">4</button>
+                                        <button class="btn btn-light btn-key">5</button>
+                                        <button class="btn btn-light btn-key">6</button>
+                                        <button class="btn btn-secondary btn-key">×</button>
 
-                            </div>
+                                        <button class="btn btn-light btn-key">1</button>
+                                        <button class="btn btn-light btn-key">2</button>
+                                        <button class="btn btn-light btn-key">3</button>
 
-                            <!-- COLUMNA DERECHA - TECLADO -->
-                            <div class="col-6">
-                                <div class="keyboard-grid">
-                                    <button class="btn btn-light btn-key">7</button>
-                                    <button class="btn btn-light btn-key">8</button>
-                                    <button class="btn btn-light btn-key">9</button>
-                                    <button class="btn btn-warning btn-key">←</button>
+                                        <!-- ENTER ocupa 2 filas -->
+                                        <button class="btn btn-info btn-enter btn-key">Enter</button>
 
-                                    <button class="btn btn-light btn-key">4</button>
-                                    <button class="btn btn-light btn-key">5</button>
-                                    <button class="btn btn-light btn-key">6</button>
-                                    <button class="btn btn-secondary btn-key">×</button>
+                                        <button class="btn btn-light btn-key key-zero">0</button>
+                                        <button class="btn btn-light btn-key">.</button>
+                                    </div>
 
-                                    <button class="btn btn-light btn-key">1</button>
-                                    <button class="btn btn-light btn-key">2</button>
-                                    <button class="btn btn-light btn-key">3</button>
 
-                                    <!-- ENTER ocupa 2 filas -->
-                                    <button class="btn btn-info btn-enter btn-key">Enter</button>
-
-                                    <button class="btn btn-light btn-key key-zero">0</button>
-                                    <button class="btn btn-light btn-key">.</button>
                                 </div>
-
 
                             </div>
 
                         </div>
 
-                    </div>
-
-                    <!-- BOTONES FINALES -->
-                    <div class="mb-3">
                         <!-- BOTONES FINALES -->
                         <div class="mb-3">
-                            <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
-                                <i class="fas fa-credit-card mr-2"></i>
+                            <!-- BOTONES FINALES -->
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
+                                    <i class="fas fa-credit-card mr-2"></i>
 
-                                Finalizar y Pagar
-                            </button>
+                                    Finalizar y Pagar
+                                </button>
+                            </div>
+
+
                         </div>
 
 
-                    </div>
+                        <!-- ESTADO BALANZA -->
+                        <div class="mt-auto">
 
-
-                    <!-- ESTADO BALANZA -->
-                    <div class="mt-auto">
-
-                        <!-- BOTONES FIJOS -->
-                        <div class="zona-botones">
-                            <div class="row g-2">
-                                <div class="col-4">
-                                    <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
-                                </div>
-                                <div class="col-4">
-                                    <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
-                                </div>
-                                <div class="col-4">
-                                    <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                            <!-- BOTONES FIJOS -->
+                            <div class="zona-botones">
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                                    </div>
                                 </div>
                             </div>
+                            <small class="text-muted">
+                                Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                            </small>
+                            <div class="progress mt-1" style="height:8px;">
+                                <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
                         </div>
-                        <small class="text-muted">
-                            Conexión balanza: <span id="estadoBalanza">Desconocida</span>
-                        </small>
-                        <div class="progress mt-1" style="height:8px;">
-                            <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
-                        </div>
+
                     </div>
 
                 </div>
@@ -339,62 +344,63 @@
 
     </div>
 
-</div>
 
-
-<!-- MODAL: DIGITAR CÓDIGO -->
-<div class="modal fade" id="modalDigitarCodigo" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title">Digitar código</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <input id="txtCodigoManual" class="form-control form-control-lg text-center mb-3" placeholder="Ingrese código" />
-                <div class="row g-2">
-                    @{ for (int r = 1; r <= 9; r++)
-                        { <text>
-                                <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">@r</button></div>
-                        </text>;
-                    } }
-                    <div class="col-4"><button class="btn btn-outline-dark w-100 py-3" id="key-back">←</button></div>
-                    <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">0</button></div>
-                    <div class="col-4"><button class="btn btn-success w-100 py-3" id="key-ok">OK</button></div>
+    <!-- MODAL: DIGITAR CÓDIGO -->
+    <div class="modal fade" id="modalDigitarCodigo" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title">Digitar código</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <input id="txtCodigoManual" class="form-control form-control-lg text-center mb-3" placeholder="Ingrese código" />
+                    <div class="row g-2">
+                        @{ for (int r = 1; r <= 9; r++)
+                            { <text>
+                                    <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">@r</button></div>
+                            </text>;
+                            } }
+                        <div class="col-4"><button class="btn btn-outline-dark w-100 py-3" id="key-back">←</button></div>
+                        <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">0</button></div>
+                        <div class="col-4"><button class="btn btn-success w-100 py-3" id="key-ok">OK</button></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- MODAL PESABLE: muestra cuando un producto es por kg -->
-<div class="modal fade" id="modalPesable" tabindex="-1">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title">Producto Pesable</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <div>Ingrese peso o use la balanza</div>
-                <input id="txtPesoPesable" class="form-control form-control-lg text-center my-2" />
-                <div class="d-flex justify-content-between">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary" id="btnAgregarPesable">Agregar</button>
+    <!-- MODAL PESABLE: muestra cuando un producto es por kg -->
+    <div class="modal fade" id="modalPesable" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Producto Pesable</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div>Ingrese peso o use la balanza</div>
+                    <input id="txtPesoPesable" class="form-control form-control-lg text-center my-2" />
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary" id="btnAgregarPesable">Agregar</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+}
+
+    @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
+
+    @Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
+
+    @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 
 
-@Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
 
-@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
-
-
-@section Scripts {
-    <script>
+    @section Scripts {
+        <script>
 
         let typingTimer = null;
         let productoSeleccionado = null;
@@ -449,6 +455,115 @@
             setInterval(actualizarFechaHora, 60000); // refresca cada minuto
 
         })();
+
+            //ABRIR CAJA
+
+        function obtenerFechaHoraActual() {
+            const ahora = new Date();
+
+            const pad = n => n.toString().padStart(2, '0');
+
+            const fecha =
+                pad(ahora.getDate()) + '/' +
+                pad(ahora.getMonth() + 1) + '/' +
+                ahora.getFullYear() + ' ' +
+                pad(ahora.getHours()) + ':' +
+                pad(ahora.getMinutes());
+
+            return fecha;
+        }
+
+            $(document).ready(function () {
+
+            const cajaAbierta = '@ViewBag.CajaAbierta'.toLowerCase() === 'true';
+
+                if (!cajaAbierta) {
+                    $('#fechaHoraApertura').val(obtenerFechaHoraActual());
+                    $('#modalAbrirCaja').modal('show');
+                }
+            });
+
+        function abrirCaja() {
+
+            const $fechaInput = $('#fechaHoraApertura');
+            const $montoInput = $('#montoInicial');
+
+            if ($fechaInput.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error interno',
+                    text: 'No se encontró el campo de fecha/hora'
+                });
+                return;
+            }
+
+            if ($montoInput.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error interno',
+                    text: 'No se encontró el campo de importe'
+                });
+                return;
+            }
+
+            const fechaHoraTexto = $fechaInput.val();
+            const monto = parseFloat($montoInput.val());
+            // Validaciones cliente
+            if (isNaN(monto) || monto < 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Importe inválido',
+                    text: 'Ingrese un monto inicial válido',
+                    confirmButtonColor: '#4e73df' // primary SB Admin 2
+                });
+                return;
+            }
+
+            $.ajax({
+                url: '@Url.Action("AbrirCaja", "Cajas")',
+                type: 'POST',
+                data: {
+                    montoInicial: monto,
+                    fechaHora: fechaHoraTexto
+                },
+                success: function (response) {
+
+                    if (response.ok) {
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Caja abierta',
+                            text: 'La caja se abrió correctamente',
+                            timer: 1200,
+                            showConfirmButton: false
+                        }).then(() => {
+                            $('#modalAbrirCaja').modal('hide');
+                            location.reload();
+                        });
+
+                    } else {
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'No se pudo abrir la caja',
+                            text: response.mensaje,
+                            confirmButtonColor: '#4e73df'
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un error al intentar abrir la caja',
+                        confirmButtonColor: '#4e73df'
+                    });
+                }
+            });
+        }
+
+
+            //FIN ABRIR CAJA
 
         $('#btnBuscarPersona').on('click', function () {
             $('#modalBuscarPersona').modal('show');
@@ -1003,85 +1118,85 @@
         }
     };
 
-    </script>
-}
-
-<style>
-    .fila-item {
-        cursor: pointer;
+        </script>
     }
 
-        .fila-item:hover {
-            background: #f2f2f2;
+    <style>
+        .fila-item {
+            cursor: pointer;
         }
 
-    .tabla-productos td {
-        border: none;
-        padding-bottom: 1rem;
-        padding-top: 0.5rem;
-    }
+            .fila-item:hover {
+                background: #f2f2f2;
+            }
 
-    .item-detalle {
-        font-size: 0.95rem;
-        color: #444;
-    }
+        .tabla-productos td {
+            border: none;
+            padding-bottom: 1rem;
+            padding-top: 0.5rem;
+        }
 
-
-    .keyboard-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(4, 60px);
-        gap: 8px;
-    }
-
-    /* Botones normales */
-    .btn-key {
-        height: 100%;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-
-    /* ENTER ocupa 2 filas */
-    .btn-enter {
-        grid-row: span 2;
-        font-size: 1.1rem;
-        font-weight: bold;
-    }
-
-    /* El 0 ocupa 2 columnas */
-    .key-zero {
-        grid-column: span 2;
-    }
+        .item-detalle {
+            font-size: 0.95rem;
+            color: #444;
+        }
 
 
-    /* Línea delicada de separación vertical */
-    .key-separator {
-        border-left: 1px solid rgba(0, 0, 0, 0.1);
-        padding-left: 8px;
-    }
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 60px);
+            gap: 8px;
+        }
 
-    /* ===== BOTÓN POS ===== */
-    .btn-agregar-pos {
-        height: 56px;
-        white-space: nowrap; /* NO se parte */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 10px;
-    }
-    /* Ajuste en pantallas chicas */
-    @@media (max-width: 576px) {
-        .btn-key,
-        .btn-enter {
+        /* Botones normales */
+        .btn-key {
+            height: 100%;
             font-size: 1.2rem;
-            padding: 14px 0;
+            font-weight: 600;
         }
 
-        .btn-agregar-pos {
-            height: 52px; /* misma sensación táctil */
-            font-size: 1rem;
+        /* ENTER ocupa 2 filas */
+        .btn-enter {
+            grid-row: span 2;
+            font-size: 1.1rem;
+            font-weight: bold;
         }
-    }
-</style>
+
+        /* El 0 ocupa 2 columnas */
+        .key-zero {
+            grid-column: span 2;
+        }
+
+
+        /* Línea delicada de separación vertical */
+        .key-separator {
+            border-left: 1px solid rgba(0, 0, 0, 0.1);
+            padding-left: 8px;
+        }
+
+        /* ===== BOTÓN POS ===== */
+        .btn-agregar-pos {
+            height: 56px;
+            white-space: nowrap; /* NO se parte */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+        /* Ajuste en pantallas chicas */
+        @@media (max-width: 576px) {
+            .btn-key,
+            .btn-enter {
+                font-size: 1.2rem;
+                padding: 14px 0;
+            }
+
+            .btn-agregar-pos {
+                height: 52px; /* misma sensación táctil */
+                font-size: 1rem;
+            }
+        }
+    </style>

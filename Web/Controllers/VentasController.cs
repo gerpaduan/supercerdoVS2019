@@ -15,6 +15,8 @@ namespace Web.Controllers
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Negocio.Persona oPersonaN = new Negocio.Persona();
+        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+        Entidades.CierreCaja  oCierreE = new Entidades.CierreCaja();
         // GET: Ventas
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
         {
@@ -157,6 +159,41 @@ namespace Web.Controllers
         #region POS
         public ActionResult POS()
         {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return RedirectToAction("Login", "Account");
+
+            // Inicializo cierre
+            var cierre = new Entidades.CierreCaja
+            {
+                Sucursal = oSucursalN.findById(user.IdSucursal),
+                UsuarioInicio = user
+            };
+
+            // Busco último cierre
+            cierre = oCierreN.findByIdOrLast(
+                cierre,
+                Entidades.CierreCaja.tipoBusqueda.FindLast,
+                ""
+            );
+
+            // ¿Hay caja abierta?
+            bool cajaAbierta = cierre != null &&
+                               (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+
+            // Paso info a la vista
+            ViewBag.CajaAbierta = cajaAbierta;
+            ViewBag.SucursalNombre = user.SucursalNombre;
+
+            // 🚨 Si NO hay caja abierta, NO inicializo venta
+            if (!cajaAbierta)
+            {
+                return View((Venta)null);  // La vista muestra modal y POS bloqueado
+            }
+
+            // ==========================
+            // POS habilitado
+            // ==========================
             var venta = Session["VentaActiva"] as Venta;
 
             if (venta == null)
@@ -170,13 +207,14 @@ namespace Web.Controllers
             var oCliente = oPersonaN.getConsumidorFinal();
 
             venta.Persona = oCliente;
-            venta.Vendedor = Session["Usuario"] as Entidades.Usuario;
+            venta.Vendedor = user;
             venta.FechaVenta = DateTime.Now;
 
             Session["VentaActiva"] = venta;
 
             return View(venta);
         }
+
 
 
         // ======================================================

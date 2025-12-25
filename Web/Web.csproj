@@ -2036,6 +2036,7 @@
     <Content Include="Views\Personas\_BuscarPersona.cshtml" />
     <Content Include="Views\Ventas\_FormaPagoModal.cshtml" />
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
+    <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

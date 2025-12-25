@@ -144,6 +144,62 @@ namespace Web.Controllers
             return Json(new { ok = true, result.Mensaje });
         }
 
+        [HttpPost]
+        public JsonResult AbrirCaja(float montoInicial, string fechaHora)
+        {
+            var user = Session["Usuario"] as Entidades.Usuario;
+            if (user == null)
+                return Json(new { ok = false, mensaje = "Sesión inválida" });
+
+            if (montoInicial < 0)
+                return Json(new { ok = false, mensaje = "Importe inválido" });
+
+            // Parsear fecha dd/MM/yyyy HH:mm
+            if (!DateTime.TryParseExact(
+                    fechaHora,
+                    "dd/MM/yyyy HH:mm",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out DateTime fechaApertura))
+            {
+                return Json(new { ok = false, mensaje = "Fecha inválida" });
+            }
+
+
+            // Crear entidad
+            var nuevoCierre = new Entidades.CierreCaja
+            {
+                Sucursal = oSucursalN.findById(user.IdSucursal),
+                UsuarioInicio = user,
+                FechaHoraInicio = fechaApertura,
+                CajaInicio = ParseFloat(montoInicial.ToString())
+            };
+
+
+            // 🔒 Revalidar caja abierta
+
+            // Busco último cierre
+            Entidades.CierreCaja cierre = oCierreN.findByIdOrLast(
+                nuevoCierre,
+                Entidades.CierreCaja.tipoBusqueda.FindLast,
+                ""
+            );
+
+            // ¿Hay caja abierta?
+            bool cajaAbierta = cierre != null &&
+                               (cierre.UsuarioCierre == null || cierre.UsuarioCierre.Id == 0);
+
+            if (cierre != null && cierre.UsuarioCierre == null)
+                return Json(new { ok = false, mensaje = "Ya existe una caja abierta" });
+
+
+            oCierreN.addOrEditCierreCaja(nuevoCierre);
+
+            return Json(new { ok = true });
+        }
+
+
+
 
         private float ParseFloat(string value)
         {
