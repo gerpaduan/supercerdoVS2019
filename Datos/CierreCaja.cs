@@ -121,7 +121,8 @@ namespace Datos
             cmCierreCaja.Parameters.AddWithValue("@cajaInicioSiguiente", oCierreCajaE.CajaInicioSiguiente);
             cmCierreCaja.Parameters.AddWithValue("@importeRetirado", oCierreCajaE.ImporteRetirado);
             cmCierreCaja.Parameters.AddWithValue("@usuarioInicio", oCierreCajaE.UsuarioInicio.Id);
-            cmCierreCaja.Parameters.AddWithValue("@usuarioCierre", oCierreCajaE.UsuarioCierre.Id);
+            cmCierreCaja.Parameters.AddWithValue("@usuarioCierre", oCierreCajaE.UsuarioCierre != null ? 
+                                                                        oCierreCajaE.UsuarioCierre.Id : 0);
 
             cmCierreCaja.ExecuteNonQuery();
             cmCierreCaja.Connection.Close();

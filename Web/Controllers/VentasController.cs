@@ -96,12 +96,14 @@ namespace Web.Controllers
             string formaPago,
             bool esPagoMixto,
             float efectivo,
+            int idPersona,
             List<LineaVenta> lineasVenta
 )
         {
             try
             {
                 var venta = Session["VentaActiva"] as Venta;
+                var user = Session["Usuario"] as Entidades.Usuario;
 
                 if (venta == null)
                     return Json(new { ok = false, msg = "No hay venta activa" });
@@ -109,8 +111,9 @@ namespace Web.Controllers
                 if (lineasVenta == null || !lineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
 
-                Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-                var user = Session["Usuario"] as Entidades.Usuario;
+                
+
+                venta.Persona = oPersonaN.findById(idPersona);
                 venta.Sucursal = oSucursalN.findById(user.IdSucursal);
 
                 venta.Observaciones = venta.Observaciones ?? "";
@@ -121,6 +124,24 @@ namespace Web.Controllers
                 venta.FormaPago = formaPago;
                 venta.EnCtaCte = formaPago == formaPagoEnum.CtaCte.ToString();
                 venta.PagoMixtoEfectivo = esPagoMixto ? efectivo : 0;
+
+                //VALIDAR VENTA EN CTACTE sea solo en Cta Cte Y NO A 
+                if (venta.EnCtaCte && (!venta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
+                    venta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
+                {
+                    string msg_ = "Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
+                        "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.";
+                    return Json(new { ok = false, msg = msg_ });
+                }
+
+                //VALIDAR CAJA ABIERTA
+                bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(DateTime.Now, venta.Sucursal, user);
+                if (!cajaAbierta)
+                {
+                    string msg_ = "La caja ha sido cerrada.";
+
+                    return Json(new { ok = false, msg = msg_ });
+                }
 
                 Negocio.Corte oCorteN = new Negocio.Corte(); 
                 for (int index = 0; index < lineasVenta.Count; index++)
@@ -207,6 +228,7 @@ namespace Web.Controllers
             var oCliente = oPersonaN.getConsumidorFinal();
 
             venta.Persona = oCliente;
+            venta.IdPersona = oCliente.idPersona;
             venta.Vendedor = user;
             venta.FechaVenta = DateTime.Now;
 

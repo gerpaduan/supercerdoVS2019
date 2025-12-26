@@ -53,7 +53,8 @@ $('.btn-forma-pago').on('click', function () {
         finalizarVenta({
             formaPago: tipo,
             esPagoMixto: false,
-            efectivo: 0
+            efectivo: 0,
+            idPersona: $('#idPersona').val()
         });
 
         return;
@@ -116,7 +117,8 @@ $('#btnFinalizarPagoMixto').on('click', function () {
     finalizarVenta({
         formaPago: otroTipoPagoSeleccionado,
         esPagoMixto: true,
-        efectivo: efectivo
+        efectivo: efectivo,
+        idPersona: $('#idPersona').val()
     });
 });
 
@@ -142,6 +144,7 @@ function finalizarVenta(data) {
         formaPago: data.formaPago,
         esPagoMixto: data.esPagoMixto,
         efectivo: data.efectivo,
+        idPersona: data.idPersona,
         lineasVenta: window.lineasVenta.map(l => ({
             Codigo: l.codigo,
             CantKg: parseFloat(l.cant),

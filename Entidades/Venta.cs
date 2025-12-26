@@ -336,7 +336,7 @@ namespace Entidades
         int idpersona;
         int idSucursal;
         public int IdVendedor { get => idVendedor; set => idVendedor = value; }
-        public int Idpersona { get => idpersona; set => idpersona = value; }
+        public int IdPersona { get => idpersona; set => idpersona = value; }
         public int IdSucursal { get => idSucursal; set => idSucursal = value; }
         public float Abona { get => abona; set => abona = value; }
         public float Cambio { get => cambio; set => cambio = value; }

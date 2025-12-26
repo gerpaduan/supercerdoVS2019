@@ -97,7 +97,6 @@
 </style>
 @if (cajaAbierta && Model != null)
 {
-
     <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
     <!-- Vista: Punto de Venta (SB Admin 2) -->
     <div class="container-fluid p-2" id="pos-app">
@@ -110,7 +109,7 @@
         <div class="form-group">
             <div class="input-group">
 
-                <input type="hidden" id="idPersona" value="@Model.Persona.IdPersona" />
+                @Html.HiddenFor(m => m.IdPersona, new { id = "idPersona" })
 
                 <input type="text"
                        id="razonSocial"
@@ -360,7 +359,7 @@
                             { <text>
                                     <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">@r</button></div>
                             </text>;
-                            } }
+                        } }
                         <div class="col-4"><button class="btn btn-outline-dark w-100 py-3" id="key-back">←</button></div>
                         <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">0</button></div>
                         <div class="col-4"><button class="btn btn-success w-100 py-3" id="key-ok">OK</button></div>
@@ -389,18 +388,20 @@
             </div>
         </div>
     </div>
+
 }
 
-    @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
+<!-- Contenedor dinámico del modal -->
+<div id="contenedorModalPersona"></div>
 
-    @Html.Partial("~/Views/Personas/_BuscarPersona.cshtml")
+@Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 
-    @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
+@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 
 
 
-    @section Scripts {
-        <script>
+@section Scripts {
+    <script>
 
         let typingTimer = null;
         let productoSeleccionado = null;
@@ -485,36 +486,36 @@
 
         function abrirCaja() {
 
-            const $fechaInput = $('#fechaHoraApertura');
-            const $montoInput = $('#montoInicial');
+            //let cajaInicio = parseFloat($("#montoInicial").val().replace(",", "."));
 
-            if ($fechaInput.length === 0) {
+            //if (isNaN(cajaInicio) || cajaInicio <= 0) {
+            //    Swal.fire({
+            //        icon: 'warning',
+            //        title: 'Caja inicial',
+            //        text: 'Ingrese un importe válido mayor a cero',
+            //        confirmButtonColor: '#4e73df'
+            //    });
+            //    return;
+            //}
+            const input = document.getElementById("montoInicial");
+
+            if (!input) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error interno',
-                    text: 'No se encontró el campo de fecha/hora'
+                    title: 'Error',
+                    text: 'No se encontró el campo Monto Inicial'
                 });
                 return;
             }
 
-            if ($montoInput.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error interno',
-                    text: 'No se encontró el campo de importe'
-                });
-                return;
-            }
+            let cajaInicio = parseFloat(input.value.replace(",", "."));
 
-            const fechaHoraTexto = $fechaInput.val();
-            const monto = parseFloat($montoInput.val());
-            // Validaciones cliente
-            if (isNaN(monto) || monto < 0) {
+            if (isNaN(cajaInicio) || cajaInicio <= 0) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Importe inválido',
-                    text: 'Ingrese un monto inicial válido',
-                    confirmButtonColor: '#4e73df' // primary SB Admin 2
+                    title: 'Caja inicial',
+                    text: 'Ingrese un importe válido mayor a cero',
+                    confirmButtonColor: '#4e73df'
                 });
                 return;
             }
@@ -523,8 +524,8 @@
                 url: '@Url.Action("AbrirCaja", "Cajas")',
                 type: 'POST',
                 data: {
-                    montoInicial: monto,
-                    fechaHora: fechaHoraTexto
+                    cajaInicio: $("#montoInicial").val(),
+                    fechaHora: $("#fechaHoraApertura").val()
                 },
                 success: function (response) {
 
@@ -565,9 +566,21 @@
 
             //FIN ABRIR CAJA
 
-        $('#btnBuscarPersona').on('click', function () {
-            $('#modalBuscarPersona').modal('show');
+
+        // ================================
+        // BUSCAR PERSONA (POS)
+        // ================================
+        $(document).on('click', '#btnBuscarPersona', function () {
+
+            $('#contenedorModalPersona').load(window.api.persona.buscar, function () {
+
+                $('#modalBuscarPersona').modal('show');
+                cargarPersonas(); // carga inicial
+            });
+
         });
+
+
 
         $('#btnConsumidorFinal').on('click', function () {
 
@@ -1109,94 +1122,96 @@
 
 
         // URLs generadas por MVC (seguras para cualquier entorno)
-        window.api = {
-            venta: {
-                finalizar: '@Url.Action("FinalizarVenta", "Ventas")'
-        },
-            persona: {
-                listar: '@Url.Action("Listar", "Personas")'
-        }
-    };
+        window.api = window.api || {};
 
-        </script>
+        window.api.venta = {
+            finalizar: '@Url.Action("FinalizarVenta", "Ventas")'
+        };
+
+        window.api.persona = {
+            listar: '@Url.Action("Listar", "Personas")',
+            buscar: '@Url.Action("Buscar", "Personas")'
+        };
+
+    </script>
+}
+
+<style>
+    .fila-item {
+        cursor: pointer;
     }
 
-    <style>
-        .fila-item {
-            cursor: pointer;
+        .fila-item:hover {
+            background: #f2f2f2;
         }
 
-            .fila-item:hover {
-                background: #f2f2f2;
-            }
+    .tabla-productos td {
+        border: none;
+        padding-bottom: 1rem;
+        padding-top: 0.5rem;
+    }
 
-        .tabla-productos td {
-            border: none;
-            padding-bottom: 1rem;
-            padding-top: 0.5rem;
-        }
-
-        .item-detalle {
-            font-size: 0.95rem;
-            color: #444;
-        }
+    .item-detalle {
+        font-size: 0.95rem;
+        color: #444;
+    }
 
 
-        .keyboard-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(4, 60px);
-            gap: 8px;
-        }
+    .keyboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 60px);
+        gap: 8px;
+    }
 
-        /* Botones normales */
-        .btn-key {
-            height: 100%;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
+    /* Botones normales */
+    .btn-key {
+        height: 100%;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
 
-        /* ENTER ocupa 2 filas */
+    /* ENTER ocupa 2 filas */
+    .btn-enter {
+        grid-row: span 2;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+
+    /* El 0 ocupa 2 columnas */
+    .key-zero {
+        grid-column: span 2;
+    }
+
+
+    /* Línea delicada de separación vertical */
+    .key-separator {
+        border-left: 1px solid rgba(0, 0, 0, 0.1);
+        padding-left: 8px;
+    }
+
+    /* ===== BOTÓN POS ===== */
+    .btn-agregar-pos {
+        height: 56px;
+        white-space: nowrap; /* NO se parte */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    /* Ajuste en pantallas chicas */
+    @@media (max-width: 576px) {
+        .btn-key,
         .btn-enter {
-            grid-row: span 2;
-            font-size: 1.1rem;
-            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 14px 0;
         }
 
-        /* El 0 ocupa 2 columnas */
-        .key-zero {
-            grid-column: span 2;
-        }
-
-
-        /* Línea delicada de separación vertical */
-        .key-separator {
-            border-left: 1px solid rgba(0, 0, 0, 0.1);
-            padding-left: 8px;
-        }
-
-        /* ===== BOTÓN POS ===== */
         .btn-agregar-pos {
-            height: 56px;
-            white-space: nowrap; /* NO se parte */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
+            height: 52px; /* misma sensación táctil */
+            font-size: 1rem;
         }
-        /* Ajuste en pantallas chicas */
-        @@media (max-width: 576px) {
-            .btn-key,
-            .btn-enter {
-                font-size: 1.2rem;
-                padding: 14px 0;
-            }
-
-            .btn-agregar-pos {
-                height: 52px; /* misma sensación táctil */
-                font-size: 1rem;
-            }
-        }
-    </style>
+    }
+</style>

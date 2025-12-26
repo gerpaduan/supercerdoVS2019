@@ -1,12 +1,12 @@
-﻿// Abrir modal
-$('#btnBuscarPersona').on('click', function () {
+﻿//// Abrir modal
+//$('#btnBuscarPersona').on('click', function () {
 
-    $('#contenedorModalPersona').load('/Personas/Buscar', function () {
-        $('#modalBuscarPersona').modal('show');
-        cargarPersonas();
-    });
+//    $('#contenedorModalPersona').load('/Personas/Buscar', function () {
+//        $('#modalBuscarPersona').modal('show');
+//        cargarPersonas();
+//    });
 
-});
+//});
 
 // Buscar en vivo
 $(document).on('keyup', '#filtroPersona', function () {
@@ -28,7 +28,7 @@ $(document).on('keydown', '#filtroPersona', function (e) {
 function cargarPersonas() {
     let filtro = $('#filtroPersona').val();
 
-    $.get(personaUrls.listar, { filtro: filtro }, function (data) {
+    $.get(window.api.persona.listar, { filtro: filtro }, function (data) {
 
         let html = '';
 

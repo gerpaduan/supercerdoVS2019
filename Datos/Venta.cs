@@ -41,7 +41,7 @@ namespace Datos
                 PagoMixtoEfectivo = drVenta["pagoMixtoEfectivo"] == DBNull.Value ? 0f : float.Parse(drVenta["pagoMixtoEfectivo"].ToString()),
                 IdVendedor = Convert.ToInt32(drVenta["idVendedor"]),
                 IdSucursal = Convert.ToInt32(drVenta["idSucursal"]),
-                Idpersona = Convert.ToInt32(drVenta["idPersona"])
+                IdPersona = Convert.ToInt32(drVenta["idPersona"])
             };
 
             // Cargar datos relacionados
@@ -52,7 +52,7 @@ namespace Datos
             oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
 
             Datos.Persona oPersonaD = new Datos.Persona();
-            oVentaE.Persona = oPersonaD.findById(oVentaE.Idpersona);
+            oVentaE.Persona = oPersonaD.findById(oVentaE.IdPersona);
 
             if (cargarLineas)
             {
