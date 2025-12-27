@@ -380,10 +380,11 @@ namespace Presentacion
 
                 nroErrorBalanza++;
                 //si tira error mas de 5 veces se desactiva balanza automaticamente y se pone contador en serio
-                if (nroErrorBalanza > 20)
+                if (nroErrorBalanza > 10)
                 {
                     timer1.Stop();
                     nroErrorBalanza = 0;
+                    checkLeerPeso.Checked = false;
                     MessageBox.Show("Balanza desactivada automaticamente");
                 }
             }
@@ -528,7 +529,7 @@ namespace Presentacion
         private void txtCantKgs_TextChanged(object sender, EventArgs e)
         {
             // Si está vacío o no empieza con '-', lo corrige
-            if (!txtCantKgs.Text.StartsWith("-"))
+            if (esDesarmeElaborado)// !txtCantKgs.Text.StartsWith("-"))
             {
                 txtCantKgs.Text = "-" + txtCantKgs.Text.Replace("-", "");
                 txtCantKgs.SelectionStart = txtCantKgs.Text.Length; // Mantiene el cursor al final
