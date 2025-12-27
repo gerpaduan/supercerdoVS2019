@@ -26,10 +26,12 @@ namespace Web.Controllers
         {
             var user = oUsuarioN.validarUsuario(usuario, clave, false);
 
-            ///TODO: recuperar idSucursal de Usuario y cargarla al nav
             if (user != null && user.Activo)
             {
-                user.SucursalNombre = oSucursalN.findById(user.IdSucursal).SucursalNombre;
+                string sucNombre = user.IdSucursal == null || user.IdSucursal == 0 ? 
+                    "Seleccione Sucursal" :
+                     oSucursalN.findById(user.IdSucursal).SucursalNombre;
+                user.SucursalNombre = sucNombre == null ? "" : sucNombre;
                 Session["Usuario"] = user;
                 return RedirectToAction("Index", "Home");
             }

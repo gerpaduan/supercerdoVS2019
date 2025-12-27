@@ -21,14 +21,3 @@
 
 *********
 
-
-
-/////////////////
-
-agregar tabla Empresas 
-actulaizar tabla Sucursal / Usuario
-
-actualizar desde Oficina [addOrEditUser]
-
-/////
-
