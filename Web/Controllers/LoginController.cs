@@ -12,7 +12,7 @@ namespace Web.Controllers
     public class LoginController : Controller
     {
         // GET: Login
-        private readonly Negocio.Usuario _usuarioNegocio = new Negocio.Usuario();
+        private readonly Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
 
         [HttpGet]
@@ -24,11 +24,12 @@ namespace Web.Controllers
         [HttpPost]
         public ActionResult Index(string usuario, string clave)
         {
-            var user = _usuarioNegocio.validarUsuario(usuario, clave, false);
+            var user = oUsuarioN.validarUsuario(usuario, clave, false);
 
             ///TODO: recuperar idSucursal de Usuario y cargarla al nav
             if (user != null && user.Activo)
             {
+                user.SucursalNombre = oSucursalN.findById(user.IdSucursal).SucursalNombre;
                 Session["Usuario"] = user;
                 return RedirectToAction("Index", "Home");
             }
@@ -57,26 +58,35 @@ namespace Web.Controllers
         [HttpPost]
         public JsonResult CambiarSucursal(int idSucursal)
         {
-            var usuario = Session["Usuario"] as Entidades.Usuario;
-
-            if (usuario == null)
-                return Json(new { ok = false, msg = "Sesión expirada" });
-
-            ///TODO: Actualizar la Sucursal Actual en tabla Usuario idSucursal
-            ///donde va a guardar el valor de la ultima sucursal visitada
-            usuario.IdSucursal = idSucursal;
-
-            // Opcional: actualizar nombre de sucursal
-            usuario.SucursalNombre = oSucursalN.findById(idSucursal).SucursalNombre;
-
-            Session["Usuario"] = usuario;
-
-            return Json(new
+            try
             {
-                ok = true,
-                sucursalNombre = usuario.SucursalNombre,
-                idSucursal = usuario.IdSucursal
-            });
+                var usuario = Session["Usuario"] as Entidades.Usuario;
+
+                if (usuario == null)
+                    return Json(new { ok = false, msg = "Sesión expirada" });
+
+                usuario.IdSucursal = idSucursal;
+                usuario.SucursalNombre = oSucursalN.findById(idSucursal).SucursalNombre;
+
+                //Actualiza la Sucursal Actual en tabla Usuario idSucursal
+                oUsuarioN.setSucursalUsuario(usuario as Entidades.Usuario);
+
+                Session["Usuario"] = usuario;
+
+                return Json(new
+                {
+                    ok = true,
+                    sucursalNombre = usuario.SucursalNombre,
+                    idSucursal = usuario.IdSucursal
+                });
+            }
+            catch (Exception)
+            {
+                return Json(new
+                {
+                    ok = false,
+                });
+            }
         }
 
 

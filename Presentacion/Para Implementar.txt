@@ -21,65 +21,14 @@
 
 *********
 
-BEGIN TRANSACTION;
-
-    -- Primero eliminar de la tabla dependiente
-    DELETE FROM PermisosUsuarios
-    WHERE idForm = 4;
-
-    -- Luego eliminar de la tabla principal
-    DELETE FROM Formularios
-    WHERE idForm = 4;
-
-COMMIT TRANSACTION;
-
-
-actualiar desde SM
-
-[addOrEditUser]
-****
-
-//////////////
-
-
-ALTER TABLE TuTabla ADD Importe_tmp DECIMAL(18,2);
-
-UPDATE TuTabla
-SET Importe_tmp = CAST(Importe AS DECIMAL(18,2));
-
-ALTER TABLE TuTabla DROP COLUMN Importe;
-
-EXEC sp_rename 'TuTabla.Importe_tmp', 'Importe', 'COLUMN';
-
 
 
 /////////////////
 
 agregar tabla Empresas 
-actulaizar tabla Sucursal
+actulaizar tabla Sucursal / Usuario
+
+actualizar desde Oficina [addOrEditUser]
 
 /////
 
-agregar idCorte
-
-ALTER PROCEDURE [dbo].[a_CierreStock]
-	-- Add the parameters for the stored procedure here
-	@texto nvarchar(50),
-	@idsucursal int,
-	@fechaDesde datetime,
-	@fechaHasta datetime,
-	@tipo nvarchar(50),
-	@idProveedor int,
-	@idMarca int
-	
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-	
-	--se verifica si texto es un numero entero
-	
-	Declare @esNumero int = (SELECT ISNUMERIC(@texto));
-    
-	select allCortes.idCorte,

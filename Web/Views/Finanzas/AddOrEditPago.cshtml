@@ -83,8 +83,13 @@
                         <!-- Fecha -->
                         <div class="form-group">
                             @Html.LabelFor(m => m.Fecha)
-                            @Html.TextBoxFor(m => m.Fecha, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
+                            @Html.TextBoxFor(
+                                m => m.Fecha,
+                                "{0:yyyy-MM-ddTHH:mm}",
+                                new { @class = "form-control", type = "datetime-local" }
+                            )
                         </div>
+
 
                         <!-- nroRecibo -->
                         <div class="form-group">

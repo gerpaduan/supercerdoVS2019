@@ -61,6 +61,12 @@ namespace Negocio
                     user.Admin = Convert.ToBoolean(drUsuario["admin"]);
                     user.Activo = Convert.ToBoolean(drUsuario["activo"]);
                     user.ColorForm = Convert.ToString(drUsuario["colorForm"]);
+                    user.IdSucursal = drUsuario["idSucursalUser"] == DBNull.Value
+                                            ? 0
+                                            : Convert.ToInt32(drUsuario["idSucursalUser"]);
+                    user.IdEmpresa = drUsuario["idEmpresa"] == DBNull.Value
+                                                        ? 0
+                                                        : Convert.ToInt32(drUsuario["idEmpresa"]);
 
                     user.Permisos = oUsuarioD.getPermisosUsuario(user.Id);
 
@@ -159,6 +165,13 @@ namespace Negocio
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
             oUsuarioD.addOrEditUser(oUsuarioE);
+        }
+
+
+        public void setSucursalUsuario(Entidades.Usuario oUsuario)
+        {
+            oUsuarioD = new Datos.Usuario();
+            oUsuarioD.setSucursalUsuario(oUsuario);
         }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)

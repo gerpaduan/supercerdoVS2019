@@ -629,6 +629,36 @@
 
             $.ajax({
                 url: '@Url.Action("BuscarProducto", "Ventas")',
+                method: "GET",
+                data: { codigo: codigo },
+                timeout: 8000, // ⏱ 8 segundos
+
+                success: function (data) {
+                    if (!data || data.error) {
+                        mostrarSinCoincidencia();
+                        return;
+                    }
+
+                    mostrarProducto(data);
+                    productoSeleccionado = data;
+                    if (callback) callback();
+                },
+
+                error: function (xhr, status) {
+
+                    if (status === "timeout") {
+                        mostrarErrorConexion("Tiempo de espera agotado");
+                    } else if (!navigator.onLine) {
+                        mostrarErrorConexion("Sin conexión a Internet");
+                    }
+                    //else {
+                    //    mostrarErrorConexion("Error de conexión con el servidor");
+                    //}
+                }
+            });
+
+            @*$.ajax({
+                url: '@Url.Action("BuscarProducto", "Ventas")',
                 //url: "/Ventas/BuscarProducto",
                 method: "GET",
                 data: { codigo: codigo },
@@ -649,6 +679,15 @@
                 error: function () {
                     mostrarSinCoincidencia();
                 }
+            });*@
+        }
+
+        function mostrarErrorConexion(msg) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sin conexión',
+                text: msg,
+                allowOutsideClick: false
             });
         }
 

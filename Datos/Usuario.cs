@@ -75,8 +75,14 @@ namespace Datos
                                 Email = drUsuario["email"] != DBNull.Value ? drUsuario["email"]?.ToString() : "",
                                 Admin = drUsuario["admin"] != DBNull.Value && Convert.ToBoolean(drUsuario["admin"]),
                                 Activo = drUsuario["activo"] != DBNull.Value && Convert.ToBoolean(drUsuario["activo"]),
-                                ColorForm = drUsuario["colorForm"]?.ToString()
-                            };
+                                ColorForm = drUsuario["colorForm"]?.ToString(),
+                                IdSucursal = drUsuario["idSucursalUser"] == DBNull.Value
+                                                        ? 0
+                                                        : Convert.ToInt32(drUsuario["idSucursalUser"]),
+                                IdEmpresa = drUsuario["idEmpresa"] == DBNull.Value
+                                                        ? 0
+                                                        : Convert.ToInt32(drUsuario["idEmpresa"])
+                        };
                         }
                     }
                 }
@@ -114,6 +120,12 @@ namespace Datos
                         oUsuarioE.Admin = Convert.ToBoolean(drUsuario["admin"]);
                         oUsuarioE.Activo = Convert.ToBoolean(drUsuario["activo"]);
                         oUsuarioE.ColorForm = Convert.ToString(drUsuario["colorForm"]);
+                        oUsuarioE.IdSucursal = drUsuario["idSucursalUser"] == DBNull.Value
+                                                        ? 0
+                                                        : Convert.ToInt32(drUsuario["idSucursalUser"]);
+                        oUsuarioE.IdEmpresa = drUsuario["idEmpresa"] == DBNull.Value
+                                                        ? 0
+                                                        : Convert.ToInt32(drUsuario["idEmpresa"]);
                     }
                 }
             }
@@ -137,11 +149,30 @@ namespace Datos
             cmUsuario.Parameters.AddWithValue("@admin", oUsuarioE.Admin);
             cmUsuario.Parameters.AddWithValue("@activo", oUsuarioE.Activo);
             cmUsuario.Parameters.AddWithValue("@colorForm", oUsuarioE.ColorForm);
+            cmUsuario.Parameters.AddWithValue("@idEmpresa", oUsuarioE.IdEmpresa);
 
             cmUsuario.ExecuteNonQuery();
             cmUsuario.Connection.Close();
         }
 
+        public void setSucursalUsuario(Entidades.Usuario oUsuario)
+        {
+
+            using (SqlConnection con = conn.conectar())
+            {
+                con.Open();
+                string query = @"UPDATE Usuarios
+                                SET idSucursalUser = @idSucursal
+                                WHERE id = @idUsuario";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@idUsuario", oUsuario.Id);
+                    cmd.Parameters.AddWithValue("@idSucursal", oUsuario.IdSucursal);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
         {

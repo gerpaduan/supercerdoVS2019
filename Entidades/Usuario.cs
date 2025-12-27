@@ -80,5 +80,7 @@ namespace Entidades
         public int IdSucursal { get; set; }
         public string SucursalNombre { get; set; }
         public List<Entidades.Sucursal> ListaSucursales{ get; set; }
+
+        public int IdEmpresa { get; set; }
     }
 }
