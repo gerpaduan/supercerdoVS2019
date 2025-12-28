@@ -369,6 +369,94 @@
         </div>
     </div>
 
+
+    <!-- MODAL LINEA VENTA: muestra las acciones eliminar y bonificar -->
+    <!-- MODAL LINEA DE VENTA -->
+    <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content shadow">
+
+                <!-- HEADER -->
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-receipt mr-2"></i> Línea de venta
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        ×
+                    </button>
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body">
+
+                    <!-- INFO DEL PRODUCTO -->
+                    <input id="modalProducto" class="form-control mb-2" readonly>
+
+                    <div class="row mb-2">
+                        <div class="col-4">
+                            <label class="small">Cant.</label>
+                            <input id="modalCantidad" class="form-control text-right" readonly>
+                        </div>
+                        <div class="col-4">
+                            <label class="small">Precio</label>
+                            <input id="modalPrecio" class="form-control text-right" readonly>
+                        </div>
+                        <div class="col-4">
+                            <label class="small">Subtotal</label>
+                            <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- BLOQUE BONIFICAR -->
+                    <div id="bloqueBonificar" style="display:none">
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="chkPorcentaje">
+                            <label class="form-check-label">
+                                Bonificar por porcentaje
+                            </label>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="small">Precio</label>
+                                <input id="txtPrecioKg" class="form-control text-right">
+                            </div>
+                            <div class="col-6">
+                                @*<label class="small">%</label>*@
+                                <label id="lblTipoPorcentaje">% bonificación</label>
+                                <input id="txtPorcentaje" class="form-control text-right" disabled>
+                            </div>
+                            <div class="col-6">
+                                <label class="small"></label>
+                            </div>
+                        </div>
+
+                        <button id="btnAplicarBonificacion"
+                                class="btn btn-primary btn-block mt-3">
+                            Aplicar bonificación
+                        </button>
+                    </div>
+                    <!-- BOTONES PRINCIPALES -->
+                    <div class="d-flex justify-content-between mb-2">
+                        <button id="btnEliminarItem" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+
+                        <button id="btnMostrarBonificar" class="btn btn-success">
+                            <i class="fas fa-percentage"></i> Bonificar
+                        </button>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- MODAL PESABLE: muestra cuando un producto es por kg -->
     <div class="modal fade" id="modalPesable" tabindex="-1">
         <div class="modal-dialog modal-sm modal-dialog-centered">
@@ -414,6 +502,7 @@
         let indexLinea = 1;
         let ingresoCantidadX = false;
         let enterDesdeTecladoVirtual = false;
+        let lineaSeleccionada = null;//para mostrar modal de acciones de la linea
 
         (function () {
 
@@ -1160,6 +1249,143 @@
         $(window).on('resize', configurarInputsPOS);
 
 
+        ////////////////////
+        //MODAL LINEA VENTA - modalLineaVenta
+        ////////////////////
+
+        $(document).on("click", ".fila-item", function () {
+
+            // mostrar botones
+            $("#btnEliminarItem").removeClass("d-none");
+            $("#btnMostrarBonificar").removeClass("d-none");
+
+            const index = $(this).data("id");
+
+            lineaSeleccionada = carrito.find(l => l.index === index);
+            if (!lineaSeleccionada) return;
+
+            cargarModalLineaVenta(lineaSeleccionada);
+        });
+
+
+        function cargarModalLineaVenta(linea) {
+
+            $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
+            $("#modalCantidad").val(linea.cant);
+            $("#modalPrecio").val(linea.precio.replace("$", "").trim());
+            $("#modalSubtotal").val(linea.subtotal.replace("$", "").trim());
+
+            // reset estado
+            $("#bloqueBonificar").hide();
+            $("#chkPorcentaje").prop("checked", false);
+            $("#txtPorcentaje").val("0").prop("disabled", true);
+            //$("#txtPrecioKg").val($("#modalPrecio").val());
+
+            const precioOriginal = parseFloat(
+                linea.precio.replace("$", "").replace(",", ".")
+            );
+
+            $("#modalPrecio")
+                .text(linea.precio)
+                .data("precio", precioOriginal);
+
+            $("#txtPrecioKg").val(precioOriginal.toFixed(2));
+            //$("#txtPorcentaje").val("0");
+            $("#lblTipoPorcentaje").text("% bonificación");
+
+            $("#modalLineaVenta").modal("show");
+        }
+
+        $("#btnMostrarBonificar").click(function () {
+            $("#bloqueBonificar").slideDown();
+            $("#txtPrecioKg").focus().select();
+
+
+            // ocultar botones
+            $("#btnEliminarItem").addClass("d-none");
+            $("#btnMostrarBonificar").addClass("d-none");
+        });
+
+
+        $("#chkPorcentaje").change(function () {
+
+            const activo = this.checked;
+
+            $("#txtPorcentaje").prop("disabled", !activo).val("");
+            $("#txtPrecioKg").prop("readonly", activo);
+
+            if (activo)
+                $("#txtPorcentaje").focus();
+            else
+                $("#txtPrecioKg").focus().select();
+        });
+
+        $("#btnAplicarBonificacion").click(function () {
+
+            let precioNuevo = parseFloat($("#txtPrecioKg").val().replace(",", "."));
+            if (isNaN(precioNuevo) || precioNuevo <= 0) {
+                alert("Precio inválido");
+                return;
+            }
+
+            lineaSeleccionada.precio = `$ ${precioNuevo.toFixed(2)}`;
+
+            const subtotal = precioNuevo * parseFloat(lineaSeleccionada.cant);
+            lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
+
+            renderTablaProductos(carrito);
+            recalcularTotal();
+
+            $("#modalLineaVenta").modal("hide");
+        });
+
+        $("#txtPrecioKg").on("input", function () {
+
+            const precioOriginal = parseFloat($("#modalPrecio").data("precio"));
+            const precioNuevo = parseFloat($(this).val().replace(",", "."));
+
+            if (isNaN(precioNuevo) || precioNuevo <= 0 || isNaN(precioOriginal)) {
+                $("#txtPorcentaje").val("");
+                return;
+            }
+
+            // cálculo porcentaje
+            let porcentaje = (1 - (precioNuevo / precioOriginal)) * 100;
+
+            // redondeo a 2 decimales
+            porcentaje = Math.round(porcentaje * 100) / 100;
+
+            // mostrar valor absoluto
+            $("#txtPorcentaje").val(Math.abs(porcentaje));
+
+            // texto dinámico
+            if (porcentaje > 0) {
+                $("#lblTipoPorcentaje").text("% bonificación");
+            } else if (porcentaje < 0) {
+                $("#lblTipoPorcentaje").text("% recargo");
+            } else {
+                $("#lblTipoPorcentaje").text("%");
+            }
+        });
+
+
+        $("#btnEliminarItem").click(function () {
+
+            if (!confirm("¿Eliminar el producto?")) return;
+
+            carrito = carrito.filter(l => l.index !== lineaSeleccionada.index);
+
+            renderTablaProductos(carrito);
+            recalcularTotal();
+
+            $("#modalLineaVenta").modal("hide");
+        });
+
+        /////////////
+        ///FIN MODAL LINEA VENTA
+        ////////////
+
+
         // URLs generadas por MVC (seguras para cualquier entorno)
         window.api = window.api || {};
 
@@ -1253,4 +1479,23 @@
             font-size: 1rem;
         }
     }
+
+    /*Modal Linea Venta*/
+    #modalLineaVenta {
+        font-size: 1.1rem;
+    }
+
+        #modalLineaVenta input {
+            font-size: 1.4rem;
+            height: 55px;
+        }
+
+        #modalLineaVenta .modal-title {
+            font-size: 1.5rem;
+        }
+
+        #modalLineaVenta .btn {
+            font-size: 1.2rem;
+            padding: 12px 18px;
+        }
 </style>

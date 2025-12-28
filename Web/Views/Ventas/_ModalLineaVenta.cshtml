@@ -1,0 +1,80 @@
+﻿<!-- MODAL LINEA DE VENTA -->
+<div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow">
+
+            <!-- HEADER -->
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt mr-2"></i> Línea de venta
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    ×
+                </button>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body">
+
+                <!-- INFO DEL PRODUCTO -->
+                <input id="modalProducto" class="form-control mb-2" readonly>
+
+                <div class="row mb-2">
+                    <div class="col-4">
+                        <label class="small">Cant.</label>
+                        <input id="modalCantidad" class="form-control text-right" readonly>
+                    </div>
+                    <div class="col-4">
+                        <label class="small">Precio</label>
+                        <input id="modalPrecio" class="form-control text-right" readonly>
+                    </div>
+                    <div class="col-4">
+                        <label class="small">Subtotal</label>
+                        <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- BOTONES PRINCIPALES -->
+                <div class="d-flex justify-content-between mb-2">
+                    <button id="btnEliminarItem" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar
+                    </button>
+
+                    <button id="btnMostrarBonificar" class="btn btn-success">
+                        <i class="fas fa-percentage"></i> Bonificar
+                    </button>
+                </div>
+
+                <!-- BLOQUE BONIFICAR -->
+                <div id="bloqueBonificar" style="display:none">
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="chkPorcentaje">
+                        <label class="form-check-label">
+                            Bonificar por porcentaje
+                        </label>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="small">Precio</label>
+                            <input id="txtPrecioKg" class="form-control text-right">
+                        </div>
+                        <div class="col-6">
+                            <label class="small">%</label>
+                            <input id="txtPorcentaje" class="form-control text-right" disabled>
+                        </div>
+                    </div>
+
+                    <button id="btnAplicarBonificacion"
+                            class="btn btn-primary btn-block mt-3">
+                        Aplicar bonificación
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
