@@ -149,6 +149,9 @@ function finalizarVenta(data) {
             Codigo: l.codigo,
             CantKg: parseFloat(l.cant),
             PrecioKg: parseFloat(l.precio.replace('$', '')),
+            Bonificacion: l.bonificacion,
+            Estado: (l.anulado ? 1 : 0),
+            Balanza: l.balanza
         }))
     };
 

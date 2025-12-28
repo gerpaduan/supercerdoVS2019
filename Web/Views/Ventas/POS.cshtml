@@ -371,7 +371,6 @@
 
 
     <!-- MODAL LINEA VENTA: muestra las acciones eliminar y bonificar -->
-    <!-- MODAL LINEA DE VENTA -->
     <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content shadow">
@@ -398,11 +397,11 @@
                             <input id="modalCantidad" class="form-control text-right" readonly>
                         </div>
                         <div class="col-4">
-                            <label class="small">Precio</label>
+                            <label class="small">Precio lista</label>
                             <input id="modalPrecio" class="form-control text-right" readonly>
                         </div>
                         <div class="col-4">
-                            <label class="small">Subtotal</label>
+                            <label id="lblTotalModalLineaVenta" class="small">Total</label>
                             <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
                         </div>
                     </div>
@@ -574,18 +573,6 @@
             });
 
         function abrirCaja() {
-
-            //let cajaInicio = parseFloat($("#montoInicial").val().replace(",", "."));
-
-            //if (isNaN(cajaInicio) || cajaInicio <= 0) {
-            //    Swal.fire({
-            //        icon: 'warning',
-            //        title: 'Caja inicial',
-            //        text: 'Ingrese un importe válido mayor a cero',
-            //        confirmButtonColor: '#4e73df'
-            //    });
-            //    return;
-            //}
             const input = document.getElementById("montoInicial");
 
             if (!input) {
@@ -893,13 +880,16 @@
             let total = 0;
 
             carrito.forEach(l => {
-                // l.subtotal viene como "$ 123.45"
-                const valor = parseFloat(
-                    l.subtotal.replace("$", "").replace(",", ".")
-                );
 
-                if (!isNaN(valor)) {
-                    total += valor;
+                if (!l.anulado) {
+                    // l.subtotal viene como "$ 123.45"
+                    const valor = parseFloat(
+                        l.subtotal.replace("$", "").replace(",", ".")
+                    );
+
+                    if (!isNaN(valor)) {
+                        total += valor;
+                    }
                 }
             });
 
@@ -985,7 +975,11 @@
                 codigo: productoSeleccionado.codigo,
                 cant: cantidad.toFixed(3),
                 precio: `$ ${productoSeleccionado.precioKg.toFixed(2)}`,
-                subtotal: `$ ${(subtotal).toFixed(2)}`
+                precioOriginal: `$ ${productoSeleccionado.precioOriginal.toFixed(2)}`,
+                subtotal: `$ ${(subtotal).toFixed(2)}`,
+                bonificacion: 0,
+                anulado: false,
+                balanza: productoSeleccionado.balanza
             };
 
             carrito.push(linea);
@@ -1034,21 +1028,27 @@
             }
 
             lineas.forEach(l => {
-                tbody.append(`
-                                <tr data-id="${l.index}" class="fila-item">
-                                    <td>
-                                        <div class="fw-bold">
-                                            #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
-                                        </div>
 
-                                        <div class="d-flex justify-content-between item-detalle">
-                                            <span >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio}</span>
-                                            <span class="fw-bold">${l.subtotal}</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `);
+                const claseAnulada = l.anulado ? 'fila-anulada' : '';
+                const bonificacion = l.bonificacion == 0 ? '' : (l.bonificacion > 0 ?
+                    ' | Bonif:' + l.bonificacion + '%' :
+                    ' | Recargo:' + (l.bonificacion * -1) + '%')
+                tbody.append(`
+                    <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
+                        <td>
+                            <div class="fw-bold">
+                                #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
+                            </div>
+
+                            <div class="d-flex justify-content-between item-detalle">
+                                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}</span>
+                                <span class="fw-bold">${l.subtotal}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `);
             });
+
         }
 
         // Fullscreen toggle
@@ -1272,8 +1272,19 @@
 
             $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
             $("#modalCantidad").val(linea.cant);
-            $("#modalPrecio").val(linea.precio.replace("$", "").trim());
+            $("#modalPrecio").val(linea.precioOriginal.replace("$", "").trim());
             $("#modalSubtotal").val(linea.subtotal.replace("$", "").trim());
+
+            const bonif = parseFloat(linea.bonificacion) || 0;
+
+            if (bonif !== 0) {
+                let texto = 'Total';
+                texto += bonif > 0
+                    ? ` | Desc:${bonif}%`
+                    : ` | Recargo:${Math.abs(bonif)}%`;
+
+                $("#lblTotalModalLineaVenta").text(texto);
+            }
 
             // reset estado
             $("#bloqueBonificar").hide();
@@ -1282,15 +1293,15 @@
             //$("#txtPrecioKg").val($("#modalPrecio").val());
 
             const precioOriginal = parseFloat(
-                linea.precio.replace("$", "").replace(",", ".")
+                linea.precioOriginal.replace("$", "").replace(",", ".")
             );
 
             $("#modalPrecio")
-                .text(linea.precio)
+                .text(linea.precioOriginal)
                 .data("precio", precioOriginal);
 
-            $("#txtPrecioKg").val(precioOriginal.toFixed(2));
-            //$("#txtPorcentaje").val("0");
+            $("#txtPrecioKg").val(linea.precio.replace("$", ""));
+            $("#txtPorcentaje").val(linea.bonificacion);
             $("#lblTipoPorcentaje").text("% bonificación");
 
             $("#modalLineaVenta").modal("show");
@@ -1333,32 +1344,61 @@
             const subtotal = precioNuevo * parseFloat(lineaSeleccionada.cant);
             lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
 
-            renderTablaProductos(carrito);
+            const bonificacion = parseFloat(
+                $("#txtPorcentaje").val().replace(",", ".")
+            ) || 0;
+
+            lineaSeleccionada.bonificacion = bonificacion;
+
+            //renderTablaProductos(carrito);
+
+            const r = {
+                ok: true,
+                lineas: carrito
+            };
+
+            // mismo flujo que AJAX success
+            renderTablaProductos(r.lineas);
             recalcularTotal();
 
             $("#modalLineaVenta").modal("hide");
         });
 
+        $("#chkPorcentaje").on("change", function () {
+
+            const porModo = $(this).is(":checked");
+
+            $("#txtPorcentaje").prop("readonly", !porModo);
+            $("#txtPrecioKg").prop("readonly", porModo);
+
+            if (porModo) {
+                $("#txtPorcentaje").focus();
+                $("#lblTipoPorcentaje").text("% bonificacion (- para recargo)");
+            } else {
+                $("#txtPrecioKg").focus();
+                $("#lblTipoPorcentaje").text("% bonificación");
+            }
+        });
+
         $("#txtPrecioKg").on("input", function () {
+
+            if ($("#chkPorcentaje").is(":checked")) return;
 
             const precioOriginal = parseFloat($("#modalPrecio").data("precio"));
             const precioNuevo = parseFloat($(this).val().replace(",", "."));
+            const cantidad = parseFloat($("#modalCantidad").val().replace(",", "."));
 
             if (isNaN(precioNuevo) || precioNuevo <= 0 || isNaN(precioOriginal)) {
                 $("#txtPorcentaje").val("");
+                $("#modalSubtotal").val("");
                 return;
             }
 
-            // cálculo porcentaje
             let porcentaje = (1 - (precioNuevo / precioOriginal)) * 100;
-
-            // redondeo a 2 decimales
             porcentaje = Math.round(porcentaje * 100) / 100;
 
-            // mostrar valor absoluto
-            $("#txtPorcentaje").val(Math.abs(porcentaje));
+            $("#txtPorcentaje").val(porcentaje);
 
-            // texto dinámico
             if (porcentaje > 0) {
                 $("#lblTipoPorcentaje").text("% bonificación");
             } else if (porcentaje < 0) {
@@ -1366,6 +1406,32 @@
             } else {
                 $("#lblTipoPorcentaje").text("%");
             }
+
+            $("#modalSubtotal").val((precioNuevo * cantidad).toFixed(2));
+        });
+
+
+        $("#txtPorcentaje").on("input", function () {
+
+            if (!$("#chkPorcentaje").is(":checked")) return;
+
+            const precioOriginal = parseFloat($("#modalPrecio").data("precio"));
+            const porcentaje = parseFloat($(this).val().replace(",", "."));
+            const cantidad = parseFloat($("#modalCantidad").val().replace(",", "."));
+
+            if (isNaN(precioOriginal) || isNaN(porcentaje) || isNaN(cantidad)) {
+                $("#txtPrecioKg").val("");
+                $("#modalSubtotal").val("");
+                return;
+            }
+
+            // determinar si es bonificación o recargo
+            const tipo = -1;//(porcentaje < 0) ? -1 : 1;
+            const precioNuevo = precioOriginal * (1 + ((porcentaje * tipo) / 100));
+            const subtotal = precioNuevo * cantidad;
+
+            $("#txtPrecioKg").val(precioNuevo.toFixed(2));
+            $("#modalSubtotal").val(subtotal.toFixed(2));
         });
 
 
@@ -1373,12 +1439,26 @@
 
             if (!confirm("¿Eliminar el producto?")) return;
 
-            carrito = carrito.filter(l => l.index !== lineaSeleccionada.index);
+            const idx = carrito.findIndex(l => l.index === lineaSeleccionada.index);
 
-            renderTablaProductos(carrito);
+            if (idx !== -1) {
+                carrito[idx].anulado = true;
+            }
+
+            const r = {
+                ok: true,
+                lineas: carrito
+            };
+
+            // mismo flujo que AJAX success
+            renderTablaProductos(r.lineas);
+
             recalcularTotal();
 
             $("#modalLineaVenta").modal("hide");
+
+            // limpiar campos
+            $("#inputCodigo").val("").focus();
         });
 
         /////////////
@@ -1485,17 +1565,23 @@
         font-size: 1.1rem;
     }
 
-        #modalLineaVenta input {
-            font-size: 1.4rem;
-            height: 55px;
-        }
+    #modalLineaVenta input {
+        font-size: 1.4rem;
+        height: 55px;
+    }
 
-        #modalLineaVenta .modal-title {
-            font-size: 1.5rem;
-        }
+    #modalLineaVenta .modal-title {
+        font-size: 1.5rem;
+    }
 
-        #modalLineaVenta .btn {
-            font-size: 1.2rem;
-            padding: 12px 18px;
-        }
+    #modalLineaVenta .btn {
+        font-size: 1.2rem;
+        padding: 12px 18px;
+    }
+
+    .fila-anulada {
+        text-decoration: line-through;
+        opacity: 0.6; /* opcional, queda más claro visualmente */
+    }
+
 </style>

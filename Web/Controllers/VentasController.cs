@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
+using Web.Models.DTO;
 using static Entidades.Venta;
 
 namespace Web.Controllers
@@ -17,6 +19,7 @@ namespace Web.Controllers
         Negocio.Persona oPersonaN = new Negocio.Persona();
         Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
         Entidades.CierreCaja  oCierreE = new Entidades.CierreCaja();
+        Negocio.Corte oCorteN = new Negocio.Corte();
         // GET: Ventas
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
         {
@@ -92,13 +95,15 @@ namespace Web.Controllers
             return View(venta);
         }
         [HttpPost]
-        public JsonResult FinalizarVenta(
-            string formaPago,
-            bool esPagoMixto,
-            float efectivo,
-            int idPersona,
-            List<LineaVenta> lineasVenta
-)
+        //        public JsonResult FinalizarVenta(
+        //            string formaPago,
+        //            bool esPagoMixto,
+        //            float efectivo,
+        //            int idPersona,
+        //            List<LineaVenta> lineasVenta
+        //)
+        //        {
+        public JsonResult FinalizarVenta(FinalizarVentaRequest request)
         {
             try
             {
@@ -108,22 +113,23 @@ namespace Web.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "No hay venta activa" });
 
-                if (lineasVenta == null || !lineasVenta.Any())
+                if (request.LineasVenta == null || !request.LineasVenta.Any())
                     return Json(new { ok = false, msg = "No hay productos en la venta" });
 
-                
 
-                venta.Persona = oPersonaN.findById(idPersona);
+
+                venta.Persona = oPersonaN.findById(request.IdPersona);
                 venta.Sucursal = oSucursalN.findById(user.IdSucursal);
 
+                venta.TipoComprobante = Convert.ToChar(Entidades.Venta.tipoComprobanteEnum.X.ToString());
                 venta.Observaciones = venta.Observaciones ?? "";
 
                 // ===============================
                 // FORMAS DE PAGO
                 // ===============================
-                venta.FormaPago = formaPago;
-                venta.EnCtaCte = formaPago == formaPagoEnum.CtaCte.ToString();
-                venta.PagoMixtoEfectivo = esPagoMixto ? efectivo : 0;
+                venta.FormaPago = request.FormaPago;
+                venta.EnCtaCte = request.FormaPago == formaPagoEnum.CtaCte.ToString();
+                venta.PagoMixtoEfectivo = request.EsPagoMixto ? request.Efectivo : 0;
 
                 //VALIDAR VENTA EN CTACTE sea solo en Cta Cte Y NO A 
                 if (venta.EnCtaCte && (!venta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
@@ -143,13 +149,60 @@ namespace Web.Controllers
                     return Json(new { ok = false, msg = msg_ });
                 }
 
-                Negocio.Corte oCorteN = new Negocio.Corte(); 
-                for (int index = 0; index < lineasVenta.Count; index++)
+                List<Entidades.LineaVenta> lineasVenta = new List<LineaVenta>();
+                Entidades.LineaVenta linea;
+
+                foreach (var l in request.LineasVenta)
                 {
-                    lineasVenta[index].Corte = oCorteN.findCorteByCodigo(lineasVenta[index].Codigo, false);
+                    linea = new Entidades.LineaVenta();
+
+
+                    linea.Corte = oCorteN.findCorteByCodigo(l.Codigo, false);
 
                     // En Negocio hace la asignacion inversa 'no recuerdo xq hice esto, posiblente por redondeo'
-                    lineasVenta[index].KgsTotalCalculado = lineasVenta[index].CantKg;
+                    linea.KgsTotalCalculado = l.CantKg = l.CantKg;
+                    linea.PrecioKg = l.PrecioKg;
+                    linea.Bonificacion = l.Bonificacion;
+                    linea.Estado = l.Estado;
+
+                    lineasVenta.Add(linea);
+                }
+
+                List<Entidades.LineaVenta> lineasAnuladas = new List<LineaVenta>();
+                Entidades.LineaVenta oLineaVenta;
+                int cantLineaParam = lineasVenta.Count; //cantidad de lineas q vienen por param
+
+                for (int index = 0; index < lineasVenta.Count; index++)
+                {
+                    ///crear Lineas de anulacion
+                    if (Entidades.LineaVenta.esAnulado(lineasVenta[index].Estado))
+                    {
+                        lineasVenta[index].Estado = 0;//se lo setea a No anulado xq se esta creando el registro opuesto
+
+                        oLineaVenta = new Entidades.LineaVenta();
+                        oLineaVenta.Corte = lineasVenta[index].Corte;
+                        oLineaVenta.Venta = lineasVenta[index].Venta;
+                        oLineaVenta.CantKg = lineasVenta[index].CantKg * -1;
+                        oLineaVenta.KgsTotalCalculado = lineasVenta[index].KgsTotalCalculado * -1;
+                        oLineaVenta.KgsAjusteTarj = lineasVenta[index].KgsAjusteTarj * -1;
+                        oLineaVenta.PrecioKg = lineasVenta[index].PrecioKg;
+                        oLineaVenta.Estado = 1;//anulado
+                        oLineaVenta.Bonificacion = lineasVenta[index].Bonificacion;
+                        oLineaVenta.IndexAnulado = (index + 1);
+                        oLineaVenta.IdExpendio = lineasVenta[index].IdExpendio;
+
+                        //se agrega el index del anulado al corte seleccionado para anular
+                        //--el index equivale a la cantidad en listaLineaVenta antes de cargarLista--
+                        lineasVenta[index].IndexAnulado = cantLineaParam++;
+
+                        lineasAnuladas.Add(oLineaVenta);
+                    }
+                }
+
+                //cargo las lineas anuladas
+                for (int index = 0; index < lineasAnuladas.Count; index++)
+                {
+                    lineasVenta.Add(lineasAnuladas[index]);
                 }
 
                 // ===============================
@@ -263,6 +316,7 @@ namespace Web.Controllers
                     id = corte.IdCorte,
                     nombre = corte.CorteDesc,
                     precioKg = corte.PrecioKg,
+                    precioOriginal = corte.PrecioKg,
                     codigo = corte.codigo,
                     pesable = corte.Pesable
                 },
