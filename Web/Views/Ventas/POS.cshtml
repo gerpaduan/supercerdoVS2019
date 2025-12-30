@@ -220,7 +220,7 @@
                                     <!-- PRECIO -->
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <label class="form-label">Precio</label>
+                                            <label class="lbl-precio">Precio</label>
                                             <div id="prodPrecio"
                                                  class="fw-bold text-muted mb-3 fs-5">
                                             </div>
@@ -233,7 +233,7 @@
                                     <!-- CANTIDAD -->
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <label class="form-label">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                            <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                             <input id="inputCantidad"
                                                    class="form-control"
                                                    autocomplete="off"
@@ -244,7 +244,7 @@
                                     <!-- SUBTOTAL -->
                                     <div class="mb-3">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <label class="form-label m-0">Subtotal</label>
+                                            <label class="lbl-subtotal">Subtotal</label>
                                             <h4 id="prodSubtotal"
                                                 class="fw-bold text-muted m-0">
                                                 $ 0,00
@@ -706,7 +706,9 @@
             $.ajax({
                 url: '@Url.Action("BuscarProducto", "Ventas")',
                 method: "GET",
-                data: { codigo: codigo },
+                data: {
+                    codigo: codigo,
+                    ingresoCantidadX: ingresoCantidadX},
                 timeout: 8000, // ⏱ 8 segundos
 
                 success: function (data) {
@@ -732,30 +734,6 @@
                     //}
                 }
             });
-
-            @*$.ajax({
-                url: '@Url.Action("BuscarProducto", "Ventas")',
-                //url: "/Ventas/BuscarProducto",
-                method: "GET",
-                data: { codigo: codigo },
-
-                success: function (data) {
-                    if (!data || data.error) {
-                        mostrarSinCoincidencia();
-                        return;
-                    }
-
-                    mostrarProducto(data);
-                    productoSeleccionado = data;
-
-                    // 🔥 ACÁ está la magia
-                    if (callback) callback();
-                },
-
-                error: function () {
-                    mostrarSinCoincidencia();
-                }
-            });*@
         }
 
         function mostrarErrorConexion(msg) {
@@ -1198,13 +1176,14 @@
             $("#inputCantidad").val(cantidad);
             codigoInput.value = codigo;
 
+            ingresoCantidadX = true;
             terminarEscritura(codigo, function () {
                 // 👇 se ejecuta CUANDO el producto YA está cargado
                 agregarProducto();
                 mostrarEsperando();
             });
 
-            ingresoCantidadX = true;
+            //ingresoCantidadX = true; 29/12 lo cambie arriba para pasar el parametar a buscarProducto
         }
 
 
@@ -1502,11 +1481,18 @@
     }
 
 
-    .keyboard-grid {
+  /*  .keyboard-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         grid-template-rows: repeat(4, 60px);
         gap: 8px;
+    }*/
+
+    /* Base teclado */
+    .keyboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
     }
 
     /* Botones normales */
@@ -1546,17 +1532,114 @@
         font-weight: 600;
         border-radius: 10px;
     }
+
+
     /* Ajuste en pantallas chicas */
     @@media (max-width: 576px) {
+
+        /* ---------------------------
+       Columnas INFO / TECLADO
+       --------------------------- */
+        #producto-info .row > .col-6:first-child {
+            flex: 0 0 30%;
+            max-width: 30%;
+        }
+
+        #producto-info .row > .col-6:last-child {
+            flex: 0 0 70%;
+            max-width: 70%;
+        }
+
+        /* ---------------------------
+       Teclado - tamaño táctil
+       --------------------------- */
         .btn-key,
         .btn-enter {
             font-size: 1.2rem;
             padding: 14px 0;
         }
 
+        /* ---------------------------
+       Botones numéricos
+       --------------------------- */
+
+        /* 7 8 9 | 4 5 6 | 1 2 3 */
+        .keyboard-grid .btn-num {
+            grid-column: span 1;
+        }
+
+        /* 0 ocupa ancho de 1 y 2 */
+        .keyboard-grid .key-zero {
+            grid-column: span 2;
+        }
+
+        /* . ocupa ancho normal */
+        .keyboard-grid .btn-num:last-child {
+            grid-column: span 1;
+        }
+
+        /* ---------------------------
+       ENTER ocupa 2 filas
+       --------------------------- */
+        .keyboard-grid .btn-enter {
+            grid-row: span 2;
+            grid-column: span 1;
+        }
+
+        /* ---------------------------
+       Botones de acción
+       --------------------------- */
+        .keyboard-grid .btn-warning,
+        .keyboard-grid .btn-secondary {
+            grid-column: span 1;
+        }
+
+        /* ---------------------------
+       Columna INFO - texto compacto
+       --------------------------- */
+        #producto-info h4,
+        #producto-info .form-control {
+            font-size: 0.85rem;
+        }
+
+        /* ---------------------------
+       Reemplazo labels
+       --------------------------- */
+        #producto-info label {
+            font-size: 0;
+        }
+
+            #producto-info label::after {
+                font-size: 0.9rem;
+                font-weight: bold;
+            }
+
+            .lbl-precio::after {
+                content: "$  ";
+            }
+
+            .lbl-cantidad::after {
+                content: "C ";
+            }
+
+            .lbl-subtotal::after {
+                content: "T  ";
+            }
+
+            .lbl-precio,
+            .lbl-cantidad,
+            .lbl-subtotal {
+                font-size: 0;
+            }
+
+        /* ---------------------------
+       Botón agregar
+       --------------------------- */
         .btn-agregar-pos {
-            height: 52px; /* misma sensación táctil */
-            font-size: 1rem;
+            height: 52px;
+            font-size: 0.85rem;
+            white-space: normal;
+            line-height: 1.1;
         }
     }
 

@@ -140,6 +140,9 @@ namespace Negocio
                     case "idPagoCobroEgresoCaja":
                         Entidades.Parametros.idPagoCobroEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
                         break;
+                    case "codProdGenerico":
+                        Entidades.Parametros.codProdGenerico = Convert.ToInt64(dtParametros.Rows[fila]["valor"].ToString());
+                        break;
                     default:
                         break;
                 }

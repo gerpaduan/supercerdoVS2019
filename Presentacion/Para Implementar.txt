@@ -17,7 +17,75 @@
 	agregar registro a talba tipo egreso
 	300	Pago/Cobro	1	NULL	NULL	1	NULL	NULL
 ##
+Agregar en parametro
+56	codProdGenerico	999999	Codigo de Producto Generico para setear el precio por el usuario
+INSERT INTO Parametros
+(
+    id,
+    nombre,
+    valor,
+    descripcion
+)
+VALUES
+(
+    56,
+    'codProdGenerico',
+    '999999',
+    'Codigo de Producto Generico para setear el precio por el usuario'
+);
 
+
+Agregar en Corte
+INSERT INTO Corte
+(
+    codigo,
+    corte,
+    tipo,
+    idCorteMaestro,
+    porcentaje,
+    precioKg,
+    porcentajeHueso,
+    independiente,
+    desvioEstandar,
+    creado,
+    actualizado,
+    mayorista,
+    enCierreStock,
+    promedio,
+    habilitado,
+    idAlicuotaIva,
+    alicuotaIva,
+    ingresoRapidoEmbutido,
+    nivel,
+    pesable,
+    puntoStock,
+    idMarca
+)
+VALUES
+(
+    '999999',
+    'PROD.GENERICO',
+    'GENERICO',
+    0,
+    100,
+    0,
+    0,
+    1,
+    0,
+    '2025-12-29 19:32:37.490',
+    '2025-12-29 19:33:09.427',
+    NULL,
+    0,
+    0,
+    1,
+    4,
+    10.5,
+    0,
+    0,
+    0,
+    0,
+    0
+);
 
 *********
 

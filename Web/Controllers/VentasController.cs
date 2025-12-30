@@ -1,8 +1,10 @@
 ﻿using Entidades;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
@@ -295,22 +297,39 @@ namespace Web.Controllers
         // ======================================================
         // GET /Ventas/BuscarProducto?codigo=123
         // ======================================================
-        public JsonResult BuscarProducto(Int64 codigo)
+        public JsonResult BuscarProducto(string codigo, bool ingresoCantidadX)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(codigo.ToString()))
+                if (string.IsNullOrWhiteSpace(codigo))
                     return Json(new { error = "Código vacío" }, JsonRequestBehavior.AllowGet);
 
-                // Buscar producto (Corte)
-                // Reemplazar por tu método real para obtener productos
+                codigo = codigo.Replace(",", ".");
+
+                int cantidadPuntos = codigo.Split('.').Length - 1;
+
+                if (cantidadPuntos > 1)
+                {
+                    return Json(new { error = "Formato de código inválido" }, JsonRequestBehavior.AllowGet);
+                }
+
+                //Para validar que sea precio siempre q contenga '.' y se suponga q no es un codigo de barras
+                int cantMinDig_EAN8 = 8;
+                bool esGenerico = ingresoCantidadX && (codigo.Contains(".") ||  codigo.Length < cantMinDig_EAN8);
+
+                long codigoProducto = esGenerico
+                    ? Convert.ToInt64(Entidades.Parametros.codProdGenerico)
+                    : Convert.ToInt64(codigo);
+
                 var gestorCortes = new Negocio.Corte();
-                var corte = gestorCortes.findCorteByCodigo(codigo, false);
+                var corte = gestorCortes.findCorteByCodigo(codigoProducto, false);
 
                 if (corte == null)
                     return Json(new { error = "Producto no encontrado" }, JsonRequestBehavior.AllowGet);
 
-                // Respuesta JSON
+                if (esGenerico)
+                    corte.PrecioKg = float.Parse(codigo, CultureInfo.InvariantCulture);
+
                 return Json(new
                 {
                     id = corte.IdCorte,
@@ -319,14 +338,14 @@ namespace Web.Controllers
                     precioOriginal = corte.PrecioKg,
                     codigo = corte.codigo,
                     pesable = corte.Pesable
-                },
-                JsonRequestBehavior.AllowGet);
+                }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
                 return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
 
 
 
