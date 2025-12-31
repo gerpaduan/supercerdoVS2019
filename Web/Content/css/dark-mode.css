@@ -276,12 +276,14 @@ body.dark-mode {
 
 
     /* INPUT CANTIDAD – MISMO ESTILO QUE INPUTS NORMALES */
-    body.dark-mode #inputCantidad {
-        background-color: #2f3238 !important;
+    body.dark-mode input#inputCantidad.form-control,
+    body.dark-mode input#inputCantidad.form-control[readonly] {
+        background-color: #353840 !important; /* más claro que el resto */
         color: #f1f1f1 !important;
         border: 1px solid #4a4d53;
-        cursor: default;
+        box-shadow: none;
     }
+
 
 
     /* BOTÓN BARCODE – DARK MODE */
@@ -310,4 +312,24 @@ body.dark-mode {
 
         body.dark-mode #btn-toggle-fullscreen:hover {
             background-color: rgba(255, 255, 255, 0.08);
+        }
+
+    /* BOTÓN FINALIZAR – DARK MODE (apagado elegante) */
+    body.dark-mode #btnFinalizar {
+        background-color: #1f7f5c; /* verde apagado */
+        border-color: #1f7f5c;
+        color: #eaf7f1;
+        box-shadow: none;
+    }
+
+        body.dark-mode #btnFinalizar:hover {
+            background-color: #24966c; /* un poco más vivo al hover */
+            border-color: #24966c;
+        }
+
+        body.dark-mode #btnFinalizar:active,
+        body.dark-mode #btnFinalizar:focus {
+            background-color: #1b6d50;
+            border-color: #1b6d50;
+            box-shadow: 0 0 0 2px rgba(36, 150, 108, 0.35);
         }

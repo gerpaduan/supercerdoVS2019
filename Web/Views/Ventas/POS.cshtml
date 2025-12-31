@@ -303,9 +303,8 @@
                                     Finalizar y Pagar
                                 </button>
                             </div>
-
-
                         </div>
+                        <div id="pos-bottom-anchor"></div>
 
 
                         <!-- ESTADO BALANZA -->
@@ -971,7 +970,10 @@
             // mismo flujo que AJAX success
             renderTablaProductos(r.lineas);
 
+            setTimeout(scrollPantallaMobile, 50);
+
             scrollTablaAlFinal();
+            scrollPantallaMobile();
 
             // recalcular total
             recalcularTotal();
@@ -1044,6 +1046,23 @@
                 behavior: 'smooth' // podés usar 'auto' si no querés animación
             });
         }
+
+        function scrollPantallaMobile() {
+
+            if (!window.matchMedia('(max-width: 576px)').matches) {
+                return; // desktop → no hace nada
+            }
+
+            const anchor = document.getElementById('pos-bottom-anchor');
+            if (!anchor) return;
+
+            anchor.scrollIntoView({
+                behavior: 'smooth',
+                block: 'end'
+            });
+        }
+
+
 
         ////TECLADO
         let inputActivo = null;
@@ -1536,6 +1555,12 @@
 
     /* Ajuste en pantallas chicas */
     @@media (max-width: 576px) {
+
+        .zona-tabla {
+            max-height: 38vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
 
         /* ---------------------------
        Columnas INFO / TECLADO
