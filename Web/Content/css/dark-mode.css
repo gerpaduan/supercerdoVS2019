@@ -1,0 +1,313 @@
+﻿/* ===============================
+   DARK MODE – SB ADMIN 2 (AMENO)
+   =============================== */
+
+/* Base general */
+body.dark-mode {
+    background-color: #2b2d31 !important; /* gris base */
+    color: #d6d6d6 !important;
+}
+
+    /* Topbar */
+    body.dark-mode .card-header {
+        background-color: #31343a !important;
+        color: #e6e6e6 !important;
+        border-bottom: 1px solid #3c3f45;
+    }
+
+    /* Textos */
+    body.dark-mode .text-dark,
+    body.dark-mode .text-gray-900 {
+        color: #d6d6d6 !important;
+    }
+
+    /* Cards */
+    body.dark-mode .card {
+        background-color: #2f3136 !important;
+        color: #d6d6d6;
+        border: 1px solid #3c3f45;
+        border-radius: 6px;
+    }
+
+    /* Tablas */
+    body.dark-mode .table {
+        color: #d6d6d6;
+    }
+
+        body.dark-mode .table thead th {
+            background-color: #34373d;
+            color: #eaeaea;
+            border-color: #3c3f45;
+        }
+
+        body.dark-mode .table td,
+        body.dark-mode .table th {
+            border-color: #3c3f45;
+        }
+
+    body.dark-mode .table-hover tbody tr:hover {
+        background-color: #3a3d43;
+    }
+
+    /* Inputs */
+    body.dark-mode .form-control,
+    body.dark-mode .custom-select {
+        background-color: #24262b !important;
+        color: #e6e6e6 !important;
+        border: 1px solid #3c3f45;
+        box-shadow: none;
+    }
+
+        body.dark-mode .form-control::placeholder {
+            color: #9a9a9a;
+        }
+
+        /* Focus suave */
+        body.dark-mode .form-control:focus {
+            background-color: #24262b;
+            border-color: #5a8dee;
+            box-shadow: 0 0 0 1px rgba(90, 141, 238, 0.35);
+        }
+
+        /* Disabled / readonly */
+        body.dark-mode .form-control:disabled,
+        body.dark-mode .form-control[readonly] {
+            background-color: #2a2c31 !important;
+            color: #a8a8a8;
+        }
+
+    /* Botones */
+    body.dark-mode .btn {
+        border-color: #3c3f45;
+    }
+
+    body.dark-mode .btn-primary {
+        background-color: #5a8dee;
+        border-color: #5a8dee;
+        color: #fff;
+    }
+
+        body.dark-mode .btn-primary:hover {
+            background-color: #4c7fe0;
+        }
+
+    body.dark-mode .btn-secondary {
+        background-color: #3a3d43;
+        border-color: #4a4d53;
+        color: #d6d6d6;
+    }
+
+    /* Dropdowns */
+    body.dark-mode .dropdown-menu {
+        background-color: #2f3136;
+        border: 1px solid #3c3f45;
+    }
+
+    body.dark-mode .dropdown-item {
+        color: #d6d6d6;
+    }
+
+        body.dark-mode .dropdown-item:hover {
+            background-color: #3a3d43;
+        }
+
+    /* Modales */
+    body.dark-mode .modal-content {
+        background-color: #2f3136;
+        color: #d6d6d6;
+        border: 1px solid #3c3f45;
+    }
+
+    body.dark-mode .modal-header,
+    body.dark-mode .modal-footer {
+        border-color: #3c3f45;
+    }
+
+    /* Scrollbar */
+    body.dark-mode ::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    body.dark-mode ::-webkit-scrollbar-track {
+        background: #2b2d31;
+    }
+
+    body.dark-mode ::-webkit-scrollbar-thumb {
+        background: #4a4d53;
+        border-radius: 6px;
+    }
+
+        body.dark-mode ::-webkit-scrollbar-thumb:hover {
+            background: #5a5d63;
+        }
+
+    /* POS container */
+    body.dark-mode #pos-container {
+        background-color: #2b2d31;
+    }
+    /* ===============================
+   PRODUCTO INFO – DARK MODE
+   =============================== */
+
+    body.dark-mode #producto-info {
+        background-color: #2f3136 !important;
+        border: 1px solid #3c3f45 !important;
+        color: #d6d6d6;
+    }
+
+        /* Títulos */
+        body.dark-mode #producto-info h4 {
+            color: #e6e6e6;
+        }
+
+        /* Labels */
+        body.dark-mode #producto-info label {
+            color: #bfc3c9;
+        }
+
+        /* Precio / Subtotal */
+        body.dark-mode #producto-info .text-muted {
+            color: #aeb3b9 !important;
+        }
+
+        /* Input cantidad */
+        body.dark-mode #producto-info input.form-control {
+            background-color: #24262b !important;
+            color: #e6e6e6 !important;
+            border: 1px solid #3c3f45;
+            text-align: right;
+            font-size: 1.2rem;
+        }
+
+    /* ===============================
+   TECLADO NUMÉRICO
+   =============================== */
+
+    /* Teclas normales */
+    body.dark-mode .btn-key.btn-light {
+        background-color: #3a3d43 !important;
+        color: #e6e6e6 !important;
+        border: 1px solid #4a4d53;
+    }
+
+        body.dark-mode .btn-key.btn-light:hover {
+            background-color: #4a4d53 !important;
+        }
+
+    /* Backspace */
+    body.dark-mode .btn-key.btn-warning {
+        background-color: #8b6b2e !important;
+        border-color: #9c7a35;
+        color: #fff;
+    }
+
+    /* Multiplicar */
+    body.dark-mode .btn-key.btn-secondary {
+        background-color: #555861 !important;
+        border-color: #646872;
+    }
+
+    /* Enter */
+    body.dark-mode .btn-enter.btn-info {
+        background-color: #5a8dee !important;
+        border-color: #5a8dee;
+        color: #fff;
+    }
+
+    /* Botón Agregar */
+    body.dark-mode #btnAgregarProducto {
+        background-color: transparent;
+        color: #7dd3a7;
+        border: 2px solid #7dd3a7;
+    }
+
+        body.dark-mode #btnAgregarProducto:hover {
+            background-color: #7dd3a7;
+            color: #1f2a24;
+        }
+
+
+        /*pisa lo anterior*/
+
+    /* ===============================
+   INPUTS – DARK MODE (CLAROS)
+   =============================== */
+
+    body.dark-mode .form-control,
+    body.dark-mode .custom-select {
+        background-color: #2f3238 !important; /* más claro que el body */
+        color: #f1f1f1 !important;
+        border: 1px solid #4a4d53;
+        box-shadow: none;
+    }
+
+        body.dark-mode .form-control::placeholder {
+            color: #b0b0b0;
+        }
+
+        /* Focus */
+        body.dark-mode .form-control:focus {
+            background-color: #32353b;
+            border-color: #5a8dee;
+            box-shadow: 0 0 0 1px rgba(90, 141, 238, 0.35);
+        }
+
+        /* Disabled / readonly */
+        body.dark-mode .form-control:disabled,
+        body.dark-mode .form-control[readonly] {
+            background-color: #3a3d43 !important;
+            color: #c0c0c0;
+        }
+    /* ===============================
+   DETALLE DE ITEM (RESALTADO)
+   =============================== */
+
+    body.dark-mode .item-detalle {
+        color: #f1f2f4;
+        padding: 6px 10px;
+        border-radius: 6px;
+        margin-top: 4px;
+    }
+
+        /* Precio final más fuerte */
+        body.dark-mode .item-detalle .fw-bold {
+            color: #f1f2f4;
+        }
+
+
+    /* INPUT CANTIDAD – MISMO ESTILO QUE INPUTS NORMALES */
+    body.dark-mode #inputCantidad {
+        background-color: #2f3238 !important;
+        color: #f1f1f1 !important;
+        border: 1px solid #4a4d53;
+        cursor: default;
+    }
+
+
+    /* BOTÓN BARCODE – DARK MODE */
+    body.dark-mode .input-group-text {
+        background-color: transparent !important;
+        border: 1px solid #4a4d53;
+        color: #ffffff;
+    }
+
+        /* Icono blanco */
+        body.dark-mode .input-group-text i {
+            color: #ffffff;
+        }
+
+        /* Hover sutil */
+        body.dark-mode .input-group-text:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+    /* BOTÓN FULLSCREEN – DARK MODE */
+    body.dark-mode #btn-toggle-fullscreen {
+        background-color: transparent !important;
+        color: #ffffff;
+        border: 1px solid #4a4d53;
+    }
+
+        body.dark-mode #btn-toggle-fullscreen:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+        }

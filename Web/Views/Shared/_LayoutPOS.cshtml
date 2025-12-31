@@ -26,6 +26,8 @@
     <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" type="text/css" />
     <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
     <link href="@Url.Content("~/Content/css/custom.css")" rel="stylesheet" />
+    <!-- TU CSS -->
+    <link href="@Url.Content("~/Content/css/dark-mode.css?v=5")" rel="stylesheet" />
 
     <style>
         @@media (max-width: 992px) {
@@ -54,6 +56,8 @@
             }
             return true;
         }
+
+
     </script>
 
 
@@ -105,7 +109,12 @@
                                 </form>
                             </div>
                         </li>-->
-
+                        <li class="nav-item">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="toggleDarkMode">
+                                <label class="form-check-label" for="toggleDarkMode">Modo nocturno</label>
+                            </div>
+                        </li>
                         <div class="topbar-divider d-none d-sm-block"></div>
 
                         <!-- Nav Item - User Information -->
@@ -119,7 +128,7 @@
                                aria-expanded="false">
 
                                 <span class="mr-2 d-none d-lg-inline text-light small">
-                                                                @(Session["Usuario"] != null
+                                    @(Session["Usuario"] != null
                                         ? ((Entidades.Usuario)Session["Usuario"]).Nombre
                                         : "")
                                 </span>
@@ -131,17 +140,17 @@
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
                                 @*<a class="dropdown-item" href="#">
-                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                Profile
-            </a>
-            <a class="dropdown-item" href="#">
-                <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                Settings
-            </a>
-            <a class="dropdown-item" href="#">
-                <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                Activity Log
-            </a>*@
+                                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Profile
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Settings
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Activity Log
+                                    </a>*@
                                 @*<div class="dropdown-divider"></div>*@
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
@@ -202,46 +211,47 @@
     <script src="@Url.Content("~/Scripts/app/persona-buscar.js?v=3")"></script>
     <script src="@Url.Content("~/Scripts/app/forma-pago.js?v=3")"></script>
 
+    <script src="@Url.Content("~/Content/js/scripts.js")"></script>
+
 
     @RenderSection("Scripts", required: false)
 
+
+    <style>
+
+        /* Base */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* 🔴 nunca scroll del body */
+        }
+
+        /* Cadena de altura */
+        #page-top,
+        #wrapper,
+        #content-wrapper {
+            height: 100%;
+        }
+
+        /* Layout principal */
+        #content-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Topbar: alto fijo */
+        .card-header {
+            flex: 0 0 auto;
+        }
+
+        /* Contenedor dinámico */
+        #pos-container {
+            flex: 1 1 auto; /* ocupa el resto */
+            overflow: auto; /* scroll SOLO acá */
+            padding: 0;
+            min-height: 0; /* 🔑 evita overflow fantasma */
+        }
+    </style>
+
 </body>
 </html>
-<style>
-    
-    /* Base */
-    html, body {
-        height: 100%;
-        margin: 0;
-        overflow: hidden; /* 🔴 nunca scroll del body */
-    }
-
-    /* Cadena de altura */
-    #page-top,
-    #wrapper,
-    #content-wrapper {
-        height: 100%;
-    }
-
-    /* Layout principal */
-    #content-wrapper {
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Topbar: alto fijo */
-    .card-header {
-        flex: 0 0 auto;
-    }
-
-    /* Contenedor dinámico */
-    #pos-container {
-        flex: 1 1 auto; /* ocupa el resto */
-        overflow: auto; /* scroll SOLO acá */
-        padding: 0;
-        min-height: 0; /* 🔑 evita overflow fantasma */
-    }
-
-
-</style>
-
