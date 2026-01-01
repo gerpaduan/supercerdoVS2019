@@ -334,8 +334,8 @@ namespace Web.Controllers
                 {
                     id = corte.IdCorte,
                     nombre = corte.CorteDesc,
-                    precioKg = corte.PrecioKg,
-                    precioOriginal = corte.PrecioKg,
+                    precioKg = Math.Round((double)corte.PrecioKg, 2),
+                    precioOriginal = Math.Round((double)corte.PrecioKg, 2),
                     codigo = corte.codigo,
                     pesable = corte.Pesable
                 }, JsonRequestBehavior.AllowGet);

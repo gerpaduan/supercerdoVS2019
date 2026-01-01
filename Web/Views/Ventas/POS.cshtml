@@ -264,26 +264,33 @@
 
                                 <!-- COLUMNA DERECHA - TECLADO -->
                                 <div class="col-6">
+
+                                    <!-- COLUMNA DERECHA - TECLADO -->
                                     <div class="keyboard-grid">
+
+                                        <button class="btn btn-secondary btn-key">*</button>
                                         <button class="btn btn-light btn-key">7</button>
                                         <button class="btn btn-light btn-key">8</button>
                                         <button class="btn btn-light btn-key">9</button>
                                         <button class="btn btn-warning btn-key">←</button>
 
+                                        <button class="btn btn-secondary btn-key">G</button>
                                         <button class="btn btn-light btn-key">4</button>
                                         <button class="btn btn-light btn-key">5</button>
                                         <button class="btn btn-light btn-key">6</button>
                                         <button class="btn btn-secondary btn-key">×</button>
 
+                                        <button class="btn btn-secondary btn-key">G1</button>
                                         <button class="btn btn-light btn-key">1</button>
                                         <button class="btn btn-light btn-key">2</button>
                                         <button class="btn btn-light btn-key">3</button>
 
-                                        <!-- ENTER ocupa 2 filas -->
                                         <button class="btn btn-info btn-enter btn-key">Enter</button>
 
+                                        <button class="btn btn-secondary btn-key"></button>
                                         <button class="btn btn-light btn-key key-zero">0</button>
                                         <button class="btn btn-light btn-key">.</button>
+
                                     </div>
 
 
@@ -842,7 +849,8 @@
 
             $("#prodSubtotal").text(
                 "$ " + subtotal.toLocaleString("es-AR", {
-                    minimumFractionDigits: 2
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                 })
             );
 
@@ -1486,6 +1494,7 @@
 
         .fila-item:hover {
             background: #f2f2f2;
+            /*background: #538c89;*/
         }
 
     .tabla-productos td {
@@ -1499,20 +1508,24 @@
         color: #444;
     }
 
-
-  /*  .keyboard-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(4, 60px);
-        gap: 8px;
-    }*/
-
     /* Base teclado */
     .keyboard-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 6px;
     }
+    /* TECLAS NUMÉRICAS – DIFERENCIACIÓN SUAVE */
+    .keyboard-grid .btn-light {
+        background-color: #ffffff;
+        border: 1px solid #d0d0d0;
+        color: #333;
+    }
+
+        /* Hover / feedback táctil */
+        .keyboard-grid .btn-light:active,
+        .keyboard-grid .btn-light:focus {
+            background-color: #f0f0f0;
+        }
 
     /* Botones normales */
     .btn-key {
@@ -1556,117 +1569,147 @@
     /* Ajuste en pantallas chicas */
     @@media (max-width: 576px) {
 
-        .zona-tabla {
-            max-height: 38vh;
-            overflow-y: auto;
-            scroll-behavior: smooth;
+        /* ===============================
+       EVITAR SCROLL HORIZONTAL GLOBAL
+       =============================== */
+        body {
+            overflow-x: hidden;
         }
 
-        /* ---------------------------
-       Columnas INFO / TECLADO
-       --------------------------- */
-        #producto-info .row > .col-6:first-child {
-            flex: 0 0 30%;
-            max-width: 30%;
+        #producto-info {
+            overflow-x: hidden;
         }
 
-        #producto-info .row > .col-6:last-child {
-            flex: 0 0 70%;
-            max-width: 70%;
+     /* ===============================
+       INFO ARRIBA / TECLADO ABAJO
+       =============================== */
+            #producto-info .row {
+                display: flex;
+                flex-direction: column;
+                margin: 0;
+            }
+
+                /* INFO */
+                #producto-info .row > .col-6:first-child {
+                    width: 100%;
+                    max-width: 100%;
+                    padding: 0;
+                    margin-bottom: 10px;
+                }
+
+                /* TECLADO */
+                #producto-info .row > .col-6:last-child {
+                    width: 100%;
+                    max-width: 100%;
+                    padding: 0;
+                }
+
+        /* ===============================
+       GRID REAL PARA INFO PRODUCTO
+       =============================== */
+            #producto-info .col-6:first-child {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                row-gap: 6px;
+                column-gap: 8px;
+            }
+
+            /* COMPACTAR INFO PRODUCTO */
+            #producto-info h4 {
+                margin-bottom: 2px !important;
+            }
+
+            #producto-info .mb-3 {
+                margin-bottom: 2px !important;
+            }
+
+            #producto-info .col-6:first-child {
+                row-gap: 2px; /* antes 6px */
+            }
+
+        /* Nombre */
+        #prodNombre {
+            grid-column: 1 / 2;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* ---------------------------
-       Teclado - tamaño táctil
-       --------------------------- */
+        /* Precio */
+        #prodPrecio {
+            grid-column: 2 / 3;
+            text-align: right;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        /* Cantidad */
+        #inputCantidad {
+            grid-column: 1 / 2;
+            text-align: center;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        /* INPUT CANTIDAD – ancho fijo 12 caracteres */
+        #inputCantidad {
+            width: 12ch;
+            text-align: right;
+            font-size: 1.2rem;
+            line-height: 1.2;
+            padding: 2px 6px; /* 🔑 antes era demasiado */
+            height: auto; /* 🔑 saca la altura forzada del navegador */
+
+            box-sizing: border-box;
+        }
+
+        /* Subtotal */
+
+        #prodSubtotal {
+            font-size: 1.2rem;
+            line-height: 1.2;
+            text-align: right;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .fila-cantidad-subtotal {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline; /* 🔑 clave */
+            gap: 12px;
+        }
+        /* Botón */
+        #btnAgregarProducto {
+            grid-column: 1 / 3;
+            height: 48px;
+            font-size: 0.85rem;
+        }
+
+        /* ===============================
+       OCULTAR LABELS
+       =============================== */
+        #producto-info label {
+            display: none;
+        }
+
+        /* ===============================
+       TECLADO TÁCTIL
+       =============================== */
+        .keyboard-grid {
+            width: 100%;
+        }
+
         .btn-key,
         .btn-enter {
             font-size: 1.2rem;
             padding: 14px 0;
         }
-
-        /* ---------------------------
-       Botones numéricos
-       --------------------------- */
-
-        /* 7 8 9 | 4 5 6 | 1 2 3 */
-        .keyboard-grid .btn-num {
-            grid-column: span 1;
-        }
-
-        /* 0 ocupa ancho de 1 y 2 */
-        .keyboard-grid .key-zero {
-            grid-column: span 2;
-        }
-
-        /* . ocupa ancho normal */
-        .keyboard-grid .btn-num:last-child {
-            grid-column: span 1;
-        }
-
-        /* ---------------------------
-       ENTER ocupa 2 filas
-       --------------------------- */
-        .keyboard-grid .btn-enter {
-            grid-row: span 2;
-            grid-column: span 1;
-        }
-
-        /* ---------------------------
-       Botones de acción
-       --------------------------- */
-        .keyboard-grid .btn-warning,
-        .keyboard-grid .btn-secondary {
-            grid-column: span 1;
-        }
-
-        /* ---------------------------
-       Columna INFO - texto compacto
-       --------------------------- */
-        #producto-info h4,
-        #producto-info .form-control {
-            font-size: 0.85rem;
-        }
-
-        /* ---------------------------
-       Reemplazo labels
-       --------------------------- */
-        #producto-info label {
-            font-size: 0;
-        }
-
-            #producto-info label::after {
-                font-size: 0.9rem;
-                font-weight: bold;
-            }
-
-            .lbl-precio::after {
-                content: "$  ";
-            }
-
-            .lbl-cantidad::after {
-                content: "C ";
-            }
-
-            .lbl-subtotal::after {
-                content: "T  ";
-            }
-
-            .lbl-precio,
-            .lbl-cantidad,
-            .lbl-subtotal {
-                font-size: 0;
-            }
-
-        /* ---------------------------
-       Botón agregar
-       --------------------------- */
-        .btn-agregar-pos {
-            height: 52px;
-            font-size: 0.85rem;
-            white-space: normal;
-            line-height: 1.1;
-        }
     }
+
+
+
 
     /*Modal Linea Venta*/
     #modalLineaVenta {
@@ -1690,6 +1733,44 @@
     .fila-anulada {
         text-decoration: line-through;
         opacity: 0.6; /* opcional, queda más claro visualmente */
+    }
+    @@media (min-width: 577px) {
+
+        /* ===============================
+           INFO 30% / TECLADO 70%
+           =============================== */
+        #producto-info .row {
+            display: flex;
+            align-items: stretch;
+        }
+
+        #producto-info .row > .col-6:first-child {
+            flex: 0 0 40%;
+            max-width: 40%;
+        }
+
+        #producto-info .row > .col-6:last-child {
+            flex: 0 0 60%;
+            max-width: 60%;
+        }
+        /* ===============================
+           TECLADO MÁS ALTO (WEB)
+           =============================== */
+        .keyboard-grid {
+            height: 100%;
+            align-content: stretch;
+        }
+
+        .btn-key {
+            min-height: 70px; /* antes ~45px → +50% */
+            font-size: 1.4rem;
+        }
+
+        .btn-enter {
+            min-height: 145px; /* 2 filas reales */
+            font-size: 1.3rem;
+        }
+
     }
 
 </style>

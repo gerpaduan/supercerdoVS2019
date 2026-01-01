@@ -261,6 +261,11 @@ body.dark-mode {
     /* ===============================
    DETALLE DE ITEM (RESALTADO)
    =============================== */
+    /*  */
+    body.dark-mode .fila-item:hover {
+        background: #538c89;
+    }
+
 
     body.dark-mode .item-detalle {
         color: #f1f2f4;
