@@ -170,6 +170,7 @@ function finalizarVenta(data) {
                     text: resp.msg || 'No se pudo finalizar la venta'
                 });
                 ventaEnProceso = false;
+                hayVentaEnCurso = false;
                 return;
             }
 

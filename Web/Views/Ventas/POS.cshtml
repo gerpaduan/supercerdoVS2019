@@ -191,7 +191,7 @@
                                 <div class="input-group input-group-lg">
                                     <span class="input-group-text"><i class="fas fa-barcode"></i></span>
                                     <input type="text" id="inputCodigo" class="form-control"
-                                           placeholder="Esperando codigo..." autocomplete="off" autofocus />
+                                           placeholder="Ingrese el codigo..." autocomplete="off" autofocus />
 
                                     <button class="btn btn-outline-secondary"
                                             id="btnAgregarManual"
@@ -991,6 +991,7 @@
             $("#inputCantidad").val("");
             $("#prodSubtotal").text("$ 0,00");
 
+            hayVentaEnCurso = true;
             productoSeleccionado = null;
             mostrarEsperando();
 
@@ -1070,10 +1071,24 @@
             });
         }
 
+        let hayVentaEnCurso = false; // ponelo en true cuando haya algo cargado
+
+        window.addEventListener("beforeunload", function (e) {
+
+            if (!hayVentaEnCurso) return;
+
+            e.preventDefault();
+            e.returnValue = ""; // 👈 obligatorio para que aparezca el cartel
+        });
 
 
         ////TECLADO
         let inputActivo = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            inputActivo = document.getElementById("inputCodigo");
+            inputActivo.focus();
+        });
 
         document.addEventListener("focusin", e => {
             if (e.target.tagName === "INPUT") {
@@ -1083,6 +1098,10 @@
 
         // Manejo de teclas del teclado virtual
         document.querySelectorAll(".btn-key").forEach(btn => {
+            btn.addEventListener("mousedown", e => {
+                e.preventDefault(); // 👈 ESTA LÍNEA LO ARREGLA TODO
+            });
+
             btn.addEventListener("click", () => {
                 const tecla = btn.innerText.trim();
                 if (!inputActivo) return;
@@ -1099,6 +1118,9 @@
 
                     case "×":
                         escribirX();
+                        break;
+                    case "g":
+                        escribirG();
                         break;
 
                     default:
@@ -1149,6 +1171,15 @@
             if (inputActivo.value.includes("X")) return;
 
             inputActivo.value += "X";
+        }
+
+        function escribirG() {
+            if (inputActivo.id !== "inputCodigo") return;
+
+            // Solo una X
+            if (inputActivo.value.includes("G")) return;
+
+            inputActivo.value += "G";
         }
 
         function borrarCaracter() {

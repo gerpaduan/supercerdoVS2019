@@ -312,13 +312,16 @@ namespace Web.Controllers
                 {
                     return Json(new { error = "Formato de código inválido" }, JsonRequestBehavior.AllowGet);
                 }
+                //validar la cantidad de G
+                var match = Regex.Match(codigo, @"^[^G]*G(\d+)[^G]*$");
+                long numeroSumaGen = match.Success ? int.Parse(match.Groups[1].Value) :0;
 
                 //Para validar que sea precio siempre q contenga '.' y se suponga q no es un codigo de barras
                 int cantMinDig_EAN8 = 8;
-                bool esGenerico = ingresoCantidadX && (codigo.Contains(".") ||  codigo.Length < cantMinDig_EAN8);
+                bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDig_EAN8);
 
                 long codigoProducto = esGenerico
-                    ? Convert.ToInt64(Entidades.Parametros.codProdGenerico)
+                    ? Convert.ToInt64(Entidades.Parametros.codProdGenerico) + numeroSumaGen
                     : Convert.ToInt64(codigo);
 
                 var gestorCortes = new Negocio.Corte();
@@ -328,7 +331,14 @@ namespace Web.Controllers
                     return Json(new { error = "Producto no encontrado" }, JsonRequestBehavior.AllowGet);
 
                 if (esGenerico)
+                {
+                    int indexG = codigo.IndexOf('G');
+
+                    if (indexG != -1)
+                        codigo = codigo.Substring(0, indexG);
+
                     corte.PrecioKg = float.Parse(codigo, CultureInfo.InvariantCulture);
+                }
 
                 return Json(new
                 {
