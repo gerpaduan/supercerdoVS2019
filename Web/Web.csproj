@@ -133,6 +133,7 @@
     <Compile Include="Controllers\LoginController.cs" />
     <Compile Include="Controllers\PersonasController.cs" />
     <Compile Include="Controllers\ProductosController.cs" />
+    <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
     <Compile Include="Filters\RequirePermissionAttribute.cs" />
@@ -2045,6 +2046,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Session\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />

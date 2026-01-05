@@ -40,6 +40,7 @@ namespace Web.Controllers
             ViewBag.Error = error;
             return View();
         }
+
         public ActionResult Logout()
         {
             // Limpia todos los objetos dentro de Session

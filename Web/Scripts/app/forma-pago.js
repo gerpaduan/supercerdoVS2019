@@ -170,7 +170,6 @@ function finalizarVenta(data) {
                     text: resp.msg || 'No se pudo finalizar la venta'
                 });
                 ventaEnProceso = false;
-                hayVentaEnCurso = false;
                 return;
             }
 
@@ -182,6 +181,7 @@ function finalizarVenta(data) {
             });
 
             $('#modalFormaPago').modal('hide');
+            hayVentaEnCurso = false;
             setTimeout(() => location.reload(), 1600);
         },
         error: function (xhr) {

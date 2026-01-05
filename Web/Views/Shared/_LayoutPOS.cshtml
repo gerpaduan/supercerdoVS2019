@@ -202,6 +202,43 @@
         </div>
     </div>
 
+    <!-- MODAL SESIÓN EXPIRADA -->
+    <div class="modal fade"
+         id="modalSesionExpirada"
+         tabindex="-1"
+         data-bs-backdrop="static"
+         data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        Sesión expirada
+                    </h5>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p class="mb-2">
+                        La sesión se cerró por seguridad.
+                    </p>
+                    <p class="fw-bold mb-0">
+                        Presione <strong>Reingresar</strong> para continuar.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger w-100"
+                            onclick="redirigirLogin()">
+                        Reingresar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
     <!-- Scripts -->
     <script src="@Url.Content("~/Content/vendor/jquery/jquery.min.js")"></script>
     <script src="@Url.Content("~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js")"></script>
@@ -212,6 +249,11 @@
     <script src="@Url.Content("~/Scripts/app/forma-pago.js?v=3")"></script>
 
     <script src="@Url.Content("~/Content/js/scripts.js")"></script>
+
+    <script>
+        window.keepAliveUrl = '@Url.Action("KeepAlive", "Session")';
+        window.loginUrl = '@Url.Action("Index", "Login")';
+    </script>
 
 
     @RenderSection("Scripts", required: false)

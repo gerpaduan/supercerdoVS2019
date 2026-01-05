@@ -237,7 +237,7 @@ namespace Web.Controllers
         {
             var user = Session["Usuario"] as Entidades.Usuario;
             if (user == null)
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Index", "Login");
 
             // Inicializo cierre
             var cierre = new Entidades.CierreCaja

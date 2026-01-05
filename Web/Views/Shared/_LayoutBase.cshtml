@@ -264,17 +264,17 @@
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
                                 @*<a class="dropdown-item" href="#">
-            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-            Profile
-        </a>
-        <a class="dropdown-item" href="#">
-            <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-            Settings
-        </a>
-        <a class="dropdown-item" href="#">
-            <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-            Activity Log
-        </a>*@
+                                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Profile
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Settings
+                                    </a>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                                        Activity Log
+                                    </a>*@
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalSucursales">
                                     <i class="fas fa-store fa-sm fa-fw mr-2 text-gray-400"></i>
                                     <strong id="lblSucursalActual">
@@ -335,6 +335,43 @@
 
     @Html.Partial("_ModalSucursales")
 
+    <!-- MODAL SESIÓN EXPIRADA -->
+    <div class="modal fade"
+         id="modalSesionExpirada"
+         tabindex="-1"
+         data-bs-backdrop="static"
+         data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        Sesión expirada
+                    </h5>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p class="mb-2">
+                        La sesión se cerró por seguridad.
+                    </p>
+                    <p class="fw-bold mb-0">
+                        Presione <strong>Reingresar</strong> para continuar.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger w-100"
+                            onclick="redirigirLogin()">
+                        Reingresar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
     <!-- Scripts -->
     <script src="@Url.Content("~/Content/vendor/jquery/jquery.min.js")"></script>
     <script src="@Url.Content("~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js")"></script>
@@ -346,9 +383,14 @@
 
     <script>
         const urlCambiarSucursal = '@Url.Action("CambiarSucursal", "Login")';
+        window.keepAliveUrl = '@Url.Action("KeepAlive", "Session")';
+        window.loginUrl = '@Url.Action("Index", "Login")';
+
     </script>
 
     <script src="@Url.Content("~/Scripts/app/modal-sucursales.js")"></script>
+
+    <script src="@Url.Content("~/Content/js/scripts.js")"></script>
 
 
     @RenderSection("Scripts", required: false)
@@ -370,8 +412,8 @@
         window.addEventListener("beforeunload", function (e) {
             if (!window.__protegerSalida) return;
 
-            e.preventDefault();
-            e.returnValue = "";
+        e.preventDefault();
+        e.returnValue = "";
         });
 
         /**************************************************
@@ -381,36 +423,36 @@
 
             if (!window.__protegerSalida) return;
 
-            let url = $(this).attr("href");
+        let url = $(this).attr("href");
 
-            // Si no navega (botón sin link) → no hacer nada
-            if (!url) return;
+        // Si no navega (botón sin link) → no hacer nada
+        if (!url) return;
 
-            e.preventDefault();
+        e.preventDefault();
 
-            Swal.fire({
-                title: "¿Salir?",
-                text: "Los cambios que hiciste podrían no haberse guardado.",
-                icon: "warning",
+        Swal.fire({
+            title: "¿Salir?",
+        text: "Los cambios que hiciste podrían no haberse guardado.",
+        icon: "warning",
 
-                showCancelButton: true,
-                confirmButtonText: "Salir igual",
-                cancelButtonText: "Cancelar",
+        showCancelButton: true,
+        confirmButtonText: "Salir igual",
+        cancelButtonText: "Cancelar",
 
-                // Que CANCELAR sea el botón por defecto
-                reverseButtons: true,
-                focusCancel: true,
+        // Que CANCELAR sea el botón por defecto
+        reverseButtons: true,
+        focusCancel: true,
 
-                allowOutsideClick: false,
-                allowEscapeKey: true,
+        allowOutsideClick: false,
+        allowEscapeKey: true,
 
-                customClass: {
-                    popup: 'swal2-popup-mid'
+        customClass: {
+            popup: 'swal2-popup-mid'
                 }
             }).then(result => {
                 if (result.isConfirmed) {
-                    desactivarProteccionSalida();
-                    window.location.href = url;
+            desactivarProteccionSalida();
+        window.location.href = url;
                 }
             });
         });
@@ -423,24 +465,24 @@
         $(document).on("input", ".solo-decimal", function () {
             let v = $(this).val();
 
-            // 1) Quitar todo excepto números, puntos y comas
-            v = v.replace(/[^0-9.,]/g, "");
+        // 1) Quitar todo excepto números, puntos y comas
+        v = v.replace(/[^0-9.,]/g, "");
 
-            // 2) Si tiene coma y punto → eliminar puntos (miles)
-            if (v.includes(",") && v.includes(".")) {
-                v = v.replace(/\./g, ""); // saco miles
+        // 2) Si tiene coma y punto → eliminar puntos (miles)
+        if (v.includes(",") && v.includes(".")) {
+            v = v.replace(/\./g, ""); // saco miles
             }
 
-            // 3) Reemplazar coma por punto
-            v = v.replace(/,/g, ".");
+        // 3) Reemplazar coma por punto
+        v = v.replace(/,/g, ".");
 
-            // 4) Permitir solo UN punto
-            let partes = v.split(".");
+        // 4) Permitir solo UN punto
+        let partes = v.split(".");
             if (partes.length > 2) {
-                v = partes[0] + "." + partes.slice(1).join("");
+            v = partes[0] + "." + partes.slice(1).join("");
             }
 
-            $(this).val(v);
+        $(this).val(v);
         });
 
 
@@ -450,34 +492,25 @@
         $(document).on("paste", ".solo-decimal", function (e) {
             let t = (e.originalEvent || e).clipboardData.getData("text");
 
-            // misma lógica del input
-            t = t.replace(/[^0-9.,]/g, "");
+        // misma lógica del input
+        t = t.replace(/[^0-9.,]/g, "");
 
-            if (t.includes(",") && t.includes(".")) {
-                t = t.replace(/\./g, "");
+        if (t.includes(",") && t.includes(".")) {
+            t = t.replace(/\./g, "");
             }
 
-            t = t.replace(/,/g, ".");
+        t = t.replace(/,/g, ".");
 
-            let partes = t.split(".");
+        let partes = t.split(".");
             if (partes.length > 2) {
-                t = partes[0] + "." + partes.slice(1).join("");
+            t = partes[0] + "." + partes.slice(1).join("");
             }
 
-            // Reemplaza el pegado con contenido limpio
-            e.preventDefault();
-            $(this).val(t).trigger("input");
+        // Reemplaza el pegado con contenido limpio
+        e.preventDefault();
+        $(this).val(t).trigger("input");
         });
     </script>
-
-    @*<style>
-            /* Posición intermedia */
-            .swal2-popup-mid {
-                margin-top: 120px !important;
-            }
-        </style>*@
-
-
 
 </body>
 </html>
