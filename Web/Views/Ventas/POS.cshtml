@@ -701,46 +701,61 @@
             }, 250);
         });
 
-
         function terminarEscritura(codigo, callback = null) {
 
-            if (codigo === "") {
+            // 🔹 Sin código → estado inicial
+            if (!codigo || codigo.trim() === "") {
                 mostrarEsperando();
                 return;
             }
 
             $.ajax({
-                url: '@Url.Action("BuscarProducto", "Ventas")',
-                method: "GET",
+                url: window.buscarProductoUrl, // 👈 mejor práctica (desde Razor)
+                type: "GET",
+                dataType: "json",
                 data: {
-                    codigo: codigo,
-                    ingresoCantidadX: ingresoCantidadX},
-                timeout: 8000, // ⏱ 8 segundos
+                    codigo: codigo.trim(),
+                    ingresoCantidadX: ingresoCantidadX
+                },
+                timeout: 3000, // ⏱ máximo de espera
 
                 success: function (data) {
-                    if (!data || data.error) {
+
+                    // 🔴 Sin datos o error lógico
+                    if (!data || data.error === true) {
                         mostrarSinCoincidencia();
                         return;
                     }
 
-                    mostrarProducto(data);
+                    // 🟢 Producto encontrado
                     productoSeleccionado = data;
-                    if (callback) callback();
+                    mostrarProducto(data);
+
+                    if (typeof callback === "function") {
+                        callback();
+                    }
                 },
 
                 error: function (xhr, status) {
 
+                    // ⏱ Timeout
                     if (status === "timeout") {
-                        mostrarErrorConexion("Tiempo de espera agotado");
-                    } else if (!navigator.onLine) {
-                        mostrarErrorConexion("Sin conexión a Internet");
+                        mostrarErrorConexion("La conexión es lenta. Reintente.");
+                        return;
                     }
-                    //else {
-                    //    mostrarErrorConexion("Error de conexión con el servidor");
-                    //}
+
+                    // 🌐 Sin internet
+                    if (!navigator.onLine) {
+                        mostrarErrorConexion("Sin conexión a Internet");
+                        return;
+                    }
+
+                    // 🔴 Error servidor / red
+                    mostrarErrorConexion("No se pudo contactar al servidor");
                 }
             });
         }
+
 
         function mostrarErrorConexion(msg) {
             Swal.fire({

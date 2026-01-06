@@ -1,5 +1,6 @@
 ﻿@model List<Entidades.Venta>
 
+
 @{
     ViewBag.Title = "Ventas";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
@@ -25,8 +26,8 @@
                            name="fechaDesde"
                            class="form-control"
                            value="@(string.IsNullOrEmpty(Request["fechaDesde"])
-                    ? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
-                    : Request["fechaDesde"])" />
+? DateTime.Today.ToString("yyyy-MM-ddTHH:mm")
+: Request["fechaDesde"])" />
                 </div>
 
                 <div class="form-group mr-3">
@@ -36,8 +37,8 @@
                            name="fechaHasta"
                            class="form-control"
                            value="@(string.IsNullOrEmpty(Request["fechaHasta"])
-                    ? DateTime.Today.ToString("yyyy-MM-ddT23:59")
-                    : Request["fechaHasta"])" />
+? DateTime.Today.ToString("yyyy-MM-ddT23:59")
+: Request["fechaHasta"])" />
                 </div>
 
                 <button type="submit"
@@ -67,24 +68,39 @@
                         }
                     </select>
                 </div>
+                <!-- Vendedor -->
+                <div class="form-group mr-3">
+
+                    <input type="text"
+                           id="buscadorVendedor"
+                           class="form-control"
+                           placeholder="Buscar vendedor..." />
+                </div>
 
                 <!-- Cliente -->
-                <div class="form-group flex-grow-1">
-                    <input type="text" id="buscadorCliente" class="form-control w-100"
+                <div class="form-group mr-3">
+                    <input type="text" id="buscadorCliente" class="form-control"
                            placeholder="Buscar cliente..." />
                 </div>
 
                 <!-- Forma de pago -->
-                <!--<div class="form-group ml-3" style="min-width:220px">
-                    <select id="formasPagoSeleccionadas"
-                            class="form-control"
-                            multiple="multiple">
-                        foreach (SelectListItem fp in (MultiSelectList)ViewBag.FormasPago)
+                <div class="form-group mr-3">
+                    <select id="formaPago"
+                            name="formaPago"
+                            class="form-control">
+                        <option value="">— Forma de pago (todas) —</option>
+
+                        @foreach (Entidades.Venta.FormaPagoEnum fp
+                                in Enum.GetValues(typeof(Entidades.Venta.FormaPagoEnum)))
                         {
-                            <option value="fp.Value" selected>fp.Text</option>
+                            <option value="@fp.ToString()">
+                                @fp.ToString()
+                            </option>
                         }
+
                     </select>
-                </div>-->
+                </div>
+
 
 
             </div>
@@ -100,13 +116,17 @@
     {
         <div class="card mb-2 shadow-sm" style="padding: 6px 10px;">
             <div class="d-flex justify-content-between">
-                <h5 class="text-muted m-0" style="font-weight: 500;">
+                <h5 id="cantFiltrado" class="text-muted m-0" style="font-weight: 500;">
                     Cant.: @Model.Count
                 </h5>
 
-                <h5 class="text-muted m-0" style="font-weight: 500;">
+                @*<h5 class="text-muted m-0" style="font-weight: 500;">
                     Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
+                </h5>*@
+                <h5 id="totalFiltrado" class="text-muted m-0" style="font-weight: 500;">
+                    Total: @(((decimal)ViewBag.TotalFiltrado).ToString("C"))
                 </h5>
+
             </div>
         </div>
     }
@@ -133,9 +153,10 @@
                         foreach (var venta in ventaAgrupada)
                         {
                             <li class="list-group-item venta-item"
-                                data-forma-pago="@venta.FormaPago?.ToLower()"
+                                data-forma-pago="@venta.FormaPago.ToString()"
                                 data-cliente="@venta.Persona.razonSocial"
                                 data-identificacion="@venta.Persona.Identificacion"
+                                data-vendedor="@venta.Vendedor.Nombre.ToLower()"
                                 onclick="location.href='@Url.Action("DetalleVenta","Ventas", new { id = venta.IdVenta })'">
                                 <div class="venta-icono">
                                     @if (!string.IsNullOrEmpty(venta.FormaPago))
@@ -200,143 +221,85 @@
 
 <!-- Select2 (después de jQuery) -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
-    const buscador = document.getElementById("buscador");
-    const lista = document.getElementById("listaVentas");
-    const filas = lista.querySelectorAll(".venta-item");
-
-    buscador?.addEventListener("input", () => {
-        const texto = buscador.value.toLowerCase();
-        filas.forEach(fila => {
-            const contenido = fila.textContent.toLowerCase();
-            fila.style.display = contenido.includes(texto) ? "" : "none";
-        });
-    });
-
-
     const buscadorCliente = document.getElementById("buscadorCliente");
+    const buscadorVendedor = document.getElementById("buscadorVendedor");
+    const filtroFormaPago = document.getElementById("formaPago");
     const ventas = document.querySelectorAll(".venta-item");
 
-    buscadorCliente.addEventListener("input", () => {
-        const texto = buscadorCliente.value.toLowerCase();
+    function aplicarFiltros() {
+
+        const textoCliente = (buscadorCliente?.value || "").toLowerCase();
+        const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
+        const formaPagoSel = (filtroFormaPago?.value || "").toLowerCase();
+
         let total = 0;
+        let cant = 0;
+        let algunaVisible = false;
 
         ventas.forEach(v => {
+
             const cliente = (v.dataset.cliente || "").toLowerCase();
             const identificacion = (v.dataset.identificacion || "").toLowerCase();
+            const vendedor = (v.dataset.vendedor || "").toLowerCase();
+            const formaPago = (v.dataset.formaPago || "").toLowerCase();
 
-            // coincide si el texto está en cliente o en identificación
-            const coincide = cliente.includes(texto) || identificacion.includes(texto);
+            const coincideCliente =
+                !textoCliente ||
+                cliente.includes(textoCliente) ||
+                identificacion.includes(textoCliente);
 
-            // mostrar u ocultar
-            v.style.display = coincide ? "" : "none";
+            const coincideVendedor =
+                !textoVendedor ||
+                vendedor.includes(textoVendedor);
 
-            // si coincide, sumar el total
-            if (coincide) {
+            const coincideFormaPago =
+                !formaPagoSel ||
+                formaPago === formaPagoSel;
+
+            const mostrar =
+                coincideCliente &&
+                coincideVendedor &&
+                coincideFormaPago;
+
+            v.style.display = mostrar ? "" : "none";
+
+            if (mostrar) {
+                algunaVisible = true;
+
                 const valor = parseFloat(
-                    v.querySelector(".importe").dataset.valor || 0
+                    v.querySelector(".importe")?.dataset.valor || 0
                 );
                 total += valor;
+                cant++;
             }
         });
 
-        // actualizar el total filtrado en el card
+        // actualizar total
         document.getElementById("totalFiltrado").textContent =
             "Total: " + total.toLocaleString("es-AR", {
                 style: "currency",
                 currency: "ARS"
             });
-    });
 
+        document.getElementById("cantFiltrado").textContent = "Cant: " + cant.toString();
 
-    const fechaDesde = document.getElementById("fechaDesde");
-    const fechaHasta = document.getElementById("fechaHasta");
-    const btnFiltrar = document.getElementById("btnFiltrarFechas");
+        // mostrar / ocultar mensaje "No hay coincidencias"
+        document.querySelectorAll(".fecha-grupo").forEach(f => {
+            const tieneVentas = Array.from(
+                f.nextElementSibling?.parentNode.children || []
+            ).some(li => li.classList.contains("venta-item") && li.style.display !== "none");
 
-    // Guardar valores originales
-    const fechaDesdeInicial = fechaDesde.value;
-    const fechaHastaInicial = fechaHasta.value;
-
-    function verificarCambios() {
-        const modificado =
-            (fechaDesde.value !== fechaDesdeInicial) ||
-            (fechaHasta.value !== fechaHastaInicial);
-
-        if (modificado) {
-            btnFiltrar.disabled = false;
-            btnFiltrar.classList.remove("btn-secondary");
-            btnFiltrar.classList.add("btn-primary");
-        } else {
-            btnFiltrar.disabled = true;
-            btnFiltrar.classList.remove("btn-primary");
-            btnFiltrar.classList.add("btn-secondary");
-        }
-    }
-
-    fechaDesde.addEventListener("change", verificarCambios);
-    fechaHasta.addEventListener("change", verificarCambios);
-
-
-    $(document).ready(function () {
-
-        $('#formasPagoSeleccionadas').select2({
-            placeholder: "Forma de pago",
-            closeOnSelect: false,   // 🔑 no se cierra al tildar
-            width: '100%',
-            allowClear: true
-        });
-
-        // filtrar en vivo
-        $('#formasPagoSeleccionadas').on('change', function () {
-            filtrarPorFormaPago();
-        });
-
-    });
-
-    function filtrarPorFormaPago() {
-
-        const seleccionadas = $('#formasPagoSeleccionadas').val();
-        // ej: ["efectivo", "debito"]
-
-        document.querySelectorAll(".venta-item").forEach(venta => {
-
-            const formaPago = venta.dataset.formaPago;
-
-            if (!seleccionadas || seleccionadas.includes(formaPago)) {
-                venta.style.display = "";
-            } else {
-                venta.style.display = "none";
-            }
-        });
-
-        // ocultar fechas sin ventas visibles
-        document.querySelectorAll(".fecha-grupo").forEach(fecha => {
-
-            let siguiente = fecha.nextElementSibling;
-            let hayVisible = false;
-
-            while (siguiente && !siguiente.classList.contains("fecha-grupo")) {
-                if (siguiente.style.display !== "none") {
-                    hayVisible = true;
-                    break;
-                }
-                siguiente = siguiente.nextElementSibling;
-            }
-
-            fecha.style.display = hayVisible ? "" : "none";
+            f.style.display = tieneVentas ? "" : "none";
         });
     }
 
-    $(function () {
-        $('#formasPagoSeleccionadas').select2({
-            placeholder: "Formas de pago",
-            closeOnSelect: false,
-            width: '100%'
-        });
-    });
+    buscadorCliente?.addEventListener("input", aplicarFiltros);
+    buscadorVendedor?.addEventListener("input", aplicarFiltros);
+    filtroFormaPago?.addEventListener("change", aplicarFiltros);
 
 </script>
+
 
 <style>
     /* Mantengo tus estilos actuales */

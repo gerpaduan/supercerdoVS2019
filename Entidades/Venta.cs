@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 
@@ -73,7 +74,29 @@ namespace Entidades
             Nulo
         }
 
-         int idVenta;
+        public enum FormaPagoEnum
+        {
+            //[Display(Name = "Efectivo")]
+            Efectivo,
+
+            //[Display(Name = "Débito")]
+            Debito,
+
+            //[Display(Name = "Crédito")]
+            Credito,
+
+            //[Display(Name = "Cuenta Corriente")]
+            CtaCte,
+
+            //[Display(Name = "QR")]
+            Qr,
+
+            //[Display(Name = "Transferencia")]
+            Transferencia
+        }
+
+
+        int idVenta;
          DateTime fechaVenta;
          DateTime creado;
          DateTime? actualizado;
