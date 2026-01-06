@@ -2043,6 +2043,7 @@
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Ventas\_ModalLineaVenta.cshtml" />
+    <Content Include="Views\Shared\_SeleccionarProductoModal.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

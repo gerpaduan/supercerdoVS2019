@@ -1,0 +1,197 @@
+﻿@* Partial reusable: selector de productos (SB Admin 2 style) *@
+<div class="modal fade" id="modalSeleccionarProducto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Seleccionar producto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+        
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input id="modalBuscarProductoInput" type="search" class="form-control form-control-lg" placeholder="Buscar por código o nombre..." autocomplete="off" />
+            <button id="modalBtnRefrescarProductos" class="btn btn-secondary" type="button" title="Refrescar">⟳</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th style="width:120px">Código</th>
+                <th>Producto</th>
+                <th style="width:140px" class="text-end">Precio</th>
+              </tr>
+            </thead>
+            <tbody id="tablaProductosModalBody">
+              <tr><td colspan="3" class="text-center text-muted py-3">Ingrese para buscar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <small class="text-muted me-auto">Selecciona con doble clic o presiona Enter para elegir el primer resultado.</small>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+  let debounceTimer = null;
+  const $modal = $('#modalSeleccionarProducto');
+  const $input = $('#modalBuscarProductoInput');
+  const $tbody = $('#tablaProductosModalBody');
+  const apiUrl = window.api && window.api.producto && window.api.producto.listar
+    ? window.api.producto.listar
+    : '/Productos/ListarParaPOS';
+
+  function fetchProductos(q) {
+    $tbody.html('<tr><td colspan="3" class="text-center py-3">Cargando...</td></tr>');
+    $.ajax({
+      url: apiUrl,
+      method: 'GET',
+      dataType: 'json',
+      data: { q: q || '' },
+      success: function (items) {
+        renderTabla(items || []);
+      },
+      error: function () {
+        $tbody.html('<tr><td colspan="3" class="text-center text-danger py-3">Error al cargar productos</td></tr>');
+      }
+    });
+  }
+
+  function renderTabla(items) {
+    if (!items || items.length === 0) {
+      $tbody.html('<tr><td colspan="3" class="text-center text-muted py-3">No se encontraron productos</td></tr>');
+      return;
+    }
+
+    const rows = items.map(p => {
+      const precio = (p.precio != null) ? p.precio : '';
+      return `<tr data-codigo="${escapeHtml(p.codigo)}" tabindex="0" role="button">
+                <td class="align-middle">${escapeHtml(p.codigo)}</td>
+                <td class="align-middle">${escapeHtml(p.nombre)}</td>
+                <td class="align-middle text-end">${formatPrecio(precio)}</td>
+              </tr>`;
+    }).join('');
+    $tbody.html(rows);
+    // marcar y enfocar la primera fila
+    $tbody.find('tr').removeClass('table-active').first().addClass('table-active').focus();
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function formatPrecio(v) {
+    if (v == null || v === '') return '';
+    const n = parseFloat(String(v).replace(',', '.'));
+    if (isNaN(n)) return v;
+    return '$ ' + n.toFixed(2).replace('.', ',');
+  }
+
+  function seleccionarProducto(codigo) {
+    const inputPOS = document.getElementById('inputCodigo');
+    if (inputPOS) {
+      inputPOS.value = codigo;
+      if (typeof window.terminarEscritura === 'function') {
+        window.terminarEscritura(codigo);
+      } else {
+        $(inputPOS).trigger('input');
+      }
+      inputPOS.focus();
+    }
+    $modal.modal('hide');
+  }
+
+  $tbody.on('dblclick', 'tr', function () {
+    const codigo = $(this).data('codigo');
+    if (codigo) seleccionarProducto(codigo);
+  });
+
+  $tbody.on('click', 'tr', function () {
+    $tbody.find('tr').removeClass('table-active');
+    $(this).addClass('table-active').focus();
+  });
+
+  $input.on('input', function () {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => fetchProductos($input.val().trim()), 220);
+  });
+
+  // Enter en input: seleccionar primer resultado
+  $input.on('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const $first = $tbody.find('tr').first();
+      if ($first.length) {
+        const codigo = $first.data('codigo');
+        if (codigo) seleccionarProducto(codigo);
+      }
+    }
+  });
+
+  // Navegación con flechas + Enter sobre modal
+  $modal.on('keydown', function (e) {
+    const KEY_UP = 38, KEY_DOWN = 40, KEY_ENTER = 13;
+    if (e.keyCode === KEY_UP || e.keyCode === KEY_DOWN) {
+      const $rows = $tbody.find('tr');
+      if (!$rows.length) return;
+      let $current = $rows.filter('.table-active');
+      if (!$current.length) $current = $rows.first();
+      let idx = $rows.index($current);
+      if (e.keyCode === KEY_UP) idx = Math.max(0, idx - 1);
+      else idx = Math.min($rows.length - 1, idx + 1);
+      $rows.removeClass('table-active');
+      $rows.eq(idx).addClass('table-active').focus();
+      e.preventDefault();
+    } else if (e.keyCode === KEY_ENTER) {
+      const $sel = $tbody.find('tr.table-active').first();
+      if ($sel.length) {
+        const codigo = $sel.data('codigo');
+        if (codigo) seleccionarProducto(codigo);
+      }
+    }
+  });
+
+  $('#modalBtnRefrescarProductos').on('click', function () {
+    fetchProductos($input.val().trim());
+    $input.focus();
+  });
+        
+    /* dentro del script del partial, exponer la API pública */
+    window.abrirModalSeleccionarProducto = window.abrirModalSeleccionarProducto || function (opts) {
+        var $modal = $('#modalSeleccionarProducto');
+        var $input = $('#modalBuscarProductoInput');
+
+        // opcional: override de URL
+        if (opts && opts.url) {
+            window._modalSeleccionarProductoUrl = opts.url;
+        }
+
+        $input.val('');
+        $('#tablaProductosModalBody').html('<tr><td colspan="3" class="text-center text-muted py-3">Ingrese para buscar...</td></tr>');
+        $modal.modal('show');
+        setTimeout(function () { $input.focus(); }, 120);
+    };
+
+  $modal.on('hidden.bs.modal', function () {
+    $tbody.empty();
+  });
+})();
+</script>
+}

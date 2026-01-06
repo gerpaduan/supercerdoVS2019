@@ -96,66 +96,60 @@
     }
 
     /* Desktop: asegurar que NO haya scroll de la página y SOLO .zona-tabla haga scroll */
-@@media (min-width: 992px) {
-    html, body {
-        height: 100%;
-        overflow: hidden !important; /* prohibir scroll del viewport en desktop */
+    @@media (min-width: 992px) {
+        html, body {
+            height: 100%;
+            overflow: hidden !important; /* prohibir scroll del viewport en desktop */
+        }
+        /* Forzar que el contenedor POS se ajuste dentro del viewport */
+        #pos-app {
+            max-height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+            /* Card / body no deben provocar scroll */
+            #pos-app > .card,
+            #pos-app .card-body,
+            #pos-app .row.flex-grow-1 {
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+                box-sizing: border-box;
+            }
+            /* Columna izquierda: zona-tabla es la única con scroll interno */
+            #pos-app .carrito-col {
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+                #pos-app .carrito-col .zona-tabla {
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    overflow-y: auto;
+                }
+            /* Columna derecha: no debe crear scroll del viewport */
+            #pos-app .col-lg-6.d-flex.flex-column {
+                display: flex !important;
+                flex-direction: column !important;
+                min-height: 0;
+                overflow: visible;
+                box-sizing: border-box;
+            }
+                /* Asegurar que elementos fijos (botones) no crezcan */
+                #pos-app .col-lg-6.d-flex.flex-column > .mb-3,
+                #pos-app .zona-botones {
+                    flex: 0 0 auto;
+                }
+        /* Limitar teclado virtual para que no empuje layout */
+        .keyboard-grid {
+            max-height: 40vh;
+            overflow-y: auto;
+        }
     }
 
-    /* Forzar que el contenedor POS se ajuste dentro del viewport */
-    #pos-app {
-        max-height: 100vh;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    /* Card / body no deben provocar scroll */
-    #pos-app > .card,
-    #pos-app .card-body,
-    #pos-app .row.flex-grow-1 {
-        height: 100%;
-        min-height: 0;
-        overflow: hidden;
-        box-sizing: border-box;
-    }
-
-    /* Columna izquierda: zona-tabla es la única con scroll interno */
-    #pos-app .carrito-col {
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    #pos-app .carrito-col .zona-tabla {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-y: auto;
-    }
-
-    /* Columna derecha: no debe crear scroll del viewport */
-    #pos-app .col-lg-6.d-flex.flex-column {
-        display: flex !important;
-        flex-direction: column !important;
-        min-height: 0;
-        overflow: visible;
-        box-sizing: border-box;
-    }
-
-    /* Asegurar que elementos fijos (botones) no crezcan */
-    #pos-app .col-lg-6.d-flex.flex-column > .mb-3,
-    #pos-app .zona-botones {
-        flex: 0 0 auto;
-    }
-
-    /* Limitar teclado virtual para que no empuje layout */
-    .keyboard-grid {
-        max-height: 40vh;
-        overflow-y: auto;
-    }
-}
-
-/* Desktop: permitir que el teclado virtual "se encoja" y no genere scroll del viewport */
+    /* Desktop: permitir que el teclado virtual "se encoja" y no genere scroll del viewport */
     @@media (min-width: 992px) {
         /* Teclado virtual: compacto pero legible */
         .keyboard-grid {
@@ -168,7 +162,6 @@
             max-height: 40vh;
             overflow-y: auto; /* scroll interno solo si es estrictamente necesario */
         }
-
             /* Botones: se encogen pero conservan lectura */
             .keyboard-grid .btn-key,
             .keyboard-grid .btn-enter {
@@ -183,7 +176,6 @@
                 white-space: nowrap;
                 box-sizing: border-box;
             }
-
             /* ENTER y 0 mantienen su posición en la grid */
             .keyboard-grid .btn-enter {
                 grid-row: span 2;
@@ -192,7 +184,6 @@
             .keyboard-grid .key-zero {
                 grid-column: span 2;
             }
-
         /* Ajuste para pantallas muy grandes */
         @@media (min-width: 1400px) {
             .keyboard-grid {
@@ -206,7 +197,6 @@
                 }
         }
     }
-
 </style>
 @if (cajaAbierta && Model != null)
 {
@@ -414,14 +404,14 @@
                         </div>
 
                         <!-- BOTONES FINALES -->
-                            <!-- BOTONES FINALES -->
-                            <div class="mb-3">
-                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
-                                    <i class="fas fa-credit-card mr-2"></i>
+                        <!-- BOTONES FINALES -->
+                        <div class="mb-3">
+                            <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
+                                <i class="fas fa-credit-card mr-2"></i>
 
-                                    Finalizar y Pagar
-                                </button>
-                            </div>
+                                Finalizar y Pagar
+                            </button>
+                        </div>
                         <div id="pos-bottom-anchor"></div>
 
                         <!-- ESTADO BALANZA -->
@@ -596,6 +586,7 @@
 
 <!-- Contenedor dinámico del modal -->
 <div id="contenedorModalPersona"></div>
+@Html.Partial("~/Views/Shared/_SeleccionarProductoModal.cshtml")
 
 @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 
@@ -605,6 +596,26 @@
 
 @section Scripts {
     <script>
+
+        // URL para el modal (usa la acción que añadimos)
+        window.api = window.api || {};
+        window.api.producto = window.api.producto || {};
+        window.api.producto.listar = '@Url.Action("ListarParaPOS", "Productos")';
+
+        $(function () {
+            $('#btnAgregarManual').off('click').on('click', function (e) {
+                e.preventDefault();
+                if (typeof window.abrirModalSeleccionarProducto === 'function') {
+                    window.abrirModalSeleccionarProducto();
+                    return;
+                }
+                // fallback seguro
+                var $modal = $('#modalSeleccionarProducto');
+                var $input = $('#modalBuscarProductoInput');
+                $modal.modal('show');
+                setTimeout(function () { $input.focus(); }, 120);
+            });
+        });
 
         let typingTimer = null;
         let productoSeleccionado = null;
@@ -1671,18 +1682,18 @@
         grid-template-columns: repeat(5, 1fr);
         gap: 6px;
     }
-    /* TECLAS NUMÉRICAS – DIFERENCIACIÓN SUAVE */
-    .keyboard-grid .btn-light {
-        background-color: #ffffff;
-        border: 1px solid #d0d0d0;
-        color: #333;
-    }
-
-        /* Hover / feedback táctil */
-        .keyboard-grid .btn-light:active,
-        .keyboard-grid .btn-light:focus {
-            background-color: #f0f0f0;
+        /* TECLAS NUMÉRICAS – DIFERENCIACIÓN SUAVE */
+        .keyboard-grid .btn-light {
+            background-color: #ffffff;
+            border: 1px solid #d0d0d0;
+            color: #333;
         }
+
+            /* Hover / feedback táctil */
+            .keyboard-grid .btn-light:active,
+            .keyboard-grid .btn-light:focus {
+                background-color: #f0f0f0;
+            }
 
     /* Botones normales */
     .btn-key {
@@ -1725,7 +1736,6 @@
 
     /* Ajuste en pantallas chicas */
     @@media (max-width: 576px) {
-
         /* ===============================
        EVITAR SCROLL HORIZONTAL GLOBAL
        =============================== */
@@ -1736,8 +1746,7 @@
         #producto-info {
             overflow-x: hidden;
         }
-
-     /* ===============================
+            /* ===============================
        INFO ARRIBA / TECLADO ABAJO
        =============================== */
             #producto-info .row {
@@ -1745,7 +1754,6 @@
                 flex-direction: column;
                 margin: 0;
             }
-
                 /* INFO */
                 #producto-info .row > .col-6:first-child {
                     width: 100%;
@@ -1753,15 +1761,13 @@
                     padding: 0;
                     margin-bottom: 10px;
                 }
-
                 /* TECLADO */
                 #producto-info .row > .col-6:last-child {
                     width: 100%;
                     max-width: 100%;
                     padding: 0;
                 }
-
-        /* ===============================
+            /* ===============================
        GRID REAL PARA INFO PRODUCTO
        =============================== */
             #producto-info .col-6:first-child {
@@ -1770,7 +1776,6 @@
                 row-gap: 6px;
                 column-gap: 8px;
             }
-
             /* COMPACTAR INFO PRODUCTO */
             #producto-info h4 {
                 margin-bottom: 2px !important;
@@ -1783,7 +1788,6 @@
             #producto-info .col-6:first-child {
                 row-gap: 2px; /* antes 6px */
             }
-
         /* Nombre */
         #prodNombre {
             grid-column: 1 / 2;
@@ -1792,7 +1796,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-
         /* Precio */
         #prodPrecio {
             grid-column: 2 / 3;
@@ -1800,7 +1803,6 @@
             font-size: 0.95rem;
             white-space: nowrap;
         }
-
         /* Cantidad */
         #inputCantidad {
             grid-column: 1 / 2;
@@ -1808,7 +1810,6 @@
             font-size: 0.9rem;
             white-space: nowrap;
         }
-
         /* INPUT CANTIDAD – ancho fijo 12 caracteres */
         #inputCantidad {
             width: 12ch;
@@ -1820,7 +1821,6 @@
 
             box-sizing: border-box;
         }
-
         /* Subtotal */
 
         #prodSubtotal {
@@ -1843,14 +1843,12 @@
             height: 48px;
             font-size: 0.85rem;
         }
-
         /* ===============================
        OCULTAR LABELS
        =============================== */
         #producto-info label {
             display: none;
         }
-
         /* ===============================
        TECLADO TÁCTIL
        =============================== */
@@ -1873,26 +1871,26 @@
         font-size: 1.1rem;
     }
 
-    #modalLineaVenta input {
-        font-size: 1.4rem;
-        height: 55px;
-    }
+        #modalLineaVenta input {
+            font-size: 1.4rem;
+            height: 55px;
+        }
 
-    #modalLineaVenta .modal-title {
-        font-size: 1.5rem;
-    }
+        #modalLineaVenta .modal-title {
+            font-size: 1.5rem;
+        }
 
-    #modalLineaVenta .btn {
-        font-size: 1.2rem;
-        padding: 12px 18px;
-    }
+        #modalLineaVenta .btn {
+            font-size: 1.2rem;
+            padding: 12px 18px;
+        }
 
     .fila-anulada {
         text-decoration: line-through;
         opacity: 0.6; /* opcional, queda más claro visualmente */
     }
-    @@media (min-width: 577px) {
 
+    @@media (min-width: 577px) {
         /* ===============================
            INFO 30% / TECLADO 70%
            =============================== */
@@ -1901,15 +1899,15 @@
             align-items: stretch;
         }
 
-        #producto-info .row > .col-6:first-child {
-            flex: 0 0 40%;
-            max-width: 40%;
-        }
+            #producto-info .row > .col-6:first-child {
+                flex: 0 0 40%;
+                max-width: 40%;
+            }
 
-        #producto-info .row > .col-6:last-child {
-            flex: 0 0 60%;
-            max-width: 60%;
-        }
+            #producto-info .row > .col-6:last-child {
+                flex: 0 0 60%;
+                max-width: 60%;
+            }
         /* ===============================
            TECLADO MÁS ALTO (WEB)
            =============================== */
@@ -1927,7 +1925,5 @@
             min-height: 145px; /* 2 filas reales */
             font-size: 1.3rem;
         }
-
     }
-
 </style>

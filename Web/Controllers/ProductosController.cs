@@ -29,6 +29,43 @@ namespace Web.Controllers
             return View(productos);
         }
 
+        // Acción para búsqueda en vivo usada por el modal POS
+        [HttpGet]
+        public JsonResult ListarParaPOS(string q = "")
+        {
+            try
+            {
+                var productos = oCorteN.findAllCortes(false, 0) ?? new List<Entidades.Corte>();
+
+                if (!string.IsNullOrWhiteSpace(q))
+                {
+                    q = q.Trim();
+                    productos = productos
+                        .Where(p =>
+                            (!string.IsNullOrEmpty(p.corte) && p.corte.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                            p.codigo.ToString().IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .ToList();
+                }
+
+                // Mapeo ligero para el cliente
+                var resultado = productos
+                    .Select(p => new
+                    {
+                        codigo = p.codigo.ToString(),
+                        nombre = p.corte,
+                        precio = p.precioKg
+                    })
+                    .Take(200) // tope razonable
+                    .ToList();
+
+                return Json(resultado, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                // Opcional: loguear ex
+                return Json(new List<object>(), JsonRequestBehavior.AllowGet);
+            }
+        }
 
         // ===============================
         // GET: CREAR
