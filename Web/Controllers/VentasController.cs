@@ -97,14 +97,7 @@ namespace Web.Controllers
             return View(venta);
         }
         [HttpPost]
-        //        public JsonResult FinalizarVenta(
-        //            string formaPago,
-        //            bool esPagoMixto,
-        //            float efectivo,
-        //            int idPersona,
-        //            List<LineaVenta> lineasVenta
-        //)
-        //        {
+
         public JsonResult FinalizarVenta(FinalizarVentaRequest request)
         {
             try

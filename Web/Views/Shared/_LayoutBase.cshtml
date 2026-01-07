@@ -412,8 +412,8 @@
         window.addEventListener("beforeunload", function (e) {
             if (!window.__protegerSalida) return;
 
-        e.preventDefault();
-        e.returnValue = "";
+            e.preventDefault();
+            e.returnValue = "";
         });
 
         /**************************************************
@@ -423,36 +423,36 @@
 
             if (!window.__protegerSalida) return;
 
-        let url = $(this).attr("href");
+            let url = $(this).attr("href");
 
-        // Si no navega (botón sin link) → no hacer nada
-        if (!url) return;
+            // Si no navega (botón sin link) → no hacer nada
+            if (!url) return;
 
-        e.preventDefault();
+            e.preventDefault();
 
-        Swal.fire({
-            title: "¿Salir?",
-        text: "Los cambios que hiciste podrían no haberse guardado.",
-        icon: "warning",
+            Swal.fire({
+                title: "¿Salir?",
+                text: "Los cambios que hiciste podrían no haberse guardado.",
+                icon: "warning",
 
-        showCancelButton: true,
-        confirmButtonText: "Salir igual",
-        cancelButtonText: "Cancelar",
+                showCancelButton: true,
+                confirmButtonText: "Salir igual",
+                cancelButtonText: "Cancelar",
 
-        // Que CANCELAR sea el botón por defecto
-        reverseButtons: true,
-        focusCancel: true,
+                // Que CANCELAR sea el botón por defecto
+                reverseButtons: true,
+                focusCancel: true,
 
-        allowOutsideClick: false,
-        allowEscapeKey: true,
+                allowOutsideClick: false,
+                allowEscapeKey: true,
 
-        customClass: {
-            popup: 'swal2-popup-mid'
+                customClass: {
+                    popup: 'swal2-popup-mid'
                 }
             }).then(result => {
                 if (result.isConfirmed) {
-            desactivarProteccionSalida();
-        window.location.href = url;
+                    desactivarProteccionSalida();
+                    window.location.href = url;
                 }
             });
         });
@@ -465,24 +465,24 @@
         $(document).on("input", ".solo-decimal", function () {
             let v = $(this).val();
 
-        // 1) Quitar todo excepto números, puntos y comas
-        v = v.replace(/[^0-9.,]/g, "");
+            // 1) Quitar todo excepto números, puntos y comas
+            v = v.replace(/[^0-9.,]/g, "");
 
-        // 2) Si tiene coma y punto → eliminar puntos (miles)
-        if (v.includes(",") && v.includes(".")) {
-            v = v.replace(/\./g, ""); // saco miles
+            // 2) Si tiene coma y punto → eliminar puntos (miles)
+            if (v.includes(",") && v.includes(".")) {
+                v = v.replace(/\./g, ""); // saco miles
             }
 
-        // 3) Reemplazar coma por punto
-        v = v.replace(/,/g, ".");
+            // 3) Reemplazar coma por punto
+            v = v.replace(/,/g, ".");
 
-        // 4) Permitir solo UN punto
-        let partes = v.split(".");
+            // 4) Permitir solo UN punto
+            let partes = v.split(".");
             if (partes.length > 2) {
-            v = partes[0] + "." + partes.slice(1).join("");
+                v = partes[0] + "." + partes.slice(1).join("");
             }
 
-        $(this).val(v);
+            $(this).val(v);
         });
 
 
@@ -492,23 +492,23 @@
         $(document).on("paste", ".solo-decimal", function (e) {
             let t = (e.originalEvent || e).clipboardData.getData("text");
 
-        // misma lógica del input
-        t = t.replace(/[^0-9.,]/g, "");
+            // misma lógica del input
+            t = t.replace(/[^0-9.,]/g, "");
 
-        if (t.includes(",") && t.includes(".")) {
-            t = t.replace(/\./g, "");
+            if (t.includes(",") && t.includes(".")) {
+                t = t.replace(/\./g, "");
             }
 
-        t = t.replace(/,/g, ".");
+            t = t.replace(/,/g, ".");
 
-        let partes = t.split(".");
+            let partes = t.split(".");
             if (partes.length > 2) {
-            t = partes[0] + "." + partes.slice(1).join("");
+                t = partes[0] + "." + partes.slice(1).join("");
             }
 
-        // Reemplaza el pegado con contenido limpio
-        e.preventDefault();
-        $(this).val(t).trigger("input");
+            // Reemplaza el pegado con contenido limpio
+            e.preventDefault();
+            $(this).val(t).trigger("input");
         });
     </script>
 

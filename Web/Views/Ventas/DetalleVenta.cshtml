@@ -4,7 +4,7 @@
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
     var index = 1; }
 
-<div class="card shadow mb-4 w-100 w-md-50 mx-auto">
+<div class="card shadow mb-4 w-100 w-md-50 mx-auto vista-venta">
     <!-- Encabezado -->
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Detalle de Venta</h6>
@@ -94,4 +94,17 @@
         .venta-lineas .font-weight-bold {
             margin-bottom: .25rem;
         }
+
+
+
+    /* Solo en pantallas grandes */
+    @@media (min-width: 992px) {
+        .vista-venta {
+            width: 60% !important;
+            max-width: none; /* anula reglas de container */
+            margin: 0 !important; /* elimina auto margins de Bootstrap */
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
 </style>

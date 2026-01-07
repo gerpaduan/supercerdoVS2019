@@ -1846,6 +1846,7 @@
     <Content Include="Scripts\app\forma-pago.js" />
     <Content Include="Scripts\app\modal-sucursales.js" />
     <Content Include="Scripts\app\persona-buscar.js" />
+    <Content Include="Scripts\app\modal-productos.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <Content Include="Content\vendor\bootstrap\js\bootstrap.bundle.js.map" />
@@ -2043,7 +2044,7 @@
     <Content Include="Views\Shared\_ModalSucursales.cshtml" />
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Ventas\_ModalLineaVenta.cshtml" />
-    <Content Include="Views\Shared\_SeleccionarProductoModal.cshtml" />
+    <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

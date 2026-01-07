@@ -300,7 +300,7 @@
                                             id="btnAgregarManual"
                                             data-bs-toggle="modal"
                                             data-bs-target="#modalDigitarCodigo">
-                                        Digitar
+                                        Buscar
                                     </button>
                                 </div>
                             </div>
@@ -586,7 +586,8 @@
 
 <!-- Contenedor dinámico del modal -->
 <div id="contenedorModalPersona"></div>
-@Html.Partial("~/Views/Shared/_SeleccionarProductoModal.cshtml")
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml")
 
 @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 
@@ -597,25 +598,15 @@
 @section Scripts {
     <script>
 
-        // URL para el modal (usa la acción que añadimos)
         window.api = window.api || {};
         window.api.producto = window.api.producto || {};
         window.api.producto.listar = '@Url.Action("ListarParaPOS", "Productos")';
 
-        $(function () {
-            $('#btnAgregarManual').off('click').on('click', function (e) {
-                e.preventDefault();
-                if (typeof window.abrirModalSeleccionarProducto === 'function') {
-                    window.abrirModalSeleccionarProducto();
-                    return;
-                }
-                // fallback seguro
-                var $modal = $('#modalSeleccionarProducto');
-                var $input = $('#modalBuscarProductoInput');
-                $modal.modal('show');
-                setTimeout(function () { $input.focus(); }, 120);
-            });
+        $('#btnAgregarManual').on('click', function (e) {
+            e.preventDefault();
+            $('#modalBuscarProducto').modal('show');
         });
+
 
         let typingTimer = null;
         let productoSeleccionado = null;
@@ -825,7 +816,7 @@
         function terminarEscritura(codigo, callback = null) {
 
             // 🔹 Sin código → estado inicial
-            if (!codigo || codigo.trim() === "") {
+            if (!codigo || String(codigo).trim() === '') {
                 mostrarEsperando();
                 return;
             }
@@ -835,7 +826,7 @@
                 type: "GET",
                 dataType: "json",
                 data: {
-                    codigo: codigo.trim(),
+                    codigo: String(codigo).trim(),
                     ingresoCantidadX: ingresoCantidadX
                 },
                 timeout: 3000, // ⏱ máximo de espera
@@ -940,6 +931,8 @@
                 .val("");
 
             $("#btnAgregarProducto").prop("disabled", true);
+
+            $("#inputCodigo").focus();
         }
 
 
@@ -1342,6 +1335,18 @@
                 if (ingresoCantidadX) {
                     ingresoCantidadX = false;
                     enterDesdeTecladoVirtual = false;
+                    return;
+                }
+
+                //verificar si el producto encontrado es igual al valor de inputCodigo
+                //estaba verificacion es por la lentitud del servicio en la respuesta del codigo
+                const codigoInput = String($('#inputCodigo').val() || '').trim();
+                const codigoProducto = String(productoSeleccionado.codigo || '').trim();
+
+                // 🔴 Validación clave
+                if (codigoProducto !== codigoInput) {
+                    mostrarSinCoincidencia();
+                    productoSeleccionado = null;
                     return;
                 }
 

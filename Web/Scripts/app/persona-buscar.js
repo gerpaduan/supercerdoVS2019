@@ -1,12 +1,4 @@
 ﻿//// Abrir modal
-//$('#btnBuscarPersona').on('click', function () {
-
-//    $('#contenedorModalPersona').load('/Personas/Buscar', function () {
-//        $('#modalBuscarPersona').modal('show');
-//        cargarPersonas();
-//    });
-
-//});
 
 // Buscar en vivo
 $(document).on('keyup', '#filtroPersona', function () {

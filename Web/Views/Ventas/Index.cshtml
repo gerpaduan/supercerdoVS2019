@@ -10,11 +10,11 @@
 }
 
 
-<div class="container-fluid p-0">
+<div class="container-fluid  p-0 vista-venta">
 
     <!-- 🗓 Filtro por fechas y Sucursal -->
     <div class="card mb-3 shadow-sm p-3">
-        <form method="get" action="@Url.Action("Index")" class="w-100">
+        <form id="formFiltroFechas" method="get" action="@Url.Action("Index")" class="w-100">
 
             <!-- ⭐ FILA 1: Fechas + Botón -->
             <div class="form-inline mb-3">
@@ -43,7 +43,7 @@
 
                 <button type="submit"
                         id="btnFiltrarFechas"
-                        class="btn btn-secondary"
+                        class="btn btn-primary"
                         disabled>
                     Filtrar fechas
                 </button>
@@ -121,8 +121,8 @@
                 </h5>
 
                 @*<h5 class="text-muted m-0" style="font-weight: 500;">
-                    Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
-                </h5>*@
+                        Total: @(( (decimal)ViewBag.TotalFiltrado ).ToString("C"))
+                    </h5>*@
                 <h5 id="totalFiltrado" class="text-muted m-0" style="font-weight: 500;">
                     Total: @(((decimal)ViewBag.TotalFiltrado).ToString("C"))
                 </h5>
@@ -221,140 +221,202 @@
 
 <!-- Select2 (después de jQuery) -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    const buscadorCliente = document.getElementById("buscadorCliente");
-    const buscadorVendedor = document.getElementById("buscadorVendedor");
-    const filtroFormaPago = document.getElementById("formaPago");
-    const ventas = document.querySelectorAll(".venta-item");
+@section Scripts {
+    <script>
 
-    function aplicarFiltros() {
+        $(document).ready(function () {
 
-        const textoCliente = (buscadorCliente?.value || "").toLowerCase();
-        const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
-        const formaPagoSel = (filtroFormaPago?.value || "").toLowerCase();
+            const $form = $('#formFiltroFechas');
 
-        let total = 0;
-        let cant = 0;
-        let algunaVisible = false;
-
-        ventas.forEach(v => {
-
-            const cliente = (v.dataset.cliente || "").toLowerCase();
-            const identificacion = (v.dataset.identificacion || "").toLowerCase();
-            const vendedor = (v.dataset.vendedor || "").toLowerCase();
-            const formaPago = (v.dataset.formaPago || "").toLowerCase();
-
-            const coincideCliente =
-                !textoCliente ||
-                cliente.includes(textoCliente) ||
-                identificacion.includes(textoCliente);
-
-            const coincideVendedor =
-                !textoVendedor ||
-                vendedor.includes(textoVendedor);
-
-            const coincideFormaPago =
-                !formaPagoSel ||
-                formaPago === formaPagoSel;
-
-            const mostrar =
-                coincideCliente &&
-                coincideVendedor &&
-                coincideFormaPago;
-
-            v.style.display = mostrar ? "" : "none";
-
-            if (mostrar) {
-                algunaVisible = true;
-
-                const valor = parseFloat(
-                    v.querySelector(".importe")?.dataset.valor || 0
-                );
-                total += valor;
-                cant++;
+            if ($form.length === 0) {
+                console.warn('formFiltroFechas NO encontrado');
+                return;
             }
-        });
 
-        // actualizar total
-        document.getElementById("totalFiltrado").textContent =
-            "Total: " + total.toLocaleString("es-AR", {
-                style: "currency",
-                currency: "ARS"
+            const $fechaDesde = $('#fechaDesde');
+            const $fechaHasta = $('#fechaHasta');
+            const $btnFiltrar = $('#btnFiltrarFechas');
+
+            const fechaDesdeInicial = $fechaDesde.val();
+            const fechaHastaInicial = $fechaHasta.val();
+
+            function fechasValidas() {
+                if (!$fechaDesde.val() || !$fechaHasta.val()) return false;
+                return new Date($fechaDesde.val()) <= new Date($fechaHasta.val());
+            }
+
+            function verificarCambios() {
+                const cambio =
+                    $fechaDesde.val() !== fechaDesdeInicial ||
+                    $fechaHasta.val() !== fechaHastaInicial;
+
+                const valido = fechasValidas();
+
+                $fechaDesde.toggleClass('is-invalid', !valido);
+                $fechaHasta.toggleClass('is-invalid', !valido);
+
+                $btnFiltrar.prop('disabled', !(cambio && valido));
+            }
+
+            $fechaDesde.on('change input', verificarCambios);
+            $fechaHasta.on('change input', verificarCambios);
+
+            $form.on('submit', function (e) {
+                if (!fechasValidas()) {
+                    e.preventDefault();
+                    return false;
+                }
+                return true;
             });
 
-        document.getElementById("cantFiltrado").textContent = "Cant: " + cant.toString();
-
-        // mostrar / ocultar mensaje "No hay coincidencias"
-        document.querySelectorAll(".fecha-grupo").forEach(f => {
-            const tieneVentas = Array.from(
-                f.nextElementSibling?.parentNode.children || []
-            ).some(li => li.classList.contains("venta-item") && li.style.display !== "none");
-
-            f.style.display = tieneVentas ? "" : "none";
         });
+
+        const buscadorCliente = document.getElementById("buscadorCliente");
+        const buscadorVendedor = document.getElementById("buscadorVendedor");
+        const filtroFormaPago = document.getElementById("formaPago");
+        const ventas = document.querySelectorAll(".venta-item");
+
+        function aplicarFiltros() {
+
+            const textoCliente = (buscadorCliente?.value || "").toLowerCase();
+            const textoVendedor = (buscadorVendedor?.value || "").toLowerCase();
+            const formaPagoSel = (filtroFormaPago?.value || "").toLowerCase();
+
+            let total = 0;
+            let cant = 0;
+            let algunaVisible = false;
+
+            ventas.forEach(v => {
+
+                const cliente = (v.dataset.cliente || "").toLowerCase();
+                const identificacion = (v.dataset.identificacion || "").toLowerCase();
+                const vendedor = (v.dataset.vendedor || "").toLowerCase();
+                const formaPago = (v.dataset.formaPago || "").toLowerCase();
+
+                const coincideCliente =
+                    !textoCliente ||
+                    cliente.includes(textoCliente) ||
+                    identificacion.includes(textoCliente);
+
+                const coincideVendedor =
+                    !textoVendedor ||
+                    vendedor.includes(textoVendedor);
+
+                const coincideFormaPago =
+                    !formaPagoSel ||
+                    formaPago === formaPagoSel;
+
+                const mostrar =
+                    coincideCliente &&
+                    coincideVendedor &&
+                    coincideFormaPago;
+
+                v.style.display = mostrar ? "" : "none";
+
+                if (mostrar) {
+                    algunaVisible = true;
+
+                    const valor = parseFloat(
+                        v.querySelector(".importe")?.dataset.valor || 0
+                    );
+                    total += valor;
+                    cant++;
+                }
+            });
+
+            // actualizar total
+            document.getElementById("totalFiltrado").textContent =
+                "Total: " + total.toLocaleString("es-AR", {
+                    style: "currency",
+                    currency: "ARS"
+                });
+
+            document.getElementById("cantFiltrado").textContent = "Cant: " + cant.toString();
+
+            // mostrar / ocultar mensaje "No hay coincidencias"
+            document.querySelectorAll(".fecha-grupo").forEach(f => {
+                const tieneVentas = Array.from(
+                    f.nextElementSibling?.parentNode.children || []
+                ).some(li => li.classList.contains("venta-item") && li.style.display !== "none");
+
+                f.style.display = tieneVentas ? "" : "none";
+            });
+        }
+
+        buscadorCliente?.addEventListener("input", aplicarFiltros);
+        buscadorVendedor?.addEventListener("input", aplicarFiltros);
+        filtroFormaPago?.addEventListener("change", aplicarFiltros);
+
+    </script>
     }
-
-    buscadorCliente?.addEventListener("input", aplicarFiltros);
-    buscadorVendedor?.addEventListener("input", aplicarFiltros);
-    filtroFormaPago?.addEventListener("change", aplicarFiltros);
-
-</script>
 
 
 <style>
-    /* Mantengo tus estilos actuales */
-    .venta-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        padding: 10px 15px;
-    }
+        /* Mantengo tus estilos actuales */
+        .venta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 10px 15px;
+        }
 
-    .venta-icono {
-        flex: 0 0 auto;
-        margin-right: 10px;
-    }
+        .venta-icono {
+            flex: 0 0 auto;
+            margin-right: 10px;
+        }
 
-    .venta-info {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
+        .venta-info {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
 
-    /* Estilo general para escritorio */
-    .venta-tipo-persona {
-        word-wrap: break-word; /* permite cortar palabras largas */
-        /*overflow-wrap: break-word*/; /* asegura compatibilidad */
-        white-space: normal;
-    }
-
-    /* En pantallas pequeñas (celulares) */
-    @@media (max-width: 576px) {
+        /* Estilo general para escritorio */
         .venta-tipo-persona {
-            max-width: 17ch;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: block;
-        }
-    }
-
-    .venta-id {
-        font-size: 0.8rem;
-        color: #6c757d;
-    }
-
-    .venta-total {
-        text-align: right;
-        flex: 0 0 auto;
-    }
-
-        .venta-total .importe {
-            font-weight: bold;
-            color: #28a745;
+            word-wrap: break-word; /* permite cortar palabras largas */
+            /*overflow-wrap: break-word*/; /* asegura compatibilidad */
+            white-space: normal;
         }
 
-    .venta-item:hover {
-        background-color: #f8f9fc;
-    }
+        /* En pantallas pequeñas (celulares) */
+        @@media (max-width: 576px) {
+            .venta-tipo-persona {
+                max-width: 17ch;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: block;
+            }
+        }
+
+        .venta-id {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .venta-total {
+            text-align: right;
+            flex: 0 0 auto;
+        }
+
+            .venta-total .importe {
+                font-weight: bold;
+                color: #28a745;
+            }
+
+        .venta-item:hover {
+            background-color: #f8f9fc;
+        }
+
+        /* Solo en pantallas grandes */
+        @@media (min-width: 992px) {
+            .vista-venta {
+                width: 60%;
+                max-width: none; /* anula reglas de container */
+                margin: 0 !important; /* elimina auto margins de Bootstrap */
+                padding-left: 0;
+                padding-right: 0;
+            }
+        }
+
 </style>
