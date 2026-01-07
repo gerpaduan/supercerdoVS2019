@@ -288,11 +288,26 @@
                     <!-- ===================== -->
                     <div class="col-lg-6 d-flex flex-column">
 
+                        <!-- BLOQUE SCANNER -->
+                        <div class="row" id="scannerContainer" style="display:none;">
+                            <div class="col-12">
+                                <div class="card shadow">
+                                    <div class="card-body text-center">
+                                        <div id="scanner" style="width:100%; height:300px;"></div>
+                                        <button class="btn btn-danger mt-2" id="btnCerrarScanner">
+                                            Cerrar cámara
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- BUSCADOR -->
                         <div class="row g-2 mb-3">
                             <div class="col-12">
                                 <div class="input-group input-group-lg">
-                                    <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                    <span class="input-group-text scanner-btn" id="btnScanner">
+                                        <i class="fas fa-barcode"></i>
+                                    </span>
                                     <input type="text" id="inputCodigo" class="form-control"
                                            placeholder="Ingrese el codigo..." autocomplete="off" autofocus />
 
@@ -584,6 +599,7 @@
 
 }
 
+
 <!-- Contenedor dinámico del modal -->
 <div id="contenedorModalPersona"></div>
 
@@ -594,9 +610,102 @@
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<audio id="beep">
+    <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=" type="audio/wav">
+</audio>
 
 @section Scripts {
     <script>
+
+        //LECTOR DE CODIGO BARRA CON CAMARA
+        let scannerActivo = false;
+        let ultimoCodigo = null;
+
+        $("#btnScanner").on("click", function () {
+            $("#scannerContainer").slideDown();
+            iniciarScanner();
+        });
+
+        $("#btnCerrarScanner").on("click", function () {
+            cerrarScanner();
+        });
+
+        function iniciarScanner() {
+            if (scannerActivo) return;
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#scanner'),
+                    constraints: {
+                        facingMode: "environment"
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_128_reader",
+                        "upc_reader"
+                    ]
+                }
+            }, function (err) {
+                if (err) {
+                    alert("No se pudo acceder a la cámara");
+                    return;
+                }
+                Quagga.start();
+                scannerActivo = true;
+            });
+
+            Quagga.onDetected(function (data) {
+                let codigo = data.codeResult.code;
+
+                // evita lecturas duplicadas
+                if (codigo === ultimoCodigo) return;
+                ultimoCodigo = codigo;
+
+                beep();
+                    navigator.vibrate?.(100); // vibración en Android
+                cargarCodigo(codigo);
+
+                cerrarScanner();
+            });
+        }
+
+        function cargarCodigo(codigo) {
+            let input = $("#inputCodigo"); // 👈 AJUSTÁ EL ID SI ES NECESARIO
+
+            input
+                .val(codigo)
+                .focus();
+
+            // 🔥 Simular ENTER real
+            let e = $.Event("keydown");
+            e.key = "Enter";
+            e.keyCode = 13;
+            e.which = 13;
+
+            input.trigger(e);
+        }
+
+        function cerrarScanner() {
+            if (scannerActivo) {
+                Quagga.stop();
+                scannerActivo = false;
+            }
+            $("#scannerContainer").slideUp();
+        }
+
+        function beep() {
+            let audio = document.getElementById("beep");
+            audio.currentTime = 0;
+            audio.play();
+        }
+
+        //FIN LECTOR CODIGO
 
         window.api = window.api || {};
         window.api.producto = window.api.producto || {};
@@ -1661,6 +1770,11 @@
 }
 
 <style>
+
+    .scanner-btn {
+        cursor: pointer;
+    }
+
     .fila-item {
         cursor: pointer;
     }
