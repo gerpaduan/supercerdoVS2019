@@ -13,6 +13,42 @@ namespace Utilidades
 {
     public class GenerarCodigoBarra
     {
+        public static bool ValidarEAN(string codigo)
+        {
+            if (string.IsNullOrWhiteSpace(codigo))
+                return false;
+
+            if (!(codigo.Length == 8 || codigo.Length == 13))
+                return false;
+
+            if (!codigo.All(char.IsDigit))
+                return false;
+
+            int length = codigo.Length;
+            int checkDigit = int.Parse(codigo[length - 1].ToString());
+            int sum = 0;
+
+            for (int i = 0; i < length - 1; i++)
+            {
+                int digit = int.Parse(codigo[i].ToString());
+
+                if (length == 13)
+                {
+                    // EAN-13: posiciones pares (índice impar) * 3
+                    sum += (i % 2 == 0) ? digit : digit * 3;
+                }
+                else if (length == 8)
+                {
+                    // EAN-8: posiciones impares (índice par) * 3
+                    sum += (i % 2 == 0) ? digit * 3 : digit;
+                }
+            }
+
+            int calculated = (10 - (sum % 10)) % 10;
+            return calculated == checkDigit;
+        }
+
+
         public void Main()
         {
             PrintDocument pd = new PrintDocument();
@@ -65,6 +101,7 @@ namespace Utilidades
            // printDoc.Print();
 
         }
+
         static Bitmap GenerateBarcode(string data)
         {
             Zen.Barcode.Code128BarcodeDraw barcode = Zen.Barcode.BarcodeDrawFactory.Code128WithChecksum;

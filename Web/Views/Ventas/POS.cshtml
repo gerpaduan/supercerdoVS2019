@@ -314,9 +314,7 @@
                                 </div>
                             </div>
                         </div>
-
-                        <audio id="beep" src="/sounds/beep.mp3" preload="auto"></audio>
-
+                        <audio id="beep" src="/Content/sounds/focus-beep.wav" preload="auto"></audio>
 
                         <!-- BUSCADOR -->
                         <div class="row g-2 mb-3">
@@ -632,12 +630,27 @@
 @section Scripts {
     <script>
 
+        document.addEventListener("click", habilitarAudio, { once: true });
+
+        function habilitarAudio() {
+            const audio = document.getElementById("beep");
+            // Solo intentamos play para que Chrome lo habilite, pero lo silenciamo inmediatamente
+            audio.volume = 0;
+            audio.play().finally(() => {
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = 1; // volvemos volumen al normal
+            });
+        }
+
+
         //LECTOR DE CODIGO BARRA CON CAMARA
         let stream = null;
         let track = null;
         let detector = null;
         let scanning = false;
-
+        let esEAN = false;
+        
         // evitar duplicados
         let ultimoCodigo = null;
         let ultimoTiempo = 0;
@@ -693,17 +706,17 @@
 
                 if (codigos.length > 0) {
                     const codigo = codigos[0].rawValue;
-                    const ahora = Date.now();
 
+                    // Filtrar por longitud + checksum
+                    if (!esEANValido(codigo)) return;
+
+                    const ahora = Date.now();
                     const mismo = codigo === ultimoCodigo;
                     const tiempoOK = (ahora - ultimoTiempo) > TIEMPO_RELECTURA;
 
                     if (!mismo || tiempoOK) {
                         ultimoCodigo = codigo;
                         ultimoTiempo = ahora;
-
-                        beep();
-                        navigator.vibrate?.(80);
                         cargarCodigo(codigo);
                     }
                 }
@@ -735,11 +748,6 @@
             input.val(codigo).focus();
 
             manejarEnter();
-            //input.trigger($.Event("keydown", {
-            //    key: "Enter",
-            //    keyCode: 13,
-            //    which: 13
-            //}));
         }
 
         $("#btnFlash").on("click", async function () {
@@ -1282,6 +1290,8 @@
 
             // recalcular total
             recalcularTotal();
+            beep();
+            navigator.vibrate?.(80);
 
             // limpiar campos
             $("#inputCodigo").val("").focus();
@@ -1359,7 +1369,7 @@
                 return; // desktop → no hace nada
             }
 
-            const anchor = document.getElementById('pos-bottom-anchor');
+            const anchor = esEAN ? document.getElementById('btnAgregarProducto') : document.getElementById('pos-bottom-anchor');
             if (!anchor) return;
 
             anchor.scrollIntoView({
@@ -1528,9 +1538,13 @@
         function procesarCodigoConCantidad() {
 
             const codigoInput = document.getElementById("inputCodigo");
-            const valor = codigoInput.value.toUpperCase();
+            let valor = codigoInput.value.toUpperCase();
+            esEAN = esEANValido(valor);
 
-            if (!valor.includes("X")) return;
+            if (!valor.includes("X") && !esEAN) return;
+
+            valor = (esEAN && !valor.includes("X")) ? "1X" + valor : valor;
+
 
             const partes = valor.split("X");
             if (partes.length !== 2) return;
@@ -1550,6 +1564,7 @@
                 mostrarEsperando();
             });
 
+            esEAN = false;
             //ingresoCantidadX = true; 29/12 lo cambie arriba para pasar el parametar a buscarProducto
         }
 
