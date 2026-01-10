@@ -321,7 +321,7 @@ namespace Web.Controllers
                 var corte = gestorCortes.findCorteByCodigo(codigoProducto, false);
 
                 if (corte == null)
-                    return Json(new { error = "Producto no encontrado" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "Código inexistente" }, JsonRequestBehavior.AllowGet);
 
                 if (esGenerico)
                 {
@@ -345,7 +345,7 @@ namespace Web.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 

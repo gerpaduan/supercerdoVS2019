@@ -630,34 +630,188 @@
 @section Scripts {
     <script>
 
+        //document.addEventListener("click", habilitarAudio, { once: true });
+
+        //function habilitarAudio() {
+        //    const audio = document.getElementById("beep");
+        //    // Solo intentamos play para que Chrome lo habilite, pero lo silenciamo inmediatamente
+        //    audio.volume = 0;
+        //    audio.play().finally(() => {
+        //        audio.pause();
+        //        audio.currentTime = 0;
+        //        audio.volume = 1; // volvemos volumen al normal
+        //    });
+        //}
+
+
+        ////LECTOR DE CODIGO BARRA CON CAMARA
+        //let stream = null;
+        //let track = null;
+        //let detector = null;
+        //let scanning = false;
+        //let esEAN = false;
+
+        //// evitar duplicados
+        //let ultimoCodigo = null;
+        //let ultimoTiempo = 0;
+        //const TIEMPO_RELECTURA = 2000; // ms
+
+        //const video = document.getElementById("videoScanner");
+
+        //$("#btnScanner").on("click", async function () {
+        //    $("#scannerContainer").slideDown();
+        //    await iniciarScanner();
+        //});
+
+        //$("#btnCerrarScanner").on("click", function () {
+        //    cerrarScanner();
+        //});
+
+        //async function iniciarScanner() {
+
+        //    if (scanning) return;
+        //    scanning = true;
+
+        //    if (!("BarcodeDetector" in window)) {
+        //        alert("Este navegador no soporta BarcodeDetector");
+        //        return;
+        //    }
+
+        //    detector = new BarcodeDetector({
+        //        formats: ["ean_13", "ean_8", "code_128", "upc_a"]
+        //    });
+
+        //    stream = await navigator.mediaDevices.getUserMedia({
+        //        video: {
+        //            facingMode: { ideal: "environment" },
+        //            width: { ideal: 640 },
+        //            height: { ideal: 480 }
+        //        }
+        //    });
+
+        //    video.srcObject = stream;
+        //    await video.play();
+
+        //    track = stream.getVideoTracks()[0];
+
+        //    leerContinuamente();
+        //}
+
+        //async function leerContinuamente() {
+
+        //    if (!scanning) return;
+
+        //    try {
+        //        const codigos = await detector.detect(video);
+
+        //        if (codigos.length > 0) {
+        //            const codigo = codigos[0].rawValue;
+
+        //            // Filtrar por longitud + checksum
+        //            if (!esEANValido(codigo)) return;
+
+        //            const ahora = Date.now();
+        //            const mismo = codigo === ultimoCodigo;
+        //            const tiempoOK = (ahora - ultimoTiempo) > TIEMPO_RELECTURA;
+
+        //            if (!mismo || tiempoOK) {
+        //                ultimoCodigo = codigo;
+        //                ultimoTiempo = ahora;
+        //                cargarCodigo(codigo);
+        //            }
+        //        }
+
+        //    } catch (e) {
+        //        console.error(e);
+        //    }
+
+        //    requestAnimationFrame(leerContinuamente);
+        //}
+
+        //function cerrarScanner() {
+
+        //    scanning = false;
+
+        //    if (track) track.stop();
+        //    if (stream) stream.getTracks().forEach(t => t.stop());
+
+        //    video.srcObject = null;
+        //    stream = null;
+        //    track = null;
+
+        //    $("#scannerContainer").slideUp();
+        //}
+
+        //function cargarCodigo(codigo) {
+        //    const input = $("#inputCodigo");
+
+        //    input.val(codigo).focus();
+
+        //    manejarEnter();
+        //}
+
+        //$("#btnFlash").on("click", async function () {
+
+        //    if (!track) return alert("Flash no disponible");
+
+        //    const cap = track.getCapabilities();
+        //    if (!cap.torch) return alert("Este dispositivo no soporta flash");
+
+        //    const settings = track.getSettings();
+
+        //    await track.applyConstraints({
+        //        advanced: [{ torch: !settings.torch }]
+        //    });
+        //});
+
+        //function beep() {
+        //    const audio = document.getElementById("beep");
+        //    if (!audio) return;
+
+        //    audio.currentTime = 0;
+        //    audio.play();
+        //}
+
         document.addEventListener("click", habilitarAudio, { once: true });
 
         function habilitarAudio() {
             const audio = document.getElementById("beep");
-            // Solo intentamos play para que Chrome lo habilite, pero lo silenciamo inmediatamente
             audio.volume = 0;
             audio.play().finally(() => {
                 audio.pause();
                 audio.currentTime = 0;
-                audio.volume = 1; // volvemos volumen al normal
+                audio.volume = 1;
             });
         }
 
-
-        //LECTOR DE CODIGO BARRA CON CAMARA
+        // VARIABLES
         let stream = null;
         let track = null;
         let detector = null;
         let scanning = false;
         let esEAN = false;
-        
-        // evitar duplicados
         let ultimoCodigo = null;
         let ultimoTiempo = 0;
-        const TIEMPO_RELECTURA = 2000; // ms
-
+        const TIEMPO_RELECTURA = 2000;
         const video = document.getElementById("videoScanner");
 
+        // ANTI FREEZE
+        let ultimoFrame = Date.now();
+        function checkCongelamiento() {
+            if (!scanning) return;
+
+            const ahora = Date.now();
+            if (ahora - ultimoFrame > 2000) {
+                console.warn("⚠ Cámara parece congelada. Reiniciando...");
+                cerrarScanner();
+                setTimeout(iniciarScanner, 500);
+                return;
+            }
+
+            requestAnimationFrame(checkCongelamiento);
+        }
+
+        // BOTONES
         $("#btnScanner").on("click", async function () {
             $("#scannerContainer").slideDown();
             await iniciarScanner();
@@ -667,13 +821,14 @@
             cerrarScanner();
         });
 
+        // INICIAR SCANNER
         async function iniciarScanner() {
-
             if (scanning) return;
             scanning = true;
 
             if (!("BarcodeDetector" in window)) {
                 alert("Este navegador no soporta BarcodeDetector");
+                scanning = false;
                 return;
             }
 
@@ -685,30 +840,34 @@
                 video: {
                     facingMode: { ideal: "environment" },
                     width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    height: { ideal: 480 },
+                    advanced: [{ focusMode: "continuous" }] // 🟢 mejora autofoco
                 }
             });
 
+            track = stream.getVideoTracks()[0];
             video.srcObject = stream;
             await video.play();
 
-            track = stream.getVideoTracks()[0];
-
+            ultimoFrame = Date.now();
             leerContinuamente();
+            requestAnimationFrame(checkCongelamiento);
         }
 
+        // LOOP LIMITADO (NO 60fps)
         async function leerContinuamente() {
-
             if (!scanning) return;
 
             try {
                 const codigos = await detector.detect(video);
+                ultimoFrame = Date.now();
 
                 if (codigos.length > 0) {
                     const codigo = codigos[0].rawValue;
 
-                    // Filtrar por longitud + checksum
-                    if (!esEANValido(codigo)) return;
+                    if (!esEANValido(codigo)) {
+                        return setTimeout(leerContinuamente, 200);
+                    }
 
                     const ahora = Date.now();
                     const mismo = codigo === ultimoCodigo;
@@ -722,55 +881,56 @@
                 }
 
             } catch (e) {
-                console.error(e);
+                console.error("Error en detector:", e);
             }
 
-            requestAnimationFrame(leerContinuamente);
+            setTimeout(leerContinuamente, 200); // 🔹 ritmo estable
         }
 
+        // CERRAR SCANNER
         function cerrarScanner() {
-
             scanning = false;
 
-            if (track) track.stop();
-            if (stream) stream.getTracks().forEach(t => t.stop());
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+            }
 
             video.srcObject = null;
             stream = null;
             track = null;
+            detector = null; // 🟢 importante
 
             $("#scannerContainer").slideUp();
         }
 
+        // CARGAR CÓDIGO DETECTADO
         function cargarCodigo(codigo) {
             const input = $("#inputCodigo");
-
             input.val(codigo).focus();
-
             manejarEnter();
         }
 
+        // FLASH
         $("#btnFlash").on("click", async function () {
-
             if (!track) return alert("Flash no disponible");
 
             const cap = track.getCapabilities();
             if (!cap.torch) return alert("Este dispositivo no soporta flash");
 
             const settings = track.getSettings();
-
             await track.applyConstraints({
                 advanced: [{ torch: !settings.torch }]
             });
         });
 
+        // BEEP
         function beep() {
             const audio = document.getElementById("beep");
             if (!audio) return;
-
             audio.currentTime = 0;
             audio.play();
         }
+
 
         //FIN LECTOR CODIGO
 
@@ -1009,9 +1169,8 @@
 
                 success: function (data) {
 
-                    // 🔴 Sin datos o error lógico
-                    if (!data || data.error === true) {
-                        mostrarSinCoincidencia();
+                    if (data.success === false) {
+                        mostrarSinCoincidencia(data.message);
                         return;
                     }
 
@@ -1086,13 +1245,13 @@
 
 
         // NO HAY COINCIDENCIA
-        function mostrarSinCoincidencia() {
+        function mostrarSinCoincidencia(msg = "Sin coincidencia") {
 
             productoSeleccionado = null;
             precioActual = 0;
 
             $("#prodNombre")
-                .text("Sin coincidencia")
+                .text(msg)
                 .removeClass("fw-bold")
                 .addClass("text-muted");
 
