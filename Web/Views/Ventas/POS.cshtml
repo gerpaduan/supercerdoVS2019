@@ -626,6 +626,8 @@
 
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 
+@Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
+
 
 @section Scripts {
     <script>
@@ -1585,10 +1587,10 @@
                 esEAN = esEANValido(valor);
                 if (!esEAN)
                     return;
-            }             
+            }
 
             valor = (esEAN && !valor.includes("X")) ? "1X" + valor : valor;
-                        
+
             const partes = valor.split("X");
             if (partes.length !== 2) return;
 
@@ -1627,6 +1629,9 @@
             scrollPantallaMobile();
         });
 
+        function mostrarModalPostVenta(ventaId) {
+            $('#modalPostVenta').data('venta-id', ventaId).modal('show');
+        }
 
 
         function esPantallaChica() {

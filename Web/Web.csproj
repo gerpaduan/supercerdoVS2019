@@ -1845,6 +1845,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Scripts\app\modal-cheque.js" />
     <Content Include="Scripts\app\forma-pago.js" />
+    <Content Include="Scripts\app\modal-post-venta.js" />
     <Content Include="Scripts\app\modal-sucursales.js" />
     <Content Include="Scripts\app\persona-buscar.js" />
     <Content Include="Scripts\app\modal-productos.js" />
@@ -2046,6 +2047,7 @@
     <Content Include="Views\Cajas\_AbrirCajaModal.cshtml" />
     <Content Include="Views\Ventas\_ModalLineaVenta.cshtml" />
     <Content Include="Views\Productos\_BuscarProductoModal.cshtml" />
+    <Content Include="Views\Ventas\_ModalPostVenta.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

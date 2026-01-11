@@ -205,11 +205,11 @@ namespace Web.Controllers
                 // ===============================
                 venta.LineasVenta = lineasVenta;
 
-                oVentaN.agregarVenta(venta);
+                int idVenta = oVentaN.agregarVenta(venta);
 
                 Session.Remove("VentaActiva");
 
-                return Json(new { ok = true }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = true, ventaId = idVenta }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {

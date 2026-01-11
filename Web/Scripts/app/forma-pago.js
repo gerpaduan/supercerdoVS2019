@@ -161,7 +161,29 @@ function finalizarVenta(data) {
         contentType: 'application/json',
         dataType: 'json', // 🔥 CLAVE
         data: JSON.stringify(payload),
+
         success: function (resp) {
+
+            //if (!resp.ok) {
+            //    Swal.fire({
+            //        icon: 'error',
+            //        title: 'Error',
+            //        text: resp.msg || 'No se pudo finalizar la venta'
+            //    });
+            //    ventaEnProceso = false;
+            //    return;
+            //}
+
+            //Swal.fire({
+            //    icon: 'success',
+            //    title: 'Venta finalizada',
+            //    timer: 1500,
+            //    showConfirmButton: false
+            //});
+
+            //$('#modalFormaPago').modal('hide');
+            //hayVentaEnCurso = false;
+            //setTimeout(() => location.reload(), 1600);
 
             if (!resp.ok) {
                 Swal.fire({
@@ -173,17 +195,18 @@ function finalizarVenta(data) {
                 return;
             }
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Venta finalizada',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            // --- NUEVO: GUARDAMOS ID VENTA PARA POST-VENTA ---
+            const ventaId = resp.ventaId; // tu backend debe mandar esto
 
             $('#modalFormaPago').modal('hide');
             hayVentaEnCurso = false;
-            setTimeout(() => location.reload(), 1600);
+
+            // Esperamos cierre animación
+            setTimeout(() => {
+                mostrarModalPostVenta(ventaId);
+            }, 400);
         },
+
         error: function (xhr) {
             Swal.fire({
                 icon: 'error',
