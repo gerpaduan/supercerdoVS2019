@@ -1,21 +1,26 @@
-﻿$('#btnImprimirTicket').on('click', function () {
+﻿function imprimirTicket(mm) {
     const ventaId = $('#modalPostVenta').data('venta-id');
 
-    $.get('/Venta/ImprimirTicket', { id: ventaId }, function (resp) {
-        // resp puede ser PDF, ESC/POS, o base64 según tu implementación
-        Swal.fire({
-            icon: 'success',
-            title: 'Ticket enviado',
-            timer: 1500,
-            showConfirmButton: false
-        });
+    // borrar iframe previo
+    $('#iframePrint').remove();
+
+    const iframe = $('<iframe>', {
+        id: 'iframePrint',
+        style: 'display:none;',
+        src: `/Ventas/ImprimirTicket?id=${ventaId}&mm=${mm}`
     });
-});
+
+    $('body').append(iframe);
+
+    $('#modalPostVenta').modal('hide');
+    setTimeout(() => location.reload(), 400);
+}
+
 
 $('#btnFacturaElectronica').on('click', function () {
     const ventaId = $('#modalPostVenta').data('venta-id');
 
-    $.post('/Factura/Emitir', { id: ventaId }, function (resp) {
+    $.post(api.venta.imprimir, { id: ventaId }, function (resp) {
         Swal.fire({
             icon: resp.ok ? 'success' : 'error',
             title: resp.ok ? 'Factura generada' : 'Error AFIP',

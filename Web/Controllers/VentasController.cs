@@ -20,8 +20,10 @@ namespace Web.Controllers
         public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
         Negocio.Persona oPersonaN = new Negocio.Persona();
         Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        Entidades.CierreCaja  oCierreE = new Entidades.CierreCaja();
         Negocio.Corte oCorteN = new Negocio.Corte();
+
+        Entidades.CierreCaja  oCierreE = new Entidades.CierreCaja();
+        Entidades.Venta.imprimirCbteEnum imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
         // GET: Ventas
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
         {
@@ -413,6 +415,31 @@ namespace Web.Controllers
             }
         }
 
+        #endregion
+
+        #region IMPRIMIR
+        [HttpGet]
+        public ActionResult ImprimirTicket(int id, int mm)
+        {
+            try
+            {
+                var venta = oVentaN.getVentaById(id);// _ventaService.ObtenerVentaCompleta(id);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" }, JsonRequestBehavior.AllowGet);
+
+                imprimirCbte = Entidades.Venta.imprimirCbteEnum.Ticket;
+                // Genera el ticket (ESC/POS, PDF, etc)
+
+                ViewBag.Medida = mm == 58 ? 58 : 80;
+
+                return View("~/Views/Ventas/_TicketHTML.cshtml", venta);
+
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, msg = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
         #endregion
     }
 

@@ -1,0 +1,176 @@
+﻿@model Entidades.Venta
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    <style>
+        body {
+            font-family: Consolas, "Courier New", monospace;
+            color: #000;
+            margin: 0;
+        }
+
+        .ticket-80 {
+            width: 80mm;
+            font-size: 12px;
+        }
+
+        .ticket-58 {
+            width: 58mm;
+            font-size: 11px;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .left {
+            text-align: left;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .big {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        .xbig {
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .line {
+            border-top: 1px dashed #000;
+            margin: 6px 0;
+        }
+
+        .spacer {
+            height: 6px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body class="@ViewBag.Medida" onload="window.print()">
+
+    <!-- X -->
+    <div class="center xbig">X</div>
+
+    <!-- No válido -->
+    <div class="center">-No válido como Factura-</div>
+
+    <div class="spacer"></div>
+
+    <!-- Negocio -->
+    <div class="center big">@ViewBag.Negocio</div>
+
+    @if (!string.IsNullOrWhiteSpace(ViewBag.NegocioAgregado1))
+    {
+        <div class="center">@ViewBag.NegocioAgregado1</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(ViewBag.NegocioAgregado2))
+    {
+        <div class="center">@ViewBag.NegocioAgregado2</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(ViewBag.NegocioAgregado3))
+    {
+        <div class="left">@ViewBag.NegocioAgregado3</div>
+    }
+
+    <div class="spacer"></div>
+
+    @if (Model.EnCtaCte && Model.FormaPago == "Efectivo")
+    {
+        <div class="center bold">A Cta. Cte.</div>
+    }
+
+    <!-- Cliente -->
+    <div class="left">A @Model.Persona.razonSocial</div>
+
+    <!-- Forma de pago -->
+    <div class="left">
+        Forma Pago:
+        @(Model.PagoMixtoEfectivo > 0
+            ? Model.FormaPago + " | Efvo"
+            : Model.FormaPago)
+    </div>
+
+    <!-- Ticket / Fecha -->
+    <div class="left">Nro. T. @Model.IdVenta</div>
+
+    <div class="row">
+        <div>Fecha: @Model.FechaVenta.ToString("dd/MM/yyyy")</div>
+        <div>Hora: @Model.FechaVenta.ToString("HH:mm")</div>
+    </div>
+
+    <div class="line"></div>
+
+    <!-- ARTÍCULOS (CLON DE AgregaArticulo) -->
+    @foreach (var l in Model.LineasVenta)
+    {
+        <!-- cantidad x precio -->
+    <div class="left">
+        @(l.Corte.corte.Length > 22
+                        ? l.Corte.corte.Substring(0, 22)
+                        : l.Corte.corte)
+    </div>
+
+        <!-- producto + total -->
+        <div class="row">
+            <div>
+                @l.CantKg.ToString("F3") x @l.PrecioKg.ToString("N2")
+            </div>
+            <div>
+                @((l.CantKg * l.PrecioKg).ToString("N2"))
+            </div>
+        </div>
+    }
+
+    <div class="line"></div>
+
+    <!-- TOTAL -->
+    <div class="row bold">
+        <div>Total</div>
+        <div>@Model.TotalImporte.ToString("N2")</div>
+    </div>
+
+    @if (Model.Abona > 0)
+    {
+        <div class="row">
+            <div>Pago</div>
+            <div>@Model.Abona.ToString("N2")</div>
+        </div>
+        <div class="row">
+            <div>Vuelto</div>
+            <div>@Model.Cambio.ToString("N2")</div>
+        </div>
+    }
+
+    <div class="spacer"></div>
+
+    <!-- Footer -->
+    <div class="left">Artículos: @Model.CantItems</div>
+    <div class="left">Cajero: @Model.Vendedor.Id</div>
+
+    <div class="spacer"></div>
+
+    <div class="center">Gracias por su visita</div>
+
+</body>
+</html>

@@ -1,34 +1,54 @@
-﻿<div class="modal fade" id="modalPostVenta" tabindex="-1" role="dialog">
+﻿<div class="modal fade" id="modalPostVenta" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
         <div class="modal-content">
 
+            <!-- HEADER -->
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">¡Venta Completada! ✔</h5>
+                <h5 class="modal-title">¡Venta completada! ✔</h5>
                 <button type="button" class="close text-white" data-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
 
+            <!-- BODY -->
             <div class="modal-body text-center">
 
                 <p class="mb-3" style="font-size:1.1rem;">
                     ¿Qué deseas hacer ahora?
                 </p>
 
-                <button class="btn btn-primary btn-lg btn-block mb-2" id="btnImprimirTicket">
-                    <i class="fas fa-receipt mr-1"></i> Imprimir Ticket
-                </button>
+                <!-- BLOQUE TICKET -->
+                <div class="mb-3">
+                    <div class="mb-2 text-muted">
+                        Imprimir ticket
+                    </div>
 
+                    <button class="btn btn-outline-primary mr-2"
+                            onclick="imprimirTicket(58)">
+                        🧾 Ticket 58 mm
+                    </button>
+
+                    <button class="btn btn-outline-primary"
+                            onclick="imprimirTicket(80)">
+                        🧾 Ticket 80 mm
+                    </button>
+                </div>
+
+                <hr />
+
+                <!-- FACTURA -->
                 <button class="btn btn-info btn-lg btn-block mb-2" id="btnFacturaElectronica">
-                    <i class="fas fa-file-invoice mr-1"></i> Factura Electrónica
+                    <i class="fas fa-file-invoice mr-1"></i>
+                    Factura electrónica
                 </button>
 
+                <!-- NO IMPRIMIR -->
                 <button class="btn btn-secondary btn-lg btn-block" id="btnNoImprimir">
-                    <i class="fas fa-times mr-1"></i> No imprimir
+                    <i class="fas fa-times mr-1"></i>
+                    No imprimir
                 </button>
 
             </div>
-
         </div>
     </div>
 </div>

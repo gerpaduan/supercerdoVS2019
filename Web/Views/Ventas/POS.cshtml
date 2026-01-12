@@ -628,6 +628,8 @@
 
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
 
+@Html.Partial("~/Views/Shared/_ModalPreImpresion.cshtml")
+
 
 @section Scripts {
     <script>
@@ -1880,7 +1882,8 @@
         window.api = window.api || {};
 
         window.api.venta = {
-            finalizar: '@Url.Action("FinalizarVenta", "Ventas")'
+            finalizar: '@Url.Action("FinalizarVenta", "Ventas")',
+            imprimir: '@Url.Action("ImprimirTicket", "Ventas")',
         };
 
         window.api.persona = {
