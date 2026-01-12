@@ -17,17 +17,17 @@
 }
 
 
-$('#btnFacturaElectronica').on('click', function () {
+$('#btnFacturaElectronica').click(function () {
     const ventaId = $('#modalPostVenta').data('venta-id');
 
-    $.post(api.venta.imprimir, { id: ventaId }, function (resp) {
-        Swal.fire({
-            icon: resp.ok ? 'success' : 'error',
-            title: resp.ok ? 'Factura generada' : 'Error AFIP',
-            text: resp.msg || '',
-        });
-    });
+    $('#FacturaVentaId').val(ventaId);  // pasamos idVenta
+    $('#FacturaVentaMm').val(0);        // mm=0 para factura
+
+    $('#modalPostVenta').modal('hide');
+    $('#modalFacturaElectronica').modal('show');
 });
+
+
 
 $('#btnNoImprimir').on('click', function () {
     $('#modalPostVenta').modal('hide');

@@ -427,6 +427,11 @@ namespace Web.Controllers
                 if (venta == null)
                     return Json(new { ok = false, msg = "Venta no encontrada" }, JsonRequestBehavior.AllowGet);
 
+                if (mm == 0)
+                {
+                    return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", venta);
+                }
+
                 imprimirCbte = Entidades.Venta.imprimirCbteEnum.Ticket;
                 // Genera el ticket (ESC/POS, PDF, etc)
 

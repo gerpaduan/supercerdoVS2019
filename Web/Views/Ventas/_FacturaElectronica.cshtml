@@ -1,0 +1,158 @@
+<!-- Modal Factura Electrónica -->
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow border-left-success">
+
+            <!-- HEADER -->
+            <div class="modal-header bg-success text-white py-2">
+                <h6 class="modal-title">Generar Factura Electrónica</h6>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <form id="formFacturaElectronica">
+                <input type="hidden" id="FacturaVentaId" name="IdVenta" />
+                <input type="hidden" id="FacturaVentaMm" name="Mm" value="0" />
+
+
+                <div class="modal-body">
+
+                    <!-- CLIENTE -->
+                    <h6 class="font-weight-bold text-success">Datos del Cliente</h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label class="small mb-1">Razón Social / Nombre</label>
+                            <input type="text" name="RazonSocialAFIP" class="form-control form-control-sm"
+                                   value="@Model.Persona?.Nombre" autocomplete="off">
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Documento (DNI/CUIT)</label>
+                            <input type="text" name="NroDocAFIP" class="form-control form-control-sm"
+                                   value="@Model.Persona?.Cuit" autocomplete="off">
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Condición frente IVA</label>
+                            <select name="CondicionIvaAFIP" class="form-control form-control-sm">
+                                <option>Consumidor Final</option>
+                                <option>Responsable Inscripto</option>
+                                <option>Monotributista</option>
+                                <option>Exento</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12 mb-2">
+                            <label class="small mb-1">Domicilio</label>
+                            <input type="text" name="DomicilioAFIP" class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1">Email</label>
+                            <input type="email" name="Email" class="form-control form-control-sm"
+                                   value="@Model.Persona?.Email">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="small mb-1">WhatsApp (para PDF)</label>
+                            <input type="text" name="Whatsapp" class="form-control form-control-sm"
+                                   placeholder="Ej: +54911xxxx">
+                        </div>
+                    </div>
+
+                    <!-- COMPROBANTE -->
+                    <h6 class="font-weight-bold text-success mt-2">Datos del Comprobante</h6>
+                    <div class="row">
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Tipo</label>
+                            <select name="TipoComprobante" id="TipoComprobante" class="form-control form-control-sm">
+                                <option value="A">Factura A</option>
+                                <option value="B" selected>Factura B</option>
+                                <option value="C">Factura C</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Forma de Pago</label>
+                            <select name="FormaPago" class="form-control form-control-sm">
+                                <option>Efectivo</option>
+                                <option>Debito</option>
+                                <option>Credito</option>
+                                <option>Transferencia</option>
+                                <option>QR</option>
+                                <option>CtaCte</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Punto de Venta</label>
+                            <input type="text" name="PtoVtaAfip" class="form-control form-control-sm" value="1">
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Fecha</label>
+                            <input type="date" name="Fecha" class="form-control form-control-sm"
+                                   value="@DateTime.Now.ToString("yyyy-MM-dd")">
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Neto Gravado</label>
+                            <input type="text" name="ImporteNetoGravado" class="form-control form-control-sm text-right"
+                                   value="@Model.TotalImporte.ToString("0.00")">
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">IVA</label>
+                            <input type="text" name="Iva" class="form-control form-control-sm text-right" value="0.00">
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="small mb-1">Total</label>
+                            <input type="text" name="ImporteTotal" class="form-control form-control-sm text-right font-weight-bold"
+                                   value="@Model.TotalImporte.ToString("0.00")">
+                        </div>
+
+                    </div>
+
+                    <!-- DETALLE -->
+                    <h6 class="font-weight-bold text-success mt-3">Detalle</h6>
+                    <div class="border rounded table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Descripción</th>
+                                    <th class="text-right">Kg</th>
+                                    <th class="text-right">$/Kg</th>
+                                    <th class="text-right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var l in Model.LineasVenta)
+                                {
+                                    <tr>
+                                        <td>@l.Corte?.Nombre</td>
+                                        <td class="text-right">@l.CantKg.ToString("0.000")</td>
+                                        <td class="text-right">@l.PrecioKg.ToString("0.00")</td>
+                                        <td class="text-right">@((l.PrecioKg * l.CantKg).ToString("0.00"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" id="btnGenerarFactura" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-invoice"></i> Generar Factura
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
