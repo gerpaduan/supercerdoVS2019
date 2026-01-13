@@ -17,17 +17,32 @@
 }
 
 
+//$('#btnFacturaElectronica').click(function () {
+//    const ventaId = $('#modalPostVenta').data('venta-id');
+
+//    $('#FacturaVentaId').val(ventaId);  // pasamos idVenta
+//    $('#FacturaVentaMm').val(0);        // mm=0 para factura
+
+//    $('#modalPostVenta').modal('hide');
+//    $('#modalFacturaElectronica').modal('show');
+//});
 $('#btnFacturaElectronica').click(function () {
+
     const ventaId = $('#modalPostVenta').data('venta-id');
 
-    $('#FacturaVentaId').val(ventaId);  // pasamos idVenta
-    $('#FacturaVentaMm').val(0);        // mm=0 para factura
+    $.get('/Ventas/ImprimirTicket', { id: ventaId, mm: 0 })
+        .done(function (html) {
+            $('#contenedorFacturaElectronica').html(html);
+            $('#modalFacturaElectronica').modal('show');
+        });
 
     $('#modalPostVenta').modal('hide');
-    $('#modalFacturaElectronica').modal('show');
 });
 
-
+// 🔁 RECARGA CUANDO SE CIERRA EL MODAL DE FACTURA
+$('#modalFacturaElectronica').on('hidden.bs.modal', function () {
+    location.reload();
+});
 
 $('#btnNoImprimir').on('click', function () {
     $('#modalPostVenta').modal('hide');

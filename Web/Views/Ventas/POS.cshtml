@@ -620,6 +620,14 @@
 <!-- Contenedor dinámico del modal -->
 <div id="contenedorModalPersona"></div>
 
+<div class="modal fade" id="modalFacturaElectronica" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="contenedorFacturaElectronica">
+            <!-- se inyecta por ajax -->
+        </div>
+    </div>
+</div>
+
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml")
 
 @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
@@ -628,7 +636,7 @@
 
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
 
-@Html.Partial("~/Views/Ventas/_FacturaElectronica.cshtml")
+@*@Html.Partial("~/Views/Ventas/_FacturaElectronica.cshtml")*@
 
 
 
