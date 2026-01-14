@@ -1,6 +1,7 @@
 ﻿using Entidades;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -9,7 +10,9 @@ using System.Web;
 using System.Web.Mvc;
 using Web.Helpers;
 using Web.Models.DTO;
+using AFIP;
 using static Entidades.Venta;
+using System.IO;
 
 namespace Web.Controllers
 {
@@ -505,7 +508,47 @@ namespace Web.Controllers
 
 
         #region MAPEAR
-        public FacturaElectronicaDTO BuildFacturaDTO(
+
+
+    public ActionResult ProbarLoginAfip()
+    {
+        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            ///OBTENER LOS DATOS DE LA EMPRESA LOGUEADA
+            ///SE DEBERIAN RECUPERAR DE LA SESSION
+
+            //string basePath = Path.Combine(
+            //    AppDomain.CurrentDomain.BaseDirectory,
+            //    "AFIP",
+            //    empresa.Cuit
+            //);
+
+            //string rutaCertificado = Path.Combine(
+            //    basePath,
+            //    empresa.AfipCertFileName
+            //);
+
+            //string rutaTA = Path.Combine(
+            //    basePath,
+            //    "TicketAcceso.txt"
+            //);
+
+
+            var login = new LoginClass(
+            "wsfe",
+            "https://wsaa.afip.gov.ar/ws/services/LoginCms",
+            Path.Combine(basePath, "AFIP", "certificado.pfx"),
+            ConfigurationManager.AppSettings["ClaveCertificadoAFIP"],
+            Path.Combine(basePath, "AFIP", "TicketAcceso.txt")
+        );
+
+        login.HacerLogin();
+
+        return Content(
+            $"OK<br/>Token: {login.Token}<br/>Vence: {login.ExpirationTime}"
+        );
+    }
+
+    public FacturaElectronicaDTO BuildFacturaDTO(
                      Entidades.Venta venta,
                      Entidades.FacturaElectronica factuElec
                     )

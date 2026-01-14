@@ -2071,6 +2071,10 @@
     <Content Include="Scripts\jquery-3.4.1.min.map" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AFIP\AFIP.csproj">
+      <Project>{452c0751-cfa1-4bf5-9e0e-371b6cc6136d}</Project>
+      <Name>AFIP</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Datos\Datos.csproj">
       <Project>{45a66afc-c105-4162-9422-5d793278719e}</Project>
       <Name>Datos</Name>
