@@ -1,28 +1,29 @@
-﻿using System;
+﻿using iTextSharp.text;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.draw;
+using Newtonsoft.Json;
+using QRCoder;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Forms;
-using System.Globalization;
+using System.Xml.Linq;
+using Utilidades;
+using wsAFIPvs2008;
 using wsAFIPvs2008.WSFEHOMO;
 using wsAFIPvs2008.WSPSA13;
-using System.Configuration;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using System.IO;
-using Utilidades;
 using Font = System.Drawing.Font;
-using iTextSharp.text.pdf.draw;
-using QRCoder;
-using Newtonsoft.Json;
-using System.Windows.Controls;
-using System.Xml.Linq;
-using System.Diagnostics;
-using System.Windows.Documents;
-using System.Threading;
 
 namespace wsAFIPvs2008
 {
@@ -854,21 +855,7 @@ namespace wsAFIPvs2008
         //RegistrarBtn
         private void Button2_Click(object sender, EventArgs e)
         {
-            try {
-                //DialogResult imprimir1 = MostrarMensaje();
-
-                //List<Entidades.AlicuotaIva> listaali = new List<Entidades.AlicuotaIva> ();
-                //foreach (Entidades.LineaVenta item in oVentaE.LineasVenta)
-                //{
-                //    Entidades.AlicuotaIva ali = new Entidades.AlicuotaIva();
-                //    ali.IdIva = item.Corte.IdAlicuotaIva;
-                //    ali.BaseImponible = item.AlicuotaIva;
-                //    ali.Importe = (item.AlicuotaIva * (item.CantKg * item.PrecioKg)) / 100;
-                //    listaali.Add( ali );    
-                //}
-                //oFactuElec.ListaAlicuota = listaali;
-                //oVentaN.addOrEditFactuElec(oFactuElec);
-
+            try {                
                 ///si es nota de credita se llama el metodo
                 ///
                 if (notaCredito)
@@ -1136,84 +1123,6 @@ namespace wsAFIPvs2008
                     if (generarPDF)
                         pdf_FacturaMetodo();
 
-                    #region imprimir desde campos
-                    ////Imprimir
-                    //Ticket.CreaTicket ticket = new Ticket.CreaTicket();
-
-                    ////imprimir si está checked
-                    //ticket.imprimir = (imprimir == DialogResult.Yes) ? true : false;
-
-                    ////Si Factura A (id = 1)
-                    //bool esFacturaA = (cm.Id == 1);
-
-                    //ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
-                    //if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["NegocioAgregado1"].ToString()))
-                    //    ticket.TextoCentro(ConfigurationManager.AppSettings["NegocioAgregado1"].ToString());
-                    //if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["NegocioAgregado2"].ToString()))
-                    //    ticket.TextoCentro(ConfigurationManager.AppSettings["NegocioAgregado2"].ToString());
-                    //if (!string.IsNullOrEmpty(ConfigurationManager.AppSettings["NegocioAgregado3"].ToString()))
-                    //    ticket.TextoCentro(ConfigurationManager.AppSettings["NegocioAgregado3"].ToString());
-
-                    //ticket.TextoIzquierda(ConfigurationManager.AppSettings["IIBB"].ToString());
-                    //ticket.TextoIzquierda(ConfigurationManager.AppSettings["Dueno"].ToString());
-                    //ticket.TextoIzquierda(ConfigurationManager.AppSettings["Direccion"].ToString());
-                    //ticket.TextoIzquierda(ConfigurationManager.AppSettings["Localidad"].ToString());
-                    //ticket.TextoIzquierda(ConfigurationManager.AppSettings["InicioActividades"].ToString());
-                    //ticket.TextoIzquierda(ConfigurationManager.AppSettings["CondicionIVA"].ToString());
-                    //ticket.LineasGuion();
-
-                    //if (esFacturaA)
-                    //    ticket.TextoCentro("Original");
-                    //ticket.TextoIzquierda(cm.Desc + " Electronica");
-                    //string ptoVtaFormatoAfip = (ptoVtaAfip + 100000).ToString().Substring(1);
-                    //string nroCbteFormatoAfip = (det.CbteDesde + 100000000).ToString().Substring(1);
-                    //ticket.TextoIzquierda("Nro." + ptoVtaFormatoAfip + "-" + nroCbteFormatoAfip);
-                    //ticket.TextoIzquierda("Fecha:" + FechaDTP.Value);// r.FeDetResp[0].CbteFch);
-                    //string formaPago = oVentaE.FormaPago == null ? Entidades.Venta.formaPagoEnum.Debito.ToString() : 
-                    //    (oVentaE.EnCtaCte && oVentaE.FormaPago.Equals(Entidades.Venta.formaPagoEnum.Efectivo.ToString())) ?
-                    //    "Cuenta Corriente" : oVentaE.FormaPago.ToString();
-                    //ticket.TextoIzquierda("Pago: " + formaPago);
-                    //ticket.LineasGuion();
-
-                    //ticket.TextoIzquierda(txtRazonSocial.Text);
-                    //if (det.DocNro != 0)
-                    //{
-                    //    ticket.TextoIzquierda(doctipo.Desc + ": " + det.DocNro.ToString()); 
-                    //    ticket.TextoIzquierda(comboIva.SelectedText);
-                    //    ticket.TextoIzquierda(txtDomicilio.Text);
-                    //}
-
-                    //ticket.LineasGuion();
-
-                    //foreach (Entidades.LineaVenta linea in oVentaE.LineasVenta)
-                    //{
-                    //    if (esFacturaA)
-                    //    {
-                    //        float precioNeto = (linea.PrecioKg / iva_a_multiplicar);
-                    //        float importeNeto = linea.CantKg * precioNeto;
-                    //        ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                    //            linea.CantKg, precioNeto, importeNeto);
-                    //    }
-                    //    else
-                    //    {
-                    //        ticket.AgregaArticulo(linea.Corte.codigo.ToString() + " " + linea.Corte.corte.ToString(),
-                    //            linea.CantKg, linea.PrecioKg, linea.PrecioKg * linea.CantKg);
-                    //    }
-                    //}
-
-                    //ticket.TextoDerecha("-------");
-                    ////Si Factura A (id = 1)
-                    //if (cm.Id == 1)
-                    //{
-                    //    ticket.TextoExtremos("Neto s/iva: ", det.ImpNeto.ToString("F2"));
-                    //    ticket.TextoExtremos("Iva: ", det.ImpIVA.ToString("F2"));
-                    //}
-                    //ticket.TextoExtremos("TOTAL: ", det.ImpTotal.ToString("F2"));
-                    //ticket.LineasEnBlanco(1);
-                    //ticket.TextoIzquierda("CAE: " + r.FeDetResp[0].CAE);
-                    //ticket.TextoIzquierda("Vto: " + r.FeDetResp[0].CAEFchVto);
-                    //ticket.LineasEnBlanco(3);
-                    #endregion
 
                     //si es nueva persona se la agregar y se actualiza la venta
                     if (nuevaPersona)
@@ -1254,6 +1163,184 @@ namespace wsAFIPvs2008
             }
         }
 
+        #region Registrar Factura Electrónica
+
+        
+//        private void Button2_Click(object sender, EventArgs e)
+//{
+//    try
+//    {
+//        // =======================
+//        // NOTA DE CRÉDITO
+//        // =======================
+//        if (notaCredito)
+//        {
+//            notaCredito_Generar();
+//            return;
+//        }
+
+//        bool nuevaPersona = false;
+
+//        // =======================
+//        // VALIDACIONES
+//        // =======================
+//        if (!string.IsNullOrEmpty(DocTX.Text) &&
+//            !Utilidades.Util_Form.validarCampoNumeroEntero(DocTX.Text, "Doc"))
+//            return;
+
+//        if (TiposComprobantesCMB.SelectedValue == null)
+//        {
+//            MessageBox.Show("Seleccione un valor en Comprobante");
+//            return;
+//        }
+
+//if (comboIva.SelectedValue == null)
+//{
+//    MessageBox.Show("Seleccione un valor en Cond.Iva");
+//    return;
+//}
+
+//if (!Utilidades.Util_Form.validarNumeroMayorACero(txtPorcentajeFacturacion.Text, "Porcentaje Facturación"))
+//{
+//    txtPorcentajeFacturacion.Focus();
+//    txtPorcentajeFacturacion.SelectAll();
+//    return;
+//}
+
+//// =======================
+//// CLIENTE NUEVO
+//// =======================
+//if (!string.IsNullOrEmpty(DocTX.Text) && oPersonaN.existeCuit(DocTX.Text) <= 0)
+//{
+//    nuevaPersona = true;
+//    personaPadron.IdIva = Convert.ToInt16(comboIva.SelectedValue);
+//}
+
+//// =======================
+//// FACTURA YA GENERADA
+//// =======================
+//if (oFactuElec != null && oFactuElec.Id > 0 && !string.IsNullOrEmpty(oFactuElec.CAE1))
+//{
+//    MessageBox.Show("La venta ya fue facturada");
+//    return;
+//}
+
+//if (!Utilidades.Util_Form.validarCampoNumerico(TotalTx.Text, "Total"))
+//    return;
+
+//if (MessageBox.Show(
+//        $"¿Registrar Factura Electrónica?\n\nTotal: $ {TotalTx.Text}",
+//        "Factura Electrónica",
+//        MessageBoxButtons.YesNo,
+//        MessageBoxIcon.Question) != DialogResult.Yes)
+//    return;
+
+//// =======================
+//// ARMADO DATOS AFIP
+//// =======================
+//var empresa = new EmpresaAfip
+//{
+//    Cuit = long.Parse(cuit),
+//    PtoVta = ptoVtaAfip,
+//    UrlWsfe = urlWSFE
+//};
+
+//CbteTipo cm = (CbteTipo)TiposComprobantesCMB.SelectedItem;
+//DocTipo docTipo = (DocTipo)TipoDocCMB.SelectedItem;
+
+//var ventaAfip = new VentaAfip
+//{
+//    TipoCbte = cm.Id,
+//    DocTipo = docTipo.Id,
+//    DocNro = string.IsNullOrEmpty(DocTX.Text) ? 0 : long.Parse(DocTX.Text),
+//    Fecha = FechaDTP.Value,
+//    ImpNeto = esRRII ? Convert.ToDouble(NetoTX.Text) : Convert.ToDouble(TotalTx.Text),
+//    ImpIVA = esRRII ? Convert.ToDouble(ImpIvaTx.Text) : 0,
+//    ImpTotal = Convert.ToDouble(TotalTx.Text)
+//};
+
+//// =======================
+//// FACTURAR AFIP
+//// =======================
+//var afipService = new AfipFacturaService();
+
+//var resultado = afipService.GenerarFactura(
+//    empresa,
+//    ventaAfip,
+//    oLoginClass
+//);
+
+//// =======================
+//// RESULTADO AFIP
+//// =======================
+//if (resultado.FeCabResp.Resultado != "A")
+//{
+//    string error = "";
+
+//    if (resultado.Errors != null)
+//        error += string.Join("\n", resultado.Errors.Select(e => e.Msg));
+
+//    MessageBox.Show("Error AFIP:\n" + error);
+//    return;
+//}
+
+//var detResp = resultado.FeDetResp[0];
+
+//// =======================
+//// GUARDAR FACTURA
+//// =======================
+//oFactuElec = new Entidades.FacturaElectronica
+//{
+//    PtoVtaAfip = empresa.PtoVta.ToString("0000"),
+//    CodTipoCbteAfip = cm.Id,
+//    DescTipoCbteAfip = cm.Desc,
+//    NroCbteAfip = detResp.CbteDesde.ToString("00000000"),
+//    FechaEmisionAfip = FechaDTP.Value,
+//    CAE1 = detResp.CAE,
+//    FecVtoCAE = detResp.CAEFchVto,
+//    RazonSocialAFIP = txtRazonSocial.Text,
+//    DomicilioAFIP = txtDomicilio.Text,
+//    TipoDocAfip = docTipo.Desc,
+//    NroDocAfip = DocTX.Text,
+//    ImporteNetoGravado = Util_Form.convertFloat(ventaAfip.ImpNeto.ToString("F2"), false, false),
+//    Iva = Util_Form.convertFloat(ventaAfip.ImpIVA.ToString("F2"), false, false),
+//    ImporteTotal = Util_Form.convertFloat(ventaAfip.ImpTotal.ToString("F2"), false, false),
+//    IdVenta = oVentaE.IdVenta,
+//    PorcentajeFacturacion = Util_Form.convertFloat(txtPorcentajeFacturacion.Text, false, false),
+//    DescItemUnitario = checkItemUnitario.Checked ? txtDescItemUnitario.Text : ""
+//};
+
+//oVentaN.addOrEditFactuElec(oFactuElec);
+
+//// =======================
+//// CLIENTE NUEVO
+//// =======================
+//if (nuevaPersona)
+//{
+//    oPersonaN.addOrEditPersona(personaPadron);
+//    personaPadron.idPersona = oPersonaN.existeCuit(personaPadron.Cuit);
+//    oVentaN.actualizarCliente(oVentaE.IdVenta, personaPadron.idPersona);
+//}
+
+//// =======================
+//// FINAL
+//// =======================
+//MessageBox.Show("Factura electrónica generada correctamente");
+
+//imprimirTicket(oFactuElec.esFacturaA(cm.Id.ToString()), MostrarMensaje());
+
+//if (generarPDF)
+//    pdf_FacturaMetodo();
+
+//this.Close();
+//    }
+//    catch (Exception ex)
+//    {
+//        MessageBox.Show(ex.Message);
+//    }
+//}
+
+        #endregion
         public void imprimirTicket(bool esFacturaA, DialogResult imprimir)
         {
             #region imprimir desde objeta FacturaElectronica

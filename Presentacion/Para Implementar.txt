@@ -99,3 +99,5 @@ Cuit
 AfipCertPath        -- ej: AFIP\20123456789\certificado.pfx
 AfipCertPassword    -- cifrada
 AfipTaPath          -- ej: AFIP\20123456789\TicketAcceso.txt
+   EsRRII
+   Entorno (HOMO / PROD)

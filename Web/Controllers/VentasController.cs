@@ -107,6 +107,9 @@ namespace Web.Controllers
         {
             try
             {
+                //probarloginafip();
+                //return Json(new { ok = true, msg = "Login AFIP exitoso" }, JsonRequestBehavior.AllowGet);
+
                 var venta = Session["VentaActiva"] as Venta;
                 var user = Session["Usuario"] as Entidades.Usuario;
 
@@ -436,42 +439,6 @@ namespace Web.Controllers
                     int idFactuElec = oVentaN.esVentaSinFacturar(venta.IdVenta, false);
                     var factuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
 
-                    //var dto = new FacturaElectronicaDTO
-                    //{
-                    //    // ===== Identificación =====
-                    //    IdVenta = venta.IdVenta,
-                    //    IdFactura = 0,
-
-                    //    // ===== Comprobante AFIP =====
-                    //    CodTipoCbteAfip = Entidades.FacturaElectronica.codFacturaB_Afip,
-                    //    DescTipoCbteAfip = "Factura B",
-                    //    LetraCbte = "B",
-                    //    PtoVtaAfip = "1",
-                    //    NroCbteAfip = null,
-                    //    FechaEmisionAfip = DateTime.Now,
-
-                    //    // ===== Cliente =====
-                    //    TipoDocAfip = "96", // DNI (AFIP)
-                    //    NroDocAfip = venta.Persona?.Cuit,
-                    //    RazonSocialAFIP = venta.Persona?.RazonSocial ?? venta.Persona?.razonSocial,
-                    //    CondicionIvaAFIP ="",// venta.Persona?.CondicionIva,
-                    //    DomicilioAFIP = venta.Persona?.Domicilio,
-                    //    Email = "",// venta.Persona?.Email,
-                    //    Whatsapp = null,
-
-                    //    // ===== Venta =====
-                    //    //CondicionVenta = venta.,
-                    //    FormaPago = venta.FormaPago,
-
-                    //    // ===== Importes =====
-                    //    ImporteNetoGravado = (decimal)venta.TotalImporte,
-                    //    Iva = 0,
-                    //    ImporteTotal = (decimal)venta.TotalImporte,
-
-                    //    // ===== CAE =====
-                    //    CAE = null,
-                    //    FecVtoCAE = null
-                    //};
                     var dto = BuildFacturaDTO(
                                         venta,
                                         factuElec
@@ -506,49 +473,51 @@ namespace Web.Controllers
         }
         #endregion
 
+        #region AFIP
 
-        #region MAPEAR
-
-
-    public ActionResult ProbarLoginAfip()
-    {
-        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+        public ActionResult ProbarLoginAfip()
+        {
             ///OBTENER LOS DATOS DE LA EMPRESA LOGUEADA
             ///SE DEBERIAN RECUPERAR DE LA SESSION
 
-            //string basePath = Path.Combine(
-            //    AppDomain.CurrentDomain.BaseDirectory,
-            //    "AFIP",
-            //    empresa.Cuit
-            //);
+            string basePath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "AFIP",
+                "20306210786"//empresa.Cuit
+            );
 
-            //string rutaCertificado = Path.Combine(
-            //    basePath,
-            //    empresa.AfipCertFileName
-            //);
+            string rutaCertificado = Path.Combine(
+                basePath,
+                "certif-prod.pfx"// empresa.AfipCertFileName //-- ej: AFIP\20123456789\certificado.pfx
+            );
 
-            //string rutaTA = Path.Combine(
-            //    basePath,
-            //    "TicketAcceso.txt"
-            //);
+            string rutaTA = Path.Combine(
+                basePath,
+                "TicketAcceso.txt"
+            );
 
 
             var login = new LoginClass(
             "wsfe",
             "https://wsaa.afip.gov.ar/ws/services/LoginCms",
-            Path.Combine(basePath, "AFIP", "certificado.pfx"),
-            ConfigurationManager.AppSettings["ClaveCertificadoAFIP"],
-            Path.Combine(basePath, "AFIP", "TicketAcceso.txt")
+            Path.Combine(rutaCertificado),
+            "",//ConfigurationManager.AppSettings["ClaveCertificadoAFIP"], //la clave la mando vacia en winform
+            Path.Combine(rutaTA)
         );
 
-        login.HacerLogin();
+            login.HacerLogin();
 
-        return Content(
-            $"OK<br/>Token: {login.Token}<br/>Vence: {login.ExpirationTime}"
-        );
-    }
+            return Content(
+                $"OK<br/>Token: {login.Token}<br/>Vence: {login.ExpirationTime}"
+            );
+        }
+        #endregion
 
-    public FacturaElectronicaDTO BuildFacturaDTO(
+
+        #region MAPEAR
+
+
+        public FacturaElectronicaDTO BuildFacturaDTO(
                      Entidades.Venta venta,
                      Entidades.FacturaElectronica factuElec
                     )
@@ -588,6 +557,20 @@ namespace Web.Controllers
             List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
             List<int> listaIdAlicuotaConIva = new List<int>();
             float importeTotal = 0, importeNeto = 0, importeIva = 0;
+
+            //iniciarTipoIva
+            //Obtiene las Alícuotas y establece el 10.5%
+            for (int index = 0; index < TipoIVACmb.Items.Count; index++)
+            {
+                IvaTipo item = (IvaTipo)TipoIVACmb.Items[index];
+
+                //cargo las alicuotas de iva para luego aplicar el importe
+                Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
+                oAli.IdIva = Convert.ToInt32(item.Id);
+                oAli.Iva = (float)(item.Desc.Replace("%", ""), true);
+                listaAlicuotasFactura.Add(oAli);
+
+            }
 
             //Inicializo valores de las Base Imponible de Alicuotas
             for (int i = 0; i < listaAlicuotasFactura.Count; i++)
