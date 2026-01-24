@@ -511,6 +511,99 @@ namespace Web.Controllers
                 $"OK<br/>Token: {login.Token}<br/>Vence: {login.ExpirationTime}"
             );
         }
+
+        [HttpPost]
+        public JsonResult GenerarFactura(int idVenta, bool esNotaCredito = false)
+        {
+            try
+            {
+                // Validar existencia de la venta
+                var venta = oVentaN.getVentaById(idVenta);
+                if (venta == null)
+                    return Json(new { ok = false, msg = "Venta no encontrada" });
+
+                // Idempotencia: si ya existe factura (o nota) para esta venta devolvemos la info
+                int idFactExistente = oVentaN.esVentaSinFacturar(idVenta, esNotaCredito);
+                if (idFactExistente > 0)
+                {
+                    var fExist = oVentaN.getFactuElecById(idFactExistente);
+                    return Json(new
+                    {
+                        ok = true,
+                        already = true,
+                        facturaId = idFactExistente,
+                        nro = fExist?.NroCbteAfip,
+                        cae = fExist?.CAE1,
+                        mensaje = "Ya existe una factura asociada a esta venta"
+                    });
+                }
+
+                // Llamar al servicio AFIP (encapsulado en AFIP.GenerarFacturaService)
+                var afipSvc = new AFIP.GenerarFacturaService();
+                var afipRes = afipSvc.GenerarFactura(venta, esNotaCredito);
+
+                // Si AFIP devolvió error, persistir registro de fallo y devolver error al cliente
+                if (!afipRes.Ok)
+                {
+                    try
+                    {
+                        var factErr = new Entidades.FacturaElectronica
+                        {
+                            IdVenta = idVenta,
+                            Error = true,
+                            MensajeError = afipRes.Mensaje,
+                            FechaError = DateTime.Now
+                        };
+                        oVentaN.addOrEditFactuElec(factErr);
+                    }
+                    catch
+                    {
+                        // no bloquear la respuesta por fallo al guardar el error, sólo loguear si es necesario
+                    }
+
+                    return Json(new { ok = false, msg = "AFIP: " + afipRes.Mensaje });
+                }
+
+                // AFIP ok → persistir la factura en BD y asociarla a la venta
+                var factura = afipRes.Factura ?? new Entidades.FacturaElectronica();
+                factura.IdVenta = idVenta;
+                try
+                {
+                    oVentaN.addOrEditFactuElec(factura);
+                }
+                catch (Exception saveEx)
+                {
+                    // Si falla guardar, informar pero mantener la info AFIP en el mensaje
+                    return Json(new { ok = false, msg = "Error guardando factura en BD: " + saveEx.Message });
+                }
+
+                // Recuperar id guardado (método seguro que ya usás)
+                int idGuardado = oVentaN.esVentaSinFacturar(idVenta, esNotaCredito);
+
+                var facturaGuardada = idGuardado > 0 ? oVentaN.getFactuElecById(idGuardado) : factura;
+
+                // Retornar resultado al cliente
+                return Json(new
+                {
+                    ok = true,
+                    facturaId = idGuardado,
+                    nro = facturaGuardada?.NroCbteAfip,
+                    cae = facturaGuardada?.CAE1,
+                    mensaje = afipRes.Mensaje ?? "Factura generada correctamente"
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new
+                {
+                    ok = false,
+                    msg = "Error generando factura",
+                    error = ex.Message
+                }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         #endregion
 
 
@@ -529,19 +622,19 @@ namespace Web.Controllers
             dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip;
             dto.DescTipoCbteAfip = factuElec.DescTipoCbteAfip;
             dto.LetraCbte = factuElec.getLetraId_TipoCbte(factuElec.CodTipoCbteAfip).ToString();
-            dto.PtoVtaAfip = venta.Sucursal.CodPtoVentaARCA.ToString();
             dto.NroCbteAfip = factuElec.NroCbteAfip;
             dto.FechaEmisionAfip = factuElec.Id > 0
                 ? factuElec.FechaEmisionAfip
                 : venta.FechaVenta;
 
             // ===== EMISOR (TU EMPRESA) =====
-            //dto.EmisorRazonSocial = venta.Sucursal.RazonSocial;
-            //dto.EmisorCUIT = venta.Sucursal.CUIT;
-            //dto.EmisorCondicionIVA = venta.Sucursal.CondicionIVA;
-            //dto.EmisorDomicilio = venta.Sucursal.Domicilio;
-            //dto.EmisorIngresosBrutos = venta.Sucursal.IngresosBrutos;
-            //dto.EmisorInicioActividad = venta.Sucursal.InicioActividad?.ToString("dd/MM/yyyy");
+            dto.PtoVtaAfip = venta.Sucursal.CodPtoVentaARCA.ToString();
+            //dto.EmisorRazonSocial = user.Empresa.RazonSocial // venta.Sucursal.RazonSocial;
+            //dto.EmisorCUIT = user.Empresa.CUIT;
+            //dto.EmisorCondicionIVA = user.Empresa.CondicionIVA;
+            //dto.EmisorDomicilio = user.Sucursal.Domicilio;
+            //dto.EmisorIngresosBrutos = user.EmpresaIngresosBrutos;
+            //dto.EmisorInicioActividad = vuser.Empresa.InicioActividad?.ToString("dd/MM/yyyy");
 
             // ===== Cliente =====
             dto.NroDocAfip = venta.Persona.Cuit?.Replace("-", "");
@@ -560,17 +653,17 @@ namespace Web.Controllers
 
             //iniciarTipoIva
             //Obtiene las Alícuotas y establece el 10.5%
-            for (int index = 0; index < TipoIVACmb.Items.Count; index++)
-            {
-                IvaTipo item = (IvaTipo)TipoIVACmb.Items[index];
+            //for (int index = 0; index < TipoIVACmb.Items.Count; index++)
+            //{
+            //    IvaTipo item = (IvaTipo)TipoIVACmb.Items[index];
 
-                //cargo las alicuotas de iva para luego aplicar el importe
-                Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
-                oAli.IdIva = Convert.ToInt32(item.Id);
-                oAli.Iva = (float)(item.Desc.Replace("%", ""), true);
-                listaAlicuotasFactura.Add(oAli);
+            //    //cargo las alicuotas de iva para luego aplicar el importe
+            //    Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
+            //    oAli.IdIva = Convert.ToInt32(item.Id);
+            //    oAli.Iva = (float)(item.Desc.Replace("%", ""), true);
+            //    listaAlicuotasFactura.Add(oAli);
 
-            }
+            //}
 
             //Inicializo valores de las Base Imponible de Alicuotas
             for (int i = 0; i < listaAlicuotasFactura.Count; i++)

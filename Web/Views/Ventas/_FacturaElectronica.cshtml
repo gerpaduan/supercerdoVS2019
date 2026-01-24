@@ -169,3 +169,28 @@
     </div>
 
 </form>
+
+<script>
+$('#formFacturaElectronica').on('submit', function (e) {
+    e.preventDefault();
+    var $btn = $(this).find('button[type="submit"]').prop('disabled', true);
+    var datos = $(this).serialize();
+    $.post('@Url.Action("GenerarFactura","Ventas")', datos)
+        .done(function (resp) {
+            if (resp.ok) {
+                Swal.fire({ icon: 'success', title: 'Factura generada', text: 'Nro: ' + (resp.nro || '') });
+                $('#modalFacturaElectronica').modal('hide');
+                // emitir evento para refrescar UI de la venta
+                $(document).trigger('venta:facturada', [resp]);
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: resp.msg || 'Error desconocido' });
+            }
+        })
+        .fail(function () {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Error en la petición' });
+        })
+        .always(function () {
+            $btn.prop('disabled', false);
+        });
+});
+</script>
