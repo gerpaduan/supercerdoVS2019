@@ -27,6 +27,16 @@ namespace Entidades
         public const int codFacturaC_Afip = 11;
         public const int codNotaCreditoC_Afip = 13;
 
+        ///Condicion frente al IVA 
+        //id  iva                     abrev
+        //1   Consumidor Final        Cons.Final
+        //2   Responsable Inscripto   Resp.Incr.
+        //3   Monotributista          Monotr.
+        //4   Exento                  Exento
+        public const int codCF_IvaAfip = 1;
+        public const int codRRII_IvaAfip = 2;
+        public const int codMonotributo_IvaAfip = 3;
+        public const int codExento_IvaAfip = 4;
 
         //Concepto
         public const int codConceptoProductos_Afip = 1;
