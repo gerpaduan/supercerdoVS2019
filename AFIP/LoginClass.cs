@@ -18,6 +18,7 @@ namespace AFIP
         private readonly string _rutaCertificado;
         private readonly SecureString _claveCertificado;
         private readonly string _rutaTA;
+        private readonly string _rutaBase;
 
         private XmlDocument _xmlLoginTicketRequest;
         private XmlDocument _xmlLoginTicketResponse;
@@ -39,12 +40,14 @@ namespace AFIP
             string urlLogin,
             string rutaCertificado,
             string claveCertificado,
-            string rutaTA)
+            string rutaTA,
+            string rutaBase)
         {
             _servicio = servicio;
             _urlLogin = urlLogin;
             _rutaCertificado = rutaCertificado;
             _rutaTA = rutaTA;
+            _rutaBase = rutaBase;
 
             _claveCertificado = new SecureString();
             foreach (char c in claveCertificado)
@@ -77,7 +80,7 @@ namespace AFIP
         private void PrepararLoginTicketRequest()
         {
             _xmlLoginTicketRequest = new XmlDocument();
-            XMLLoader.LoadTemplate(_xmlLoginTicketRequest, "LoginTemplate");
+            XMLLoader.LoadTemplate(_xmlLoginTicketRequest, _rutaBase, "LoginTemplate");
 
             _xmlLoginTicketRequest.SelectSingleNode("//uniqueId").InnerText = _globalId.ToString();
             _xmlLoginTicketRequest.SelectSingleNode("//generationTime").InnerText =
@@ -173,11 +176,10 @@ namespace AFIP
 
     public static class XMLLoader
     {
-        public static void LoadTemplate(XmlDocument doc, string file)
+        public static void LoadTemplate(XmlDocument doc, string ruta, string file)
         {
             string path = Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
-                "Templates",
+                ruta,
                 file + ".xml"
             );
 

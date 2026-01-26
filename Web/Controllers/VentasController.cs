@@ -498,12 +498,13 @@ namespace Web.Controllers
 
 
             var login = new LoginClass(
-            "wsfe",
-            "https://wsaa.afip.gov.ar/ws/services/LoginCms",
-            Path.Combine(rutaCertificado),
-            "",//ConfigurationManager.AppSettings["ClaveCertificadoAFIP"], //la clave la mando vacia en winform
-            Path.Combine(rutaTA)
-        );
+                "wsfe",
+                "https://wsaa.afip.gov.ar/ws/services/LoginCms",
+                Path.Combine(rutaCertificado),
+                "",//ConfigurationManager.AppSettings["ClaveCertificadoAFIP"], //la clave la mando vacia en winform
+                Path.Combine(rutaTA),
+                basePath
+            );
 
             login.HacerLogin();
 

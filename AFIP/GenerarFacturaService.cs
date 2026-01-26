@@ -60,13 +60,13 @@ namespace AFIP
                 "TicketAcceso.txt"
             );
 
-
             login = new LoginClass(
                 servicioAfip,//"wsfe",
                 urlLogin,//"https://wsaa.afip.gov.ar/ws/services/LoginCms",
                 Path.Combine(rutaCertificado),
                 "",//ConfigurationManager.AppSettings["ClaveCertificadoAFIP"], //la clave la mando vacia en winform
-                Path.Combine(rutaTA)
+                Path.Combine(rutaTA),
+                basePath
             );
 
             login.HacerLogin();
