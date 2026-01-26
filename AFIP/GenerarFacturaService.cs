@@ -22,7 +22,7 @@ namespace AFIP
         private readonly string clave = "";
 
         //"Producción"
-        private readonly string urlLogin = "https://wsaa.afip.gov.ar/ws/services/logincms";
+        private readonly string urlLogin = "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl";
         private readonly string urlWSFE = "https://servicios1.afip.gov.ar/wsfev1/service.asmx?WSDL";
 
         ///"Testing"
@@ -84,14 +84,24 @@ namespace AFIP
              {
                 if (venta == null) throw new ArgumentNullException(nameof(venta));
 
+
                 List<int> listaIdAlicuotaConIva = new List<int>();
+               
                 List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
 
                 //Inicializo valores de las Base Imponible de Alicuotas
-                for (int i = 0; i < listaAlicuotasFactura.Count; i++)
+                // solo para 10.5% y 21 %
+                ///< !--Alicuotas IVA->ID 3 = 0 % | ID 4 = 10.5 % | ID 5 = 21 % | ID 6 = 27 % | ID 8 = 5 % | ID 9 = 2.5 % -->
+                int cantAlicuotas = 2;
+                for (int i = 0; i < cantAlicuotas; i++)
                 {
-                    listaAlicuotasFactura[i].BaseImponible = 0;
-                    listaAlicuotasFactura[i].Importe = 0;
+                    Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
+                    oAli.IdIva = i + 4; //4 y 5
+                    oAli.Iva = i == 0 ? 10.5f : 21f;
+                    oAli.BaseImponible = 0;
+                    oAli.Importe = 0;
+
+                    listaAlicuotasFactura.Add(oAli);
                 }
 
                 foreach (Entidades.LineaVenta lineaE in venta.LineasVenta)
@@ -108,18 +118,7 @@ namespace AFIP
                             listaAlicuotasFactura[i].Importe += (float)Math.Round((totalLinea - baseImponibleLinea), 2);
                         }
                     }
-                }
-
-                //se cargan los textBox de Alicuotas
-                foreach (Entidades.AlicuotaIva item in listaAlicuotasFactura)
-                {
-                    ///< !--Alicuotas IVA->ID 3 = 0 % | ID 4 = 10.5 % | ID 5 = 21 % | ID 6 = 27 % | ID 8 = 5 % | ID 9 = 2.5 % -->
-
-                    //se carga la alicuota si es mayor a cero
-                    if (item.Importe > 0)
-                        listaIdAlicuotaConIva.Add(item.IdIva);
-                }
-
+                }                
 
                 // 2) Auth request
                 var auth = new FEAuthRequest
@@ -201,82 +200,11 @@ namespace AFIP
                 // Fecha del comprobante en formato AAAAMMDD
                 det.CbteFch = (venta.FechaVenta != DateTime.MinValue ? venta.FechaVenta : DateTime.Now).ToString("yyyyMMdd");
 
-                //// Importes: implementación inicial:
-                //// - para Factura C (consumidor final) enviamos todo en ImpTotal
-                //// - para Factura A intentamos separar neto/iva si las alícuotas están disponibles en las líneas (básico)
-                //double impTotal = Math.Round(Convert.ToDouble(venta.TotalImporte), 2);
-                //det.ImpTotal = impTotal;
-
-                //// Intento cálculo simple de neto/iva por alícuota si hay datos en líneas
-                //double impNeto = 0;
-                //double impIva = 0;
-                //if (venta.LineasVenta != null && venta.LineasVenta.Any(l => l.AlicuotaIva > 0))
-                //{
-                //    foreach (var l in venta.LineasVenta)
-                //    {
-                //        var totalLinea = l.CantKg * l.PrecioKg;
-                //        double divisor = 1.0 + (l.AlicuotaIva / 100.0);
-                //        var baseImp = totalLinea / divisor;
-                //        var ivaLinea = totalLinea - baseImp;
-                //        impNeto += Math.Round(baseImp, 2);
-                //        impIva += Math.Round(ivaLinea, 2);
-                //    }
-                //}
-                //else
-                //{
-                //    // fallback: todo a neto (Factura C) o neto igual total (A/B may need proper calc)
-                //    impNeto = impTotal;
-                //    impIva = 0;
-                //}
-
-                //// Si tipo comprobante es A (cod 1) y hay IVA, enviar ImpNeto/ImpIVA
-                //if (codTipoCbte == FacturaElectronica.codFacturaA_Afip)
-                //{
-                //    det.ImpNeto = Math.Round(impNeto, 2);
-                //    det.ImpIVA = Math.Round(impIva, 2);
-                //}
-                //else
-                //{
-                //    det.ImpNeto = impNeto; // puede ser igual a total
-                //    det.ImpIVA = impIva;
-                //}
-
-                //det.ImpTotConc = 0;
-                //det.ImpOpEx = 0;
-                //det.ImpTrib = 0;
-
-                //// Moneda (pesos)
-                //det.MonId = "PES";
-                //det.MonCotiz = 1;
-
-                //// Opcional: alícuotas (solo si hay lista de alícuotas calculadas)
-                //if (venta.LineasVenta != null && venta.LineasVenta.Any(l => l.AlicuotaIva > 0))
-                //{
-                //    var alicuotas = venta.LineasVenta
-                //        .GroupBy(x => x.IdAlicuotaIva)
-                //        .Select(g => new { Id = g.Key, Base = g.Sum(x => x.CantKg * x.PrecioKg) / (1 + (g.First().AlicuotaIva / 100.0)), Importe = g.Sum(x => x.CantKg * x.PrecioKg) - g.Sum(x => x.CantKg * x.PrecioKg) / (1 + (g.First().AlicuotaIva / 100.0)), Iva = g.First().AlicuotaIva })
-                //        .ToArray();
-
-                //    if (alicuotas.Length > 0)
-                //    {
-                //        var arr = alicuotas.Select((a, i) => new AlicIva
-                //        {
-                //            Id = (int)a.Id,// a.Id,
-                //            BaseImp = Math.Round(a.Base, 2),
-                //            Importe = Math.Round(a.Importe, 2)
-                //        }).ToArray();
-                //        det.Iva = arr;
-                //    }
-                //}
-
-
                 // ===============================
                 // CALCULO FISCAL AFIP (CORRECTO)
                 // ===============================
 
-                bool informaIva =
-                    codTipoCbte == FacturaElectronica.codFacturaA_Afip ||
-                    codTipoCbte == FacturaElectronica.codNotaCreditoA_Afip;
+                bool informaIva = esRRII;
 
                 det.ImpTotConc = 0;
                 det.ImpOpEx = 0;
@@ -314,7 +242,6 @@ namespace AFIP
 
                             det.ImpNeto += baseImp;
                             det.ImpIVA += iva;
-                            int iddd = 4;
                             return new AlicIva
                             {
                                 Id = (int)Math.Round(g.Key.IdAlicuotaIva, 0, MidpointRounding.AwayFromZero),
@@ -356,7 +283,6 @@ namespace AFIP
                     det.ImpOpEx +
                     det.ImpTotConc,
                     2, MidpointRounding.AwayFromZero);
-
 
                 // Armar FECAERequest
                 var req = new FECAERequest
@@ -409,6 +335,8 @@ namespace AFIP
                         IdVenta = venta.IdVenta,
                         PorcentajeFacturacion = 100
                     };
+                    fact.ListaAlicuota.AddRange(listaAlicuotasFactura.Where(a => a.Importe > 0));
+
 
                     // Persistir: se delega al Negocio (tu capa) desde el controlador.
                     result.Ok = true;
