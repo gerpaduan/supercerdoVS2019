@@ -8,6 +8,9 @@ using System.IO;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using System.Data;
+using iTextSharp.text.pdf.draw;
+using System.Configuration;
+using System.Diagnostics;
 
 namespace Utilidades
 {
@@ -199,5 +202,312 @@ namespace Utilidades
                 return ms.ToArray();
             }
         }
+
+
+        //#region imprimirVenta
+        //public byte[] GenerarFacturaX(Entidades.Venta modelo)
+        //{
+        //    using (var ms = new MemoryStream())
+        //    {
+        //        Document doc = new Document(PageSize.A4, 30, 30, 20, 20);
+        //        PdfWriter.GetInstance(doc, ms);
+        //        doc.Open();
+
+        //        // ===== FUENTES =====
+        //        var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, new BaseColor(174, 0, 0));
+        //        var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
+        //        var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+        //        var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
+        //        var fuenteFooter = FontFactory.GetFont(FontFactory.HELVETICA, 7);
+
+        //        // ===== CABECERA =====
+        //        PdfPTable cabecera = new PdfPTable(3) { WidthPercentage = 100 };
+        //        cabecera.SetWidths(new float[] { 33, 34, 33 });
+
+        //        cabecera.AddCell(CeldaLibre("Nombre Negocio", fuenteTitulo));
+
+        //        PdfPCell centro = new PdfPCell { Border = 0 };
+        //        var p = new Paragraph { Alignment = Element.ALIGN_CENTER };
+        //        p.Add(new Chunk("X\n", fuenteX));
+        //        p.Add(new Chunk("- Documento no válido como factura -", fuenteFooter));
+        //        centro.AddElement(p);
+        //        cabecera.AddCell(centro);
+
+        //        cabecera.AddCell(CeldaLibre(
+        //            $"N°Comprobante: {modelo.IdVenta}\nFecha: {modelo.FechaVenta:dd/MM/yyyy}",
+        //            fuenteNegrita,
+        //            Element.ALIGN_RIGHT
+        //        ));
+
+        //        doc.Add(cabecera);
+        //        doc.Add(new LineSeparator());
+
+        //        // ===== CLIENTE =====
+        //        PdfPTable cliente = new PdfPTable(4) { WidthPercentage = 100 };
+        //        cliente.SetWidths(new float[] { 15, 45, 10, 30 });
+
+        //        cliente.AddCell(CeldaSimple("Sr. (es):", fuenteNegrita));
+        //        cliente.AddCell(CeldaSimple(modelo.Persona.razonSocial, fuenteNormal));
+        //        cliente.AddCell(CeldaSimple("CUIT:", fuenteNegrita));
+        //        cliente.AddCell(CeldaSimple(modelo.Persona.Cuit, fuenteNormal));
+
+        //        doc.Add(cliente);
+
+        //        // ===== PRODUCTOS =====
+        //        PdfPTable prod = new PdfPTable(4) { WidthPercentage = 100 };
+        //        prod.SetWidths(new float[] { 6, 2, 2, 2 });
+
+        //        foreach (var l in modelo.LineasVenta)
+        //        {
+        //            prod.AddCell(CeldaSimple(l.Corte.corte, fuenteNormal));
+        //            prod.AddCell(CeldaDerecha(l.CantKg.ToString("F3"), fuenteNormal));
+        //            prod.AddCell(CeldaDerecha(l.PrecioKg.ToString("#,##0.00"), fuenteNormal));
+        //            prod.AddCell(CeldaDerecha((l.CantKg * l.PrecioKg).ToString("#,##0.00"), fuenteNormal));
+        //        }
+
+        //        doc.Add(prod);
+
+        //        // ===== TOTAL =====
+        //        doc.Add(new LineSeparator());
+        //        PdfPTable total = new PdfPTable(3) { WidthPercentage = 100 };
+        //        total.SetWidths(new float[] { 5, 1, 1 });
+
+        //        total.AddCell(CeldaLibre("", fuenteNormal));
+        //        total.AddCell(CeldaDerecha("Total:", fuenteNegrita));
+        //        total.AddCell(CeldaDerecha(modelo.TotalImporte.ToString("#,##0.00"), fuenteNegrita));
+
+        //        doc.Add(total);
+
+        //        // ===== OBS =====
+        //        if (!string.IsNullOrEmpty(modelo.Observaciones))
+        //            doc.Add(new Paragraph(modelo.Observaciones, FontFactory.GetFont(FontFactory.HELVETICA, 8)));
+
+        //        doc.Close();
+        //        return ms.ToArray();
+        //    }
+        //}
+
+        //private PdfPCell CeldaSimple(string t, Font f) =>
+        //    new PdfPCell(new Phrase(t, f)) { Border = 0, Padding = 4 };
+
+        //private PdfPCell CeldaDerecha(string t, Font f) =>
+        //    new PdfPCell(new Phrase(t, f)) { Border = 0, HorizontalAlignment = Element.ALIGN_RIGHT };
+
+        //private PdfPCell CeldaLibre(string t, Font f, int align = Element.ALIGN_LEFT) =>
+        //    new PdfPCell(new Phrase(t, f)) { Border = 0, HorizontalAlignment = align };
+        //#endregion
+        #region PUBLICO
+
+        public byte[] GenerarFacturaX(Entidades.Venta venta)
+        {
+            using (var ms = new MemoryStream())
+            {
+                Document doc = new Document(PageSize.A4, 30, 30, 20, 20);
+                PdfWriter.GetInstance(doc, ms);
+                doc.Open();
+
+                // ===== FUENTES =====
+                var colorRojo = new BaseColor(174, 0, 0);
+                var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, colorRojo);
+                var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
+                var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
+                var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
+                var fuenteFooter = FontFactory.GetFont(FontFactory.HELVETICA, 7);
+                var fuenteHeaderTabla = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9);
+
+                var linea = new LineSeparator(1.5f, 100f, BaseColor.GRAY, Element.ALIGN_CENTER, -6);
+
+                // ===== CABECERA =====
+                doc.Add(GenerarCabecera(venta, fuenteTitulo, fuenteNormal, fuenteNegrita, fuenteX, fuenteFooter));
+                doc.Add(new Chunk(linea));
+                doc.Add(new Paragraph(" "));
+
+                // ===== CLIENTE =====
+                doc.Add(GenerarCliente(venta, fuenteNormal, fuenteNegrita));
+                doc.Add(new Chunk(linea));
+                doc.Add(new Paragraph(" "));
+
+                // ===== PRODUCTOS =====
+                doc.Add(GenerarProductos(venta, fuenteNormal, fuenteHeaderTabla));
+
+                // ===== TOTALES =====
+                doc.Add(new Chunk(linea));
+                doc.Add(new Paragraph(" "));
+                doc.Add(GenerarTotales(venta, fuenteNegrita));
+                doc.Add(new Chunk(linea));
+
+                // ===== OBS =====
+                if (!string.IsNullOrEmpty(venta.Observaciones))
+                {
+                    doc.Add(new Paragraph("\nObs: " + venta.Observaciones,
+                        FontFactory.GetFont(FontFactory.HELVETICA, 8)));
+                }
+
+                doc.Close();
+                return ms.ToArray();
+            }
+        }
+
+        #endregion
+
+        #region CABECERA
+
+        private PdfPTable GenerarCabecera(
+            Entidades.Venta venta,
+            Font fuenteTitulo,
+            Font fuenteNormal,
+            Font fuenteNegrita,
+            Font fuenteX,
+            Font fuenteFooter)
+        {
+            PdfPTable cabecera = new PdfPTable(3) { WidthPercentage = 100 };
+            cabecera.SetWidths(new float[] { 33f, 34f, 33f });
+
+            // IZQUIERDA
+            PdfPCell izq = new PdfPCell { Border = 0 };
+            izq.AddElement(new Paragraph("NOMBRE DEL NEGOCIO\n", fuenteTitulo));
+            cabecera.AddCell(izq);
+
+            // CENTRO
+            PdfPCell centro = new PdfPCell { Border = 0 };
+            Paragraph p = new Paragraph { Alignment = Element.ALIGN_CENTER };
+
+            if (venta.TipoComprobante == 'X')
+            {
+                p.Add(new Chunk("X\n", fuenteX));
+                p.Add(new Chunk("- Documento no válido como factura -", fuenteFooter));
+            }
+            else
+            {
+                p.Add(new Chunk(venta.TipoComprobante.ToString(), fuenteX));
+            }
+
+            centro.AddElement(p);
+            cabecera.AddCell(centro);
+
+            // DERECHA
+            PdfPCell der = new PdfPCell
+            {
+                Border = 0,
+                HorizontalAlignment = Element.ALIGN_RIGHT
+            };
+
+            der.AddElement(new Paragraph($"N° Comprobante: {venta.IdVenta}", fuenteNegrita));
+            der.AddElement(new Paragraph($"Fecha: {venta.FechaVenta:dd/MM/yyyy}", fuenteNormal));
+            cabecera.AddCell(der);
+
+            return cabecera;
+        }
+
+        #endregion
+
+        #region CLIENTE
+
+        private PdfPTable GenerarCliente(Entidades.Venta venta, Font normal, Font negrita)
+        {
+            PdfPTable cliente = new PdfPTable(4) { WidthPercentage = 100 };
+            cliente.SetWidths(new float[] { 15, 45, 15, 25 });
+
+            cliente.AddCell(Celda("Sr.(es):", negrita));
+            cliente.AddCell(Celda(venta.Persona.razonSocial, normal));
+            cliente.AddCell(Celda("CUIT:", negrita));
+            cliente.AddCell(Celda(venta.Persona.Cuit, normal));
+
+            cliente.AddCell(Celda("Cond. IVA:", negrita));
+            cliente.AddCell(Celda(venta.Persona.Iva, normal));
+            cliente.AddCell(Celda("Forma pago:", negrita));
+            cliente.AddCell(Celda(venta.FormaPago, normal));
+
+            return cliente;
+        }
+
+        #endregion
+
+        #region PRODUCTOS
+
+        private PdfPTable GenerarProductos(Entidades.Venta venta, Font normal, Font header)
+        {
+            bool esFacturaA = venta.TipoComprobante == 'A';
+
+            int columnas = esFacturaA ? 5 : 4;
+            PdfPTable tabla = new PdfPTable(columnas) { WidthPercentage = 100 };
+
+            tabla.SetWidths(esFacturaA
+                ? new float[] { 6, 2, 2, 2, 2 }
+                : new float[] { 6, 2, 2, 2 });
+
+            // HEADER
+            tabla.AddCell(CeldaHeader("Descripción", header));
+            tabla.AddCell(CeldaHeader("Cantidad", header));
+            tabla.AddCell(CeldaHeader("Precio Un.", header));
+
+            if (esFacturaA)
+                tabla.AddCell(CeldaHeader("IVA", header));
+
+            tabla.AddCell(CeldaHeader("Importe", header));
+
+            // ITEMS
+            foreach (var l in venta.LineasVenta)
+            {
+                tabla.AddCell(Celda(l.Corte.corte, normal));
+                tabla.AddCell(Celda(l.CantKg.ToString("F3"), normal, Element.ALIGN_RIGHT));
+                tabla.AddCell(Celda(l.PrecioKg.ToString("#,##0.00", new CultureInfo("es-AR")), normal, Element.ALIGN_RIGHT));
+
+                if (esFacturaA)
+                    tabla.AddCell(Celda(l.AlicuotaIva.ToString("#,##0.00"), normal, Element.ALIGN_RIGHT));
+
+                tabla.AddCell(Celda(
+                    (l.CantKg * l.PrecioKg).ToString("#,##0.00", new CultureInfo("es-AR")),
+                    normal,
+                    Element.ALIGN_RIGHT));
+            }
+
+            return tabla;
+        }
+
+        #endregion
+
+        #region TOTALES
+
+        private PdfPTable GenerarTotales(Entidades.Venta venta, Font negrita)
+        {
+            PdfPTable total = new PdfPTable(3) { WidthPercentage = 100 };
+            total.SetWidths(new float[] { 5, 1, 1 });
+
+            total.AddCell(Celda("", negrita));
+            total.AddCell(Celda("TOTAL:", negrita, Element.ALIGN_RIGHT));
+            total.AddCell(Celda(
+                venta.TotalImporte.ToString("#,##0.00", new CultureInfo("es-AR")),
+                negrita,
+                Element.ALIGN_RIGHT));
+
+            return total;
+        }
+
+        #endregion
+
+        #region HELPERS
+
+        private PdfPCell Celda(string texto, Font fuente, int align = Element.ALIGN_LEFT)
+        {
+            return new PdfPCell(new Phrase(texto, fuente))
+            {
+                Border = 0,
+                Padding = 4,
+                HorizontalAlignment = align
+            };
+        }
+
+        private PdfPCell CeldaHeader(string texto, Font fuente)
+        {
+            return new PdfPCell(new Phrase(texto, fuente))
+            {
+                BackgroundColor = new BaseColor(255, 200, 200),
+                HorizontalAlignment = Element.ALIGN_CENTER,
+                Padding = 4
+            };
+        }
+
+        #endregion
     }
 }

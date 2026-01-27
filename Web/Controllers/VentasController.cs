@@ -101,6 +101,17 @@ namespace Web.Controllers
             // Pasar la venta a la vista
             return View(venta);
         }
+
+        public ActionResult Imprimir(int id)
+        {
+            Entidades.Venta venta = oVentaN.getVentaById(id);
+
+            var generador = new Utilidades.GenerarDocs();
+            byte[] pdfBytes = generador.GenerarFacturaX(venta);
+            return File(pdfBytes, "application/pdf", $"Factura_{id}.pdf");
+        }
+
+
         [HttpPost]
 
         public JsonResult FinalizarVenta(FinalizarVentaRequest request)
