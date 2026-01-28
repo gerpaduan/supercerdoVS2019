@@ -200,8 +200,16 @@
 </style>
 @if (cajaAbierta && Model != null)
 {
-    <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">Pantalla completa</button>
-    <!-- Vista: Punto de Venta (SB Admin 2) -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">
+                Pantalla completa
+        </button>
+
+        <span class="text-muted">
+            @(Session["Usuario"] != null ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia + " | SUC :" + ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre : "")
+        </span>
+    </div>
+          <!-- Vista: Punto de Venta (SB Admin 2) -->
     <div class="container-fluid p-2" id="pos-app">
 
         <div class="d-flex justify-content-end mb-2">

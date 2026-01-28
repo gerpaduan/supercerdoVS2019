@@ -58,6 +58,7 @@
     <Compile Include="Cheque.cs" />
     <Compile Include="CierreCaja.cs" />
     <Compile Include="CortePorFormula.cs" />
+    <Compile Include="Empresa.cs" />
     <Compile Include="Formula.cs" />
     <Compile Include="FacturaElectronica.cs" />
     <Compile Include="Formulario.cs" />

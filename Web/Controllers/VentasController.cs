@@ -640,7 +640,7 @@ namespace Web.Controllers
                 : venta.FechaVenta;
 
             // ===== EMISOR (TU EMPRESA) =====
-            dto.PtoVtaAfip = venta.Sucursal.CodPtoVentaARCA.ToString();
+            dto.PtoVtaAfip = venta.Sucursal.CodPuntoVentaAfip.ToString();
             //dto.EmisorRazonSocial = user.Empresa.RazonSocial // venta.Sucursal.RazonSocial;
             //dto.EmisorCUIT = user.Empresa.CUIT;
             //dto.EmisorCondicionIVA = user.Empresa.CondicionIVA;

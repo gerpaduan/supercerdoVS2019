@@ -21,31 +21,6 @@ namespace Datos
             return dtSucursal;
         }
 
-        //public Entidades.Sucursal findById(int id)
-        //{
-        //    Entidades.Sucursal oSucursalE = null;
-
-        //    using (SqlConnection conn = this.conn.conectar())
-        //    using (SqlCommand cmd = new SqlCommand("SELECT idSucursal, sucursal FROM sucursal WHERE idSucursal = @id", conn))
-        //    {
-        //        cmd.Parameters.AddWithValue("@id", id);
-
-        //        conn.Open();
-        //        using (SqlDataReader dr = cmd.ExecuteReader())
-        //        {
-        //            if (dr.Read())
-        //            {
-        //                oSucursalE = new Entidades.Sucursal
-        //                {
-        //                    idSucursal = Convert.ToInt32(dr["idSucursal"]),
-        //                    sucursal = dr["sucursal"].ToString()
-        //                };
-        //            }
-        //        }
-        //    }
-
-        //    return oSucursalE;
-        //}
         public Entidades.Sucursal findById(int id)
         {
             Entidades.Sucursal oSucursalE = null;
@@ -63,6 +38,13 @@ namespace Datos
                         oSucursalE = mapSucursal(dr);
                     }
                 }
+            }
+
+            // === Cargar Empresa si corresponde ===
+            if (oSucursalE != null && oSucursalE.IdEmpresa > 0)
+            {
+                var empresa = findEmpresaById(oSucursalE.IdEmpresa);
+                oSucursalE.Empresa = empresa; // suponiendo que Sucursal tiene propiedad Empresa
             }
 
             return oSucursalE;
@@ -96,7 +78,7 @@ namespace Datos
                 IdSucursal = dr["idSucursal"] != DBNull.Value ? Convert.ToInt32(dr["idSucursal"]) : 0,
                 SucursalNombre = dr["sucursal"] != DBNull.Value ? dr["sucursal"].ToString() : string.Empty,
                 IdEmpresa = dr["idEmpresa"] != DBNull.Value ? Convert.ToInt32(dr["idEmpresa"]) : 0,
-                CodPtoVentaARCA = dr["codPtoVentaARCA"] != DBNull.Value ? Convert.ToInt32(dr["codPtoVentaARCA"]) : 0,
+                CodPuntoVentaAfip = dr["codPuntoVentaAfip"] != DBNull.Value ? Convert.ToInt32(dr["codPuntoVentaAfip"]) : 0,
                 Direccion = dr["direccion"] != DBNull.Value ? dr["direccion"].ToString() : string.Empty,
                 Localidad = dr["localidad"] != DBNull.Value ? dr["localidad"].ToString() : string.Empty,
                 Provincia = dr["provincia"] != DBNull.Value ? dr["provincia"].ToString() : string.Empty,
@@ -104,6 +86,76 @@ namespace Datos
             };
         }
 
+        public Entidades.Empresa findEmpresaById(int idEmpresa)
+        {
+            Entidades.Empresa oEmpresa = null;
+
+            using (SqlConnection conn = this.conn.conectar())
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Empresas WHERE idEmpresa = @id", conn))
+            {
+                cmd.Parameters.AddWithValue("@id", idEmpresa);
+
+                conn.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        oEmpresa = mapEmpresa(dr);
+                    }
+                }
+            }
+
+            return oEmpresa;
+        }
+
+        public Entidades.Empresa findEmpresaByCuit(long cuit)
+        {
+            Entidades.Empresa oEmpresa = null;
+
+            using (SqlConnection conn = this.conn.conectar())
+            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Empresas WHERE cuit = @cuit", conn))
+            {
+                cmd.Parameters.AddWithValue("@cuit", cuit);
+
+                conn.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    if (dr.Read())
+                    {
+                        oEmpresa = mapEmpresa(dr);
+                    }
+                }
+            }
+
+            return oEmpresa;
+        }
+
+        private Entidades.Empresa mapEmpresa(SqlDataReader dr)
+        {
+            return new Entidades.Empresa
+            {
+                IdEmpresa = dr["idEmpresa"] != DBNull.Value ? Convert.ToInt32(dr["idEmpresa"]) : 0,
+                RazonSocialAfip = dr["razonSocialAfip"]?.ToString(),
+                Cuit = dr["cuit"] != DBNull.Value ? Convert.ToInt64(dr["cuit"]) : 0,
+                NombreFantasia = dr["nombreFantasia"]?.ToString(),
+                Slogan1 = dr["slogan1"]?.ToString(),
+                Slogan2 = dr["slogan2"]?.ToString(),
+                Slogan3 = dr["slogan3"]?.ToString(),
+                Iibb = dr["iibb"] != DBNull.Value ? Convert.ToInt64(dr["iibb"]) : 0,
+                CondicionIVA = dr["condicionIVA"]?.ToString(),
+                InicioActividad = dr["inicioActividad"] != DBNull.Value ? Convert.ToDateTime(dr["inicioActividad"]) : DateTime.MinValue,
+                TenantSlug = dr["tenantSlug"]?.ToString(),
+                Domicilio = dr["domicilio"]?.ToString(),
+                Ciudad = dr["ciudad"]?.ToString(),
+                Pais = dr["pais"]?.ToString(),
+                Telefono = dr["telefono"]?.ToString(),
+                Email = dr["email"]?.ToString(),
+                BasePath = dr["basePath"]?.ToString(),
+                EsRRII = dr["esRRII"] != DBNull.Value ? Convert.ToByte(dr["esRRII"]) : (byte)0,
+                NombreCertificado_pfx = dr["nombreCertificado_pfx"]?.ToString(),
+                Entorno_HOMO_PROD = dr["entorno_HOMO_PROD"]?.ToString()
+            };
+        }
 
         public DataTable obtenerSucursalSanMartin()
         {

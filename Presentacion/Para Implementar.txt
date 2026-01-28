@@ -101,3 +101,6 @@ AfipCertPassword    -- cifrada
 AfipTaPath          -- ej: AFIP\20123456789\TicketAcceso.txt
    EsRRII
    Entorno (HOMO / PROD)
+
+*****
+Ver cambios en tabla Sucursales

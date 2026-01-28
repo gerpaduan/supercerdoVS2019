@@ -99,6 +99,9 @@ namespace Negocio
             {
                 listUsuarios = convertDatatableToList();
             }
+
+            Datos.Sucursal oSucursalD = new Datos.Sucursal();
+
             foreach (Entidades.Usuario user in listUsuarios)
             {
                 if (soloNombreUsuario)
@@ -107,6 +110,12 @@ namespace Negocio
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
+                        userEncontrado.Sucursal = userEncontrado.IdSucursal > 0
+                            ? oSucursalD.findById(userEncontrado.IdSucursal)
+                            : null;
+                        userEncontrado.Empresa = userEncontrado.IdEmpresa > 0
+                            ? oSucursalD.findEmpresaById(userEncontrado.IdEmpresa)
+                            : null;
                         break;
                     }
                 }
@@ -117,6 +126,12 @@ namespace Negocio
                     {
                         userEncontrado = new Entidades.Usuario();
                         userEncontrado = user;
+                        userEncontrado.Sucursal = userEncontrado.IdSucursal > 0
+                            ? oSucursalD.findById(userEncontrado.IdSucursal)
+                            : null;
+                        userEncontrado.Empresa = userEncontrado.IdEmpresa > 0
+                            ? oSucursalD.findEmpresaById(userEncontrado.IdEmpresa)
+                            : null;
                         break;
                     }
                 }

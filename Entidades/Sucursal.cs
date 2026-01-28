@@ -12,11 +12,13 @@ namespace Entidades
 
         // Nuevos campos
         public int IdEmpresa { get; set; }
-        public int CodPtoVentaARCA { get; set; }
+        public int CodPuntoVentaAfip { get; set; }
         public string Direccion { get; set; }
         public string Localidad { get; set; }
         public string Provincia { get; set; }
         public string Pais { get; set; }
+
+        public Entidades.Empresa Empresa { get; set; }
 
         public int IdSucursal
         {

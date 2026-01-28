@@ -78,9 +78,13 @@ namespace Entidades
         string email;
 
         public int IdSucursal { get; set; }
+
+        public Entidades.Sucursal Sucursal { get; set; }
         public string SucursalNombre { get; set; }
         public List<Entidades.Sucursal> ListaSucursales{ get; set; }
 
         public int IdEmpresa { get; set; }
+
+        public Entidades.Empresa Empresa { get; set; }
     }
 }
