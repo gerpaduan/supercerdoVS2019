@@ -5,24 +5,31 @@ using System.Text;
 using System.Data;
 using Datos;
 using System.Data.SqlClient;
+using Utilidades;
 
 namespace Negocio
 {
     public class OtrasClases
     {
-        Datos.OtrasClases oOtrasClasesD = new Datos.OtrasClases();
+        private readonly Datos.OtrasClases oOtrasClasesD;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        public OtrasClases(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oOtrasClasesD = new Datos.OtrasClases(empresa);
+        }
 
         #region Licencia
         public bool existeLicencia(string nroLicencia)
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             return oOtrasClasesD.existeLicencia(nroLicencia);
         }
 
         public void agregarLicencia(string nroLicencia, string identificacion)
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             oOtrasClasesD.agregarLicencia(nroLicencia, identificacion);
         }
         #endregion
@@ -30,123 +37,123 @@ namespace Negocio
         #region VencimientosLicencia
         public DataTable obtenerVencimientoLicencia(DateTime fechaDesde)
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             return oOtrasClasesD.obtenerVencimientoLicencia(fechaDesde);
         }
 
         public DateTime fechaVencimientoLicencia()
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             return oOtrasClasesD.fechaVencimientoLicencia();
         }
         public bool existePagoLicenciaHoy()
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             return oOtrasClasesD.existePagoLicenciaHoy();
         }
         public void agregaVencimientosLicencia(DateTime fechaDesde)
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             oOtrasClasesD.agregaVencimientosLicencia(fechaDesde);
         }
         public void agregarPagoCuota(DateTime fechaVencimiento)
         {
-            oOtrasClasesD = new Datos.OtrasClases();
+            
             oOtrasClasesD.agregarPagoCuota(fechaVencimiento);
         }
         #endregion
 
 
-        public DataTable obtenerParametrosDt()
-        {
-            return oOtrasClasesD.obtenerParametros();
-        }
-        public void actualizarParametros(DataTable dtParametros)
-        {
-            oOtrasClasesD.actualizarParametros(dtParametros);
-        }
-        public void obtenerParametros()
-        { 
-            DataTable dtParametros = oOtrasClasesD.obtenerParametros();            
+        //public DataTable obtenerParametrosDt()
+        //{
+        //    return oOtrasClasesD.obtenerParametros();
+        //}
+        //public void actualizarParametros(DataTable dtParametros)
+        //{
+        //    oOtrasClasesD.actualizarParametros(dtParametros);
+        //}
+        //public void obtenerParametros()
+        //{ 
+        //    DataTable dtParametros = oOtrasClasesD.obtenerParametros();            
 
-            for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
-            {
-                switch (dtParametros.Rows[fila]["nombre"].ToString())
-                {
-                    case "porcAjEfectivo":
-                        Entidades.Parametros.porcAjEfectivo = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjDebito":
-                        Entidades.Parametros.porcAjDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjCredito":
-                        Entidades.Parametros.porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjCtaCte":
-                        Entidades.Parametros.porcAjCtaCte = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjQr":
-                        Entidades.Parametros.porcAjQr = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjTranf":
-                        Entidades.Parametros.porcAjTranf = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "limiteKgParaAjuste":
-                        Entidades.Parametros.limiteKgParaAjuste = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "idConsumidorFinal":
-                        Entidades.Parametros.idConsumidorFinal = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "comisionDebito":
-                        Entidades.Parametros.comisionDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "comisionCredito":
-                        Entidades.Parametros.comisionCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "idIndefinido":
-                        Entidades.Parametros.idIndefinido = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
-                        break;
-                        ///TODO: eliminar este parametro
-                    case "minAccesoUltimaVentaVendedor":
-                        Entidades.Parametros.minAccesoUltimaVentaVendedor = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
-                        break;
-                    case "idPagoTarjetaEgresoCaja":
-                        Entidades.Parametros.idPagoTarjetaEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
-                        break;
-                    case "idCtaCteEgresoCaja":
-                        Entidades.Parametros.idCtaCteEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "idCompraEgresoCaja":
-                        Entidades.Parametros.idCompraEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "mayuscula":
-                        Entidades.Parametros.mayuscula = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
-                        break;
-                    case "loginRapidoMovimiento":
-                        Entidades.Parametros.loginRapidoMovimiento = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
-                        break;
-                    case "loginRapidoElaborado":
-                        Entidades.Parametros.loginRapidoElaborado = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
-                        break;
-                    case "loginRapidoStock":
-                        Entidades.Parametros.loginRapidoStock = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
-                        break;
-                    case "diasLimitFechaDesde":
-                        Entidades.Parametros.diasLimitFechaDesde = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "importeMaxRedondeo":
-                        Entidades.Parametros.importeMaxRedondeo = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "idPagoCobroEgresoCaja":
-                        Entidades.Parametros.idPagoCobroEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "codProdGenerico":
-                        Entidades.Parametros.codProdGenerico = Convert.ToInt64(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+        //    for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
+        //    {
+        //        switch (dtParametros.Rows[fila]["nombre"].ToString())
+        //        {
+        //            case "porcAjEfectivo":
+        //                Entidades.Parametros.porcAjEfectivo = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "porcAjDebito":
+        //                Entidades.Parametros.porcAjDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "porcAjCredito":
+        //                Entidades.Parametros.porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "porcAjCtaCte":
+        //                Entidades.Parametros.porcAjCtaCte = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "porcAjQr":
+        //                Entidades.Parametros.porcAjQr = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "porcAjTranf":
+        //                Entidades.Parametros.porcAjTranf = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "limiteKgParaAjuste":
+        //                Entidades.Parametros.limiteKgParaAjuste = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "idConsumidorFinal":
+        //                Entidades.Persona.idConsumidorFinal = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "comisionDebito":
+        //                Entidades.Parametros.comisionDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "comisionCredito":
+        //                Entidades.Parametros.comisionCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "idIndefinido":
+        //                Entidades.Persona.idIndefinido = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
+        //                break;
+        //                ///TODO: eliminar este parametro
+        //            case "minAccesoUltimaVentaVendedor":
+        //                Entidades.Parametros.minAccesoUltimaVentaVendedor = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
+        //                break;
+        //            case "idPagoTarjetaEgresoCaja":
+        //                Entidades.Parametros.idPagoTarjetaEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()); 
+        //                break;
+        //            case "idCtaCteEgresoCaja":
+        //                Entidades.Parametros.idCtaCteEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "idCompraEgresoCaja":
+        //                Entidades.EgresoCaja.idCompraEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "mayuscula":
+        //                Entidades.Parametros.mayuscula = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+        //                break;
+        //            case "loginRapidoMovimiento":
+        //                Entidades.Parametros.loginRapidoMovimiento = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+        //                break;
+        //            case "loginRapidoElaborado":
+        //                Entidades.Parametros.loginRapidoElaborado = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+        //                break;
+        //            case "loginRapidoStock":
+        //                Entidades.Parametros.loginRapidoStock = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString()) == 1;
+        //                break;
+        //            case "diasLimitFechaDesde":
+        //                Entidades.Parametros.diasLimitFechaDesde = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "importeMaxRedondeo":
+        //                Entidades.Parametros.importeMaxRedondeo = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "idPagoCobroEgresoCaja":
+        //                Entidades.EgresoCaja.idPagoCobroEgresoCaja = Convert.ToInt32(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            case "codProdGenerico":
+        //                Entidades.Parametros.codProdGenerico = Convert.ToInt64(dtParametros.Rows[fila]["valor"].ToString());
+        //                break;
+        //            default:
+        //                break;
+        //        }
+        //    }
+        //}
     }
 }

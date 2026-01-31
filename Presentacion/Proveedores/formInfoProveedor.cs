@@ -67,7 +67,7 @@ namespace Presentacion
         {
             if (validarCampos())
             {
-                Negocio.Persona oProveedorN = new Negocio.Persona();
+                Negocio.Persona oProveedorN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
                 oProvModificarE.otrosDatos = this.txtOtrosDatos.Text.Trim();
 

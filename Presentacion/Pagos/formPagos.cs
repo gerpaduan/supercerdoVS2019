@@ -13,8 +13,8 @@ namespace Presentacion.Pagos
 {
     public partial class formPagos : Form, InterfaceUsuario
     {
-        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Pago oPagoE = new Entidades.Pago();
         Entidades.Persona oPersonaE;
         Entidades.Usuario oUsuario;

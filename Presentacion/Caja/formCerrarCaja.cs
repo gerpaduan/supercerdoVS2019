@@ -14,8 +14,8 @@ namespace Presentacion.Caja
 {
     public partial class formCerrarCaja : Form
     {
-        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         public Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
@@ -396,7 +396,7 @@ namespace Presentacion.Caja
                     oCierreAnterior = oCierreN.findByIdOrLast(oCierreE, Entidades.CierreCaja.tipoBusqueda.FindLastOpen, "");
                     lblDiferenciaEntreCaja.Visible = oCierreAnterior != null && !oCierreAnterior.CajaInicioSiguiente.Equals(oCierreE.CajaInicio);
 
-                    Negocio.Venta oVentaN = new Negocio.Venta();
+                    Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                     oCierreE.FechaHoraCierre = oCierreE.FechaHoraCierre != null ? oCierreE.FechaHoraCierre : DateTime.Now;
                     lblCortesAnulados.Visible = oVentaN.getVentasVendedorCierreCaja(oCierreE, true).Rows.Count > 0;
 

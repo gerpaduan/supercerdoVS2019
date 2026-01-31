@@ -15,7 +15,7 @@ namespace Presentacion
 {
     public partial class formLineasMov : formBaseColor
     {
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Corte oCorteE = new Entidades.Corte();
         Entidades.Sucursal oSucursalOrigen = new Entidades.Sucursal();
@@ -26,7 +26,7 @@ namespace Presentacion
         DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
  
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         bool cargar = false;
 
@@ -43,7 +43,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursales();
-                txtFechaDesde.Value = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+                txtFechaDesde.Value = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
                 cargar = true;
                 cargarGrilla();
             }

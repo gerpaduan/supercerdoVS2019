@@ -13,12 +13,12 @@ namespace Presentacion.Cortes
     {
         string ultimaConnSelect;
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtConexiones;
         DataTable dtSucursales;
 
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         DataTable dtGrillaReporte = new DataTable();
         int idSucursal;
@@ -50,7 +50,7 @@ namespace Presentacion.Cortes
                 if (FormPrincipal.soyYo)
                 {
                     dtConexiones = new DataTable();
-                    //oSucursalN = new Negocio.Sucursal();
+                    //oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                     dtConexiones = oSucursalN.obtenerConexiones(null, true);
                     comboConexion.DataSource = dtConexiones;
                     comboConexion.ValueMember = "name";

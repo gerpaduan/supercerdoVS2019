@@ -32,9 +32,9 @@ namespace Presentacion
 
         public DataTable dtSucursales;
 
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        public Negocio.Venta oVentaN = new Negocio.Venta();
-        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        public Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        public Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public Entidades.CierreCaja oCierreE;
 
         public DataTable dtVentas;
@@ -175,7 +175,7 @@ namespace Presentacion
         private void cargarSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalesConTodas();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";

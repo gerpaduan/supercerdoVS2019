@@ -22,17 +22,17 @@ namespace Presentacion
             get { return esVentaClientes; }
             set { esVentaClientes = value; }
         }
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtEmbutidos = new DataTable();
 
         DataTable dtSucursales;
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Usuario oUsuario;
         
 
-        int cantDiasLimitFechaDesde = Entidades.Parametros.diasLimitFechaDesde;
+        int cantDiasLimitFechaDesde = FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0);
         DateTime limitFechaDesde;
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         bool cargar = false;
@@ -161,7 +161,7 @@ namespace Presentacion
 
         private void cargarSucursal()
         {
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalesConTodas();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";

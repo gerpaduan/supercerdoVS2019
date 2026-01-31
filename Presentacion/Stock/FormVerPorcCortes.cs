@@ -14,7 +14,7 @@ namespace Presentacion.Stock
         public int idPesaje = 0;
         int idAjuste = 0;
 
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Compra oPesajeE;
         Entidades.Compra oAjusteE;
         public Entidades.Usuario oUsuario;

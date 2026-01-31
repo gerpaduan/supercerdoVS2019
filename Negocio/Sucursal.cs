@@ -3,16 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using Utilidades;
 
 namespace Negocio
 {
     public class Sucursal
     {
-        Datos.Sucursal oSucursalD;
+        private readonly Datos.Sucursal oSucursalD;
+        private readonly IEmpresaContext _empresa;
+        private readonly IParametrosContext _param;
 
-        public DataTable obtenerSucursales()
+        public Sucursal(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            oSucursalD = new Datos.Sucursal();
+            _empresa = empresa;
+            _param = param;
+            oSucursalD = new Datos.Sucursal(empresa);
+        }
+        public DataTable obtenerSucursales()
+        {            
             return oSucursalD.obtenerSucursales();
         }
 
@@ -29,35 +37,47 @@ namespace Negocio
 
         public Entidades.Sucursal findById(int id)
         {
-            oSucursalD = new Datos.Sucursal();
+            
             return oSucursalD.findById(id);
         }
         public List<Entidades.Sucursal> findAll()
         {
-            oSucursalD = new Datos.Sucursal();
+            
             return oSucursalD.findAll();
+        }
+
+        public Entidades.Empresa findEmpresaById(int idEmpresa)
+        {
+            
+            return oSucursalD.findEmpresaById(idEmpresa);
+        }
+
+        public Entidades.Empresa findEmpresaByCuit(long cuit)
+        {
+            
+            return oSucursalD.findEmpresaByCuit(cuit);
         }
 
         public DataTable obtenerSucursalSanMartin()
         {
-            oSucursalD = new Datos.Sucursal();
+            
             return oSucursalD.obtenerSucursalSanMartin();
         }
         public DataTable obtenerSucursalSanLorenzo()
         {
-            oSucursalD = new Datos.Sucursal();
+            
             return oSucursalD.obtenerSucursalSanLorenzo();
         }
 
         public DataTable obtenerConexiones(bool? mostrarEnPrincipal, bool? mostrarEnStockActual)
         {
-            oSucursalD = new Datos.Sucursal();
+            
             return oSucursalD.obtenerConexiones(mostrarEnPrincipal, mostrarEnStockActual);
         }
 
         public int getIdSucursalByConexion(string nameConnString)
         {
-            oSucursalD = new Datos.Sucursal();
+            
             return oSucursalD.getIdSucursalByConexion(nameConnString);
         }
     }

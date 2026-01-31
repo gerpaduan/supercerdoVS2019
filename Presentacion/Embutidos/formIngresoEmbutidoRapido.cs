@@ -22,7 +22,7 @@ namespace Presentacion
         public formEmbutidos frmEmbutidos = new formEmbutidos();
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN;
-        Negocio.Corte oCorteN=new Negocio.Corte();
+        Negocio.Corte oCorteN=new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtFormula;
 
         public Entidades.Corte oCorteEmbutidoE;
@@ -233,7 +233,7 @@ namespace Presentacion
         private void cargarComboSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalSanMartin();
             dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;

@@ -19,8 +19,8 @@ namespace Presentacion
     {
         public int idCorte = 0;
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();  
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);  
         Entidades.Corte oCorteE=new Entidades.Corte();
         Entidades.Corte oExisteCorte = new Entidades.Corte();
         public formCortes frmCorte;// = new formCortes();
@@ -412,7 +412,7 @@ namespace Presentacion
                 comboAlicuotaIva.DisplayMember = "iva";
                 comboAlicuotaIva.ValueMember = "idIva";
 
-                checkMayuscula.Checked = Entidades.Parametros.mayuscula;
+                checkMayuscula.Checked = FormPrincipal.ParametrosCTX.GetBool01(Entidades.Parametros.Mayuscula, false);;
                 txtCodigo.Focus();
 
                 checkSugerirCodigo.Visible = !(idCorte > 0);//solo visible para altas de productos

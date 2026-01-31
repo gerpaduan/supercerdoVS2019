@@ -115,6 +115,7 @@
       <DependentUpon>BarraProgreso.cs</DependentUpon>
     </Compile>
     <Compile Include="Conexion.cs" />
+    <Compile Include="EmpresaContextNulo .cs" />
     <Compile Include="formAppConfigTerminal.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -153,6 +154,8 @@
     </Compile>
     <Compile Include="GenerarCodigoBarra.cs" />
     <Compile Include="GenerarDocs.cs" />
+    <Compile Include="IEmpresaContext.cs" />
+    <Compile Include="IParametrosContext.cs" />
     <Compile Include="Mensajes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SingletonLeerPeso.cs" />

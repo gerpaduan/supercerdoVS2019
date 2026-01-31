@@ -11,7 +11,7 @@ namespace Presentacion.Caja
 {
     public partial class FormLoginVendedor : Form
     {
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
         public bool soloActivos = false;
         public bool usuarioConPermiso = false;

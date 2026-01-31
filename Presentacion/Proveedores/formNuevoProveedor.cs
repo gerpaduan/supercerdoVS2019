@@ -42,7 +42,7 @@ namespace Presentacion
             oProveedorE.otrosDatos = txtOtrosDatos.Text.Trim();
             oProveedorE.tipo = "Proveedor";
 
-            Negocio.Persona oProveedorN = new Negocio.Persona();
+            Negocio.Persona oProveedorN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             oProveedorN.agregarPersona(oProveedorE);
         }
 

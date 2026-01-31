@@ -104,3 +104,107 @@ AfipTaPath          -- ej: AFIP\20123456789\TicketAcceso.txt
 
 *****
 Ver cambios en tabla Sucursales
+
+-------------
+actualizar dbo.Parametros (
+
+
+BEGIN TRY
+    BEGIN TRAN;
+
+    ------------------------------------------------------------
+    -- 1) Agregar columna tipo si no existe
+    ------------------------------------------------------------
+    IF COL_LENGTH('dbo.Parametros', 'tipo') IS NULL
+    BEGIN
+        ALTER TABLE dbo.Parametros
+        ADD tipo TINYINT NULL; -- luego lo pasamos a NOT NULL
+    END
+
+    ------------------------------------------------------------
+    -- 2) Set default inicial: Número
+    ------------------------------------------------------------
+    UPDATE dbo.Parametros
+    SET tipo = 1
+    WHERE tipo IS NULL;
+
+    ------------------------------------------------------------
+    -- 3) Inicializar tipo según tu modelo C#
+    -- Bool = 2
+    -- (todos los demás quedan como Número = 1)
+    ------------------------------------------------------------
+    UPDATE dbo.Parametros
+    SET tipo = 2
+    WHERE nombre IN (
+        'mayuscula',
+        'loginRapidoMovimiento',
+        'loginRapidoElaborado',
+        'loginRapidoStock'
+    );
+
+    ------------------------------------------------------------
+    -- 4) Normalización opcional de valores BOOL a '0'/'1'
+    -- (no toca los que ya estén '0'/'1')
+    ------------------------------------------------------------
+    UPDATE dbo.Parametros
+    SET valor =
+        CASE
+            WHEN valor IS NULL THEN '0'
+            WHEN LTRIM(RTRIM(valor)) IN ('1','0') THEN LTRIM(RTRIM(valor))
+            WHEN UPPER(LTRIM(RTRIM(valor))) IN ('TRUE','VERDADERO','SI','S','YES','Y') THEN '1'
+            WHEN UPPER(LTRIM(RTRIM(valor))) IN ('FALSE','FALSO','NO','N') THEN '0'
+            ELSE '0' -- fallback seguro
+        END
+    WHERE tipo = 2;
+
+    ------------------------------------------------------------
+    -- 5) Si existieran parámetros fuera del modelo (no listados),
+    -- y no son bool, los dejamos como Número (1).
+    -- (Si querés marcar texto como 3 automáticamente, avisame y lo agrego)
+    ------------------------------------------------------------
+
+    ------------------------------------------------------------
+    -- 6) Hacer tipo NOT NULL
+    ------------------------------------------------------------
+    ALTER TABLE dbo.Parametros
+    ALTER COLUMN tipo TINYINT NOT NULL;
+
+    ------------------------------------------------------------
+    -- 7) Constraint para rango válido (1,2,3)
+    ------------------------------------------------------------
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE name = 'CK_Parametros_Tipo'
+          AND parent_object_id = OBJECT_ID('dbo.Parametros')
+    )
+    BEGIN
+        ALTER TABLE dbo.Parametros
+        ADD CONSTRAINT CK_Parametros_Tipo CHECK (tipo IN (1,2,3));
+    END
+
+    COMMIT;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK;
+    THROW;
+END CATCH;
+
+
+-----
+
+CREATE TABLE dbo.EmpresaParametros (
+    idEmpresa   INT NOT NULL,
+    idParametro INT NOT NULL,
+    valor       NVARCHAR(200) NULL,
+
+    CONSTRAINT PK_EmpresaParametros PRIMARY KEY (idEmpresa, idParametro),
+    CONSTRAINT FK_EmpresaParametros_Empresas
+        FOREIGN KEY (idEmpresa) REFERENCES dbo.Empresas(idEmpresa),
+    CONSTRAINT FK_EmpresaParametros_Parametros
+        FOREIGN KEY (idParametro) REFERENCES dbo.Parametros(idParametro)
+);
+
+CREATE INDEX IX_EmpresaParametros_IdEmpresa
+ON dbo.EmpresaParametros(idEmpresa);
+

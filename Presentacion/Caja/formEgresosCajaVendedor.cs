@@ -11,8 +11,8 @@ namespace Presentacion.Caja
 {
     public partial class formEgresosCajaVendedor : Form
     {
-        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
@@ -124,7 +124,7 @@ namespace Presentacion.Caja
 
                 ///si es Venta con tarjeta o Cta Cte se muestra la venta infoVenta y NO es egreso por pago/cobro
                 if (oEgresoCajaE.Monto > 0 && (oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.EgresoCaja.idPagoTarjeta) ||
-                    (!oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.Parametros.idPagoCobroEgresoCaja) && oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja))))
+                    (!oEgresoCajaE.IdTipoEgresoCaja.Equals(Entidades.EgresoCaja.idPagoCobroEgresoCaja) && oEgresoCajaE.esEgresoCtaCte(oEgresoCajaE.IdTipoEgresoCaja))))
                 {
                     //Obtiene el ID de la Venta
                     string resultString = "";
@@ -144,7 +144,7 @@ namespace Presentacion.Caja
 
                     idVentaSelected = Convert.ToInt32(resultString);
                     Caja.formUltimaVenta frmUltimaVenta = new Caja.formUltimaVenta();
-                    Negocio.Venta oVentaN = new Negocio.Venta();
+                    Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                     frmUltimaVenta.oUltimaVenta = oVentaN.getVentaById(idVentaSelected);
                     frmUltimaVenta.ShowDialog();
 

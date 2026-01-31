@@ -15,7 +15,7 @@ namespace Presentacion.Caja
 {
     public partial class formTiposEgresos : Form, InterfaceUsuario
     {
-        Negocio.CierreCaja oCierreCajaN = new Negocio.CierreCaja();
+        Negocio.CierreCaja oCierreCajaN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtTiposEgreso = new DataTable();
 
         Entidades.Usuario oUsuario;

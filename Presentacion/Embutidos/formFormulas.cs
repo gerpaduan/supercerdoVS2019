@@ -23,12 +23,12 @@ namespace Presentacion
             get { return esVentaClientes; }
             set { esVentaClientes = value; }
         }
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtEmbutidos = new DataTable();
 
         DataTable dtSucursales;
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        public Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Usuario oUsuario;
         bool cargar = false;

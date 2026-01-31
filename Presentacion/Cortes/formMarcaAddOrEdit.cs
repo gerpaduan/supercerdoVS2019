@@ -18,8 +18,8 @@ namespace Presentacion.Cortes
         Entidades.Persona oMarcaE = new Entidades.Persona();
         Entidades.Persona oPropietarioE = new Entidades.Persona();
         Entidades.Persona oMarcasSinMod = new Entidades.Persona();
-        Negocio.Persona oPersonaN = new Negocio.Persona();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public Entidades.Usuario oUsuario;
         public int idPersona = 0;
         bool huboModif = true;
@@ -112,7 +112,7 @@ namespace Presentacion.Cortes
             {
                 ///Se valida que la persona no sea un ID reservado por el sistema
                 ///
-                if (oMarcaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) || oMarcaE.idPersona.Equals(Entidades.Parametros.idIndefinido))
+                if (oMarcaE.idPersona.Equals(Entidades.Persona.idConsumidorFinal) || oMarcaE.idPersona.Equals(Entidades.Persona.idIndefinido))
                 {
                     MessageBox.Show("La persona seleccionada es reservada por el sistema y no se puede modificar");
                     return;

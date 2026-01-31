@@ -11,8 +11,8 @@ namespace Presentacion.CuentaCorriente
 {
     public partial class formCtasCtes : Form
     {
-        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public bool desdePOS = false;
         public Entidades.CierreCaja oCierreCajaE;
         bool formCargado = false;

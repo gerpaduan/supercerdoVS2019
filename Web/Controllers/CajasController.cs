@@ -9,11 +9,21 @@ using Utilidades;
 
 namespace Web.Controllers
 {
-    public class CajasController : Controller
+    public class CajasController : BaseController
     {
-        private readonly Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        private readonly Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        private readonly Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.CierreCaja oCierreN;
+        Negocio.Sucursal oSucursalN;
+        Negocio.Usuario oUsuarioN;
+
+        protected override void OnActionExecuting(
+            ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            oCierreN = new Negocio.CierreCaja(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+            oUsuarioN = new Negocio.Usuario(empresa);
+        }
 
         // GET: Cajas/CajasAbiertas
         public ActionResult CajasAbiertas(int? idSucursal, string buscar = "", bool ajax = false)

@@ -16,18 +16,31 @@ using System.IO;
 
 namespace Web.Controllers
 {
-    public class VentasController : Controller
+    public class VentasController : BaseController
     {
-        Negocio.Venta oVentaN = new Negocio.Venta();
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-        Negocio.Persona oPersonaN = new Negocio.Persona();
-        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        private Negocio.Venta oVentaN;
+        private Negocio.Sucursal oSucursalN;
+        private Negocio.Usuario oUsuarioN;
+        private Negocio.Persona oPersonaN;
+        private Negocio.CierreCaja oCierreN;
+        private Negocio.Corte oCorteN;
 
-        Entidades.CierreCaja  oCierreE = new Entidades.CierreCaja();
-        Entidades.Venta.imprimirCbteEnum imprimirCbte = Entidades.Venta.imprimirCbteEnum.Nulo;
-        // GET: Ventas
+        private Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
+        private Entidades.Venta.imprimirCbteEnum imprimirCbte =
+            Entidades.Venta.imprimirCbteEnum.Nulo;
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            oVentaN = new Negocio.Venta(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+            oUsuarioN = new Negocio.Usuario(empresa);
+            oPersonaN = new Negocio.Persona(empresa);
+            oCierreN = new Negocio.CierreCaja(empresa);
+            oCorteN = new Negocio.Corte(empresa);
+        }
+
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
         {
             // Si no envían fechas, por defecto usar hoy
@@ -147,7 +160,7 @@ namespace Web.Controllers
 
                 //VALIDAR VENTA EN CTACTE sea solo en Cta Cte Y NO A 
                 if (venta.EnCtaCte && (!venta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                    venta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
+                    venta.Persona.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
                 {
                     string msg_ = "Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
                         "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.";
@@ -333,10 +346,10 @@ namespace Web.Controllers
                 bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDig_EAN8);
 
                 long codigoProducto = esGenerico
-                    ? Convert.ToInt64(Entidades.Parametros.codProdGenerico) + numeroSumaGen
+                    ? param.GetLong(Entidades.Parametros.CodProdGenerico, 0L) + numeroSumaGen
                     : Convert.ToInt64(codigo);
 
-                var gestorCortes = new Negocio.Corte();
+                var gestorCortes = oCorteN;
                 var corte = gestorCortes.findCorteByCodigo(codigoProducto, false);
 
                 if (corte == null)
@@ -394,7 +407,7 @@ namespace Web.Controllers
                 }
 
                 // Obtener el producto
-                var gestorCortes = new  Negocio.Corte();
+                var gestorCortes = oCorteN;
                 var corte = gestorCortes.findCorteById(idCorte, false);
 
                 if (corte == null)

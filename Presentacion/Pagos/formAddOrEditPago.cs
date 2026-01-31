@@ -28,9 +28,9 @@ namespace Presentacion.Pagos
     public partial class formAddOrEditPago : Form, InterfaceUsuario, InterfacePersona
     {
         public formPagos frmPagos;
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public Entidades.Persona oPersonaE = new Entidades.Persona();
         Entidades.Pago oPagoE = new Entidades.Pago();
         Entidades.Pago oPagoSinMod = new Entidades.Pago();
@@ -484,7 +484,7 @@ namespace Presentacion.Pagos
         {
             bool respuesta = true;
 
-            if (oPersonaE == null || oPersonaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+            if (oPersonaE == null || oPersonaE.idPersona.Equals(Entidades.Persona.idConsumidorFinal))
             {
                 MessageBox.Show("Debe seleccionar una persona y ser diferente a Consumidor Final.\nNo pueden asignarse pagos/cobros a CF", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;

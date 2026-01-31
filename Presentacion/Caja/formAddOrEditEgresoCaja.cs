@@ -15,14 +15,14 @@ namespace Presentacion.Caja
 {
     public partial class formAddOrEditEgresoCaja : Form, InterfaceUsuario
     {
-        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         protected Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
 
         public Entidades.Usuario oUsuario;
-        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        public Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         formEgresosCaja frmEgresosCaja;
 
@@ -76,7 +76,7 @@ namespace Presentacion.Caja
 
         private void validarAperturaCaja()
         {
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;
@@ -162,7 +162,7 @@ namespace Presentacion.Caja
         private bool validarCajaAbiertaVendedeor()
         {
             bool resp = true;
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;

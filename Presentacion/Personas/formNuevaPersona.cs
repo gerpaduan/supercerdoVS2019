@@ -17,8 +17,8 @@ namespace Presentacion.Personas
         public  formPersonas frmPersonas;
         Entidades.Persona oPersonaE = new Entidades.Persona();
         Entidades.Persona oPersonaSinMod = new Entidades.Persona();
-        Negocio.Persona oPersonaN = new Negocio.Persona();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public Entidades.Usuario oUsuario;
         public int idPersona = 0;
         bool huboModif = true;
@@ -59,7 +59,7 @@ namespace Presentacion.Personas
         private void cargarIva()
         {
             dtIva = new DataTable();
-            oPersonaN = new Negocio.Persona();
+            oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtIva = oPersonaN.getIva();
             comboIva.DataSource = dtIva;
             comboIva.DisplayMember = "iva";
@@ -153,7 +153,7 @@ namespace Presentacion.Personas
             {
                 ///Se valida que la persona no sea un ID reservado por el sistema
                 ///
-                if (oPersonaE.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) || oPersonaE.idPersona.Equals(Entidades.Parametros.idIndefinido))
+                if (oPersonaE.idPersona.Equals(Entidades.Persona.idConsumidorFinal) || oPersonaE.idPersona.Equals(Entidades.Persona.idIndefinido))
                 {
                     MessageBox.Show("La persona seleccionada es reservada por el sistema y no se puede modificar");
                     return;

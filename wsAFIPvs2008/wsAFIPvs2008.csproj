@@ -98,6 +98,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EmpresaContextWin.cs" />
     <Compile Include="LoginClass_Person.cs" />
     <Compile Include="formFacturaElectronica.cs">
       <SubType>Form</SubType>

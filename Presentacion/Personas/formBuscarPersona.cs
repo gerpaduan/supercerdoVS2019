@@ -11,7 +11,7 @@ namespace Presentacion.Personas
 {
     public partial class formBuscarPersona : Form
     {
-        Negocio.Persona oPersonaN = new Negocio.Persona();
+        Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         bool tabStop = false;
         public formBuscarPersona()
         {
@@ -24,7 +24,7 @@ namespace Presentacion.Personas
         public void cargarGrilla()
         {
             grillaPersonas.ClearSelection();
-            oPersonaN = new Negocio.Persona();
+            oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             grillaPersonas.AutoGenerateColumns = false;
 
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBuscar.Text.Trim(), false);
@@ -37,7 +37,7 @@ namespace Presentacion.Personas
         public void buscarPersona()
         {            
             btnSeleccionar.TabStop = true;
-            oPersonaN = new Negocio.Persona();
+            oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.AutoGenerateColumns = false;
             grillaPersonas.DataSource = oPersonaN.buscarPersona(txtBusqueda, false);
@@ -54,7 +54,7 @@ namespace Presentacion.Personas
                     return;
 
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
-                oPersonaN = new Negocio.Persona();
+                oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 oPersonaE = oPersonaN.findById(idPersona);
 
                 InterfacePersona formInterface = this.Owner as InterfacePersona;

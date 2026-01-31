@@ -13,8 +13,8 @@ namespace Presentacion.Caja
 {
     public partial class formCierresDeCaja : Form, InterfaceUsuario
     {
-        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         protected Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();

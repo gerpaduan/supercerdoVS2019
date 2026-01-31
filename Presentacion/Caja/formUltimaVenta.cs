@@ -26,8 +26,8 @@ namespace Presentacion.Caja
         Entidades.Usuario oVendedorNuevo;
         public Entidades.CierreCaja oCierreE;
 
-        Negocio.Venta oVentaN = new Negocio.Venta();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.LineaVenta oLineaVenta;
         wsAFIPvs2008.formFacturaElectronica formFactElec;
 
@@ -193,7 +193,7 @@ namespace Presentacion.Caja
 
         private void validarAperturaCaja()
         {
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.Sucursal = oUltimaVenta.Sucursal;
             oCierreE.UsuarioInicio = oVendedorNuevo;
@@ -234,7 +234,7 @@ namespace Presentacion.Caja
                 //Validación que es llamado desde POS
                 if (oCierreE != null)
                 {
-                    Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                    Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                     bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(oUltimaVenta.FechaVenta, oUltimaVenta.Sucursal, oCierreE.UsuarioInicio);
                     if (!cajaAbierta)
                     {
@@ -284,7 +284,7 @@ namespace Presentacion.Caja
 
                 //valida que un venta en CTA CTE sea solo en Cta Cte
                 if (checkCtaCte.Checked && (!oUltimaVenta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                    oUltimaVenta.Persona.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
+                    oUltimaVenta.Persona.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
                 {
                     MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) no pueden ser a Consumidor Final y debe seleccionar Cta.Cte en forma de pago" +
                         "\n\nCorrija y vuelva a finalizar la venta.",

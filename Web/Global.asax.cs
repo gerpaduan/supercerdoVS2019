@@ -16,10 +16,6 @@ namespace Web
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
-
-            // 🔹 Cargar parámetros globales una sola vez al iniciar la app
-            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
-            oOtrasClasesN.obtenerParametros();
         }
     }
 }

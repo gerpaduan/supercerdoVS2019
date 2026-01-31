@@ -7,13 +7,16 @@ namespace Entidades
 {
     public class EgresoCaja
     {
-        public static int idPagoTarjeta = Entidades.Parametros.idPagoTarjetaEgresoCaja;
-        public static int idCtaCte = Entidades.Parametros.idCtaCteEgresoCaja;
+        public static int idCompraEgresoCaja = 19; // Entidades.EgresoCaja.idCompraEgresoCaja;
+        public static int idCtaCte = 100; // Entidades.Parametros.idCtaCteEgresoCaja;
+        public static int idPagoTarjeta = 200; // Entidades.Parametros.idPagoTarjetaEgresoCaja;
+        public static int idPagoCobroEgresoCaja = 300; // Entidades.EgresoCaja.idPagoCobroEgresoCaja;
+
 
         public bool esEgresoCtaCte(int idTipoEgreso)
         {
             //100 es el IdTipoEgresoCaja para CtaCte
-            return (idTipoEgreso.Equals(idCtaCte) || idTipoEgreso.Equals(Entidades.Parametros.idPagoCobroEgresoCaja));
+            return (idTipoEgreso.Equals(idCtaCte) || idTipoEgreso.Equals(idPagoCobroEgresoCaja));
         }
 
         public enum tablas

@@ -15,7 +15,7 @@ namespace Presentacion.Cortes
     {
         public Entidades.Usuario oUsuario;
 
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtTipoProducto = new DataTable();
 
         public string tipoProductoSelected = "";

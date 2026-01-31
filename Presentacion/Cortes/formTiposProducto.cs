@@ -17,7 +17,7 @@ namespace Presentacion.Cortes
 {
     public partial class formTiposProducto : Form, InterfaceUsuario
     {
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtTiposProducto = new DataTable();
 
         Entidades.Usuario oUsuario;

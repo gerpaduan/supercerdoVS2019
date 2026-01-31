@@ -25,8 +25,8 @@ namespace Presentacion.Movimientos
         CortesPorMovimiento cortePorMovimiento;
         List<CortesPorMovimiento> listaEnGrilla;
 
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         public formInfoMovimiento()
         {

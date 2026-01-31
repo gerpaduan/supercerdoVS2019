@@ -138,9 +138,12 @@ namespace Entidades
 
         DateTime creado;
 
+
+        public static int idIndefinido = 4;
+        public static int idConsumidorFinal = 6;
         public static bool esConsumidorFinal(Entidades.Persona oPersona)
         {
-            return (oPersona.idPersona == Parametros.idConsumidorFinal);
+            return (oPersona.idPersona == idConsumidorFinal);// Persona.idConsumidorFinal);
         }
 
     }

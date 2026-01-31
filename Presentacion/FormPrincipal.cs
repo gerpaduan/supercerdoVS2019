@@ -23,6 +23,7 @@ using Negocio;
 using Presentacion.Licencia;
 using Presentacion.Cheques;
 using System.Runtime.CompilerServices;
+using ParamKeys = Entidades.Parametros;
 
 
 namespace Presentacion
@@ -39,6 +40,9 @@ namespace Presentacion
         char validarPassDemo = '0';
         // 1: true 0:False x:Cerrar
 
+        public static IEmpresaContext EmpresaSTATIC { get; private set; }
+        public static IParametrosContext ParametrosCTX; // <-- nuevo
+
         public static bool esVersionDemo = ConfigurationManager.AppSettings["version"] != null && ConfigurationManager.AppSettings["version"].ToString().ToUpper().Equals("D") ? true : false;
         public static string passDemo = ConfigurationManager.AppSettings["passDemo"].ToString();
         public static bool leerBalanza = ConfigurationManager.AppSettings["puerto"].ToString().Equals("0") ? false : true;
@@ -47,8 +51,9 @@ namespace Presentacion
         public static string nombreSucursal = ConfigurationManager.AppSettings["nombreSucursal"].ToString();
         public static string cliente = ConfigurationManager.AppSettings["cliente"].ToString();
         public static string cuitCliente = ConfigurationManager.AppSettings["cuitCliente"].ToString();
+        public static string cuit = ConfigurationManager.AppSettings["cuit"].ToString();
         public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
-        public static string textForm = cliente + " | Suc. " + nombreSucursal;
+        public static string textForm;// =  cliente + " | Suc. " + nombreSucursal;
         //codigo de barras
         public static int cantDigitosProdEnCodBarra = Convert.ToInt32(ConfigurationManager.AppSettings["cantDigitosProdEnCodBarra"].ToString());
         public static bool esCodBarraPorCantidad = ConfigurationManager.AppSettings["codBarraPorCantidad"].ToString().Equals("0") ? true : false;
@@ -58,6 +63,8 @@ namespace Presentacion
         Entidades.Usuario oUserAdminEmpresa;
         public static Entidades.Usuario oUserLogueado;
         public static Entidades.Usuario oUserAdmin;
+        Negocio.Sucursal oSucN;// = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Parametros oParamN;
 
         string ultimaConnSelect;
 
@@ -311,8 +318,24 @@ namespace Presentacion
 
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
+            Entidades.Empresa oEmpresa = new Entidades.Empresa();
             try
             {
+                IEmpresaContext empresa = new EmpresaContextNulo();
+                oSucN = new Negocio.Sucursal(empresa, FormPrincipal.ParametrosCTX);
+                long cuit = long.Parse(cuitCliente);
+                oEmpresa = oSucN.findEmpresaByCuit(cuit);
+
+                if (oEmpresa == null)
+                {
+                    MessageBox.Show("\n\nNo se ha encontrado la empresa con CUIT: " + cuitCliente + ".\nEl sistema se cerrará.", "Empresa no encontrada", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Application.Exit();
+                }
+
+                int idEmpresa = oEmpresa != null ? oEmpresa.IdEmpresa : 0;
+
+                EmpresaSTATIC = new EmpresaContextWin(idEmpresa);
+
                 if (esVersionDemo)
                 {
                     while (validarPassDemo.Equals('0'))
@@ -322,7 +345,13 @@ namespace Presentacion
                     if (!validarPassDemo.Equals('1'))
                         Application.Exit();
                 }
-                Negocio.OtrasClases otrasClasesN = new OtrasClases();
+
+
+                // ✅ Nuevo: contexto de parámetros por empresa (instancia, no static values)
+                ParametrosCTX = new Negocio.Parametros(EmpresaSTATIC);
+                ParametrosCTX.Reload(); // opcional
+
+                Negocio.OtrasClases otrasClasesN = new OtrasClases(EmpresaSTATIC, ParametrosCTX);
 
                 #region validarLicenciaCuotas
                 ///se valida que la licencia no esté vencida
@@ -403,14 +432,14 @@ namespace Presentacion
             }
 
             //public static int idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-            Negocio.Sucursal oSucN = new Negocio.Sucursal();
+            
             Entidades.Sucursal oSucE = oSucN.findById(idSucursal);
             nombreSucursal = oSucE.sucursal; // ConfigurationManager.AppSettings["nombreSucursal"].ToString();
             //public static string cliente = ConfigurationManager.AppSettings["cliente"].ToString();
             //public static string cuitCliente = ConfigurationManager.AppSettings["cuitCliente"].ToString();
             //public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals
 
-            textForm = cliente + " | Suc. " + nombreSucursal;
+            textForm = oEmpresa.NombreFantasia + " | Suc. " + oSucE.SucursalNombre;//cliente + " | Suc. " + nombreSucursal;
 
             this.Text = textForm + " " + version_nro;
             timerInactividadAdmin.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["tiempoInactivoAdmin"].ToString());
@@ -427,9 +456,6 @@ namespace Presentacion
             {
                 comboConexion.Text = connStringActual.ToString();
             }
-            //Se obtienen los parametros
-            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
-            oOtrasClasesN.obtenerParametros();
 
             valorTextoMenuEncriptarDesencriptar();
             //ExportarListaPrecioAutomatica();
@@ -1337,6 +1363,14 @@ namespace Presentacion
                 formVentas frmVentas = new formVentas();
                 frmVentas.Logueado = true;
                 frmVentas.Show();
+            }
+        }
+
+        private void configuracionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var f = new Presentacion.FrmParametrosEmpresa(FormPrincipal.EmpresaSTATIC))
+            {
+                f.ShowDialog();
             }
         }
     }

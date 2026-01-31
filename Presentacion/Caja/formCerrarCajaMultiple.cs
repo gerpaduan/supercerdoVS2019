@@ -14,8 +14,8 @@ namespace Presentacion.Caja
 {
     public partial class formCerrarCajaMultiple : Form
     {
-        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         public Entidades.CierreCaja oCierreCajero = new Entidades.CierreCaja();
         public List<Entidades.CierreCaja> ListCierreE = new List<Entidades.CierreCaja>();

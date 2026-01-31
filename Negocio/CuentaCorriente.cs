@@ -7,12 +7,20 @@ using Entidades;
 using System.Data.SqlClient;
 using System.Transactions;
 using Datos;
+using Utilidades;
 
 namespace Negocio
 {
     public class CuentaCorriente
     {
-        Datos.CuentaCorriente oCtaCteD = new Datos.CuentaCorriente();
+        private readonly Datos.CuentaCorriente oCtaCteD;
+
+        IEmpresaContext _empresa;private readonly IParametrosContext _param;
+        public CuentaCorriente(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oCtaCteD = new Datos.CuentaCorriente(empresa);
+        }
 
         public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona)
         {
@@ -36,8 +44,7 @@ namespace Negocio
             Entidades.Sucursal oSucursalE, DateTime? creado, Entidades.Usuario creadoPor, DateTime? actualizado,
             Entidades.Usuario actualizadoPor, bool crearMovCtaCte, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoE, Entidades.Pago oPagoAnterior)
         {
-            Datos.CuentaCorriente oCtaCteN = new Datos.CuentaCorriente();
-            Entidades.MovCtaCte oMovCtaCte = oCtaCteN.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
+            Entidades.MovCtaCte oMovCtaCte = oCtaCteD.getMovCtaCteBy(0, tabla, idTabla, Entidades.MovCtaCte.getBy.TablaAndId);
 
             ///si no tiene oMovCtaCte o Tiene y fue quitado de la cta se la crea 
             if ((oMovCtaCte == null || oMovCtaCte.Id.Equals(0)) || oMovCtaCte.QuitadoCtaCta)
@@ -222,13 +229,13 @@ namespace Negocio
         public void crearMovCtaCtePago(Entidades.Pago oPagoE, Entidades.CierreCaja oCierreCajaE, Entidades.Pago oPagoAnterior)
         {
             //oPagoE = oCtaCteD.getPagoById(oPagoE.Id); COMENTADO XQ YA ENVIO EL OBJETO POR PARAMETRO
-            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-            oCtaCteN.crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
+            
+            crearMovCtaCte(oPagoE.Persona, oPagoE.Fecha, Entidades.MovCtaCte.tablas.Pagos, oPagoE.Id, oPagoE.NroRecibo,
                  oPagoE.FormaPago, oPagoE.AProveedor ? Entidades.MovCtaCte.tipoMov.Debito : Entidades.MovCtaCte.tipoMov.Credito, oPagoE.Importe, oPagoE.Sucursal,
                 oPagoE.Creado, oPagoE.CreadoPor, oPagoE.Actualizado, null, true, oCierreCajaE, oPagoE, oPagoAnterior);
         }
 
-        private static void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE, 
+        private void CargarEgresoCajaPorPago(Entidades.MovCtaCte oMovCtaCte, Entidades.CierreCaja oCierreCajaE, 
             Entidades.Pago oPagoE, bool esRegistroAnulacion)//Pago oPagoE, Entidades.CierreCaja oCierreCajaE)
         {
             ///Si se llama desde POS, generar el egreso de caja de pago/cobro
@@ -238,7 +245,7 @@ namespace Negocio
 
             ///si es ANULACION recupera se carga el pago del importe en efectivo correspondiente al pago de esta caja abierta
             ///
-            Negocio.CierreCaja oCierreN = new CierreCaja();
+            Negocio.CierreCaja oCierreN = new CierreCaja(_empresa);
             ///consulto si existe un egreso de caja para la tabla y id
             ///si no existe, creo nuevo objeto
             ///
@@ -286,7 +293,7 @@ namespace Negocio
                     oEgresoCajaE.Id = 0;
 
                 oEgresoCajaE.Fecha = oPagoE.Fecha;
-                oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idPagoCobroEgresoCaja;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idPagoCobroEgresoCaja;
                 oEgresoCajaE.Descripcion = descripcionEgreso;
                 oEgresoCajaE.Monto = montoEgreso;
                 oEgresoCajaE.Detalle = oPagoE.Observaciones;
@@ -311,7 +318,7 @@ namespace Negocio
             // PERSONA
             // ===============================
             if (oPagoE.Persona == null ||
-                oPagoE.Persona.idPersona == Entidades.Parametros.idConsumidorFinal)
+                oPagoE.Persona.idPersona == Entidades.Persona.idConsumidorFinal)
             {
                 return (false,
                     "Debe seleccionar una persona válida y diferente a Consumidor Final.\n" +

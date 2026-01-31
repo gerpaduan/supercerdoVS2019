@@ -13,8 +13,8 @@ namespace Presentacion
     public partial class formVentasVendedor : Form
     {
         public Entidades.CierreCaja oCierreE;
-        public Negocio.Venta oVentaN = new Negocio.Venta();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        public Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         public DataTable dtVentas;
         bool soloAnulados = false;

@@ -6,12 +6,21 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Net.Sockets;
 using System.Transactions;
+using Utilidades;
 
 namespace Negocio
 {
     public class Venta
     {
-        Datos.Venta oVentaD = new Datos.Venta();
+        private readonly Datos.Venta oVentaD;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
+
+        public Venta(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oVentaD = new Datos.Venta(empresa);
+        }
+
 
         public Entidades.Venta getVentaById(int idVenta)
         {
@@ -44,10 +53,10 @@ namespace Negocio
                             oVentaE.ComisionTarjeta = 0;
                             break;
                         case "Debito":
-                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionDebito, 0f);
                             break;
                         case "Credito":
-                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionCredito, 0f);
                             break;
                         default:
                             oVentaE.ComisionTarjeta = 0;
@@ -169,10 +178,10 @@ namespace Negocio
                             oVentaE.ComisionTarjeta = 0;
                             break;
                         case "Debito":
-                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionDebito, 0f);
                             break;
                         case "Credito":
-                            oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionCredito, 0f);
                             break;
                         default:
                             oVentaE.ComisionTarjeta = 0;
@@ -216,7 +225,7 @@ namespace Negocio
         public void crearMovCtaCteVenta(Entidades.Venta oVentaE)
         {
             //oVentaE = oVentaD.getVentaById(oVentaE.IdVenta);
-            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(_empresa);
             oCtaCteN.crearMovCtaCte(oVentaE.Persona, oVentaE.FechaVenta, Entidades.MovCtaCte.tablas.Ventas, oVentaE.IdVenta, oVentaE.NroRemito,
                 //"", Entidades.MovCtaCte.tipoMov.Debito, oVentaE.LineasVenta.Count == 0 ? 0 : Entidades.Venta. oVentaD.getTotalVenta(oVentaE.IdVenta), oVentaE.Sucursal,
                 "", Entidades.MovCtaCte.tipoMov.Debito, oVentaE.LineasVenta.Count == 0 ? 0 : oVentaE.getImporteVenta(oVentaE), oVentaE.Sucursal,
@@ -334,7 +343,7 @@ namespace Negocio
                 oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
                 oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oVentaConEgresoCaja.Vendedor != null ? oVentaConEgresoCaja.Vendedor.Id : -1) : -1;
 
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(_empresa);
                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
             }
         }

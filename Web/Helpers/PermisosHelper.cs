@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Web;
-using Entidades;   // Ajustá si tus entidades están en otro namespace
-using Negocio;
+using Utilidades;
 
 namespace Web.Helpers
 {
     public static class PermisosHelper
     {
+
+
         /// <summary>
         /// De aquí se llama a Negocio.Usuario
         /// Se valida si el oUsuario tiene permiso en el formulario, por defecto pasar Fecha Actual,
@@ -26,7 +25,10 @@ namespace Web.Helpers
             if (user == null)
                 return false;
 
-            var oUsuarioN = new Negocio.Usuario();
+            // EmpresaContextWeb lee Session["IdEmpresa"]
+            IEmpresaContext empresa = new EmpresaContextWeb();
+
+            var oUsuarioN = new Negocio.Usuario(empresa);
 
             return oUsuarioN.tienePermiso(
                 user,

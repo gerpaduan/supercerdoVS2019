@@ -28,7 +28,7 @@ namespace Presentacion
 {
     public partial class formCortes : formBaseColor, InterfacePersona
     {
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Corte oCorteE;
         Entidades.Corte oCorteMaestroE;
 
@@ -132,7 +132,7 @@ namespace Presentacion
 
             //se llama a cargar grilla directamente
             lblActualizar.Visible = false;
-            oCorteN = new Negocio.Corte();
+            oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
             string txtBusqueda = this.txtBuscarCorte.Text.Trim();
 

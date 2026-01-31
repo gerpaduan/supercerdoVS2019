@@ -3,13 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using Utilidades;
 
 namespace Negocio
 {
     public class CierreCaja
     {
-        Datos.CierreCaja oCierreD = new Datos.CierreCaja();
-        Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Venta oVentaN;
+
+        private readonly Datos.CierreCaja oCierreD;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
+
+        public CierreCaja(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oCierreD = new Datos.CierreCaja(empresa);
+            oVentaN = new Negocio.Venta(empresa);
+        }
 
         public Entidades.CierreCaja findByIdOrLast(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)
         {
@@ -19,16 +29,16 @@ namespace Negocio
             return cierreCaja;
         }
 
-        private static List<Entidades.CierreCaja> convertDatatableToList(DataTable dtCierreCaja)
+        private List<Entidades.CierreCaja> convertDatatableToList(DataTable dtCierreCaja)
         {
             List<Entidades.CierreCaja> listCierreCaja = new List<Entidades.CierreCaja>();
             Entidades.CierreCaja oCierreE = null;
             if (dtCierreCaja.Rows.Count > 0)
             {
-                Datos.Sucursal oSucursalD = new Datos.Sucursal();
+                Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
                 Entidades.Sucursal oSucursalE = oSucursalD.findById(Convert.ToInt32(dtCierreCaja.Rows[0]["idSucursal"]));
                 
-                Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+                Negocio.Usuario oUsuarioN = new Negocio.Usuario(_empresa);
                 List<Entidades.Usuario> listUsers = oUsuarioN.convertDatatableToList();
 
                 foreach (DataRow drCierreCaja in dtCierreCaja.Rows)
@@ -125,7 +135,7 @@ namespace Negocio
         public int getIdEgresoCajaPorCompra()
         {
             //DataTable tiposEgresos = obtenerTiposEgresoCaja();
-            int idTipoEgreso = Entidades.Parametros.idCompraEgresoCaja;
+            int idTipoEgreso = Entidades.EgresoCaja.idCompraEgresoCaja;
             //foreach (DataRow row in tiposEgresos.Rows)
             //{
             //    if (!string.IsNullOrEmpty(row["esCompra"].ToString()) && !row["esCompra"].ToString().Equals("0"))
@@ -150,7 +160,7 @@ namespace Negocio
 
             if (oEgresoCaja != null)
             {
-                Negocio.Usuario oUserN = new Usuario();
+                Negocio.Usuario oUserN = new Usuario(_empresa);
 
                 oEgresoCaja.CreadoPorUser = oUserN.getUserById(oEgresoCaja.CreadoPor);
                 oEgresoCaja.ActualizadoPorUser = oUserN.getUserById(oEgresoCaja.ActualizadoPor);
@@ -177,7 +187,7 @@ namespace Negocio
         public bool validarCajaAbiertaVendedor(DateTime fechaHoraRegistro, Entidades.Sucursal oSucursalE, Entidades.Usuario oUsuario)
         {
             bool resp = true;
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(_empresa);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.Sucursal = oSucursalE;
             oCierreE.UsuarioInicio = oUsuario;

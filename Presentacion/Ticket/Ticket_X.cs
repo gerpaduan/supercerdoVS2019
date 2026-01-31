@@ -10,7 +10,7 @@ namespace Presentacion.Ticket
     class Ticket_X
     {
         public Entidades.Venta oVentaE = null;
-        Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public void generarTicket_X()
         {
             Ticket.CreaTicket ticket = new Ticket.CreaTicket();

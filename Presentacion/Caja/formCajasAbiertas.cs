@@ -13,9 +13,9 @@ namespace Presentacion.Caja
 {
     public partial class formCajasAbiertas : Form, InterfaceUsuario
     {
-        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        protected Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        protected Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         protected Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         protected Entidades.Sucursal oSucursalE = new Entidades.Sucursal();

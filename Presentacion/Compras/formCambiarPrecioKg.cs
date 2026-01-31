@@ -11,7 +11,7 @@ namespace Presentacion.Compras
 {
     public partial class formCambiarPrecioKg : Form
     {
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         int idCompra;
         formModificarCompra frmModificarCompra;
 

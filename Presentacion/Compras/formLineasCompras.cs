@@ -16,7 +16,7 @@ namespace Presentacion
         DataTable dtCompras = new DataTable();
 
         public DataTable dtSucursales;
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         bool cargar = false;
         string descripcion, codigo, corte;
@@ -59,7 +59,7 @@ namespace Presentacion
 	            {
                     idSucCombo = Convert.ToInt32(comboSucursal.SelectedValue);
 	            }
-                oCompraN = new Negocio.Compra();
+                oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
                 grillaLineasCompras.AutoGenerateColumns = true;
 
@@ -207,7 +207,7 @@ namespace Presentacion
         private void cargarSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalesConTodas();
 
             comboSucursal.DataSource = dtSucursales;

@@ -11,11 +11,20 @@ using Web.Helpers;
 
 namespace Web.Controllers
 {
-    public class ProductosController : Controller
+    public class ProductosController : BaseController
     {
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        public Negocio.Corte oCorteN = new Negocio.Corte();
-        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        private Negocio.Sucursal oSucursalN;
+        private Negocio.Corte oCorteN;
+        private Negocio.Usuario oUsuarioN;
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            oSucursalN = new Negocio.Sucursal(empresa);
+            oCorteN = new Negocio.Corte(empresa);
+            oUsuarioN = new Negocio.Usuario(empresa);
+        }
 
         public ActionResult Index(int SucursalId = 0)
         {

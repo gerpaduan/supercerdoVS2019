@@ -22,10 +22,10 @@ namespace Presentacion.Ventas
         formVentas frmVentas;
         DataTable dtSucursales;
         DataTable dtCortes = new DataTable();
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Sucursal oSucursalN=new Negocio.Sucursal();
-        Negocio.Venta oVentaN = new Negocio.Venta();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Sucursal oSucursalN=new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
@@ -549,7 +549,7 @@ namespace Presentacion.Ventas
 
             //valida que un venta en CTA CTE sea solo en Cta Cte
             if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
+                oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
             {
                 MessageBox.Show("Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
                     "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.",
@@ -631,7 +631,7 @@ namespace Presentacion.Ventas
         private void cargarSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
@@ -875,7 +875,7 @@ namespace Presentacion.Ventas
         public void EnviarPersona(Entidades.Persona persona)
         {
             oCliente = persona;
-            checkCtaCte.Visible = false;// !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
+            checkCtaCte.Visible = false;// !oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal);
             checkCtaCte.Checked = oCliente.CtaCte;
             this.txtCliente.Text = oCliente.razonSocial;
             this.txtCuit.Text = oCliente.Cuit;
@@ -963,14 +963,23 @@ namespace Presentacion.Ventas
             cargandoDatos = false;
 
             //se cargar los porcentajes de ajuste por tarjeta
-            porcAjEfectivo = Entidades.Parametros.porcAjEfectivo;
-            porcAjDebito = Entidades.Parametros.porcAjDebito;
-            porcAjCredito = Entidades.Parametros.porcAjCredito;
-            porcAjCtaCte = 1;//no se obtiene el valor desde parametros
-            porcAjQr = Entidades.Parametros.porcAjQr;
-            porcAjTranf = Entidades.Parametros.porcAjTranf;
+            //porcAjEfectivo = Entidades.Parametros.porcAjEfectivo;
+            //porcAjDebito = Entidades.Parametros.porcAjDebito;
+            //porcAjCredito = Entidades.Parametros.porcAjCredito;
+            //porcAjCtaCte = 1;//no se obtiene el valor desde parametros
+            //porcAjQr = Entidades.Parametros.porcAjQr;
+            //porcAjTranf = Entidades.Parametros.porcAjTranf;
+            //limiteKgParaAjuste = Entidades.Parametros.limiteKgParaAjuste;
 
-            limiteKgParaAjuste = Entidades.Parametros.limiteKgParaAjuste;
+            porcAjEfectivo = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjEfectivo, 1f);
+            porcAjDebito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjDebito, 1f);
+            porcAjCredito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjCredito, 1f);
+
+            porcAjCtaCte = 1f; // no se obtiene el valor desde parametros
+
+            porcAjQr = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjQr, 1f);
+            porcAjTranf = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjTranf, 1f);
+            limiteKgParaAjuste = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.LimiteKgParaAjuste, 1f);
 
             if (oVentaE.IdVenta > 0)
             {

@@ -35,8 +35,9 @@ namespace wsAFIPvs2008
         public bool esShowDialog = false;
         public bool notaCredito = false;
         Entidades.Venta oVentaE; 
-        Negocio.Venta oVentaN = new Negocio.Venta();
-        Negocio.Persona oPersonaN = new Negocio.Persona();
+        Negocio.Venta oVentaN;
+        Negocio.Persona oPersonaN;
+        Negocio.Sucursal oSucN;
         public Entidades.FacturaElectronica oFactuElec;
         public Entidades.FacturaElectronica oNotaCredito;
         Entidades.Sucursal oSucursalEntidad = new Entidades.Sucursal();
@@ -44,6 +45,8 @@ namespace wsAFIPvs2008
         List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
         List<Entidades.LineaVenta> lineaNuevosAnulados = new List<Entidades.LineaVenta>();
         List<Entidades.lineaVentaUnificada> listaLineaGrilla = new List<Entidades.lineaVentaUnificada>();
+
+        public static IEmpresaContext EmpresaSTATIC { get; private set; }
         DataTable dtIva;
         public bool logueado;
         public bool facturaPendiente = true;
@@ -164,11 +167,26 @@ namespace wsAFIPvs2008
 
         private void formFacturaElectronica_Load(object sender, EventArgs e)
         {
+            Entidades.Empresa oEmpresa = new Entidades.Empresa();
+            long cuitLong = long.Parse(cuit);
+            oEmpresa = oSucN.findEmpresaByCuit(cuitLong);
+
+            if (oEmpresa == null)
+            {
+                MessageBox.Show("\n\nNo se ha encontrado la empresa con CUIT: " + cuit + ".\nEl sistema se cerrará.", "Empresa no encontrada", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Application.Exit();
+            }
+
+            int idEmpresa = oEmpresa != null ? oEmpresa.IdEmpresa : 0;
+
+            EmpresaSTATIC = new EmpresaContextWin(idEmpresa);
+
             loadForm();    
-        }
+    }
 
         public void loadForm()
         {
+
             cargarDatosAfip = true;
 
             if (servidor_0test_1prod == "1")
@@ -341,7 +359,7 @@ namespace wsAFIPvs2008
         private void cargarIva()
         {
             dtIva = new DataTable();
-            oPersonaN = new Negocio.Persona();
+            oPersonaN = new Negocio.Persona(EmpresaSTATIC);
             dtIva = oPersonaN.getIva();
             comboIva.DataSource = dtIva;
             comboIva.DisplayMember = "iva";
@@ -1729,7 +1747,7 @@ namespace wsAFIPvs2008
                 {
                     if (oVentaE != null)// && !(oVentaE.FormaPago == Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
                     {
-                        oVentaN = new Negocio.Venta();
+                        oVentaN = new Negocio.Venta(EmpresaSTATIC);
                         oFactuElec = new Entidades.FacturaElectronica();
 
                         oFactuElec.Id = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);

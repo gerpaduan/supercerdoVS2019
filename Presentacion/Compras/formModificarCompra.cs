@@ -13,8 +13,8 @@ namespace Presentacion.Compras
 {
     public partial class formModificarCompra : Form, InterfaceProveedor, InterfaceCorte, InterfaceUsuario
     {
-        Negocio.Compra oCompraN = new Negocio.Compra();
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         string estadoModificar;
         bool modificado = false;
         bool buscaCodigoDesdeInterfase = false;
@@ -31,7 +31,7 @@ namespace Presentacion.Compras
         CortesPorCompra cortePorCompra;
         MediasPorCompra mediaPorCompra;
 
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         List<CortesPorCompra> listaCortesEnGrilla = new List<CortesPorCompra>();//Lista que se carga en la grilla
         List<MediasPorCompra> listaMediasEnGrilla = new List<MediasPorCompra>();
@@ -259,7 +259,7 @@ namespace Presentacion.Compras
         private void cargarComboSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";

@@ -22,7 +22,7 @@ namespace Presentacion.Licencia
         DataTable dtMov;
         Entidades.Persona oPersonaE;
         DateTime fechaDesde = DateTime.Now;
-        Negocio.OtrasClases otrasClasesN = new Negocio.OtrasClases();   
+        Negocio.OtrasClases otrasClasesN = new Negocio.OtrasClases(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);   
 
         public formVencimientoCuotas()
         {

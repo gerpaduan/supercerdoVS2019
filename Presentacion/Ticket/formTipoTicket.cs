@@ -24,7 +24,7 @@ namespace Presentacion.Ticket
         {
             try
             {
-                Negocio.Corte oCorteN = new Negocio.Corte();
+                Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 Entidades.Movimiento oMovimientoE = oCorteN.cargarMovimiento(idMovimiento, true);
 
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();

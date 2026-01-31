@@ -17,7 +17,7 @@ namespace Presentacion.Embutidos
         public formEmbutidos frmEmbutidos = new formEmbutidos();
         public bool esDesarmeElaborado = false;
         Negocio.Sucursal oSucursalN;
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Embutido oEmbutidoE = new Entidades.Embutido();
         public Entidades.Usuario oUsuario;

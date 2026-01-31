@@ -1,38 +1,45 @@
 ﻿using System.Data;
+using Utilidades;
 
 namespace Negocio
 {
     public class Persona
     {
-        Datos.Persona oPersonaD;
+        private readonly Datos.Persona oPersonaD;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
+        public Persona(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oPersonaD = new Datos.Persona(empresa);
+        }
         public void agregarPersona(Entidades.Persona oPersonaE)
         {
-            oPersonaD = new Datos.Persona();
+            
             oPersonaD.addOrEditPersona(oPersonaE);
         }
 
         public void modificarProveedor(Entidades.Persona oPersonaE)
         {
-            oPersonaD = new Datos.Persona();
+            
             oPersonaD.addOrEditPersona(oPersonaE);
         }
 
         public void addOrEditPersona(Entidades.Persona oPersonaE)
         {
-            oPersonaD = new Datos.Persona();
+            
             oPersonaD.addOrEditPersona(oPersonaE);
         }
 
         public void eliminarPersona(Entidades.Persona oPersonaE)
         {
-            oPersonaD = new Datos.Persona();
+            
             oPersonaD.eliminarPersona(oPersonaE);
         }
 
         public Entidades.Persona findById(int id)
         {
-            oPersonaD = new Datos.Persona();
+            
             Entidades.Persona oPersonaE = oPersonaD.findById(id);
             if (oPersonaE != null && oPersonaE.Marca && oPersonaE.IdPropietario > 0)
             {
@@ -43,40 +50,40 @@ namespace Negocio
 
         public Entidades.Persona getConsumidorFinal()
         {
-            return findById(Entidades.Parametros.idConsumidorFinal);
+            return findById(Entidades.Persona.idConsumidorFinal);
         }
 
         public bool personaTieneCompras_Ventas(int idPersona)
         {
-            oPersonaD = new Datos.Persona();
+            
             return oPersonaD.personaTieneCompras_Ventas(idPersona);
         }
 
         public DataTable buscarPersona(string texto, bool? marca)
         {
-            oPersonaD = new Datos.Persona();
+            
             return oPersonaD.buscarPersona(texto, marca);
         }
 
         public DataTable getIva()
         {
-            oPersonaD = new Datos.Persona();
+            
             return oPersonaD.getIva();
         }
         public int existeCuit(string cuit)
         {
-            oPersonaD = new Datos.Persona();
+            
             return oPersonaD.existeCuit(cuit);
         }
         public DataTable buscarProveedor(string buscarTexto)
         {
-            oPersonaD = new Datos.Persona();
+            
             return oPersonaD.buscarProveedor(buscarTexto);
 
         }
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
         {
-            oPersonaD = new Datos.Persona();
+            
             return oPersonaD.existenMarcasParecidas(buscarTexto, idMarca);
 
         }

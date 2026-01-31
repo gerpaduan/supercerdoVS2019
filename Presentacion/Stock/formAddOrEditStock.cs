@@ -22,10 +22,10 @@ namespace Presentacion
         
         DataTable dtCorte = new DataTable();
         DataTable dtSucursales;
-        Negocio.Compra oCompraN=new Negocio.Compra();
+        Negocio.Compra oCompraN=new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Negocio.Sucursal oSucursalN;
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oProvNuevaCompra;
         public Entidades.Usuario oUsuario;
@@ -93,7 +93,7 @@ namespace Presentacion
                 }
 
                 oProvNuevaCompra = new Entidades.Persona();
-                oProvNuevaCompra.idPersona = Entidades.Parametros.idIndefinido;
+                oProvNuevaCompra.idPersona = Entidades.Persona.idIndefinido;
                 oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
 
                 btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
@@ -689,7 +689,7 @@ namespace Presentacion
         private void cargarComboSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN=new Negocio.Sucursal();
+            oSucursalN=new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales=oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";

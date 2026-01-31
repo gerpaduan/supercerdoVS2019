@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -7,9 +8,17 @@ using System.Web.Mvc;
 
 namespace Web.Controllers
 {
-    public class PersonasController : Controller
+    public class PersonasController : BaseController
     {
-        Negocio.Persona oPersonaN = new Negocio.Persona();
+        private Negocio.Persona oPersonaN;
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            oPersonaN = new Negocio.Persona(empresa);
+        }
+
         // GET: Personas
         public ActionResult Buscar()
         {

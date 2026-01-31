@@ -11,7 +11,7 @@ namespace Presentacion.Compras
 {
     public partial class formPorcentajeCortesCompra : Form
     {
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public formPorcentajeCortesCompra(int idCompra)
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;

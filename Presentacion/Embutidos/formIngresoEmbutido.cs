@@ -24,8 +24,8 @@ namespace Presentacion
         DataTable dtSucursales;
         DataTable dtFormula;
         Negocio.Sucursal oSucursalN;
-        Negocio.Corte oCorteN=new Negocio.Corte();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Corte oCorteN=new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Corte oCorteEmbutidoE;
         Entidades.Corte oCorteE;
@@ -47,7 +47,7 @@ namespace Presentacion
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         int nroErrorBalanza = 0;
 
-        bool loginRapidoElaborado = Entidades.Parametros.loginRapidoElaborado;
+        bool loginRapidoElaborado = FormPrincipal.ParametrosCTX.GetBool01(Entidades.Parametros.LoginRapidoElaborado, false);
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -314,7 +314,7 @@ namespace Presentacion
         private void cargarComboSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalSanMartin();
             dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
@@ -554,8 +554,8 @@ namespace Presentacion
             }
 
             //Se obtienen los parametros
-            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
-            oOtrasClasesN.obtenerParametros();
+            //Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+            //oOtrasClasesN.obtenerParametros();
 
             if (esDuplicado)
                 this.Left += 50;

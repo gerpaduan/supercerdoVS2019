@@ -11,7 +11,7 @@ namespace Presentacion.Caja
 {
     public partial class FormSelectPuntoExpendio : Form
     {
-        Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public bool soloActivos = false;
 
         public FormSelectPuntoExpendio()

@@ -4,12 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using Utilidades;
 
 namespace Negocio
 {
     public class Corte
     {
-        Datos.Corte oCorteD=new Datos.Corte();
+        private readonly Datos.Corte oCorteD;
+
+        IEmpresaContext _empresa;private readonly IParametrosContext _param;
+        public Corte(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oCorteD = new Datos.Corte(empresa);
+        }
 
         //Mantuve el metodo con este nombre getCorteById para no modificar toda la capa presentacion
         public Entidades.Corte getCorteById(int id, bool cargarMaestro)
@@ -139,37 +147,44 @@ namespace Negocio
         }
         public DataTable buscarCorte(string txtBusqueda)
         {
-            oCorteD = new Datos.Corte();
             DataTable dtCortes = oCorteD.buscarCorte(txtBusqueda);
             
-            Datos.OtrasClases oOtrasClasesD = new Datos.OtrasClases();
-            DataTable dtParametros = oOtrasClasesD.obtenerParametros();
+            //Datos.OtrasClases oOtrasClasesD = new Datos.OtrasClases(_empresa);
+            //DataTable dtParametros = oOtrasClasesD.obtenerParametros();
             float porcAjEfectivo, porcAjDebito, porcAjCredito, porcAjCtaCte, porcAjQr, porcAjTranf;
             porcAjEfectivo=porcAjDebito=porcAjCredito=porcAjCtaCte=porcAjQr=porcAjTranf=0;
-            for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
-            {
-                switch (dtParametros.Rows[fila]["nombre"].ToString())
-                {
-                    case "porcAjEfectivo":
-                        porcAjEfectivo = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjDebito":
-                        porcAjDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjCredito":
-                        porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjCtaCte":
-                        porcAjCtaCte = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjQr":
-                        porcAjQr = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                    case "porcAjTranf":
-                        porcAjTranf = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
-                        break;
-                }                            
-            }
+
+            porcAjEfectivo = _param.GetFloat(Entidades.Parametros.PorcAjEfectivo, 0f);
+            porcAjDebito = _param.GetFloat(Entidades.Parametros.PorcAjDebito, 0f);
+            porcAjCredito = _param.GetFloat(Entidades.Parametros.PorcAjCredito, 0f);
+            porcAjCtaCte = 1;//no se obtiene el valor desde parametros
+            porcAjQr = _param.GetFloat(Entidades.Parametros.PorcAjQr, 0f);
+            porcAjTranf = _param.GetFloat(Entidades.Parametros.PorcAjTranf, 0f);
+
+            //for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
+            //{
+            //    switch (dtParametros.Rows[fila]["nombre"].ToString())
+            //    {
+            //        case "porcAjEfectivo":
+            //            porcAjEfectivo = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+            //            break;
+            //        case "porcAjDebito":
+            //            porcAjDebito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+            //            break;
+            //        case "porcAjCredito":
+            //            porcAjCredito = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+            //            break;
+            //        case "porcAjCtaCte":
+            //            porcAjCtaCte = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+            //            break;
+            //        case "porcAjQr":
+            //            porcAjQr = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+            //            break;
+            //        case "porcAjTranf":
+            //            porcAjTranf = float.Parse(dtParametros.Rows[fila]["valor"].ToString());
+            //            break;
+            //    }                            
+            //}
 
             for (int fila = 0; fila < dtCortes.Rows.Count; fila++)
             {
@@ -186,40 +201,39 @@ namespace Negocio
         }
         public DataTable buscarCorteSinMaestro(string txtBusqueda)
         {
-            oCorteD = new Datos.Corte();
             return oCorteD.buscarCorteSinMaestro(txtBusqueda);
         }
 
         public DataTable buscarCodigoCorte(long codigo)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.buscarCodigoCorte(codigo);
         }
 
         public void eliminarCorte(Entidades.Corte oCorteE)
         {
-            oCorteD = new Datos.Corte();
+            
             oCorteD.eliminarCorte(oCorteE);
         }
 
         public DataTable obtenerCortes()
         {
             DataTable dtCorte = new DataTable();
-            oCorteD = new Datos.Corte();
+            
             dtCorte=oCorteD.obtenerCortes();
            
             return dtCorte;
         }
         public DataTable cargarDtCortes()
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.cargarDtCortes();
         }
 
         public DataTable obtenerInfoCorte(int idCorte)
         {
             DataTable dtCorte = new DataTable();
-            oCorteD = new Datos.Corte();
+            
             dtCorte = oCorteD.obtenerInfoCorte(idCorte);
 
             return dtCorte;
@@ -233,14 +247,14 @@ namespace Negocio
         public DataTable obtenerTiposProducto(bool mostrarTodos)
         {
             DataTable dtAlicuotasIva = new DataTable();
-            oCorteD = new Datos.Corte();
+            
             dtAlicuotasIva = oCorteD.obtenerTiposProducto(mostrarTodos);
             return dtAlicuotasIva;
         }
         public DataTable obtenerAlicuotasIva(bool mostrarTodos)
         {
             DataTable dtAlicuotasIva = new DataTable();
-            oCorteD = new Datos.Corte();
+            
             dtAlicuotasIva = oCorteD.obtenerAlicuotasIva(mostrarTodos);
 
             return dtAlicuotasIva;
@@ -259,7 +273,7 @@ namespace Negocio
         public DataTable obtenerEmbutidos(string txtBusqueda)
         {
             DataTable dtCorte = new DataTable();
-            oCorteD = new Datos.Corte();
+            
             dtCorte = oCorteD.obtenerEmbutidos(txtBusqueda);
 
             return dtCorte;
@@ -268,7 +282,7 @@ namespace Negocio
         public DataTable getListaElegirEmbutido()
         {
             DataTable dtCorte = new DataTable();
-            oCorteD = new Datos.Corte();
+            
             dtCorte = oCorteD.getListaElegirEmbutido();
 
             return dtCorte;
@@ -276,19 +290,19 @@ namespace Negocio
 
         public DataTable buscarEmbutido(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.buscarEmbutido(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
         public DataTable obtenerLineasEmb(int idSucursal, string texto, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.obtenerLineasEmb(idSucursal, texto, fechaDesde, fechaHasta);
         }
 
          public int agregarEmbutido(Entidades.Embutido oEmbutido)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.agregarEmbutido(oEmbutido);         
          }
 
@@ -304,7 +318,7 @@ namespace Negocio
 
          public void agregarCortePorEmbutido(Entidades.CortePorEmbutido oCortePorEmbutido)
          {
-             oCorteD = new Datos.Corte();
+             
              oCorteD.agregarCortePorEmbutido(oCortePorEmbutido);
          }
 
@@ -366,49 +380,48 @@ namespace Negocio
 
          public DataTable obtenerMovimientos(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.obtenerMovimientos(sucOrigen,sucDestino, fechaDesde,fechaHasta,texto);
          }
 
          public DataTable obtenerLineasMov(string sucOrigen, string sucDestino, DateTime fechaDesde, DateTime fechaHasta, string texto)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.obtenerLineasMov(sucOrigen, sucDestino, fechaDesde, fechaHasta, texto);
          }
 
          public Entidades.Movimiento cargarMovimiento(int idMovimiento, bool acumulado)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.cargarMovimiento(idMovimiento, acumulado);
          }
 
          //public void quitarCortesPorMovimiento(Entidades.Movimiento oMovimientoE)
          //{
-         //    oCorteD = new Datos.Corte();
+         //    
          //    oCorteD.quitarCortesPorMovimiento(oMovimientoE);
          //}
 
          public List<Entidades.CortePorMovimiento> cargarCortesPorMovimiento(int idMovimiento, bool acumulado)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.cargarCortesPorMovimiento(idMovimiento, acumulado);
          }
 
          public void reiniciarStockReal(int idSucursal)
          {
-             oCorteD=new Datos.Corte();
              oCorteD.reiniciarStockReal(idSucursal);
          }
 
          public void reiniciarStockTeorico(int idSucursal)
         {
-            oCorteD = new Datos.Corte();
+            
             oCorteD.reiniciarStockTeorico(idSucursal);
         }
 
          public DataTable reporteTeoricoReal(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.reporteTeoricoReal(texto, idSucursal, fechaDesde, fechaHasta);
 
          }
@@ -416,7 +429,7 @@ namespace Negocio
 
          public DataTable CierreStock(int nroCierre, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string conexionSucursal, string tipo, int idProveedor, int idMarca)
          {
-             oCorteD = new Datos.Corte();
+             
              DataTable dtGrillaReporte = oCorteD.CierreStock(nroCierre, texto, idSucursal, fechaDesde, fechaHasta, conexionSucursal, tipo, idProveedor, idMarca);
 
             foreach (DataRow fila in dtGrillaReporte.Rows)
@@ -539,43 +552,43 @@ namespace Negocio
 
          public DataTable acum_Ventas(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo , int idProveedor, int idMarca)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.acum_Ventas(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
          public DataTable StockIngresoEgreso(string texto,int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.StockIngresoEgreso(texto, idSucursal, fechaDesde, fechaHasta);
          }
 
          public DataTable TotalPorCortesVendidos(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta, string tipo, int idProveedor, int idMarca)
          {
-             oCorteD = new Datos.Corte();
+             
              return oCorteD.TotalPorCortesVendidos(texto, idSucursal, fechaDesde, fechaHasta, tipo, idProveedor, idMarca);
          }
 
         public DataTable imprimirTeoricoReal(DataTable dtTeoricoReal, string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.imprimirTeoricoReal(dtTeoricoReal, texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable TotalKgsCortePorCompra(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.TotalKgsCortePorCompra(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable TotalMovimientosPorCorte(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.TotalMovimientosPorCorte(texto, idSucursal, fechaDesde, fechaHasta);
         }
 
         public DataTable Balance(string texto, int idSucursal, DateTime fechaDesde, DateTime fechaHasta)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.Balance(texto, idSucursal, fechaDesde, fechaHasta);
         }
         #endregion
@@ -583,19 +596,19 @@ namespace Negocio
         #region Tipos Producto/Corte
         public DataTable obtenerTiposProductoGrilla(string buscarText)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.obtenerTiposProductoGrilla(buscarText);
         }
 
         public string addOrEditTipoProducto(string tiposProducto, string orden, bool esInsert, string tipoToUpdate)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.addOrEditTipoProducto(tiposProducto,orden, esInsert, tipoToUpdate);
         }
 
         public string eliminarTipoProducto(string tiposProducto)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.eliminarTipoProducto(tiposProducto);
         }
 
@@ -607,14 +620,14 @@ namespace Negocio
         /// <returns></returns>
         public long sugerirCodigo(string tipo)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.sugerirCodigo(tipo);
         }
         #endregion
 
         public int obtenerNivelCorte(int idCorteMaestro)
         {
-            oCorteD = new Datos.Corte();
+            
             return oCorteD.obtenerNivelCorte(idCorteMaestro);
         }
     }

@@ -15,7 +15,7 @@ namespace Presentacion.Caja
     {
         public Entidades.Usuario oUsuario;
 
-        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtTiposEgreso = new DataTable();
 
         public int idTipoEgreso = 0;
@@ -59,7 +59,7 @@ namespace Presentacion.Caja
 
         private void validarAperturaCaja()
         {
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             //oCierreE.Sucursal = oSucursalE;
             //oCierreE.UsuarioInicio = oUsuario;

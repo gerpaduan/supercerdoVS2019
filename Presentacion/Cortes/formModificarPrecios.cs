@@ -13,7 +13,7 @@ namespace Presentacion
     public partial class formModificarPrecios: formBaseColor
     {
         Entidades.Corte oCorteMaestroE=new Entidades.Corte();
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Corte oCorteE=new Entidades.Corte();
         List<Entidades.Corte> listCortes = new List<Entidades.Corte>();
         formCortes frmCorte;

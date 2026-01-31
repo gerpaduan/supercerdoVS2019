@@ -39,14 +39,14 @@ namespace Presentacion.Caja
         public bool bonificarTodos = false;
         public string porcentajeBonif_String = "";
         formVentas frmVentas;
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtCortes = new DataTable();
         DataTable dtExpendios = new DataTable(); 
         DataTable tablaFiltrada;
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Venta oVentaN = new Negocio.Venta();
-        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
@@ -102,7 +102,9 @@ namespace Presentacion.Caja
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool redondeo = Convert.ToBoolean(ConfigurationManager.AppSettings["redondeo"].ToString());
-        int importeMaxRedondeo = Entidades.Parametros.importeMaxRedondeo;
+        //int importeMaxRedondeo = Entidades.Parametros.importeMaxRedondeo;
+        int importeMaxRedondeo = FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.ImporteMaxRedondeo, 0);
+
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
         float totalCorte, precioKg, precioKgCorteExpendio, cantKg, cantKgTarjeta, kgsTotalCalculado;
@@ -146,16 +148,16 @@ namespace Presentacion.Caja
             this.KeyPreview = true;
 
             //Se obtienen los parametros
-            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
-            oOtrasClasesN.obtenerParametros();
+            //Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+            //oOtrasClasesN.obtenerParametros();
 
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             //this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
-            Negocio.Persona oPersonaN = new Negocio.Persona();
-            idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
+            Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+            idConsumidorFinal = Entidades.Persona.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtFechaVenta.Text = DateTime.Now.ToString();
@@ -168,14 +170,14 @@ namespace Presentacion.Caja
             //checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
 
             //se cargar los porcentajes de ajuste por tarjeta
-            porcAjEfectivo = Entidades.Parametros.porcAjEfectivo;
-            porcAjDebito = Entidades.Parametros.porcAjDebito;
-            porcAjCredito = Entidades.Parametros.porcAjCredito;
+            porcAjEfectivo = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjEfectivo, 0f);
+            porcAjDebito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjDebito, 0f);
+            porcAjCredito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjCredito, 0f) ;
             porcAjCtaCte = 1;//no se obtiene el valor desde parametros
-            porcAjQr = Entidades.Parametros.porcAjQr;
-            porcAjTranf = Entidades.Parametros.porcAjTranf;
-                
-            limiteKgParaAjuste = Entidades.Parametros.limiteKgParaAjuste;
+            porcAjQr = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjQr, 0f);
+            porcAjTranf = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjTranf, 0f);
+
+            limiteKgParaAjuste = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.LimiteKgParaAjuste, 0f);
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -441,7 +443,7 @@ namespace Presentacion.Caja
                 Entidades.EgresoCaja oEgresoCajaE = new Entidades.EgresoCaja();
 
                 oEgresoCajaE.Fecha = oVentaConEgresoCaja.FechaVenta;
-                oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idCtaCteEgresoCaja;
+                oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCtaCte;
                 oEgresoCajaE.Descripcion = "Venta a " + oVentaConEgresoCaja.Persona.razonSocial + " - ID:" + oVentaConEgresoCaja.IdVenta.ToString();
                 oEgresoCajaE.Monto = oVentaN.getTotalVenta(oVentaConEgresoCaja.IdVenta);
                 oEgresoCajaE.Detalle = oVentaConEgresoCaja.Observaciones;
@@ -452,7 +454,7 @@ namespace Presentacion.Caja
                 oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
                 oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
 
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
 
                 ////Solo imprimo Egreso Caja si venta es en Efectivo
@@ -490,7 +492,7 @@ namespace Presentacion.Caja
                 //oEgresoCajaE.CreadoPor = oVentaConEgresoCaja.Vendedor.Id;
                 //oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? (oUsuario != null ? oUsuario.Id : -1) : -1;
 
-                //Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                //Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 //oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
                 #endregion
             }
@@ -504,7 +506,7 @@ namespace Presentacion.Caja
         {
             try
             {
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 oEgresoCajaE = oCierreN.getEgresoCajaById(oEgresoCajaE.Id);
                 //imprimir ticket
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();
@@ -536,8 +538,8 @@ namespace Presentacion.Caja
 
         private void limpiarListas()
         {
-            Negocio.Persona oPersonaN = new Negocio.Persona();
-            int idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
+            Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+            int idConsumidorFinal = Entidades.Persona.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             EnviarPersona(oCliente);
             txtCuit.Text = "";
@@ -921,7 +923,7 @@ namespace Presentacion.Caja
 
             //valida que un venta en CTA CTE sea solo en Cta Cte
             if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal)))
+                oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
             {
                 MessageBox.Show("Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
                     "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.",
@@ -965,7 +967,7 @@ namespace Presentacion.Caja
             }
             else
             {
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 bool cajaAbierta = oCierreN.validarCajaAbiertaVendedor(txtFechaVenta.Value, oVentaE.Sucursal, oUsuario);
                 if (totalVenta > 0 && !cajaAbierta)
                 {
@@ -987,7 +989,7 @@ namespace Presentacion.Caja
                 //for (int index = 0; index < listaLineaVenta.Count; index++)
                 //{
                 //    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
-                //        oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal))
+                //        oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal))
                 //    {
                 //        bool esAnulado = false;
                 //        //se valida que el corte no hay sido anulado
@@ -1703,8 +1705,8 @@ namespace Presentacion.Caja
         {
             oCliente = persona;
 
-            linkVerCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal);
-            linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Parametros.idConsumidorFinal) ?
+            linkVerCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal);
+            linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal) ?
                 "mis ventas" : "Ver ultimas 5 ventas";
 
             ////Ocultar Ultimas Ventas para SuperCerdo si cliente es Empleado o Cliente tiene CtaCte por defecto
@@ -1722,7 +1724,7 @@ namespace Presentacion.Caja
             lblSaldo.Visible = linkVerCtaCte.Visible;
             if (linkVerCtaCte.Visible)
             {
-                Negocio.CuentaCorriente ctacteN = new Negocio.CuentaCorriente();
+                Negocio.CuentaCorriente ctacteN = new Negocio.CuentaCorriente(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 DataTable ctaCtePersona = ctacteN.getCtaCteByIdPersona(oCliente.idPersona, DateTime.Now);
                 float saldoF = 0f;
                 if (ctaCtePersona.Rows.Count > 0)
@@ -2647,7 +2649,7 @@ namespace Presentacion.Caja
 
         private void misEgresoCaja()
         {
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE.Sucursal = oSucursalE;
@@ -3723,7 +3725,7 @@ namespace Presentacion.Caja
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (oCliente.idPersona == Entidades.Parametros.idConsumidorFinal)
+            if (oCliente.idPersona == Entidades.Persona.idConsumidorFinal)
             {
                 formVentasVendedor frmVentasVendedor = new formVentasVendedor();
                 frmVentasVendedor.desdeCajaVenta = true;

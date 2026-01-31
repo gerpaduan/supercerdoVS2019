@@ -16,15 +16,15 @@ namespace Presentacion.CuentaCorriente
 {
     public partial class formCtaCtePersona : Form, InterfaceUsuario
     {
-        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public Entidades.Usuario oUsuario;
         public Entidades.CierreCaja oCierreCajaE;
 
         public int idPersona;
         DataTable dtMov;
         Entidades.Persona oPersonaE;
-        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         public bool desdePOS = true; //para indicar que es llamado desde el form POS
 
@@ -45,7 +45,7 @@ namespace Presentacion.CuentaCorriente
                     return;
                 }
 
-                Negocio.Persona oPersonaN = new Negocio.Persona();
+                Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 oPersonaE = oPersonaN.findById(idPersona);
                 txtPersona.Text = oPersonaE.razonSocial;
                 ////Ocultar Ultimas Ventas para SuperCerdo si cliente es Empleado o Cliente tiene CtaCte por defecto

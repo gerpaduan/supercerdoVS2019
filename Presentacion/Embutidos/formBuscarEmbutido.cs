@@ -21,7 +21,7 @@ namespace Presentacion.Embutidos
 
         private void cargarGrilla()
         {
-            oCorteN = new Negocio.Corte();
+            oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             grillaCortes.AutoGenerateColumns = false;
             grillaCortes.DataSource = oCorteN.buscarCorteSinMaestro(txtBuscarCorte.Text.Trim());
         }

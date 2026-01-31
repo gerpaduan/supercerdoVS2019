@@ -15,7 +15,7 @@ namespace Presentacion.Ventas
         public int idVenta = 0;
         public formVentas frmVentas = new formVentas();
 
-        Negocio.Venta oVentaN = new Negocio.Venta();
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Venta oVentaE = new Entidades.Venta();
         List<Entidades.LineaVenta> listaLineaVenta = new List<Entidades.LineaVenta>();

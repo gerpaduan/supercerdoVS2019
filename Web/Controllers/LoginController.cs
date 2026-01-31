@@ -1,19 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.Mvc;
-using Negocio;
-using Entidades;
-using Web.Helpers;
+using Utilidades;
 
 namespace Web.Controllers
 {
     public class LoginController : Controller
     {
-        // GET: Login
-        private readonly Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        private Negocio.Usuario oUsuarioN;
+        private Negocio.Sucursal oSucursalN;
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            IEmpresaContext empresa = new EmpresaContextNulo();
+            oUsuarioN = new Negocio.Usuario(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+        }
 
         [HttpGet]
         public ActionResult Index()
@@ -28,21 +31,42 @@ namespace Web.Controllers
 
             if (user != null && user.Activo)
             {
-                string sucNombre = user.IdSucursal == null || user.IdSucursal == 0 ? 
-                    "Seleccione Sucursal" :
-                     oSucursalN.findById(user.IdSucursal).SucursalNombre;
-                user.SucursalNombre = sucNombre == null ? "" : sucNombre;
+                // Sucursal (igual que tenías)
+                string sucNombre = user.IdSucursal == null || user.IdSucursal == 0
+                    ? "Seleccione Sucursal"
+                    : oSucursalN.findById(user.IdSucursal).SucursalNombre;
+
+                user.SucursalNombre = sucNombre ?? "";
+
+                // ✅ Guardar usuario en sesión
                 Session["Usuario"] = user;
+
+                // ✅ CLAVE: IdEmpresa en sesión (lo lee EmpresaContextWeb)
+                Session["IdEmpresa"] = user.IdEmpresa;
+
+                // ✅ Limpiar cache viejo por las dudas
+                Session.Remove("PARAM_CTX");
+
+                // ✅ Cargar parámetros 1 vez por sesión
+                IEmpresaContext empresaContext = new EmpresaContextWeb(); // usa Session["IdEmpresa"]
+                IParametrosContext paramCtx = new Negocio.Parametros(empresaContext);
+                paramCtx.Reload(); // opcional (precarga)
+                Session["PARAM_CTX"] = paramCtx;
+
                 return RedirectToAction("Index", "Home");
             }
 
-            string error = user == null ? "Usuario o clave incorrectos." :(!user.Activo ? "cuenta inactiva" : "");
+            string error = user == null ? "Usuario o clave incorrectos." : (!user.Activo ? "cuenta inactiva" : "");
             ViewBag.Error = error;
             return View();
         }
 
         public ActionResult Logout()
         {
+            // ✅ limpiar lo que agregamos
+            Session.Remove("PARAM_CTX");
+            Session.Remove("IdEmpresa");
+
             // Limpia todos los objetos dentro de Session
             Session.Clear();
 
@@ -71,9 +95,7 @@ namespace Web.Controllers
                 usuario.IdSucursal = idSucursal;
                 usuario.SucursalNombre = oSucursalN.findById(idSucursal).SucursalNombre;
 
-                //Actualiza la Sucursal Actual en tabla Usuario idSucursal
-                oUsuarioN.setSucursalUsuario(usuario as Entidades.Usuario);
-
+                oUsuarioN.setSucursalUsuario(usuario);
                 Session["Usuario"] = usuario;
 
                 return Json(new
@@ -83,15 +105,10 @@ namespace Web.Controllers
                     idSucursal = usuario.IdSucursal
                 });
             }
-            catch (Exception)
+            catch
             {
-                return Json(new
-                {
-                    ok = false,
-                });
+                return Json(new { ok = false });
             }
         }
-
-
     }
 }

@@ -14,12 +14,12 @@ namespace Presentacion
 {
     public partial class formStock : formBaseColor
     {
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtCompras = new DataTable();
         public DataTable dtSucursales;
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         bool cargar = false;
         public formStock()
@@ -218,7 +218,7 @@ namespace Presentacion
         private void cargarSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalesConTodas();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";

@@ -18,8 +18,8 @@ namespace Presentacion.Cheques
 {
     public partial class formCheques : Form, InterfaceUsuario
     {
-        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        protected Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        protected Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Pago oPagoE = new Entidades.Pago();
         Entidades.Persona oPersonaE;
         public Entidades.Usuario oUsuario;

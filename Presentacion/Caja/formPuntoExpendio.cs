@@ -33,11 +33,11 @@ namespace Presentacion.Caja
         public bool bonificarTodos = false;
         public string porcentajeBonif_String = "";
         formVentas frmVentas;
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtCortes = new DataTable();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Venta oVentaN = new Negocio.Venta();
-        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Venta oVentaN = new Negocio.Venta(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
         Entidades.Compra oCompraE = new Entidades.Compra();
         Entidades.Persona oCliente;
@@ -86,7 +86,7 @@ namespace Presentacion.Caja
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool redondeo = Convert.ToBoolean(ConfigurationManager.AppSettings["redondeo"].ToString());
-        int importeMaxRedondeo = Entidades.Parametros.importeMaxRedondeo;     
+        int importeMaxRedondeo = FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.ImporteMaxRedondeo, 0);     
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
         float totalCorte, precioKg, cantKg, cantKgTarjeta, kgsTotalCalculado;
@@ -133,17 +133,13 @@ namespace Presentacion.Caja
             timer1.Interval = Convert.ToInt32(ConfigurationManager.AppSettings["timerForm"].ToString());
             this.KeyPreview = true;
 
-            //Se obtienen los parametros
-            Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
-            oOtrasClasesN.obtenerParametros();
-
             //asigo sucursal a la venta  
             int idSucursal = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
             oSucursalE = oSucursalN.findById(idSucursal);
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
-            Negocio.Persona oPersonaN = new Negocio.Persona();
-            idConsumidorFinal = Entidades.Parametros.idConsumidorFinal;
+            Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+            idConsumidorFinal = Entidades.Persona.idConsumidorFinal;
             oCliente = oPersonaN.findById(idConsumidorFinal);
             txtFecVenta.Text = DateTime.Now.ToString();
             if (!fecha.Equals(""))
@@ -419,7 +415,7 @@ namespace Presentacion.Caja
 
         private void limpiarListas()
         {
-            Negocio.Persona oPersonaN = new Negocio.Persona();
+            Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             txtFecVenta.Text = DateTime.Now.ToString();
             txtCliente.Text = "";
             lblCantItems.Text = "0";
@@ -1602,7 +1598,7 @@ namespace Presentacion.Caja
 
         private void misEgresoCaja()
         {
-            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+            Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             Entidades.CierreCaja oCierreE = new Entidades.CierreCaja();
             oCierreE.UsuarioInicio = oUsuario;
             oCierreE.Sucursal = oSucursalE;

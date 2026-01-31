@@ -12,7 +12,7 @@ namespace Presentacion.Usuario
 {
     public partial class FormNuevoUsuario : Form
     {
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
 
         public FormNuevoUsuario()

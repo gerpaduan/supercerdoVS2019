@@ -15,12 +15,22 @@ using System.Web;
 
 namespace Web.Controllers
 {
-    public class FinanzasController : Controller
+    public class FinanzasController : BaseController
     {
-        private Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        private Usuario oUsuarioN = new Usuario();
-        private readonly Negocio.Persona oPersonasN = new Negocio.Persona();
+        private Negocio.CuentaCorriente oCtaCteN;
+        private Negocio.Sucursal oSucursalN;
+        private Negocio.Usuario oUsuarioN;
+        private Negocio.Persona oPersonasN;
+
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            oCtaCteN = new Negocio.CuentaCorriente(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+            oUsuarioN = new Negocio.Usuario(empresa);
+            oPersonasN = new Negocio.Persona(empresa);
+        }
 
         // ***********************************************************
         //  Estos valores se pasan como QueryString o TempData

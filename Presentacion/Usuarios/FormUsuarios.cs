@@ -11,7 +11,7 @@ namespace Presentacion.Usuario
 {
     public partial class FormUsuarios : Form
     {
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Usuario oUsuarioE = new Entidades.Usuario();
 
         private List<Entidades.PermisosUsuarios> Permisos = new List<Entidades.PermisosUsuarios>();

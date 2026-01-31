@@ -11,11 +11,19 @@ using Web.Helpers;
 
 namespace Web.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
+        private Negocio.Usuario oUsuarioN;
+        private Negocio.Sucursal oSucursalN;
 
-        public Negocio.Usuario oUsuarioN = new Negocio.Usuario();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        protected override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+
+            oUsuarioN = new Negocio.Usuario(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa);
+        }
+
         public ActionResult Index()
         {
             var user = Session["Usuario"] as Entidades.Usuario;

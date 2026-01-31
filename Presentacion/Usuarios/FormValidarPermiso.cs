@@ -12,7 +12,7 @@ namespace Presentacion.Usuarios
     public partial class FormValidarPermiso : Form, InterfaceUsuario
     {
         Entidades.Usuario oUsuario;
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         public FormValidarPermiso()
         {

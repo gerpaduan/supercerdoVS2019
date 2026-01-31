@@ -29,7 +29,7 @@ namespace Presentacion.Cortes
                 btnSeleccionar.TabStop = true; 
                 btnCancelar.TabStop = true;
             }
-            oCorteN = new Negocio.Corte();
+            oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             string txtBusqueda = txtBuscarCorte.Text.Trim();
 
             grillaCortes.AutoGenerateColumns = false;

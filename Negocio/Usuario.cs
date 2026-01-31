@@ -3,18 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using Utilidades;
 
 namespace Negocio
 {
     public class Usuario
     {
-        Datos.Usuario oUsuarioD;
         public DataTable dtUsuarios;
         List<Entidades.Usuario> listUsuarios;
 
+        private readonly Datos.Usuario oUsuarioD; 
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
+
+        public Usuario(IEmpresaContext empresa, IParametrosContext param = null)
+        {   
+            _empresa = empresa;_param = param;
+            oUsuarioD = new Datos.Usuario(empresa);
+        }
+
         public DataTable obtenerUsuarios(bool soloActivos, bool soloAdmin = false)
         {
-            oUsuarioD = new Datos.Usuario();
             dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos, soloAdmin);
             convertDatatableToList();
             return dtUsuarios;
@@ -23,7 +31,7 @@ namespace Negocio
         public DataTable getUsuarioActivos()
         {
             DataTable dtUserActivos;
-            oUsuarioD = new Datos.Usuario();
+            
             dtUserActivos = oUsuarioD.getUsuarioActivos();
             return dtUserActivos;
         }
@@ -100,7 +108,7 @@ namespace Negocio
                 listUsuarios = convertDatatableToList();
             }
 
-            Datos.Sucursal oSucursalD = new Datos.Sucursal();
+            Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
 
             foreach (Entidades.Usuario user in listUsuarios)
             {
@@ -185,7 +193,7 @@ namespace Negocio
 
         public void setSucursalUsuario(Entidades.Usuario oUsuario)
         {
-            oUsuarioD = new Datos.Usuario();
+            
             oUsuarioD.setSucursalUsuario(oUsuario);
         }
 

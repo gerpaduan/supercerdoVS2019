@@ -38,13 +38,13 @@ namespace Presentacion
         CortesPorMovimiento cortePorMovimiento;
         List<CortesPorMovimiento> listaEnGrilla;
 
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
 
-        bool loginRapidoMovimiento = Entidades.Parametros.loginRapidoMovimiento;// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
+        bool loginRapidoMovimiento = FormPrincipal.ParametrosCTX.GetBool01(Entidades.Parametros.LoginRapidoMovimiento, false);// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
 
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool cantSuc2 = false;

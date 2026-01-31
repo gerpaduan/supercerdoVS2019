@@ -25,9 +25,9 @@ namespace Presentacion
         DataTable dtCompras = new DataTable();
 
         public DataTable dtSucursales;
-        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        public Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Usuario oUsuario;
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();  
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);  
 
         bool cargar = false;
         public formCompras()
@@ -84,7 +84,7 @@ namespace Presentacion
                     return;
                 }
 
-                oCompraN = new Negocio.Compra();
+                oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
                 grillaCompras.AutoGenerateColumns = false;
 
@@ -238,7 +238,7 @@ namespace Presentacion
         private void cargarSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursalesConTodas();
 
             comboSucursal.DataSource = dtSucursales;

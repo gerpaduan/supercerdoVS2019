@@ -17,9 +17,9 @@ namespace Presentacion
     {
         DataTable dtSucursales;
         DataTable dtCortes;
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Negocio.Sucursal oSucursalN;
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         public Entidades.Usuario oUsuario;
         public bool esEgresoCaja = false;
         public int idCompra = 0;
@@ -45,7 +45,7 @@ namespace Presentacion
         List<Entidades.CortePorCompra> listaCortePorCompra = new List<Entidades.CortePorCompra>();
 
         formCompras oFrmCompra;
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         bool ultimaValidacion = true;
         bool mostrarCartelCierre = true;
@@ -186,7 +186,7 @@ namespace Presentacion
                 {
                     if (validaciónFinal())
                     {
-                        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                         cargarCompra();//se cargan datos de la compra
 
                         if (esEgresoCaja)
@@ -226,7 +226,7 @@ namespace Presentacion
         {
             try
             {
-                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                Negocio.CierreCaja oCierreN = new Negocio.CierreCaja(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 oEgresoCajaE = oCierreN.getEgresoCajaById(oEgresoCajaE.Id);
                 //imprimir ticket
                 Ticket.CreaTicket ticket = new Ticket.CreaTicket();
@@ -863,7 +863,7 @@ namespace Presentacion
         private void cargarComboSucursal()
         {
             dtSucursales = new DataTable();
-            oSucursalN = new Negocio.Sucursal();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             dtSucursales = oSucursalN.obtenerSucursales();
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";

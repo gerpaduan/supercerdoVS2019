@@ -4,12 +4,32 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using System.Transactions;
+using Utilidades;
 
 namespace Negocio
 {
     public class Compra
     {
-        Datos.Compra oCompraD = new Datos.Compra();
+        private readonly Datos.Compra oCompraD;
+        Negocio.Corte oCorteN;
+        Negocio.Sucursal oSucN;
+        Negocio.Usuario oUsuarioN;
+        Negocio.CierreCaja oCierreN;
+        Negocio.Persona oPersonaN;
+        Negocio.CuentaCorriente oCtaCteN;
+
+        IEmpresaContext _empresa;private readonly IParametrosContext _param;
+        public Compra(IEmpresaContext empresa, IParametrosContext param = null)
+        {
+            _empresa = empresa;_param = param;
+            oCompraD = new Datos.Compra(empresa);
+            oCorteN = new Corte(empresa);
+            oSucN = new Negocio.Sucursal(empresa);
+            oUsuarioN = new Usuario(empresa);
+            oCierreN = new Negocio.CierreCaja(empresa);
+            oPersonaN = new Persona(empresa);
+            oCtaCteN = new Negocio.CuentaCorriente(empresa);
+        }
 
         public int AddOrEditCompra(Entidades.Compra oCompraE, string tipoCompra,List<Entidades.MediaRes> listaMediaRes, 
             List<Entidades.CortePorCompra> listaCortePorCompra, bool esEgresoCaja, Entidades.EgresoCaja oEgresoCajaE)
@@ -48,7 +68,7 @@ namespace Negocio
                     //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.EgresoStock)) ||
                     //    tipoCompra.Equals(Entidades.Compra.tipoCompraToString(Entidades.Compra.tipoCompraEnum.CierreStock)))
                     
-                    Negocio.Corte oCorteN = new Corte();
+                    
                     foreach (Entidades.CortePorCompra cortePorCompra in listaCortePorCompra)
                     {
                         cortePorCompra.Sucursal = oCompraE.Sucursal;
@@ -95,7 +115,7 @@ namespace Negocio
                         descripcionEgreso += oCompraE.Proveedor.razonSocial + " - ID:" + oCompraE.IdCompra.ToString() + detalleEgreso;
 
                         oEgresoCajaE.Fecha = oCompraE.FechaCompra;
-                        oEgresoCajaE.IdTipoEgresoCaja = Entidades.Parametros.idCompraEgresoCaja;// oCierreN.getIdEgresoCajaPorCompra();
+                        oEgresoCajaE.IdTipoEgresoCaja = Entidades.EgresoCaja.idCompraEgresoCaja;// oCierreN.getIdEgresoCajaPorCompra();
                         oEgresoCajaE.Descripcion = descripcionEgreso;
                         oEgresoCajaE.Monto = montoEgreso;
                         oEgresoCajaE.Detalle = oCompraE.Observaciones;
@@ -104,7 +124,7 @@ namespace Negocio
                         oEgresoCajaE.CreadoPor =  oCompraE.CreadoPor.Id;
                         oEgresoCajaE.ActualizadoPor = oEgresoCajaE.Id > 0 ? oCompraE.ActualizadoPor.Id : 0;
 
-                        Negocio.CierreCaja oCierreN = new Negocio.CierreCaja();
+                        
                         oEgresoCajaE = oCierreN.addOrEditEgresoCaja(oEgresoCajaE);
                     }
 
@@ -142,20 +162,20 @@ namespace Negocio
                 oCompra.IdCompra = Convert.ToInt32(row["idCompra"].ToString());
                 oCompra.NroRemito = row["nroRemito"].ToString();
                 oCompra.FechaCompra = Convert.ToDateTime(row["fechaCompra"].ToString());
-                Negocio.Persona oPersonaN = new Persona();
+                
                 oCompra.Proveedor = oPersonaN.findById(Convert.ToInt32(row["idProveedor"].ToString()));
                 oCompra.TipoCompra = row["tipoCompra"].ToString();
                 oCompra.CantMedias = row["cantMedias"].Equals(DBNull.Value) ? null : (int?)(row["cantMedias"]);
                 oCompra.KgsMedias = row["kgsMedias"].Equals(DBNull.Value) ? null : (float?) Convert.ToSingle(row["kgsMedias"]);
                 oCompra.EnCtaCte = Convert.ToBoolean(row["enCtaCte"]);
                 //agrego sucursal
-                Negocio.Sucursal oSucN = new Negocio.Sucursal();
+                
                 oCompra.Sucursal = oSucN.findById(Convert.ToInt32(row["idSucursal"].ToString()));
                 oCompra.Estado = row["estado"].ToString();
                 oCompra.Observaciones = row["observaciones"].ToString();
                 oCompra.Creado = row["creado"].Equals(null) ? (DateTime?)null : (DateTime?)Convert.ToDateTime(row["creado"].ToString());
                 oCompra.Actualizado = row["actualizado"].Equals(DBNull.Value) ? null : (DateTime?)(row["actualizado"]);
-                Usuario oUsuarioN = new Usuario();
+                
                 oCompra.CreadoPor = row["creadoPor"].Equals(DBNull.Value) ? null : oUsuarioN.getUserById(Convert.ToInt32(row["creadoPor"].ToString()));
                 oCompra.ActualizadoPor = row["actualizadoPor"].Equals(DBNull.Value) ? null : oUsuarioN.getUserById(Convert.ToInt32(row["actualizadoPor"].ToString()));
             }
@@ -170,7 +190,7 @@ namespace Negocio
         public void crearMovCtaCteCompra(Entidades.Compra oCompraE)
         {
             //oCompraE = findById_convertToCompra(oCompraE.IdCompra);
-            Negocio.CuentaCorriente oCtaCteN = new Negocio.CuentaCorriente();
+            
             string detalle = "\'" + oCompraE.TipoCompra + "\'" + " | Kgs: " + oCompraE.KgsMedias.ToString()
                 + " | " + "Cant: " + oCompraE.CantMedias.ToString();
             oCtaCteN.crearMovCtaCte(oCompraE.Proveedor, oCompraE.FechaCompra, Entidades.MovCtaCte.tablas.Compras, oCompraE.IdCompra, oCompraE.NroRemito,
@@ -222,10 +242,10 @@ namespace Negocio
             DataTable dtCortesPorCompra = obtenerCortesPorCompra(idCompra);
             if (dtCortesPorCompra.Rows.Count > 0)
             {
-                Negocio.Usuario oUsuarioN = new Usuario();
+                
                 List<Entidades.Usuario> listaUsuario = oUsuarioN.listaUsuario();
 
-                Negocio.Corte oCorteN = new Corte();
+                
                 DataTable dtCortes = oCorteN.obtenerCortes();
                 Entidades.Corte oCorte;
 

@@ -26,7 +26,7 @@ namespace Presentacion.Personas
         public void cargarGrilla()
         {
 
-            oPersonaN = new Negocio.Persona();
+            oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.DataSource = null;
             grillaPersonas.AutoGenerateColumns = true;

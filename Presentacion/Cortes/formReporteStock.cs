@@ -21,11 +21,11 @@ namespace Presentacion.Cortes
         Entidades.Sucursal oSucursalE = new Entidades.Sucursal();
         Entidades.Persona oMarcaE = new Entidades.Persona();
         Entidades.Persona oProveedor = new Entidades.Persona();
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtSucursales;
 
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.Compra oCompraN = new Negocio.Compra();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Compra oCompraN = new Negocio.Compra(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         string cargarPersona = "";
         string tipo = "";

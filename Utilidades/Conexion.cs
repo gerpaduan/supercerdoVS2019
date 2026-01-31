@@ -44,18 +44,83 @@ namespace Utilidades
 
 
         SqlConnection conn;
-        public SqlConnection conectar()
+        //public SqlConnection conectar()
+        //{
+        //    //conString = getConnString();
+        //    conn = new SqlConnection(conString);
+        //    return conn;
+        //}
+
+        //public SqlConnection conectar(string conexionSucursal)
+        //{
+        //    conString = ConfigurationManager.ConnectionStrings[conexionSucursal].ToString();
+        //    conn = new SqlConnection(conString);
+        //    return conn;
+        //}
+        private static string GetConnectionStringFromConfig(string csNameOverride = null)
         {
-            //conString = getConnString();
-            conn = new SqlConnection(conString);
+            // Si te pasan un nombre de connectionString explícito, usa ese.
+            // Si no, usa el nombre guardado en AppSettings["connString"].
+            string csName = csNameOverride;
+
+            if (string.IsNullOrWhiteSpace(csName))
+                csName = ConfigurationManager.AppSettings["connString"];
+
+            if (string.IsNullOrWhiteSpace(csName))
+                throw new ConfigurationErrorsException("Falta AppSettings key 'connString' en el .config.");
+
+            var settings = ConfigurationManager.ConnectionStrings[csName];
+            if (settings == null || string.IsNullOrWhiteSpace(settings.ConnectionString))
+                throw new ConfigurationErrorsException("No existe la connectionString '" + csName + "' en <connectionStrings>.");
+
+            return settings.ConnectionString;
+        }
+        public SqlConnection conectar(IEmpresaContext empresa)
+        {
+            string cs = GetConnectionStringFromConfig();
+
+            conn = new SqlConnection(cs);
+            conn.Open();
+
+            SetEmpresaSession(conn, empresa);
+
             return conn;
         }
 
-        public SqlConnection conectar(string conexionSucursal)
+        public SqlConnection conectar(string conexionSucursal, IEmpresaContext empresa)
         {
-            conString = ConfigurationManager.ConnectionStrings[conexionSucursal].ToString();
-            conn = new SqlConnection(conString);
+            // "conexionSucursal" debe ser el NOMBRE de una connectionString
+            // Ej: "carnisys_local" (WinForms) o "ConexionPrincipal" (Web)
+            string cs = GetConnectionStringFromConfig(conexionSucursal);
+
+            conn = new SqlConnection(cs);
+            conn.Open();
+
+            SetEmpresaSession(conn, empresa);
+
             return conn;
+        }
+
+
+        // ---------------------------
+        // SESSION_CONTEXT
+        // ---------------------------
+        private void SetEmpresaSession(
+            SqlConnection cn,
+            IEmpresaContext empresa)
+        {
+            if (empresa == null)
+                throw new ArgumentNullException(nameof(empresa));
+
+            using (var cmd = new SqlCommand(
+                "EXEC sp_set_session_context 'IdEmpresa', @IdEmpresa",
+                cn))
+            {
+                cmd.Parameters.AddWithValue(
+                    "@IdEmpresa", empresa.IdEmpresa);
+
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public void cerraConexion()

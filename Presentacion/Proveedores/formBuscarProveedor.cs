@@ -22,7 +22,7 @@ namespace Presentacion
 
         public void cargarGrilla()
         {
-            oProveedorN = new Negocio.Persona();
+            oProveedorN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             grillaProveedores.AutoGenerateColumns = false;
 
             grillaProveedores.DataSource = oProveedorN.buscarPersona(txtBuscar.Text.Trim(), false);
@@ -32,7 +32,7 @@ namespace Presentacion
 
         public void buscarProveedor()
         {
-            oProveedorN = new Negocio.Persona();
+            oProveedorN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaProveedores.AutoGenerateColumns = false;
             grillaProveedores.DataSource = oProveedorN.buscarPersona(txtBusqueda, false);

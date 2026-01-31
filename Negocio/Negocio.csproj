@@ -67,6 +67,7 @@
       <DependentUpon>DataSetCorte.xsd</DependentUpon>
     </Compile>
     <Compile Include="OtrasClases.cs" />
+    <Compile Include="Parametros.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Persona.cs" />
     <Compile Include="Sucursal.cs" />

@@ -13,7 +13,7 @@ namespace Presentacion.Personas
     {
         Entidades.Persona oPersonaModificarE = new Entidades.Persona();
 
-        Negocio.Persona oPersonaN = new Negocio.Persona();
+        Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         public formInfoPersona()
         {

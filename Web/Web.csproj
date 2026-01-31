@@ -127,6 +127,7 @@
     <Compile Include="App_Start\BundleConfig.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Controllers\CajasController.cs" />
     <Compile Include="Controllers\FinanzasController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -135,6 +136,7 @@
     <Compile Include="Controllers\ProductosController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
     <Compile Include="Controllers\VentasController.cs" />
+    <Compile Include="EmpresaContextWeb.cs" />
     <Compile Include="Filters\PermisoFormularioAttribute.cs" />
     <Compile Include="Filters\RequirePermissionAttribute.cs" />
     <Compile Include="Global.asax.cs">
@@ -2056,6 +2058,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Base\" />
     <Folder Include="Views\Session\" />
   </ItemGroup>
   <ItemGroup>

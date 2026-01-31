@@ -22,8 +22,8 @@ namespace Presentacion
         public formFormulas frmFormulas = new formFormulas();
         DataTable dtSucursales;
         Negocio.Sucursal oSucursalN;
-        Negocio.Corte oCorteN=new Negocio.Corte();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Corte oCorteN=new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         //Entidades.Corte oCorteFormulaE;
         Entidades.Corte oCorteE;

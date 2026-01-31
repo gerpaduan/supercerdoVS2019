@@ -15,7 +15,7 @@ namespace Presentacion
 {
     public partial class formMovimientos : formBaseColor
     {
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         Entidades.Corte oCorteE = new Entidades.Corte();
         Entidades.Sucursal oSucursalOrigen = new Entidades.Sucursal();
@@ -26,11 +26,11 @@ namespace Presentacion
         DataTable dtSucursalOrigen = new DataTable();
         DataTable dtSucursalDestino = new DataTable();
  
-        Negocio.Sucursal oSucursalN = new Negocio.Sucursal();
-        Negocio.Usuario oUsuarioN = new Negocio.Usuario();
+        Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         int cantServidores = Convert.ToInt32(ConfigurationManager.AppSettings["cantServidores"].ToString());
-        DateTime limitFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
 
         bool cargar = false;
@@ -46,7 +46,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursales();
-                txtFechaDesde.Value = ultimaFechaDesde = DateTime.Today.AddDays(-Entidades.Parametros.diasLimitFechaDesde);
+                txtFechaDesde.Value = ultimaFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
                 cargar = true;
                 cargarGrilla();
                 actualizar.Visible = FormPrincipal.soyYo;

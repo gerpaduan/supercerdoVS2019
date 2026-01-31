@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.Configuration;
 using Utilidades;
-using Entidades;
 
 namespace Presentacion.Cortes
 {
@@ -16,8 +17,8 @@ namespace Presentacion.Cortes
     {
         public Entidades.Usuario oUsuario;
 
-        Negocio.Corte oCorteN = new Negocio.Corte();
-        Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+        Negocio.OtrasClases oOtrasClasesN = new Negocio.OtrasClases(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         DataTable dtParametros = new DataTable();
 
         public string tipoProductoSelected = "";
@@ -45,28 +46,39 @@ namespace Presentacion.Cortes
                 }
 
                 //al guardar informa que tiene que volver a abrir la aplicacion para que se actualicen los valores
-                dtParametros = oOtrasClasesN.obtenerParametrosDt();
-                for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
-                {
-                    switch (dtParametros.Rows[fila]["nombre"].ToString())
-                    {
-                        case "porcAjEfectivo":
-                            txtEfectivo.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
-                            break;
-                        case "porcAjDebito":
-                            txtDebito.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
-                            break;
-                        case "porcAjCredito":
-                            txtCredito.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
-                            break;
-                        case "porcAjQr":
-                            txtQr.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
-                            break;
-                        case "porcAjTranf":
-                            txtTransferencia.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
-                            break;
-                    }
-                }
+                //dtParametros = oOtrasClasesN.obtenerParametrosDt();
+                //for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
+                //{
+                //    switch (dtParametros.Rows[fila]["nombre"].ToString())
+                //    {
+                //        case "porcAjEfectivo":
+                //            txtEfectivo.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
+                //            break;
+                //        case "porcAjDebito":
+                //            txtDebito.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
+                //            break;
+                //        case "porcAjCredito":
+                //            txtCredito.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
+                //            break;
+                //        case "porcAjQr":
+                //            txtQr.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
+                //            break;
+                //        case "porcAjTranf":
+                //            txtTransferencia.Text = ((decimal.Parse(dtParametros.Rows[fila][2].ToString()) - 1) * 100).ToString();
+                //            break;
+                //    }
+                //}
+
+                // Cultura actual (Argentina: coma decimal)
+                var ci = CultureInfo.CurrentCulture;
+                // porcAjX está guardado como factor (ej 1.05). En pantalla querés %: (1.05 - 1) * 100 = 5
+                txtEfectivo.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjEfectivo, 1m) - 1m) * 100m).ToString(ci);
+                txtDebito.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjDebito, 1m) - 1m) * 100m).ToString(ci);
+                txtCredito.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjCredito, 1m) - 1m) * 100m).ToString(ci);
+                txtQr.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjQr, 1m) - 1m) * 100m).ToString(ci);
+                txtTransferencia.Text =
+                                  ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjTranf, 1m) - 1m) * 100m).ToString(ci);
+
             }
             catch (Exception ex)
             {
@@ -145,7 +157,8 @@ namespace Presentacion.Cortes
                     }
                 }
 
-                oOtrasClasesN.actualizarParametros(dtParametros);
+                //TODO: actualizar parametros
+                //oOtrasClasesN.actualizarParametros(dtParametros);
 
                 MessageBox.Show("La actualizacion de los costos por cobro se registró correctamente.\n\n"+
                     "Cierre y vuelva a abrir el Sistema para que los cambios impacten correctamente.");

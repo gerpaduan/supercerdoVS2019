@@ -25,7 +25,7 @@ namespace Presentacion.Cortes
 
         public void cargarGrilla()
         {
-            oPersonaN = new Negocio.Persona();
+            oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
             string txtBusqueda = txtBuscar.Text.Trim();
             grillaPersonas.DataSource = null;
             grillaPersonas.AutoGenerateColumns = true;
@@ -142,7 +142,7 @@ namespace Presentacion.Cortes
                     return;
 
                 int idPersona = Convert.ToInt32(grillaPersonas.CurrentRow.Cells[0].Value.ToString());
-                oPersonaN = new Negocio.Persona();
+                oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
                 oMarcaE = oPersonaN.findById(idPersona);
 
                 InterfacePersona formInterface = this.Owner as InterfacePersona;

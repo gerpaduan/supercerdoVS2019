@@ -2,7 +2,9 @@
 using System.Web;
 using System.Web.Mvc;
 using Entidades;
-using Negocio; // donde está tu clase que tiene tienePermiso()
+using Negocio;
+using Utilidades;
+using Web; // donde está EmpresaContextWeb
 
 namespace Web.Filters
 {
@@ -20,28 +22,44 @@ namespace Web.Filters
 
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
-            var sessionUser = filterContext.HttpContext.Session["usuario"] as Entidades.Usuario;
+            var session = filterContext.HttpContext.Session;
+
+            var usuario = session["Usuario"] as Entidades.Usuario;
 
             // 1. No logueado → Login
-            if (sessionUser == null)
+            if (usuario == null)
             {
                 filterContext.Result = new RedirectResult("/Login/Index");
                 return;
             }
 
-            // 2. Objeto de negocio que contiene tienePermiso()
-            var usuarioNeg = new Negocio.Usuario();
+            // 2. Empresa desde Session (como BaseController)
+            IEmpresaContext empresa;
+            try
+            {
+                empresa = new EmpresaContextWeb();
+            }
+            catch
+            {
+                filterContext.Result = new RedirectResult("/Login/Index");
+                return;
+            }
 
-            // 3. Fecha desde: si no aplica edición, se pasa Today
+            // 3. Negocio con empresa
+            var usuarioNeg = new Negocio.Usuario(empresa);
+
+            // 4. Fecha desde
             DateTime fechaDesde = DateTime.Today;
 
-            // 4. idCreador: si solo miramos consulta → se pasa -1
-            var usuario = (Entidades.Usuario)HttpContext.Current.Session["Usuario"];
-            int idUsuario = usuario.Id;
+            // 5. idCreador
+            int idCreador = _validarEdicion ? usuario.Id : -1;
 
-            int idCreador = _validarEdicion ? idUsuario : -1;
-
-            bool tiene = usuarioNeg.tienePermiso(sessionUser, _nombreForm, fechaDesde, idCreador);
+            bool tiene = usuarioNeg.tienePermiso(
+                usuario,
+                _nombreForm,
+                fechaDesde,
+                idCreador
+            );
 
             if (!tiene)
             {

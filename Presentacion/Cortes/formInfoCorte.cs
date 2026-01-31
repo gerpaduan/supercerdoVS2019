@@ -12,7 +12,7 @@ namespace Presentacion
     public partial class formInfoCorte : formBaseColor
     {
         public int idCorte = 0;
-        Negocio.Corte oCorteN = new Negocio.Corte();
+        Negocio.Corte oCorteN = new Negocio.Corte(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
         Entidades.Corte oCorteE = new Entidades.Corte();
         public formCortes oFrmCortes;
         DataTable dtCorte;
