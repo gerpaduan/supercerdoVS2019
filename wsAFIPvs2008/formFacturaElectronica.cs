@@ -1,6 +1,8 @@
-﻿using iTextSharp.text;
+﻿using Entidades;
+using iTextSharp.text;
 using iTextSharp.text.pdf;
 using iTextSharp.text.pdf.draw;
+using Negocio;
 using Newtonsoft.Json;
 using QRCoder;
 using System;
@@ -40,13 +42,15 @@ namespace wsAFIPvs2008
         Negocio.Sucursal oSucN;
         public Entidades.FacturaElectronica oFactuElec;
         public Entidades.FacturaElectronica oNotaCredito;
-        Entidades.Sucursal oSucursalEntidad = new Entidades.Sucursal();
+        Entidades.Empresa oEmpresa;
+        Entidades.Sucursal oSucursalEntidad;// = new Entidades.Sucursal();
         Entidades.Persona personaPadron = new Entidades.Persona();
         List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
         List<Entidades.LineaVenta> lineaNuevosAnulados = new List<Entidades.LineaVenta>();
         List<Entidades.lineaVentaUnificada> listaLineaGrilla = new List<Entidades.lineaVentaUnificada>();
 
         public static IEmpresaContext EmpresaSTATIC { get; private set; }
+        public static IParametrosContext ParametrosCTX; // <-- nuevo
         DataTable dtIva;
         public bool logueado;
         public bool facturaPendiente = true;
@@ -63,9 +67,9 @@ namespace wsAFIPvs2008
         private LoginClass oLoginClass;
         private string urlLogin;
         private string urlWSFE;
-        bool esRRII = ConfigurationManager.AppSettings["ivaCliente"].ToString().Equals("RRII");
+        bool esRRII;// = ConfigurationManager.AppSettings["ivaCliente"].ToString().Equals("RRII");
         string cuit = ConfigurationManager.AppSettings["cuit"].ToString();
-        string certificado = Directory.GetCurrentDirectory() + ConfigurationManager.AppSettings["rutaCertificado"].ToString();
+        string certificado;// = Directory.GetCurrentDirectory() + ConfigurationManager.AppSettings["rutaCertificado"].ToString();
         string servidor_0test_1prod = ConfigurationManager.AppSettings["tipoServidor"].ToString();
         string qrTicketFactura = ConfigurationManager.AppSettings["qrTicketFactura"].ToString();
         string servicioAfip = "wsfe";
@@ -167,7 +171,9 @@ namespace wsAFIPvs2008
 
         private void formFacturaElectronica_Load(object sender, EventArgs e)
         {
-            Entidades.Empresa oEmpresa = new Entidades.Empresa();
+            oEmpresa = new Entidades.Empresa();
+            IEmpresaContext empresa = new EmpresaContextNulo();
+            oSucN = new Negocio.Sucursal(empresa, ParametrosCTX);
             long cuitLong = long.Parse(cuit);
             oEmpresa = oSucN.findEmpresaByCuit(cuitLong);
 
@@ -178,8 +184,11 @@ namespace wsAFIPvs2008
             }
 
             int idEmpresa = oEmpresa != null ? oEmpresa.IdEmpresa : 0;
-
+            esRRII = Convert.ToBoolean(oEmpresa.EsRRII);
+            //cuit = oEmpresa.Cuit.ToString();
             EmpresaSTATIC = new EmpresaContextWin(idEmpresa);
+
+            certificado = Directory.GetCurrentDirectory() + @"\Templates\" + oEmpresa.NombreCertificado_pfx;
 
             loadForm();    
     }
@@ -189,7 +198,7 @@ namespace wsAFIPvs2008
 
             cargarDatosAfip = true;
 
-            if (servidor_0test_1prod == "1")
+            if (oEmpresa.Entorno_HOMO_PROD.ToUpper().Contains("PROD"))//(servidor_0test_1prod == "1")
             {
                 lblServidor.Text = "Produccion";
                 urlLogin = "https://wsaa.afip.gov.ar/ws/services/LoginCms?wsdl";
@@ -209,7 +218,7 @@ namespace wsAFIPvs2008
             login();
 
             MyCuitTX.Text = cuit;
-            txtPuntoVentaConfig.Text = ptoVtaAfip.ToString();
+            //txtPuntoVentaConfig.Text = ptoVtaAfip.ToString();
             ptos_venta_cm.DisplayMember = "Nro";
             TiposComprobantesCMB.DisplayMember = "Desc";
             TiposComprobantesCMB.ValueMember = "Id";
@@ -240,10 +249,14 @@ namespace wsAFIPvs2008
             ///en caso qeu ya exista factura
             if (txtPorcentajeFacturacion.Text == "100")
             {
-
+                oVentaN = (oVentaN == null) ? new Negocio.Venta(EmpresaSTATIC, ParametrosCTX) : oVentaN;
                 oVentaE = !string.IsNullOrEmpty(txtIdVenta.Text) ? oVentaN.getVentaById(Convert.ToInt32(txtIdVenta.Text)) : null;
 
-                label_Sucursal.Text = oSucursalEntidad.getNomSucPorPtoVtaAfip(ptoVtaAfip);
+                oSucursalEntidad = oVentaE.Sucursal;
+                ptoVtaAfip = oSucursalEntidad.CodPuntoVentaAfip;
+                txtPuntoVentaConfig.Text = ptoVtaAfip.ToString();
+
+                label_Sucursal.Text = oSucursalEntidad.SucursalNombre; //.getNomSucPorPtoVtaAfip(ptoVtaAfip);
                 facturaPendiente = true;
                 FechaDTP.Enabled = logueado;
                 checkTodosDatos.Enabled = logueado;
@@ -260,7 +273,15 @@ namespace wsAFIPvs2008
                 }
 
                 idFactuElec = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);
-                oFactuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
+                if (idFactuElec > 0)
+                    oFactuElec = oVentaN.getFactuElecById(idFactuElec);
+                else
+                {
+                    oFactuElec = new Entidades.FacturaElectronica();
+                    oFactuElec.Venta = oVentaE;
+                }
+                //oFactuElec = idFactuElec > 0 ? oVentaN.getFactuElecById(idFactuElec) : new Entidades.FacturaElectronica();
+                
                 ///Si la Venta ya fue facturada, se bloquean y habilitan los campos y componentes que no pueden ser modificados
                 TiposComprobantesCMB.Enabled = idFactuElec == 0;
                 comboIva.Enabled = idFactuElec == 0;
@@ -359,7 +380,7 @@ namespace wsAFIPvs2008
         private void cargarIva()
         {
             dtIva = new DataTable();
-            oPersonaN = new Negocio.Persona(EmpresaSTATIC);
+            oPersonaN = new Negocio.Persona(EmpresaSTATIC, ParametrosCTX);
             dtIva = oPersonaN.getIva();
             comboIva.DataSource = dtIva;
             comboIva.DisplayMember = "iva";
@@ -524,7 +545,7 @@ namespace wsAFIPvs2008
                 puntosventa = service.FEParamGetPtosVenta(authRequest);
                 ptos_venta_cm.DataSource = puntosventa.ResultGet;
                 iniciarPtosVenta(mostrarSeleccionados);
-                errores += puntosventa.Errors != null ? "\nAl cargar combo en puntosventa: " + puntosventa.Errors[0].Msg.ToString() : "";
+                
                 #region codigo para mostrar puntos de venta recuperados desde afip
                 //Resultado.Text = "Puntos de Ventas: ";
                 //if (puntosventa.ResultGet != null)
@@ -585,12 +606,16 @@ namespace wsAFIPvs2008
             }
             catch (Exception ex)
             {
+                string error_ptoVenta =  puntosventa.Errors != null ? "\n\nAl cargar Punto de Venta: " + 
+                    puntosventa.Errors[0].Msg.ToString() + "\nVerificar que el certificado pertenezca a este cuit." +
+                    "\n\nLogin (subject): " + oLoginClass.certificado.Subject.ToString() : "";
                 MessageBox.Show(
                     "No se pudo establecer la conexión con los servicios de AFIP.\n\n" +
                     "Esto puede deberse a:\n" +
                     "• Falta de conexión a internet.\n" +
                     "• Inconvenientes en los servidores de AFIP.\n\n" +
-                    "Por favor, verifique su conexión y vuelva a intentar.\n\n" + ex.Message,
+                    "Por favor, verifique su conexión y vuelva a intentar.\n\n" + ex.Message +
+                    error_ptoVenta,
                     "Error de conexión",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning
@@ -990,6 +1015,11 @@ namespace wsAFIPvs2008
                 DocTipo doctipo = (DocTipo) TipoDocCMB.SelectedItem;
                 det.DocTipo = doctipo.Id;
                 det.DocNro = !string.IsNullOrEmpty(DocTX.Text) ? long.Parse(DocTX.Text) : 0;
+
+                int idLocalIva = ((int)comboIva.SelectedValue); // o de tu cliente
+                var factTemp = new FacturaElectronica();
+                det.CondicionIVAReceptorId = factTemp.MapearCondicionIVAReceptorIdAfip(idLocalIva);
+
                 //Ultimo CAE autorizado y se le suma 1
                 FERecuperaLastCbteResponse lastRes = service.FECompUltimoAutorizado(authRequest, ptoVtaAfip, cm.Id);
                 int last = lastRes.CbteNro;
@@ -1011,7 +1041,7 @@ namespace wsAFIPvs2008
                 Moneda mon = (Moneda)MonedaCMB.SelectedItem;
                 det.MonId = mon.Id;
                 det.MonCotiz = 1;
-
+                det.MonCotizSpecified = true;
                 //Alicuota IVA
                 //AlicIva alicuota = new AlicIva();
                 //IvaTipo ivat = (IvaTipo)TipoIVACmb.SelectedItem;
@@ -1048,7 +1078,7 @@ namespace wsAFIPvs2008
                 FECAEDetRequest[] reqArr = new FECAEDetRequest[1];
                 reqArr[0] = det;
                 req.FeDetReq = reqArr;
-                return;
+                
                 //Solicita el CAE
                 FECAEResponse r = service.FECAESolicitar(authRequest, req);
 
@@ -1384,12 +1414,12 @@ namespace wsAFIPvs2008
                 ticket.LineasEnBlanco(1);
 
                 ticket.DobleTamanoB();
-                ticket.TextoCentro(ConfigurationManager.AppSettings["Negocio"].ToString());
+                ticket.TextoCentro(oDocumentoImprimir.Venta.Sucursal.Empresa.NombreFantasia); //(ConfigurationManager.AppSettings["Negocio"].ToString());
                 ticket.DobleTamanoB(false);
-                string NegocioAgregado1 = ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
-                string NegocioAgregado2 = ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
-                string NegocioAgregado3 = ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
-                string NegocioAgregado4 = ConfigurationManager.AppSettings["NegocioAgregado4"].ToString();
+                string NegocioAgregado1 = (oDocumentoImprimir.Venta.Sucursal.Empresa.Slogan1); //ConfigurationManager.AppSettings["NegocioAgregado1"].ToString();
+                string NegocioAgregado2 = (oDocumentoImprimir.Venta.Sucursal.Empresa.Slogan2); //ConfigurationManager.AppSettings["NegocioAgregado2"].ToString();
+                string NegocioAgregado3 = (oDocumentoImprimir.Venta.Sucursal.Empresa.Slogan3); //ConfigurationManager.AppSettings["NegocioAgregado3"].ToString();
+                string NegocioAgregado4 = "";// (oDocumentoImprimir.Venta.Sucursal.Empresa.Slogan1); //ConfigurationManager.AppSettings["NegocioAgregado4"].ToString();
 
                 if (!(NegocioAgregado1.Equals("-") || string.IsNullOrEmpty(NegocioAgregado1)))
                     ticket.TextoCentro(NegocioAgregado1);
@@ -1408,18 +1438,6 @@ namespace wsAFIPvs2008
                 ticket.TextoIzquierda(ConfigurationManager.AppSettings["CondicionIVA"].ToString());
                 ticket.LineasGuion();
 
-                //if (esFacturaA)
-                //    ticket.TextoCentro("Original");
-
-                //ticket.TextoIzquierda(oDocumentoImprimir.DescTipoCbteAfip + " Electronica");
-                //ticket.TextoIzquierda("Nro." + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip);
-                //ticket.TextoIzquierda("Fecha:" + oDocumentoImprimir.FechaEmisionAfip);// r.FeDetResp[0].CbteFch);
-                //if (notaCredito)
-                //{
-                //    ticket.TextoIzquierda("Cbte Asoc: " + txtNroFacturaNotaCredito.Text.Replace("Factura ","F"));
-                //}
-
-                //ticket.TextoIzquierda(oDocumentoImprimir.DescTipoCbteAfip + " Electronica");
                 ticket.TextoIzquierda("Nro." + oDocumentoImprimir.PtoVtaAfip + "-" + oDocumentoImprimir.NroCbteAfip);
                 ticket.TextoIzquierda("Fecha:" + oDocumentoImprimir.FechaEmisionAfip);// r.FeDetResp[0].CbteFch);
                 if (notaCredito)
@@ -1718,9 +1736,10 @@ namespace wsAFIPvs2008
 
         private void ptos_venta_cm_SelectedIndexChanged(object sender, EventArgs e)
         {
-            txtPuntoVentaConfig.Text = ptos_venta_cm.Text.ToString();
-            ptoVtaAfip = Convert.ToInt32(ptos_venta_cm.Text.ToString());
-            label_Sucursal.Text = oSucursalEntidad.getNomSucPorPtoVtaAfip(ptoVtaAfip);
+            //txtPuntoVentaConfig.Text = ptos_venta_cm.Text.ToString();
+            //ptoVtaAfip = Convert.ToInt32(ptos_venta_cm.Text.ToString());
+            //label_Sucursal.Text = oSucursalEntidad.getNomSucPorPtoVtaAfip(ptoVtaAfip);
+            lbl_PtoVentaDistinto.Visible = !ptos_venta_cm.Text.Equals(ptoVtaAfip.ToString());
         }
 
         private void TotalTx_TextChanged(object sender, EventArgs e)
@@ -1747,7 +1766,7 @@ namespace wsAFIPvs2008
                 {
                     if (oVentaE != null)// && !(oVentaE.FormaPago == Entidades.Venta.formaPagoEnum.Efectivo.ToString()))
                     {
-                        oVentaN = new Negocio.Venta(EmpresaSTATIC);
+                        oVentaN = new Negocio.Venta(EmpresaSTATIC, ParametrosCTX);
                         oFactuElec = new Entidades.FacturaElectronica();
 
                         oFactuElec.Id = oVentaN.esVentaSinFacturar(oVentaE.IdVenta, false);
@@ -1925,11 +1944,11 @@ namespace wsAFIPvs2008
             iTextSharp.text.Paragraph parrafoIzq = new iTextSharp.text.Paragraph();
             parrafoIzq.Alignment = Element.ALIGN_LEFT;
 
-            parrafoIzq.Add(new Chunk("\n" + ConfigurationManager.AppSettings["Negocio"].ToString() + "\n\n", fuenteTitulo));
-            parrafoIzq.Add(new Chunk("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
-            parrafoIzq.Add(new Chunk(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " +
-                                    ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));
-            parrafoIzq.Add(new Chunk("Cond. IVA: " + ConfigurationManager.AppSettings["CondicionIVA"].ToString() + "\n", fuenteRazonSocial));
+            parrafoIzq.Add(new Chunk("\n" + oDocumentoImprimir.Venta.Sucursal.Empresa.NombreFantasia + "\n\n", fuenteTitulo));
+            parrafoIzq.Add(new Chunk("Razón Social: " + oDocumentoImprimir.Venta.Sucursal.Empresa.RazonSocialAfip + "\n", fuenteRazonSocial));
+            parrafoIzq.Add(new Chunk(oDocumentoImprimir.Venta.Sucursal.Empresa.Domicilio + " - " +
+                                    oDocumentoImprimir.Venta.Sucursal.Empresa.Ciudad + "\n", fuenteRazonSocial));
+            parrafoIzq.Add(new Chunk("Cond. IVA: " + oDocumentoImprimir.Venta.Sucursal.Empresa.CondicionIVA + "\n", fuenteRazonSocial));
 
             // Agregamos el párrafo a la celda
             izquierda.AddElement(parrafoIzq);
@@ -1959,9 +1978,9 @@ namespace wsAFIPvs2008
             derecha.AddElement(new iTextSharp.text.Paragraph(descComprobante.ToUpper() + "\n", fuenteNegrita));
             derecha.AddElement(new iTextSharp.text.Paragraph("Punto de Venta: " + oDocumentoImprimir.PtoVtaAfip + "   Comp.Nro: " + oDocumentoImprimir.NroCbteAfip + "\n", fuenteNormal));
             derecha.AddElement(new iTextSharp.text.Paragraph("Fecha de Emisión: " + oDocumentoImprimir.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") + "\n", fuenteNormal));
-            derecha.AddElement(new iTextSharp.text.Paragraph(ConfigurationManager.AppSettings["IIBB"] + "\n", fuenteNormal));
-            derecha.AddElement(new iTextSharp.text.Paragraph("CUIT: " + ConfigurationManager.AppSettings["cuit"] + "\n", fuenteNormal));
-            derecha.AddElement(new iTextSharp.text.Paragraph("Inicio Act.: " + ConfigurationManager.AppSettings["InicioActividades"] + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph("IIBB: " + oDocumentoImprimir.Venta.Sucursal.Empresa.Iibb.ToString() + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph("CUIT: " + oDocumentoImprimir.Venta.Sucursal.Empresa.Cuit.ToString() + "\n", fuenteNormal));
+            derecha.AddElement(new iTextSharp.text.Paragraph("Inicio Act.: " + oDocumentoImprimir.Venta.Sucursal.Empresa.InicioActividad.ToString() + "\n", fuenteNormal));
 
             cabecera.AddCell(derecha);
 

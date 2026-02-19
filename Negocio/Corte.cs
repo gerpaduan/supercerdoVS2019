@@ -154,12 +154,12 @@ namespace Negocio
             float porcAjEfectivo, porcAjDebito, porcAjCredito, porcAjCtaCte, porcAjQr, porcAjTranf;
             porcAjEfectivo=porcAjDebito=porcAjCredito=porcAjCtaCte=porcAjQr=porcAjTranf=0;
 
-            porcAjEfectivo = _param.GetFloat(Entidades.Parametros.PorcAjEfectivo, 0f);
-            porcAjDebito = _param.GetFloat(Entidades.Parametros.PorcAjDebito, 0f);
-            porcAjCredito = _param.GetFloat(Entidades.Parametros.PorcAjCredito, 0f);
+            porcAjEfectivo = _param.GetFloat(Entidades.ParamKeys.PorcAjEfectivo, 0f);
+            porcAjDebito = _param.GetFloat(Entidades.ParamKeys.PorcAjDebito, 0f);
+            porcAjCredito = _param.GetFloat(Entidades.ParamKeys.PorcAjCredito, 0f);
             porcAjCtaCte = 1;//no se obtiene el valor desde parametros
-            porcAjQr = _param.GetFloat(Entidades.Parametros.PorcAjQr, 0f);
-            porcAjTranf = _param.GetFloat(Entidades.Parametros.PorcAjTranf, 0f);
+            porcAjQr = _param.GetFloat(Entidades.ParamKeys.PorcAjQr, 0f);
+            porcAjTranf = _param.GetFloat(Entidades.ParamKeys.PorcAjTranf, 0f);
 
             //for (int fila = 0; fila < dtParametros.Rows.Count; fila++)
             //{

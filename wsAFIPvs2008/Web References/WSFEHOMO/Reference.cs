@@ -14,16 +14,16 @@
 #pragma warning disable 1591
 
 namespace wsAFIPvs2008.WSFEHOMO {
-    using System;
-    using System.Web.Services;
     using System.Diagnostics;
-    using System.Web.Services.Protocols;
+    using System;
     using System.Xml.Serialization;
     using System.ComponentModel;
+    using System.Web.Services.Protocols;
+    using System.Web.Services;
     
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Web.Services.WebServiceBindingAttribute(Name="ServiceSoap", Namespace="http://ar.gov.afip.dif.FEV1/")]
@@ -69,9 +69,13 @@ namespace wsAFIPvs2008.WSFEHOMO {
         
         private System.Threading.SendOrPostCallback FEParamGetTiposCbteOperationCompleted;
         
+        private System.Threading.SendOrPostCallback FEParamGetCondicionIvaReceptorOperationCompleted;
+        
         private System.Threading.SendOrPostCallback FEParamGetTiposDocOperationCompleted;
         
         private System.Threading.SendOrPostCallback FEParamGetTiposPaisesOperationCompleted;
+        
+        private System.Threading.SendOrPostCallback FEParamGetActividadesOperationCompleted;
         
         private bool useDefaultCredentialsSetExplicitly;
         
@@ -166,10 +170,16 @@ namespace wsAFIPvs2008.WSFEHOMO {
         public event FEParamGetTiposCbteCompletedEventHandler FEParamGetTiposCbteCompleted;
         
         /// <remarks/>
+        public event FEParamGetCondicionIvaReceptorCompletedEventHandler FEParamGetCondicionIvaReceptorCompleted;
+        
+        /// <remarks/>
         public event FEParamGetTiposDocCompletedEventHandler FEParamGetTiposDocCompleted;
         
         /// <remarks/>
         public event FEParamGetTiposPaisesCompletedEventHandler FEParamGetTiposPaisesCompleted;
+        
+        /// <remarks/>
+        public event FEParamGetActividadesCompletedEventHandler FEParamGetActividadesCompleted;
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FECAESolicitar", RequestNamespace="http://ar.gov.afip.dif.FEV1/", ResponseNamespace="http://ar.gov.afip.dif.FEV1/", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
@@ -487,26 +497,28 @@ namespace wsAFIPvs2008.WSFEHOMO {
         
         /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetCotizacion", RequestNamespace="http://ar.gov.afip.dif.FEV1/", ResponseNamespace="http://ar.gov.afip.dif.FEV1/", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
-        public FECotizacionResponse FEParamGetCotizacion(FEAuthRequest Auth, string MonId) {
+        public FECotizacionResponse FEParamGetCotizacion(FEAuthRequest Auth, string MonId, string FchCotiz) {
             object[] results = this.Invoke("FEParamGetCotizacion", new object[] {
                         Auth,
-                        MonId});
+                        MonId,
+                        FchCotiz});
             return ((FECotizacionResponse)(results[0]));
         }
         
         /// <remarks/>
-        public void FEParamGetCotizacionAsync(FEAuthRequest Auth, string MonId) {
-            this.FEParamGetCotizacionAsync(Auth, MonId, null);
+        public void FEParamGetCotizacionAsync(FEAuthRequest Auth, string MonId, string FchCotiz) {
+            this.FEParamGetCotizacionAsync(Auth, MonId, FchCotiz, null);
         }
         
         /// <remarks/>
-        public void FEParamGetCotizacionAsync(FEAuthRequest Auth, string MonId, object userState) {
+        public void FEParamGetCotizacionAsync(FEAuthRequest Auth, string MonId, string FchCotiz, object userState) {
             if ((this.FEParamGetCotizacionOperationCompleted == null)) {
                 this.FEParamGetCotizacionOperationCompleted = new System.Threading.SendOrPostCallback(this.OnFEParamGetCotizacionOperationCompleted);
             }
             this.InvokeAsync("FEParamGetCotizacion", new object[] {
                         Auth,
-                        MonId}, this.FEParamGetCotizacionOperationCompleted, userState);
+                        MonId,
+                        FchCotiz}, this.FEParamGetCotizacionOperationCompleted, userState);
         }
         
         private void OnFEParamGetCotizacionOperationCompleted(object arg) {
@@ -720,6 +732,37 @@ namespace wsAFIPvs2008.WSFEHOMO {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetCondicionIvaReceptor", RequestNamespace="http://ar.gov.afip.dif.FEV1/", ResponseNamespace="http://ar.gov.afip.dif.FEV1/", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public CondicionIvaReceptorResponse FEParamGetCondicionIvaReceptor(FEAuthRequest Auth, string ClaseCmp) {
+            object[] results = this.Invoke("FEParamGetCondicionIvaReceptor", new object[] {
+                        Auth,
+                        ClaseCmp});
+            return ((CondicionIvaReceptorResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void FEParamGetCondicionIvaReceptorAsync(FEAuthRequest Auth, string ClaseCmp) {
+            this.FEParamGetCondicionIvaReceptorAsync(Auth, ClaseCmp, null);
+        }
+        
+        /// <remarks/>
+        public void FEParamGetCondicionIvaReceptorAsync(FEAuthRequest Auth, string ClaseCmp, object userState) {
+            if ((this.FEParamGetCondicionIvaReceptorOperationCompleted == null)) {
+                this.FEParamGetCondicionIvaReceptorOperationCompleted = new System.Threading.SendOrPostCallback(this.OnFEParamGetCondicionIvaReceptorOperationCompleted);
+            }
+            this.InvokeAsync("FEParamGetCondicionIvaReceptor", new object[] {
+                        Auth,
+                        ClaseCmp}, this.FEParamGetCondicionIvaReceptorOperationCompleted, userState);
+        }
+        
+        private void OnFEParamGetCondicionIvaReceptorOperationCompleted(object arg) {
+            if ((this.FEParamGetCondicionIvaReceptorCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.FEParamGetCondicionIvaReceptorCompleted(this, new FEParamGetCondicionIvaReceptorCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetTiposDoc", RequestNamespace="http://ar.gov.afip.dif.FEV1/", ResponseNamespace="http://ar.gov.afip.dif.FEV1/", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
         public DocTipoResponse FEParamGetTiposDoc(FEAuthRequest Auth) {
             object[] results = this.Invoke("FEParamGetTiposDoc", new object[] {
@@ -778,6 +821,35 @@ namespace wsAFIPvs2008.WSFEHOMO {
         }
         
         /// <remarks/>
+        [System.Web.Services.Protocols.SoapDocumentMethodAttribute("http://ar.gov.afip.dif.FEV1/FEParamGetActividades", RequestNamespace="http://ar.gov.afip.dif.FEV1/", ResponseNamespace="http://ar.gov.afip.dif.FEV1/", Use=System.Web.Services.Description.SoapBindingUse.Literal, ParameterStyle=System.Web.Services.Protocols.SoapParameterStyle.Wrapped)]
+        public FEActividadesResponse FEParamGetActividades(FEAuthRequest Auth) {
+            object[] results = this.Invoke("FEParamGetActividades", new object[] {
+                        Auth});
+            return ((FEActividadesResponse)(results[0]));
+        }
+        
+        /// <remarks/>
+        public void FEParamGetActividadesAsync(FEAuthRequest Auth) {
+            this.FEParamGetActividadesAsync(Auth, null);
+        }
+        
+        /// <remarks/>
+        public void FEParamGetActividadesAsync(FEAuthRequest Auth, object userState) {
+            if ((this.FEParamGetActividadesOperationCompleted == null)) {
+                this.FEParamGetActividadesOperationCompleted = new System.Threading.SendOrPostCallback(this.OnFEParamGetActividadesOperationCompleted);
+            }
+            this.InvokeAsync("FEParamGetActividades", new object[] {
+                        Auth}, this.FEParamGetActividadesOperationCompleted, userState);
+        }
+        
+        private void OnFEParamGetActividadesOperationCompleted(object arg) {
+            if ((this.FEParamGetActividadesCompleted != null)) {
+                System.Web.Services.Protocols.InvokeCompletedEventArgs invokeArgs = ((System.Web.Services.Protocols.InvokeCompletedEventArgs)(arg));
+                this.FEParamGetActividadesCompleted(this, new FEParamGetActividadesCompletedEventArgs(invokeArgs.Results, invokeArgs.Error, invokeArgs.Cancelled, invokeArgs.UserState));
+            }
+        }
+        
+        /// <remarks/>
         public new void CancelAsync(object userState) {
             base.CancelAsync(userState);
         }
@@ -797,7 +869,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -842,7 +914,163 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class ActividadesTipo {
+        
+        private long idField;
+        
+        private short ordenField;
+        
+        private string descField;
+        
+        /// <remarks/>
+        public long Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public short Orden {
+            get {
+                return this.ordenField;
+            }
+            set {
+                this.ordenField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Desc {
+            get {
+                return this.descField;
+            }
+            set {
+                this.descField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class FEActividadesResponse {
+        
+        private ActividadesTipo[] resultGetField;
+        
+        private Err[] errorsField;
+        
+        private Evt[] eventsField;
+        
+        /// <remarks/>
+        public ActividadesTipo[] ResultGet {
+            get {
+                return this.resultGetField;
+            }
+            set {
+                this.resultGetField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Err[] Errors {
+            get {
+                return this.errorsField;
+            }
+            set {
+                this.errorsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Evt[] Events {
+            get {
+                return this.eventsField;
+            }
+            set {
+                this.eventsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class Err {
+        
+        private int codeField;
+        
+        private string msgField;
+        
+        /// <remarks/>
+        public int Code {
+            get {
+                return this.codeField;
+            }
+            set {
+                this.codeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Msg {
+            get {
+                return this.msgField;
+            }
+            set {
+                this.msgField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class Evt {
+        
+        private int codeField;
+        
+        private string msgField;
+        
+        /// <remarks/>
+        public int Code {
+            get {
+                return this.codeField;
+            }
+            set {
+                this.codeField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Msg {
+            get {
+                return this.msgField;
+            }
+            set {
+                this.msgField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -875,7 +1103,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -920,73 +1148,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
-    public partial class Err {
-        
-        private int codeField;
-        
-        private string msgField;
-        
-        /// <remarks/>
-        public int Code {
-            get {
-                return this.codeField;
-            }
-            set {
-                this.codeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Msg {
-            get {
-                return this.msgField;
-            }
-            set {
-                this.msgField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
-    [System.SerializableAttribute()]
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
-    public partial class Evt {
-        
-        private int codeField;
-        
-        private string msgField;
-        
-        /// <remarks/>
-        public int Code {
-            get {
-                return this.codeField;
-            }
-            set {
-                this.codeField = value;
-            }
-        }
-        
-        /// <remarks/>
-        public string Msg {
-            get {
-                return this.msgField;
-            }
-            set {
-                this.msgField = value;
-            }
-        }
-    }
-    
-    /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1043,7 +1205,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1088,7 +1250,97 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class CondicionIvaReceptor {
+        
+        private int idField;
+        
+        private string descField;
+        
+        private string cmp_ClaseField;
+        
+        /// <remarks/>
+        public int Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Desc {
+            get {
+                return this.descField;
+            }
+            set {
+                this.descField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string Cmp_Clase {
+            get {
+                return this.cmp_ClaseField;
+            }
+            set {
+                this.cmp_ClaseField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class CondicionIvaReceptorResponse {
+        
+        private CondicionIvaReceptor[] resultGetField;
+        
+        private Err[] errorsField;
+        
+        private Evt[] eventsField;
+        
+        /// <remarks/>
+        public CondicionIvaReceptor[] ResultGet {
+            get {
+                return this.resultGetField;
+            }
+            set {
+                this.resultGetField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Err[] Errors {
+            get {
+                return this.errorsField;
+            }
+            set {
+                this.errorsField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public Evt[] Events {
+            get {
+                return this.eventsField;
+            }
+            set {
+                this.eventsField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1145,7 +1397,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1190,7 +1442,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1247,7 +1499,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1292,7 +1544,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1349,7 +1601,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1394,7 +1646,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1451,7 +1703,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1496,7 +1748,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1553,7 +1805,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1598,7 +1850,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1655,7 +1907,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1700,7 +1952,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1757,7 +2009,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1802,7 +2054,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1847,7 +2099,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1893,7 +2145,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEASinMovResponse))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1938,7 +2190,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -1983,7 +2235,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2028,7 +2280,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2133,7 +2385,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2166,7 +2418,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2211,7 +2463,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2268,7 +2520,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2279,7 +2531,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEACabResponse))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAECabResponse))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2372,7 +2624,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2381,7 +2633,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2404,7 +2656,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEADetResponse))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEDetResponse))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2509,7 +2761,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2542,7 +2794,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2575,7 +2827,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2586,7 +2838,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEACabRequest))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAECabRequest))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2631,7 +2883,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2640,7 +2892,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2676,7 +2928,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEADetRequest))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECAEDetRequest))]
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECompConsResponse))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -2717,6 +2969,14 @@ namespace wsAFIPvs2008.WSFEHOMO {
         
         private double monCotizField;
         
+        private bool monCotizFieldSpecified;
+        
+        private string canMisMonExtField;
+        
+        private int condicionIVAReceptorIdField;
+        
+        private bool condicionIVAReceptorIdFieldSpecified;
+        
         private CbteAsoc[] cbtesAsocField;
         
         private Tributo[] tributosField;
@@ -2728,6 +2988,8 @@ namespace wsAFIPvs2008.WSFEHOMO {
         private Comprador[] compradoresField;
         
         private Periodo periodoAsocField;
+        
+        private Actividad[] actividadesField;
         
         /// <remarks/>
         public int Concepto {
@@ -2900,6 +3162,48 @@ namespace wsAFIPvs2008.WSFEHOMO {
         }
         
         /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool MonCotizSpecified {
+            get {
+                return this.monCotizFieldSpecified;
+            }
+            set {
+                this.monCotizFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
+        public string CanMisMonExt {
+            get {
+                return this.canMisMonExtField;
+            }
+            set {
+                this.canMisMonExtField = value;
+            }
+        }
+        
+        /// <remarks/>
+        public int CondicionIVAReceptorId {
+            get {
+                return this.condicionIVAReceptorIdField;
+            }
+            set {
+                this.condicionIVAReceptorIdField = value;
+            }
+        }
+        
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool CondicionIVAReceptorIdSpecified {
+            get {
+                return this.condicionIVAReceptorIdFieldSpecified;
+            }
+            set {
+                this.condicionIVAReceptorIdFieldSpecified = value;
+            }
+        }
+        
+        /// <remarks/>
         public CbteAsoc[] CbtesAsoc {
             get {
                 return this.cbtesAsocField;
@@ -2958,10 +3262,20 @@ namespace wsAFIPvs2008.WSFEHOMO {
                 this.periodoAsocField = value;
             }
         }
+        
+        /// <remarks/>
+        public Actividad[] Actividades {
+            get {
+                return this.actividadesField;
+            }
+            set {
+                this.actividadesField = value;
+            }
+        }
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3030,7 +3344,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3099,7 +3413,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3144,7 +3458,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3177,7 +3491,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3222,7 +3536,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3255,8 +3569,29 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
+    [System.SerializableAttribute()]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(Namespace="http://ar.gov.afip.dif.FEV1/")]
+    public partial class Actividad {
+        
+        private long idField;
+        
+        /// <remarks/>
+        public long Id {
+            get {
+                return this.idField;
+            }
+            set {
+                this.idField = value;
+            }
+        }
+    }
+    
+    /// <remarks/>
     [System.Xml.Serialization.XmlIncludeAttribute(typeof(FECompConsResponse))]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3265,7 +3600,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3370,7 +3705,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3415,7 +3750,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3460,7 +3795,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3529,7 +3864,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3574,7 +3909,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3619,7 +3954,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3676,7 +4011,7 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Xml", "4.8.9221.0")]
     [System.SerializableAttribute()]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -3709,11 +4044,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECAESolicitarCompletedEventHandler(object sender, FECAESolicitarCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECAESolicitarCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3735,11 +4070,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECompTotXRequestCompletedEventHandler(object sender, FECompTotXRequestCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECompTotXRequestCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3761,11 +4096,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEDummyCompletedEventHandler(object sender, FEDummyCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEDummyCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3787,11 +4122,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECompUltimoAutorizadoCompletedEventHandler(object sender, FECompUltimoAutorizadoCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECompUltimoAutorizadoCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3813,11 +4148,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECompConsultarCompletedEventHandler(object sender, FECompConsultarCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECompConsultarCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3839,11 +4174,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECAEARegInformativoCompletedEventHandler(object sender, FECAEARegInformativoCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECAEARegInformativoCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3865,11 +4200,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECAEASolicitarCompletedEventHandler(object sender, FECAEASolicitarCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECAEASolicitarCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3891,11 +4226,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECAEASinMovimientoConsultarCompletedEventHandler(object sender, FECAEASinMovimientoConsultarCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECAEASinMovimientoConsultarCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3917,11 +4252,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECAEASinMovimientoInformarCompletedEventHandler(object sender, FECAEASinMovimientoInformarCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECAEASinMovimientoInformarCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3943,11 +4278,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FECAEAConsultarCompletedEventHandler(object sender, FECAEAConsultarCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FECAEAConsultarCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3969,11 +4304,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetCotizacionCompletedEventHandler(object sender, FEParamGetCotizacionCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetCotizacionCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -3995,11 +4330,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposTributosCompletedEventHandler(object sender, FEParamGetTiposTributosCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposTributosCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4021,11 +4356,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposMonedasCompletedEventHandler(object sender, FEParamGetTiposMonedasCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposMonedasCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4047,11 +4382,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposIvaCompletedEventHandler(object sender, FEParamGetTiposIvaCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposIvaCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4073,11 +4408,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposOpcionalCompletedEventHandler(object sender, FEParamGetTiposOpcionalCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposOpcionalCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4099,11 +4434,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposConceptoCompletedEventHandler(object sender, FEParamGetTiposConceptoCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposConceptoCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4125,11 +4460,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetPtosVentaCompletedEventHandler(object sender, FEParamGetPtosVentaCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetPtosVentaCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4151,11 +4486,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposCbteCompletedEventHandler(object sender, FEParamGetTiposCbteCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposCbteCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4177,11 +4512,37 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
+    public delegate void FEParamGetCondicionIvaReceptorCompletedEventHandler(object sender, FEParamGetCondicionIvaReceptorCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class FEParamGetCondicionIvaReceptorCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal FEParamGetCondicionIvaReceptorCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public CondicionIvaReceptorResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((CondicionIvaReceptorResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposDocCompletedEventHandler(object sender, FEParamGetTiposDocCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposDocCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4203,11 +4564,11 @@ namespace wsAFIPvs2008.WSFEHOMO {
     }
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     public delegate void FEParamGetTiposPaisesCompletedEventHandler(object sender, FEParamGetTiposPaisesCompletedEventArgs e);
     
     /// <remarks/>
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.4084.0")]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     public partial class FEParamGetTiposPaisesCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
@@ -4224,6 +4585,32 @@ namespace wsAFIPvs2008.WSFEHOMO {
             get {
                 this.RaiseExceptionIfNecessary();
                 return ((FEPaisResponse)(this.results[0]));
+            }
+        }
+    }
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
+    public delegate void FEParamGetActividadesCompletedEventHandler(object sender, FEParamGetActividadesCompletedEventArgs e);
+    
+    /// <remarks/>
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Web.Services", "4.8.9221.0")]
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    public partial class FEParamGetActividadesCompletedEventArgs : System.ComponentModel.AsyncCompletedEventArgs {
+        
+        private object[] results;
+        
+        internal FEParamGetActividadesCompletedEventArgs(object[] results, System.Exception exception, bool cancelled, object userState) : 
+                base(exception, cancelled, userState) {
+            this.results = results;
+        }
+        
+        /// <remarks/>
+        public FEActividadesResponse Result {
+            get {
+                this.RaiseExceptionIfNecessary();
+                return ((FEActividadesResponse)(this.results[0]));
             }
         }
     }

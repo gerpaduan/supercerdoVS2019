@@ -123,7 +123,17 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
+            int idSucursalActual = FormPrincipal.idSucursal; // o Conexion.getIdSucursalConexion()
+
+            // Seleccionar por valor (no por índice)
+            comboSucursal.SelectedValue = idSucursalActual;
+
+            // Si no existe en la lista, dejar vacío
+            if (comboSucursal.SelectedValue == null ||
+                Convert.ToInt32(comboSucursal.SelectedValue) != idSucursalActual)
+            {
+                comboSucursal.SelectedIndex = -1;
+            }
         }
                
 

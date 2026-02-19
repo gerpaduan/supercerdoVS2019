@@ -153,7 +153,7 @@ namespace Presentacion.Personas
             {
                 ///Se valida que la persona no sea un ID reservado por el sistema
                 ///
-                if (oPersonaE.idPersona.Equals(Entidades.Persona.idConsumidorFinal) || oPersonaE.idPersona.Equals(Entidades.Persona.idIndefinido))
+                if (oPersonaE.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0)) || oPersonaE.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdIndefinido, 0)))
                 {
                     MessageBox.Show("La persona seleccionada es reservada por el sistema y no se puede modificar");
                     return;

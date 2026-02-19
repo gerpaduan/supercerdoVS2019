@@ -12,6 +12,10 @@
     });
 });
 
+window.addEventListener('beforeunload', () => {
+    localStorage.setItem('lastVisitedURL', window.location.pathname);
+});
+
 // ===============================
 // CONTROL DE SESIÓN (POS REAL)
 // ===============================

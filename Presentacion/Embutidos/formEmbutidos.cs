@@ -32,7 +32,7 @@ namespace Presentacion
         Entidades.Usuario oUsuario;
         
 
-        int cantDiasLimitFechaDesde = FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0);
+        int cantDiasLimitFechaDesde = FormPrincipal.ParametrosCTX.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0);
         DateTime limitFechaDesde;
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         bool cargar = false;
@@ -166,7 +166,17 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            //comboSucursal.SelectedValue = Utilidades.Util_Form.idSucursalAppConfig();
+            int idSucursalActual = FormPrincipal.idSucursal; // o Conexion.getIdSucursalConexion()
+
+            // Seleccionar por valor (no por índice)
+            comboSucursal.SelectedValue = idSucursalActual;
+
+            // Si no existe en la lista, dejar vacío
+            if (comboSucursal.SelectedValue == null ||
+                Convert.ToInt32(comboSucursal.SelectedValue) != idSucursalActual)
+            {
+                comboSucursal.SelectedIndex = -1;
+            }
         }
 
         private void btnSalir_Click(object sender, EventArgs e)

@@ -99,3 +99,57 @@
     }
 }
 
+
+/* ===========================================
+   Botones forma de pago: número + texto truncado
+   =========================================== */
+
+#modalFormaPago .btn-forma-pago {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    padding: .7rem .5rem;
+    white-space: normal;
+}
+
+    /* Número/atajo */
+    #modalFormaPago .btn-forma-pago .fp-key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 1.05rem;
+        background: rgba(255,255,255,.25);
+    }
+
+    /* Texto: siempre dentro, con truncado */
+    #modalFormaPago .btn-forma-pago .fp-text {
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+        line-height: 1.05;
+    }
+
+/* Ajustes para pantallas chicas */
+@media (max-width: 576px) {
+    #modalFormaPago .btn-forma-pago {
+        padding: .6rem .35rem;
+    }
+
+        #modalFormaPago .btn-forma-pago .fp-text {
+            font-size: .95rem;
+        }
+}
+
+#tablaPersonas tr.fila-persona.is-selected {
+    outline: 2px solid rgba(0,0,0,.2);
+    background: rgba(0,0,0,.06);
+}

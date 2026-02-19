@@ -115,6 +115,7 @@
       <DependentUpon>BarraProgreso.cs</DependentUpon>
     </Compile>
     <Compile Include="Conexion.cs" />
+    <Compile Include="Db.cs" />
     <Compile Include="EmpresaContextNulo .cs" />
     <Compile Include="formAppConfigTerminal.cs">
       <SubType>Form</SubType>

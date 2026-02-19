@@ -1,0 +1,32 @@
+{
+  "name": "CarniSys POS",
+  "short_name": "CarniSys",
+  "description": "Punto de venta CarniSys",
+  "lang": "es-AR",
+
+  "start_url": "./?source=pwa",
+  "scope": "./",
+
+  "display": "standalone",
+  "background_color": "#0b1320",
+  "theme_color": "#0d6efd",
+
+  "icons": [
+    {
+      "src": "./Content/img/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./Content/img/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./Content/img/pwa-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

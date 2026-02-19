@@ -15,6 +15,7 @@ using iTextSharp.text.pdf.draw;
 using System.Diagnostics;
 using System.Threading;
 using System.Globalization;
+using Entidades;
 
 namespace Presentacion.Caja
 {
@@ -284,7 +285,7 @@ namespace Presentacion.Caja
 
                 //valida que un venta en CTA CTE sea solo en Cta Cte
                 if (checkCtaCte.Checked && (!oUltimaVenta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                    oUltimaVenta.Persona.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
+                    oUltimaVenta.Persona.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0))))
                 {
                     MessageBox.Show("Las ventas en cuenta corriente (CTA.CTE.) no pueden ser a Consumidor Final y debe seleccionar Cta.Cte en forma de pago" +
                         "\n\nCorrija y vuelva a finalizar la venta.",
@@ -823,7 +824,7 @@ namespace Presentacion.Caja
             // Columna izquierda: nombre empresa y dirección
             PdfPCell izquierda = new PdfPCell();
             izquierda.Border = iTextSharp.text.Rectangle.NO_BORDER;
-            izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Negocio"].ToString() + "\n", fuenteTitulo));
+            izquierda.AddElement(new Paragraph(oUltimaVenta.Sucursal.Empresa.NombreFantasia + "\n", fuenteTitulo));
             izquierda.AddElement(new Paragraph(" ", fuenteRazonSocial));
             //izquierda.AddElement(new Paragraph("Razón Social: " + ConfigurationManager.AppSettings["Dueno"].ToString() + "\n", fuenteRazonSocial));
             //izquierda.AddElement(new Paragraph(ConfigurationManager.AppSettings["Direccion"].ToString() + " - " + ConfigurationManager.AppSettings["Localidad"].ToString() + "\n", fuenteRazonSocial));

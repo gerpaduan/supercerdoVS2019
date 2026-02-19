@@ -341,6 +341,11 @@ namespace Presentacion.Usuario
         private void cargarCombo()
         {
             comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(false);
+
+            bool tieneDatos = comboUsuario.Items != null && comboUsuario.Items.Count > 0;
+            if (!tieneDatos)
+                return;
+
             comboUsuario.DisplayMember = "usuario";
             comboUsuario.ValueMember = "usuario";
         }

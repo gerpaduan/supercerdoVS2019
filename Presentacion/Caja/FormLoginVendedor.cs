@@ -30,7 +30,7 @@ namespace Presentacion.Caja
 
         private void cargarCombo()
         {
-            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(soloActivos, soloAdmin);
+            comboUsuario.DataSource = oUsuarioN.obtenerUsuarios(soloActivos, true, soloAdmin);
             comboUsuario.DisplayMember = "usuario";
             comboUsuario.ValueMember = "usuario";
         }

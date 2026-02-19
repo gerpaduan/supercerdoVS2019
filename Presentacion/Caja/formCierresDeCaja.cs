@@ -53,7 +53,17 @@ namespace Presentacion.Caja
             comboSucursal.DataSource = oSucursalN.obtenerSucursales();
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = idSucursal-1;
+            int idSucursalActual = FormPrincipal.idSucursal; // o Conexion.getIdSucursalConexion()
+
+            // Seleccionar por valor (no por índice)
+            comboSucursal.SelectedValue = idSucursalActual;
+
+            // Si no existe en la lista, dejar vacío
+            if (comboSucursal.SelectedValue == null ||
+                Convert.ToInt32(comboSucursal.SelectedValue) != idSucursalActual)
+            {
+                comboSucursal.SelectedIndex = -1;
+            }
         }
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)

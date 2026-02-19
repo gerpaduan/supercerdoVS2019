@@ -44,10 +44,15 @@ namespace Presentacion
 
         bool modificacion = false, huboModificaciones = false, eliminacion = false, dejarDeLeerPeso = false;
 
-        bool loginRapidoMovimiento = FormPrincipal.ParametrosCTX.GetBool01(Entidades.Parametros.LoginRapidoMovimiento, false);// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
+        bool loginRapidoMovimiento = FormPrincipal.ParametrosCTX.GetBool01(Entidades.ParamKeys.LoginRapidoMovimiento, false);// Convert.ToBoolean(ConfigurationManager.AppSettings["loginRapidoMovimiento"].ToString());
 
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool cantSuc2 = false;
+
+        private bool _cambiando = false;
+        private int _sucA = 0;
+        private int _sucB = 0;
+
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -527,7 +532,6 @@ namespace Presentacion
         private void cargarSucursales()
         {
             dtSucursalOrigen = oSucursalN.obtenerSucursales();
-
             cantSuc2 = dtSucursalOrigen.Rows.Count == 2;
 
             comboSucOrigen.DataSource = dtSucursalOrigen;
@@ -538,11 +542,31 @@ namespace Presentacion
             comboSucDestino.DataSource = dtSucursalDestino;
             comboSucDestino.DisplayMember = "sucursal";
             comboSucDestino.ValueMember = "idSucursal";
-            comboSucDestino.SelectedValue = 0;
+            comboSucDestino.SelectedIndex = -1; // sin selección (mejor que SelectedValue = 0)
 
-            comboSucOrigen.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());//-1;//No muestra ninguna sucursal
+            // Si hay exactamente 2 sucursales, guardo sus IDs reales
+            if (cantSuc2)
+            {
+                _sucA = Convert.ToInt32(dtSucursalOrigen.Rows[0]["idSucursal"]);
+                _sucB = Convert.ToInt32(dtSucursalOrigen.Rows[1]["idSucursal"]);
+            }
+            else
+            {
+                _sucA = _sucB = 0;
+            }
+
+            // Seleccionar origen con la sucursal actual
+            int idActual = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());
+            comboSucOrigen.SelectedValue = idActual;
+
+            // Si no existe en el combo, dejar vacío
+            if (comboSucOrigen.SelectedValue == null || Convert.ToInt32(comboSucOrigen.SelectedValue) != idActual)
+                comboSucOrigen.SelectedIndex = -1;
+
+            // Sincronizar destino si aplica
             cambiarSucursalDestino();
         }
+
 
         private void quitarCorteEnMovimiento()
         {
@@ -592,38 +616,57 @@ namespace Presentacion
                 this.Close();
             }
         }
-
         private void cambiarSucursalDestino()
         {
-            //si la cantidad de Sucursales es mayor a 2 no hace el intercambio de valores automaticamente
-            if (!cantSuc2)
+            if (_cambiando) return;
+            if (!cantSuc2) return;
+            if (comboSucOrigen.SelectedValue == null) return;
+
+            if (!(comboSucOrigen.SelectedValue is int origen))
                 return;
 
-            if (comboSucOrigen.SelectedValue.Equals(1))
+            // si el origen no es uno de los 2, no hago nada
+            if (origen != _sucA && origen != _sucB) return;
+
+            int destino = (origen == _sucA) ? _sucB : _sucA;
+
+            try
             {
-                comboSucDestino.SelectedValue = 2;
+                _cambiando = true;
+                comboSucDestino.SelectedValue = destino;
             }
-            else
+            finally
             {
-                comboSucDestino.SelectedValue = 1;
+                _cambiando = false;
             }
         }
 
         private void cambiarSucursalOrigen()
         {
-            //si la cantidad de Sucursales distinta a 2 no hace el intercambio de valores automaticamente
-            if (!cantSuc2 || comboSucDestino.SelectedValue == null)
+            if (_cambiando) return;
+            if (!cantSuc2) return;
+            if (comboSucDestino.SelectedValue == null) return;
+
+
+            if (!(comboSucDestino.SelectedValue is int destino))
                 return;
 
-            if (comboSucDestino.SelectedValue.Equals(1))
+            // si el destino no es uno de los 2, no hago nada
+            if (destino != _sucA && destino != _sucB) return;
+
+            int origen = (destino == _sucA) ? _sucB : _sucA;
+
+            try
             {
-                comboSucOrigen.SelectedValue = 2;
+                _cambiando = true;
+                comboSucOrigen.SelectedValue = origen;
             }
-            else
+            finally
             {
-                comboSucOrigen.SelectedValue = 1;
+                _cambiando = false;
             }
         }
+
 
         private void comboSucOrigen_SelectedValueChanged(object sender, EventArgs e)
         {

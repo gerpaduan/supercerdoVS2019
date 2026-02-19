@@ -47,7 +47,7 @@ namespace Presentacion
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         int nroErrorBalanza = 0;
 
-        bool loginRapidoElaborado = FormPrincipal.ParametrosCTX.GetBool01(Entidades.Parametros.LoginRapidoElaborado, false);
+        bool loginRapidoElaborado = FormPrincipal.ParametrosCTX.GetBool01(Entidades.ParamKeys.LoginRapidoElaborado, false);
 
         Color enableColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["enableColor"].ToString()); //SystemColors.Window;
         Color readOnlyColor = ColorTranslator.FromHtml(ConfigurationManager.AppSettings["readOnlyColor"].ToString());//SystemColors.ScrollBar;
@@ -320,7 +320,17 @@ namespace Presentacion
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedValue = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion());//-1;//No muestra ninguna sucursal
+            int idSucursalActual = FormPrincipal.idSucursal; // o Conexion.getIdSucursalConexion()
+
+            // Seleccionar por valor (no por índice)
+            comboSucursal.SelectedValue = idSucursalActual;
+
+            // Si no existe en la lista, dejar vacío
+            if (comboSucursal.SelectedValue == null ||
+                Convert.ToInt32(comboSucursal.SelectedValue) != idSucursalActual)
+            {
+                comboSucursal.SelectedIndex = -1;
+            }
         }
 
         #endregion

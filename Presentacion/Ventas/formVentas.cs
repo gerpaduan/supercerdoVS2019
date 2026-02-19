@@ -520,6 +520,8 @@ namespace Presentacion
                     consulta += " OR " + nombreCol + " = 'A'";
                 if (item == "Factura B")
                     consulta += " OR " + nombreCol + " = 'B'";
+                if (item == "Factura C")
+                    consulta += " OR " + nombreCol + " = 'C'";
             }
             arrayRowFilter[2] = consulta;
             aplicarRowFilter();

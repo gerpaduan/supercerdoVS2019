@@ -5,6 +5,11 @@ let totalVentaActual = 0;
 let otroTipoPagoSeleccionado = null;
 let ventaEnProceso = false;
 
+window.mostrarModalPostVenta = window.mostrarModalPostVenta || function (ventaId) {
+    $('#modalPostVenta').data('venta-id', ventaId).modal('show');
+};
+
+
 // ===============================
 // AL ABRIR MODAL
 // ===============================
@@ -15,6 +20,21 @@ $('#modalFormaPago').on('shown.bs.modal', function () {
 
     resetPagoMixto();
 });
+
+// ===============================
+// Atajos: seleccionar forma de pago (GLOBAL)
+// ===============================
+window.seleccionarFormaPago = function (tipo) {
+    // modal abierto?
+    if (!$('#modalFormaPago').hasClass('show')) return;
+
+    const $btn = $(`.btn-forma-pago[data-tipo="${tipo}"]`).first();
+    if (!$btn.length) return;
+    if ($btn.prop('disabled')) return;
+
+    $btn.trigger('click');
+};
+
 
 // ===============================
 // CHECK PAGO MIXTO
@@ -122,6 +142,7 @@ $('#btnFinalizarPagoMixto').on('click', function () {
     });
 });
 
+
 // ===============================
 // FINALIZAR VENTA (POST)
 // ===============================
@@ -164,27 +185,6 @@ function finalizarVenta(data) {
 
         success: function (resp) {
 
-            //if (!resp.ok) {
-            //    Swal.fire({
-            //        icon: 'error',
-            //        title: 'Error',
-            //        text: resp.msg || 'No se pudo finalizar la venta'
-            //    });
-            //    ventaEnProceso = false;
-            //    return;
-            //}
-
-            //Swal.fire({
-            //    icon: 'success',
-            //    title: 'Venta finalizada',
-            //    timer: 1500,
-            //    showConfirmButton: false
-            //});
-
-            //$('#modalFormaPago').modal('hide');
-            //hayVentaEnCurso = false;
-            //setTimeout(() => location.reload(), 1600);
-
             if (!resp.ok) {
                 Swal.fire({
                     icon: 'error',
@@ -203,7 +203,8 @@ function finalizarVenta(data) {
 
             // Esperamos cierre animación
             setTimeout(() => {
-                mostrarModalPostVenta(ventaId);
+                window.mostrarModalPostVenta(ventaId);
+
             }, 400);
         },
 
@@ -254,14 +255,9 @@ $(document).ready(function () {
             return;
         }
 
-        // ---- NORMAL ----
-        switch (e.key) {
-            case '1': seleccionarFormaPago('Efectivo'); break;
-            case '2': seleccionarFormaPago('Debito'); break;
-            case '3': seleccionarFormaPago('Credito'); break;
-            case '4': seleccionarFormaPago('CtaCte'); break;
-            case '5': seleccionarFormaPago('QR'); break;
-            case '6': seleccionarFormaPago('Transferencia'); break;
-        }
+        const mapa = { '1': 'Efectivo', '2': 'Debito', '3': 'Credito', '4': 'CtaCte', '5': 'QR', '6': 'Transferencia' };
+        const k = mapa[e.key] || mapa[(e.code || '').replace('Numpad', '')];
+        if (k) window.seleccionarFormaPago(k);
+
     });
 });

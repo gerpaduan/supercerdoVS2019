@@ -38,8 +38,30 @@ namespace Entidades
         public const int codMonotributo_IvaAfip = 3;
         public const int codExento_IvaAfip = 4;
 
+
         //Concepto
         public const int codConceptoProductos_Afip = 1;
+
+        
+
+        public int MapearCondicionIVAReceptorIdAfip(int idLocalIva)
+        {
+            // Reemplazo la expresión switch por una instrucción switch tradicional para compatibilidad con C# 7.3
+            switch (idLocalIva)
+            {
+                case 1: // Consumidor Final
+                    return 5;
+                case 2: // Responsable Inscripto
+                    return 1;
+                case 3: // Monotributista
+                    return 6;
+                case 4: // Exento
+                    return 4;
+                default:
+                    // Manejo de casos no contemplados para evitar CS8509
+                    return 5; // Valor por defecto (puede ajustarse según necesidades)
+            }
+        }
 
         /// <summary>
         /// Pasando en (String) Codigo TipoComprobante se retorna bool si es Factura A (Codigo Afip 001)

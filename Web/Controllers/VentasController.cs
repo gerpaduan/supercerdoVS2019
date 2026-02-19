@@ -33,12 +33,12 @@ namespace Web.Controllers
         {
             base.OnActionExecuting(filterContext);
 
-            oVentaN = new Negocio.Venta(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oPersonaN = new Negocio.Persona(empresa);
-            oCierreN = new Negocio.CierreCaja(empresa);
-            oCorteN = new Negocio.Corte(empresa);
+            oVentaN = new Negocio.Venta(empresa, param);
+            oSucursalN = new Negocio.Sucursal(empresa, param);
+            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oPersonaN = new Negocio.Persona(empresa, param);
+            oCierreN = new Negocio.CierreCaja(empresa, param);
+            oCorteN = new Negocio.Corte(empresa, param);
         }
 
         public ActionResult Index(DateTime? fechaDesde, DateTime? fechaHasta, int idSucursal = -1)
@@ -264,10 +264,20 @@ namespace Web.Controllers
             if (user == null)
                 return RedirectToAction("Index", "Login");
 
+            if (user.IdSucursal == 0)
+            {
+                TempData["AlertType"] = "info"; // success | info | warning | error
+                TempData["AlertTitle"] = "Sucursal no seleccionada";
+                TempData["AlertMsg"] = "Seleccione una sucursal desde el icono de usuario (arriba a la derecha) y vuelve a entrar al Punto de Venta.";
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            user.Sucursal = user.Sucursal == null ? oSucursalN.findById(user.IdSucursal) : user.Sucursal;
             // Inicializo cierre
             var cierre = new Entidades.CierreCaja
             {
-                Sucursal = oSucursalN.findById(user.IdSucursal),
+                Sucursal = user.Sucursal,
                 UsuarioInicio = user
             };
 
@@ -326,7 +336,7 @@ namespace Web.Controllers
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(codigo))
+               if (string.IsNullOrWhiteSpace(codigo))
                     return Json(new { error = "Código vacío" }, JsonRequestBehavior.AllowGet);
 
                 codigo = codigo.Replace(",", ".");
@@ -346,14 +356,17 @@ namespace Web.Controllers
                 bool esGenerico = ingresoCantidadX && (codigo.Contains(".") || codigo.Contains("G") || codigo.Length < cantMinDig_EAN8);
 
                 long codigoProducto = esGenerico
-                    ? param.GetLong(Entidades.Parametros.CodProdGenerico, 0L) + numeroSumaGen
+                    ? param.GetLong(ParamKeys.CodProdGenerico, 0L) + numeroSumaGen
                     : Convert.ToInt64(codigo);
 
                 var gestorCortes = oCorteN;
                 var corte = gestorCortes.findCorteByCodigo(codigoProducto, false);
 
                 if (corte == null)
-                    return Json(new { success = false, message = "Código inexistente" }, JsonRequestBehavior.AllowGet);
+                {
+                    string mensaje = esGenerico ? ("No existe  el código genérico") : "Código inexistente"; 
+                    return Json(new { success = false, message = mensaje }, JsonRequestBehavior.AllowGet);
+                }
 
                 if (esGenerico)
                 {

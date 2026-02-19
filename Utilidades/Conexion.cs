@@ -1,16 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data.SqlClient;
-using System.Data;
 using System.Configuration;
-using System.Data.Common;
-using System.Runtime.CompilerServices;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace Utilidades
 {
-    public class Conexion
+    /// <summary>
+    /// Factory de conexiones. NO guarda conexiones compartidas.
+    /// Crea una nueva SqlConnection, la abre, setea SESSION_CONTEXT('IdEmpresa') y la devuelve.
+    /// El caller SIEMPRE debe usar using(...) para cerrar.
+    /// </summary>
+    public sealed class Conexion
     {
         public enum tipoConexion
         {
@@ -21,42 +21,71 @@ namespace Utilidades
             sanLorenzoRemoto,
             servidor
         }
+
         public static tipoConexion tipoConn;
-        //public static string connStringActual = ConfigurationManager.AppSettings["connString"].ToString();
-        //public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
-        //string conString = ConfigurationManager.ConnectionStrings[connStringActual.ToString()].ToString();
-        //public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"].ToString().Equals("20306210786") ? true : false;
-        //public static int timeOut = Convert.ToInt32(ConfigurationManager.AppSettings["timeOut"].ToString());
 
         // Lee el nombre de la cadena desde AppSettings
         public static string connStringActual = ConfigurationManager.AppSettings["connString"];
 
         // Usa ese nombre para buscar la cadena real en ConnectionStrings
         public static string conString = ConfigurationManager
-                                            .ConnectionStrings[connStringActual]
-                                            .ConnectionString;
+            .ConnectionStrings[connStringActual]
+            .ConnectionString;
 
         public static int idSucursalAppConfig = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"]);
-
-        public static bool soyYo = ConfigurationManager.AppSettings["cuitCliente"] == "20306210786";
-
+        public static bool soyYo = ConfigurationManager.AppSettings["cuit"] == "20306210786";
         public static int timeOut = Convert.ToInt32(ConfigurationManager.AppSettings["timeOut"]);
 
+        // ---------------------------
+        //  CONEXION (MULTI-TENANT)
+        // ---------------------------
 
-        SqlConnection conn;
-        //public SqlConnection conectar()
-        //{
-        //    //conString = getConnString();
-        //    conn = new SqlConnection(conString);
-        //    return conn;
-        //}
+        public SqlConnection conectar(IEmpresaContext empresa)
+        {
+            return conectar(null, empresa);
+        }
 
-        //public SqlConnection conectar(string conexionSucursal)
-        //{
-        //    conString = ConfigurationManager.ConnectionStrings[conexionSucursal].ToString();
-        //    conn = new SqlConnection(conString);
-        //    return conn;
-        //}
+        public SqlConnection conectar(string conexionSucursal, IEmpresaContext empresa)
+        {
+            if (empresa == null) throw new ArgumentNullException(nameof(empresa));
+
+            string cs = GetConnectionStringFromConfig(conexionSucursal);
+
+            var cn = new SqlConnection(cs);
+            cn.Open();
+
+            SetEmpresaSession(cn, empresa.IdEmpresa);
+
+            return cn;
+        }
+
+        // ---------------------------
+        // SESSION_CONTEXT
+        // ---------------------------
+        private static void SetEmpresaSession(SqlConnection cn, int idEmpresa)
+        {
+            using (var cmd = new SqlCommand(
+                "EXEC sys.sp_set_session_context @key=N'IdEmpresa', @value=@IdEmpresa, @read_only=1;",
+                cn))
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Parameters.Add("@IdEmpresa", SqlDbType.Int).Value = idEmpresa;
+                cmd.ExecuteNonQuery();
+            }
+
+        }
+
+        // ---------------------------
+        // TIMEOUT
+        // ---------------------------
+        public int TimeOut()
+        {
+            return timeOut;
+        }
+
+        // ---------------------------
+        // CONNECTION STRING HELPERS
+        // ---------------------------
         private static string GetConnectionStringFromConfig(string csNameOverride = null)
         {
             // Si te pasan un nombre de connectionString explícito, usa ese.
@@ -75,64 +104,10 @@ namespace Utilidades
 
             return settings.ConnectionString;
         }
-        public SqlConnection conectar(IEmpresaContext empresa)
-        {
-            string cs = GetConnectionStringFromConfig();
-
-            conn = new SqlConnection(cs);
-            conn.Open();
-
-            SetEmpresaSession(conn, empresa);
-
-            return conn;
-        }
-
-        public SqlConnection conectar(string conexionSucursal, IEmpresaContext empresa)
-        {
-            // "conexionSucursal" debe ser el NOMBRE de una connectionString
-            // Ej: "carnisys_local" (WinForms) o "ConexionPrincipal" (Web)
-            string cs = GetConnectionStringFromConfig(conexionSucursal);
-
-            conn = new SqlConnection(cs);
-            conn.Open();
-
-            SetEmpresaSession(conn, empresa);
-
-            return conn;
-        }
-
 
         // ---------------------------
-        // SESSION_CONTEXT
+        // LEGACY / TUS HELPERS
         // ---------------------------
-        private void SetEmpresaSession(
-            SqlConnection cn,
-            IEmpresaContext empresa)
-        {
-            if (empresa == null)
-                throw new ArgumentNullException(nameof(empresa));
-
-            using (var cmd = new SqlCommand(
-                "EXEC sp_set_session_context 'IdEmpresa', @IdEmpresa",
-                cn))
-            {
-                cmd.Parameters.AddWithValue(
-                    "@IdEmpresa", empresa.IdEmpresa);
-
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        public void cerraConexion()
-        {
-            conn.Close();
-        }
-
-        public int TimeOut()
-        {
-            return timeOut;
-        }
-
         public static string getConnString()
         {
             string connString = "";
@@ -213,7 +188,7 @@ namespace Utilidades
                     sucursalConexion += "Servidor";
                     break;
             }
-             return sucursalConexion;
+            return sucursalConexion;
         }
 
         //Se obtiene el id de Sucursal par a la conexión actual
@@ -268,12 +243,11 @@ namespace Utilidades
                 case "servidor":
                     idSucursal = Convert.ToInt32(ConfigurationManager.AppSettings["idSucursal"].ToString());
                     break;
-                default: 
+                default:
                     idSucursal = idSucursalAppConfig;
                     break;
             }
             return idSucursal;
         }
-     }
-    
+    }
 }

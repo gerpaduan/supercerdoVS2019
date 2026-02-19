@@ -10,8 +10,7 @@
     }
 }
 <!DOCTYPE html>
-<html>
-
+<html lang="es">
 <head>
 
     <meta charset="utf-8">
@@ -20,13 +19,43 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
+    <!-- =========================================================
+    ANTI-FLASH (modo oscuro): aplica clase ANTES del primer paint
+    ========================================================= -->
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem("carnisys-theme"); // "dark" | "light"
+                if (mode === "dark") {
+                    document.documentElement.classList.add("dark-mode");
+                }
+            } catch (e) { }
+        })();
+    </script>
+
+    <style>
+        /* Evita el flash blanco (aplica aunque todavía no cargó tu CSS) */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+            html.dark-mode, html.dark-mode body {
+                background: #0b1320 !important;
+                color: rgba(255,255,255,.92);
+            }
+
+            html.dark-mode {
+                color-scheme: dark;
+            }
+    </style>
+
     <title>CarniSys web - Dashboard</title>
 
     <!-- Custom styles for this template-->
     <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" type="text/css" />
     <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
     <link href="@Url.Content("~/Content/css/custom.css")" rel="stylesheet" />
-    <!-- TU CSS -->
     <link href="@Url.Content("~/Content/css/dark-mode.css?v=6")" rel="stylesheet" />
 
     <style>
@@ -43,6 +72,27 @@
                     min-width: 900px !important;
                 }
         }
+
+        /* ===== TOPBAR: botón tema prolijo ===== */
+        .topbar-icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 !important;
+            margin: 0 6px;
+        }
+
+            .topbar-icon-btn:hover {
+                background: rgba(255,255,255,.14);
+                text-decoration: none;
+            }
+
+            .topbar-icon-btn i {
+                font-size: 1.2rem;
+            }
     </style>
 
     <!-- Variable global para AJAX -->
@@ -56,68 +106,38 @@
             }
             return true;
         }
-
-
     </script>
-
 
 </head>
 
 <body id="page-top">
 
-    <!-- Page Wrapper -->
     <div id="wrapper">
 
-        <!-- End of Sidebar -->
-        <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
 
-            <!-- Main Content -->
             <div id="content">
+
                 <!-- Topbar -->
                 <nav class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    @*<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">*@
-
-                    <!-- Título de la sección (IZQUIERDA) -->
                     <span class="navbar-text text-light h5 mr-3" style="font-weight: bold;">
                         @ViewBag.Title
                     </span>
 
-                    <!-- Topbar Navbar -->
-                    <ul class="navbar-nav ml-auto">
-
-                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
-                        <!--<li class="nav-item dropdown no-arrow d-sm-none">
-                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
-                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-search fa-fw"></i>
-                        </a>-->
-                        <!-- Dropdown - Messages -->
-                        <!--<div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
-                                 aria-labelledby="searchDropdown">
-                                <form class="form-inline mr-auto w-100 navbar-search">
-                                    <div class="input-group">
-                                        <input type="text" class="form-control bg-light border-0 small"
-                                               placeholder="Search for..." aria-label="Search"
-                                               aria-describedby="basic-addon2">
-                                        <div class="input-group-append">
-                                            <button class="btn btn-primary" type="button">
-                                                <i class="fas fa-search fa-sm"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </li>-->
-                        <li class="nav-item">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="toggleDarkMode">
-                                <label class="form-check-label" for="toggleDarkMode">Modo nocturno</label>
-                            </div>
+                    <ul class="navbar-nav ml-auto flex-row align-items-center">
+                        <li class="nav-item no-arrow">
+                            <a class="nav-link topbar-icon-btn"
+                               href="#"
+                               id="btnToggleTheme"
+                               role="button"
+                               title="Activar modo oscuro"
+                               aria-label="Cambiar tema">
+                                <i id="icoTheme" class="fas fa-moon text-light"></i>
+                            </a>
                         </li>
+
                         <div class="topbar-divider d-none d-sm-block"></div>
 
-                        <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle d-flex align-items-center"
                                href="#"
@@ -136,48 +156,28 @@
                                 <i class="fas fa-user-circle fa-2x text-light"></i>
                             </a>
 
-                            <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                  aria-labelledby="userDropdown">
-                                @*<a class="dropdown-item" href="#">
-                                        <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Profile
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Settings
-                                    </a>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Activity Log
-                                    </a>*@
-                                @*<div class="dropdown-divider"></div>*@
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Logout
                                 </a>
                             </div>
                         </li>
-
                     </ul>
-
                 </nav>
-                <!-- End of Topbar -->
-                <!-- Aquí se muestra el contenido dinámico de cada vista -->
+                <!-- End Topbar -->
+                <!-- RenderBody -->
                 <div id="pos-container">
                     @RenderBody()
                 </div>
 
-
             </div>
-            <!-- End of Main Content -->
 
         </div>
-        <!-- End of Content Wrapper -->
 
     </div>
-    <!-- End of Page Wrapper -->
-    <!-- Scroll to Top Button-->
+
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
@@ -213,15 +213,11 @@
             <div class="modal-content border-danger">
 
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">
-                        Sesión expirada
-                    </h5>
+                    <h5 class="modal-title">Sesión expirada</h5>
                 </div>
 
                 <div class="modal-body text-center">
-                    <p class="mb-2">
-                        La sesión se cerró por seguridad.
-                    </p>
+                    <p class="mb-2">La sesión se cerró por seguridad.</p>
                     <p class="fw-bold mb-0">
                         Presione <strong>Reingresar</strong> para continuar.
                     </p>
@@ -239,20 +235,27 @@
     </div>
 
 
+    <script>
+        window.keepAliveUrl = '@Url.Action("KeepAlive", "Session")';
+    </script>
+
     <!-- Scripts -->
     <script src="@Url.Content("~/Content/vendor/jquery/jquery.min.js")"></script>
     <script src="@Url.Content("~/Content/vendor/bootstrap/js/bootstrap.bundle.min.js")"></script>
     <script src="@Url.Content("~/Content/vendor/jquery-easing/jquery.easing.min.js")"></script>
     <script src="@Url.Content("~/Content/js/sb-admin-2.min.js")"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="@Url.Content("~/Scripts/app/persona-buscar.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/forma-pago.js?v=5")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=3")"></script>
-    <script src="@Url.Content("~/Scripts/app/modal-productos.js?")"></script>
+    <script src="@Url.Content("~/Scripts/app/persona-buscar.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/forma-pago.js?v=6")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-postventa.js?v=5")"></script>
+    <script src="@Url.Content("~/Scripts/app/modal-productos.js?v=4")"></script>
+    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
+    <script src="@Url.Content("~/Content/js/scripts.js")"></script>
+    <link rel="manifest" href="@Url.Content("~/manifest.json")" />
+    <meta name="theme-color" content="#0d6efd" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-
-
-    <script src="@Url.Content("~/Content/js/scripts.js?v=2")"></script>
 
     <script>
         window.keepAliveUrl = '@Url.Action("KeepAlive", "Session")';
@@ -260,43 +263,109 @@
         window.buscarProductoUrl = '@Url.Action("BuscarProducto", "Ventas")';
     </script>
 
-
     @RenderSection("Scripts", required: false)
 
+    <!-- ✅ Theme toggle (luna/sol) -->
+    <script>
+        (function () {
+            const STORAGE_KEY = "carnisys-theme"; // "dark" | "light"
 
+            function setTheme(mode) {
+                const isDark = (mode === "dark");
+
+                document.documentElement.classList.toggle("dark-mode", isDark);
+                if (document.body) {
+                    document.body.classList.toggle("dark-mode", isDark);
+                }
+
+                const btn = document.getElementById("btnToggleTheme");
+                const ico = document.getElementById("icoTheme");
+                if (btn && ico) {
+                    ico.className = isDark ? "fas fa-sun" : "fas fa-moon";
+                    btn.title = isDark ? "Activar modo claro" : "Activar modo oscuro";
+                    btn.classList.toggle("btn-dark", isDark);
+                    btn.classList.toggle("btn-light", !isDark);
+                }
+
+                try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) { }
+            }
+
+            function toggleTheme(e) {
+                if (e) e.preventDefault();
+                const current = (localStorage.getItem(STORAGE_KEY) || "light");
+                setTheme(current === "dark" ? "light" : "dark");
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                const saved = (localStorage.getItem(STORAGE_KEY) || "light");
+                setTheme(saved);
+
+                const btn = document.getElementById("btnToggleTheme");
+                if (btn) btn.addEventListener("click", toggleTheme);
+            });
+        })();
+    </script>
+
+    <!-- =========================================================
+       LAYOUT POS: la clave para que tu vista POS pueda “llenar alto”
+       - En desktop: sin scroll del navegador
+       - #pos-container ocupa el resto debajo de la topbar
+       ========================================================= -->
     <style>
-
-        /* Base */
         html, body {
             height: 100%;
             margin: 0;
-            overflow: hidden; /* 🔴 nunca scroll del body */
         }
 
-        /* Cadena de altura */
-        #page-top,
-        #wrapper,
-        #content-wrapper {
+        #page-top, #wrapper, #content-wrapper, #content {
             height: 100%;
+            min-height: 0;
         }
 
-        /* Layout principal */
         #content-wrapper {
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
-        /* Topbar: alto fijo */
-        .card-header {
+        #content {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1 1 auto;
+        }
+
+        nav.card-header {
             flex: 0 0 auto;
         }
 
-        /* Contenedor dinámico */
         #pos-container {
-            flex: 1 1 auto; /* ocupa el resto */
-            overflow: auto; /* scroll SOLO acá */
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden; /* desktop */
             padding: 0;
-            min-height: 0; /* 🔑 evita overflow fantasma */
+        }
+
+        /* Desktop: NO scroll del navegador */
+        @@media (min-width: 992px) {
+            html, body {
+                overflow: hidden !important;
+            }
+
+            #pos-container {
+                overflow: hidden !important;
+            }
+        }
+
+        /* Mobile/tablet: scroll normal */
+        @@media (max-width: 991.98px) {
+            html, body {
+                overflow: auto !important;
+            }
+
+            #pos-container {
+                overflow: visible !important;
+            }
         }
     </style>
 

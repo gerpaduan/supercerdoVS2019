@@ -72,12 +72,12 @@ namespace Presentacion.Cortes
                 // Cultura actual (Argentina: coma decimal)
                 var ci = CultureInfo.CurrentCulture;
                 // porcAjX está guardado como factor (ej 1.05). En pantalla querés %: (1.05 - 1) * 100 = 5
-                txtEfectivo.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjEfectivo, 1m) - 1m) * 100m).ToString(ci);
-                txtDebito.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjDebito, 1m) - 1m) * 100m).ToString(ci);
-                txtCredito.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjCredito, 1m) - 1m) * 100m).ToString(ci);
-                txtQr.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjQr, 1m) - 1m) * 100m).ToString(ci);
+                txtEfectivo.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.ParamKeys.PorcAjEfectivo, 1m) - 1m) * 100m).ToString(ci);
+                txtDebito.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.ParamKeys.PorcAjDebito, 1m) - 1m) * 100m).ToString(ci);
+                txtCredito.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.ParamKeys.PorcAjCredito, 1m) - 1m) * 100m).ToString(ci);
+                txtQr.Text = ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.ParamKeys.PorcAjQr, 1m) - 1m) * 100m).ToString(ci);
                 txtTransferencia.Text =
-                                  ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.Parametros.PorcAjTranf, 1m) - 1m) * 100m).ToString(ci);
+                                  ((FormPrincipal.ParametrosCTX.GetDecimal(Entidades.ParamKeys.PorcAjTranf, 1m) - 1m) * 100m).ToString(ci);
 
             }
             catch (Exception ex)

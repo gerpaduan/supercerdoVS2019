@@ -10,6 +10,7 @@ using Presentacion.Cortes;
 using Utilidades;
 using System.Configuration;
 using System.Numerics;
+using Entidades;
 
 
 namespace Presentacion
@@ -93,7 +94,7 @@ namespace Presentacion
                 }
 
                 oProvNuevaCompra = new Entidades.Persona();
-                oProvNuevaCompra.idPersona = Entidades.Persona.idIndefinido;
+                oProvNuevaCompra.idPersona =  FormPrincipal.ParametrosCTX.GetInt(Parametros.IdIndefinido, 0);
                 oSucursalE.idSucursal = (int)comboSucursal.SelectedValue;
 
                 btnVerNoCargados.Visible = tipoCompraEnum.Equals(Entidades.Compra.tipoCompraEnum.CierreStock);
@@ -112,7 +113,7 @@ namespace Presentacion
                 oSucursalE = oCompraE.Sucursal;
                 comboSucursal.SelectedValue = oSucursalE.idSucursal;
                 txtFechaCompra.Value = oCompraE.FechaCompra;
-                txtProveedor.Text = oCompraE.Proveedor.razonSocial;
+                txtProveedor.Text = oCompraE.Proveedor?.razonSocial ?? "";
                 txtKgsMedias.Text = oCompraE.KgsMedias.ToString();
                 txtCantMedias.Text = oCompraE.CantMedias.ToString();
                 txtObservaciones.Text = oCompraE.Observaciones;
@@ -688,14 +689,25 @@ namespace Presentacion
 
         private void cargarComboSucursal()
         {
-            dtSucursales = new DataTable();
-            oSucursalN=new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
-            dtSucursales=oSucursalN.obtenerSucursales();
+            oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
+
+            dtSucursales = oSucursalN.obtenerSucursales();
+
             comboSucursal.DataSource = dtSucursales;
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
 
-            comboSucursal.SelectedIndex = Convert.ToInt32(Utilidades.Conexion.getIdSucursalConexion()) - 1;
+            int idSucursalActual = FormPrincipal.idSucursal; // o Conexion.getIdSucursalConexion()
+
+            // Seleccionar por valor (no por índice)
+            comboSucursal.SelectedValue = idSucursalActual;
+
+            // Si no existe en la lista, dejar vacío
+            if (comboSucursal.SelectedValue == null ||
+                Convert.ToInt32(comboSucursal.SelectedValue) != idSucursalActual)
+            {
+                comboSucursal.SelectedIndex = -1;
+            }
         }
 
         #endregion

@@ -7,13 +7,11 @@ namespace Datos
 {
     public class OtrasClases
     {
-        private readonly Utilidades.Conexion conn;
         private readonly IEmpresaContext _empresa;
 
         public OtrasClases(IEmpresaContext empresa)
         {
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
-            conn = new Utilidades.Conexion();
         }
 
         // =========================
@@ -23,17 +21,15 @@ namespace Datos
         {
             const string sql = "SELECT COUNT(1) FROM Claves WHERE Clave = @clave;";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.Add("@clave", SqlDbType.NVarChar, 50).Value = clave ?? "";
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@clave", SqlDbType.NVarChar, 50).Value = clave ?? ""
+            );
 
-                if (cn.State != ConnectionState.Open) cn.Open();
-                int count = Convert.ToInt32(cmd.ExecuteScalar());
-                return count > 0;
-            }
+            int count = (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+            return count > 0;
         }
 
         #region Licencia
@@ -42,17 +38,15 @@ namespace Datos
         {
             const string sql = "SELECT COUNT(1) FROM Licencias WHERE nroLicencia = @nroLicencia;";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.Add("@nroLicencia", SqlDbType.NVarChar, 50).Value = nroLicencia ?? "";
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@nroLicencia", SqlDbType.NVarChar, 50).Value = nroLicencia ?? ""
+            );
 
-                if (cn.State != ConnectionState.Open) cn.Open();
-                int count = Convert.ToInt32(cmd.ExecuteScalar());
-                return count > 0;
-            }
+            int count = (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+            return count > 0;
         }
 
         public void agregarLicencia(string nroLicencia, string identificacion)
@@ -61,19 +55,17 @@ namespace Datos
                 INSERT INTO Licencias (NroLicencia, identificacion, creado)
                 VALUES (@nroLicencia, @identificacion, @creado);";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.Add("@nroLicencia", SqlDbType.NVarChar, 50).Value = nroLicencia ?? "";
-                cmd.Parameters.Add("@identificacion", SqlDbType.NVarChar, 200).Value = identificacion ?? "";
-                cmd.Parameters.Add("@creado", SqlDbType.DateTime2).Value = DateTime.Now;
-
-                if (cn.State != ConnectionState.Open) cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@nroLicencia", SqlDbType.NVarChar, 50).Value = nroLicencia ?? "";
+                    p.Add("@identificacion", SqlDbType.NVarChar, 200).Value = identificacion ?? "";
+                    p.Add("@creado", SqlDbType.DateTime2).Value = DateTime.Now;
+                }
+            );
         }
 
         #endregion
@@ -92,20 +84,12 @@ namespace Datos
                   AND (fechaVencimiento < DATEADD(MONTH, 2, GETDATE()))
                 ORDER BY fechaVencimiento;";
 
-            var dt = new DataTable();
-
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde;
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@fechaDesde", SqlDbType.DateTime).Value = fechaDesde
+            );
         }
 
         /// <summary>
@@ -121,36 +105,26 @@ namespace Datos
                 WHERE pagado = 0
                 ORDER BY fechaVencimiento;";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
+            object result = Db.Scalar(_empresa, sql, CommandType.Text);
 
-                if (cn.State != ConnectionState.Open) cn.Open();
-                object result = cmd.ExecuteScalar();
-
-                return (result == null || result == DBNull.Value)
-                    ? DateTime.MinValue
-                    : Convert.ToDateTime(result);
-            }
+            return (result == null || result == DBNull.Value)
+                ? DateTime.MinValue
+                : Convert.ToDateTime(result);
         }
 
         public bool existePagoLicenciaHoy()
         {
             const string sql = "SELECT COUNT(1) FROM VencimientosLicencia WHERE fechaPago = @fechaPago;";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.Add("@fechaPago", SqlDbType.Date).Value = DateTime.Today;
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@fechaPago", SqlDbType.Date).Value = DateTime.Today
+            );
 
-                if (cn.State != ConnectionState.Open) cn.Open();
-                int count = Convert.ToInt32(cmd.ExecuteScalar());
-                return count > 0;
-            }
+            int count = (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+            return count > 0;
         }
 
         public void agregaVencimientosLicencia(DateTime fechaDesde)
@@ -159,19 +133,18 @@ namespace Datos
                 INSERT INTO VencimientosLicencia (fechaVencimiento, pagado)
                 VALUES (@fechaVencimiento, @pagado);";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
+            // Acá conviene mantener una sola conexión abierta para el loop (más rápido).
+            using (SqlConnection cn = Db.Open(_empresa))
             using (SqlCommand cmd = new SqlCommand(sql, cn))
             {
                 cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
+                cmd.CommandTimeout = Conexion.timeOut;
 
-                // Creamos parámetros una sola vez
+                // parámetros una sola vez
                 var pFecha = cmd.Parameters.Add("@fechaVencimiento", SqlDbType.DateTime);
                 var pPagado = cmd.Parameters.Add("@pagado", SqlDbType.Bit);
 
-                if (cn.State != ConnectionState.Open) cn.Open();
-
-                for (int i = 0; i < 400; i++)
+                for (int i = 0; i < 500; i++)
                 {
                     pFecha.Value = fechaDesde.AddMonths(i);
                     pPagado.Value = false;
@@ -188,19 +161,17 @@ namespace Datos
                     fechaPago = @fechaPago
                 WHERE fechaVencimiento = @fechaVencimiento;";
 
-            using (SqlConnection cn = conn.conectar(_empresa))
-            using (SqlCommand cmd = new SqlCommand(sql, cn))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.Add("@fechaVencimiento", SqlDbType.DateTime).Value = fechaVencimiento;
-                cmd.Parameters.Add("@pagado", SqlDbType.Bit).Value = true;
-                cmd.Parameters.Add("@fechaPago", SqlDbType.Date).Value = DateTime.Today;
-
-                if (cn.State != ConnectionState.Open) cn.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@fechaVencimiento", SqlDbType.DateTime).Value = fechaVencimiento;
+                    p.Add("@pagado", SqlDbType.Bit).Value = true;
+                    p.Add("@fechaPago", SqlDbType.Date).Value = DateTime.Today;
+                }
+            );
         }
 
         #endregion

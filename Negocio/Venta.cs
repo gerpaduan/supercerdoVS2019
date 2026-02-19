@@ -7,17 +7,20 @@ using System.Data.SqlClient;
 using System.Net.Sockets;
 using System.Transactions;
 using Utilidades;
+using Entidades;
 
 namespace Negocio
 {
     public class Venta
     {
         private readonly Datos.Venta oVentaD;
-        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
+        private readonly IEmpresaContext _empresa;
+        private readonly IParametrosContext _param;
 
         public Venta(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa;_param = param;
+            _empresa = empresa;
+            _param = param;
             oVentaD = new Datos.Venta(empresa);
         }
 
@@ -53,10 +56,10 @@ namespace Negocio
                             oVentaE.ComisionTarjeta = 0;
                             break;
                         case "Debito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionDebito, 0f);
+                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionDebito, 0f);
                             break;
                         case "Credito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionCredito, 0f);
+                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionCredito, 0f);
                             break;
                         default:
                             oVentaE.ComisionTarjeta = 0;
@@ -156,10 +159,10 @@ namespace Negocio
             //        oVentaE.ComisionTarjeta = 0;
             //        break;
             //    case "Debito":
-            //        oVentaE.ComisionTarjeta = Entidades.Parametros.comisionDebito;
+            //        oVentaE.ComisionTarjeta = Entidades.ParamKeys.comisionDebito;
             //        break;
             //    case "Credito":
-            //        oVentaE.ComisionTarjeta = Entidades.Parametros.comisionCredito;
+            //        oVentaE.ComisionTarjeta = Entidades.ParamKeys.comisionCredito;
             //        break;
             //    default:
             //        oVentaE.ComisionTarjeta = 0;
@@ -178,10 +181,10 @@ namespace Negocio
                             oVentaE.ComisionTarjeta = 0;
                             break;
                         case "Debito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionDebito, 0f);
+                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionDebito, 0f);
                             break;
                         case "Credito":
-                            oVentaE.ComisionTarjeta = _param.GetFloat(Entidades.Parametros.ComisionCredito, 0f);
+                            oVentaE.ComisionTarjeta = _param.GetFloat(ParamKeys.ComisionCredito, 0f);
                             break;
                         default:
                             oVentaE.ComisionTarjeta = 0;

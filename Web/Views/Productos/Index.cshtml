@@ -3,35 +3,95 @@
 @{
     ViewBag.Title = "Productos";
     Layout = "~/Views/Shared/_LayoutBase.cshtml";
+
+    var modo = (Request["modo"] ?? "").ToString().ToLower();
+    bool modoEtiquetas = (modo == "etiquetas");
+
+    var sucursales = ViewBag.Sucursales as List<Entidades.Sucursal> ?? new List<Entidades.Sucursal>();
+    var sucursalIdSeleccionada = (ViewBag.SucursalId != null) ? (int)ViewBag.SucursalId : 0;
 }
 
-<div class="container-fluid">
+<div class="container-fluid productos-wrap">
 
+    <!-- =========================
+         TOOLBAR (acciones globales)
+         ========================= -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+        <div class="d-flex flex-wrap gap-2">
+
+            <a class="btn btn-primary" href="@Url.Action("Create", "Productos")">
+                <i class="fas fa-plus mr-1"></i> Nuevo
+            </a>
+
+            <a class="btn btn-outline-secondary" href="@Url.Action("Tipos", "Productos")">
+                <i class="fas fa-tags mr-1"></i> Tipos
+            </a>
+
+            <a class="btn btn-outline-secondary" href="@Url.Action("Marcas", "Productos")">
+                <i class="fas fa-industry mr-1"></i> Marcas
+            </a>
+
+            <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Productos", new { modo = "etiquetas" })">
+                <i class="fas fa-barcode mr-1"></i> Etiquetas (PDF)
+            </a>
+
+            @if (modoEtiquetas)
+            {
+                <a class="btn btn-outline-dark" href="@Url.Action("Index", "Productos")">
+                    <i class="fas fa-arrow-left mr-1"></i> Volver
+                </a>
+            }
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-3">
+
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchVistaCompleta">
+                <label class="custom-control-label" for="switchVistaCompleta">Vista completa</label>
+            </div>
+
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchFiltrosAvanzados">
+                <label class="custom-control-label" for="switchFiltrosAvanzados">Filtros avanzados</label>
+            </div>
+
+            <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="switchStockSucursales">
+                <label class="custom-control-label" for="switchStockSucursales">Ver stock sucursales</label>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =========================
+         FILTRO SUCURSAL (columna stock simple)
+         ========================= -->
     <form method="get" id="formStock" class="mb-3" action="@Url.Action("Index","Productos")">
-
-        <!-- COMBO SUCURSALES -->
-        <div class="form-group">
-            <label class="font-weight-bold">Seleccione una sucursal para mostrar el stock</label>
+        <input type="hidden" name="modo" value="@(modoEtiquetas ? "etiquetas" : "")" />
+        <div class="form-group mb-0">
+            <label class="font-weight-bold mb-1">Stock por sucursal (columna simple)</label>
             <select class="form-control" id="SucursalId" name="SucursalId"
                     onchange="document.getElementById('formStock').submit()">
                 <option value="">- Seleccione sucursal -</option>
 
-                @foreach (var s in (List<Entidades.Sucursal>)ViewBag.Sucursales)
+                @foreach (var s in sucursales)
                 {
-                    <option value="@s.IdSucursal"
-                            @(ViewBag.SucursalId != null && ViewBag.SucursalId == s.IdSucursal ? "selected" : "")>
+                    <option value="@s.IdSucursal" @(sucursalIdSeleccionada == s.IdSucursal ? "selected" : "")>
                         @s.SucursalNombre
                     </option>
                 }
             </select>
+            <small class="text-muted">
+                Tip: si activás <b>Ver stock sucursales</b>, se agregan columnas por cada sucursal.
+            </small>
         </div>
-
     </form>
 
-
-    <!-- 🔍 Buscador -->
-    <div class="row mb-3">
-        <div class="col-md-6">
+    <!-- =========================
+         BUSCADOR + contador
+         ========================= -->
+    <div class="row mb-2">
+        <div class="col-lg-6 col-md-8">
             <div class="input-group">
                 <input type="text" id="buscador" class="form-control" placeholder="Buscar por código o nombre...">
                 <div class="input-group-append">
@@ -40,205 +100,778 @@
                     </span>
                 </div>
             </div>
+            <div class="mt-2">
+                <span id="contadorProductos" class="text-secondary font-weight-bold"></span>
+            </div>
         </div>
     </div>
 
-    <div class="card shadow mb-4">
+    <!-- =========================
+         FILTROS AVANZADOS (cliente)
+         ========================= -->
+    <div id="panelFiltrosAvanzados" class="card shadow-sm mb-3 d-none">
+        <div class="card-body py-3">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-2">
+                    <label class="mb-1 font-weight-bold">Tipo</label>
+                    <select class="form-control" id="fTipo">
+                        <option value="">(Todos)</option>
+                        @if (ViewBag.Tipos != null)
+                        {
+                            foreach (var t in (IEnumerable<SelectListItem>)ViewBag.Tipos)
+                            {
+                                <option value="@t.Value">@t.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
 
-        <div class="mb-2">
-            <span id="contadorProductos" class="text-secondary font-weight-bold"></span>
-        </div>
+                <div class="col-lg-3 col-md-6 mb-2">
+                    <label class="mb-1 font-weight-bold">Marca</label>
+                    <select class="form-control" id="fMarca">
+                        <option value="">(Todas)</option>
+                        @if (ViewBag.Marcas != null)
+                        {
+                            foreach (var m in (IEnumerable<SelectListItem>)ViewBag.Marcas)
+                            {
+                                <option value="@m.Value">@m.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
 
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <label class="mb-0 mr-2">Zoom:</label>
-                <input type="range" id="zoomRange" min="0.5" max="1.5" step="0.1" value="1" style="width: 120px;">
+                <div class="col-lg-3 col-md-6 mb-2">
+                    <label class="mb-1 font-weight-bold">Proveedor</label>
+                    <select class="form-control" id="fProveedor">
+                        <option value="">(Todos)</option>
+                        @if (ViewBag.Proveedores != null)
+                        {
+                            foreach (var p in (IEnumerable<SelectListItem>)ViewBag.Proveedores)
+                            {
+                                <option value="@p.Value">@p.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-2">
+                    <label class="mb-1 font-weight-bold">Código desde / hasta</label>
+                    <div class="d-flex gap-2">
+                        <input class="form-control" id="fCodigoDesde" placeholder="Desde" inputmode="numeric">
+                        <input class="form-control" id="fCodigoHasta" placeholder="Hasta" inputmode="numeric">
+                    </div>
+                </div>
+
+                <div class="col-12 mt-2 d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="aplicarFiltrosAvanzados()">
+                        <i class="fas fa-filter mr-1"></i> Aplicar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltrosAvanzados()">
+                        <i class="fas fa-undo mr-1"></i> Limpiar
+                    </button>
+
+                    <small class="text-muted align-self-center ml-2">
+                        (Por ahora filtra en pantalla. Luego lo conectamos a backend.)
+                    </small>
+                </div>
             </div>
         </div>
+    </div>
 
-        <div class="card-body">
-            <div id="zoomTableContainer" class="tabla-full table-responsive">
-                <div id="zoomWrapper" style="transform-origin: top left; transition: transform 0.2s; display: inline-block;">
+    <!-- =========================
+         CARD TABLA
+         ========================= -->
+    <div class="card shadow mb-4 tabla-card">
+        @if (modoEtiquetas)
+        {
+            <!-- Barra modo etiquetas -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center p-2 border-bottom bg-white">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="seleccionarTodos(true)">
+                        <i class="fas fa-check-square mr-1"></i> Tildar todos
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="seleccionarTodos(false)">
+                        <i class="fas fa-square mr-1"></i> Destildar todos
+                    </button>
+
+                    <span class="text-muted ml-2" id="lblSeleccionados">0 seleccionados</span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-success" onclick="generarEtiquetas()">
+                        <i class="fas fa-file-pdf mr-1"></i> Generar etiquetas
+                    </button>
+                </div>
+            </div>
+
+            <form id="formEtiquetas" method="post" action="@Url.Action("GenerarEtiquetasPdf", "Productos")" class="d-none">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ids" id="idsEtiquetas" />
+            </form>
+        }
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive tabla-full">
+                <table class="table table-bordered table-striped tabla-productos mb-0" id="tablaProductos">
+
+                    <thead class="thead-dark">
+                        <tr>
+                            @if (modoEtiquetas)
+                            {
+                                <th style="width:42px;" class="text-center">✓</th>
+                            }
+
+                            <th style="width:110px;">Código</th>
+                            <th class="th-producto">Producto</th>
+
+                            @if (sucursalIdSeleccionada != 0)
+                            {
+                                <th style="width:140px;" class="th-stock-simple">Stock</th>
+                            }
+
+                            <!-- columnas dinámicas de stock por sucursal (se muestran sólo si switchStockSucursales ON) -->
+                            @foreach (var s in sucursales)
+                            {
+                                <th class="th-stock-sucursal d-none text-nowrap" data-sucid="@s.IdSucursal">
+                                    @s.SucursalNombre
+                                </th>
+                            }
+
+                            <th style="width:130px;">Precio</th>
+                            <th style="width:240px;">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var rowId = $"fila_{item.idCorte}";
+                            var detailsId = $"det_{item.idCorte}";
+
+                            <tr id="@rowId"
+                                data-id="@item.idCorte"
+                                data-codigo="@item.Codigo"
+                                data-nombre="@item.CorteDesc"
+                                data-tipo="@item.Tipo"
+                                data-marca="@item.Marca">
+                                @if (modoEtiquetas)
+                                {
+                                    <td class="text-center">
+                                        <input type="checkbox"
+                                               class="chk-etiqueta"
+                                               value="@item.idCorte"
+                                               onchange="actualizarSeleccionados()" />
+                                    </td>
+                                }
+
+                                <td class="text-nowrap">@item.Codigo</td>
+
+                                <td class="td-producto">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="producto-text text-truncate" title="@item.CorteDesc">
+                                            @item.CorteDesc
+                                        </div>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-link text-decoration-none btn-detalles"
+                                                data-toggle="collapse"
+                                                data-target="#@detailsId"
+                                                aria-expanded="false"
+                                                aria-controls="@detailsId">
+                                            <i class="fas fa-chevron-down"></i> Detalles
+                                        </button>
+                                    </div>
+                                </td>
+
+                                @if (sucursalIdSeleccionada != 0)
+                                {
+                                    <td class="text-nowrap th-stock-simple">
+                                        @item.Stock_EnString @item.StockUnidades
+                                    </td>
+                                }
+
+                                <!-- celdas de stock por sucursal (se muestran sólo si switchStockSucursales ON) -->
+                                @foreach (var s in sucursales)
+                                {
+                                    <td class="td-stock-sucursal d-none text-nowrap"
+                                        data-sucid="@s.IdSucursal"
+                                        id="stk_@s.IdSucursal">
+                                        <span class="text-muted">—</span>
+                                    </td>
+                                }
+
+                                <td class="text-nowrap font-weight-bold" id="precio_@item.idCorte">
+                                    @item.PrecioKg.ToString("C")
+                                </td>
+
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-warning mr-1"
+                                            title="Modificar precio"
+                                            onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg')">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-info mr-1"
+                                            title="Ver stock por sucursales (modal)"
+                                            onclick="verStockSucursales(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
+                                        <i class="fas fa-warehouse"></i>
+                                    </button>
+
+                                    <a class="btn btn-sm btn-primary mr-1"
+                                       title="Editar producto"
+                                       href="@Url.Action("Edit", "Productos", new { id = item.idCorte })">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            title="Eliminar"
+                                            onclick="confirmarEliminar(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- DETALLES (siempre disponibles) -->
+                            <tr class="tr-detalles">
+                                @{
+                                    int baseCols = ((sucursalIdSeleccionada != 0) ? 5 : 4) + sucursales.Count; // incluye columnas stock sucursales (aunque estén ocultas)
+                                    int colspan = modoEtiquetas ? (baseCols + 1) : baseCols;
+                                }
+                                <td colspan="@colspan" class="p-0">
+                                    <div id="@detailsId" class="collapse">
+                                        <div class="p-3 bg-light border-top">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <div class="mb-2">
+                                                        <span class="font-weight-bold">@item.CorteDesc</span>
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Tipo:</span>
+                                                        <span class="font-weight-bold">@item.Tipo</span>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Marca:</span>
+                                                        <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.MarcaNombre) ? item.MarcaNombre : "-")</span>
+
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Alícuota IVA:</span>
+                                                        <span class="font-weight-bold">@item.AlicuotaIva</span>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Pesable:</span>
+                                                        <span class="font-weight-bold">@(item.Pesable ? "Sí" : "No")</span>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Habilitado:</span>
+                                                        <span class="font-weight-bold">@(item.Habilitado ? "Sí" : "No")</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-lg-6">
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Punto stock:</span>
+                                                        <span class="font-weight-bold">@item.PuntoStock</span>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">En cierre stock:</span>
+                                                        <span class="font-weight-bold">@(item.EnCierreStock ? "Sí" : "No")</span>
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <span class="text-muted">Promedio:</span>
+                                                        <span class="font-weight-bold">@item.Promedio</span>
+                                                    </div>
+                                                </div>
+
+                                                @if (!string.IsNullOrWhiteSpace(item.CorteMaestroNombre))
+                                                {
+                                                    var esPres = item.Presentacion;
+
+                                                    <div class="col-lg-6">
+                                                        <div class="mb-2">
+
+                                                            @if (esPres)
+                                                            {
+                                                                <div class="mb-2">
+
+                                                                    <span class="text-muted">Presentación:</span>
+                                                                    <span class="font-weight-bold">@item.CorteMaestroNombre</span>
+                                                                </div>
+                                                                <span class="text-muted">Unidades:</span>
+                                                                <span class="font-weight-bold">
+                                                                    @item.getCantPresentacion(item.PorcentajeHueso)
+                                                                </span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="mb-2">
+
+                                                                    <span class="text-muted">Corte Maestro:</span>
+                                                                    <span class="font-weight-bold">@item.CorteMaestroNombre</span>
+                                                                </div>
+                                                                <span class="text-muted">%:</span>
+                                                                <span class="font-weight-bold">
+                                                                    @item.Porcentaje
+                                                                </span>
+                                                            }
+                                                        </div>
+
+                                                        @if (!esPres)
+                                                        {
+                                                            <div class="mb-2">
+                                                                <span class="text-muted">% Hueso:</span>
+                                                                <span class="font-weight-bold">@item.PorcentajeHueso</span>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+
+                                            </div>
+
+                                            <div class="mt-2 text-muted small">
+                                                ID: <b>@item.idCorte</b>
+                                                @* Si tenés CorteMaestro / independiente / etc, lo agregamos acá *@
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =========================
+         MODAL EDITAR PRECIO
+         ========================= -->
+    <form id="formPrecio" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="modal fade" id="modalPrecio" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-sm" role="document">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Modificar precio</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <input type="hidden" id="IdCorte" name="IdCorte" />
+
+                        <div class="form-group">
+                            <label>Producto</label>
+                            <input type="text" id="CorteDesc" class="form-control" readonly>
+                        </div>
+
+                        <div class="form-group mt-2">
+                            <label>Nuevo precio</label>
+                            <input type="text" id="PrecioKg" name="PrecioKg" class="form-control" autocomplete="off">
+                            <small id="errorPrecio" class="text-danger d-none">El precio ingresado es inválido.</small>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="guardarPrecio()">
+                            <i class="fas fa-save mr-1"></i> Guardar
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            Cancelar
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- =========================
+         MODAL VER STOCK (por sucursales)
+         ========================= -->
+    <div class="modal fade" id="modalStockSucursales" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-warehouse mr-1"></i> Stock por sucursales
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <div class="text-muted">Producto</div>
+                        <div class="h6 mb-0" id="lblProductoStock"></div>
+                    </div>
+
+                    <div id="stockLoading" class="text-muted py-3 d-none">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Cargando stock...
+                    </div>
 
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped tabla-productos">
-                            <colgroup>
-                                <col class="col-codigo" />
-                                <col class="col-producto" />
-                                <col class="col-acciones" />
-                                <col class="col-extra" />
-                            </colgroup>
-
-                            <thead class="thead-dark">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
                                 <tr>
-                                    <th class="col-codigo">Código</th>
-                                    <th class="col-producto">Producto</th>
-                                    @if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
-                                    {
-                                        <th class="col-codigo">Stock</th>
-                                    }
-
-                                    <th class="col-codigo">Precio</th>
-                                    <th class="col-acciones">Acciones</th>
-                                    <th class="col-extra">Col.Extra</th>
+                                    <th>Sucursal</th>
+                                    <th style="width:180px;">Stock</th>
                                 </tr>
                             </thead>
-
-                            <tbody>
-                                @foreach (var item in Model)
-                                {
-                                <tr id="fila_@item.idCorte">
-                                    <td class="col-codigo">@item.Codigo</td>
-                                    <td class="col-producto">@item.CorteDesc</td>
-                                    @if (ViewBag.SucursalId != null && ViewBag.SucursalId != 0)
-                                    {
-                                        <td class="col-codigo">@item.Stock_EnString @item.StockUnidades</td>
-}
-                                    <td class="col-codigo" id="precio_@item.idCorte">@item.PrecioKg.ToString("C")</td>
-                                    <td class="col-acciones">
-                                        <button type="button" class="btn btn-sm btn-warning"
-                                                onclick="abrirPopupPrecio(@item.idCorte, '@item.CorteDesc', '@item.PrecioKg')">
-                                            <i class="fas fa-dollar-sign"></i>
-                                        </button>
-                                    </td>
-                                    <td class="col-extra"></td>
-                                </tr>}
+                            <tbody id="tbodyStockSucursales">
+                                <tr><td colspan="2" class="text-muted text-center">Sin datos</td></tr>
                             </tbody>
                         </table>
                     </div>
-
                 </div>
-            </div>
 
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+
+            </div>
         </div>
-
-        <!-- ⭐ MODAL PARA EDITAR PRECIO ⭐ -->
-        <form id="formPrecio" method="post">
-            @Html.AntiForgeryToken()
-
-            <div class="modal fade" id="modalPrecio" tabindex="-1" role="dialog">
-                <div class="modal-dialog modal-sm" role="document">
-                    <div class="modal-content">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title">Modificar precio</h5>
-
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-
-                        </div>
-
-                        <div class="modal-body">
-
-                            <input type="hidden" id="IdCorte" name="IdCorte" />
-
-                            <div class="form-group">
-                                <label>Producto</label>
-                                <input type="text" id="CorteDesc" class="form-control" readonly>
-                            </div>
-
-                            <div class="form-group mt-2">
-                                <label>Nuevo precio</label>
-                                <input type="text" id="PrecioKg" name="PrecioKg" class="form-control" autocomplete="off">
-                                <small id="errorPrecio" class="text-danger d-none">El precio ingresado es inválido.</small>
-                            </div>
-
-                        </div>
-
-                        <div class="modal-footer">
-
-                            <button type="button" class="btn btn-success" onclick="guardarPrecio()">Guardar</button>
-
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                Cancelar
-                            </button>
-
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </form>
-
     </div>
+
+    <!-- =========================
+         FORM ELIMINAR (POST)
+         ========================= -->
+    <form id="formEliminar" method="post" action="@Url.Action("Delete", "Productos")" class="d-none">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" id="EliminarId" />
+    </form>
 
 </div>
 
-<!-- JS -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@section Scripts {
 
-<script>
+    <script>
+    // ============================
+    // Helpers
+    // ============================
+    const tabla = document.getElementById("tablaProductos");
+
+    function getFilasProductos() {
+        return Array.from(tabla.querySelectorAll("tbody tr"))
+            .filter(tr => tr.id && tr.id.startsWith("fila_"));
+    }
+
+    function getFilaDetallesDe(filaProducto) {
+        const next = filaProducto.nextElementSibling;
+        if (next && next.classList.contains("tr-detalles")) return next;
+        return null;
+    }
 
     // ============================
-    // BUSCADOR
+    // BUSCADOR + CONTADOR
     // ============================
     const buscador = document.getElementById("buscador");
-    const filas = document.querySelectorAll("table tbody tr");
     const contador = document.getElementById("contadorProductos");
 
+    function actualizarContador(visibles) {
+        const total = getFilasProductos().length;
+        const cant = (visibles !== undefined) ? visibles : total;
+        contador.textContent = `Mostrando ${cant} de ${total} productos`;
+    }
     actualizarContador();
 
     buscador.addEventListener("keyup", function () {
-        const valor = this.value.toLowerCase();
+        const valor = (this.value || "").toLowerCase().trim();
         let visibles = 0;
 
-        filas.forEach(fila => {
-            const codigo = fila.children[0]?.textContent.toLowerCase() || "";
-            const producto = fila.children[1]?.textContent.toLowerCase() || "";
-            const coincide = codigo.includes(valor) || producto.includes(valor);
+        getFilasProductos().forEach(fila => {
+            const codigo = (fila.dataset.codigo || "").toLowerCase();
+            const nombre = (fila.dataset.nombre || "").toLowerCase();
+            const coincide = codigo.includes(valor) || nombre.includes(valor);
+
             fila.style.display = coincide ? "" : "none";
+
+            const det = getFilaDetallesDe(fila);
+            if (det) det.style.display = coincide ? "" : "none";
+
             if (coincide) visibles++;
         });
 
         actualizarContador(visibles);
+        actualizarSeleccionados();
     });
 
-    function actualizarContador(cantidadVisible) {
-        const total = filas.length;
-        const cantidad = cantidadVisible !== undefined ? cantidadVisible : total;
-        contador.textContent = `Mostrando ${cantidad} de ${total} productos`;
+    // ============================
+    // VISTA COMPLETA (expand/collapse todos)
+    // OFF: no expande nada automáticamente, queda botón por fila
+    // ON : expande todos los detalles visibles
+    // ============================
+    const switchVista = document.getElementById("switchVistaCompleta");
+
+    function setVistaCompleta(activa) {
+        localStorage.setItem("vistaCompletaProductos", activa ? "1" : "0");
+
+        // sólo afecta filas visibles
+        const filas = getFilasProductos().filter(f => f.style.display !== "none");
+
+        filas.forEach(fila => {
+            const detRow = getFilaDetallesDe(fila);
+            if (!detRow) return;
+            const collapse = detRow.querySelector(".collapse");
+            if (!collapse) return;
+
+            if (activa) {
+                $(collapse).collapse('show');
+            } else {
+                $(collapse).collapse('hide');
+            }
+        });
+    }
+
+    (function initVista() {
+        const saved = localStorage.getItem("vistaCompletaProductos");
+        const activa = saved === "1";
+        switchVista.checked = activa;
+        // aplica al cargar
+        setTimeout(() => setVistaCompleta(activa), 50);
+    })();
+
+    switchVista.addEventListener("change", function () {
+        setVistaCompleta(this.checked);
+    });
+
+    // ============================
+    // FILTROS AVANZADOS (toggle + filtro cliente)
+    // ============================
+    const switchFiltros = document.getElementById("switchFiltrosAvanzados");
+    const panelFiltros = document.getElementById("panelFiltrosAvanzados");
+
+    function toggleFiltrosAvanzados(show) {
+        panelFiltros.classList.toggle("d-none", !show);
+        localStorage.setItem("filtrosAvanzadosProductos", show ? "1" : "0");
+    }
+
+    (function initFiltros() {
+        const saved = localStorage.getItem("filtrosAvanzadosProductos");
+        const show = saved === "1";
+        switchFiltros.checked = show;
+        toggleFiltrosAvanzados(show);
+    })();
+
+    switchFiltros.addEventListener("change", function () {
+        toggleFiltrosAvanzados(this.checked);
+    });
+
+    function aplicarFiltrosAvanzados() {
+        const tipo = (document.getElementById("fTipo")?.value || "").toLowerCase();
+        const marca = (document.getElementById("fMarca")?.value || "").toLowerCase();
+        const proveedor = (document.getElementById("fProveedor")?.value || "").toLowerCase();
+
+        const cd = (document.getElementById("fCodigoDesde")?.value || "").trim();
+        const ch = (document.getElementById("fCodigoHasta")?.value || "").trim();
+
+        const codigoDesde = cd === "" ? null : parseInt(cd, 10);
+        const codigoHasta = ch === "" ? null : parseInt(ch, 10);
+
+        let visibles = 0;
+
+        getFilasProductos().forEach(fila => {
+            const fTipo = (fila.dataset.tipo || "").toLowerCase();
+            const fMarca = (fila.dataset.marca || "").toLowerCase();
+            const fProv = (fila.dataset.proveedor || "").toLowerCase();
+
+            const codStr = (fila.dataset.codigo || "").toString().trim();
+            const codNum = parseInt(codStr, 10);
+
+            let ok = true;
+
+            if (tipo && fTipo !== tipo) ok = false;
+            if (marca && fMarca !== marca) ok = false;
+            if (proveedor && fProv !== proveedor) ok = false;
+
+            if (codigoDesde !== null && !isNaN(codNum) && codNum < codigoDesde) ok = false;
+            if (codigoHasta !== null && !isNaN(codNum) && codNum > codigoHasta) ok = false;
+
+            fila.style.display = ok ? "" : "none";
+            const det = getFilaDetallesDe(fila);
+            if (det) det.style.display = ok ? "" : "none";
+
+            if (ok) visibles++;
+        });
+
+        actualizarContador(visibles);
+        actualizarSeleccionados();
+
+        // si vista completa está ON, aseguramos expandir los que quedaron visibles
+        if (switchVista.checked) setVistaCompleta(true);
+    }
+
+    function limpiarFiltrosAvanzados() {
+        ["fTipo","fMarca","fProveedor","fCodigoDesde","fCodigoHasta"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+
+        // mostrar todos
+        getFilasProductos().forEach(fila => {
+            fila.style.display = "";
+            const det = getFilaDetallesDe(fila);
+            if (det) det.style.display = "";
+        });
+
+        actualizarContador();
+        actualizarSeleccionados();
+
+        if (switchVista.checked) setVistaCompleta(true);
     }
 
     // ============================
-    // ZOOM
+    // STOCK SUCURSALES EN COLUMNAS (toggle + AJAX)
     // ============================
-    const range = document.getElementById('zoomRange');
-    const zoomWrapper = document.getElementById('zoomWrapper');
+    const switchStock = document.getElementById("switchStockSucursales");
 
-    range.addEventListener('input', () => {
-        const scale = parseFloat(range.value);
-        zoomWrapper.style.transform = `scale(${scale})`;
+    function toggleStockSucursales(show) {
+        localStorage.setItem("stockSucursalesProductos", show ? "1" : "0");
+
+        document.querySelectorAll(".th-stock-sucursal, .td-stock-sucursal")
+            .forEach(el => el.classList.toggle("d-none", !show));
+
+        // si mostramos, cargamos stocks
+        if (show) {
+            cargarStocksEnTabla();
+        }
+    }
+
+    (function initStockSucursales() {
+        const saved = localStorage.getItem("stockSucursalesProductos");
+        const show = saved === "1";
+        switchStock.checked = show;
+        toggleStockSucursales(show);
+    })();
+
+    switchStock.addEventListener("change", function () {
+        toggleStockSucursales(this.checked);
     });
 
+    function cargarStocksEnTabla() {
+        // consulta 1 vez: devuelve { success:true, items:[{idCorte, idSucursal, stockTexto}] }
+        const ids = getFilasProductos().map(f => parseInt(f.dataset.id, 10)).filter(x => !isNaN(x));
+        if (!ids.length) return;
+
+        // loading
+        document.querySelectorAll(".td-stock-sucursal").forEach(td => {
+            td.innerHTML = `<span class="text-muted">...</span>`;
+        });
+
+        $.ajax({
+            url: '@Url.Action("GetStocksPorSucursalesTabla", "Productos")',
+            type: 'POST',
+            data: { ids: ids },
+            traditional: true, // importante para arrays
+            success: function(resp) {
+                if (!resp || resp.success === false) {
+                    document.querySelectorAll(".td-stock-sucursal").forEach(td => {
+                        td.innerHTML = `<span class="text-danger">Err</span>`;
+                    });
+                    return;
+                }
+
+                // vaciar a "—"
+                document.querySelectorAll(".td-stock-sucursal").forEach(td => {
+                    td.innerHTML = `<span class="text-muted">—</span>`;
+                });
+
+                const items = resp.items || [];
+                items.forEach(x => {
+                    const tdId = `stk_${x.idCorte}_${x.idSucursal}`;
+                    const td = document.getElementById(tdId);
+                    if (td) td.innerHTML = `<span class="font-weight-bold">${x.stockTexto ?? x.stock ?? ""}</span>`;
+                });
+            },
+            error: function() {
+                document.querySelectorAll(".td-stock-sucursal").forEach(td => {
+                    td.innerHTML = `<span class="text-danger">Err</span>`;
+                });
+            }
+        });
+    }
+
+    // ============================
+    // MODO ETIQUETAS: seleccionar + generar
+    // ============================
+    function seleccionarTodos(estado) {
+        document.querySelectorAll(".chk-etiqueta").forEach(chk => {
+            // sólo si la fila está visible
+            const tr = chk.closest("tr");
+            if (tr && tr.style.display === "none") return;
+            chk.checked = estado;
+        });
+        actualizarSeleccionados();
+    }
+
+    function actualizarSeleccionados() {
+        const lbl = document.getElementById("lblSeleccionados");
+        if (!lbl) return;
+
+        const checks = Array.from(document.querySelectorAll(".chk-etiqueta"))
+            .filter(chk => {
+                const tr = chk.closest("tr");
+                return tr && tr.style.display !== "none" && chk.checked;
+            });
+
+        lbl.textContent = `${checks.length} seleccionados`;
+    }
+
+    function generarEtiquetas() {
+        const checks = Array.from(document.querySelectorAll(".chk-etiqueta"))
+            .filter(chk => {
+                const tr = chk.closest("tr");
+                return tr && tr.style.display !== "none" && chk.checked;
+            });
+
+        if (!checks.length) {
+            Swal.fire("Atención", "No seleccionaste ningún producto.", "info");
+            return;
+        }
+
+        const ids = checks.map(x => x.value).join(",");
+        document.getElementById("idsEtiquetas").value = ids;
+        document.getElementById("formEtiquetas").submit();
+    }
+
     // =========================
-    // ABRIR MODAL + FOCO
+    // MODAL PRECIO (igual que venías)
     // =========================
     function abrirPopupPrecio(id, nombreTabla, precioTabla) {
 
         $("#errorPrecio").addClass("d-none");
 
-        // Cargar ID y desc por si la consulta demora
         $("#IdCorte").val(id);
         $("#CorteDesc").val(nombreTabla);
         $("#PrecioKg").val(precioTabla);
 
-        // Mostrar el modal YA
         $("#modalPrecio").modal("show");
 
-        // Luego consultar el valor real desde BD
         $.ajax({
             url: '@Url.Action("findCorteById", "Productos")',
-            //url: baseUrl + '/Productos/findCorteById',
             type: 'GET',
             data: { id: id },
             success: function (resp) {
-
-                // Cargar datos reales desde la BD
-                $("#CorteDesc").val(resp.descripcion);
-                $("#PrecioKg").val(resp.precio);
-
-                // Foco en el input con selección
+                if (resp) {
+                    $("#CorteDesc").val(resp.descripcion ?? nombreTabla);
+                    $("#PrecioKg").val(resp.precio ?? precioTabla);
+                }
                 setTimeout(() => {
                     const inp = document.getElementById("PrecioKg");
                     inp.focus();
@@ -246,9 +879,6 @@
                 }, 80);
             },
             error: function () {
-                // Si falla, sigo usando los datos pasados por la tabla
-                console.warn("No se pudo obtener el precio desde la BD.");
-
                 setTimeout(() => {
                     const inp = document.getElementById("PrecioKg");
                     inp.focus();
@@ -257,7 +887,6 @@
             }
         });
     }
-
 
     $('#modalPrecio').on('shown.bs.modal', function () {
         const inp = document.getElementById("PrecioKg");
@@ -269,61 +898,46 @@
         $("#PrecioKg").val("");
     });
 
-    // =========================
-    // GUARDAR PRECIO
-    // =========================
-  function guardarPrecio() {
+    function guardarPrecio() {
 
-    let precioRaw = $("#PrecioKg").val().trim();
+        let precioRaw = ($("#PrecioKg").val() || "").trim();
 
-    if (precioRaw === "") {
-        $("#errorPrecio").removeClass("d-none");
-        return;
-    }
-
-    // Normalización numérica
-    precioRaw = precioRaw.replace(".", ",");
-    let numero = parseFloat(precioRaw.replace(",", "."));
-
-    if (isNaN(numero) || numero <= 0) {
-        $("#errorPrecio").removeClass("d-none");
-        return;
-    }
-
-    $("#PrecioKg").val(precioRaw);
-
-    $.ajax({
-        url: '@Url.Action("EditPrecioCorte", "Productos")',
-        type: 'POST',
-        data: $("#formPrecio").serialize(),
-        success: function (resp) {
-
-            // ⭐ Detectar si el backend devolvió "no tiene permisos"
-            if (!manejarPermiso(resp)) return;
-
-            // ⭐ OK – Actualizar precio en la grilla
-            $("#precio_" + resp.id).text(resp.precioFormateado);
-
-            $("#modalPrecio").modal("hide");
-        },
-        error: function () {
-            Swal.fire("Error", "Error al actualizar el precio.", "error");
+        if (precioRaw === "") {
+            $("#errorPrecio").removeClass("d-none");
+            return;
         }
-    });
-}
 
+        precioRaw = precioRaw.replace(".", ",");
+        let numero = parseFloat(precioRaw.replace(",", "."));
 
+        if (isNaN(numero) || numero <= 0) {
+            $("#errorPrecio").removeClass("d-none");
+            return;
+        }
 
-    // =========================
-    // INPUT SIMPLE: punto y coma = coma
-    // =========================
+        $("#PrecioKg").val(precioRaw);
+
+        $.ajax({
+            url: '@Url.Action("EditPrecioCorte", "Productos")',
+            type: 'POST',
+            data: $("#formPrecio").serialize(),
+            success: function (resp) {
+
+                if (!manejarPermiso(resp)) return;
+
+                $("#precio_" + resp.id).text(resp.precioFormateado);
+                $("#modalPrecio").modal("hide");
+            },
+            error: function () {
+                Swal.fire("Error", "Error al actualizar el precio.", "error");
+            }
+        });
+    }
 
     document.addEventListener("DOMContentLoaded", function () {
-
         const input = document.getElementById("PrecioKg");
         if (!input) return;
 
-        // ENTER
         input.addEventListener("keydown", function (e) {
             if (e.key === "Enter") {
                 e.preventDefault();
@@ -331,51 +945,215 @@
             }
         });
 
-        // No formatear, solo limpiar y manejar decimal
         input.addEventListener("input", function () {
-
-            let v = this.value;
-
-            // Reemplazar punto → coma
+            let v = this.value || "";
             v = v.replace(/\./g, ",");
-
-            // Dejar solo números y coma
             v = v.replace(/[^\d,]/g, "");
 
-            // Permitir solo una coma
             let partes = v.split(",");
-            if (partes.length > 2) {
-                v = partes[0] + "," + partes[1];
-            }
+            if (partes.length > 2) v = partes[0] + "," + partes[1];
 
             this.value = v;
         });
     });
 
     // =========================
-    // SUCURSAL CAMBIO AUTO
+    // VER STOCK MODAL
     // =========================
+    function verStockSucursales(idCorte, nombre) {
 
-    function onSucursalChange() {
-        document.getElementById('formStock').submit();
+        $("#lblProductoStock").text(nombre);
+        $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-muted text-center">Sin datos</td></tr>`);
+        $("#stockLoading").removeClass("d-none");
+
+        $("#modalStockSucursales").modal("show");
+
+        $.ajax({
+            url: '@Url.Action("GetStockPorSucursales", "Productos")',
+            type: 'GET',
+            data: { idCorte: idCorte },
+            success: function (resp) {
+
+                $("#stockLoading").addClass("d-none");
+
+                if (!resp || resp.success === false) {
+                    const msg = resp?.message || "No se pudo obtener el stock.";
+                    $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-danger text-center">${msg}</td></tr>`);
+                    return;
+                }
+
+                const items = resp.items || [];
+                if (!items.length) {
+                    $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-muted text-center">Sin stock / sin datos</td></tr>`);
+                    return;
+                }
+
+                let html = "";
+                items.forEach(x => {
+                    html += `
+                        <tr>
+                            <td>${(x.sucursal ?? "")}</td>
+                            <td class="text-nowrap font-weight-bold">${(x.stockTexto ?? x.stock ?? "")}</td>
+                        </tr>`;
+                });
+
+                $("#tbodyStockSucursales").html(html);
+            },
+            error: function () {
+                $("#stockLoading").addClass("d-none");
+                $("#tbodyStockSucursales").html(`<tr><td colspan="2" class="text-danger text-center">Error al consultar el stock.</td></tr>`);
+            }
+        });
     }
 
-</script>
+    // =========================
+    // ELIMINAR
+    // =========================
+    function confirmarEliminar(id, nombre) {
+        Swal.fire({
+            title: "¿Eliminar producto?",
+            text: `Se eliminará: ${nombre}`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+            reverseButtons: true,
+            focusCancel: true
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            $("#EliminarId").val(id);
+            $("#formEliminar").submit();
+        });
+    }
+
+    // init contador seleccionados (si está modo etiquetas)
+    actualizarSeleccionados();
+
+        // =========================
+        // PROTECCIÓN SALIDA (modo etiquetas) - SAFE
+        // =========================
+        function _setProteccionSalida(valor) {
+            // preferimos usar tus funciones del layout si están
+            if (valor) {
+                if (typeof window.activarProteccionSalida === "function") {
+                    window.activarProteccionSalida();
+                } else {
+                    window.__protegerSalida = true;
+                }
+            } else {
+                if (typeof window.desactivarProteccionSalida === "function") {
+                    window.desactivarProteccionSalida();
+                } else {
+                    window.__protegerSalida = false;
+                }
+            }
+        }
+
+        function updateExitProtectionEtiquetas() {
+            // Solo aplica si estamos en modo etiquetas (o al menos existe la UI)
+            const hayModoEtiquetas = document.querySelector(".chk-etiqueta") != null
+                || document.getElementById("lblSeleccionados") != null;
+
+            if (!hayModoEtiquetas) return;
+
+            const checked = document.querySelectorAll(".chk-etiqueta:checked").length;
+            _setProteccionSalida(checked > 0);
+        }
+
+        // Ejecutar cuando el DOM ya está listo
+        document.addEventListener("DOMContentLoaded", function () {
+            updateExitProtectionEtiquetas();
+
+            // Cada cambio de checkbox recalcula
+            document.addEventListener("change", function (e) {
+                if (e.target && e.target.classList.contains("chk-etiqueta")) {
+                    updateExitProtectionEtiquetas();
+                }
+            });
+        });
+
+        // Si tu función seleccionarTodos existe, la envolvemos sin romper
+        if (typeof window.seleccionarTodos === "function") {
+            const _seleccionarTodosOriginal = window.seleccionarTodos;
+            window.seleccionarTodos = function (estado) {
+                _seleccionarTodosOriginal(estado);
+                updateExitProtectionEtiquetas();
+            };
+        }
+
+        // Si tu función actualizarSeleccionados existe, la envolvemos
+        if (typeof window.actualizarSeleccionados === "function") {
+            const _actualizarSeleccionadosOriginal = window.actualizarSeleccionados;
+            window.actualizarSeleccionados = function () {
+                _actualizarSeleccionadosOriginal();
+                updateExitProtectionEtiquetas();
+            };
+        }
+
+    </script>
+}
 
 <style>
+    /* NO ocupar 100%: hacemos el bloque más "compacto" */
+    .productos-wrap .tabla-card {
+        max-width: 1200px; /* ajustá si querés más/menos */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .tabla-full {
-        width: 100% !important;
-        overflow-x: auto !important;
+        width: 100%;
+        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
 
-    table {
-        white-space: nowrap;
+    .tabla-productos th, .tabla-productos td {
+        vertical-align: middle;
+    }
+
+    /* Columna producto más chica (aprox 60%) y truncado */
+    .th-producto {
+        width: 60%;
+    }
+
+    .td-producto {
+        max-width: 420px;
+    }
+
+    .producto-text {
+        max-width: 340px;
+    }
+
+    /* columnas de stock por sucursal compactas */
+    .th-stock-sucursal, .td-stock-sucursal {
+        width: 140px;
+    }
+
+    @@media (max-width: 992px) {
+        .productos-wrap .tabla-card {
+            max-width: 980px;
+        }
+
+        .producto-text {
+            max-width: 240px;
+        }
     }
 
     @@media (max-width: 768px) {
-        .card-body {
-            padding: 5px !important;
+        .productos-wrap .tabla-card {
+            max-width: 100%;
+        }
+
+        .producto-text {
+            max-width: 170px;
+        }
+
+        .tabla-productos td, .tabla-productos th {
+            white-space: nowrap;
+        }
+
+        .btn {
+            margin-bottom: 4px;
         }
     }
 </style>

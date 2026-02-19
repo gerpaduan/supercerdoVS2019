@@ -30,7 +30,7 @@ namespace Presentacion
         Negocio.Usuario oUsuarioN = new Negocio.Usuario(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         int cantServidores = Convert.ToInt32(ConfigurationManager.AppSettings["cantServidores"].ToString());
-        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
 
         bool cargar = false;
@@ -46,7 +46,7 @@ namespace Presentacion
             {
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursales();
-                txtFechaDesde.Value = ultimaFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
+                txtFechaDesde.Value = ultimaFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
                 cargar = true;
                 cargarGrilla();
                 actualizar.Visible = FormPrincipal.soyYo;

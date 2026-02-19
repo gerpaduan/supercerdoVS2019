@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -8,49 +9,41 @@ namespace Datos
 {
     public class Sucursal
     {
-        private readonly Utilidades.Conexion _cx;
         private readonly IEmpresaContext _empresa;
 
         public Sucursal(IEmpresaContext empresa)
         {
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
-            _cx = new Utilidades.Conexion();
         }
 
         public DataTable obtenerSucursales()
         {
-            var dt = new DataTable();
-
-            using (SqlConnection cn = _cx.conectar(_empresa)) // ya viene abierta
-            using (SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM sucursal", cn))
-            {
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                "SELECT * FROM Sucursal WHERE idEmpresa = @id",
+                CommandType.Text,
+                setParams: p => p.Add("@id", SqlDbType.Int).Value = _empresa.IdEmpresa
+            );
         }
 
         public Entidades.Sucursal findById(int id)
         {
-            Entidades.Sucursal oSucursalE = null;
+            const string sql = "SELECT * FROM Sucursal WHERE idSucursal = @id";
 
-            using (SqlConnection cn = _cx.conectar(_empresa)) // ya viene abierta
-            using (SqlCommand cmd = new SqlCommand("SELECT * FROM sucursal WHERE idSucursal = @id", cn))
-            {
-                cmd.Parameters.Add("@id", SqlDbType.Int).Value = id;
+            var lista = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr => mapSucursal(dr),
+                setParams: p => p.Add("@id", SqlDbType.Int).Value = id
+            );
 
-                using (SqlDataReader dr = cmd.ExecuteReader())
-                {
-                    if (dr.Read())
-                        oSucursalE = mapSucursal(dr);
-                }
-            }
+            var oSucursalE = (lista.Count > 0) ? lista[0] : null;
 
             // === Cargar Empresa si corresponde ===
             if (oSucursalE != null && oSucursalE.IdEmpresa > 0)
             {
-                var emp = findEmpresaById(oSucursalE.IdEmpresa);
-                oSucursalE.Empresa = emp;
+                oSucursalE.Empresa = findEmpresaById(oSucursalE.IdEmpresa);
             }
 
             return oSucursalE;
@@ -58,107 +51,81 @@ namespace Datos
 
         public List<Entidades.Sucursal> findAll()
         {
-            var lista = new List<Entidades.Sucursal>();
-
-            using (SqlConnection cn = _cx.conectar(_empresa)) // ya viene abierta
-            using (SqlCommand cmd = new SqlCommand("SELECT * FROM sucursal", cn))
-            using (SqlDataReader dr = cmd.ExecuteReader())
-            {
-                while (dr.Read())
-                    lista.Add(mapSucursal(dr));
-            }
-
-            return lista;
+            return Db.Reader(
+                _empresa,
+                "SELECT * FROM sucursal WHERE idEmpresa = @id",
+                CommandType.Text,
+                map: dr => mapSucursal(dr),
+                setParams: p => p.Add("@id", SqlDbType.Int).Value = _empresa.IdEmpresa 
+            );
         }
 
         public Entidades.Empresa findEmpresaById(int idEmpresa)
         {
-            Entidades.Empresa oEmpresa = null;
+            const string sql = "SELECT * FROM Empresas WHERE idEmpresa = @id";
 
-            using (SqlConnection cn = _cx.conectar(_empresa)) // ya viene abierta
-            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Empresas WHERE idEmpresa = @id", cn))
-            {
-                cmd.Parameters.Add("@id", SqlDbType.Int).Value = idEmpresa;
+            var lista = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr => mapEmpresa(dr),
+                setParams: p => p.Add("@id", SqlDbType.Int).Value = idEmpresa
+            );
 
-                using (SqlDataReader dr = cmd.ExecuteReader())
-                {
-                    if (dr.Read())
-                        oEmpresa = mapEmpresa(dr);
-                }
-            }
-
-            return oEmpresa;
+            return (lista.Count > 0) ? lista[0] : null;
         }
 
         public Entidades.Empresa findEmpresaByCuit(long cuit)
         {
-            Entidades.Empresa oEmpresa = null;
+            const string sql = "SELECT * FROM Empresas WHERE cuit = @cuit";
 
-            using (SqlConnection cn = _cx.conectar(_empresa)) // ya viene abierta
-            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Empresas WHERE cuit = @cuit", cn))
-            {
-                cmd.Parameters.Add("@cuit", SqlDbType.BigInt).Value = cuit;
+            var lista = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr => mapEmpresa(dr),
+                setParams: p => p.Add("@cuit", SqlDbType.BigInt).Value = cuit
+            );
 
-                using (SqlDataReader dr = cmd.ExecuteReader())
-                {
-                    if (dr.Read())
-                        oEmpresa = mapEmpresa(dr);
-                }
-            }
-
-            return oEmpresa;
+            return (lista.Count > 0) ? lista[0] : null;
         }
 
         public DataTable obtenerSucursalSanMartin()
         {
-            var dt = new DataTable();
-
-            using (SqlConnection cn = _cx.conectar(_empresa))
-            using (SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM sucursal WHERE idSucursal = 2", cn))
-            {
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                "SELECT * FROM sucursal WHERE idSucursal = 2",
+                CommandType.Text
+            );
         }
 
         public DataTable obtenerSucursalSanLorenzo()
         {
-            var dt = new DataTable();
-
-            using (SqlConnection cn = _cx.conectar(_empresa))
-            using (SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM sucursal WHERE idSucursal = 1", cn))
-            {
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                "SELECT * FROM sucursal WHERE idSucursal = 1",
+                CommandType.Text
+            );
         }
 
         public DataTable obtenerConexiones(bool? mostrarEnPrincipal, bool? mostrarEnStockActual)
         {
-            var dt = new DataTable();
-
-            // ✅ Parametrizado (evita concatenación)
-            var sql = @"
+            const string sql = @"
                 SELECT *
                 FROM Conexiones
                 WHERE (@mp IS NULL OR mostrarEnPrincipal = @mp)
                   AND (@ms IS NULL OR mostrarEnStockActual = @ms);";
 
-            using (SqlConnection cn = _cx.conectar(_empresa))
-            using (SqlDataAdapter da = new SqlDataAdapter(sql, cn))
-            {
-                da.SelectCommand.Parameters.Add("@mp", SqlDbType.Bit).Value =
-                    (object)mostrarEnPrincipal ?? DBNull.Value;
-
-                da.SelectCommand.Parameters.Add("@ms", SqlDbType.Bit).Value =
-                    (object)mostrarEnStockActual ?? DBNull.Value;
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@mp", SqlDbType.Bit).Value = (object)mostrarEnPrincipal ?? DBNull.Value;
+                    p.Add("@ms", SqlDbType.Bit).Value = (object)mostrarEnStockActual ?? DBNull.Value;
+                }
+            );
         }
 
         public int getIdSucursalByConexion(string nameConnString)
@@ -166,16 +133,16 @@ namespace Datos
             if (string.IsNullOrWhiteSpace(nameConnString))
                 return 0;
 
-            using (SqlConnection cn = _cx.conectar(_empresa)) // ya viene abierta
-            using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 idSucursal FROM Conexiones WHERE name = @name", cn))
-            {
-                cmd.Parameters.Add("@name", SqlDbType.NVarChar, 100).Value = nameConnString.Trim();
+            const string sql = "SELECT TOP 1 idSucursal FROM Conexiones WHERE name = @name";
 
-                object obj = cmd.ExecuteScalar();
-                if (obj == null || obj == DBNull.Value) return 0;
+            object obj = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.Add("@name", SqlDbType.NVarChar, 100).Value = nameConnString.Trim()
+            );
 
-                return Convert.ToInt32(obj);
-            }
+            return (obj == null || obj == DBNull.Value) ? 0 : Convert.ToInt32(obj);
         }
 
         // --------------------
@@ -219,7 +186,9 @@ namespace Datos
                 BasePath = dr["basePath"]?.ToString(),
                 EsRRII = dr["esRRII"] != DBNull.Value ? Convert.ToByte(dr["esRRII"]) : (byte)0,
                 NombreCertificado_pfx = dr["nombreCertificado_pfx"]?.ToString(),
-                Entorno_HOMO_PROD = dr["entorno_HOMO_PROD"]?.ToString()
+                Entorno_HOMO_PROD = dr["entorno_HOMO_PROD"]?.ToString(),
+                BaseDatosNombre = dr["baseDatosNombre"]?.ToString(),
+                Activa = dr["activa"] != DBNull.Value ? Convert.ToByte(dr["activa"]) : (byte)0
             };
         }
     }

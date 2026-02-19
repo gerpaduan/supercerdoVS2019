@@ -1,4 +1,6 @@
-﻿using System;
+﻿using iTextSharp.text;
+using Presentacion.Compras;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -6,7 +8,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using Presentacion.Compras;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Presentacion
 {
@@ -19,7 +21,7 @@ namespace Presentacion
         public Negocio.Sucursal oSucursalN = new Negocio.Sucursal(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
 
         bool cargar = false;
-        string descripcion, codigo, corte;
+        string descripcion, codigo, corte, tipoCompra;
         public formLineasCompras()
         {
             InitializeComponent(); this.Icon = Properties.Resources.CarniSys_ICONO;
@@ -32,6 +34,11 @@ namespace Presentacion
                 this.Text += Utilidades.Conexion.getSucursalConexion();
                 cargarSucursal();
                 this.comboTipoCompra.SelectedIndex = 0;
+                //ocultar item media res si no soy yo la empresa
+                if (!FormPrincipal.soyYo)
+                {
+                    comboTipoCompra.Items.Remove("Media Res");
+                }
                 fechaDesde.Value = DateTime.Today.AddMonths(-2);
                 cargar = true;
                 cargarGrilla();
@@ -64,7 +71,7 @@ namespace Presentacion
                 grillaLineasCompras.AutoGenerateColumns = true;
 
                 dtCompras = null;
-                dtCompras = oCompraN.getLineasCompras(idSucCombo, comboTipoCompra.Text, descripcion, codigo, corte, fechaDesde.Value.Date, fechaHasta.Value.Date, null);
+                dtCompras = oCompraN.getLineasCompras(idSucCombo, tipoCompra, descripcion, codigo, corte, fechaDesde.Value.Date, fechaHasta.Value.Date, null);
                 grillaLineasCompras.DataSource = dtCompras;
 
                 formatearGrilla();
@@ -182,13 +189,15 @@ namespace Presentacion
             //Cortes
             txtDescripcion.Text = "";
             checkBusquedaMultiple.Visible = false;
-            if (comboTipoCompra.Text == "Cortes")
+            if (comboTipoCompra.Text == "Productos")
             {
-                checkBusquedaMultiple.Visible = true;
-                txtDescripcion.Text = "NroRem_RazonSoc+Codigo+Corte";
+                tipoCompra = "Cortes";
+                //checkBusquedaMultiple.Visible = true; Comentado el 09/02/2026 xq no le encontré utilidad
+                txtDescripcion.Text = "NroRem_RazonSoc+Codigo+Producto";
             }
             else
             {
+                tipoCompra = comboTipoCompra.Text;
                 checkBusquedaMultiple.Visible = false;
             }
 

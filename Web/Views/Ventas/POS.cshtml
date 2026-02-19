@@ -1,482 +1,278 @@
 ﻿@model Entidades.Venta
 
-@{ ViewBag.Title = "CarniSys web | Punto de Venta";
+@{
+    ViewBag.Title = "CarniSys web | Punto de Venta";
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
 }
 
-
-<style>
-    /* =============================
-    FIX REAL PARA SB ADMIN 2 POS
-    ============================= */
-
-
-    #pos-app {
-        height: 85vh;
-        display: flex;
-        flex-direction: column;
-    }
-
-
-        /* Card del POS */
-        #pos-app > .card {
-            /*flex: 1;
-             overflow: auto;*/
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        #pos-app .card-body {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        /* La fila principal */
-        #pos-app .row.flex-grow-1 {
-            flex: 1;
-            min-height: 0;
-        }
-
-        /* Columna izquierda */
-        #pos-app .carrito-col {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            min-height: 0;
-        }
-
-        /* SCROLL REAL */
-        #pos-app .zona-tabla {
-            flex: 1;
-            overflow-y: auto;
-            min-height: 0;
-        }
-
-    /* Total y botones no crecen */
-    .zona-total,
-    .zona-botones {
-        flex-shrink: 0;
-    }
-
-    @@media (max-width: 992px) {
-        /* La app deja de forzar altura */
-        #pos-app {
-            height: auto !important;
-            min-height: auto !important;
-        }
-
-        #content {
-            height: auto !important;
-            min-height: auto !important;
-        }
-        /* La columna carrito deja de ser flex rígido */
-        .carrito-col {
-            display: block !important;
-            height: auto !important;
-            min-height: auto !important;
-        }
-        /* 🚫 SIN SCROLL interno */
-        .zona-tabla {
-            flex: none !important;
-            overflow: visible !important;
-            max-height: none !important;
-            height: auto !important;
-        }
-        /* Total y botones pasan a flujo normal */
-        .zona-total,
-        .zona-botones {
-            position: static !important;
-        }
-    }
-
-    /* Desktop: asegurar que NO haya scroll de la página y SOLO .zona-tabla haga scroll */
-    @@media (min-width: 992px) {
-        html, body {
-            height: 100%;
-            overflow: hidden !important; /* prohibir scroll del viewport en desktop */
-        }
-        /* Forzar que el contenedor POS se ajuste dentro del viewport */
-        #pos-app {
-            max-height: 100vh;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-            /* Card / body no deben provocar scroll */
-            #pos-app > .card,
-            #pos-app .card-body,
-            #pos-app .row.flex-grow-1 {
-                height: 100%;
-                min-height: 0;
-                overflow: hidden;
-                box-sizing: border-box;
-            }
-            /* Columna izquierda: zona-tabla es la única con scroll interno */
-            #pos-app .carrito-col {
-                display: flex;
-                flex-direction: column;
-                min-height: 0;
-                overflow: hidden;
-            }
-
-                #pos-app .carrito-col .zona-tabla {
-                    flex: 1 1 auto;
-                    min-height: 0;
-                    overflow-y: auto;
-                }
-            /* Columna derecha: no debe crear scroll del viewport */
-            #pos-app .col-lg-6.d-flex.flex-column {
-                display: flex !important;
-                flex-direction: column !important;
-                min-height: 0;
-                overflow: visible;
-                box-sizing: border-box;
-            }
-                /* Asegurar que elementos fijos (botones) no crezcan */
-                #pos-app .col-lg-6.d-flex.flex-column > .mb-3,
-                #pos-app .zona-botones {
-                    flex: 0 0 auto;
-                }
-        /* Limitar teclado virtual para que no empuje layout */
-        .keyboard-grid {
-            max-height: 40vh;
-            overflow-y: auto;
-        }
-    }
-
-    /* Desktop: permitir que el teclado virtual "se encoja" y no genere scroll del viewport */
-    @@media (min-width: 992px) {
-        /* Teclado virtual: compacto pero legible */
-        .keyboard-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-auto-rows: minmax(48px, 1fr); /* filas mínimas más grandes para legibilidad */
-            gap: 8px;
-            align-content: stretch;
-            box-sizing: border-box;
-            max-height: 40vh;
-            overflow-y: auto; /* scroll interno solo si es estrictamente necesario */
-        }
-            /* Botones: se encogen pero conservan lectura */
-            .keyboard-grid .btn-key,
-            .keyboard-grid .btn-enter {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 0;
-                height: 100%;
-                padding: 8px 6px;
-                font-size: clamp(1rem, 1.0vw, 1.18rem); /* nunca menor a 1rem, escala con viewport */
-                line-height: 1;
-                white-space: nowrap;
-                box-sizing: border-box;
-            }
-            /* ENTER y 0 mantienen su posición en la grid */
-            .keyboard-grid .btn-enter {
-                grid-row: span 2;
-            }
-
-            .keyboard-grid .key-zero {
-                grid-column: span 2;
-            }
-        /* Ajuste para pantallas muy grandes */
-        @@media (min-width: 1400px) {
-            .keyboard-grid {
-                max-height: 45vh;
-            }
-
-                .keyboard-grid .btn-key,
-                .keyboard-grid .btn-enter {
-                    font-size: clamp(1.05rem, 0.9vw, 1.3rem);
-                    padding: 10px 8px;
-                }
-        }
-    }
-</style>
 @if (cajaAbierta && Model != null)
 {
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <button class="btn btn-sm btn-light me-2" id="btn-toggle-fullscreen">
-                Pantalla completa
-        </button>
+    <!-- =========================================================
+         WRAPPER POS: ocupa todo el alto del pos-container
+         ========================================================= -->
+    <div class="pos-page">
 
-        <span class="text-muted">
-            @(Session["Usuario"] != null ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia + " | SUC :" + ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre : "")
-        </span>
-    </div>
-          <!-- Vista: Punto de Venta (SB Admin 2) -->
-    <div class="container-fluid p-2" id="pos-app">
+        <!-- TOP POS (responsive: en mobile arriba comercio/fecha, abajo cliente) -->
+        <div class="pos-topbar row no-gutters align-items-stretch mb-2">
 
-        <div class="d-flex justify-content-end mb-2">
-            <span id="fechaHoraPOS" class="text-muted font-weight-bold"></span>
-            <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
-        </div>
+            <!-- DERECHA (en desktop) / ARRIBA (en mobile): comercio + fecha + fullscreen -->
+            <div class="col-12 col-lg-6 order-1 order-lg-2 d-flex align-items-stretch justify-content-between">
 
-        <div class="form-group">
-            <div class="input-group">
-
-                @Html.HiddenFor(m => m.IdPersona, new { id = "idPersona" })
-
-                <input type="text"
-                       id="razonSocial"
-                       class="form-control"
-                       value="@(Model.Persona?.RazonSocial ?? "Error al cargar cliente")"
-                       readonly />
-
-
-                <div class="input-group-append">
-                    <button type="button"
-                            class="btn btn-primary"
-                            id="btnBuscarPersona">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-
-                <!-- Consumidor Final -->
-                <!-- Consumidor Final -->
-                <button type="button"
-                        class="btn btn-secondary ml-2"
-                        id="btnConsumidorFinal"
-                        title="Consumidor Final">
-                    CF
-                </button>
-
-            </div>
-        </div>
-
-
-        <div class="card shadow-lg border-0 pos-panel">
-
-            <div class="card-body p-2 d-flex flex-column">
-
-                <div class="row flex-grow-1  h-100">
-
-                    <!-- ===================== -->
-                    <!-- COLUMNA IZQUIERDA: CARRITO -->
-                    <!-- ===================== -->
-                    <!-- COLUMNA IZQUIERDA - CARRITO -->
-                    <div class="col-lg-6 carrito-col">
-
-                        <!-- ZONA SCROLLEABLE -->
-                        <div class="zona-tabla mb-2">
-                            <table class="table table-sm tabla-productos mb-0">
-                                <tbody id="tablaItems">
-
-                                    <!-- Estado vacío -->
-                                    <tr id="filaVacia">
-                                        <td class="text-muted text-center py-3">
-                                            No hay productos agregados
-                                        </td>
-                                    </tr>
-
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- TOTAL FIJO -->
-                        <div class="zona-total">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h3 class="m-0" style="color:#adb5bd;">Total</h3>
-                                <h1 id="lblSubtotal" class="m-0" style="color:#4a6fa5;">
-                                    $ 0,00
-                                </h1>
-                            </div>
-                        </div>
-
+                <div class="pos-meta flex-grow-1 text-left text-lg-right pr-2">
+                    <div class="pos-empresa text-truncate">
+                        @(Session["Usuario"] != null
+                            ? ((Entidades.Usuario)Session["Usuario"]).Empresa.NombreFantasia + " | SUC: " + ((Entidades.Usuario)Session["Usuario"]).Sucursal.SucursalNombre
+                            : "")
                     </div>
 
+                    <div class="pos-fecha">
+                        <span id="fechaHoraPOS" class="font-weight-bold"></span>
+                        <input type="hidden" id="fechaVenta" name="fechaVenta" value="@Model.FechaVenta" />
+                    </div>
+                </div>
 
-                    <!-- ===================== -->
-                    <!-- COLUMNA DERECHA -->
-                    <!-- ===================== -->
-                    <div class="col-lg-6 d-flex flex-column">
+                <button class="btn btn-light btn-sm pos-btn-fullscreen"
+                        id="btn-toggle-fullscreen"
+                        type="button"
+                        title="Pantalla completa">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+            </div>
 
-                        <!-- 🔍 BLOQUE SCANNER -->
-                        <!-- 🔍 BLOQUE SCANNER -->
-                        <div class="row" id="scannerContainer" style="display:none;">
-                            <div class="col-12">
-                                <div class="card shadow">
-                                    <div class="card-body text-center">
+            <!-- IZQUIERDA (en desktop) / ABAJO (en mobile): cliente + buscar + CF -->
+            <div class="col-12 col-lg-6 order-2 order-lg-1 d-flex align-items-center">
+                <div class="pos-cliente w-100">
+                    @Html.HiddenFor(m => m.IdPersona, new { id = "idPersona" })
 
-                                        <div class="scanner-wrapper">
-                                            <video id="videoScanner" autoplay muted playsinline></video>
-                                            <div class="scanner-line"></div>
-                                        </div>
+                    <div class="input-group input-group-sm">
+                        <input type="text"
+                               id="razonSocial"
+                               class="form-control"
+                               value="@(Model.Persona?.RazonSocial ?? "Error al cargar cliente")"
+                               readonly />
 
-                                        <div class="d-flex justify-content-between mt-2">
-                                            <button class="btn btn-secondary btn-sm" id="btnFlash">
-                                                🔦 Flash
-                                            </button>
+                        <div class="input-group-append">
+                            <button type="button"
+                                    class="btn btn-primary"
+                                    id="btnBuscarPersona"
+                                    title="Buscar cliente (F9)">
+                                <i class="fas fa-search"></i>
+                            </button>
 
-                                            <button class="btn btn-danger btn-sm" id="btnCerrarScanner">
-                                                Cerrar cámara
-                                            </button>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <audio id="beep" src="/Content/sounds/focus-beep.wav" preload="auto"></audio>
-
-                        <!-- BUSCADOR -->
-                        <div class="row g-2 mb-3">
-                            <div class="col-12">
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text scanner-btn" id="btnScanner">
-                                        <i class="fas fa-barcode"></i>
-                                    </span>
-                                    <input type="text"
-                                           id="inputCodigo"
-                                           class="form-control"
-                                           placeholder="Ingrese el código..."
-                                           autocomplete="off"
-                                           autofocus />
-
-                                    <button class="btn btn-outline-secondary"
-                                            id="btnAgregarManual"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#modalDigitarCodigo">
-                                        Buscar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- INFO PRODUCTO -->
-                        <div id="producto-info" class="p-3 rounded bg-light border mb-3">
-                            <div class="row">
-
-                                <!-- COLUMNA IZQUIERDA -->
-                                <!-- COLUMNA IZQUIERDA -->
-                                <div class="col-6">
-
-                                    <!-- NOMBRE PRODUCTO -->
-                                    <h4 id="prodNombre"
-                                        class="fw-bold text-muted mb-2">
-                                        Info producto...
-                                    </h4>
-
-                                    <!-- PRECIO -->
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <label class="lbl-precio">Precio</label>
-                                            <div id="prodPrecio"
-                                                 class="fw-bold text-muted mb-3 fs-5">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div id="prodPrecio"
-                                         class="fw-bold text-muted mb-3 fs-5">
-                                    </div>
-
-                                    <!-- CANTIDAD -->
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                                            <input id="inputCantidad"
-                                                   class="form-control"
-                                                   autocomplete="off"
-                                                   inputmode="decimal">
-                                        </div>
-                                    </div>
-
-                                    <!-- SUBTOTAL -->
-                                    <div class="mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <label class="lbl-subtotal">Subtotal</label>
-                                            <h4 id="prodSubtotal"
-                                                class="fw-bold text-muted m-0">
-                                                $ 0,00
-                                            </h4>
-                                        </div>
-                                    </div>
-
-
-                                    <!-- BOTÓN AGREGAR -->
-                                    <button id="btnAgregarProducto"
-                                            class="btn btn-outline-success btn-lg w-100 btn-agregar-pos"
-                                            disabled>
-                                        ➕ Agregar a la venta
-                                    </button>
-
-                                </div>
-
-                                <!-- COLUMNA DERECHA - TECLADO -->
-                                <div class="col-6">
-
-                                    <!-- COLUMNA DERECHA - TECLADO -->
-                                    <div class="keyboard-grid">
-
-                                        <button class="btn btn-secondary btn-key">*</button>
-                                        <button class="btn btn-light btn-key">7</button>
-                                        <button class="btn btn-light btn-key">8</button>
-                                        <button class="btn btn-light btn-key">9</button>
-                                        <button class="btn btn-warning btn-key">←</button>
-
-                                        <button class="btn btn-secondary btn-key">G</button>
-                                        <button class="btn btn-light btn-key">4</button>
-                                        <button class="btn btn-light btn-key">5</button>
-                                        <button class="btn btn-light btn-key">6</button>
-                                        <button class="btn btn-secondary btn-key">×</button>
-
-                                        <button class="btn btn-secondary btn-key">G1</button>
-                                        <button class="btn btn-light btn-key">1</button>
-                                        <button class="btn btn-light btn-key">2</button>
-                                        <button class="btn btn-light btn-key">3</button>
-
-                                        <button class="btn btn-info btn-enter btn-key">Enter</button>
-
-                                        <button class="btn btn-secondary btn-key"></button>
-                                        <button class="btn btn-light btn-key key-zero">0</button>
-                                        <button class="btn btn-light btn-key">.</button>
-
-                                    </div>
-
-
-                                </div>
-
-                            </div>
-
-                        </div>
-                        <!-- BOTONES FINALES -->
-                        <div class="mb-3">
-                            <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
-                                <i class="fas fa-credit-card mr-2"></i>
-
-                                Finalizar y Pagar
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    id="btnConsumidorFinal"
+                                    title="Consumidor Final">
+                                CF
                             </button>
                         </div>
-                        <div id="pos-bottom-anchor"></div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- ESTADO BALANZA -->
-                        <div class="mt-auto">
+        </div>
 
-                            <!-- BOTONES FIJOS -->
-                            <div class="zona-botones">
-                                <div class="row g-2">
-                                    <div class="col-4">
-                                        <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
-                                    </div>
-                                    <div class="col-4">
-                                        <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
-                                    </div>
-                                    <div class="col-4">
-                                        <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+        <!-- Vista: Punto de Venta (SB Admin 2) -->
+        <div class="container-fluid p-1" id="pos-app">
+
+            <div class="card shadow-lg border-0 pos-panel">
+
+                <div class="card-body p-2 d-flex flex-column">
+
+                    <div class="row flex-grow-1 h-100">
+
+                        <!-- ===================== -->
+                        <!-- COLUMNA IZQUIERDA - CARRITO -->
+                        <div class="col-12 col-md-6 carrito-col">
+
+                            <div class="zona-tabla">
+                                <table class="table table-sm tabla-productos mb-0">
+                                    <tbody id="tablaItems">
+                                        <tr id="filaVacia">
+                                            <td class="text-muted text-center py-3">
+                                                No hay productos agregados
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="zona-total">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h3 class="m-0 pos-total-label">Total</h3>
+                                    <h1 id="lblSubtotal" class="m-0 pos-total-value">$ 0,00</h1>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- ===================== -->
+                        <!-- COLUMNA DERECHA -->
+                        <div class="col-12 col-md-6 d-flex flex-column">
+
+                            <!-- 🔍 BLOQUE SCANNER -->
+                            <div class="row" id="scannerContainer" style="display:none;">
+                                <div class="col-12">
+                                    <div class="card shadow">
+                                        <div class="card-body text-center">
+
+                                            <div class="scanner-wrapper">
+                                                <video id="videoScanner" autoplay muted playsinline></video>
+                                                <div class="scanner-line"></div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-between mt-2">
+                                                <button class="btn btn-secondary btn-sm" id="btnFlash">
+                                                    🔦 Flash
+                                                </button>
+
+                                                <button class="btn btn-danger btn-sm" id="btnCerrarScanner">
+                                                    Cerrar cámara
+                                                </button>
+                                            </div>
+
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <small class="text-muted">
-                                Conexión balanza: <span id="estadoBalanza">Desconocida</span>
-                            </small>
-                            <div class="progress mt-1" style="height:8px;">
-                                <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            <audio id="beep" src="/Content/sounds/focus-beep.wav" preload="auto"></audio>
+
+                            <!-- BUSCADOR -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-12">
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text scanner-btn" id="btnScanner">
+                                            <i class="fas fa-barcode"></i>
+                                        </span>
+                                        <input type="text"
+                                               id="inputCodigo"
+                                               class="form-control"
+                                               placeholder="Ingrese el código..."
+                                               autocomplete="off"
+                                               autofocus />
+
+                                        <button class="btn btn-outline-secondary"
+                                                id="btnAgregarManual"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalDigitarCodigo">
+                                            Buscar
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- INFO PRODUCTO -->
+                            <div id="producto-info" class="p-3 rounded bg-light border mb-3">
+                                <div class="row">
+
+                                    <!-- COLUMNA IZQUIERDA -->
+                                    <div class="col-6">
+
+                                        <h4 id="prodNombre" class="fw-bold text-muted">
+                                            Info producto...
+                                        </h4>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-precio">Precio</label>
+                                                <div id="prodPrecio" class="fw-bold text-muted fs-5"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-cantidad">Cantidad&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                                <input id="inputCantidad"
+                                                       class="form-control"
+                                                       autocomplete="off"
+                                                       inputmode="decimal">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label class="lbl-subtotal">Subtotal</label>
+                                                <h4 id="prodSubtotal" class="fw-bold text-muted m-0">
+                                                    $ 0,00
+                                                </h4>
+                                            </div>
+                                        </div>
+                                        <button id="btnAgregarProducto"
+                                                class="btn btn-outline-success btn-lg w-100 btn-agregar-pos d-none d-md-block"
+                                                disabled>
+                                            ➕ Agregar a la venta
+                                        </button>
+
+
+                                    </div>
+
+                                    <!-- COLUMNA DERECHA - TECLADO -->
+                                    <div class="col-6">
+                                        <div class="keyboard-grid">
+                                            <button class="btn btn-secondary btn-key">*</button>
+                                            <button class="btn btn-light btn-key">7</button>
+                                            <button class="btn btn-light btn-key">8</button>
+                                            <button class="btn btn-light btn-key">9</button>
+                                            <button class="btn btn-warning btn-key">←</button>
+
+                                            <button class="btn btn-secondary btn-key">G</button>
+                                            <button class="btn btn-light btn-key">4</button>
+                                            <button class="btn btn-light btn-key">5</button>
+                                            <button class="btn btn-light btn-key">6</button>
+                                            <button class="btn btn-secondary btn-key">×</button>
+
+                                            <button class="btn btn-secondary btn-key">G1</button>
+                                            <button class="btn btn-light btn-key">1</button>
+                                            <button class="btn btn-light btn-key">2</button>
+                                            <button class="btn btn-light btn-key">3</button>
+
+                                            <button class="btn btn-info btn-enter btn-key">Enter</button>
+
+                                            <button class="btn btn-secondary btn-key"></button>
+                                            <button class="btn btn-light btn-key key-zero">0</button>
+                                            <button class="btn btn-light btn-key">.</button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- BOTONES FINALES -->
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-lg w-100" id="btnFinalizar">
+                                    <i class="fas fa-credit-card mr-2"></i>
+                                    Finalizar y Pagar
+                                </button>
+                            </div>
+                            <div id="pos-bottom-anchor"></div>
+
+                            <!-- ESTADO BALANZA -->
+                            <div class="mt-auto">
+
+                                <div class="zona-botones">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-danger w-100" id="btnCancelarItem">Cancelar Venta</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
+                                        </div>
+                                        <div class="col-4">
+                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <small class="text-muted">
+                                    Conexión balanza: <span id="estadoBalanza">Desconocida</span>
+                                </small>
+                                <div class="progress mt-1" style="height:8px;">
+                                    <div id="barraBalanza" class="progress-bar" role="progressbar" style="width:0%"></div>
+                                </div>
+                            </div>
+
                         </div>
 
                     </div>
@@ -488,7 +284,6 @@
         </div>
 
     </div>
-
 
     <!-- MODAL: DIGITAR CÓDIGO -->
     <div class="modal fade" id="modalDigitarCodigo" tabindex="-1">
@@ -515,9 +310,8 @@
         </div>
     </div>
 
-
-    <!-- MODAL LINEA VENTA: muestra las acciones eliminar y bonificar -->
-    <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog">
+    <!-- MODAL LINEA VENTA -->
+    <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content shadow">
 
@@ -526,30 +320,60 @@
                     <h5 class="modal-title">
                         <i class="fas fa-receipt mr-2"></i> Línea de venta
                     </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
-                        ×
-                    </button>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">×</button>
                 </div>
 
                 <!-- BODY -->
                 <div class="modal-body">
 
-                    <!-- INFO DEL PRODUCTO -->
+                    <!-- INFO PRODUCTO -->
                     <input id="modalProducto" class="form-control mb-2" readonly>
 
+                    <!-- FILA DATOS -->
+                    <!-- FILA DATOS -->
                     <div class="row mb-2">
-                        <div class="col-4">
+
+                        <!-- ✅ Cantidad: en mobile ocupa toda la fila -->
+                        <div class="col-12 col-md-5">
                             <label class="small">Cant.</label>
-                            <input id="modalCantidad" class="form-control text-right" readonly>
+
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button id="btnCantMenos" type="button"
+                                            class="btn btn-outline-secondary d-none" tabindex="-1">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+
+                                <input id="modalCantidad"
+                                       class="form-control text-right"
+                                       readonly
+                                       inputmode="decimal"
+                                       autocomplete="off">
+
+                                <div class="input-group-append">
+                                    <button id="btnCantMas" type="button"
+                                            class="btn btn-outline-secondary d-none" tabindex="-1">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-4">
+
+                        <!-- ✅ salto de línea SOLO en pantallas chicas -->
+                        <div class="w-100 d-block d-md-none"></div>
+
+                        <!-- ✅ Precio y Total: abajo en mobile -->
+                        <div class="col-6 col-md-3">
                             <label class="small">Precio lista</label>
                             <input id="modalPrecio" class="form-control text-right" readonly>
                         </div>
-                        <div class="col-4">
+
+                        <div class="col-6 col-md-4">
                             <label id="lblTotalModalLineaVenta" class="small">Total</label>
                             <input id="modalSubtotal" class="form-control text-right font-weight-bold" readonly>
                         </div>
+
                     </div>
 
                     <hr>
@@ -559,42 +383,65 @@
 
                         <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" id="chkPorcentaje">
-                            <label class="form-check-label">
-                                Bonificar por porcentaje
-                            </label>
+                            <label class="form-check-label" for="chkPorcentaje">Bonificar por porcentaje</label>
                         </div>
 
                         <div class="row">
                             <div class="col-6">
-                                <label class="small">Precio</label>
-                                <input id="txtPrecioKg" class="form-control text-right">
+                                <label class="small">Precio bonificado</label>
+                                <input id="txtPrecioKg"
+                                       class="form-control text-right"
+                                       inputmode="decimal"
+                                       autocomplete="off">
                             </div>
+
                             <div class="col-6">
-                                @*<label class="small">%</label>*@
-                                <label id="lblTipoPorcentaje">% bonificación</label>
-                                <input id="txtPorcentaje" class="form-control text-right" disabled>
-                            </div>
-                            <div class="col-6">
-                                <label class="small"></label>
+                                <label id="lblTipoPorcentaje" class="small">% bonificación</label>
+                                <input id="txtPorcentaje"
+                                       class="form-control text-right"
+                                       inputmode="decimal"
+                                       autocomplete="off"
+                                       readonly>
                             </div>
                         </div>
 
-                        <button id="btnAplicarBonificacion"
-                                class="btn btn-primary btn-block mt-3">
+                        <!-- Aplicar bonificación (cuando se muestra bonificar) -->
+                        <button id="btnAplicarBonificacion" class="btn btn-primary btn-block mt-3">
                             Aplicar bonificación
                         </button>
+
+                        <!-- espacio -->
+                        <div class="mt-2"></div>
                     </div>
-                    <!-- BOTONES PRINCIPALES -->
-                    <div class="d-flex justify-content-between mb-2">
+
+                    <!-- BLOQUE CANTIDAD (solo para el botón Aplicar cantidad) -->
+                    <div id="bloqueCantidad" style="display:none">
+                        <button id="btnAplicarCantidad" class="btn btn-primary btn-block mt-3">
+                            Aplicar cantidad
+                        </button>
+
+                        <!-- espacio -->
+                        <div class="mt-2"></div>
+                    </div>
+
+                    <!-- BOTONES PRINCIPALES / DE ACCIÓN -->
+                    <!-- Siempre visibles en columna, y el JS los oculta/activa según modo -->
+                    <div class="d-flex flex-column" style="gap:.5rem;">
+
+                        <!-- (Opcional) si querés seguir mostrando el botón "Bonificar" como antes -->
+                        <button id="btnMostrarBonificar" class="btn btn-success">
+                            <i class="fas fa-percentage"></i> Bonificar
+                        </button>
+
+                        <button id="btnMostrarCantidad" class="btn btn-info">
+                            <i class="fas fa-sort-numeric-up"></i> Cantidad
+                        </button>
+
                         <button id="btnEliminarItem" class="btn btn-danger">
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
 
-                        <button id="btnMostrarBonificar" class="btn btn-success">
-                            <i class="fas fa-percentage"></i> Bonificar
-                        </button>
                     </div>
-
 
                 </div>
             </div>
@@ -602,7 +449,8 @@
     </div>
 
 
-    <!-- MODAL PESABLE: muestra cuando un producto es por kg -->
+
+    <!-- MODAL PESABLE -->
     <div class="modal fade" id="modalPesable" tabindex="-1">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
@@ -621,9 +469,7 @@
             </div>
         </div>
     </div>
-
 }
-
 
 <!-- Contenedor dinámico del modal -->
 <div id="contenedorModalPersona"></div>
@@ -637,1281 +483,1880 @@
 </div>
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml")
-
 @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
-
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
-
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
-
-@*@Html.Partial("~/Views/Ventas/_FacturaElectronica.cshtml")*@
-
-
 
 @section Scripts {
     <script>
+    document.addEventListener("click", habilitarAudio, { once: true });
 
-        document.addEventListener("click", habilitarAudio, { once: true });
-
-        function habilitarAudio() {
-            const audio = document.getElementById("beep");
-            audio.volume = 0;
-            audio.play().finally(() => {
-                audio.pause();
-                audio.currentTime = 0;
-                audio.volume = 1;
-            });
-        }
-
-        // VARIABLES
-        let stream = null;
-        let track = null;
-        let detector = null;
-        let scanning = false;
-        let esEAN = false;
-        let ultimoCodigo = null;
-        let ultimoTiempo = 0;
-        const TIEMPO_RELECTURA = 2000;
-        const video = document.getElementById("videoScanner");
-
-        // ANTI FREEZE
-        let ultimoFrame = Date.now();
-        function checkCongelamiento() {
-            if (!scanning) return;
-
-            const ahora = Date.now();
-            if (ahora - ultimoFrame > 2000) {
-                console.warn("⚠ Cámara parece congelada. Reiniciando...");
-                cerrarScanner();
-                setTimeout(iniciarScanner, 500);
-                return;
-            }
-
-            requestAnimationFrame(checkCongelamiento);
-        }
-
-        // BOTONES
-        $("#btnScanner").on("click", async function () {
-            $("#scannerContainer").slideDown();
-            await iniciarScanner();
-        });
-
-        $("#btnCerrarScanner").on("click", function () {
-            cerrarScanner();
-        });
-
-        // INICIAR SCANNER
-        async function iniciarScanner() {
-            if (scanning) return;
-            scanning = true;
-
-            if (!("BarcodeDetector" in window)) {
-                alert("Este navegador no soporta BarcodeDetector");
-                scanning = false;
-                return;
-            }
-
-            detector = new BarcodeDetector({
-                formats: ["ean_13", "ean_8", "code_128", "upc_a"]
-            });
-
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: { ideal: "environment" },
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    advanced: [{ focusMode: "continuous" }] // 🟢 mejora autofoco
-                }
-            });
-
-            track = stream.getVideoTracks()[0];
-            video.srcObject = stream;
-            await video.play();
-
-            ultimoFrame = Date.now();
-            leerContinuamente();
-            requestAnimationFrame(checkCongelamiento);
-
-            scrollPantallaMobile();
-        }
-
-        // LOOP LIMITADO (NO 60fps)
-        async function leerContinuamente() {
-            if (!scanning) return;
-
-            try {
-                const codigos = await detector.detect(video);
-                ultimoFrame = Date.now();
-
-                if (codigos.length > 0) {
-                    const codigo = codigos[0].rawValue;
-
-                    if (!esEANValido(codigo)) {
-                        return setTimeout(leerContinuamente, 200);
-                    }
-
-                    const ahora = Date.now();
-                    const mismo = codigo === ultimoCodigo;
-                    const tiempoOK = (ahora - ultimoTiempo) > TIEMPO_RELECTURA;
-
-                    if (!mismo || tiempoOK) {
-                        ultimoCodigo = codigo;
-                        ultimoTiempo = ahora;
-                        cargarCodigo(codigo);
-                    }
-                }
-
-            } catch (e) {
-                console.error("Error en detector:", e);
-            }
-
-            setTimeout(leerContinuamente, 200); // 🔹 ritmo estable
-        }
-
-        // CERRAR SCANNER
-        function cerrarScanner() {
-            scanning = false;
-
-            if (stream) {
-                stream.getTracks().forEach(t => t.stop());
-            }
-
-            video.srcObject = null;
-            stream = null;
-            track = null;
-            detector = null; // 🟢 importante
-
-            $("#scannerContainer").slideUp();
-
-            scrollPantallaMobile();
-        }
-
-        // CARGAR CÓDIGO DETECTADO
-        function cargarCodigo(codigo) {
-            const input = $("#inputCodigo");
-            input.val(codigo).focus();
-            manejarEnter();
-        }
-
-        // FLASH
-        $("#btnFlash").on("click", async function () {
-            if (!track) return alert("Flash no disponible");
-
-            const cap = track.getCapabilities();
-            if (!cap.torch) return alert("Este dispositivo no soporta flash");
-
-            const settings = track.getSettings();
-            await track.applyConstraints({
-                advanced: [{ torch: !settings.torch }]
-            });
-        });
-
-        // BEEP
-        function beep() {
-            const audio = document.getElementById("beep");
-            if (!audio) return;
+    function habilitarAudio() {
+        const audio = document.getElementById("beep");
+        audio.volume = 0;
+        audio.play().finally(() => {
+            audio.pause();
             audio.currentTime = 0;
-            audio.play();
-        }
+            audio.volume = 1;
+        });
+    }
 
+    // VARIABLES
+    let stream = null;
+    let track = null;
+    let detector = null;
+    let scanning = false;
+    let esEAN = false;
+    let ultimoCodigo = null;
+    let ultimoTiempo = 0;
+    const TIEMPO_RELECTURA = 2000;
+    const video = document.getElementById("videoScanner");
 
-        //FIN LECTOR CODIGO
+    const scanner = new BarcodeScanner({
+            videoSelector: "#videoScanner",
+            containerSelector: "#scannerContainer",
+            onCodeDetected: function (codigo) {
+                document.querySelector("#inputCodigo").value = codigo;
+                document.querySelector("#inputCodigo").focus();
+                manejarEnter();
+                // si querés cerrar al detectar:
+                // scanner.cerrar();
+            }
+        });
 
-        window.api = window.api || {};
-        window.api.producto = window.api.producto || {};
-        window.api.producto.listar = '@Url.Action("ListarParaPOS", "Productos")';
+        document.getElementById("btnScanner").addEventListener("click", () => scanner.iniciar());
+        document.getElementById("btnCerrarScanner").addEventListener("click", () => scanner.cerrar());
 
-        $('#btnAgregarManual').on('click', function (e) {
-            e.preventDefault();
-            $('#modalBuscarProducto').modal('show');
+        document.getElementById("btnFlash").addEventListener("click", async () => {
+            const estado = await scanner.toggleFlash();
+
+            // feedback visual opcional
+            const btn = document.getElementById("btnFlash");
+            if (estado) {
+                btn.classList.remove("btn-secondary");
+                btn.classList.add("btn-warning");
+                btn.textContent = "🔦 Flash ON";
+            } else {
+                btn.classList.remove("btn-warning");
+                btn.classList.add("btn-secondary");
+                btn.textContent = "🔦 Flash";
+            }
         });
 
 
-        let typingTimer = null;
-        let productoSeleccionado = null;
-        let precioActual = 0;
-        // ===== ESTADO POS EN MEMORIA =====
-        let carrito = [];
-        // Alias global
-        window.lineasVenta = carrito;
-        window.fechaVenta = new Date();
-        let indexLinea = 1;
-        let ingresoCantidadX = false;
-        let enterDesdeTecladoVirtual = false;
-        let lineaSeleccionada = null;//para mostrar modal de acciones de la linea
+    // BEEP
+    function beep() {
+        const audio = document.getElementById("beep");
+        if (!audio) return;
+        audio.currentTime = 0;
+        audio.play();
+    }
 
-        (function () {
+    // URLs
+    window.api = window.api || {};
+    window.api.producto = window.api.producto || {};
+    window.api.producto.listar = '@Url.Action("ListarParaPOS", "Productos")';
 
-            const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    $('#btnAgregarManual').on('click', function (e) {
+        e.preventDefault();
+        $('#modalBuscarProducto').modal('show');
+    });
 
-            function actualizarFechaHora() {
+    let typingTimer = null;
+    let productoSeleccionado = null;
+    let precioActual = 0;
 
-                //Actualiza Hora al registrar el primer producto o si no tiene
-                if (!(carrito.length === 0 || carrito.length === 1))
-                    return;
+    let buscandoProducto = false;
+    let ultimoCodigoPedido = null;
+    let reqProducto = null;
 
-                const ahora = new Date();
+    const norm = (x) => String(x ?? "").trim();
 
-                const fechaSql = ahora.toISOString().slice(0, 19);
-                // → "2025-12-24T11:42:30"
+    // ===== ESTADO POS EN MEMORIA =====
+    let carrito = [];
+    window.lineasVenta = carrito;
+    window.fechaVenta = new Date();
+    let indexLinea = 1;
+    let ingresoCantidadX = false;
+    let enterDesdeTecladoVirtual = false;
+    let lineaSeleccionada = null;
 
-                $('#fechaVenta').val(fechaSql);
+    (function () {
+        const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-                //window.fechaVenta = '2025-12-12';
-                //$('#fechaVenta').val(ahora);
+        function actualizarFechaHora() {
+            if (!(carrito.length === 0 || carrito.length === 1)) return;
 
-                const diaSemana = dias[ahora.getDay()];
-                const dia = ahora.getDate();
-                const mes = meses[ahora.getMonth()];
-                const anio = ahora.getFullYear();
-
-                const hora = String(ahora.getHours()).padStart(2, '0');
-                const minutos = String(ahora.getMinutes()).padStart(2, '0');
-
-                const formato = `${diaSemana} ${dia} de ${mes}, ${anio} · ${hora}:${minutos}`;
-
-                const span = document.getElementById('fechaHoraPOS');
-                if (span) {
-                    span.innerText = formato;
-                }
-            }
-
-            actualizarFechaHora();
-            setInterval(actualizarFechaHora, 60000); // refresca cada minuto
-
-        })();
-
-            //ABRIR CAJA
-
-        function obtenerFechaHoraActual() {
             const ahora = new Date();
+            const fechaSql = ahora.toISOString().slice(0, 19);
+            $('#fechaVenta').val(fechaSql);
 
-            const pad = n => n.toString().padStart(2, '0');
+            const diaSemana = dias[ahora.getDay()];
+            const dia = ahora.getDate();
+            const mes = meses[ahora.getMonth()];
+            const anio = ahora.getFullYear();
 
-            const fecha =
-                pad(ahora.getDate()) + '/' +
-                pad(ahora.getMonth() + 1) + '/' +
-                ahora.getFullYear() + ' ' +
-                pad(ahora.getHours()) + ':' +
-                pad(ahora.getMinutes());
+            const hora = String(ahora.getHours()).padStart(2, '0');
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
 
-            return fecha;
+            const formato = `${diaSemana} ${dia} de ${mes}, ${anio} · ${hora}:${minutos}`;
+
+            const span = document.getElementById('fechaHoraPOS');
+            if (span) span.innerText = formato;
         }
 
-            $(document).ready(function () {
+        actualizarFechaHora();
+        setInterval(actualizarFechaHora, 60000);
+    })();
 
-            const cajaAbierta = '@ViewBag.CajaAbierta'.toLowerCase() === 'true';
-
-                if (!cajaAbierta) {
-                    $('#fechaHoraApertura').val(obtenerFechaHoraActual());
-                    $('#modalAbrirCaja').modal('show');
-                }
-            });
-
-        function abrirCaja() {
-            const input = document.getElementById("montoInicial");
-
-            if (!input) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se encontró el campo Monto Inicial'
-                });
-                return;
-            }
-
-            let cajaInicio = parseFloat(input.value.replace(",", "."));
-
-            if (isNaN(cajaInicio) || cajaInicio <= 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Caja inicial',
-                    text: 'Ingrese un importe válido mayor a cero',
-                    confirmButtonColor: '#4e73df'
-                });
-                return;
-            }
-
-            $.ajax({
-                url: '@Url.Action("AbrirCaja", "Cajas")',
-                type: 'POST',
-                data: {
-                    cajaInicio: $("#montoInicial").val(),
-                    fechaHora: $("#fechaHoraApertura").val()
-                },
-                success: function (response) {
-
-                    if (response.ok) {
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Caja abierta',
-                            text: 'La caja se abrió correctamente',
-                            timer: 1200,
-                            showConfirmButton: false
-                        }).then(() => {
-                            $('#modalAbrirCaja').modal('hide');
-                            location.reload();
-                        });
-
-                    } else {
-
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'No se pudo abrir la caja',
-                            text: response.mensaje,
-                            confirmButtonColor: '#4e73df'
-                        });
-                    }
-                },
-                error: function () {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Ocurrió un error al intentar abrir la caja',
-                        confirmButtonColor: '#4e73df'
-                    });
-                }
-            });
-        }
-
-
-            //FIN ABRIR CAJA
-
-
-        // ================================
-        // BUSCAR PERSONA (POS)
-        // ================================
-        $(document).on('click', '#btnBuscarPersona', function () {
-
-            $('#contenedorModalPersona').load(window.api.persona.buscar, function () {
-
-                $('#modalBuscarPersona').modal('show');
-                cargarPersonas(); // carga inicial
-            });
-
+    // BUSCAR PERSONA
+    $(document).on('click', '#btnBuscarPersona', function () {
+        $('#contenedorModalPersona').load(window.api.persona.buscar, function () {
+            $('#modalBuscarPersona').modal('show');
+            cargarPersonas();
         });
+    });
 
+    $('#btnConsumidorFinal').on('click', function () {
+        $('#idPersona').val('@Entidades.Persona.idConsumidorFinal');
+        $('#razonSocial').val('Consumidor Final');
+    });
 
+    // BÚSQUEDA EN VIVO
+    $("#inputCodigo").on("keyup", function (e) {
+        let cod = this.value.trim().toUpperCase();
 
-        $('#btnConsumidorFinal').on('click', function () {
-
-            $('#idPersona').val('@Entidades.Persona.idConsumidorFinal');
-            $('#razonSocial').val('Consumidor Final');
-
-        });
-
-        // ================================
-        // BÚSQUEDA EN VIVO
-        // ================================
-        $("#inputCodigo").on("keyup", function (e) {
-
-            let cod = this.value.trim().toUpperCase();
-
-            // ⌨️ ENTER → cancelar debounce y pasar a cantidad
-            if (e.key === "Enter") {
-                clearTimeout(typingTimer);
-                terminarEscritura(cod, function () {
-                    // 👇 se ejecuta CUANDO el producto YA está cargado
-                    pasarAFocoCantidad();
-                });
-                return;
-            }
-
-            // ⛔ Si tiene X, no buscar (se procesa con Enter)
-            if (cod.includes("X")) {
-                mostrarSinCoincidencia();
-                clearTimeout(typingTimer);
-                return;
-            }
-
+        if (e.key === "Enter") {
             clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                terminarEscritura(cod);
-            }, 250);
-        });
+            return;
+        }
 
-        function terminarEscritura(codigo, callback = null) {
+        if (cod.includes("X")) {
+            mostrarSinCoincidencia();
+            clearTimeout(typingTimer);
+            return;
+        }
 
-            // 🔹 Sin código → estado inicial
-            if (!codigo || String(codigo).trim() === '') {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            terminarEscritura(cod);
+        }, 250);
+    });
+
+    document.addEventListener("keydown", function (e) {
+        if ($(".modal.show").length) return;
+
+        if (e.key === "End") {
+            e.preventDefault();
+            const btn = document.getElementById("btnFinalizar");
+            if (btn && !btn.disabled) btn.click();
+        }
+
+        if (e.key === "Home") {
+            e.preventDefault();
+            const inp = document.getElementById("inputCodigo");
+            if (inp) {
+                inp.focus();
+                try { inp.select(); } catch { }
+            }
+        }
+
+        if (e.key === "F9" || e.key === "F10") e.preventDefault();
+        else return;
+
+        if (e.key === "F9") {
+            const btn = document.getElementById("btnBuscarPersona");
+            if (btn && !btn.disabled) btn.click();
+            return;
+        }
+
+        if (e.key === "F10") {
+            const btn = document.getElementById("btnAgregarManual");
+            if (btn && !btn.disabled) btn.click();
+            return;
+        }
+    });
+
+        // ===============================
+        // Helpers robustos (X / x / × + float)
+        // ===============================
+        function normalizarEntrada(raw) {
+            return String(raw ?? "")
+                .trim()
+                .toUpperCase()
+                .replace(/×/g, "X"); // por si viene el símbolo de multiplicación
+        }
+
+        function parseFloatAR(s) {
+            const n = parseFloat(String(s ?? "").trim().replace(",", "."));
+            return Number.isFinite(n) ? n : NaN;
+        }
+
+        // Devuelve { cant, codigo } o null
+        function parseCantidadXCodigo(entrada) {
+            const s = normalizarEntrada(entrada);
+
+            // cantidad puede ser float: 1,25 o 1.25
+            // codigo: lo que venga después de la X (no vacío)
+            const m = s.match(/^([0-9]+(?:[.,][0-9]+)?)X(.+)$/);
+            if (!m) return null;
+
+            const cant = parseFloatAR(m[1]);
+            const codigo = String(m[2] ?? "").trim();
+
+            if (!codigo) return null;
+            if (!Number.isFinite(cant) || cant <= 0) return null;
+
+            return { cant, codigo};
+        }
+
+        // ===============================
+        // terminarEscritura (AHORA con flag ingresoCantidadXParam)
+        // ===============================
+        function terminarEscritura(codigo, callback = null, ingresoCantidadXParam = false) {
+
+            const codigoTrim = normalizarEntrada(codigo);
+
+            // Sin código → estado inicial
+            if (!codigoTrim) {
                 mostrarEsperando();
                 return;
             }
 
-            $.ajax({
-                url: window.buscarProductoUrl, // 👈 mejor práctica (desde Razor)
+            // Si existe un request anterior y lo estás usando, abortalo (opcional, no rompe si no existía)
+            if (typeof reqProducto !== "undefined" && reqProducto && reqProducto.readyState !== 4) {
+                reqProducto.abort();
+            }
+
+            // Si usás estas banderas en tu script, las mantenemos (no rompe si no existen)
+            if (typeof buscandoProducto !== "undefined") buscandoProducto = true;
+            if (typeof ultimoCodigoPedido !== "undefined") ultimoCodigoPedido = codigoTrim;
+
+            reqProducto = $.ajax({
+                url: window.buscarProductoUrl,
                 type: "GET",
                 dataType: "json",
                 data: {
-                    codigo: String(codigo).trim(),
-                    ingresoCantidadX: ingresoCantidadX
+                    codigo: codigoTrim,
+                    ingresoCantidadX: ingresoCantidadXParam
                 },
-                timeout: 3000, // ⏱ máximo de espera
+                timeout: 3000,
 
                 success: function (data) {
 
-                    if (data.success === false) {
+                    if (typeof buscandoProducto !== "undefined") buscandoProducto = false;
+
+                    // Si tenés control anti-respuesta vieja, respetalo (no rompe si no existe)
+                    if (typeof ultimoCodigoPedido !== "undefined") {
+                        const codigoActual = normalizarEntrada($("#inputCodigo").val());
+                        if (codigoActual !== ultimoCodigoPedido) return;
+                    }
+
+                    if (data && data.success === false) {
+                        productoSeleccionado = null;
                         mostrarSinCoincidencia(data.message);
+
+                        if (typeof callback === "function") callback(false, data);
                         return;
                     }
 
-                    // 🟢 Producto encontrado
+
                     productoSeleccionado = data;
                     mostrarProducto(data);
 
-                    if (typeof callback === "function") {
-                        callback();
+                    //validar si es EAN agregar
+                    if (typeof esEANValido === "function" && esEANValido(codigoTrim)) {
+                        $("#inputCantidad").val("1");
+                        document.querySelector("#inputCantidad").focus();
+                        manejarEnter();
                     }
+
+                    if (typeof callback === "function") callback();
                 },
 
                 error: function (xhr, status) {
 
-                    // ⏱ Timeout
+                    if (status === "abort") return;
+                    if (typeof buscandoProducto !== "undefined") buscandoProducto = false;
+
                     if (status === "timeout") {
                         mostrarErrorConexion("La conexión es lenta. Reintente.");
                         return;
                     }
 
-                    // 🌐 Sin internet
                     if (!navigator.onLine) {
                         mostrarErrorConexion("Sin conexión a Internet");
                         return;
                     }
 
-                    // 🔴 Error servidor / red
                     mostrarErrorConexion("No se pudo contactar al servidor");
                 }
             });
         }
 
+        // ===============================
+        // procesarCodigoConCantidad (DEVUELVE true si disparó auto-agregado)
+        // ===============================
+        function procesarCodigoConCantidad() {
 
-        function mostrarErrorConexion(msg) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Sin conexión',
-                text: msg,
-                allowOutsideClick: false
-            });
-        }
+            const input = document.getElementById("inputCodigo");
+            if (!input) return false;
 
-        // --------------------------------------------------------------------
-        //  ESTADOS DEL PANEL
-        // --------------------------------------------------------------------
+            const entrada = normalizarEntrada(input.value);
 
-        // PRODUCTO ENCONTRADO
-        function mostrarProducto(p) {
+            // 1) Formato: cantidadXcodigo  (2X123, 1.25X779, 1,25X779)
+            const parsed = parseCantidadXCodigo(entrada);
+            if (parsed) {
 
-            $("#prodNombre")
-                .text(p.nombre)
-                .removeClass("text-muted")
-                .addClass("fw-bold");
+                $("#inputCantidad").val(String(parsed.cant));
+                $("#inputCodigo").val(parsed.codigo);
 
-            $("#prodPrecio")
-                .text("$ " + p.precioKg.toLocaleString("es-AR"))
-                .removeClass("text-muted")
-                .addClass("fw-bold");
+                // auto agrega al terminar de buscar
+                terminarEscritura(parsed.codigo, function () {
+                    agregarProducto();
+                    mostrarEsperando();
+                }, true);
 
-            precioActual = p.precioKg;
-
-            $("#inputCantidad")
-                .prop("disabled", false)
-                //.val(p.pesable ? obtenerPesoBalanza() : "")
-                //.focus();
-
-            $("#prodSubtotal").text("$ 0,00");
-            calcularSubtotal();
-
-            $("#btnAgregarProducto").prop("disabled", false);
-        }
-
-
-        // NO HAY COINCIDENCIA
-        function mostrarSinCoincidencia(msg = "Sin coincidencia") {
-
-            productoSeleccionado = null;
-            precioActual = 0;
-
-            $("#prodNombre")
-                .text(msg)
-                .removeClass("fw-bold")
-                .addClass("text-muted");
-
-            $("#prodPrecio")
-                .text("")
-                .addClass("text-muted");
-
-            $("#prodSubtotal").text("$ 0,00");
-
-            $("#inputCantidad")
-                .prop("disabled", true)
-                .val("");
-
-            $("#btnAgregarProducto").prop("disabled", true);
-
-            $("#inputCodigo").focus();
-        }
-
-
-        // ESTADO INICIAL
-        function mostrarEsperando() {
-
-            productoSeleccionado = null;
-            precioActual = 0;
-
-            $("#prodNombre")
-                .text("Info producto...")
-                .removeClass("fw-bold")
-                .addClass("text-muted");
-
-            $("#prodPrecio").text("");
-
-            $("#prodSubtotal").text("$ 0,00");
-
-            $("#inputCantidad")
-                .prop("disabled", true)
-                .val("");
-
-            $("#btnAgregarProducto").prop("disabled", true);
-        }
-
-
-        // --------------------------------------------------------------------
-        // CALCULAR SUBTOTAL EN VIVO
-        // --------------------------------------------------------------------
-        $("#inputCantidad").on("input", calcularSubtotal);
-
-        function calcularSubtotal() {
-
-            let cant = parseFloat($("#inputCantidad").val().replace(",", "."));
-
-            if (isNaN(cant) || cant <= 0 || precioActual <= 0) {
-                $("#prodSubtotal").text("$ 0,00");
-                $("#btnAgregarProducto").prop("disabled", true);
-                return;
+                return true;
             }
 
-            let subtotal = cant * precioActual;
+            // 2) Si es EAN válido (escaneo / ingreso directo): auto agrega con cantidad 1
+            //    OJO: esto mantiene tu comportamiento anterior (scanner => agrega 1)
+            if (typeof esEANValido === "function" && esEANValido(entrada)) {
 
-            $("#prodSubtotal").text(
-                "$ " + subtotal.toLocaleString("es-AR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })
-            );
+                $("#inputCantidad").val("1");
+                $("#inputCodigo").val(entrada);
 
-            $("#btnAgregarProducto").prop("disabled", false);
-        }
+                terminarEscritura(entrada, function () {
+                    agregarProducto();
+                    mostrarEsperando();
+                }, true);
 
-
-        // --------------------------------------------------------------------
-        // CALCULAR TOTAL EN VIVO
-        // --------------------------------------------------------------------
-        function recalcularTotal() {
-            let total = 0;
-
-            carrito.forEach(l => {
-
-                if (!l.anulado) {
-                    // l.subtotal viene como "$ 123.45"
-                    const valor = parseFloat(
-                        l.subtotal.replace("$", "").replace(",", ".")
-                    );
-
-                    if (!isNaN(valor)) {
-                        total += valor;
-                    }
-                }
-            });
-
-            $("#lblSubtotal").text(
-                `$ ${total.toFixed(2).replace(".", ",")}`
-            );
-        }
-
-        function obtenerTotalVenta() {
-
-            let texto = $('#lblSubtotal').text() || '0';
-
-            // Limpia símbolos y convierte a número
-            texto = texto
-                .replace('$', '')
-                .replace(/\./g, '')
-                .replace(',', '.')
-                .trim();
-
-            let total = parseFloat(texto);
-
-            return isNaN(total) ? 0 : total;
-        }
-
-        // ====================================================
-        // FOCO EN CANTIDAD TODO: VALIDAR SI EL PRODUCTO EXISTE
-        // ====================================================
-        $("#inputCodigo").on("keydown", function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                clearTimeout(typingTimer); // 🔥 CLAVE (cancelar debounce)
-                enterDesdeTecladoVirtual = false;
-                manejarEnter();
-            }
-        });
-
-
-        // ====================================================
-        // BUSCAR PRODUCTO (ya lo usás)
-        // ====================================================
-        function seleccionarProducto(data) {
-            productoSeleccionado = data;
-        }
-
-        // ====================================================
-        // AGREGAR CUANDO PRESIONA ENTER EN CANTIDAD
-        // ====================================================
-        $("#inputCantidad").on("keydown", function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                agregarProducto();
-            }
-        });
-
-        $("#btnAgregarProducto").on("click", function () {
-            agregarProducto();
-        });
-
-        // ====================================================
-        // FUNCIÓN PRINCIPAL PARA AGREGAR
-        // ====================================================
-        function agregarProducto() {
-
-            if (!productoSeleccionado) {
-                alert("Selecciona un producto primero");
-                volverACodigo();
-                return;
+                return true;
             }
 
-            let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
-
-            if (isNaN(cantidad) || cantidad <= 0) {
-                alert("Cantidad inválida");
-                return;
-            }
-            // ===== SIMULACIÓN BACKEND =====
-
-            const subtotal = cantidad * productoSeleccionado.precioKg;
-
-            const linea = {
-                index: indexLinea++,
-                producto: productoSeleccionado.nombre,
-                codigo: productoSeleccionado.codigo,
-                cant: cantidad.toFixed(3),
-                precio: `$ ${productoSeleccionado.precioKg.toFixed(2)}`,
-                precioOriginal: `$ ${productoSeleccionado.precioOriginal.toFixed(2)}`,
-                subtotal: `$ ${(subtotal).toFixed(2)}`,
-                bonificacion: 0,
-                anulado: false,
-                balanza: productoSeleccionado.balanza
-            };
-
-            carrito.push(linea);
-
-            // simula respuesta del backend
-            const r = {
-                ok: true,
-                lineas: carrito
-            };
-
-            // mismo flujo que AJAX success
-            renderTablaProductos(r.lineas);
-
-            setTimeout(scrollPantallaMobile, 50);
-
-            scrollTablaAlFinal();
-            scrollPantallaMobile();
-
-            // recalcular total
-            recalcularTotal();
-            beep();
-            navigator.vibrate?.(80);
-
-            // limpiar campos
-            $("#inputCodigo").val("").focus();
-            $("#inputCantidad").val("");
-            $("#prodSubtotal").text("$ 0,00");
-
-            hayVentaEnCurso = true;
-            productoSeleccionado = null;
-            mostrarEsperando();
-
+            return false; // no era auto-agregado
         }
 
-        // ====================================================
-        // RENDER DE LA TABLA (mantiene tu diseño)
-        // ====================================================
-        function renderTablaProductos(lineas) {
-
-            let tbody = $("#tablaItems");
-            tbody.empty();
-
-            if (!lineas || lineas.length === 0) {
-                tbody.append(`
-                                <tr id="filaVacia">
-                                    <td class="text-muted text-center py-3">
-                                        No hay productos agregados
-                                    </td>
-                                </tr>
-                            `);
-                return;
-            }
-
-            lineas.forEach(l => {
-
-                const claseAnulada = l.anulado ? 'fila-anulada' : '';
-                const bonificacion = l.bonificacion == 0 ? '' : (l.bonificacion > 0 ?
-                    ' | Bonif:' + l.bonificacion + '%' :
-                    ' | Recargo:' + (l.bonificacion * -1) + '%')
-                tbody.append(`
-                    <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
-                        <td>
-                            <div class="fw-bold">
-                                #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
-                            </div>
-
-                            <div class="d-flex justify-content-between item-detalle">
-                                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}</span>
-                                <span class="fw-bold">${l.subtotal}</span>
-                            </div>
-                        </td>
-                    </tr>
-                `);
-            });
-
-        }
-
-        // Fullscreen toggle
-        document.getElementById('btn-toggle-fullscreen').addEventListener('click', () => {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-            else document.exitFullscreen();
-        });
-
-        function scrollTablaAlFinal() {
-            const zonaTabla = document.querySelector('.zona-tabla');
-            if (!zonaTabla) return;
-
-            zonaTabla.scrollTo({
-                top: zonaTabla.scrollHeight,
-                behavior: 'smooth' // podés usar 'auto' si no querés animación
-            });
-        }
-
-        //function scrollPantallaMobile() {
-
-        //    if (!window.matchMedia('(max-width: 576px)').matches) {
-        //        return; // desktop → no hace nada
-        //    }
-
-        //    const anchor = scanning ? document.getElementById('btnAgregarProducto') : document.getElementById('pos-bottom-anchor');
-        //    if (!anchor) return;
-
-        //    anchor.scrollIntoView({
-        //        behavior: 'smooth',
-        //        block: 'end'
-        //    });
-        //}
-
-        function scrollPantallaMobile() {
-
-            // Solo toca el scroll en mobile
-            if (!window.matchMedia('(max-width: 576px)').matches) return;
-
-            const anchor = scanning
-                ? document.getElementById('btnAgregarProducto')
-                : document.getElementById('pos-bottom-anchor');
-
-            if (!anchor) return;
-
-            // Desplazar suavemente hacia el anchor
-            anchor.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest' // evita recortes raros
-            });
-        }
-
-
-        let hayVentaEnCurso = false; // ponelo en true cuando haya algo cargado
-
-        window.addEventListener("beforeunload", function (e) {
-
-            if (!hayVentaEnCurso) return;
-
-            e.preventDefault();
-            e.returnValue = ""; // 👈 obligatorio para que aparezca el cartel
-        });
-
-
-        ////TECLADO
-        let inputActivo = null;
-
-        document.addEventListener("DOMContentLoaded", () => {
-            inputActivo = document.getElementById("inputCodigo");
-            inputActivo.focus();
-        });
-
-        document.addEventListener("focusin", e => {
-            if (e.target.tagName === "INPUT") {
-                inputActivo = e.target;
-            }
-        });
-
-        // Manejo de teclas del teclado virtual
-        document.querySelectorAll(".btn-key").forEach(btn => {
-            btn.addEventListener("mousedown", e => {
-                e.preventDefault(); // 👈 ESTA LÍNEA LO ARREGLA TODO
-            });
-
-            btn.addEventListener("click", () => {
-                const tecla = btn.innerText.trim();
-                if (!inputActivo) return;
-
-                switch (tecla) {
-                    case "←":
-                        borrarCaracter();
-                        break;
-
-                    case "Enter":
-                        enterDesdeTecladoVirtual = true;
-                        manejarEnter();
-                        break;
-
-                    case "×":
-                        escribirX();
-                        break;
-                    case "g":
-                        escribirG();
-                        break;
-
-                    default:
-                        escribirCaracter(tecla);
-                        break;
-                }
-            });
-        });
-
-        function volverACodigo() {
-            $("#inputCodigo").focus().select();
-        }
-
-        function pasarAFocoCantidad() {
-            $("#inputCantidad").focus().select();
-        }
-
-        function escribirCaracter(valor) {
-            if (!inputActivo) return;
-
-            if (inputActivo.id === "inputCantidad") {
-
-                // solo números o punto
-                if (!/^[0-9.]$/.test(valor)) return;
-
-                // evitar doble punto
-                if (valor === "." && inputActivo.value.includes(".")) return;
-
-                // si empieza con punto, anteponer 0
-                if (valor === "." && inputActivo.value === "") {
-                    inputActivo.value = "0";
-                }
-            }
-
-            inputActivo.value += valor;
-
-            //si cantidad tiene el foco
-            if (inputActivo.id === "inputCantidad")
-                calcularSubtotal();
-            else
-                terminarEscritura(inputActivo.value);
-        }
-
-        function escribirX() {
-            if (inputActivo.id !== "inputCodigo") return;
-
-            // Solo una X
-            if (inputActivo.value.includes("X")) return;
-
-            inputActivo.value += "X";
-        }
-
-        function escribirG() {
-            if (inputActivo.id !== "inputCodigo") return;
-
-            // Solo una X
-            if (inputActivo.value.includes("G")) return;
-
-            inputActivo.value += "G";
-        }
-
-        function borrarCaracter() {
-            if (!inputActivo) return;
-
-            inputActivo.value = inputActivo.value.slice(0, -1);
-            terminarEscritura(inputActivo.value);
-        }
-
-
+        // ===============================
+        // manejarEnter (usa procesarCodigoConCantidad robusto)
+        // ===============================
         function manejarEnter() {
 
             if (!inputActivo) return;
 
+            // ENTER en cantidad => agregar
             if (inputActivo.id === "inputCantidad") {
                 agregarProducto();
                 enterDesdeTecladoVirtual = false;
                 return;
             }
 
+            // ENTER en código
             if (enterDesdeTecladoVirtual || inputActivo.id === "inputCodigo") {
-                procesarCodigoConCantidad();
 
-                if (ingresoCantidadX) {
-                    ingresoCantidadX = false;
-                    enterDesdeTecladoVirtual = false;
+                // 1) Intentar auto-agregado por cantidadXcodigo o EAN
+                const auto = procesarCodigoConCantidad();
+                enterDesdeTecladoVirtual = false;
+
+                if (auto) return;
+
+                // 2) Búsqueda normal (sin auto-agregado)
+                const codigoInput = normalizarEntrada($("#inputCodigo").val());
+
+                // si aún contiene X, es que escribieron mal (ej: "2X" o "X123")
+                if (codigoInput.includes("X")) {
+                    mostrarSinCoincidencia("Formato inválido (use 2X123)");
                     return;
                 }
 
-                //verificar si el producto encontrado es igual al valor de inputCodigo
-                //estaba verificacion es por la lentitud del servicio en la respuesta del codigo
-                const codigoInput = String($('#inputCodigo').val() || '').trim();
-                const codigoProducto = String(productoSeleccionado.codigo || '').trim();
+                if (typeof buscandoProducto !== "undefined" && buscandoProducto) return;
 
-                // 🔴 Validación clave
-                if (codigoProducto !== codigoInput) {
-                    mostrarSinCoincidencia();
-                    productoSeleccionado = null;
-                    return;
-                }
+                terminarEscritura(codigoInput, function () {
 
-                pasarAFocoCantidad();
-                return;
-            }
+                    const codigoActual = normalizarEntrada($("#inputCodigo").val());
+                    const codigoProducto = normalizarEntrada(productoSeleccionado?.codigo);
 
-        }
+                    if (!codigoProducto || codigoProducto !== codigoActual) {
+                        mostrarSinCoincidencia();
+                        productoSeleccionado = null;
+                        return;
+                    }
 
-
-        function procesarCodigoConCantidad() {
-
-            const codigoInput = document.getElementById("inputCodigo");
-            let valor = codigoInput.value.toUpperCase();
-
-            //si no contiene X validar que no sea EAN
-            if (!valor.includes("X")) {
-                esEAN = esEANValido(valor);
-                if (!esEAN)
-                    return;
-            }
-
-            valor = (esEAN && !valor.includes("X")) ? "1X" + valor : valor;
-
-            const partes = valor.split("X");
-            if (partes.length !== 2) return;
-
-            const cantidad = partes[0];
-            const codigo = partes[1];
-
-            if (!cantidad || !codigo) return;
-
-            $("#inputCantidad").val(cantidad);
-            codigoInput.value = codigo;
-
-            ingresoCantidadX = true;
-            terminarEscritura(codigo, function () {
-                // 👇 se ejecuta CUANDO el producto YA está cargado
-                agregarProducto();
-                mostrarEsperando();
-            });
-
-            esEAN = false;
-            //ingresoCantidadX = true; 29/12 lo cambie arriba para pasar el parametar a buscarProducto
-        }
-
-
-        $('#btnFinalizar').on('click', function () {
-            if (carrito.length === 0) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Venta vacía',
-                    text: 'Debe agregar al menos un producto'
+                    pasarAFocoCantidad();
                 });
 
                 return;
             }
+        }
 
-            $('#modalFormaPago').modal('show');
-            scrollPantallaMobile();
+
+    function mostrarErrorConexion(msg) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Sin conexión',
+            text: msg,
+            allowOutsideClick: false
         });
+    }
 
-        function mostrarModalPostVenta(ventaId) {
-            $('#modalPostVenta').data('venta-id', ventaId).modal('show');
+    function mostrarProducto(p) {
+        $("#prodNombre").text(p.nombre).removeClass("text-muted").addClass("fw-bold");
+        $("#prodPrecio").text("$ " + p.precioKg.toLocaleString("es-AR")).removeClass("text-muted").addClass("fw-bold");
+
+        precioActual = p.precioKg;
+
+        $("#inputCantidad").prop("disabled", false);
+        $("#prodSubtotal").text("$ 0,00");
+        calcularSubtotal();
+        $("#btnAgregarProducto").prop("disabled", false);
+    }
+
+    function mostrarSinCoincidencia(msg = "Sin coincidencia") {
+        productoSeleccionado = null;
+        precioActual = 0;
+
+        $("#prodNombre").text(msg).removeClass("fw-bold").addClass("text-muted");
+        $("#prodPrecio").text("").addClass("text-muted");
+        $("#prodSubtotal").text("$ 0,00");
+
+        $("#inputCantidad").prop("disabled", true).val("");
+        $("#btnAgregarProducto").prop("disabled", true);
+
+        $("#inputCodigo").focus();
+    }
+
+    function mostrarEsperando() {
+        productoSeleccionado = null;
+        precioActual = 0;
+
+        $("#prodNombre").text("Info producto...").removeClass("fw-bold").addClass("text-muted");
+        $("#prodPrecio").text("");
+        $("#prodSubtotal").text("$ 0,00");
+        $("#inputCantidad").prop("disabled", true).val("");
+        $("#btnAgregarProducto").prop("disabled", true);
+    }
+
+    function mostrarBuscando(msg = "Buscando...") {
+        productoSeleccionado = null;
+        precioActual = 0;
+
+        $("#prodNombre").text(msg).removeClass("fw-bold").addClass("text-muted");
+        $("#prodPrecio").text("").addClass("text-muted");
+        $("#prodSubtotal").text("$ 0,00");
+        $("#inputCantidad").prop("disabled", true).val("");
+        $("#btnAgregarProducto").prop("disabled", true);
+    }
+
+    $("#inputCantidad").on("input", calcularSubtotal);
+
+    function calcularSubtotal() {
+        let cant = parseFloat($("#inputCantidad").val().replace(",", "."));
+
+        if (isNaN(cant) || cant <= 0 || precioActual <= 0) {
+            $("#prodSubtotal").text("$ 0,00");
+            $("#btnAgregarProducto").prop("disabled", true);
+            return;
         }
 
+        let subtotal = cant * precioActual;
 
-        function esPantallaChica() {
-            return window.innerWidth < 768; // Bootstrap md breakpoint
-        }
+        $("#prodSubtotal").text(
+            "$ " + subtotal.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        );
 
-        function configurarInputsPOS() {
-            if (esPantallaChica()) {
-                // Bloquea teclado nativo
-                $('#inputCodigo, #inputCantidad')
-                    .attr('readonly', true)
-                    .attr('inputmode', 'none');
-            } else {
-                // Permite teclado normal
-                $('#inputCodigo, #inputCantidad')
-                    .removeAttr('readonly')
-                    .removeAttr('inputmode');
+        $("#btnAgregarProducto").prop("disabled", false);
+    }
+
+    function recalcularTotal() {
+        let total = 0;
+
+        carrito.forEach(l => {
+            if (!l.anulado) {
+                const valor = parseFloat(l.subtotal.replace("$", "").replace(",", "."));
+                if (!isNaN(valor)) total += valor;
             }
+        });
+
+        $("#lblSubtotal").text(`$ ${total.toFixed(2).replace(".", ",")}`);
+    }
+
+    // ENTER en código
+    $("#inputCodigo").on("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            clearTimeout(typingTimer);
+            enterDesdeTecladoVirtual = false;
+            manejarEnter();
+        }
+    });
+
+    // ENTER en cantidad
+    $("#inputCantidad").on("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            agregarProducto();
+        }
+    });
+
+    $("#btnAgregarProducto").on("click", function () {
+        agregarProducto();
+    });
+
+    // ====================================================
+    // ✅ AGREGAR PRODUCTO (con scroll correcto)
+    // ====================================================
+    function agregarProducto() {
+        if (!productoSeleccionado) {
+            //alert("Selecciona un producto primero");
+            volverACodigo();
+            return;
         }
 
-        // Ejecutar al cargar la página
-        $(document).ready(configurarInputsPOS);
+        let cantidad = parseFloat($("#inputCantidad").val().replace(",", "."));
+        if (isNaN(cantidad) || cantidad <= 0) {
+            alert("Cantidad inválida");
+            return;
+        }
 
-        // Reconfigurar al cambiar tamaño de pantalla
-        $(window).on('resize', configurarInputsPOS);
+        const subtotal = cantidad * productoSeleccionado.precioKg;
 
+        if (!Number.isFinite(subtotal) || subtotal <= 0) {
+            alert("No se puede agregar: el producto no tiene precio cargado (debe ser mayor a 0).");
+            volverACodigo(); // opcional: vuelve al input código
+            return;
+        }
 
-        ////////////////////
-        //MODAL LINEA VENTA - modalLineaVenta
-        ////////////////////
+        const linea = {
+            index: indexLinea++,
+            producto: productoSeleccionado.nombre,
+            codigo: productoSeleccionado.codigo,
+            cant: cantidad.toFixed(3),
+            precio: `$ ${productoSeleccionado.precioKg.toFixed(2)}`,
+            precioOriginal: `$ ${productoSeleccionado.precioOriginal.toFixed(2)}`,
+            subtotal: `$ ${(subtotal).toFixed(2)}`,
+            bonificacion: 0,
+            anulado: false,
+            balanza: productoSeleccionado.balanza
+        };
 
-        $(document).on("click", ".fila-item", function () {
+        carrito.push(linea);
 
-            // mostrar botones
-            $("#btnEliminarItem").removeClass("d-none");
-            $("#btnMostrarBonificar").removeClass("d-none");
+        renderTablaProductos(carrito);
+        recalcularTotal();
+        beep();
+        navigator.vibrate?.(80);
 
-            const index = $(this).data("id");
-
-            lineaSeleccionada = carrito.find(l => l.index === index);
-            if (!lineaSeleccionada) return;
-
-            cargarModalLineaVenta(lineaSeleccionada);
+        // ✅ Scroll/foco al último agregado (cuando el DOM ya pintó)
+        requestAnimationFrame(() => {
+            scrollTablaAlFinal();
+            // mantiene tu experiencia mobile (si aplica)
+            setTimeout(scrollPantallaMobile, 50);
         });
 
 
-        function cargarModalLineaVenta(linea) {
+        // limpiar campos
+        $("#inputCodigo").val("").focus();
+        $("#inputCantidad").val("");
+        $("#prodSubtotal").text("$ 0,00");
 
-            $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
-            $("#modalCantidad").val(linea.cant);
-            $("#modalPrecio").val(linea.precioOriginal.replace("$", "").trim());
-            $("#modalSubtotal").val(linea.subtotal.replace("$", "").trim());
+        hayVentaEnCurso = true;
+        productoSeleccionado = null;
+        mostrarEsperando();
+    }
 
-            const bonif = parseFloat(linea.bonificacion) || 0;
+    function renderTablaProductos(lineas) {
+        let tbody = $("#tablaItems");
+        tbody.empty();
 
-            if (bonif !== 0) {
-                let texto = 'Total';
-                texto += bonif > 0
-                    ? ` | Desc:${bonif}%`
-                    : ` | Recargo:${Math.abs(bonif)}%`;
+        if (!lineas || lineas.length === 0) {
+            tbody.append(`
+                <tr id="filaVacia">
+                    <td class="text-muted text-center py-3">
+                        No hay productos agregados
+                    </td>
+                </tr>
+            `);
+            return;
+        }
 
+        lineas.forEach(l => {
+            const claseAnulada = l.anulado ? 'fila-anulada' : '';
+            const bonificacion = l.bonificacion == 0 ? '' : (l.bonificacion > 0 ?
+                ' | Bonif:' + l.bonificacion + '%' :
+                ' | Recargo:' + (l.bonificacion * -1) + '%');
+
+            tbody.append(`
+                <tr data-id="${l.index}" class="fila-item ${claseAnulada}">
+                    <td>
+                        <div class="fw-bold">
+                            #${l.index} <strong>${l.producto}</strong> (cod: ${l.codigo})
+                        </div>
+
+                        <div class="d-flex justify-content-between item-detalle">
+                            <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.cant} x ${l.precio} ${bonificacion}</span>
+                            <span class="fw-bold">${l.subtotal}</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        });
+
+        // ✅ marca visual del último item
+        tbody.find("tr.fila-item").removeClass("fila-ultimo");
+        tbody.find("tr.fila-item:last").addClass("fila-ultimo");
+    }
+
+        function scrollTablaAlFinal() {
+            const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+
+            const zonaTabla = document.querySelector('.carrito-col .zona-tabla');
+            const tbody = document.getElementById('tablaItems');
+            if (!tbody) return;
+
+            const ultimaFila = tbody.querySelector('tr.fila-item:last-child');
+            if (!ultimaFila) return;
+
+            // ✅ Marca visual + foco real (sin “saltar” el scroll)
+            tbody.querySelectorAll('tr.fila-item').forEach(tr => tr.classList.remove('fila-ultimo', 'pos-last-added'));
+            ultimaFila.classList.add('fila-ultimo', 'pos-last-added');
+
+            // hacerlo focusable y darle foco (foco real en el último agregado)
+            ultimaFila.tabIndex = -1;
+            try { ultimaFila.focus({ preventScroll: true }); }
+            catch { try { ultimaFila.focus(); } catch { } }
+
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const behavior = reduceMotion ? 'auto' : 'smooth';
+
+            if (isDesktop && zonaTabla) {
+                // ✅ Desktop: scroll interno SOLO en zona-tabla (Total no se pierde)
+                zonaTabla.scrollTo({ top: zonaTabla.scrollHeight, behavior });
+            } else {
+                // ✅ Responsive: se scrollea la página al último item
+                ultimaFila.scrollIntoView({ behavior, block: 'start' });
+            }
+
+            // quitar resaltado al rato (opcional)
+            setTimeout(() => ultimaFila.classList.remove('pos-last-added'), 900);
+
+            volverACodigo();
+        }
+
+
+    function scrollPantallaMobile() {
+        if (!window.matchMedia('(max-width: 576px)').matches) return;
+
+        const anchor = scanning
+            ? document.getElementById('btnAgregarProducto')
+            : document.getElementById('pos-bottom-anchor');
+
+        if (!anchor) return;
+
+        anchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    let hayVentaEnCurso = false;
+    window.addEventListener("beforeunload", function (e) {
+        if (!hayVentaEnCurso) return;
+        e.preventDefault();
+        e.returnValue = "";
+    });
+
+    // TECLADO
+    let inputActivo = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        inputActivo = document.getElementById("inputCodigo");
+        inputActivo.focus();
+    });
+
+    document.addEventListener("focusin", e => {
+        if (e.target.tagName === "INPUT") inputActivo = e.target;
+    });
+
+    document.querySelectorAll(".btn-key").forEach(btn => {
+        btn.addEventListener("mousedown", e => { e.preventDefault(); });
+
+        btn.addEventListener("click", () => {
+            const tecla = btn.innerText.trim();
+            if (!inputActivo) return;
+
+            switch (tecla) {
+                case "←": borrarCaracter(); break;
+                case "Enter":
+                    enterDesdeTecladoVirtual = true;
+                    manejarEnter();
+                    break;
+                case "×": escribirX(); break;
+                case "g":
+                case "G": escribirG(); break;
+                default: escribirCaracter(tecla); break;
+            }
+        });
+    });
+
+    function volverACodigo() { $("#inputCodigo").focus().select(); }
+    function pasarAFocoCantidad() { $("#inputCantidad").focus().select(); }
+
+    function escribirCaracter(valor) {
+        if (!inputActivo) return;
+
+        if (inputActivo.id === "inputCantidad") {
+            if (!/^[0-9.]$/.test(valor)) return;
+            if (valor === "." && inputActivo.value.includes(".")) return;
+            if (valor === "." && inputActivo.value === "") inputActivo.value = "0";
+        }
+
+        inputActivo.value += valor;
+
+        if (inputActivo.id === "inputCantidad")
+            calcularSubtotal();
+        else terminarEscritura(inputActivo.value);
+    }
+
+    function escribirX() {
+        if (inputActivo.id !== "inputCodigo") return;
+        if (inputActivo.value.includes("X")) return;
+        inputActivo.value += "X";
+    }
+
+    function escribirG() {
+        if (inputActivo.id !== "inputCodigo") return;
+        if (inputActivo.value.includes("G")) return;
+        inputActivo.value += "G";
+    }
+
+    function borrarCaracter() {
+        if (!inputActivo) return;
+        inputActivo.value = inputActivo.value.slice(0, -1);
+        terminarEscritura(inputActivo.value);
+    }
+
+        ////////////////////
+        // MODAL LINEA VENTA - modalLineaVenta
+        // - Bonificar (precio / porcentaje)
+        // - Cantidad con decimales (coma o punto)
+        // - Botones + / - suman/restan 1 (parte entera)
+        // - Aplicar cantidad actualiza la línea y la tabla
+        ////////////////////
+
+        ////////////////////
+        // MODAL LINEA VENTA - modalLineaVenta
+        // - Bonificar (precio / porcentaje)
+        // - Cantidad editable con decimales (coma o punto)
+        // - + / - suman/restan 1 manteniendo decimales
+        // - Validación SOLO al aplicar cantidad
+        ////////////////////
+
+        if (!window.__posLineaVentaModalInit) {
+            window.__posLineaVentaModalInit = true;
+
+            if (typeof window.lineaSeleccionada === "undefined") window.lineaSeleccionada = null;
+
+            // ---------- helpers float (precio / subtotal) ----------
+            function fnum(v) {
+                return parseFloat(
+                    String(v ?? "")
+                        .replace(/\$/g, "")
+                        .trim()
+                        .replace(",", ".")
+                ) || 0.0;
+            }
+
+            // ===== Cantidad (editable) =====
+            const CANT_DECIMALES = 3;
+
+            function roundCant(n) {
+                const p = Math.pow(10, CANT_DECIMALES);
+                return Math.round(n * p) / p;
+            }
+
+            // Convierte "1,150" o "1.150" => 1.15
+            // NO fuerza formato ni mínimo: eso se valida al aplicar
+            function parseCant(v) {
+                let s = String(v ?? "").trim();
+
+                // permitir solo dígitos + coma/punto
+                s = s.replace(/[^0-9.,]/g, "");
+                if (s === "") return NaN;
+
+                // tomar el primer separador como decimal y borrar los demás
+                const m = s.match(/[.,]/);
+                if (m) {
+                    const i = s.indexOf(m[0]);
+                    const intPart = s.slice(0, i).replace(/[.,]/g, "");
+                    const decPart = s.slice(i + 1).replace(/[.,]/g, "");
+                    s = intPart + "." + decPart;
+                } else {
+                    s = s.replace(/[.,]/g, "");
+                }
+
+                const n = parseFloat(s);
+                return isFinite(n) ? n : NaN;
+            }
+
+            // Mostrar con coma y 3 decimales
+            function fmtCant(n) {
+                n = roundCant(n);
+                return n.toFixed(CANT_DECIMALES).replace(".", ",");
+            }
+
+            function precioLineaAplicadoNum() {
+                let p = fnum(window.lineaSeleccionada?.precio);
+                if (p > 0) return p;
+
+                p = fnum(window.lineaSeleccionada?.precioOriginal ?? 0);
+                if (p > 0) return p;
+
+                return fnum($("#modalPrecio").val());
+            }
+
+            // Preview de subtotal SIN tocar el texto del input (para no mover el cursor)
+            function previewSubtotalDesdeCantidad() {
+                if (!window.lineaSeleccionada) return;
+
+                const raw = String($("#modalCantidad").val() ?? "").trim();
+                if (raw === "") {
+                    $("#modalSubtotal").val("");
+                    return;
+                }
+
+                const cant = parseCant(raw);
+                if (!isFinite(cant) || cant < 0) {   // permito tipear cualquier cosa "numérica"; si <0, invalido preview
+                    $("#modalSubtotal").val("");
+                    return;
+                }
+
+                // si bonificar está visible, recalculo desde el modo actual (pero sin formatear cantidad)
+                if ($("#bloqueBonificar").is(":visible")) {
+                    if ($("#chkPorcentaje").is(":checked")) syncDesdePorcentaje();
+                    else syncDesdePrecio();
+                    return;
+                }
+
+                const subtotal = precioLineaAplicadoNum() * cant;
+                $("#modalSubtotal").val(subtotal.toFixed(2));
+            }
+
+            function setModoBonificacion(porcentajeMode) {
+                $("#chkPorcentaje").prop("checked", porcentajeMode);
+
+                $("#txtPorcentaje").prop("readonly", !porcentajeMode);
+                $("#txtPrecioKg").prop("readonly", porcentajeMode);
+
+                if (porcentajeMode) {
+                    $("#lblTipoPorcentaje").text("% bonificación (- para recargo)");
+                    requestAnimationFrame(() => $("#txtPorcentaje").focus().select());
+                    syncDesdePorcentaje();
+                } else {
+                    $("#lblTipoPorcentaje").text("% bonificación");
+                    requestAnimationFrame(() => $("#txtPrecioKg").focus().select());
+                    syncDesdePrecio();
+                }
+            }
+
+            function syncDesdePrecio() {
+                if (!window.lineaSeleccionada) return;
+
+                const precioLista = fnum($("#modalPrecio").data("precio"));
+                const precioNuevo = fnum($("#txtPrecioKg").val());
+
+                const cant = parseCant($("#modalCantidad").val());
+                if (!precioLista || !precioNuevo || !isFinite(cant) || cant <= 0) {
+                    $("#txtPorcentaje").val("");
+                    $("#modalSubtotal").val("");
+                    return;
+                }
+
+                let pct = (1 - (precioNuevo / precioLista)) * 100.0;
+                pct = Math.round(pct * 100) / 100.0;
+
+                $("#txtPorcentaje").val(pct);
+
+                if (pct > 0) $("#lblTipoPorcentaje").text("% bonificación");
+                else if (pct < 0) $("#lblTipoPorcentaje").text("% recargo");
+                else $("#lblTipoPorcentaje").text("%");
+
+                $("#modalSubtotal").val((precioNuevo * cant).toFixed(2));
+            }
+
+            function syncDesdePorcentaje() {
+                if (!window.lineaSeleccionada) return;
+
+                const precioLista = fnum($("#modalPrecio").data("precio"));
+                const pct = fnum($("#txtPorcentaje").val());
+
+                const cant = parseCant($("#modalCantidad").val());
+                if (!precioLista || !isFinite(cant) || cant <= 0) {
+                    $("#txtPrecioKg").val("");
+                    $("#modalSubtotal").val("");
+                    return;
+                }
+
+                const precioNuevo = precioLista * (1 - (pct / 100.0));
+                const subtotal = precioNuevo * cant;
+
+                $("#txtPrecioKg").val(precioNuevo.toFixed(2));
+                $("#modalSubtotal").val(subtotal.toFixed(2));
+
+                if (pct > 0) $("#lblTipoPorcentaje").text("% bonificación");
+                else if (pct < 0) $("#lblTipoPorcentaje").text("% recargo");
+                else $("#lblTipoPorcentaje").text("%");
+            }
+
+            function scrollLineaVisible(idLinea) {
+                const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
+                if (!fila) return;
+
+                const isDesktop = window.matchMedia("(min-width: 992px)").matches;
+                const zonaTabla = document.querySelector(".carrito-col .zona-tabla");
+
+                fila.tabIndex = -1;
+                try { fila.focus({ preventScroll: true }); } catch { }
+
+                if (isDesktop && zonaTabla) fila.scrollIntoView({ block: "nearest" });
+                else fila.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            // ---------- abrir modal ----------
+            $(document).on("click", "#tablaItems tr.fila-item", function () {
+
+                $("#btnEliminarItem").removeClass("d-none");
+                $("#btnMostrarBonificar").removeClass("d-none");
+                $("#btnMostrarCantidad").removeClass("d-none");
+
+                const index = parseInt($(this).data("id"), 10);
+                window.lineaSeleccionada = carrito.find(l => l.index === index);
+                if (!window.lineaSeleccionada) return;
+
+                cargarModalLineaVenta(window.lineaSeleccionada);
+            });
+
+            window.cargarModalLineaVenta = function (linea) {
+
+                $("#modalProducto").val(`#${linea.index} ${linea.producto}`);
+
+                // mostramos cantidad con formato (pero editable después)
+                const cantNum = parseCant(linea.cant);
+                $("#modalCantidad").val(isFinite(cantNum) ? fmtCant(cantNum) : String(linea.cant ?? ""));
+
+                const precioListaNum = fnum(linea.precioOriginal ?? linea.precio);
+                $("#modalPrecio").val(String(linea.precioOriginal ?? linea.precio).replace("$", "").trim());
+                $("#modalPrecio").data("precio", precioListaNum);
+
+                $("#modalSubtotal").val(String(linea.subtotal).replace("$", "").trim());
+
+                const bonif = fnum(linea.bonificacion);
+                let texto = "Total";
+                if (bonif !== 0) texto += bonif > 0 ? ` | Desc:${bonif}%` : ` | Recargo:${Math.abs(bonif)}%`;
                 $("#lblTotalModalLineaVenta").text(texto);
-            }
 
-            // reset estado
-            $("#bloqueBonificar").hide();
-            $("#chkPorcentaje").prop("checked", false);
-            $("#txtPorcentaje").val("0").prop("disabled", true);
-            //$("#txtPrecioKg").val($("#modalPrecio").val());
+                $("#txtPrecioKg").val(String(linea.precio ?? "").replace("$", "").trim());
+                $("#txtPorcentaje").val(linea.bonificacion ?? 0);
 
-            const precioOriginal = parseFloat(
-                linea.precioOriginal.replace("$", "").replace(",", ".")
-            );
+                // reset bonificar
+                $("#chkPorcentaje").prop("checked", false);
+                $("#txtPorcentaje").prop("readonly", true);
+                $("#txtPrecioKg").prop("readonly", false);
 
-            $("#modalPrecio")
-                .text(linea.precioOriginal)
-                .data("precio", precioOriginal);
+                // reset cantidad UI
+                $("#bloqueCantidad").hide();
+                $("#modalCantidad").prop("readonly", true);
+                $("#btnCantMenos").addClass("d-none");
+                $("#btnCantMas").addClass("d-none");
 
-            $("#txtPrecioKg").val(linea.precio.replace("$", ""));
-            $("#txtPorcentaje").val(linea.bonificacion);
-            $("#lblTipoPorcentaje").text("% bonificación");
+                if (bonif !== 0) {
+                    $("#bloqueBonificar").show();
 
-            $("#modalLineaVenta").modal("show");
+                    $("#btnMostrarCantidad").removeClass("d-none");
+                    $("#btnEliminarItem").removeClass("d-none");
+                    $("#btnMostrarBonificar").addClass("d-none");
+
+                    setModoBonificacion(true);
+                } else {
+                    $("#bloqueBonificar").hide();
+                    setModoBonificacion(false);
+                }
+
+                $("#modalLineaVenta").modal("show");
+            };
+
+            // ---------- Bonificar ----------
+            $("#btnMostrarBonificar").off("click").on("click", function () {
+                if (!window.lineaSeleccionada) return;
+
+                $("#bloqueBonificar").slideDown(120);
+
+                $("#btnMostrarBonificar").addClass("d-none");
+                $("#btnMostrarCantidad").removeClass("d-none");
+                $("#btnEliminarItem").removeClass("d-none");
+
+                setModoBonificacion(false);
+            });
+
+            $("#chkPorcentaje").off("change").on("change", function () {
+                setModoBonificacion($(this).is(":checked"));
+            });
+
+            $("#txtPrecioKg").off("input").on("input", function () {
+                if ($("#chkPorcentaje").is(":checked")) return;
+                syncDesdePrecio();
+            });
+
+            $("#txtPorcentaje").off("input").on("input", function () {
+                if (!$("#chkPorcentaje").is(":checked")) return;
+                syncDesdePorcentaje();
+            });
+
+            $("#btnAplicarBonificacion").off("click").on("click", function () {
+                if (!window.lineaSeleccionada) return;
+
+                const precioNuevo = fnum($("#txtPrecioKg").val());
+                if (!precioNuevo || precioNuevo <= 0) {
+                    alert("Precio inválido");
+                    return;
+                }
+
+                // cantidad: validar numérica y >0
+                const cant = parseCant($("#modalCantidad").val());
+                if (!isFinite(cant)) {
+                    alert("Cantidad inválida");
+                    return;
+                }
+                if (cant <= 0) { // si querés permitir 0, cambiá a: if (cant < 0)
+                    alert("La cantidad debe ser mayor a 0");
+                    return;
+                }
+
+                window.lineaSeleccionada.cant = roundCant(cant);
+
+                const subtotal = precioNuevo * cant;
+
+                window.lineaSeleccionada.precio = `$ ${precioNuevo.toFixed(2)}`;
+                window.lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
+
+                const bonificacion = fnum($("#txtPorcentaje").val());
+                window.lineaSeleccionada.bonificacion = bonificacion;
+
+                renderTablaProductos(carrito);
+                recalcularTotal();
+
+                $("#modalLineaVenta").modal("hide");
+                requestAnimationFrame(() => scrollLineaVisible(window.lineaSeleccionada.index));
+            });
+
+            // ---------- Eliminar ----------
+            $("#btnEliminarItem").off("click").on("click", function () {
+                if (!window.lineaSeleccionada) return;
+                if (!confirm("¿Eliminar el producto?")) return;
+
+                const idx = carrito.findIndex(l => l.index === window.lineaSeleccionada.index);
+                if (idx !== -1) carrito[idx].anulado = true;
+
+                renderTablaProductos(carrito);
+                recalcularTotal();
+
+                $("#modalLineaVenta").modal("hide");
+                requestAnimationFrame(() => scrollLineaVisible(window.lineaSeleccionada.index));
+
+                $("#inputCodigo").val("").focus();
+            });
+
+            // ---------- Cantidad ----------
+            $("#btnMostrarCantidad").off("click").on("click", function () {
+                if (!window.lineaSeleccionada) return;
+
+                $("#bloqueCantidad").slideDown(120);
+
+                $("#btnMostrarCantidad").addClass("d-none");
+                $("#btnEliminarItem").removeClass("d-none");
+
+                $("#modalCantidad").prop("readonly", false);
+                $("#btnCantMenos").removeClass("d-none");
+                $("#btnCantMas").removeClass("d-none");
+
+                // ✅ solo foco (NO select, para no “pelear” con el cursor)
+                requestAnimationFrame(() => $("#modalCantidad").focus());
+
+                previewSubtotalDesdeCantidad();
+            });
+
+            // Solo permitir teclas válidas (sin reescribir el value)
+            $("#modalCantidad")
+                .off("keydown.cant")
+                .on("keydown.cant", function (e) {
+                    if ($(this).prop("readonly")) return;
+
+                    const k = e.key;
+                    const ctrl = e.ctrlKey || e.metaKey;
+
+                    // permitir navegación/edición
+                    const allow = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Tab", "Enter"];
+                    if (allow.includes(k)) return;
+
+                    // permitir atajos
+                    if (ctrl && ["a", "c", "v", "x"].includes(k.toLowerCase())) return;
+
+                    // permitir números
+                    if (/^[0-9]$/.test(k)) return;
+
+                    // permitir separador decimal
+                    if (k === "," || k === ".") return;
+
+                    // bloquear lo demás
+                    e.preventDefault();
+                })
+                .off("input.cant")
+                .on("input.cant", function () {
+                    if ($(this).prop("readonly")) return;
+                    previewSubtotalDesdeCantidad();
+                });
+
+            // + / - suman/restan 1 manteniendo decimales
+            $("#btnCantMas").off("click").on("click", function () {
+                const actual = parseCant($("#modalCantidad").val());
+                const base = isFinite(actual) ? actual : 0;
+
+                const nuevo = roundCant(base + 1);
+                $("#modalCantidad").val(fmtCant(nuevo));
+                previewSubtotalDesdeCantidad();
+            });
+
+            $("#btnCantMenos").off("click").on("click", function () {
+                const actual = parseCant($("#modalCantidad").val());
+                const base = isFinite(actual) ? actual : 0;
+
+                const nuevo = roundCant(base - 1);
+                // no permitir negativo (si querés permitir 0, dejalo en 0)
+                const final = Math.max(0, nuevo);
+                $("#modalCantidad").val(fmtCant(final));
+                previewSubtotalDesdeCantidad();
+            });
+
+            // Aplicar cantidad: recién acá validamos
+            $("#btnAplicarCantidad").off("click").on("click", function () {
+                if (!window.lineaSeleccionada) return;
+
+                const cant = parseCant($("#modalCantidad").val());
+
+                if (!isFinite(cant)) {
+                    alert("Cantidad inválida (ingresá un número).");
+                    return;
+                }
+
+                // ✅ validación al aplicar:
+                // si querés permitir 0, cambiá a: if (cant < 0)
+                if (cant <= 0) {
+                    alert("La cantidad debe ser mayor a 0.");
+                    return;
+                }
+
+                const cantOk = roundCant(cant);
+
+                window.lineaSeleccionada.cant = cantOk;
+
+                const p = precioLineaAplicadoNum();
+                const subtotal = p * cantOk;
+
+                window.lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
+
+                // opcional: dejar el input prolijo ya aplicado
+                $("#modalCantidad").val(fmtCant(cantOk));
+
+                renderTablaProductos(carrito);
+                recalcularTotal();
+
+                $("#modalLineaVenta").modal("hide");
+                requestAnimationFrame(() => scrollLineaVisible(window.lineaSeleccionada.index));
+            });
+
+            // ---------- al cerrar modal ----------
+            $("#modalLineaVenta").on("hidden.bs.modal", function () {
+
+                $("#btnEliminarItem").removeClass("d-none");
+                $("#btnMostrarBonificar").removeClass("d-none");
+                $("#btnMostrarCantidad").removeClass("d-none");
+
+                $("#bloqueBonificar").hide();
+                $("#chkPorcentaje").prop("checked", false);
+                $("#txtPorcentaje").prop("readonly", true);
+                $("#txtPrecioKg").prop("readonly", false);
+
+                $("#bloqueCantidad").hide();
+                $("#modalCantidad").prop("readonly", true);
+                $("#btnCantMenos").addClass("d-none");
+                $("#btnCantMas").addClass("d-none");
+
+                window.lineaSeleccionada = null;
+            });
         }
 
-        $("#btnMostrarBonificar").click(function () {
-            $("#bloqueBonificar").slideDown();
-            $("#txtPrecioKg").focus().select();
+        ////////////////////
+        // FIN MODAL LINEA VENTA
+        ////////////////////
 
 
-            // ocultar botones
-            $("#btnEliminarItem").addClass("d-none");
-            $("#btnMostrarBonificar").addClass("d-none");
-        });
+        ////////////////////
+        // FIN MODAL LINEA VENTA
+        ////////////////////
 
+        // ===============================
+        // HELPERS NUMÉRICOS (AR)
+        // ===============================
+        function toFloatAR(v) {
+            // Acepta: "12,34" | "12.34" | "$ 12,34" | "$ 12.34"
+            // Si vienen ambos separadores, asume "." miles y "," decimales.
+            let s = String(v ?? "").trim();
 
-        $("#chkPorcentaje").change(function () {
+            // dejar solo números, coma, punto y signo
+            s = s.replace(/[^0-9,.\-]/g, "");
 
-            const activo = this.checked;
+            const hasComma = s.includes(",");
+            const hasDot = s.includes(".");
 
-            $("#txtPorcentaje").prop("disabled", !activo).val("");
-            $("#txtPrecioKg").prop("readonly", activo);
-
-            if (activo)
-                $("#txtPorcentaje").focus();
-            else
-                $("#txtPrecioKg").focus().select();
-        });
-
-        $("#btnAplicarBonificacion").click(function () {
-
-            let precioNuevo = parseFloat($("#txtPrecioKg").val().replace(",", "."));
-            if (isNaN(precioNuevo) || precioNuevo <= 0) {
-                alert("Precio inválido");
-                return;
+            if (hasComma && hasDot) {
+                // 1.234,56 => 1234.56
+                s = s.replace(/\./g, "").replace(",", ".");
+            } else if (hasComma) {
+                // 1234,56 => 1234.56
+                s = s.replace(",", ".");
             }
+            const n = parseFloat(s);
+            return isNaN(n) ? 0.0 : n;
+        }
 
-            lineaSeleccionada.precio = `$ ${precioNuevo.toFixed(2)}`;
+        // ===============================
+        // TOTAL VENTA (GLOBAL)
+        // ===============================
+        window.obtenerTotalVenta = function obtenerTotalVenta() {
+            const lineas = (window.lineasVenta && Array.isArray(window.lineasVenta) && window.lineasVenta.length)
+                ? window.lineasVenta
+                : (typeof carrito !== "undefined" ? carrito : []);
 
-            const subtotal = precioNuevo * parseFloat(lineaSeleccionada.cant);
-            lineaSeleccionada.subtotal = `$ ${subtotal.toFixed(2)}`;
+            let total = 0.0;
 
-            const bonificacion = parseFloat(
-                $("#txtPorcentaje").val().replace(",", ".")
-            ) || 0;
+            for (const l of lineas) {
+                if (!l || l.anulado) continue;
 
-            lineaSeleccionada.bonificacion = bonificacion;
+                // si viene subtotal formateado lo usamos
+                let sub = toFloatAR(l.subtotal);
 
-            //renderTablaProductos(carrito);
+                // fallback: si no hay subtotal, calculamos cant * precio
+                if (!sub) {
+                    const cant = toFloatAR(l.cant);
+                    const precio = toFloatAR(l.precio);
+                    sub = cant * precio;
+                }
 
-            const r = {
-                ok: true,
-                lineas: carrito
-            };
-
-            // mismo flujo que AJAX success
-            renderTablaProductos(r.lineas);
-            recalcularTotal();
-
-            $("#modalLineaVenta").modal("hide");
-        });
-
-        $("#chkPorcentaje").on("change", function () {
-
-            const porModo = $(this).is(":checked");
-
-            $("#txtPorcentaje").prop("readonly", !porModo);
-            $("#txtPrecioKg").prop("readonly", porModo);
-
-            if (porModo) {
-                $("#txtPorcentaje").focus();
-                $("#lblTipoPorcentaje").text("% bonificacion (- para recargo)");
-            } else {
-                $("#txtPrecioKg").focus();
-                $("#lblTipoPorcentaje").text("% bonificación");
+                total += sub;
             }
-        });
-
-        $("#txtPrecioKg").on("input", function () {
-
-            if ($("#chkPorcentaje").is(":checked")) return;
-
-            const precioOriginal = parseFloat($("#modalPrecio").data("precio"));
-            const precioNuevo = parseFloat($(this).val().replace(",", "."));
-            const cantidad = parseFloat($("#modalCantidad").val().replace(",", "."));
-
-            if (isNaN(precioNuevo) || precioNuevo <= 0 || isNaN(precioOriginal)) {
-                $("#txtPorcentaje").val("");
-                $("#modalSubtotal").val("");
-                return;
-            }
-
-            let porcentaje = (1 - (precioNuevo / precioOriginal)) * 100;
-            porcentaje = Math.round(porcentaje * 100) / 100;
-
-            $("#txtPorcentaje").val(porcentaje);
-
-            if (porcentaje > 0) {
-                $("#lblTipoPorcentaje").text("% bonificación");
-            } else if (porcentaje < 0) {
-                $("#lblTipoPorcentaje").text("% recargo");
-            } else {
-                $("#lblTipoPorcentaje").text("%");
-            }
-
-            $("#modalSubtotal").val((precioNuevo * cantidad).toFixed(2));
-        });
-
-
-        $("#txtPorcentaje").on("input", function () {
-
-            if (!$("#chkPorcentaje").is(":checked")) return;
-
-            const precioOriginal = parseFloat($("#modalPrecio").data("precio"));
-            const porcentaje = parseFloat($(this).val().replace(",", "."));
-            const cantidad = parseFloat($("#modalCantidad").val().replace(",", "."));
-
-            if (isNaN(precioOriginal) || isNaN(porcentaje) || isNaN(cantidad)) {
-                $("#txtPrecioKg").val("");
-                $("#modalSubtotal").val("");
-                return;
-            }
-
-            // determinar si es bonificación o recargo
-            const tipo = -1;//(porcentaje < 0) ? -1 : 1;
-            const precioNuevo = precioOriginal * (1 + ((porcentaje * tipo) / 100));
-            const subtotal = precioNuevo * cantidad;
-
-            $("#txtPrecioKg").val(precioNuevo.toFixed(2));
-            $("#modalSubtotal").val(subtotal.toFixed(2));
-        });
-
-
-        $("#btnEliminarItem").click(function () {
-
-            if (!confirm("¿Eliminar el producto?")) return;
-
-            const idx = carrito.findIndex(l => l.index === lineaSeleccionada.index);
-
-            if (idx !== -1) {
-                carrito[idx].anulado = true;
-            }
-
-            const r = {
-                ok: true,
-                lineas: carrito
-            };
-
-            // mismo flujo que AJAX success
-            renderTablaProductos(r.lineas);
-
-            recalcularTotal();
-
-            $("#modalLineaVenta").modal("hide");
-
-            // limpiar campos
-            $("#inputCodigo").val("").focus();
-        });
-
-        /////////////
-        ///FIN MODAL LINEA VENTA
-        ////////////
-
-
-        // URLs generadas por MVC (seguras para cualquier entorno)
-        window.api = window.api || {};
-
-        window.api.venta = {
-            finalizar: '@Url.Action("FinalizarVenta", "Ventas")',
-            imprimir: '@Url.Action("ImprimirTicket", "Ventas")',
+            return total;
         };
 
-        window.api.persona = {
-            listar: '@Url.Action("Listar", "Personas")',
-            buscar: '@Url.Action("Buscar", "Personas")'
-        };
+
+
+    // Helper: scroll a una línea (desktop scroll interno / responsive scroll página)
+    function scrollTablaAItem(idLinea) {
+        const fila = document.querySelector(`#tablaItems tr.fila-item[data-id="${idLinea}"]`);
+        if (!fila) return;
+
+        const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+        const zonaTabla = document.querySelector('.carrito-col .zona-tabla');
+
+        // foco real para que el usuario “sienta” que quedó ahí
+        fila.tabIndex = -1;
+        try { fila.focus({ preventScroll: true }); } catch { }
+
+        if (isDesktop && zonaTabla) {
+            fila.scrollIntoView({ block: 'nearest' });
+        } else {
+            fila.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+
+    $('#btnFinalizar').on('click', function () {
+        if (carrito.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Venta vacía',
+                text: 'Debe agregar al menos un producto'
+            });
+            return;
+        }
+
+        $('#modalFormaPago').modal('show');
+        scrollPantallaMobile();
+    });
+
+    function esPantallaChica() {
+        return window.innerWidth < 768;
+    }
+
+    function configurarInputsPOS() {
+        if (esPantallaChica()) {
+            $('#inputCodigo, #inputCantidad')
+                .attr('readonly', true)
+                .attr('inputmode', 'none');
+        } else {
+            $('#inputCodigo, #inputCantidad')
+                .removeAttr('readonly')
+                .removeAttr('inputmode');
+        }
+    }
+
+    $(document).ready(configurarInputsPOS);
+    $(window).on('resize', configurarInputsPOS);
+
+    // URLs MVC
+    window.api = window.api || {};
+    window.api.venta = {
+        finalizar: '@Url.Action("FinalizarVenta", "Ventas")',
+        imprimir: '@Url.Action("ImprimirTicket", "Ventas")',
+    };
+    window.api.persona = {
+        listar: '@Url.Action("Listar", "Personas")',
+        buscar: '@Url.Action("Buscar", "Personas")'
+    };
+
+    // FULLSCREEN + recordar al recargar
+    (function () {
+        const FS_KEY = "carnisys-fullscreen";
+        const root = document.documentElement;
+
+        function isFullscreen() { return !!document.fullscreenElement; }
+
+        function updateFullscreenUI() {
+            const btn = document.getElementById("btn-toggle-fullscreen");
+            if (!btn) return;
+
+            const on = isFullscreen();
+            btn.classList.toggle("is-fullscreen", on);
+
+            const ico = btn.querySelector("i");
+            if (ico) {
+                ico.className = on ? "fas fa-compress-arrows-alt" : "fas fa-expand-arrows-alt";
+            }
+
+            btn.title = on ? "Salir de pantalla completa" : "Pantalla completa";
+        }
+
+        async function enterFullscreen() {
+            try {
+                if (root.requestFullscreen) await root.requestFullscreen();
+                else if (root.webkitRequestFullscreen) root.webkitRequestFullscreen();
+
+                localStorage.setItem(FS_KEY, "1");
+                updateFullscreenUI();
+                return true;
+            } catch (e) {
+                updateFullscreenUI();
+                return false;
+            }
+        }
+
+        async function exitFullscreen() {
+            try {
+                if (document.exitFullscreen) await document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            } catch (e) { }
+
+            localStorage.removeItem(FS_KEY);
+            updateFullscreenUI();
+        }
+
+        async function toggleFullscreen() {
+            if (isFullscreen()) await exitFullscreen();
+            else await enterFullscreen();
+        }
+
+        function wantFullscreen() { return localStorage.getItem(FS_KEY) === "1"; }
+
+        function restoreFullscreenIfNeeded() {
+            if (!wantFullscreen() || isFullscreen()) return;
+
+            enterFullscreen().then(ok => {
+                if (ok) return;
+
+                const retryOnce = async () => { await enterFullscreen(); };
+                document.addEventListener("click", retryOnce, { capture: true, once: true });
+                document.addEventListener("keydown", retryOnce, { capture: true, once: true });
+            });
+        }
+
+        document.addEventListener("fullscreenchange", function () {
+            if (isFullscreen()) localStorage.setItem(FS_KEY, "1");
+            else localStorage.removeItem(FS_KEY);
+
+            updateFullscreenUI();
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.getElementById("btn-toggle-fullscreen");
+            if (btn) btn.addEventListener("click", toggleFullscreen);
+
+            updateFullscreenUI();
+            restoreFullscreenIfNeeded();
+        });
+        })();
+
+        // ================================
+        // MODO COMPACTO AUTOMÁTICO (por alto)
+        // - ayuda en 1366x768 / zoom 125%
+        // ================================
+        (function () {
+            function aplicarCompacto() {
+                const h = window.innerHeight || document.documentElement.clientHeight;
+
+                // Ajustá umbrales si querés
+                document.documentElement.classList.toggle("pos-compact", h < 820);
+                document.documentElement.classList.toggle("pos-tiny", h < 740);
+            }
+
+            window.addEventListener("resize", aplicarCompacto);
+            window.addEventListener("orientationchange", aplicarCompacto);
+            document.addEventListener("DOMContentLoaded", aplicarCompacto);
+            aplicarCompacto();
+        })();
+
 
     </script>
 }
 
 <style>
+    /* =========================================================
+     0) Base: wrapper de la vista
+     ========================================================= */
+    .pos-page {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* =========================================================
+     1) Variables (claro/oscuro)
+     ========================================================= */
+    :root {
+        --pos-bg: #ffffff;
+        --pos-text: rgba(0,0,0,.88);
+        --pos-muted: rgba(0,0,0,.60);
+        --pos-border: rgba(0,0,0,.12);
+        --posbar-bg: #ffffff;
+        --posbar-border: rgba(0,0,0,.12);
+        --posbar-text: rgba(0,0,0,.88);
+        --posbar-muted: rgba(0,0,0,.60);
+    }
+
+    html.dark-mode {
+        --pos-bg: #0f172a;
+        --pos-text: rgba(255,255,255,.92);
+        --pos-muted: rgba(255,255,255,.70);
+        --pos-border: rgba(255,255,255,.12);
+        --posbar-bg: #0f172a;
+        --posbar-border: rgba(255,255,255,.12);
+        --posbar-text: rgba(255,255,255,.92);
+        --posbar-muted: rgba(255,255,255,.70);
+    }
+
+    /* =========================================================
+     2) TOP POS
+     ========================================================= */
+    .pos-topbar {
+        flex: 0 0 auto;
+        border: 1px solid var(--posbar-border);
+        border-radius: 10px;
+        background: var(--posbar-bg);
+        padding: .40rem .50rem;
+        margin-bottom: .45rem !important;
+    }
+
+        .pos-topbar > [class*="col-"] {
+            padding-top: .10rem;
+            padding-bottom: .10rem;
+        }
+
+    .pos-empresa {
+        font-weight: 700;
+        color: var(--posbar-text);
+    }
+
+    .pos-fecha {
+        color: var(--posbar-muted);
+        font-size: .95rem;
+        line-height: 1.15;
+    }
+
+    .pos-btn-fullscreen {
+        min-width: 44px;
+        padding-left: .7rem;
+        padding-right: .7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @@media (min-width: 992px) {
+        .pos-meta {
+            min-width: 0;
+        }
+
+        .pos-btn-fullscreen {
+            height: 100%;
+            min-height: 44px;
+        }
+    }
+
+    @@media (max-width: 991.98px) {
+        .pos-meta {
+            text-align: left !important;
+        }
+    }
+
+    /* =========================================================
+     3) POS APP: ocupa TODO el alto restante (desktop)
+     - mata cualquier height:85vh viejo
+     ========================================================= */
+    #pos-app {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: auto !important;
+        padding: .30rem !important;
+    }
+
+        #pos-app > .card {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--pos-bg);
+            border-color: var(--pos-border);
+        }
+
+        #pos-app .card-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: .45rem !important;
+        }
+
+        #pos-app .row.flex-grow-1 {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+            #pos-app .row.flex-grow-1 > [class*="col-"] {
+                min-height: 0;
+            }
+
+    /* =========================================================
+     4) CARRITO: scroll SOLO en .zona-tabla
+     ========================================================= */
+    .carrito-col {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .zona-tabla {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-bottom: .35rem !important;
+    }
+
+    .zona-total {
+        flex: 0 0 auto;
+        padding-top: .25rem;
+        border-top: 1px solid var(--pos-border);
+    }
+
+    .pos-total-label {
+        color: #adb5bd;
+    }
+
+    .pos-total-value {
+        color: #4a6fa5;
+    }
+
+    html.dark-mode .pos-total-value {
+        color: #6ea8fe;
+    }
+
+    /* =========================================================
+     5) Tabla items
+     ========================================================= */
+    .tabla-productos td {
+        border: none;
+        padding: .45rem 0 .70rem 0;
+    }
+
+    .fila-item {
+        cursor: pointer;
+    }
+
+        .fila-item:hover {
+            background: #f2f2f2;
+        }
+
+    html.dark-mode .fila-item:hover {
+        background: rgba(255,255,255,.06);
+    }
+
+    .item-detalle {
+        font-size: .95rem;
+        color: #444;
+    }
+
+    html.dark-mode .item-detalle {
+        color: rgba(255,255,255,.75);
+    }
+
+    .fila-anulada {
+        text-decoration: line-through;
+        opacity: .6;
+    }
+
+    /* ✅ highlight último item */
+    .fila-ultimo {
+        background: rgba(25,135,84,.08);
+    }
+
+    html.dark-mode .fila-ultimo {
+        background: rgba(32,201,151,.12);
+    }
+
+    /* =========================================================
+     6) COLUMNA DERECHA (desktop): todo entra
+     ========================================================= */
+    @@media (min-width: 992px) {
+        #pos-app .col-md-6.d-flex.flex-column {
+            min-height: 0;
+            overflow: hidden;
+        }
+
+            #pos-app .col-md-6.d-flex.flex-column .row.g-2.mb-3 {
+                flex: 0 0 auto;
+                margin-bottom: .35rem !important;
+            }
+
+        #producto-info {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+            padding: .55rem !important;
+            margin-bottom: .35rem !important;
+            background: var(--pos-bg) !important;
+            border-color: var(--pos-border) !important;
+            color: var(--pos-text);
+        }
+
+        html.dark-mode #producto-info.bg-light {
+            background: var(--pos-bg) !important;
+        }
+
+        #producto-info > .row {
+            height: 100%;
+        }
+
+        #pos-app .col-md-6.d-flex.flex-column > .mb-3 {
+            flex: 0 0 auto;
+            margin-bottom: .35rem !important;
+        }
+
+        #pos-app .col-md-6.d-flex.flex-column > .mt-auto {
+            flex: 0 0 auto;
+        }
+
+        #btnFinalizar {
+            padding-top: .6rem;
+            padding-bottom: .6rem;
+        }
+
+        .zona-botones {
+            margin-bottom: .25rem;
+        }
+        /* fija el alto del nombre para que no “baila” */
+        #prodNombre {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.15;
+            height: 1.25em;
+            margin: 0 0 .25rem 0 !important;
+        }
+
+        #producto-info .mb-3 {
+            margin-bottom: .35rem !important;
+        }
+
+        #producto-info .fs-5 {
+            font-size: 1.05rem !important;
+        }
+    }
+
+    /* =========================================================
+     7) Teclado: SIN scroll interno (desktop)
+     ========================================================= */
+    .keyboard-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        width: 100%;
+        overflow: hidden !important;
+        max-height: none !important;
+    }
+
+    @@media (min-width: 992px) {
+        #producto-info .col-6:last-child {
+            display: flex;
+            min-height: 0;
+        }
+
+        .keyboard-grid {
+            flex: 1 1 auto;
+            min-height: 0;
+            grid-auto-rows: minmax(34px, 1fr);
+        }
+
+        .btn-key {
+            height: 100%;
+            font-weight: 700;
+            font-size: clamp(.95rem, 1.0vw, 1.2rem);
+            padding: .35rem .2rem;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .btn-enter {
+            grid-row: span 2;
+            font-weight: 800;
+        }
+
+        .key-zero {
+            grid-column: span 2;
+        }
+    }
+
+    /* Teclas numéricas */
+    .keyboard-grid .btn-light {
+        background-color: #fff;
+        border: 1px solid #d0d0d0;
+        color: #333;
+    }
+
+        .keyboard-grid .btn-light:active,
+        .keyboard-grid .btn-light:focus {
+            background-color: #f0f0f0;
+        }
+
+    html.dark-mode .keyboard-grid .btn-light {
+        background-color: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.15);
+        color: rgba(255,255,255,.92);
+    }
+
+    /* =========================================================
+     8) FULLSCREEN botón activo
+     ========================================================= */
+    #btn-toggle-fullscreen.is-fullscreen {
+        background: #198754;
+        border-color: #198754;
+        color: #fff;
+    }
+
+    html.dark-mode #btn-toggle-fullscreen.is-fullscreen {
+        background: #20c997;
+        border-color: #20c997;
+        color: #0b1320;
+    }
+
+    /* =========================================================
+     9) MOBILE/TABLET: layout responsivo
+     - scroll normal
+     - teclado full width (stack)
+     ========================================================= */
+    @@media (max-width: 991.98px) {
+        #pos-app,
+        #pos-app > .card,
+        #pos-app .card-body,
+        #pos-app .row.flex-grow-1 {
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        .carrito-col {
+            overflow: visible !important;
+            min-height: auto !important;
+        }
+
+        .zona-tabla {
+            overflow: visible !important;
+            max-height: none !important;
+        }
+
+        #producto-info {
+            overflow: visible !important;
+        }
+
+        .keyboard-grid {
+            overflow: visible !important;
+            max-height: none !important;
+            width: 100% !important;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        #pos-app {
+            padding: .25rem !important;
+        }
+
+            #pos-app .card-body {
+                padding: .35rem !important;
+            }
+        /* fuerza teclado a ocupar TODO el ancho (1 columna) */
+        #producto-info .row {
+            display: flex !important;
+            flex-direction: column !important;
+            margin: 0 !important;
+        }
+
+            #producto-info .row > [class*="col-"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+        /* teclas grandes */
+        .keyboard-grid {
+            gap: 10px !important;
+            grid-auto-rows: clamp(58px, 9vh, 88px) !important;
+        }
+
+        .btn-key {
+            font-size: 1.25rem !important;
+            border-radius: 10px !important;
+        }
+
+        .btn-enter {
+            font-size: 1.1rem !important;
+        }
+    }
+
+    /* Scanner */
     .scanner-wrapper {
         position: relative;
         width: 100%;
@@ -1937,276 +2382,239 @@
         box-shadow: 0 0 6px red;
     }
 
-
-
-    .fila-item {
-        cursor: pointer;
+    /* =========================================================
+    MODO COMPACTO por altura (desktop bajito: 768px/zoom)
+    ========================================================= */
+    html.pos-compact .pos-topbar {
+        padding: .30rem .40rem !important;
+        margin-bottom: .35rem !important;
     }
 
-        .fila-item:hover {
-            background: #f2f2f2;
-            /*background: #538c89;*/
+    html.pos-compact #pos-app {
+        padding: .22rem !important;
+    }
+
+        html.pos-compact #pos-app .card-body {
+            padding: .32rem !important;
         }
 
-    .tabla-productos td {
-        border: none;
-        padding-bottom: 1rem;
-        padding-top: 0.5rem;
+    html.pos-compact #producto-info {
+        padding: .42rem !important;
+        margin-bottom: .28rem !important;
     }
 
-    .item-detalle {
-        font-size: 0.95rem;
-        color: #444;
+        html.pos-compact #producto-info .mb-3 {
+            margin-bottom: .22rem !important;
+        }
+
+    /* Total un poquito más chico cuando no entra cómodo */
+    html.pos-compact .pos-total-value {
+        font-size: 2.2rem !important;
+        line-height: 1.05 !important;
     }
 
-    /* Base teclado */
+    /* Teclado: baja gaps y fuente para que no “explote” en 768 */
+    html.pos-compact .keyboard-grid {
+        gap: 5px !important;
+        grid-auto-rows: minmax(30px, 1fr) !important;
+    }
+
+    html.pos-compact .btn-key {
+        font-size: clamp(.85rem, .95vw, 1.10rem) !important;
+        padding: .25rem .15rem !important;
+    }
+
+    /* =========================================================
+    MODO TINY (alto MUY justo: zoom alto / ventanas chicas)
+    ========================================================= */
+    html.pos-tiny .keyboard-grid {
+        gap: 4px !important;
+        grid-auto-rows: minmax(26px, 1fr) !important;
+    }
+
+    html.pos-tiny .btn-key {
+        font-size: clamp(.80rem, .90vw, 1.05rem) !important;
+        padding: .20rem .12rem !important;
+    }
+
+    html.pos-tiny #btnFinalizar {
+        padding-top: .45rem !important;
+        padding-bottom: .45rem !important;
+    }
+
+    /* =========================================================
+    TECLADO: forma y spans SIEMPRE (todas las resoluciones)
+    ========================================================= */
     .keyboard-grid {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 6px;
-    }
-        /* TECLAS NUMÉRICAS – DIFERENCIACIÓN SUAVE */
-        .keyboard-grid .btn-light {
-            background-color: #ffffff;
-            border: 1px solid #d0d0d0;
-            color: #333;
-        }
-
-            /* Hover / feedback táctil */
-            .keyboard-grid .btn-light:active,
-            .keyboard-grid .btn-light:focus {
-                background-color: #f0f0f0;
-            }
-
-    /* Botones normales */
-    .btn-key {
-        height: 100%;
-        font-size: 1.2rem;
-        font-weight: 600;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+        /* altura de tecla por defecto (tablet/desktop) */
+        --key-h: 56px;
+        grid-auto-rows: var(--key-h);
+        overflow: visible !important;
+        max-height: none !important;
     }
 
-    /* ENTER ocupa 2 filas */
-    .btn-enter {
-        grid-row: span 2;
-        font-size: 1.1rem;
-        font-weight: bold;
-    }
-
-    /* El 0 ocupa 2 columnas */
+    /* Spans SIEMPRE (no dentro de media) */
     .key-zero {
         grid-column: span 2;
     }
 
-
-    /* Línea delicada de separación vertical */
-    .key-separator {
-        border-left: 1px solid rgba(0, 0, 0, 0.1);
-        padding-left: 8px;
+    .btn-enter {
+        grid-row: span 2;
+        font-weight: 800;
     }
 
-    /* ===== BOTÓN POS ===== */
-    .btn-agregar-pos {
-        height: 56px;
-        white-space: nowrap; /* NO se parte */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 10px;
+    /* Teclas */
+    .btn-key {
+        height: 100%;
+        min-height: var(--key-h);
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        padding: .35rem .2rem;
+        font-size: clamp(.95rem, 1.0vw, 1.2rem);
     }
 
-
-    /* Ajuste en pantallas chicas */
-    @@media (max-width: 576px) {
-        /* ===============================
-       EVITAR SCROLL HORIZONTAL GLOBAL
-       =============================== */
-        body {
-            overflow-x: hidden;
-        }
-
-        #producto-info {
-            overflow-x: hidden;
-        }
-            /* ===============================
-       INFO ARRIBA / TECLADO ABAJO
-       =============================== */
-            #producto-info .row {
-                display: flex;
-                flex-direction: column;
-                margin: 0;
-            }
-                /* INFO */
-                #producto-info .row > .col-6:first-child {
-                    width: 100%;
-                    max-width: 100%;
-                    padding: 0;
-                    margin-bottom: 10px;
-                }
-                /* TECLADO */
-                #producto-info .row > .col-6:last-child {
-                    width: 100%;
-                    max-width: 100%;
-                    padding: 0;
-                }
-            /* ===============================
-       GRID REAL PARA INFO PRODUCTO
-       =============================== */
-            #producto-info .col-6:first-child {
-                display: grid;
-                grid-template-columns: 1fr auto;
-                row-gap: 6px;
-                column-gap: 8px;
-            }
-            /* COMPACTAR INFO PRODUCTO */
-            #producto-info h4 {
-                margin-bottom: 2px !important;
-            }
-
-            #producto-info .mb-3 {
-                margin-bottom: 2px !important;
-            }
-
-            #producto-info .col-6:first-child {
-                row-gap: 2px; /* antes 6px */
-            }
-        /* Nombre */
-        #prodNombre {
-            grid-column: 1 / 2;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        /* Precio */
-        #prodPrecio {
-            grid-column: 2 / 3;
-            text-align: right;
-            font-size: 0.95rem;
-            white-space: nowrap;
-        }
-        /* Cantidad */
-        #inputCantidad {
-            grid-column: 1 / 2;
-            text-align: center;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-        /* INPUT CANTIDAD – ancho fijo 12 caracteres */
-        #inputCantidad {
-            width: 12ch;
-            text-align: right;
-            font-size: 1.2rem;
-            line-height: 1.2;
-            padding: 2px 6px; /* 🔑 antes era demasiado */
-            height: auto; /* 🔑 saca la altura forzada del navegador */
-
-            box-sizing: border-box;
-        }
-        /* Subtotal */
-
-        #prodSubtotal {
-            font-size: 1.2rem;
-            line-height: 1.2;
-            text-align: right;
-            white-space: nowrap;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .fila-cantidad-subtotal {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline; /* 🔑 clave */
-            gap: 12px;
-        }
-        /* Botón */
-        #btnAgregarProducto {
-            grid-column: 1 / 3;
-            height: 48px;
-            font-size: 0.85rem;
-        }
-        /* ===============================
-       OCULTAR LABELS
-       =============================== */
-        #producto-info label {
-            display: none;
-        }
-        /* ===============================
-       TECLADO TÁCTIL
-       =============================== */
-        .keyboard-grid {
-            width: 100%;
-        }
-
-        .btn-key,
-        .btn-enter {
-            font-size: 1.2rem;
-            padding: 14px 0;
-        }
+    /* =========================================================
+    BLOQUE INFO PRODUCTO: estirar alto y alinear columnas
+    ========================================================= */
+    #producto-info {
+        /* hace más alto el bloque sin romper en pantallas chicas */
+        min-height: clamp(260px, 38vh, 460px);
     }
 
-
-
-
-    /*Modal Linea Venta*/
-    #modalLineaVenta {
-        font-size: 1.1rem;
-    }
-
-        #modalLineaVenta input {
-            font-size: 1.4rem;
-            height: 55px;
-        }
-
-        #modalLineaVenta .modal-title {
-            font-size: 1.5rem;
-        }
-
-        #modalLineaVenta .btn {
-            font-size: 1.2rem;
-            padding: 12px 18px;
-        }
-
-    .fila-anulada {
-        text-decoration: line-through;
-        opacity: 0.6; /* opcional, queda más claro visualmente */
-    }
-
-    @@media (min-width: 577px) {
-        /* ===============================
-           INFO 30% / TECLADO 70%
-           =============================== */
+    /* En desktop, que ambas columnas se estiren igual */
+    @@media (min-width: 992px) {
         #producto-info .row {
-            display: flex;
             align-items: stretch;
         }
 
-            #producto-info .row > .col-6:first-child {
-                flex: 0 0 40%;
-                max-width: 40%;
-            }
-
-            #producto-info .row > .col-6:last-child {
-                flex: 0 0 60%;
-                max-width: 60%;
-            }
-        /* ===============================
-           TECLADO MÁS ALTO (WEB)
-           =============================== */
+        #producto-info .col-6:last-child {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        /* Teclas grandes pero con mínimo garantizado */
         .keyboard-grid {
-            height: 100%;
-            align-content: stretch;
+            --key-h: clamp(46px, 6.2vh, 78px);
+            gap: 8px;
+        }
+    }
+
+    /* =========================================================
+    MOBILE: teclado grande y estable (no se achica)
+    ========================================================= */
+    @@media (max-width: 991.98px) {
+        .keyboard-grid {
+            --key-h: clamp(60px, 9vh, 92px);
+            gap: 10px;
         }
 
         .btn-key {
-            min-height: 70px; /* antes ~45px → +50% */
-            font-size: 1.4rem;
+            font-size: 1.25rem;
+            border-radius: 10px;
+        }
+    }
+
+    /* =========================================================
+    Si usás pos-compact / pos-tiny: NO lo dejes bajar demasiado
+    (si no, el teclado se “aplasta”)
+    ========================================================= */
+    html.pos-compact .keyboard-grid {
+        --key-h: max(44px, clamp(44px, 5.6vh, 64px));
+        gap: 6px !important;
+    }
+
+    html.pos-tiny .keyboard-grid {
+        --key-h: max(40px, clamp(40px, 5.2vh, 58px));
+        gap: 5px !important;
+    }
+
+    /* =========================================================
+    CARRITO DESKTOP: tabla con scroll + total fijo visible
+    ========================================================= */
+    @@media (min-width: 992px) {
+        .carrito-col {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
         }
 
-        .btn-enter {
-            min-height: 145px; /* 2 filas reales */
-            font-size: 1.3rem;
+        .zona-tabla {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
+
+        .zona-total {
+            flex: 0 0 auto;
+        }
+    }
+
+    /* opcional: highlight del último */
+    #tablaItems tr.pos-last-added {
+        outline: 2px solid rgba(25,135,84,.35);
+        background: rgba(25,135,84,.08);
+    }
+
+    /* =========================================================
+    RESPONSIVE: asegurar scroll de página (si algo lo bloqueó)
+    ========================================================= */
+    @@media (max-width: 991.98px) {
+        /* 1) Asegurar que la página pueda scrollear */
+        html, body {
+            height: auto !important;
+            min-height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+        /* 2) Evitar que el “panel POS” quede clavado con alto fijo/overflow hidden */
+        #pos-app,
+        #pos-app > .card,
+        #pos-app .card-body,
+        #pos-app .row.flex-grow-1,
+        .pos-panel {
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+        }
+        /* 3) Si querés que el carrito también pueda scrollear internamente en tablet,
+         activalo acá (recomendado para no perder zona-total dentro del panel) */
+        .carrito-col {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .zona-tabla {
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            flex: 1 1 auto;
+            min-height: 0;
+            /* Ajustá este valor si querés más/menos alto de tabla en responsive */
+            max-height: 55vh;
+        }
+
+        .zona-total {
+            flex: 0 0 auto;
+        }
+    }
+
+
+    #tablaItems tr.fila-item {
+        cursor: pointer;
+    }
+
+        #tablaItems tr.fila-item:hover {
+            background: rgba(0,0,0,.04);
+        }
+
+    html.dark-mode #tablaItems tr.fila-item:hover {
+        background: rgba(255,255,255,.06);
     }
 </style>

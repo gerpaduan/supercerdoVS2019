@@ -412,7 +412,7 @@ namespace Presentacion
                 comboAlicuotaIva.DisplayMember = "iva";
                 comboAlicuotaIva.ValueMember = "idIva";
 
-                checkMayuscula.Checked = FormPrincipal.ParametrosCTX.GetBool01(Entidades.Parametros.Mayuscula, false);;
+                checkMayuscula.Checked = FormPrincipal.ParametrosCTX.GetBool01(Entidades.ParamKeys.Mayuscula, false);;
                 txtCodigo.Focus();
 
                 checkSugerirCodigo.Visible = !(idCorte > 0);//solo visible para altas de productos

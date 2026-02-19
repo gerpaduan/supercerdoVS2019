@@ -112,7 +112,7 @@ namespace Presentacion.Cortes
             {
                 ///Se valida que la persona no sea un ID reservado por el sistema
                 ///
-                if (oMarcaE.idPersona.Equals(Entidades.Persona.idConsumidorFinal) || oMarcaE.idPersona.Equals(Entidades.Persona.idIndefinido))
+                if (oMarcaE.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0)) || oMarcaE.idPersona.Equals(FormPrincipal.ParametrosCTX.GetInt(Parametros.IdIndefinido, 0)))
                 {
                     MessageBox.Show("La persona seleccionada es reservada por el sistema y no se puede modificar");
                     return;
@@ -157,6 +157,7 @@ namespace Presentacion.Cortes
         private void cargarMarca()
         {
             oMarcaE.razonSocial = txtRazonSocial.Text.Trim();
+            oMarcaE.Identificacion = txtRazonSocial.Text.Trim();    
             oMarcaE.Marca = true;
             oMarcaE.otrosDatos = txtOtrosDatos.Text.Trim();
         }

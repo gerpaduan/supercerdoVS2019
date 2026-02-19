@@ -28,7 +28,7 @@ namespace Web.Controllers
 
         public ActionResult Index(int SucursalId = 0)
         {
-            var productos = oCorteN.findAllCortes(false, SucursalId);
+            var productos = oCorteN.findAllCortes(true, SucursalId);
 
             var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
 

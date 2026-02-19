@@ -107,10 +107,7 @@ namespace Presentacion.Licencia
 
         private void menuGenerarCuotas_Click(object sender, EventArgs e)
         {
-            Presentacion.Caja.FormLoginVendedor frmLogin = new Presentacion.Caja.FormLoginVendedor();
-            frmLogin.ShowDialog(this);
-            if (oUsuario == null) return;
-            if (!(oUsuario.User.ToLower() ==  "admin"))
+            if (FormPrincipal.oUserAdmin == null || FormPrincipal.oUserAdmin.IdEmpresa != 0)
             {
                 MessageBox.Show("No tienes permiso para generar la cuotas");
                 return;

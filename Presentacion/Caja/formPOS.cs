@@ -102,8 +102,8 @@ namespace Presentacion.Caja
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool redondeo = Convert.ToBoolean(ConfigurationManager.AppSettings["redondeo"].ToString());
-        //int importeMaxRedondeo = Entidades.Parametros.importeMaxRedondeo;
-        int importeMaxRedondeo = FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.ImporteMaxRedondeo, 0);
+        //int importeMaxRedondeo = Entidades.ParamKeys.importeMaxRedondeo;
+        int importeMaxRedondeo = FormPrincipal.ParametrosCTX.GetInt(Entidades.ParamKeys.ImporteMaxRedondeo, 0);
 
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
@@ -157,7 +157,7 @@ namespace Presentacion.Caja
             oVentaE.Sucursal = oSucursalE;
             //this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
             Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
-            idConsumidorFinal = Entidades.Persona.idConsumidorFinal;
+            idConsumidorFinal = FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0);//  FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0);
             oCliente = oPersonaN.findById(idConsumidorFinal);
             this.txtCliente.Text = oCliente.razonSocial;
             txtFechaVenta.Text = DateTime.Now.ToString();
@@ -170,14 +170,14 @@ namespace Presentacion.Caja
             //checkTicket.Visible = FormPrincipal.logueado || Convert.ToBoolean(ConfigurationManager.AppSettings["ticket"].ToString());
 
             //se cargar los porcentajes de ajuste por tarjeta
-            porcAjEfectivo = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjEfectivo, 0f);
-            porcAjDebito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjDebito, 0f);
-            porcAjCredito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjCredito, 0f) ;
+            porcAjEfectivo = FormPrincipal.ParametrosCTX.GetFloat(Entidades.ParamKeys.PorcAjEfectivo, 0f);
+            porcAjDebito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.ParamKeys.PorcAjDebito, 0f);
+            porcAjCredito = FormPrincipal.ParametrosCTX.GetFloat(Entidades.ParamKeys.PorcAjCredito, 0f) ;
             porcAjCtaCte = 1;//no se obtiene el valor desde parametros
-            porcAjQr = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjQr, 0f);
-            porcAjTranf = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.PorcAjTranf, 0f);
+            porcAjQr = FormPrincipal.ParametrosCTX.GetFloat(Entidades.ParamKeys.PorcAjQr, 0f);
+            porcAjTranf = FormPrincipal.ParametrosCTX.GetFloat(Entidades.ParamKeys.PorcAjTranf, 0f);
 
-            limiteKgParaAjuste = FormPrincipal.ParametrosCTX.GetFloat(Entidades.Parametros.LimiteKgParaAjuste, 0f);
+            limiteKgParaAjuste = FormPrincipal.ParametrosCTX.GetFloat(Entidades.ParamKeys.LimiteKgParaAjuste, 0f);
         }
 
         public void EnviarUsuario(Entidades.Usuario usuario)
@@ -539,7 +539,7 @@ namespace Presentacion.Caja
         private void limpiarListas()
         {
             Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
-            int idConsumidorFinal = Entidades.Persona.idConsumidorFinal;
+            int idConsumidorFinal =  FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0);
             oCliente = oPersonaN.findById(idConsumidorFinal);
             EnviarPersona(oCliente);
             txtCuit.Text = "";
@@ -923,7 +923,7 @@ namespace Presentacion.Caja
 
             //valida que un venta en CTA CTE sea solo en Cta Cte
             if (checkCtaCte.Checked && (!oVentaE.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
+                oCliente.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0))))
             {
                 MessageBox.Show("Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
                     "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.",
@@ -989,7 +989,7 @@ namespace Presentacion.Caja
                 //for (int index = 0; index < listaLineaVenta.Count; index++)
                 //{
                 //    if (listaLineaVenta[index].Bonificacion != 0 && !FormPrincipal.logueado && !oUsuario.Admin && 
-                //        oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal))
+                //        oCliente.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0)))
                 //    {
                 //        bool esAnulado = false;
                 //        //se valida que el corte no hay sido anulado
@@ -1705,8 +1705,8 @@ namespace Presentacion.Caja
         {
             oCliente = persona;
 
-            linkVerCtaCte.Visible = !oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal);
-            linkUltimasVentasCliente.Text = oCliente.idPersona.Equals(Entidades.Persona.idConsumidorFinal) ?
+            linkVerCtaCte.Visible = !oCliente.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0));
+            linkUltimasVentasCliente.Text = oCliente.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0)) ?
                 "mis ventas" : "Ver ultimas 5 ventas";
 
             ////Ocultar Ultimas Ventas para SuperCerdo si cliente es Empleado o Cliente tiene CtaCte por defecto
@@ -3627,9 +3627,9 @@ namespace Presentacion.Caja
             try
             {
                 oUltimaVentaVendedor = oVentaN.getUltimaVentaVendedor(oCierreE);
-                lblHoraUltimaVenta.Text = oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
+                lblHoraUltimaVenta.Text = oUltimaVentaVendedor == null ? "-" : (oUltimaVentaVendedor.FechaVenta.ToShortDateString() +
                     " " + oUltimaVentaVendedor.FechaVenta.ToShortTimeString() +
-                    "\n$ " + oUltimaVentaVendedor.TotalImporte.ToString("N2");
+                    "\n$ " + oUltimaVentaVendedor.TotalImporte.ToString("N2"));
             }
             catch (Exception)
             {
@@ -3725,7 +3725,7 @@ namespace Presentacion.Caja
 
         private void linkUltimasVentasCliente_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            if (oCliente.idPersona == Entidades.Persona.idConsumidorFinal)
+            if (oCliente.idPersona ==  FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0))
             {
                 formVentasVendedor frmVentasVendedor = new formVentasVendedor();
                 frmVentasVendedor.desdeCajaVenta = true;

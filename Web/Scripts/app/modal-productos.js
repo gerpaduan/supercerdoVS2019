@@ -6,7 +6,6 @@
     const $input = $('#filtroProducto');
     const $tbody = $('#tablaProductos');
 
-
     /* =========================
        CARGA DE PRODUCTOS
        ========================= */
@@ -60,19 +59,25 @@
         const $inputPOS = $('#inputCodigo');
         if (!$inputPOS.length) return;
 
+        // 1) Setear código y cerrar modal YA
         $inputPOS.val(codigo);
-
-        if (typeof window.terminarEscritura === 'function') {
-            window.terminarEscritura(codigo);
-        } else {
-            $inputPOS.trigger('input');
-        }
-
         $modal.modal('hide');
 
-        const $inputCantidad = $('#inputCantidad');
-        $inputCantidad.focus();
+        // 2) Cuando el modal terminó de cerrar, recién ahí hacés el resto
+        $modal.one('hidden.bs.modal', function () {
+            if (typeof window.terminarEscritura === 'function') {
+                window.terminarEscritura(codigo, function () {
+                    const $inputCantidad = $('#inputCantidad');
+                    if ($inputCantidad.length) $inputCantidad.focus().select();
+                });
+            } else {
+                $inputPOS.trigger('input');
+                const $inputCantidad = $('#inputCantidad');
+                if ($inputCantidad.length) $inputCantidad.focus().select();
+            }
+        });
     }
+
 
     /* =========================
        EVENTOS
@@ -86,13 +91,16 @@
         }, 250);
     });
 
-    // Enter → seleccionar primero
+    // Enter → seleccionar activa (o primera)
     $input.on('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const $first = $tbody.find('tr:first');
-            if ($first.length) {
-                seleccionarProducto($first.data('codigo'));
+
+            const $sel = $tbody.find('tr.table-active:first');
+            const $row = $sel.length ? $sel : $tbody.find('tr:first');
+
+            if ($row.length) {
+                seleccionarProducto($row.attr('data-codigo'));
             }
         }
     });
@@ -103,9 +111,9 @@
         $(this).addClass('table-active');
     });
 
-    // Doble click → seleccionar
+    // Doble click → seleccionar el clickeado
     $tbody.on('dblclick', 'tr', function () {
-        seleccionarProducto($(this).data('codigo'));
+        seleccionarProducto($(this).attr('data-codigo'));
     });
 
     // Al abrir el modal

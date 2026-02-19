@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Web.Mvc;
 using Utilidades;
+using wsAFIPvs2008;
 
 namespace Web.Controllers
 {
@@ -31,10 +33,17 @@ namespace Web.Controllers
 
             if (user != null && user.Activo)
             {
+
+                IEmpresaContext empresa = new EmpresaContextWin(user.IdEmpresa);
+
+                oUsuarioN = new Negocio.Usuario(empresa);
+                oSucursalN = new Negocio.Sucursal(empresa);
+
+                user = oUsuarioN.getUsuarioById(user.Id); //user.IdSucursal == 0 ? null : oSucursalN.findById(user.IdSucursal);
                 // Sucursal (igual que tenías)
-                string sucNombre = user.IdSucursal == null || user.IdSucursal == 0
+                string sucNombre = user.Sucursal == null
                     ? "Seleccione Sucursal"
-                    : oSucursalN.findById(user.IdSucursal).SucursalNombre;
+                    : user.Sucursal.SucursalNombre;
 
                 user.SucursalNombre = sucNombre ?? "";
 
@@ -91,6 +100,12 @@ namespace Web.Controllers
 
                 if (usuario == null)
                     return Json(new { ok = false, msg = "Sesión expirada" });
+
+
+                IEmpresaContext empresa = new EmpresaContextWin(usuario.IdEmpresa);
+
+                oUsuarioN = new Negocio.Usuario(empresa);
+                oSucursalN = new Negocio.Sucursal(empresa);
 
                 usuario.IdSucursal = idSucursal;
                 usuario.SucursalNombre = oSucursalN.findById(idSucursal).SucursalNombre;

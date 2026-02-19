@@ -17,6 +17,7 @@ using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
 using Presentacion.Ticket;
 using System.Web.Services.Description;
+using Entidades;
 
 namespace Presentacion.Caja
 {
@@ -86,7 +87,7 @@ namespace Presentacion.Caja
         bool modificar = false;
         bool fijarPeso = Convert.ToBoolean(ConfigurationManager.AppSettings["fijarPeso"].ToString());
         bool redondeo = Convert.ToBoolean(ConfigurationManager.AppSettings["redondeo"].ToString());
-        int importeMaxRedondeo = FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.ImporteMaxRedondeo, 0);     
+        int importeMaxRedondeo = FormPrincipal.ParametrosCTX.GetInt(Entidades.ParamKeys.ImporteMaxRedondeo, 0);     
         bool ultimaVenta = Convert.ToBoolean(ConfigurationManager.AppSettings["ultimaVenta"].ToString());
         string fecha = "", estadoVenta = "", detalleRedondeo;
         float totalCorte, precioKg, cantKg, cantKgTarjeta, kgsTotalCalculado;
@@ -139,7 +140,7 @@ namespace Presentacion.Caja
             oVentaE.Sucursal = oSucursalE;
             this.txtSucursal.Text = oVentaE.Sucursal.sucursal;
             Negocio.Persona oPersonaN = new Negocio.Persona(FormPrincipal.EmpresaSTATIC, FormPrincipal.ParametrosCTX);
-            idConsumidorFinal = Entidades.Persona.idConsumidorFinal;
+            idConsumidorFinal =  FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0);
             oCliente = oPersonaN.findById(idConsumidorFinal);
             txtFecVenta.Text = DateTime.Now.ToString();
             if (!fecha.Equals(""))

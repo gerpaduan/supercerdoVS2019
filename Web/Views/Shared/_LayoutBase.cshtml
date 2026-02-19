@@ -30,6 +30,13 @@
     <link href="@Url.Content("~/Content/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" type="text/css" />
     <link href="@Url.Content("~/Content/css/sb-admin-2.min.css")" rel="stylesheet" />
     <link href="@Url.Content("~/Content/css/custom.css")" rel="stylesheet" />
+    <link rel="manifest" href="@Url.Content("~/manifest.json")" />
+    <meta name="theme-color" content="#0d6efd" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="@Url.Content("~/Content/img/pwa-192.png")" />
+
+
     @*<link href="@Url.Content("~/vendor/fontawesome-free/css/all.min.css")" rel="stylesheet" type="text/css">*@
 
 
@@ -380,6 +387,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="@Url.Content("~/Scripts/app/persona-buscar.js")"></script>
     <script src="@Url.Content("~/Scripts/app/forma-pago.js")"></script>
+    <script src="@Url.Content("~/Scripts/app/scanner.js")"></script>
 
     <script>
         const urlCambiarSucursal = '@Url.Action("CambiarSucursal", "Login")';
@@ -510,7 +518,52 @@
             e.preventDefault();
             $(this).val(t).trigger("input");
         });
+
+
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("/sw.js")
+                    .then(function (registration) {
+                        console.log("Service Worker registrado con éxito.");
+
+                        // Pedir la última URL visitada
+                        if (registration.active) {
+                            registration.active.postMessage({ type: "GET_LAST_URL" });
+                        }
+
+                        // Escuchar la respuesta con la URL
+                        navigator.serviceWorker.addEventListener("message", (event) => {
+                            if (event.data.type === "LAST_URL") {
+                                if (window.location.pathname === "/") {
+                                    window.location.href = event.data.url;
+                                }
+                            }
+                        });
+                    })
+                    .catch(function (error) {
+                        console.error("Error al registrar el Service Worker:", error);
+                    });
+            });
+        }
+
+
     </script>
 
+    @if (TempData["AlertMsg"] != null)
+    {
+        <script>
+        (function () {
+            var type = '@(TempData["AlertType"] ?? "info")';
+            var title = '@(TempData["AlertTitle"] ?? "Aviso")';
+            var msg = '@TempData["AlertMsg"]';
+
+            if (window.Swal) {
+                Swal.fire({ icon: type, title: title, text: msg });
+            } else {
+                alert(title + "\n\n" + msg);
+            }
+        })();
+        </script>
+    }
 </body>
 </html>

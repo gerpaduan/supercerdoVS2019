@@ -29,6 +29,7 @@ namespace Entidades
         public string NombreCertificado_pfx { get; set; }
         public string Entorno_HOMO_PROD { get; set; }
         public string BaseDatosNombre { get; set; }
+        public byte Activa { get; set; }
     }
 
 }

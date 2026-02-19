@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Entidades;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -8,142 +9,114 @@ namespace Datos
 {
     public class Usuario
     {
-        private readonly Utilidades.Conexion conn;
         private readonly IEmpresaContext _empresa;
 
         public Usuario(IEmpresaContext empresa)
         {
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
-            conn = new Utilidades.Conexion();
         }
 
-        public DataTable obtenerUsuarios(bool soloActivos, bool soloAdmin = false)
+        public DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false)
         {
-            var dt = new DataTable();
-
             string sql;
+
             if (soloAdmin)
             {
                 sql = "SELECT * FROM Usuarios WHERE usuario = @usuario";
+                return Db.DataTable(
+                    _empresa,
+                    sql,
+                    CommandType.Text,
+                    setParams: p =>
+                    {
+                        p.Add("@usuario", SqlDbType.NVarChar, 50).Value = "admin";
+                    }
+                );
             }
-            else
-            {
-                sql = "SELECT * FROM Usuarios" + (soloActivos ? " WHERE activo = 1" : "");
-            }
+            var where = new List<string>();
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
+            if (filtroEmpresa)
+                where.Add("idEmpresa = @idEmpresa");
 
-                if (soloAdmin)
-                    cmd.Parameters.AddWithValue("@usuario", "admin");
+            if (soloActivos)
+                where.Add("activo = 1");
 
-                da.Fill(dt);
-            }
+            sql = "SELECT * FROM Usuarios"
+                + (where.Count > 0 ? " WHERE " + string.Join(" AND ", where) : "");
 
-            return dt;
+            return Db.DataTable(_empresa, sql, CommandType.Text, setParams: p =>  p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
         }
 
         public DataTable getUsuarioActivos()
         {
-            var dt = new DataTable();
-
-            const string sql = "SELECT nombre, usuario, clave FROM Usuarios WHERE activo = 1";
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            const string sql = "SELECT nombre, usuario, clave FROM Usuarios WHERE activo = 1 AND idEmpresa = @idEmpresa";
+            return Db.DataTable(_empresa, sql, CommandType.Text, setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa);
         }
 
         /// <summary>
-        /// Obtiene usuario por ID. Si pasás una SqlConnection abierta, no la cierra (ideal para reutilizar).
-        /// Si no pasás conexión, abre/cierra una propia.
+        /// Obtiene usuario por ID.
+        /// Nota: si querés conservar el "externalConn" para reutilizar una conexión abierta,
+        /// conviene agregar overloads en Db que acepten (SqlConnection/SqlTransaction).
+        /// Por ahora lo dejo simple con Db.Reader.
         /// </summary>
-        public Entidades.Usuario getUsuarioById(int idUsuario, SqlConnection externalConn = null)
+        public Entidades.Usuario getUsuarioById(int idUsuario)
         {
-            Entidades.Usuario user = null;
-            bool ownConn = false;
 
-            SqlConnection con = externalConn;
-            try
-            {
-                if (con == null)
+            var oSucursalD = new Datos.Sucursal(_empresa);
+
+            const string sql = "SELECT * FROM Usuarios WHERE id = @id";
+
+            var list = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr =>
                 {
-                    con = conn.conectar(_empresa);
-                    if (con.State != ConnectionState.Open) con.Open();
-                    ownConn = true;
-                }
-
-                using (var cmd = new SqlCommand("SELECT * FROM Usuarios WHERE id = @id", con))
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandTimeout = conn.TimeOut();
-                    cmd.Parameters.AddWithValue("@id", idUsuario);
-
-                    using (var dr = cmd.ExecuteReader())
+                    return new Entidades.Usuario
                     {
-                        if (dr.Read())
-                        {
-                            user = new Entidades.Usuario
-                            {
-                                Id = Convert.ToInt32(dr["id"]),
-                                Nombre = dr["nombre"] == DBNull.Value ? "" : Convert.ToString(dr["nombre"]),
-                                User = dr["usuario"] == DBNull.Value ? "" : Convert.ToString(dr["usuario"]),
-                                Clave = dr["clave"] == DBNull.Value ? "" : Convert.ToString(dr["clave"]),
-                                Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
-                                Admin = dr["admin"] != DBNull.Value && Convert.ToBoolean(dr["admin"]),
-                                Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
-                                ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
-                                IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
-                                IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"])
-                            };
-                        }
-                    }
+                        Id = Convert.ToInt32(dr["id"]),
+                        Nombre = dr["nombre"] == DBNull.Value ? "" : Convert.ToString(dr["nombre"]),
+                        User = dr["usuario"] == DBNull.Value ? "" : Convert.ToString(dr["usuario"]),
+                        Clave = dr["clave"] == DBNull.Value ? "" : Convert.ToString(dr["clave"]),
+                        Email = dr["email"] == DBNull.Value ? "" : Convert.ToString(dr["email"]),
+                        Admin = dr["admin"] != DBNull.Value && Convert.ToBoolean(dr["admin"]),
+                        Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
+                        ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
+                        IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
+                        IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
+                        Sucursal = dr["idSucursalUser"] == DBNull.Value ? null : oSucursalD.findById(Convert.ToInt32(dr["idSucursalUser"])),
+                        Empresa = dr["idEmpresa"] == DBNull.Value ? null : oSucursalD.findEmpresaById(Convert.ToInt32(dr["idEmpresa"]))
+                    };
+                },
+                setParams: p =>
+                {
+                    p.Add("@id", SqlDbType.Int).Value = idUsuario;
                 }
-            }
-            finally
-            {
-                if (ownConn && con != null && con.State == ConnectionState.Open)
-                    con.Close();
-            }
+            );
 
-            return user;
+            return list.Count > 0 ? list[0] : null;
         }
 
         public void addOrEditUser(Entidades.Usuario oUsuarioE)
         {
             if (oUsuarioE == null) throw new ArgumentNullException(nameof(oUsuarioE));
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("addOrEditUser", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@id", oUsuarioE.Id);
-                cmd.Parameters.AddWithValue("@nombre", oUsuarioE.Nombre ?? "");
-                cmd.Parameters.AddWithValue("@usuario", oUsuarioE.User ?? "");
-                cmd.Parameters.AddWithValue("@email", oUsuarioE.Email ?? "");
-                cmd.Parameters.AddWithValue("@clave", oUsuarioE.Clave ?? "");
-                cmd.Parameters.AddWithValue("@admin", oUsuarioE.Admin);
-                cmd.Parameters.AddWithValue("@activo", oUsuarioE.Activo);
-                cmd.Parameters.AddWithValue("@colorForm", oUsuarioE.ColorForm ?? "");
-                cmd.Parameters.AddWithValue("@idEmpresa", oUsuarioE.IdEmpresa);
-
-                if (con.State != ConnectionState.Open) con.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Db.NonQuery(
+                _empresa,
+                "addOrEditUser",
+                CommandType.StoredProcedure,
+                setParams: p =>
+                {
+                    p.Add("@id", SqlDbType.Int).Value = oUsuarioE.Id;
+                    p.Add("@nombre", SqlDbType.NVarChar, 120).Value = oUsuarioE.Nombre ?? "";
+                    p.Add("@usuario", SqlDbType.NVarChar, 50).Value = oUsuarioE.User ?? "";
+                    p.Add("@email", SqlDbType.NVarChar, 120).Value = oUsuarioE.Email ?? "";
+                    p.Add("@clave", SqlDbType.NVarChar, 200).Value = oUsuarioE.Clave ?? "";
+                    p.Add("@admin", SqlDbType.Bit).Value = oUsuarioE.Admin;
+                    p.Add("@activo", SqlDbType.Bit).Value = oUsuarioE.Activo;
+                    p.Add("@colorForm", SqlDbType.NVarChar, 50).Value = oUsuarioE.ColorForm ?? "";
+                }
+            );
         }
 
         public void setSucursalUsuario(Entidades.Usuario oUsuario)
@@ -155,18 +128,16 @@ namespace Datos
                 SET idSucursalUser = @idSucursal
                 WHERE id = @idUsuario;";
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@idUsuario", oUsuario.Id);
-                cmd.Parameters.AddWithValue("@idSucursal", oUsuario.IdSucursal);
-
-                if (con.State != ConnectionState.Open) con.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Db.NonQuery(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = oUsuario.Id;
+                    p.Add("@idSucursal", SqlDbType.Int).Value = oUsuario.IdSucursal;
+                }
+            );
         }
 
         public List<Entidades.PermisosUsuarios> getPermisosUsuario(int idUsuario)
@@ -188,50 +159,42 @@ namespace Datos
                     ON f.idForm = p.idForm AND p.idUsuario = @idUsuario
                 ORDER BY f.idForm;";
 
-            var list = new List<Entidades.PermisosUsuarios>();
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(query, con))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
-
-                if (con.State != ConnectionState.Open) con.Open();
-                using (var dr = cmd.ExecuteReader())
+            return Db.Reader(
+                _empresa,
+                query,
+                CommandType.Text,
+                map: dr =>
                 {
-                    while (dr.Read())
+                    return new Entidades.PermisosUsuarios
                     {
-                        var permisosUsuarios = new Entidades.PermisosUsuarios
+                        IdUsuario = idUsuario,
+                        IdForm = Convert.ToInt32(dr["idForm"]),
+                        DiasPermitidosVer = dr["diasPermitidosVer"] == DBNull.Value ? -1 : Convert.ToInt32(dr["diasPermitidosVer"]),
+                        DiasPermitidosEditar = dr["diasPermitidosEditar"] == DBNull.Value ? -1 : Convert.ToInt32(dr["diasPermitidosEditar"]),
+                        SoloRegistrosPropios = dr["soloRegistrosPropios"] == DBNull.Value ? true : Convert.ToBoolean(dr["soloRegistrosPropios"]),
+                        Formulario = new Entidades.Formulario
                         {
-                            IdUsuario = idUsuario,
-                            IdForm = dr.GetInt32(dr.GetOrdinal("idForm")),
-                            DiasPermitidosVer = dr.IsDBNull(dr.GetOrdinal("diasPermitidosVer")) ? -1 : dr.GetInt32(dr.GetOrdinal("diasPermitidosVer")),
-                            DiasPermitidosEditar = dr.IsDBNull(dr.GetOrdinal("diasPermitidosEditar")) ? -1 : dr.GetInt32(dr.GetOrdinal("diasPermitidosEditar")),
-                            SoloRegistrosPropios = dr.IsDBNull(dr.GetOrdinal("soloRegistrosPropios")) ? true : dr.GetBoolean(dr.GetOrdinal("soloRegistrosPropios")),
-                            Formulario = new Entidades.Formulario
-                            {
-                                IdForm = dr.GetInt32(dr.GetOrdinal("idForm")),
-                                NombreForm = dr.GetString(dr.GetOrdinal("nombreForm")),
-                                Descripcion = dr.IsDBNull(dr.GetOrdinal("descripcion")) ? "" : dr.GetString(dr.GetOrdinal("descripcion")),
-                                FormConsulta = dr.IsDBNull(dr.GetOrdinal("formConsulta")) ? "" : dr.GetString(dr.GetOrdinal("formConsulta")),
-                                FormEdicion = dr.IsDBNull(dr.GetOrdinal("formEdicion")) ? "" : dr.GetString(dr.GetOrdinal("formEdicion")),
-                                FormEdicionExtra1 = dr.IsDBNull(dr.GetOrdinal("formEdicionExtra1")) ? "" : dr.GetString(dr.GetOrdinal("formEdicionExtra1")),
-                                FormEdicionExtra2 = dr.IsDBNull(dr.GetOrdinal("formEdicionExtra2")) ? "" : dr.GetString(dr.GetOrdinal("formEdicionExtra2"))
-                            }
-                        };
-
-                        list.Add(permisosUsuarios);
-                    }
+                            IdForm = Convert.ToInt32(dr["idForm"]),
+                            NombreForm = Convert.ToString(dr["nombreForm"]),
+                            Descripcion = dr["descripcion"] == DBNull.Value ? "" : Convert.ToString(dr["descripcion"]),
+                            FormConsulta = dr["formConsulta"] == DBNull.Value ? "" : Convert.ToString(dr["formConsulta"]),
+                            FormEdicion = dr["formEdicion"] == DBNull.Value ? "" : Convert.ToString(dr["formEdicion"]),
+                            FormEdicionExtra1 = dr["formEdicionExtra1"] == DBNull.Value ? "" : Convert.ToString(dr["formEdicionExtra1"]),
+                            FormEdicionExtra2 = dr["formEdicionExtra2"] == DBNull.Value ? "" : Convert.ToString(dr["formEdicionExtra2"])
+                        }
+                    };
+                },
+                setParams: p =>
+                {
+                    p.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
                 }
-            }
-
-            return list;
+            );
         }
 
         public void AddOrEditPermisos(List<Entidades.PermisosUsuarios> permisos)
         {
             if (permisos == null) throw new ArgumentNullException(nameof(permisos));
+            if (permisos.Count == 0) return;
 
             const string query = @"
                 IF EXISTS (SELECT 1 FROM PermisosUsuarios WHERE idUsuario = @idUsuario AND idForm = @idForm)
@@ -248,22 +211,27 @@ namespace Datos
                     VALUES (@idUsuario, @idForm, @diasVer, @diasEditar, @soloPropios)
                 END";
 
-            using (var con = conn.conectar(_empresa))
+            // Una conexión, muchos updates (como tu código original)
+            using (var con = Db.Open(_empresa))
             {
-                if (con.State != ConnectionState.Open) con.Open();
-
-                foreach (var permiso in permisos)
+                using (var cmd = new SqlCommand(query, con))
                 {
-                    using (var cmd = new SqlCommand(query, con))
-                    {
-                        cmd.CommandType = CommandType.Text;
-                        cmd.CommandTimeout = conn.TimeOut();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandTimeout = Conexion.timeOut;
 
-                        cmd.Parameters.AddWithValue("@idUsuario", permiso.IdUsuario);
-                        cmd.Parameters.AddWithValue("@idForm", permiso.IdForm);
-                        cmd.Parameters.AddWithValue("@diasVer", permiso.DiasPermitidosVer);
-                        cmd.Parameters.AddWithValue("@diasEditar", permiso.DiasPermitidosEditar);
-                        cmd.Parameters.AddWithValue("@soloPropios", permiso.SoloRegistrosPropios);
+                    var pIdUsuario = cmd.Parameters.Add("@idUsuario", SqlDbType.Int);
+                    var pIdForm = cmd.Parameters.Add("@idForm", SqlDbType.Int);
+                    var pDiasVer = cmd.Parameters.Add("@diasVer", SqlDbType.Int);
+                    var pDiasEditar = cmd.Parameters.Add("@diasEditar", SqlDbType.Int);
+                    var pSoloPropios = cmd.Parameters.Add("@soloPropios", SqlDbType.Bit);
+
+                    foreach (var permiso in permisos)
+                    {
+                        pIdUsuario.Value = permiso.IdUsuario;
+                        pIdForm.Value = permiso.IdForm;
+                        pDiasVer.Value = permiso.DiasPermitidosVer;
+                        pDiasEditar.Value = permiso.DiasPermitidosEditar;
+                        pSoloPropios.Value = permiso.SoloRegistrosPropios;
 
                         cmd.ExecuteNonQuery();
                     }

@@ -133,6 +133,7 @@
             this.label28 = new System.Windows.Forms.Label();
             this.txtDescItemUnitario = new System.Windows.Forms.TextBox();
             this.checkItemUnitario = new System.Windows.Forms.CheckBox();
+            this.lbl_PtoVentaDistinto = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grillaLineasVenta)).BeginInit();
             this.panel1.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -725,7 +726,7 @@
             this.imprimir.Image = ((System.Drawing.Image)(resources.GetObject("imprimir.Image")));
             this.imprimir.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.imprimir.Name = "imprimir";
-            this.imprimir.Size = new System.Drawing.Size(42, 39);
+            this.imprimir.Size = new System.Drawing.Size(43, 39);
             this.imprimir.Text = "&Ticket";
             this.imprimir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.imprimir.Click += new System.EventHandler(this.imprimir_Click);
@@ -778,7 +779,7 @@
             // btnBuscarCuit
             // 
             this.btnBuscarCuit.Location = new System.Drawing.Point(264, 34);
-            this.btnBuscarCuit.Margin = new System.Windows.Forms.Padding(2);
+            this.btnBuscarCuit.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.btnBuscarCuit.Name = "btnBuscarCuit";
             this.btnBuscarCuit.Size = new System.Drawing.Size(135, 24);
             this.btnBuscarCuit.TabIndex = 78;
@@ -1195,12 +1196,25 @@
             this.checkItemUnitario.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
             this.checkItemUnitario.Location = new System.Drawing.Point(14, 297);
             this.checkItemUnitario.Name = "checkItemUnitario";
-            this.checkItemUnitario.Size = new System.Drawing.Size(150, 20);
+            this.checkItemUnitario.Size = new System.Drawing.Size(149, 20);
             this.checkItemUnitario.TabIndex = 102;
             this.checkItemUnitario.Text = "Facturar ítem unitario";
             this.checkItemUnitario.UseVisualStyleBackColor = true;
             this.checkItemUnitario.Visible = false;
             this.checkItemUnitario.CheckedChanged += new System.EventHandler(this.checkItemUnitario_CheckedChanged);
+            // 
+            // lbl_PtoVentaDistinto
+            // 
+            this.lbl_PtoVentaDistinto.AutoSize = true;
+            this.lbl_PtoVentaDistinto.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_PtoVentaDistinto.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.lbl_PtoVentaDistinto.Location = new System.Drawing.Point(372, 42);
+            this.lbl_PtoVentaDistinto.Name = "lbl_PtoVentaDistinto";
+            this.lbl_PtoVentaDistinto.Size = new System.Drawing.Size(185, 52);
+            this.lbl_PtoVentaDistinto.TabIndex = 101;
+            this.lbl_PtoVentaDistinto.Text = "El Punto de Venta configurado \r\npara esta sucursal no coincide \r\ncon el Punto de " +
+    "Venta \r\nhabilitado en la AFIP/ARCA.";
+            this.lbl_PtoVentaDistinto.Visible = false;
             // 
             // formFacturaElectronica
             // 
@@ -1268,6 +1282,7 @@
             this.Controls.Add(this.Label3);
             this.Controls.Add(this.Label1);
             this.Controls.Add(this.CargaBtn);
+            this.Controls.Add(this.lbl_PtoVentaDistinto);
             this.Name = "formFacturaElectronica";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Factura Electronica";
@@ -1388,5 +1403,6 @@
         internal System.Windows.Forms.Label label28;
         internal System.Windows.Forms.TextBox txtDescItemUnitario;
         private System.Windows.Forms.CheckBox checkItemUnitario;
+        internal System.Windows.Forms.Label lbl_PtoVentaDistinto;
     }
 }

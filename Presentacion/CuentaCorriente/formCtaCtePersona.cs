@@ -24,7 +24,7 @@ namespace Presentacion.CuentaCorriente
         public int idPersona;
         DataTable dtMov;
         Entidades.Persona oPersonaE;
-        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.Parametros.DiasLimitFechaDesde, 0));
+        DateTime limitFechaDesde = DateTime.Today.AddDays(-FormPrincipal.ParametrosCTX.GetInt(Entidades.ParamKeys.DiasLimitFechaDesde, 0));
         DateTime ultimaFechaDesde; //guarda la ultima fecha de la busqueda exitosa
         public bool desdePOS = true; //para indicar que es llamado desde el form POS
 

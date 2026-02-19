@@ -8,13 +8,11 @@ namespace Datos
 {
     public class Persona
     {
-        private readonly Utilidades.Conexion conn;
         private readonly IEmpresaContext _empresa;
 
         public Persona(IEmpresaContext empresa)
         {
             _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
-            conn = new Utilidades.Conexion();
         }
 
         #region Helpers (LIKE seguro + DBNull)
@@ -45,94 +43,49 @@ namespace Datos
 
         #region ABM Persona (SP)
 
-        public void agregarPersona(Entidades.Persona oPersonaE)
-        {
-            if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("agregarPersona", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@razonSocial", oPersonaE.razonSocial ?? "");
-                cmd.Parameters.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
-                cmd.Parameters.AddWithValue("@tipo", oPersonaE.tipo ?? "");
-
-                if (con.State != ConnectionState.Open) con.Open();
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        // Mantuve el nombre original por compatibilidad aunque conceptualmente sea "modificarPersona"
-        public void modificarProveedor(Entidades.Persona oPersonaE)
-        {
-            if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("modificarPersona", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@idPersona", oPersonaE.idPersona);
-                cmd.Parameters.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
-                cmd.Parameters.AddWithValue("@razonSocial", oPersonaE.razonSocial ?? "");
-                cmd.Parameters.AddWithValue("@tipo", oPersonaE.tipo ?? "");
-
-                if (con.State != ConnectionState.Open) con.Open();
-                cmd.ExecuteNonQuery();
-            }
-        }
-
         public void addOrEditPersona(Entidades.Persona oPersonaE)
         {
             if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("addOrEditPersona", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
+            Db.NonQuery(
+                _empresa,
+                "addOrEditPersona",
+                CommandType.StoredProcedure,
+                setParams: p =>
+                {
+                    p.AddWithValue("@idPersona", oPersonaE.idPersona);
+                    p.AddWithValue("@identificacion", oPersonaE.Identificacion ?? "");
+                    p.AddWithValue("@razonSocial", oPersonaE.razonSocial ?? "");
+                    p.AddWithValue("@idIva", oPersonaE.IdIva);
+                    p.AddWithValue("@cuit", oPersonaE.Cuit ?? "");
+                    p.AddWithValue("@telefono", oPersonaE.Telefono ?? "");
+                    p.AddWithValue("@domicilio", oPersonaE.Domicilio ?? "");
+                    p.AddWithValue("@ciudad", oPersonaE.Ciudad ?? "");
+                    p.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
+                    p.AddWithValue("@tipo", oPersonaE.tipo ?? "");
+                    p.AddWithValue("@ctaCte", oPersonaE.CtaCte);
+                    p.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
+                    p.AddWithValue("@marca", oPersonaE.Marca);
 
-                cmd.Parameters.AddWithValue("@idPersona", oPersonaE.idPersona);
-                cmd.Parameters.AddWithValue("@identificacion", oPersonaE.Identificacion ?? "");
-                cmd.Parameters.AddWithValue("@razonSocial", oPersonaE.razonSocial ?? "");
-                cmd.Parameters.AddWithValue("@idIva", oPersonaE.IdIva);
-                cmd.Parameters.AddWithValue("@cuit", oPersonaE.Cuit ?? "");
-                cmd.Parameters.AddWithValue("@telefono", oPersonaE.Telefono ?? "");
-                cmd.Parameters.AddWithValue("@domicilio", oPersonaE.Domicilio ?? "");
-                cmd.Parameters.AddWithValue("@ciudad", oPersonaE.Ciudad ?? "");
-                cmd.Parameters.AddWithValue("@otrosDatos", oPersonaE.otrosDatos ?? "");
-                cmd.Parameters.AddWithValue("@tipo", oPersonaE.tipo ?? "");
-                cmd.Parameters.AddWithValue("@ctaCte", oPersonaE.CtaCte);
-                cmd.Parameters.AddWithValue("@bonificacion", oPersonaE.Bonificacion);
-                cmd.Parameters.AddWithValue("@marca", oPersonaE.Marca);
-
-                // idPropietario nullable
-                cmd.Parameters.AddWithValue("@idPropietario",
-                    oPersonaE.Propietario != null ? (object)oPersonaE.Propietario.idPersona : DBNull.Value);
-
-                if (con.State != ConnectionState.Open) con.Open();
-                cmd.ExecuteNonQuery();
-            }
+                    // idPropietario nullable
+                    p.AddWithValue("@idPropietario",
+                        oPersonaE.Propietario != null
+                            ? (object)oPersonaE.Propietario.idPersona
+                            : DBNull.Value);
+                }
+            );
         }
 
         public void eliminarPersona(Entidades.Persona oPersonaE)
         {
             if (oPersonaE == null) throw new ArgumentNullException(nameof(oPersonaE));
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("eliminarPersona", con))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@idPersona", oPersonaE.idPersona);
-
-                if (con.State != ConnectionState.Open) con.Open();
-                cmd.ExecuteNonQuery();
-            }
+            Db.NonQuery(
+                _empresa,
+                "eliminarPersona",
+                CommandType.StoredProcedure,
+                setParams: p => p.AddWithValue("@idPersona", oPersonaE.idPersona)
+            );
         }
 
         #endregion
@@ -141,9 +94,7 @@ namespace Datos
 
         public Entidades.Persona findById(int id)
         {
-            Entidades.Persona oPersona = null;
-
-            string sql = @"
+            const string sql = @"
                 SELECT 
                     p.idPersona,
                     p.identificacion,
@@ -165,68 +116,52 @@ namespace Datos
                 LEFT JOIN dbo.Iva i ON i.id = p.idIva
                 WHERE p.idPersona = @id;";
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.AddWithValue("@id", id);
-
-                if (con.State != ConnectionState.Open) con.Open();
-                using (var dr = cmd.ExecuteReader())
+            var list = Db.Reader(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr =>
                 {
-                    if (dr.Read())
+                    return new Entidades.Persona
                     {
-                        oPersona = new Entidades.Persona
-                        {
-                            idPersona = Convert.ToInt32(dr["idPersona"]),
-                            tipo = Convert.ToString(dr["tipo"]),
-                            Identificacion = Convert.ToString(dr["identificacion"]),
-                            razonSocial = Convert.ToString(dr["razonSocial"]),
-                            Iva = dr["iva"] == DBNull.Value ? null : Convert.ToString(dr["iva"]),
-                            IdIva = dr["idIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idIva"]),
-                            Cuit = Convert.ToString(dr["cuit"]),
-                            Telefono = Convert.ToString(dr["telefono"]),
-                            Domicilio = Convert.ToString(dr["domicilio"]),
-                            Ciudad = Convert.ToString(dr["ciudad"]),
-                            CtaCte = dr["ctaCte"] != DBNull.Value && Convert.ToBoolean(dr["ctaCte"]),
-                            Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
-                            OtrosDatos = Convert.ToString(dr["otrosDatos"]),
-                            Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
-                            Marca = dr["marca"] != DBNull.Value && Convert.ToBoolean(dr["marca"]),
-                            IdPropietario = dr["idPropietario"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idPropietario"])
-                        };
-                    }
-                }
-            }
+                        idPersona = Convert.ToInt32(dr["idPersona"]),
+                        tipo = Convert.ToString(dr["tipo"]),
+                        Identificacion = Convert.ToString(dr["identificacion"]),
+                        razonSocial = Convert.ToString(dr["razonSocial"]),
+                        Iva = dr["iva"] == DBNull.Value ? null : Convert.ToString(dr["iva"]),
+                        IdIva = dr["idIva"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idIva"]),
+                        Cuit = Convert.ToString(dr["cuit"]),
+                        Telefono = Convert.ToString(dr["telefono"]),
+                        Domicilio = Convert.ToString(dr["domicilio"]),
+                        Ciudad = Convert.ToString(dr["ciudad"]),
+                        CtaCte = dr["ctaCte"] != DBNull.Value && Convert.ToBoolean(dr["ctaCte"]),
+                        Bonificacion = dr["bonificacion"] == DBNull.Value ? 0 : Convert.ToSingle(dr["bonificacion"]),
+                        OtrosDatos = Convert.ToString(dr["otrosDatos"]),
+                        Creado = dr["creado"] == DBNull.Value ? DateTime.MinValue : Convert.ToDateTime(dr["creado"]),
+                        Marca = dr["marca"] != DBNull.Value && Convert.ToBoolean(dr["marca"]),
+                        IdPropietario = dr["idPropietario"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idPropietario"])
+                    };
+                },
+                setParams: p => p.AddWithValue("@id", id)
+            );
 
-            return oPersona;
+            return (list.Count > 0) ? list[0] : null;
         }
 
         public DataTable buscarProveedor(string buscarTexto)
         {
-            var dt = new DataTable();
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("buscarProveedor", con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@texto", buscarTexto ?? "");
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                "buscarProveedor",
+                CommandType.StoredProcedure,
+                setParams: p => p.AddWithValue("@texto", buscarTexto ?? "")
+            );
         }
 
         public DataTable buscarPersona(string buscarTexto, bool? marca)
         {
-            var dt = new DataTable();
-
             string sql;
+
             if (marca.HasValue && marca.Value)
             {
                 sql = @"
@@ -269,35 +204,21 @@ namespace Datos
                       );";
             }
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@texto", LikePattern(buscarTexto));
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.AddWithValue("@texto", LikePattern(buscarTexto))
+            );
         }
 
         public DataTable getIva()
         {
-            var dt = new DataTable();
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("SELECT * FROM Iva", con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                "SELECT * FROM Iva",
+                CommandType.Text
+            );
         }
 
         public int existeCuit(string cuit)
@@ -309,25 +230,21 @@ namespace Datos
             if (!long.TryParse(cuitNorm, out _))
                 return 0;
 
-            string sql = "SELECT TOP 1 idPersona FROM Personas WHERE REPLACE(cuit, '-', '') = @cuit;";
+            const string sql = "SELECT TOP 1 idPersona FROM Personas WHERE REPLACE(cuit, '-', '') = @cuit;";
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.AddWithValue("@cuit", cuitNorm);
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.AddWithValue("@cuit", cuitNorm)
+            );
 
-                if (con.State != ConnectionState.Open) con.Open();
-                object result = cmd.ExecuteScalar();
-
-                return (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
-            }
+            return (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
         }
 
         public bool personaTieneCompras_Ventas(int idPersona)
         {
-            string sql = @"
+            const string sql = @"
                 SELECT 
                     CASE 
                         WHEN EXISTS (SELECT 1 FROM Ventas WHERE idPersona = @idPersona) 
@@ -335,41 +252,29 @@ namespace Datos
                         THEN 1 ELSE 0
                     END;";
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-                cmd.Parameters.AddWithValue("@idPersona", idPersona);
+            object result = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p => p.AddWithValue("@idPersona", idPersona)
+            );
 
-                if (con.State != ConnectionState.Open) con.Open();
-                int existe = Convert.ToInt32(cmd.ExecuteScalar());
-                return existe == 1;
-            }
+            int existe = (result == null || result == DBNull.Value) ? 0 : Convert.ToInt32(result);
+            return existe == 1;
         }
 
         public DataTable obtenerProveedores()
         {
-            var dt = new DataTable();
-
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand("buscarPersona", con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                "buscarPersona",
+                CommandType.StoredProcedure
+            );
         }
 
         public DataTable existenMarcasParecidas(string buscarTexto, int idMarca)
         {
-            var dt = new DataTable();
-
-            string sql = @"
+            const string sql = @"
                 SELECT 
                     p.idPersona,
                     p.razonSocial as Marca,
@@ -381,20 +286,16 @@ namespace Datos
                   AND p.marca = 1
                   AND p.razonSocial COLLATE Latin1_General_CI_AI LIKE @texto;";
 
-            using (var con = conn.conectar(_empresa))
-            using (var cmd = new SqlCommand(sql, con))
-            using (var da = new SqlDataAdapter(cmd))
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandTimeout = conn.TimeOut();
-
-                cmd.Parameters.AddWithValue("@texto", LikePattern(buscarTexto));
-                cmd.Parameters.AddWithValue("@idMarca", idMarca);
-
-                da.Fill(dt);
-            }
-
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.AddWithValue("@texto", LikePattern(buscarTexto));
+                    p.AddWithValue("@idMarca", idMarca);
+                }
+            );
         }
 
         #endregion

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Entidades;
+using System.Data;
 using Utilidades;
 
 namespace Negocio
@@ -50,7 +51,7 @@ namespace Negocio
 
         public Entidades.Persona getConsumidorFinal()
         {
-            return findById(Entidades.Persona.idConsumidorFinal);
+            return findById(_param.GetInt(ParamKeys.IdConsumidorFinal, 0));// Entidades.Persona.idConsumidorFinal);
         }
 
         public bool personaTieneCompras_Ventas(int idPersona)

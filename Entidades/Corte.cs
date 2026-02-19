@@ -182,15 +182,12 @@ namespace Entidades
 
         public Corte CorteMaestro
         {
-            get
-            {
-                return corteMaestro;
-            }
-            set
-            {
-                corteMaestro = value;
-            }
+            get => corteMaestro;
+            set => corteMaestro = value;
         }
+
+        // Solo para mostrar
+        public string CorteMaestroNombre => CorteMaestro?.CorteDesc ?? "";
 
         public float PorcentajeHueso
         {
@@ -220,7 +217,10 @@ namespace Entidades
         public bool Pesable { get => pesable; set => pesable = value; }
         public int Nivel { get => nivel; set => nivel = value; }
         public int PuntoStock { get => puntoStock; set => puntoStock = value; }
-        public Persona Marca { get => marca; set => marca = value; }
+        public Persona Marca { get; set; }
+
+        public string MarcaNombre => Marca?.RazonSocial ?? "";
+
         public bool CodBarraValidadoEnPos { get => codBarraValidadoEnPos; set => codBarraValidadoEnPos = value; }
         public bool Presentacion { get => presentacion; set => presentacion = value; }
         public string Stock_EnString { get => stock_EnString; set => stock_EnString = value; }

@@ -8,22 +8,16 @@ namespace Datos
 {
     public class Parametros
     {
-        private readonly Conexion conn;
-        private readonly IEmpresaContext empresa;
+        private readonly IEmpresaContext _empresa;
 
         public Parametros(IEmpresaContext empresaContext)
         {
-            if (empresaContext == null) throw new ArgumentNullException("empresaContext");
-            empresa = empresaContext;
-            conn = new Conexion();
+            _empresa = empresaContext ?? throw new ArgumentNullException(nameof(empresaContext));
         }
 
         public DataTable ObtenerGrid()
         {
-            DataTable dt = new DataTable();
-
-            using (SqlConnection cn = conn.conectar(empresa))
-            using (SqlDataAdapter da = new SqlDataAdapter(@"
+            const string sql = @"
                 SELECT
                     p.idParametro,
                     p.nombre,
@@ -34,96 +28,99 @@ namespace Datos
                 LEFT JOIN dbo.EmpresaParametros ep
                        ON ep.idParametro = p.idParametro
                       AND ep.idEmpresa = @idEmpresa
-                ORDER BY p.nombre;", cn))
-            {
-                da.SelectCommand.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = empresa.IdEmpresa;
-                da.Fill(dt);
-            }
+                ORDER BY p.nombre;";
 
-            return dt;
+            return Db.DataTable(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                }
+            );
         }
 
         public void GuardarGrid(DataTable dtParametros)
         {
-            if (dtParametros == null) throw new ArgumentNullException("dtParametros");
+            if (dtParametros == null) throw new ArgumentNullException(nameof(dtParametros));
             if (!dtParametros.Columns.Contains("idParametro")) throw new ArgumentException("Falta la columna idParametro");
             if (!dtParametros.Columns.Contains("valor")) throw new ArgumentException("Falta la columna valor");
 
-            using (SqlConnection cn = conn.conectar(empresa))
+            const string mergeSql = @"
+                MERGE dbo.EmpresaParametros AS T
+                USING (SELECT @idEmpresa AS idEmpresa, @idParametro AS idParametro, @valor AS valor) AS S
+                ON (T.idEmpresa = S.idEmpresa AND T.idParametro = S.idParametro)
+                WHEN MATCHED THEN UPDATE SET valor = S.valor
+                WHEN NOT MATCHED THEN INSERT (idEmpresa, idParametro, valor)
+                                   VALUES (S.idEmpresa, S.idParametro, S.valor);";
+
+            // Mantengo tu transacción (es lo correcto para guardado masivo)
+            using (SqlConnection cn = Db.Open(_empresa))
+            using (SqlTransaction tx = cn.BeginTransaction())
+            using (SqlCommand cmd = new SqlCommand(mergeSql, cn, tx))
             {
-                if (cn.State != ConnectionState.Open) cn.Open();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = Conexion.timeOut;
 
-                using (SqlTransaction tx = cn.BeginTransaction())
-                using (SqlCommand cmd = cn.CreateCommand())
+                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                SqlParameter pIdParametro = cmd.Parameters.Add("@idParametro", SqlDbType.Int);
+                SqlParameter pValor = cmd.Parameters.Add("@valor", SqlDbType.NVarChar, 200);
+
+                try
                 {
-                    cmd.Transaction = tx;
-                    cmd.CommandText = @"
-                        MERGE dbo.EmpresaParametros AS T
-                        USING (SELECT @idEmpresa AS idEmpresa, @idParametro AS idParametro, @valor AS valor) AS S
-                        ON (T.idEmpresa = S.idEmpresa AND T.idParametro = S.idParametro)
-                        WHEN MATCHED THEN UPDATE SET valor = S.valor
-                        WHEN NOT MATCHED THEN INSERT (idEmpresa, idParametro, valor)
-                                           VALUES (S.idEmpresa, S.idParametro, S.valor);";
-
-                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = empresa.IdEmpresa;
-                    SqlParameter pIdParametro = cmd.Parameters.Add("@idParametro", SqlDbType.Int);
-                    SqlParameter pValor = cmd.Parameters.Add("@valor", SqlDbType.NVarChar, 200);
-
-                    try
+                    foreach (DataRow row in dtParametros.Rows)
                     {
-                        foreach (DataRow row in dtParametros.Rows)
-                        {
-                            if (row.RowState == DataRowState.Deleted) continue;
-                            if (row["idParametro"] == DBNull.Value) continue;
+                        if (row.RowState == DataRowState.Deleted) continue;
+                        if (row["idParametro"] == DBNull.Value) continue;
 
-                            pIdParametro.Value = Convert.ToInt32(row["idParametro"]);
+                        pIdParametro.Value = Convert.ToInt32(row["idParametro"]);
 
-                            object valObj = row["valor"];
-                            if (valObj == DBNull.Value || valObj == null)
-                                pValor.Value = DBNull.Value;
-                            else
-                                pValor.Value = valObj.ToString();
+                        object valObj = row["valor"];
+                        if (valObj == DBNull.Value || valObj == null)
+                            pValor.Value = DBNull.Value;
+                        else
+                            pValor.Value = valObj.ToString();
 
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        tx.Commit();
+                        cmd.ExecuteNonQuery();
                     }
-                    catch
-                    {
-                        tx.Rollback();
-                        throw;
-                    }
+
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
                 }
             }
         }
 
         public Dictionary<string, string> ObtenerDiccionario()
         {
-            Dictionary<string, string> dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            const string sql = @"
+                SELECT p.nombre, ep.valor
+                FROM dbo.Parametros p
+                LEFT JOIN dbo.EmpresaParametros ep
+                       ON ep.idParametro = p.idParametro
+                      AND ep.idEmpresa = @idEmpresa;";
 
-            using (SqlConnection cn = conn.conectar(empresa))
-            using (SqlCommand cmd = cn.CreateCommand())
-            {
-                cmd.CommandText = @"
-                    SELECT p.nombre, ep.valor
-                    FROM dbo.Parametros p
-                    LEFT JOIN dbo.EmpresaParametros ep
-                           ON ep.idParametro = p.idParametro
-                          AND ep.idEmpresa = @idEmpresa;";
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = empresa.IdEmpresa;
-
-                using (SqlDataReader rd = cmd.ExecuteReader())
+            // Usamos Db.Reader para mapear y armar el diccionario
+            Db.Reader<object>(
+                _empresa,
+                sql,
+                CommandType.Text,
+                map: dr =>
                 {
-                    while (rd.Read())
-                    {
-                        string nombre = rd.GetString(0);
-                        string valor = rd.IsDBNull(1) ? "" : rd.GetString(1);
+                    string nombre = dr.IsDBNull(0) ? "" : dr.GetString(0);
+                    string valor = dr.IsDBNull(1) ? "" : dr.GetString(1);
+                    if (!string.IsNullOrEmpty(nombre))
                         dict[nombre] = valor;
-                    }
-                }
-            }
+                    return null;
+                },
+                setParams: p => p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa
+            );
 
             return dict;
         }
@@ -132,71 +129,70 @@ namespace Datos
         public string ObtenerValor(string nombreParametro)
         {
             if (string.IsNullOrWhiteSpace(nombreParametro))
-                throw new ArgumentException("nombreParametro vacío");
+                throw new ArgumentException("nombreParametro vacío", nameof(nombreParametro));
 
-            using (SqlConnection cn = conn.conectar(empresa))
-            using (SqlCommand cmd = cn.CreateCommand())
-            {
-                if (cn.State != ConnectionState.Open) cn.Open();
-                cmd.CommandText = @"
-                    SELECT ep.valor
-                    FROM dbo.Parametros p
-                    LEFT JOIN dbo.EmpresaParametros ep
-                           ON ep.idParametro = p.idParametro
-                          AND ep.idEmpresa = @idEmpresa
-                    WHERE p.nombre = @nombre;";
+            const string sql = @"
+                SELECT ep.valor
+                FROM dbo.Parametros p
+                LEFT JOIN dbo.EmpresaParametros ep
+                       ON ep.idParametro = p.idParametro
+                      AND ep.idEmpresa = @idEmpresa
+                WHERE p.nombre = @nombre;";
 
-                cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = empresa.IdEmpresa;
-                cmd.Parameters.Add("@nombre", SqlDbType.NVarChar, 100).Value = nombreParametro;
+            object obj = Db.Scalar(
+                _empresa,
+                sql,
+                CommandType.Text,
+                setParams: p =>
+                {
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    p.Add("@nombre", SqlDbType.NVarChar, 100).Value = nombreParametro;
+                }
+            );
 
-                object obj = cmd.ExecuteScalar();
-                if (obj == null || obj == DBNull.Value) return null;
-                return obj.ToString();
-            }
+            return (obj == null || obj == DBNull.Value) ? null : obj.ToString();
         }
 
         public void SetValor(string nombreParametro, string valor)
         {
             if (string.IsNullOrWhiteSpace(nombreParametro))
-                throw new ArgumentException("nombreParametro vacío");
+                throw new ArgumentException("nombreParametro vacío", nameof(nombreParametro));
 
-            using (SqlConnection cn = conn.conectar(empresa))
-            {
-                if (cn.State != ConnectionState.Open) cn.Open();
+            // 1) Obtener idParametro
+            const string sqlGetId = "SELECT idParametro FROM dbo.Parametros WHERE nombre = @nombre";
 
-                int idParametro;
-                using (SqlCommand cmdGet = cn.CreateCommand())
+            object objId = Db.Scalar(
+                _empresa,
+                sqlGetId,
+                CommandType.Text,
+                setParams: p => p.Add("@nombre", SqlDbType.NVarChar, 100).Value = nombreParametro
+            );
+
+            if (objId == null || objId == DBNull.Value)
+                throw new InvalidOperationException("No existe el parámetro '" + nombreParametro + "' en dbo.Parametros.");
+
+            int idParametro = Convert.ToInt32(objId);
+
+            // 2) MERGE (upsert) en EmpresaParametros
+            const string mergeSql = @"
+                MERGE dbo.EmpresaParametros AS T
+                USING (SELECT @idEmpresa AS idEmpresa, @idParametro AS idParametro, @valor AS valor) AS S
+                ON (T.idEmpresa = S.idEmpresa AND T.idParametro = S.idParametro)
+                WHEN MATCHED THEN UPDATE SET valor = S.valor
+                WHEN NOT MATCHED THEN INSERT (idEmpresa, idParametro, valor)
+                                   VALUES (S.idEmpresa, S.idParametro, S.valor);";
+
+            Db.NonQuery(
+                _empresa,
+                mergeSql,
+                CommandType.Text,
+                setParams: p =>
                 {
-                    cmdGet.CommandText = "SELECT idParametro FROM dbo.Parametros WHERE nombre = @nombre";
-                    cmdGet.Parameters.Add("@nombre", SqlDbType.NVarChar, 100).Value = nombreParametro;
-
-                    object obj = cmdGet.ExecuteScalar();
-                    if (obj == null || obj == DBNull.Value)
-                        throw new InvalidOperationException("No existe el parámetro '" + nombreParametro + "' en dbo.Parametros.");
-
-                    idParametro = Convert.ToInt32(obj);
+                    p.Add("@idEmpresa", SqlDbType.Int).Value = _empresa.IdEmpresa;
+                    p.Add("@idParametro", SqlDbType.Int).Value = idParametro;
+                    p.Add("@valor", SqlDbType.NVarChar, 200).Value = (object)valor ?? DBNull.Value;
                 }
-
-                using (SqlCommand cmd = cn.CreateCommand())
-                {
-                    cmd.CommandText = @"
-                        MERGE dbo.EmpresaParametros AS T
-                        USING (SELECT @idEmpresa AS idEmpresa, @idParametro AS idParametro, @valor AS valor) AS S
-                        ON (T.idEmpresa = S.idEmpresa AND T.idParametro = S.idParametro)
-                        WHEN MATCHED THEN UPDATE SET valor = S.valor
-                        WHEN NOT MATCHED THEN INSERT (idEmpresa, idParametro, valor)
-                                           VALUES (S.idEmpresa, S.idParametro, S.valor);";
-
-                    cmd.Parameters.Add("@idEmpresa", SqlDbType.Int).Value = empresa.IdEmpresa;
-                    cmd.Parameters.Add("@idParametro", SqlDbType.Int).Value = idParametro;
-
-                    // si valor es null, guardamos NULL
-                    cmd.Parameters.Add("@valor", SqlDbType.NVarChar, 200).Value =
-                        (object)valor ?? DBNull.Value;
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
+            );
         }
     }
 }

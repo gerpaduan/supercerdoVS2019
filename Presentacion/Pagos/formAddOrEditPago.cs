@@ -209,7 +209,17 @@ namespace Presentacion.Pagos
             comboSucursal.DataSource = oSucursalN.obtenerSucursales();
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = idSucursal - 1;
+            int idSucursalActual = FormPrincipal.idSucursal; // o Conexion.getIdSucursalConexion()
+
+            // Seleccionar por valor (no por índice)
+            comboSucursal.SelectedValue = idSucursalActual;
+
+            // Si no existe en la lista, dejar vacío
+            if (comboSucursal.SelectedValue == null ||
+                Convert.ToInt32(comboSucursal.SelectedValue) != idSucursalActual)
+            {
+                comboSucursal.SelectedIndex = -1;
+            }
 
             txtSucursal.Text = comboSucursal.Text;
             comboSucursalCargada = true;
@@ -484,7 +494,7 @@ namespace Presentacion.Pagos
         {
             bool respuesta = true;
 
-            if (oPersonaE == null || oPersonaE.idPersona.Equals(Entidades.Persona.idConsumidorFinal))
+            if (oPersonaE == null || oPersonaE.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0)))
             {
                 MessageBox.Show("Debe seleccionar una persona y ser diferente a Consumidor Final.\nNo pueden asignarse pagos/cobros a CF", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return false;

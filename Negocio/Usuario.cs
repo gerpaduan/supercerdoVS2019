@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data;
 using Utilidades;
+using System.Runtime.Remoting;
 
 namespace Negocio
 {
@@ -21,9 +22,9 @@ namespace Negocio
             oUsuarioD = new Datos.Usuario(empresa);
         }
 
-        public DataTable obtenerUsuarios(bool soloActivos, bool soloAdmin = false)
+        public DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false)
         {
-            dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos, soloAdmin);
+            dtUsuarios = oUsuarioD.obtenerUsuarios(soloActivos, filtroEmpresa, soloAdmin);
             convertDatatableToList();
             return dtUsuarios;
         }
@@ -36,9 +37,14 @@ namespace Negocio
             return dtUserActivos;
         }
 
-        public DataTable obtenerUsuariosConTodos(bool soloActivos)
+        public Entidades.Usuario getUsuarioById(int idUsuario)
         {
-            dtUsuarios = obtenerUsuarios(soloActivos);
+            return oUsuarioD.getUsuarioById(idUsuario);
+        }
+
+        public DataTable obtenerUsuariosConTodos(bool soloActivos, bool filtroEmpresa = true)
+        {
+            dtUsuarios = obtenerUsuarios(soloActivos, filtroEmpresa);
             DataRow drTodos = dtUsuarios.NewRow();
             drTodos["id"] = -1;
             drTodos["nombre"] = "Todos";
@@ -52,7 +58,7 @@ namespace Negocio
         {
             if (dtUsuarios == null || (listUsuarios != null && listUsuarios.Count != dtUsuarios.Rows.Count))
             {
-                obtenerUsuarios(false);
+                obtenerUsuarios(false, false);
             }
             if (dtUsuarios.Rows.Count > 0)
             {
@@ -106,7 +112,11 @@ namespace Negocio
             if (listUsuarios == null)
             {
                 listUsuarios = convertDatatableToList();
+
+                if (listUsuarios == null)
+                    return userEncontrado;
             }
+
 
             Datos.Sucursal oSucursalD = new Datos.Sucursal(_empresa);
 

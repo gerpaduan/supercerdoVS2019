@@ -8,8 +8,8 @@ namespace Entidades
     public class EgresoCaja
     {
         public static int idCompraEgresoCaja = 19; // Entidades.EgresoCaja.idCompraEgresoCaja;
-        public static int idCtaCte = 100; // Entidades.Parametros.idCtaCteEgresoCaja;
-        public static int idPagoTarjeta = 200; // Entidades.Parametros.idPagoTarjetaEgresoCaja;
+        public static int idCtaCte = 100; // Entidades.ParamKeys.idCtaCteEgresoCaja;
+        public static int idPagoTarjeta = 200; // Entidades.ParamKeys.idPagoTarjetaEgresoCaja;
         public static int idPagoCobroEgresoCaja = 300; // Entidades.EgresoCaja.idPagoCobroEgresoCaja;
 
 

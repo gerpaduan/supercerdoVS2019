@@ -19,9 +19,10 @@ namespace Web.Controllers
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
+            if (filterContext.Result != null) return;
 
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
+            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oSucursalN = new Negocio.Sucursal(empresa, param);
         }
 
         public ActionResult Index()

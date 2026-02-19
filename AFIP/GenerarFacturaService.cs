@@ -189,7 +189,10 @@ namespace AFIP
                 long nroDoc = string.IsNullOrEmpty(venta.Persona.Cuit) ? 0 : long.Parse(venta.Persona.Cuit);
 
                 det.DocTipo = tipoDoc;
-                det.DocNro = nroDoc;
+                det.DocNro = nroDoc;; // o de tu cliente
+
+                var factTemp = new FacturaElectronica();
+                det.CondicionIVAReceptorId = factTemp.MapearCondicionIVAReceptorIdAfip(venta.Persona.IdIva);
 
                 // CBTE nro -> recuperar ultimo
                 var ultimo = service.FECompUltimoAutorizado(auth, ptoVtaAfip, codTipoCbte);

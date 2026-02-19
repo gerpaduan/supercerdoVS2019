@@ -53,14 +53,40 @@ namespace Presentacion.Caja
 
         private void cargarSucursal()
         {
-            int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
-            oSucursalE = oSucursalN.findById(idSucursal);
-            oCierreE.Sucursal = oSucursalE;
+            //int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
+            //oSucursalE = oSucursalN.findById(idSucursal);
+            //oCierreE.Sucursal = oSucursalE;
 
+            //comboSucursal.DataSource = oSucursalN.obtenerSucursales();
+            //comboSucursal.DisplayMember = "sucursal";
+            //comboSucursal.ValueMember = "idSucursal";
+            //comboSucursal.SelectedIndex = idSucursal-1;
+
+            int idSucursal = Utilidades.Conexion.getIdSucursalConexion();
+
+            // Cargar datasource primero
             comboSucursal.DataSource = oSucursalN.obtenerSucursales();
             comboSucursal.DisplayMember = "sucursal";
             comboSucursal.ValueMember = "idSucursal";
-            comboSucursal.SelectedIndex = idSucursal-1;
+
+            // Intentar seleccionar por valor
+            comboSucursal.SelectedValue = idSucursal;
+
+            // Si no existe ese id en el DataSource, queda sin selección
+            if (comboSucursal.SelectedValue == null || Convert.ToInt32(comboSucursal.SelectedValue) != idSucursal)
+                comboSucursal.SelectedIndex = -1;
+
+            // Setear oSucursalE / oCierreE acorde a lo que quedó seleccionado
+            if (comboSucursal.SelectedIndex >= 0)
+            {
+                oSucursalE = oSucursalN.findById(Convert.ToInt32(comboSucursal.SelectedValue));
+                oCierreE.Sucursal = oSucursalE;
+            }
+            else
+            {
+                oSucursalE = null;
+                oCierreE.Sucursal = null; // o lo que corresponda
+            }
         }
 
         private void comboSucursal_SelectedIndexChanged(object sender, EventArgs e)

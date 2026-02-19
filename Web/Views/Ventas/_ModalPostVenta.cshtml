@@ -2,12 +2,9 @@
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
         <div class="modal-content">
 
-            <!-- HEADER -->
+            <!-- HEADER (sin X) -->
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">¡Venta completada! ✔</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <h5 class="modal-title mb-0">¡Venta completada! ✔</h5>
             </div>
 
             <!-- BODY -->
@@ -17,35 +14,70 @@
                     ¿Qué deseas hacer ahora?
                 </p>
 
-                <!-- BLOQUE TICKET -->
-                <div class="mb-3">
-                    <div class="mb-2 text-muted">
-                        Imprimir ticket
-                    </div>
+                <!-- 1) NO IMPRIMIR -->
+                <button class="btn btn-secondary btn-lg btn-block mb-2" id="btnPostVenta1" type="button">
+                    <span class="badge badge-light mr-2">1</span>
+                    No imprimir
+                </button>
 
-                    <button class="btn btn-outline-primary mr-2"
-                            onclick="imprimirTicket(58)">
-                        🧾 Ticket 58 mm
+                <!-- 2) TICKET + CAMBIAR -->
+                <div class="d-flex mb-2">
+                    <button class="btn btn-outline-primary btn-lg flex-grow-1 mr-2"
+                            id="btnPostVenta2"
+                            type="button">
+                        <span class="badge badge-primary mr-2">2</span>
+                        <span id="lblTicketAccion">Ticket</span>
                     </button>
 
-                    <button class="btn btn-outline-primary"
-                            onclick="imprimirTicket(80)">
-                        🧾 Ticket 80 mm
+                    <button class="btn btn-outline-secondary btn-lg"
+                            id="btnCambiarTicket"
+                            type="button"
+                            title="Cambiar tamaño de ticket">
+                        Cambiar
                     </button>
                 </div>
 
-                <hr />
+                <!-- Opciones Ticket -->
+                <div class="collapse mb-2" id="bloqueTicketOpciones">
+                    <div class="card card-body p-2">
 
-                <!-- FACTURA -->
-                <button class="btn btn-info btn-lg btn-block mb-2" id="btnFacturaElectronica">
-                    <i class="fas fa-file-invoice mr-1"></i>
-                    Factura electrónica
+                        <button class="btn btn-outline-primary btn-block mb-2 btnTicketOpt"
+                                id="btnTicket58"
+                                type="button"
+                                data-mm="58">
+                            🧾 58 mm
+                        </button>
+
+                        <button class="btn btn-outline-primary btn-block btnTicketOpt"
+                                id="btnTicket80"
+                                type="button"
+                                data-mm="80">
+                            🧾 80 mm
+                        </button>
+
+                        <small class="text-muted mt-2 d-block">
+                            Elegí un tamaño y se imprimirá automáticamente.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- 3) FACTURA -->
+                <button class="btn btn-info btn-lg btn-block mb-2" id="btnPostVenta3" type="button">
+                    <span class="badge badge-light mr-2">3</span>
+                    Factura
                 </button>
 
-                <!-- NO IMPRIMIR -->
-                <button class="btn btn-secondary btn-lg btn-block" id="btnNoImprimir">
-                    <i class="fas fa-times mr-1"></i>
-                    No imprimir
+                <!-- 4) GENERAR PDF -->
+                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostVenta4" type="button">
+                    <span class="badge badge-light mr-2">4</span>
+                    Generar PDF
+                </button>
+
+                <!-- 5) WHATSAPP -->
+                <button class="btn btn-success btn-lg btn-block" id="btnPostVenta5" type="button">
+                    <span class="badge badge-light mr-2">5</span>
+                    <i class="fab fa-whatsapp mr-2"></i>
+                    Enviar a WhatsApp
                 </button>
 
             </div>
