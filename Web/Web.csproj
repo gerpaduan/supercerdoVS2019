@@ -143,6 +143,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\PermisosHelper.cs" />
+    <Compile Include="Models\CorteUpsertVM.cs" />
     <Compile Include="Models\DTO\FacturaElectronicaDTO.cs" />
     <Compile Include="Models\DTO\FinalizarVentaRequest.cs" />
     <Compile Include="Models\DTO\LineaVentaDto.cs" />
