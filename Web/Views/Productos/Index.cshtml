@@ -66,7 +66,7 @@
     <!-- =========================
          FILTRO SUCURSAL (columna stock simple)
          ========================= -->
-    <form method="get" id="formStock" class="mb-3" action="@Url.Action("Index","Productos")">
+    @*<form method="get" id="formStock" class="mb-3" action="@Url.Action("Index","Productos")">
         <input type="hidden" name="modo" value="@(modoEtiquetas ? "etiquetas" : "")" />
         <div class="form-group mb-0">
             <label class="font-weight-bold mb-1">Stock por sucursal (columna simple)</label>
@@ -85,7 +85,7 @@
                 Tip: si activás <b>Ver stock sucursales</b>, se agregan columnas por cada sucursal.
             </small>
         </div>
-    </form>
+    </form>*@
 
     <!-- =========================
          BUSCADOR + contador
@@ -170,9 +170,6 @@
                         <i class="fas fa-undo mr-1"></i> Limpiar
                     </button>
 
-                    <small class="text-muted align-self-center ml-2">
-                        (Por ahora filtra en pantalla. Luego lo conectamos a backend.)
-                    </small>
                 </div>
             </div>
         </div>
@@ -211,247 +208,262 @@
             </form>
         }
 
-        <div class="card-body p-0">
+    <div class="card-body p-0">
+        @if (TempData["FlashSuccess"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["FlashSuccess"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-            <div class="table-responsive tabla-full">
-                <table class="table table-bordered table-striped tabla-productos mb-0" id="tablaProductos">
+        @if (TempData["FlashError"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["FlashError"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
-                    <thead class="thead-dark">
-                        <tr>
+        <div class="table-responsive tabla-full">
+            <table class="table table-bordered table-striped tabla-productos mb-0" id="tablaProductos">
+
+                <thead class="thead-dark">
+                    <tr>
+                        @if (modoEtiquetas)
+                        {
+                            <th style="width:42px;" class="text-center">✓</th>
+                        }
+
+                        <th style="width:110px;">Código</th>
+                        <th class="th-producto">Producto</th>
+
+                        @if (sucursalIdSeleccionada != 0)
+                        {
+                            <th style="width:140px;" class="th-stock-simple">Stock</th>
+                        }
+
+                        <!-- columnas dinámicas de stock por sucursal (se muestran sólo si switchStockSucursales ON) -->
+                        @foreach (var s in sucursales)
+                        {
+                            <th class="th-stock-sucursal d-none text-nowrap" data-sucid="@s.IdSucursal">
+                                @s.SucursalNombre
+                            </th>
+                        }
+
+                        <th style="width:130px;">Precio</th>
+                        <th style="width:240px;">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        var rowId = $"fila_{item.idCorte}";
+                        var detailsId = $"det_{item.idCorte}";
+
+                        <tr id="@rowId"
+                            data-id="@item.idCorte"
+                            data-codigo="@item.Codigo"
+                            data-nombre="@item.CorteDesc"
+                            data-tipo="@item.Tipo"
+                            data-marca="@item.Marca">
                             @if (modoEtiquetas)
                             {
-                                <th style="width:42px;" class="text-center">✓</th>
+                                <td class="text-center">
+                                    <input type="checkbox"
+                                           class="chk-etiqueta"
+                                           value="@item.idCorte"
+                                           onchange="actualizarSeleccionados()" />
+                                </td>
                             }
 
-                            <th style="width:110px;">Código</th>
-                            <th class="th-producto">Producto</th>
+                            <td class="text-nowrap">@item.Codigo</td>
+
+                            <td class="td-producto">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="producto-text text-truncate" title="@item.CorteDesc">
+                                        @item.CorteDesc
+                                    </div>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-link text-decoration-none btn-detalles"
+                                            data-toggle="collapse"
+                                            data-target="#@detailsId"
+                                            aria-expanded="false"
+                                            aria-controls="@detailsId">
+                                        <i class="fas fa-chevron-down"></i> Detalles
+                                    </button>
+                                </div>
+                            </td>
 
                             @if (sucursalIdSeleccionada != 0)
                             {
-                                <th style="width:140px;" class="th-stock-simple">Stock</th>
+                                <td class="text-nowrap th-stock-simple">
+                                    @item.Stock_EnString @item.StockUnidades
+                                </td>
                             }
 
-                            <!-- columnas dinámicas de stock por sucursal (se muestran sólo si switchStockSucursales ON) -->
+                            <!-- celdas de stock por sucursal (se muestran sólo si switchStockSucursales ON) -->
                             @foreach (var s in sucursales)
                             {
-                                <th class="th-stock-sucursal d-none text-nowrap" data-sucid="@s.IdSucursal">
-                                    @s.SucursalNombre
-                                </th>
+                                <td class="td-stock-sucursal d-none text-nowrap"
+                                    data-sucid="@s.IdSucursal"
+                                    id="stk_@s.IdSucursal">
+                                    <span class="text-muted">—</span>
+                                </td>
                             }
 
-                            <th style="width:130px;">Precio</th>
-                            <th style="width:240px;">Acciones</th>
+                            <td class="text-nowrap font-weight-bold" id="precio_@item.idCorte">
+                                @item.PrecioKg.ToString("C")
+                            </td>
+
+                            <td class="text-nowrap">
+                                <button type="button" class="btn btn-sm btn-warning mr-1"
+                                        title="Modificar precio"
+                                        onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg')">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </button>
+
+                                <button type="button" class="btn btn-sm btn-info mr-1"
+                                        title="Ver stock por sucursales (modal)"
+                                        onclick="verStockSucursales(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
+                                    <i class="fas fa-warehouse"></i>
+                                </button>
+
+                                <a class="btn btn-sm btn-primary mr-1"
+                                   title="Editar producto"
+                                   href="@Url.Action("AddOrEdit", "Productos", new { id = item.idCorte })">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        title="Eliminar"
+                                        onclick="confirmarEliminar(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
 
-                    <tbody>
-                        @foreach (var item in Model)
-                        {
-                            var rowId = $"fila_{item.idCorte}";
-                            var detailsId = $"det_{item.idCorte}";
-
-                            <tr id="@rowId"
-                                data-id="@item.idCorte"
-                                data-codigo="@item.Codigo"
-                                data-nombre="@item.CorteDesc"
-                                data-tipo="@item.Tipo"
-                                data-marca="@item.Marca">
-                                @if (modoEtiquetas)
-                                {
-                                    <td class="text-center">
-                                        <input type="checkbox"
-                                               class="chk-etiqueta"
-                                               value="@item.idCorte"
-                                               onchange="actualizarSeleccionados()" />
-                                    </td>
-                                }
-
-                                <td class="text-nowrap">@item.Codigo</td>
-
-                                <td class="td-producto">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="producto-text text-truncate" title="@item.CorteDesc">
-                                            @item.CorteDesc
-                                        </div>
-
-                                        <button type="button"
-                                                class="btn btn-sm btn-link text-decoration-none btn-detalles"
-                                                data-toggle="collapse"
-                                                data-target="#@detailsId"
-                                                aria-expanded="false"
-                                                aria-controls="@detailsId">
-                                            <i class="fas fa-chevron-down"></i> Detalles
-                                        </button>
-                                    </div>
-                                </td>
-
-                                @if (sucursalIdSeleccionada != 0)
-                                {
-                                    <td class="text-nowrap th-stock-simple">
-                                        @item.Stock_EnString @item.StockUnidades
-                                    </td>
-                                }
-
-                                <!-- celdas de stock por sucursal (se muestran sólo si switchStockSucursales ON) -->
-                                @foreach (var s in sucursales)
-                                {
-                                    <td class="td-stock-sucursal d-none text-nowrap"
-                                        data-sucid="@s.IdSucursal"
-                                        id="stk_@s.IdSucursal">
-                                        <span class="text-muted">—</span>
-                                    </td>
-                                }
-
-                                <td class="text-nowrap font-weight-bold" id="precio_@item.idCorte">
-                                    @item.PrecioKg.ToString("C")
-                                </td>
-
-                                <td class="text-nowrap">
-                                    <button type="button" class="btn btn-sm btn-warning mr-1"
-                                            title="Modificar precio"
-                                            onclick="abrirPopupPrecio(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))', '@item.PrecioKg')">
-                                        <i class="fas fa-dollar-sign"></i>
-                                    </button>
-
-                                    <button type="button" class="btn btn-sm btn-info mr-1"
-                                            title="Ver stock por sucursales (modal)"
-                                            onclick="verStockSucursales(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
-                                        <i class="fas fa-warehouse"></i>
-                                    </button>
-
-                                    <a class="btn btn-sm btn-primary mr-1"
-                                       title="Editar producto"
-                                       href="@Url.Action("Edit", "Productos", new { id = item.idCorte })">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-
-                                    <button type="button" class="btn btn-sm btn-danger"
-                                            title="Eliminar"
-                                            onclick="confirmarEliminar(@item.idCorte, '@(item.CorteDesc?.Replace("'", "\\'"))')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-
-                            <!-- DETALLES (siempre disponibles) -->
-                            <tr class="tr-detalles">
-                                @{
-                                    int baseCols = ((sucursalIdSeleccionada != 0) ? 5 : 4) + sucursales.Count; // incluye columnas stock sucursales (aunque estén ocultas)
-                                    int colspan = modoEtiquetas ? (baseCols + 1) : baseCols;
-                                }
-                                <td colspan="@colspan" class="p-0">
-                                    <div id="@detailsId" class="collapse">
-                                        <div class="p-3 bg-light border-top">
-                                            <div class="row">
-                                                <div class="col-lg-6">
-                                                    <div class="mb-2">
-                                                        <span class="font-weight-bold">@item.CorteDesc</span>
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Tipo:</span>
-                                                        <span class="font-weight-bold">@item.Tipo</span>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Marca:</span>
-                                                        <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.MarcaNombre) ? item.MarcaNombre : "-")</span>
-
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Alícuota IVA:</span>
-                                                        <span class="font-weight-bold">@item.AlicuotaIva</span>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Pesable:</span>
-                                                        <span class="font-weight-bold">@(item.Pesable ? "Sí" : "No")</span>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Habilitado:</span>
-                                                        <span class="font-weight-bold">@(item.Habilitado ? "Sí" : "No")</span>
-                                                    </div>
+                        <!-- DETALLES (siempre disponibles) -->
+                        <tr class="tr-detalles">
+                            @{
+                                int baseCols = ((sucursalIdSeleccionada != 0) ? 5 : 4) + sucursales.Count; // incluye columnas stock sucursales (aunque estén ocultas)
+                                int colspan = modoEtiquetas ? (baseCols + 1) : baseCols;
+                            }
+                            <td colspan="@colspan" class="p-0">
+                                <div id="@detailsId" class="collapse">
+                                    <div class="p-3 bg-light border-top">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <div class="mb-2">
+                                                    <span class="font-weight-bold">@item.CorteDesc</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Tipo:</span>
+                                                    <span class="font-weight-bold">@item.Tipo</span>
                                                 </div>
 
-                                                <div class="col-lg-6">
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Marca:</span>
+                                                    <span class="font-weight-bold">@(!string.IsNullOrWhiteSpace(item.MarcaNombre) ? item.MarcaNombre : "-")</span>
 
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Punto stock:</span>
-                                                        <span class="font-weight-bold">@item.PuntoStock</span>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">En cierre stock:</span>
-                                                        <span class="font-weight-bold">@(item.EnCierreStock ? "Sí" : "No")</span>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="text-muted">Promedio:</span>
-                                                        <span class="font-weight-bold">@item.Promedio</span>
-                                                    </div>
                                                 </div>
 
-                                                @if (!string.IsNullOrWhiteSpace(item.CorteMaestroNombre))
-                                                {
-                                                    var esPres = item.Presentacion;
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Alícuota IVA:</span>
+                                                    <span class="font-weight-bold">@item.AlicuotaIva</span>
+                                                </div>
 
-                                                    <div class="col-lg-6">
-                                                        <div class="mb-2">
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Pesable:</span>
+                                                    <span class="font-weight-bold">@(item.Pesable ? "Sí" : "No")</span>
+                                                </div>
 
-                                                            @if (esPres)
-                                                            {
-                                                                <div class="mb-2">
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Habilitado:</span>
+                                                    <span class="font-weight-bold">@(item.Habilitado ? "Sí" : "No")</span>
+                                                </div>
+                                            </div>
 
-                                                                    <span class="text-muted">Presentación:</span>
-                                                                    <span class="font-weight-bold">@item.CorteMaestroNombre</span>
-                                                                </div>
-                                                                <span class="text-muted">Unidades:</span>
-                                                                <span class="font-weight-bold">
-                                                                    @item.getCantPresentacion(item.PorcentajeHueso)
-                                                                </span>
-                                                            }
-                                                            else
-                                                            {
-                                                                <div class="mb-2">
+                                            <div class="col-lg-6">
 
-                                                                    <span class="text-muted">Corte Maestro:</span>
-                                                                    <span class="font-weight-bold">@item.CorteMaestroNombre</span>
-                                                                </div>
-                                                                <span class="text-muted">%:</span>
-                                                                <span class="font-weight-bold">
-                                                                    @item.Porcentaje
-                                                                </span>
-                                                            }
-                                                        </div>
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Punto stock:</span>
+                                                    <span class="font-weight-bold">@item.PuntoStock</span>
+                                                </div>
 
-                                                        @if (!esPres)
+                                                <div class="mb-2">
+                                                    <span class="text-muted">En cierre stock:</span>
+                                                    <span class="font-weight-bold">@(item.EnCierreStock ? "Sí" : "No")</span>
+                                                </div>
+
+                                                <div class="mb-2">
+                                                    <span class="text-muted">Promedio:</span>
+                                                    <span class="font-weight-bold">@item.Promedio</span>
+                                                </div>
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(item.CorteMaestroNombre))
+                                            {
+                                                var esPres = item.Presentacion;
+
+                                                <div class="col-lg-6">
+                                                    <div class="mb-2">
+
+                                                        @if (esPres)
                                                         {
                                                             <div class="mb-2">
-                                                                <span class="text-muted">% Hueso:</span>
-                                                                <span class="font-weight-bold">@item.PorcentajeHueso</span>
+
+                                                                <span class="text-muted">Presentación:</span>
+                                                                <span class="font-weight-bold">@item.CorteMaestroNombre</span>
                                                             </div>
+                                                            <span class="text-muted">Unidades:</span>
+                                                            <span class="font-weight-bold">
+                                                                @item.getCantPresentacion(item.PorcentajeHueso)
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="mb-2">
+
+                                                                <span class="text-muted">Corte Maestro:</span>
+                                                                <span class="font-weight-bold">@item.CorteMaestroNombre</span>
+                                                            </div>
+                                                            <span class="text-muted">%:</span>
+                                                            <span class="font-weight-bold">
+                                                                @item.Porcentaje
+                                                            </span>
                                                         }
                                                     </div>
-                                                }
 
-                                            </div>
+                                                    @if (!esPres)
+                                                    {
+                                                        <div class="mb-2">
+                                                            <span class="text-muted">% Hueso:</span>
+                                                            <span class="font-weight-bold">@item.PorcentajeHueso</span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
 
-                                            <div class="mt-2 text-muted small">
-                                                ID: <b>@item.idCorte</b>
-                                                @* Si tenés CorteMaestro / independiente / etc, lo agregamos acá *@
-                                            </div>
+                                        </div>
+
+                                        <div class="mt-2 text-muted small">
+                                            ID: <b>@item.idCorte</b>
+                                            @* Si tenés CorteMaestro / independiente / etc, lo agregamos acá *@
                                         </div>
                                     </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
 
-                </table>
-            </div>
-
+            </table>
         </div>
+
+    </div>
     </div>
 
     <!-- =========================
@@ -552,7 +564,7 @@
     <!-- =========================
          FORM ELIMINAR (POST)
          ========================= -->
-    <form id="formEliminar" method="post" action="@Url.Action("Delete", "Productos")" class="d-none">
+    <form id="formEliminar" method="post" action="@Url.Action("Eliminar", "Productos")" class="d-none">
         @Html.AntiForgeryToken()
         <input type="hidden" name="id" id="EliminarId" />
     </form>

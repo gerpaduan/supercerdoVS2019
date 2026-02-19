@@ -20,7 +20,7 @@
     <div class="row">
         <div class="col-12 col-lg-6">
 
-            @using (Html.BeginForm("Guardar", "Cortes", FormMethod.Post, new { id = "frmCorte", autocomplete = "off" }))
+            @using (Html.BeginForm("Guardar", "Productos", FormMethod.Post, new { id = "frmCorte", autocomplete = "off" }))
             {
                 @Html.AntiForgeryToken()
 
@@ -32,8 +32,8 @@
                 @Html.HiddenFor(m => m.AlicuotaIva)
 
                 <div id="page-urls"
-                     data-url-marcas="@Url.Action("Buscar", "Marcas")"
-                     data-url-cortes="@Url.Action("Buscar", "Cortes")">
+                     data-url-marcas="@Url.Action("BuscarMarca", "Productos")"
+                     data-url-cortes="@Url.Action("Buscar", "Productos")">
                 </div>
 
                 @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
@@ -199,12 +199,6 @@
                             </div>
                         </div>
 
-                        <div class="col-12" id="boxIndependiente">
-                            <div class="form-check form-switch">
-                                @Html.CheckBoxFor(m => m.Independiente, new { @class = "form-check-input", id = "swIndependiente" })
-                                <label class="form-check-label" for="swIndependiente">Independiente</label>
-                            </div>
-                        </div>
 
                         <div class="col-12" id="boxCorteMaestroCampos">
                             <div class="row g-3">
@@ -224,6 +218,13 @@
                             </div>
                         </div>
 
+                        <div class="col-12" id="boxIndependiente">
+                            <div class="form-check form-switch">
+                                @Html.CheckBoxFor(m => m.Independiente, new { @class = "form-check-input", id = "swIndependiente" })
+                                <label class="form-check-label" for="swIndependiente">Independiente</label>
+                            </div>
+                        </div>
+
                         <div class="col-12" id="boxPresentacionCampos">
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
@@ -231,7 +232,6 @@
                                     <input type="text" class="form-control" id="txtPresentacionUnidades"
                                            value="@(Model?.PresentacionUnidades != null ? Model.PresentacionUnidades.ToString() : "")"
                                            placeholder="Ej: 5" />
-                                    <small class="text-muted">Al guardar: Porcentaje=100 y Desperdicio=100*(unidades-1)</small>
                                 </div>
                             </div>
                         </div>
@@ -249,9 +249,9 @@
                             @(esEdicion ? "Guardar cambios" : "Crear producto")
                         </button>
 
-                        <button type="submit" name="accion" value="guardar_nuevo" class="btn btn-outline-primary">
+                        @*<button type="submit" name="accion" value="guardar_nuevo" class="btn btn-outline-primary">
                             @(esEdicion ? "Guardar y cargar otro" : "Crear y continuar")
-                        </button>
+                        </button>*@
                     </div>
                 </div>
             }
@@ -675,7 +675,164 @@
         }
     });
 
-})();
+        })();
+
+
+        // =========================
+        // MODAL MARCAS (auto-load + live search + teclado)
+        // =========================
+        (function () {
+
+            const $modal = $("#modalMarcas");
+            const $q = $("#qMarca");
+            const $tb = $("#tbMarcas");
+            const urlMarcas = $("#page-urls").data("url-marcas");
+
+            let debounceTimer = null;
+
+            function esc(s) {
+                return (s || "").toString().replace(/"/g, "&quot;");
+            }
+
+            function setMarca(id, nombre) {
+                $("input[name='IdMarca']").val(id || "");
+                $("#txtMarcaNombre").val(nombre || "");
+            }
+
+            function limpiarMarca() {
+                setMarca("", "");
+            }
+
+            function marcarFila($tr) {
+                $tb.find("tr.marca-row").removeClass("table-active");
+                $tr.addClass("table-active");
+
+                // asegurar que se vea (scroll dentro del modal)
+                const el = $tr.get(0);
+                if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+            }
+
+            function moverSeleccion(delta) {
+                const $rows = $tb.find("tr.marca-row");
+                if (!$rows.length) return;
+
+                let idx = $rows.index($tb.find("tr.table-active"));
+                if (idx < 0) idx = 0;
+                idx = Math.max(0, Math.min($rows.length - 1, idx + delta));
+
+                marcarFila($rows.eq(idx));
+            }
+
+            function seleccionarFilaActual() {
+                let $sel = $tb.find("tr.table-active").first();
+                if (!$sel.length) $sel = $tb.find("tr.marca-row").first();
+                if (!$sel.length) return;
+
+                const id = $sel.data("id");
+                const nombre = $sel.data("nombre");
+
+                setMarca(id, nombre);
+                $modal.modal("hide");
+            }
+
+            function renderMarcas(items) {
+                if (!items || !items.length) {
+                    $tb.html('<tr><td colspan="2" class="text-muted">Sin resultados</td></tr>');
+                    return;
+                }
+
+                let html = "";
+                items.forEach(x => {
+                    html += `
+                <tr class="marca-row" tabindex="0" data-id="${x.id}" data-nombre="${esc(x.nombre)}">
+                    <td style="width:120px;">
+                        <button type="button" class="btn btn-sm btn-success btnSelMarca">Seleccionar</button>
+                    </td>
+                    <td>${x.nombre || ""}</td>
+                </tr>`;
+                });
+
+                $tb.html(html);
+
+                // marcar primera por defecto (para que Enter seleccione la primera)
+                const $first = $tb.find("tr.marca-row").first();
+                if ($first.length) marcarFila($first);
+            }
+
+            function cargarMarcas(q) {
+                $.get(urlMarcas, { q: q || "" })
+                    .done(renderMarcas)
+                    .fail(() => $tb.html('<tr><td colspan="2" class="text-danger">Error cargando marcas</td></tr>'));
+            }
+
+            // Abrir modal: cargar todas automáticamente
+            $modal.on("shown.bs.modal", function () {
+                $q.val("");
+                $tb.html('<tr><td colspan="2" class="text-muted">Cargando...</td></tr>');
+                cargarMarcas("");
+                setTimeout(() => $q.trigger("focus"), 50);
+            });
+
+            // Búsqueda en vivo (debounce)
+            $q.on("input", function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    cargarMarcas($q.val());
+                }, 200);
+            });
+
+            // Click en fila: marca activa
+            $tb.on("click", "tr.marca-row", function () {
+                marcarFila($(this));
+            });
+
+            // Doble click: selecciona
+            $tb.on("dblclick", "tr.marca-row", function () {
+                marcarFila($(this));
+                seleccionarFilaActual();
+            });
+
+            // Botón "Seleccionar" (por si usan mouse/touch)
+            $tb.on("click", ".btnSelMarca", function (e) {
+                const $tr = $(this).closest("tr.marca-row");
+                marcarFila($tr);
+                seleccionarFilaActual();
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            // Teclado dentro del modal:
+            // - Enter: selecciona (activa o primera)
+            // - Escape: limpia marca y cierra
+            // - Flechas: mover selección
+            $modal.on("keydown", function (e) {
+                if (e.key === "Escape") {
+                    $modal.modal("hide");
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === "Enter") {
+                    seleccionarFilaActual(); // selecciona activa o primera
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === "ArrowDown") {
+                    moverSeleccion(+1);
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === "ArrowUp") {
+                    moverSeleccion(-1);
+                    e.preventDefault();
+                    return;
+                }
+            });
+
+        })();
+
     </script>
 }
 

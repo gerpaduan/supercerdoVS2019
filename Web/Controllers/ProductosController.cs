@@ -18,14 +18,16 @@ namespace Web.Controllers
         private Negocio.Sucursal oSucursalN;
         private Negocio.Corte oCorteN;
         private Negocio.Usuario oUsuarioN;
+        private Negocio.Persona oPersonaN;
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             base.OnActionExecuting(filterContext);
 
-            oSucursalN = new Negocio.Sucursal(empresa);
-            oCorteN = new Negocio.Corte(empresa);
-            oUsuarioN = new Negocio.Usuario(empresa);
+            oSucursalN = new Negocio.Sucursal(empresa, param);
+            oCorteN = new Negocio.Corte(empresa, param);
+            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oPersonaN = new Negocio.Persona(empresa, param);
         }
 
         public ActionResult Index(int SucursalId = 0)
@@ -213,8 +215,8 @@ namespace Web.Controllers
         {
             if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
             {
-                ViewBag.Seccion = "Agregar/Modificar Productos";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
+                return RedirectToAction("Index");
             }
 
             Entidades.Corte entity = (id == 0)
@@ -238,8 +240,8 @@ namespace Web.Controllers
         {
             if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
             {
-                ViewBag.Seccion = "Agregar/Modificar Productos";
-                return View("~/Views/Shared/AccesoDenegado.cshtml");
+                TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
+                return RedirectToAction("Index");
             }
 
             ValidarModoCorte(vm);
@@ -263,6 +265,9 @@ namespace Web.Controllers
 
             oCorteN.addOrEditCorte(entity);
 
+
+            // 6) Mensaje OK
+            TempData["FlashSuccess"] = $"El producto \"{vm.CorteDesc}\" guardó correctamente.";
             return RedirectToAction("Index");
         }
 
@@ -600,6 +605,72 @@ namespace Web.Controllers
             lista.Insert(0, new SelectListItem { Value = "", Text = "-- Seleccione --" });
 
             return lista;
+        }
+
+
+        // ===============================
+        // EJEMPLO: POST Guardar
+        // ===============================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Eliminar(int id)
+        {
+            // 1) Permisos -> cartel y volver al Index
+            if (!PermisosHelper.TienePermiso(Session, Permisos.Producto.NuevoCorte, null))
+            {
+                TempData["FlashError"] = "No tenés permisos para realizar la acción seleccionada.";
+                return RedirectToAction("Index");
+            }
+
+            // 2) Validación de Id
+            if (id <= 0)
+            {
+                TempData["FlashError"] = "No se pudo eliminar: producto inválido.";
+                return RedirectToAction("Index");
+            }
+
+            // 3) Buscar entidad real
+            var entity = oCorteN.findCorteById(id, true);
+            if (entity == null)
+            {
+                TempData["FlashError"] = "No se pudo eliminar: el producto no existe o ya fue eliminado.";
+                return RedirectToAction("Index");
+            }
+
+            // 4) Guardar nombre ANTES de eliminar
+            var nombre = entity.CorteDesc ?? entity.corte ?? "(sin nombre)";
+
+            // 5) Eliminar
+            oCorteN.eliminarCorte(entity);
+
+            // 6) Mensaje OK
+            TempData["FlashSuccess"] = $"El producto \"{nombre}\" se eliminó correctamente.";
+            return RedirectToAction("Index");
+        }
+
+
+
+        [HttpGet]
+        public JsonResult BuscarMarca(string q = "")
+        {
+            q = (q ?? "").Trim();
+
+            // Si tu método con q="" ya devuelve todas, listo.
+            // Si NO devuelve todas, ahí tenés que llamar a otro método "obtenerTodas".
+            var dt = oPersonaN.buscarPersona(q, true); // DataTable
+
+            var list = new List<object>();
+
+            foreach (System.Data.DataRow row in dt.Rows)
+            {
+                list.Add(new
+                {
+                    id = Convert.ToInt32(row["idPersona"]),          // <-- AJUSTÁ
+                    nombre = Convert.ToString(row["Marca"])    // <-- AJUSTÁ
+                });
+            }
+
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
 
     }
