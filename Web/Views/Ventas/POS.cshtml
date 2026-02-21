@@ -5,6 +5,7 @@
     Layout = "~/Views/Shared/_LayoutPOS.cshtml";
 
     bool cajaAbierta = ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta;
+    bool showAbrirCajaModal = ViewBag.ShowAbrirCajaModal != null && (bool)ViewBag.ShowAbrirCajaModal;
 }
 
 @if (cajaAbierta && Model != null)
@@ -111,7 +112,6 @@
                         <!-- ===================== -->
                         <!-- COLUMNA DERECHA -->
                         <div class="col-12 col-md-6 d-flex flex-column">
-
                             <!-- 🔍 BLOQUE SCANNER -->
                             <div class="row" id="scannerContainer" style="display:none;">
                                 <div class="col-12">
@@ -124,11 +124,11 @@
                                             </div>
 
                                             <div class="d-flex justify-content-between mt-2">
-                                                <button class="btn btn-secondary btn-sm" id="btnFlash">
+                                                <button type="button" class="btn btn-secondary btn-sm" id="btnFlash">
                                                     🔦 Flash
                                                 </button>
 
-                                                <button class="btn btn-danger btn-sm" id="btnCerrarScanner">
+                                                <button type="button" class="btn btn-danger btn-sm" id="btnCerrarScanner">
                                                     Cerrar cámara
                                                 </button>
                                             </div>
@@ -137,7 +137,9 @@
                                     </div>
                                 </div>
                             </div>
+
                             <audio id="beep" src="/Content/sounds/focus-beep.wav" preload="auto"></audio>
+
 
                             <!-- BUSCADOR -->
                             <div class="row g-2 mb-3">
@@ -155,8 +157,8 @@
 
                                         <button class="btn btn-outline-secondary"
                                                 id="btnAgregarManual"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#modalDigitarCodigo">
+                                                data-toggle="modal"
+                                                data-target="#modalDigitarCodigo">
                                             Buscar
                                         </button>
                                     </div>
@@ -291,7 +293,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-secondary text-white">
                     <h5 class="modal-title">Digitar código</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
                     <input id="txtCodigoManual" class="form-control form-control-lg text-center mb-3" placeholder="Ingrese código" />
@@ -456,13 +458,13 @@
             <div class="modal-content">
                 <div class="modal-header bg-warning">
                     <h5 class="modal-title">Producto Pesable</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
                     <div>Ingrese peso o use la balanza</div>
                     <input id="txtPesoPesable" class="form-control form-control-lg text-center my-2" />
                     <div class="d-flex justify-content-between">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                         <button class="btn btn-primary" id="btnAgregarPesable">Agregar</button>
                     </div>
                 </div>
@@ -471,6 +473,12 @@
     </div>
 }
 
+else
+{
+    @* Caja cerrada: no muestro mensaje, solo dejo el modal *@
+    @Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
+
+}
 <!-- Contenedor dinámico del modal -->
 <div id="contenedorModalPersona"></div>
 
@@ -483,12 +491,110 @@
 </div>
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml")
-@Html.Partial("~/Views/Cajas/_AbrirCajaModal.cshtml")
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
 
+
 @section Scripts {
     <script>
+
+
+    $(function () {
+
+         // -----------------------
+    // Helpers
+    // -----------------------
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+    // dd/MM/yyyy HH:mm
+    function nowAR() {
+        var d = new Date();
+        return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + "/" + d.getFullYear()
+            + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+
+    function mostrarError(msg) {
+        if (window.Swal) {
+            Swal.fire({ icon: 'error', title: 'No se pudo abrir la caja', text: msg || 'Error' });
+        } else {
+            alert(msg || 'No se pudo abrir la caja');
+        }
+    }
+
+    // -----------------------
+    // Acción Abrir Caja (llama al controller)
+    // -----------------------
+    window.abrirCaja = function () {
+        var cajaInicio = $("#montoInicial").val();
+        var fechaHora = $("#fechaHoraApertura").val();
+
+        $.ajax({
+            url: '@Url.Action("AbrirCaja", "Cajas")',
+            type: 'POST',
+            dataType: 'json',
+            data: { cajaInicio: cajaInicio, fechaHora: fechaHora },
+            success: function (r) {
+                if (r && r.ok) {
+                    // ✅ Ya se abrió: recargo el POS (ahora el controller debería dejarte entrar)
+                    $("#modalAbrirCaja").modal('hide');
+                    location.reload();
+                    return;
+                }
+
+                // ❌ No abrió: muestro error y me quedo en el modal
+                mostrarError((r && r.mensaje) ? r.mensaje : "Error al abrir caja.");
+            },
+            error: function () {
+                mostrarError("No se pudo contactar al servidor.");
+            }
+        });
+    };
+
+    // -----------------------
+    // Init
+    // -----------------------
+    $(function () {
+
+        // Si el controller te setea ViewBag.CajaAbierta (como ya haces):
+        var cajaAbierta = @((ViewBag.CajaAbierta != null && (bool)ViewBag.CajaAbierta) ? "true" : "false");
+
+        if (!cajaAbierta) {
+            // seteo fecha/hora y abro modal
+            $("#fechaHoraApertura").val(nowAR());
+
+            $("#modalAbrirCaja").modal('show');
+
+            $("#modalAbrirCaja").on("shown.bs.modal", function () {
+                $("#montoInicial").trigger("focus");
+            });
+
+            // Cancelar => volver al Index (layout base)
+            $("#btnCancelarAbrirCaja").off("click").on("click", function () {
+                window.location.href = '@Url.Action("Index", "Home")';
+            });
+
+            // Enter en monto => abrir caja
+            $("#montoInicial").off("keydown").on("keydown", function(e){
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    window.abrirCaja();
+                }
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    $("#btnCancelarAbrirCaja").click();
+                }
+            });
+        }
+
+    });
+
+
+        // ✅ Guard: si NO está el POS renderizado, NO ejecuto el script del POS
+        if (!document.getElementById("pos-app") || !document.getElementById("inputCodigo")) {
+            console.warn("POS script: no está el HTML del POS (caja cerrada o vista distinta).");
+            return;
+        }
+
     document.addEventListener("click", habilitarAudio, { once: true });
 
     function habilitarAudio() {
@@ -523,11 +629,10 @@
                 // scanner.cerrar();
             }
         });
+        document.getElementById("btnScanner")?.addEventListener("click", () => scanner.iniciar());
+        document.getElementById("btnCerrarScanner")?.addEventListener("click", () => scanner.cerrar());
 
-        document.getElementById("btnScanner").addEventListener("click", () => scanner.iniciar());
-        document.getElementById("btnCerrarScanner").addEventListener("click", () => scanner.cerrar());
-
-        document.getElementById("btnFlash").addEventListener("click", async () => {
+        document.getElementById("btnFlash")?.addEventListener("click", async () => {
             const estado = await scanner.toggleFlash();
 
             // feedback visual opcional
@@ -1922,6 +2027,7 @@
         })();
 
 
+    });
     </script>
 }
 

@@ -531,6 +531,61 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+
+        [HttpGet]
+        public ActionResult FindCorteByCodigo(string codigo, int? idExcluir = null)
+        {
+            codigo = (codigo ?? "").Trim();
+
+            // Si viene vacío, responder JSON normal (no 404)
+            if (string.IsNullOrWhiteSpace(codigo))
+            {
+                return Json(new
+                {
+                    existe = false
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Como en tu BD el código es bigint, validamos numérico
+            if (!long.TryParse(codigo, out long codigoLong))
+            {
+                return Json(new
+                {
+                    existe = false
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            var corte = oCorteN.findCorteByCodigo(codigoLong, false);
+
+            // No existe -> JSON (no 404)
+            if (corte == null)
+            {
+                return Json(new
+                {
+                    existe = false
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Si estoy editando y encontró el mismo producto, no lo tomo como duplicado
+            if (idExcluir.HasValue && corte.IdCorte == idExcluir.Value)
+            {
+                return Json(new
+                {
+                    existe = false
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            // Existe -> devolvemos lo que la vista necesita
+            return Json(new
+            {
+                existe = true,
+                id = corte.IdCorte,
+                nombre = corte.CorteDesc,        // <- lo espera tu JS
+                descripcion = corte.CorteDesc,   // <- opcional, por compatibilidad
+                precio = corte.PrecioKg
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         // ===============================
         // GET: modificar Precio
         // ===============================
