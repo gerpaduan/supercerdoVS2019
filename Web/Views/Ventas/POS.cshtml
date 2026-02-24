@@ -288,7 +288,7 @@
     </div>
 
     <!-- MODAL: DIGITAR CÓDIGO -->
-    <div class="modal fade" id="modalDigitarCodigo" tabindex="-1">
+    @*<div class="modal fade" id="modalDigitarCodigo" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-secondary text-white">
@@ -310,7 +310,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>*@
 
     <!-- MODAL LINEA VENTA -->
     <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
@@ -490,7 +490,16 @@ else
     </div>
 </div>
 
-@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml")
+<!-- MODAL CORTES (Corte Maestro) - reutiliza partial -->
+@{
+    var vdBuscarCorteMaestro = new ViewDataDictionary();
+    vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
+    vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
+    //vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
+    //vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
+}
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
 
@@ -662,9 +671,62 @@ else
     window.api.producto = window.api.producto || {};
     window.api.producto.listar = '@Url.Action("ListarParaPOS", "Productos")';
 
-    $('#btnAgregarManual').on('click', function (e) {
+    function abrirBuscadorProductosPOS() {
+        if (typeof window.abrirBuscarProductoModal !== "function") {
+            alert("No se pudo abrir el buscador de productos. Verificá que el script global del modal esté cargado.");
+            return;
+        }
+
+        // Evita que quede “activo” el input del POS mientras el modal está abierto
+        inputActivo = null;
+
+        window.abrirBuscarProductoModal({
+            modalSelector: "#modalBuscarProducto",
+            mostrarPrecio: true, // en POS normalmente sí
+            onSelect: function (producto) {
+                const codigo = String((producto && producto.codigo) || "").trim();
+                if (!codigo) {
+                    volverACodigo();
+                    return;
+                }
+
+                // Cargar código en POS
+                $("#inputCodigo").val(codigo);
+                clearTimeout(typingTimer);
+
+                // Buscar el producto en el backend y seguir flujo normal POS
+                terminarEscritura(codigo, function (ok) {
+                    // Si terminarEscritura devolvió error lógico
+                    if (ok === false) {
+                        volverACodigo();
+                        return;
+                    }
+
+                    // Validación de que realmente quedó seleccionado el mismo código
+                    const codigoActual = normalizarEntrada($("#inputCodigo").val());
+                    const codigoProducto = normalizarEntrada(productoSeleccionado?.codigo);
+
+                    if (!codigoProducto || codigoProducto !== codigoActual) {
+                        mostrarSinCoincidencia();
+                        productoSeleccionado = null;
+                        volverACodigo();
+                        return;
+                    }
+
+                    // Si tu lógica EAN autoagrega, no forzamos foco en cantidad
+                    if (typeof esEANValido === "function" && esEANValido(codigoActual)) {
+                        return;
+                    }
+
+                    pasarAFocoCantidad();
+                });
+            }
+        });
+    }
+
+    $('#btnAgregarManual').off('click').on('click', function (e) {
         e.preventDefault();
-        $('#modalBuscarProducto').modal('show');
+        abrirBuscadorProductosPOS();
     });
 
     let typingTimer = null;
@@ -778,7 +840,7 @@ else
 
         if (e.key === "F10") {
             const btn = document.getElementById("btnAgregarManual");
-            if (btn && !btn.disabled) btn.click();
+            if (btn && !btn.disabled) abrirBuscadorProductosPOS();
             return;
         }
     });
@@ -899,6 +961,8 @@ else
                 }
             });
         }
+
+        window.terminarEscritura = terminarEscritura;
 
         // ===============================
         // procesarCodigoConCantidad (DEVUELVE true si disparó auto-agregado)
@@ -1166,7 +1230,7 @@ else
         $("#inputCantidad").val("");
         $("#prodSubtotal").text("$ 0,00");
 
-        hayVentaEnCurso = true;
+        actualizarEstadoVentaEnCurso();
         productoSeleccionado = null;
         mostrarEsperando();
     }
@@ -1262,23 +1326,51 @@ else
         anchor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    let hayVentaEnCurso = false;
-    window.addEventListener("beforeunload", function (e) {
-        if (!hayVentaEnCurso) return;
-        e.preventDefault();
-        e.returnValue = "";
-    });
+        let hayVentaEnCurso = false;
+        let omitirAvisoSalidaPOS = false;
+
+        // Calcula si realmente hay líneas activas (no anuladas)
+        function actualizarEstadoVentaEnCurso() {
+            hayVentaEnCurso = Array.isArray(carrito) && carrito.some(l => l && !l.anulado);
+        }
+
+        // Para usarlo cuando la venta terminó OK (antes de redirigir / recargar)
+        window.desactivarAvisoSalidaPOS = function () {
+            omitirAvisoSalidaPOS = true;
+            hayVentaEnCurso = false;
+        };
+
+        // Si alguna vez querés reactivarlo manualmente
+        window.activarAvisoSalidaPOS = function () {
+            omitirAvisoSalidaPOS = false;
+            actualizarEstadoVentaEnCurso();
+        };
+
+        window.addEventListener("beforeunload", function (e) {
+            // recalcula por si cambió el carrito y no se actualizó la bandera
+            actualizarEstadoVentaEnCurso();
+
+            if (omitirAvisoSalidaPOS || !hayVentaEnCurso) return;
+
+            e.preventDefault();
+            e.returnValue = ""; // necesario para que el navegador muestre el aviso
+        });
 
     // TECLADO
-    let inputActivo = null;
-
-    document.addEventListener("DOMContentLoaded", () => {
-        inputActivo = document.getElementById("inputCodigo");
+    inputActivo = document.getElementById("inputCodigo");
+    if (inputActivo) {
         inputActivo.focus();
-    });
+        try { inputActivo.select(); } catch { }
+    }
 
     document.addEventListener("focusin", e => {
-        if (e.target.tagName === "INPUT") inputActivo = e.target;
+        const t = e.target;
+        if (!t || t.tagName !== "INPUT") return;
+
+        // SOLO inputs del POS (no el input del modal buscar producto)
+        if (t.id === "inputCodigo" || t.id === "inputCantidad") {
+            inputActivo = t;
+        }
     });
 
     document.querySelectorAll(".btn-key").forEach(btn => {
@@ -1304,6 +1396,18 @@ else
 
     function volverACodigo() { $("#inputCodigo").focus().select(); }
     function pasarAFocoCantidad() { $("#inputCantidad").focus().select(); }
+
+        $("#modalBuscarProducto")
+            .off("shown.bs.modal.posBuscar hidden.bs.modal.posBuscar")
+            .on("shown.bs.modal.posBuscar", function () {
+                // mientras está abierto el modal, el teclado POS no debe escribir en inputs del modal
+                inputActivo = null;
+            })
+            .on("hidden.bs.modal.posBuscar", function () {
+                setTimeout(function () {
+                    volverACodigo();
+                }, 0);
+            });
 
     function escribirCaracter(valor) {
         if (!inputActivo) return;

@@ -195,6 +195,10 @@ function finalizarVenta(data) {
                 return;
             }
 
+
+            // ✅ Venta OK: desactivar aviso de salida/recarga
+            window.desactivarAvisoSalidaPOS?.();
+
             // --- NUEVO: GUARDAMOS ID VENTA PARA POST-VENTA ---
             const ventaId = resp.ventaId; // tu backend debe mandar esto
 
