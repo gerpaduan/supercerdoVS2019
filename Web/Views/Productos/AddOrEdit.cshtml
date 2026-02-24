@@ -37,7 +37,7 @@
                      data-url-existe-codigo="@Url.Action("FindCorteByCodigo", "Productos")">
                 </div>
 
-                @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+                @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
 
                 <!-- =========================
                  1) DATOS PRINCIPALES
@@ -83,6 +83,7 @@
 
                             <small id="scannerMsg" class="text-danger d-none"></small>
                             <div id="alertCodigoExiste" class="alert alert-warning py-2 px-2 mt-2 mb-0 d-none"></div>
+                            <small id="msgCodigoReq" class="text-danger d-none">El campo codigo es obligatorio.</small>
                             @Html.ValidationMessageFor(m => m.Codigo, "", new { @class = "text-danger" })
                         </div>
 
@@ -132,7 +133,7 @@
 
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
-                            <label class="form-label">Punto Stock</label>
+                            <label class="form-label">Punto Stock (Nro Entero)</label>
                             @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
                         </div>
 
@@ -220,6 +221,21 @@
                             </div>
                         </div>
 
+
+                        <div class="col-12" id="boxPresentacionCampos">
+                            <div class="row g-3">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label">Presentación (unidades)</label>
+
+                                    <input type="text" class="form-control" id="txtPresentacionUnidades"
+                                           name="PresentacionUnidades"
+                                           value="@(Model?.PresentacionUnidades != null ? Model.PresentacionUnidades.ToString() : "")"
+                                           placeholder="Ej: 5" inputmode="decimal" />
+                                </div>
+                            </div>
+                        </div>
+
+
                         <div class="col-12" id="boxIndependiente">
                             <div class="form-check form-switch">
                                 @Html.CheckBoxFor(m => m.Independiente, new { @class = "form-check-input", id = "swIndependiente" })
@@ -227,33 +243,27 @@
                             </div>
                         </div>
 
-                        <div class="col-12" id="boxPresentacionCampos">
-                            <div class="row g-3">
-                                <div class="col-12 col-md-4">
-                                    <label class="form-label">Presentación (unidades)</label>
-                                    <input type="text" class="form-control" id="txtPresentacionUnidades"
-                                           value="@(Model?.PresentacionUnidades != null ? Model.PresentacionUnidades.ToString() : "")"
-                                           placeholder="Ej: 5" inputmode="decimal" />
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 <!-- =========================
-                 4) BOTONERA (abajo del todo)
+                 4) BOTONERA (fija al pie)
                  ========================= -->
-                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-                    <a class="btn btn-outline-secondary" href="@Url.Action("Index","Cortes")">Volver</a>
+                <div class="espacio-botonera-fija"></div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" name="accion" value="guardar" class="btn btn-primary" id="btnGuardarProducto">
-                            @(esEdicion ? "Guardar cambios" : "Crear producto")
-                        </button>
+                <div class="barra-acciones-fija">
+                    <div class="barra-acciones-inner d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                        <a class="btn btn-outline-secondary" href="@Url.Action("Index","Productos")">Volver</a>
 
-                        @*<button type="submit" name="accion" value="guardar_nuevo" class="btn btn-outline-primary">
-                                @(esEdicion ? "Guardar y cargar otro" : "Crear y continuar")
-                            </button>*@
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="accion" value="guardar" class="btn btn-primary" id="btnGuardarProducto">
+                                @(esEdicion ? "Guardar cambios" : "Crear producto")
+                            </button>
+
+                            @*<button type="submit" name="accion" value="guardar_nuevo" class="btn btn-outline-primary">
+                                    @(esEdicion ? "Guardar y cargar otro" : "Crear y continuar")
+                                </button>*@
+                        </div>
                     </div>
                 </div>
             }
@@ -266,7 +276,7 @@
 
 <!-- MODAL MARCAS -->
 <div class="modal fade" id="modalMarcas" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fit-screen">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Buscar marca</h5>
@@ -278,61 +288,73 @@
                     <button class="btn btn-primary" type="button" id="btnDoBuscarMarca">Buscar</button>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
+                <div class="table-responsive modal-table-scroll" id="wrapTablaMarcas">
+                    <table class="table table-sm table-hover mb-0">
                         <thead>
                             <tr>
-                                <th style="width:120px;"></th>
                                 <th>Marca</th>
+                                <th style="width:35%;">Propietario</th>
                             </tr>
                         </thead>
                         <tbody id="tbMarcas">
-                            <tr><td colspan="2" class="text-muted">Buscá una marca...</td></tr>
+                            <tr><td colspan="2" class="text-muted">Cargando marcas...</td></tr>
                         </tbody>
                     </table>
                 </div>
+
+                <small class="text-muted d-block mt-2">
+                    Enter = selecciona la primera fila. Doble clic = selecciona la fila.
+                </small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL CORTES (Corte Maestro) -->
-<div class="modal fade" id="modalCortes" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Seleccionar corte maestro</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control" id="qCorte" placeholder="Escribí para buscar..." />
-                    <button class="btn btn-primary" type="button" id="btnDoBuscarCorte">Buscar</button>
-                </div>
+<!-- MODAL CORTES (Corte Maestro) - reutiliza partial -->
+@{
+    var vdBuscarCorteMaestro = new ViewDataDictionary();
+    vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
+    vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
+    vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
+    vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
+}
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead>
-                            <tr>
-                                <th style="width:120px;"></th>
-                                <th>Corte</th>
-                                <th style="width:160px;">Código</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbCortes">
-                            <tr><td colspan="3" class="text-muted">Buscá un corte...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
+
+<script>
+    (function () {
+        const barra = document.querySelector('.barra-acciones-fija');
+        if (!barra) return;
+
+        // Busca la columna que contiene el formulario/botonera
+        const contenedor = barra.closest('.col-12.col-lg-6')
+            || document.querySelector('#frmCorte')?.closest('.col-12.col-lg-6');
+
+        if (!contenedor) return;
+
+        function ajustarBarra() {
+            const r = contenedor.getBoundingClientRect();
+
+            barra.style.left = r.left + 'px';
+            barra.style.width = r.width + 'px';
+        }
+
+        ajustarBarra();
+
+        window.addEventListener('resize', ajustarBarra);
+        window.addEventListener('scroll', ajustarBarra, { passive: true });
+
+        // Por si cambia el layout dinámicamente (responsive / contenido)
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(ajustarBarra);
+            ro.observe(contenedor);
+        }
+    })();
+</script>
 
 @section Scripts {
     <script>
 (function () {
-
     // =========================
     // URLs
     // =========================
@@ -349,23 +371,43 @@
     const $frm = $("#frmCorte");
     const $btnGuardar = $("#btnGuardarProducto");
     const $codigo = $("#Codigo");
-    const $precioKg = $("#PrecioKg");
+    const $precioKg = $("#frmCorte").find("input[name='PrecioKg']").first();
+    const $promedio = $("#frmCorte").find("input[name='Promedio']").first();
     const $nombre = $("#CorteDesc");
     const $tipo = $("#ddlTipo");
     const $iva = $("#ddlIva");
+    const $puntoStock = $("#frmCorte").find("input[name='PuntoStock']").first();
+    const $idCorteMaestroHidden = $("input[name='IdCorteMaestro']");
+    const $presentacionUnidades = $("#txtPresentacionUnidades");
     const $porcentaje = $("#txtPorcentaje");
     const $desperdicio = $("#txtDesperdicio");
 
     const $alertCodigoExiste = $("#alertCodigoExiste");
+    const $msgCodigoReq = $("#msgCodigoReq");
     const $msgNombreReq = $("#msgNombreReq");
     const $msgTipoReq = $("#msgTipoReq");
     const $msgIvaReq = $("#msgIvaReq");
 
     let codigoDuplicado = false;
     let xhrCodigo = null;
+    let reenviandoSubmit = false;
+
+    // =========================
+    // Helpers UI (texto seguro)
+    // =========================
+    function escapeHtml(str) {
+        return (str == null ? "" : String(str))
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
 
     // =========================
     // Decimales flexibles (coma o punto)
+    // - Mientras escribe: muestra con punto (si escribe coma, se convierte a punto)
+    // - Antes de enviar: se convierte a coma (binder es-AR)
     // =========================
     function normalizarDecimalTexto(v) {
         v = (v || "").toString().trim();
@@ -393,26 +435,23 @@
         return isNaN(n) ? null : n;
     }
 
-    function formatFloatInvariant(n) {
-        return Number(n).toString(); // con punto decimal
+    // Para enviar al POST con cultura es-AR (coma decimal)
+    function formatFloatForPost(n) {
+        return Number(n).toString().replace(".", ",");
     }
 
-    // Mientras escribe, convertir coma en punto (precio / porcentaje / desperdicio / presentación)
-    $precioKg.on("input", function () {
-        this.value = normalizarDecimalTexto(this.value);
-    });
+    function normalizarCampoFloatVisible($input) {
+        if (!$input || !$input.length) return;
+        $input.on("input", function () {
+            this.value = normalizarDecimalTexto(this.value);
+        });
+    }
 
-    $porcentaje.on("input", function () {
-        this.value = normalizarDecimalTexto(this.value);
-    });
-
-    $desperdicio.on("input", function () {
-        this.value = normalizarDecimalTexto(this.value);
-    });
-
-    $("#txtPresentacionUnidades").on("input", function () {
-        this.value = normalizarDecimalTexto(this.value);
-    });
+    normalizarCampoFloatVisible($precioKg);
+    normalizarCampoFloatVisible($promedio);
+    normalizarCampoFloatVisible($porcentaje);
+    normalizarCampoFloatVisible($desperdicio);
+    normalizarCampoFloatVisible($presentacionUnidades);
 
     // =========================
     // UI: mostrar/ocultar secciones (Modo)
@@ -432,7 +471,7 @@
             $boxCMCampos.hide();
             $boxPresCampos.hide();
 
-            // Limpieza
+            // Limpieza + enviar cero en hidden
             $("input[name='IdCorteMaestro']").val("");
             $("#txtCorteMaestroNombre").val("");
 
@@ -461,10 +500,27 @@
 
     // =========================
     // MODAL MARCAS
+    // - abre y carga todas las marcas
+    // - foco automático en input
+    // - Enter selecciona primera fila
+    // - Doble click selecciona
+    // - sin botón "Seleccionar"
     // =========================
+    let debounceMarcaTimer = null;
+
+    function seleccionarMarcaDesdeFila($row) {
+        if (!$row || !$row.length) return;
+
+        const id = $row.data("id");
+        const nombre = $row.data("nombre");
+
+        $("input[name='IdMarca']").val(id || "");
+        $("#txtMarcaNombre").val(nombre || "");
+        $("#modalMarcas").modal("hide");
+    }
+
     $("#btnBuscarMarca").on("click", function () {
         $("#modalMarcas").modal("show");
-        setTimeout(function(){ $("#qMarca").focus(); }, 100);
     });
 
     $("#btnLimpiarMarca").on("click", function () {
@@ -474,100 +530,119 @@
 
     function renderMarcas(items) {
         const $tb = $("#tbMarcas");
+
         if (!items || !items.length) {
             $tb.html('<tr><td colspan="2" class="text-muted">Sin resultados</td></tr>');
             return;
         }
+
         let html = "";
         items.forEach(x => {
+            const id = x.id ?? x.Id ?? "";
+            const nombre = x.nombre ?? x.Nombre ?? x.marca ?? x.Marca ?? "";
+            const propietario = x.propietario ?? x.Propietario ?? x.duenio ?? x.Duenio ?? x.titular ?? x.Titular ?? "";
+
             html += `
-                <tr>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-success btnSelMarca"
-                            data-id="${x.id}" data-nombre="${(x.nombre || "").replace(/"/g, '&quot;')}">
-                            Seleccionar
-                        </button>
-                    </td>
-                    <td>${x.nombre || ""}</td>
+                <tr class="fila-marca"
+                    data-id="${escapeHtml(id)}"
+                    data-nombre="${escapeHtml(nombre)}"
+                    style="cursor:pointer;">
+                    <td>${escapeHtml(nombre)}</td>
+                    <td>${escapeHtml(propietario)}</td>
                 </tr>`;
         });
+
         $tb.html(html);
+
+        // marcar primera fila
+        $tb.find("tr:first").addClass("table-active");
     }
 
     function buscarMarcas() {
-        const q = $("#qMarca").val() || "";
-        $.get(urlMarcas, { q })
+        const q = ($("#qMarca").val() || "").trim();
+
+        $.get(urlMarcas, { q: q })
             .done(renderMarcas)
             .fail(function () {
                 $("#tbMarcas").html('<tr><td colspan="2" class="text-danger">Error cargando marcas</td></tr>');
             });
     }
 
-    $("#btnDoBuscarMarca").on("click", buscarMarcas);
-    $("#qMarca").on("keyup", function (e) { if (e.key === "Enter") buscarMarcas(); });
+    // Al abrir: foco + cargar todas automáticamente
+    $("#modalMarcas").on("shown.bs.modal", function () {
+        setTimeout(function () {
+            $("#qMarca").focus().select();
+        }, 80);
 
-    $(document).on("click", ".btnSelMarca", function () {
-        const id = $(this).data("id");
-        const nombre = $(this).data("nombre");
-        $("input[name='IdMarca']").val(id);
-        $("#txtMarcaNombre").val(nombre);
-        $("#modalMarcas").modal("hide");
+        buscarMarcas(); // q vacío => traer todas
+    });
+
+    // Botón Buscar manual
+    $("#btnDoBuscarMarca").on("click", buscarMarcas);
+
+    // Búsqueda en vivo (debounce)
+    $("#qMarca").on("input", function () {
+        clearTimeout(debounceMarcaTimer);
+        debounceMarcaTimer = setTimeout(function () {
+            buscarMarcas();
+        }, 250);
+    });
+
+    // Enter => seleccionar fila activa o primera
+    $("#qMarca").on("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+
+            const $tb = $("#tbMarcas");
+            const $sel = $tb.find("tr.table-active:first");
+            const $row = $sel.length ? $sel : $tb.find("tr:first");
+
+            if ($row.length && !$row.find("td.text-danger, td.text-muted").length) {
+                seleccionarMarcaDesdeFila($row);
+            }
+        }
+    });
+
+    // Click => marcar fila
+    $("#tbMarcas").on("click", "tr", function () {
+        const $row = $(this);
+        if ($row.find("td").length === 1 && ($row.text() || "").match(/Sin resultados|Error|Cargando/i)) return;
+
+        $("#tbMarcas tr").removeClass("table-active");
+        $row.addClass("table-active");
+    });
+
+    // Doble click => seleccionar
+    $("#tbMarcas").on("dblclick", "tr", function () {
+        const $row = $(this);
+        if ($row.find("td").length === 1 && ($row.text() || "").match(/Sin resultados|Error|Cargando/i)) return;
+
+        seleccionarMarcaDesdeFila($row);
     });
 
     // =========================
     // MODAL CORTES (Corte Maestro)
+    // reutiliza _BuscarProductoModal + script global
     // =========================
     $("#btnBuscarCorteMaestro").on("click", function () {
-        $("#modalCortes").modal("show");
-        setTimeout(function(){ $("#qCorte").focus(); }, 100);
+        if (typeof window.abrirBuscarProductoModal !== "function") {
+            alert("No se pudo abrir el buscador de productos. Verificá que el script del modal esté cargado.");
+            return;
+        }
+
+        window.abrirBuscarProductoModal({
+            modalSelector: "#modalBuscarProducto", // <-- explícito
+            mostrarPrecio: false,
+            onSelect: function (producto) {
+                $("input[name='IdCorteMaestro']").val(producto.id || "");
+                $("#txtCorteMaestroNombre").val(producto.nombre || "");
+            }
+        });
     });
 
     $("#btnLimpiarCorteMaestro").on("click", function () {
         $("input[name='IdCorteMaestro']").val("");
         $("#txtCorteMaestroNombre").val("");
-    });
-
-    function renderCortes(items) {
-        const $tb = $("#tbCortes");
-        if (!items || !items.length) {
-            $tb.html('<tr><td colspan="3" class="text-muted">Sin resultados</td></tr>');
-            return;
-        }
-        let html = "";
-        items.forEach(x => {
-            html += `
-                <tr>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-success btnSelCorte"
-                            data-id="${x.id}" data-nombre="${(x.nombre || "").replace(/"/g, '&quot;')}">
-                            Seleccionar
-                        </button>
-                    </td>
-                    <td>${x.nombre || ""}</td>
-                    <td>${x.codigo || ""}</td>
-                </tr>`;
-        });
-        $tb.html(html);
-    }
-
-    function buscarCortes() {
-        const q = $("#qCorte").val() || "";
-        $.get(urlCortes, { q })
-            .done(renderCortes)
-            .fail(function () {
-                $("#tbCortes").html('<tr><td colspan="3" class="text-danger">Error cargando cortes</td></tr>');
-            });
-    }
-
-    $("#btnDoBuscarCorte").on("click", buscarCortes);
-    $("#qCorte").on("keyup", function (e) { if (e.key === "Enter") buscarCortes(); });
-
-    $(document).on("click", ".btnSelCorte", function () {
-        const id = $(this).data("id");
-        const nombre = $(this).data("nombre");
-        $("input[name='IdCorteMaestro']").val(id);
-        $("#txtCorteMaestroNombre").val(nombre);
-        $("#modalCortes").modal("hide");
     });
 
     // =========================
@@ -577,8 +652,8 @@
         const modoActual = ($ddlModo.val() || "");
         if (modoActual) return;
 
-        const idCM = parseInt($("input[name='IdCorteMaestro']").val() || "0");
-        const ph = parseFloat(($("input[name='PorcentajeHueso']").val() || "0").replace(",", "."));
+        const idCM = parseInt($("input[name='IdCorteMaestro']").val() || "0", 10);
+        const ph = parseFloat((($("input[name='PorcentajeHueso']").val() || "0") + "").replace(",", "."));
 
         if (idCM > 0) {
             $ddlModo.val(ph > 100 ? "Presentacion" : "CorteMaestro");
@@ -644,12 +719,55 @@
     });
 
     // =========================
-    // Validaciones en vista (Nombre / Tipo / IVA)
+    // Validaciones en vista (cliente)
     // =========================
+    function marcarValidez($el, ok) {
+        if (!$el || !$el.length) return;
+        $el.toggleClass("is-invalid", !ok);
+    }
+
+    function esEnteroPositivoTexto(v) {
+        v = (v || "").toString().trim();
+        return /^\d+$/.test(v) && v !== "0";
+    }
+
+    function esEnteroNoNegativoTexto(v) {
+        v = (v || "").toString().trim();
+        return /^\d+$/.test(v); // permite 0
+    }
+
+    function validarCodigo() {
+        const v = (($codigo.val() || "") + "").trim();
+
+        // obligatorio + numérico entero
+        const ok = esEnteroNoNegativoTexto(v) && v !== "";
+        $msgCodigoReq.toggleClass("d-none", ok);
+        $codigo.toggleClass("is-invalid", !ok);
+
+        return ok;
+    }
+
     function validarNombre() {
         const ok = (($nombre.val() || "").trim() !== "");
         $msgNombreReq.toggleClass("d-none", ok);
         $nombre.toggleClass("is-invalid", !ok);
+        return ok;
+    }
+
+    function validarPrecio() {
+        const raw = (($precioKg.val() || "") + "").trim();
+
+        // obligatorio
+        if (raw === "") {
+            marcarValidez($precioKg, false);
+            return false;
+        }
+
+        // numérico (float) y >= 0
+        const n = parseFloatFlexible(raw);
+        const ok = (n !== null && n >= 0);
+
+        marcarValidez($precioKg, ok);
         return ok;
     }
 
@@ -667,12 +785,132 @@
         return ok;
     }
 
+    function validarPuntoStock() {
+        const raw = (($puntoStock.val() || "") + "").trim();
+
+        // Según lo que pediste: entero, no vacío, >= 0
+        if (raw === "") {
+            marcarValidez($puntoStock, false);
+            return false;
+        }
+
+        const ok = esEnteroNoNegativoTexto(raw);
+        marcarValidez($puntoStock, ok);
+        return ok;
+    }
+
+    function validarPromedio() {
+        const raw = (($promedio.val() || "") + "").trim();
+
+        // si querés obligatorio, cambiá este return por validación como precio
+        if (raw === "") {
+            marcarValidez($promedio, true);
+            return true; // opcional
+        }
+
+        const n = parseFloatFlexible(raw);
+        const ok = (n !== null); // si querés >=0: (n !== null && n >= 0)
+        marcarValidez($promedio, ok);
+        return ok;
+    }
+
+    function validarPorcentajeCorteMaestro() {
+        const raw = (($porcentaje.val() || "") + "").trim();
+        const n = parseFloatFlexible(raw);
+
+        // obligatorio cuando modo = CorteMaestro y > 0
+        const ok = (raw !== "" && n !== null && n > 0);
+        marcarValidez($porcentaje, ok);
+        return ok;
+    }
+
+    function validarDesperdicioCorteMaestro() {
+        const raw = (($desperdicio.val() || "") + "").trim();
+        const n = parseFloatFlexible(raw);
+
+        // obligatorio cuando modo = CorteMaestro y >= 0
+        const ok = (raw !== "" && n !== null && n >= 0);
+        marcarValidez($desperdicio, ok);
+        return ok;
+    }
+
+    function validarPresentacionUnidades() {
+        const raw = (($presentacionUnidades.val() || "") + "").trim();
+        const n = parseFloatFlexible(raw);
+
+        // obligatorio cuando modo = Presentacion y >= 1
+        const ok = (raw !== "" && n !== null && n >= 0);
+        marcarValidez($presentacionUnidades, ok);
+        return ok;
+    }
+
+    function validarCorteMaestroSeleccionadoSiAplica() {
+        const modo = ($ddlModo.val() || "Ninguno");
+
+        if (modo === "CorteMaestro" || modo === "Presentacion") {
+            const ok = (($idCorteMaestroHidden.val() || "") + "").trim() !== "";
+            marcarValidez($("#txtCorteMaestroNombre"), ok);
+            return ok;
+        }
+
+        marcarValidez($("#txtCorteMaestroNombre"), true);
+        return true;
+    }
+
+    function validarModoDependientes() {
+        const modo = ($ddlModo.val() || "Ninguno");
+        let ok = true;
+
+        // valida selección de corte maestro si aplica
+        if (!validarCorteMaestroSeleccionadoSiAplica()) ok = false;
+
+        if (modo === "CorteMaestro") {
+            if (!validarPorcentajeCorteMaestro()) ok = false;
+            if (!validarDesperdicioCorteMaestro()) ok = false;
+
+            // limpiar visualmente presentación (sin tocar valor)
+            marcarValidez($presentacionUnidades, true);
+        }
+        else if (modo === "Presentacion") {
+            if (!validarPresentacionUnidades()) ok = false;
+
+            // limpiar visualmente porcentaje/desperdicio (sin tocar valor)
+            marcarValidez($porcentaje, true);
+            marcarValidez($desperdicio, true);
+        }
+        else {
+            // Ninguno
+            marcarValidez($("#txtCorteMaestroNombre"), true);
+            marcarValidez($porcentaje, true);
+            marcarValidez($desperdicio, true);
+            marcarValidez($presentacionUnidades, true);
+        }
+
+        return ok;
+    }
+
+    // Eventos de validación
     $nombre.on("blur input", validarNombre);
+    $codigo.on("blur input", validarCodigo);
+    $precioKg.on("blur input", validarPrecio);
     $tipo.on("change", validarTipo);
     $iva.on("change", validarIva);
-
+    $puntoStock.on("blur input", validarPuntoStock);
+    $promedio.on("blur input", validarPromedio);
+    $porcentaje.on("blur input", function () {
+        if (($ddlModo.val() || "") === "CorteMaestro") validarPorcentajeCorteMaestro();
+    });
+    $desperdicio.on("blur input", function () {
+        if (($ddlModo.val() || "") === "CorteMaestro") validarDesperdicioCorteMaestro();
+    });
+    $presentacionUnidades.on("blur input", function () {
+        if (($ddlModo.val() || "") === "Presentacion") validarPresentacionUnidades();
+    });
+    $ddlModo.on("change", function () {
+        validarModoDependientes();
+    });
     // =========================
-    // Validación código duplicado al salir del foco
+    // Validación código duplicado UI
     // =========================
     function setCodigoDuplicadoUI(existe, nombreProducto) {
         codigoDuplicado = !!existe;
@@ -686,13 +924,18 @@
             $alertCodigoExiste.addClass("d-none").text("");
         }
 
-        // Pedido del usuario: deshabilitar/habilitar botón crear producto (solo alta)
+        // Deshabilitar/habilitar botón crear producto (solo alta)
         if (!esEdicion) {
             $btnGuardar.prop("disabled", codigoDuplicado);
         }
     }
 
+    // =========================
+    // Validación código duplicado (PROMISE)
+    // - Sirve para blur y para submit
+    // =========================
     function validarCodigoExistente() {
+        const dfd = $.Deferred();
         const codigo = ($codigo.val() || "").trim();
 
         if (xhrCodigo && xhrCodigo.readyState !== 4) {
@@ -701,7 +944,8 @@
 
         if (codigo === "") {
             setCodigoDuplicadoUI(false, "");
-            return;
+            dfd.resolve();
+            return dfd.promise();
         }
 
         xhrCodigo = $.get(urlExisteCodigo, {
@@ -709,119 +953,210 @@
                 idExcluir: $("input[name='IdCorte']").val() || 0
             })
             .done(function (data) {
-                // tolerante a distintas formas de respuesta
-                const existe = !!(data && (data.existe === true || data.Existe === true));
-                const nombre = (data && (data.nombre || data.Nombre || data.descripcion || data.Descripcion)) || "";
+                let existe = false;
+                let nombre = "";
 
-                // Si el endpoint devuelve el mismo producto en edición y trae id, no marcar duplicado
+                if (data) {
+                    // Endpoint mejorado: { existe: true/false, nombre: "..." }
+                    if ("existe" in data || "Existe" in data) {
+                        existe = !!(data.existe === true || data.Existe === true);
+                    } else {
+                        // Compatibilidad con endpoint viejo: si devuelve objeto => existe
+                        existe = !!(data.id || data.Id || data.descripcion || data.Descripcion);
+                    }
+
+                    nombre = data.nombre || data.Nombre || data.descripcion || data.Descripcion || "";
+                }
+
+                // Si estás en edición y el código pertenece al mismo producto, no marcar duplicado
                 if (esEdicion && data && (data.id || data.Id)) {
-                    const idEncontrado = parseInt(data.id || data.Id || 0);
-                    const idActual = parseInt($("input[name='IdCorte']").val() || "0");
+                    const idEncontrado = parseInt(data.id || data.Id || 0, 10);
+                    const idActual = parseInt($("input[name='IdCorte']").val() || "0", 10);
+
                     if (idEncontrado > 0 && idActual > 0 && idEncontrado === idActual) {
                         setCodigoDuplicadoUI(false, "");
+                        dfd.resolve();
                         return;
                     }
                 }
 
                 setCodigoDuplicadoUI(existe, nombre);
+                dfd.resolve();
             })
             .fail(function (xhr, status) {
-                if (status === "abort") return;
-                // No bloquear por error de red, solo ocultar alerta de duplicado
+                if (status === "abort") {
+                    dfd.reject("abort");
+                    return;
+                }
+
+                // Compatibilidad endpoint viejo: 404 = no existe
+                if (xhr && xhr.status === 404) {
+                    setCodigoDuplicadoUI(false, "");
+                    dfd.resolve();
+                    return;
+                }
+
+                // Error real: no bloquear por red
                 setCodigoDuplicadoUI(false, "");
+                dfd.resolve();
             });
+
+        return dfd.promise();
     }
 
-    $codigo.on("blur", validarCodigoExistente);
+    $codigo.on("blur", function () {
+        validarCodigoExistente();
+    });
 
-    // Si cambia el código, limpiar alerta y re-habilitar hasta revalidar en blur
+    // Si cambia el código, limpiar alerta y re-habilitar hasta revalidar
     $codigo.on("input", function () {
         setCodigoDuplicadoUI(false, "");
     });
 
     // =========================
-    // Submit: validaciones + mapear campos según modo
+    // Helpers submit decimales
+    // =========================
+    function normalizarFloatOpcionalParaPost($input, etiqueta) {
+        if (!$input || !$input.length) return true;
+
+        const raw = ($input.val() || "").toString().trim();
+        if (raw === "") return true; // opcional, se deja vacío
+
+        const n = parseFloatFlexible(raw);
+        if (n === null) {
+            alert(`${etiqueta} inválido. Usá números y decimal con coma o punto.`);
+            return false;
+        }
+
+        $input.val(formatFloatForPost(n)); // COMA para binder .NET (es-AR)
+        return true;
+    }
+
+    // =========================
+    // Submit: SIEMPRE validar código duplicado + luego validar resto
     // =========================
     $("#frmCorte").on("submit", function (e) {
 
-        let ok = true;
-
-        if (!validarNombre()) ok = false;
-        if (!validarTipo()) ok = false;
-        if (!validarIva()) ok = false;
-
-        if (codigoDuplicado) {
-            ok = false;
-            $codigo.focus();
+        function enfocarPrimerInvalido() {
+            const $first = $frm.find(".is-invalid:visible").first();
+            if ($first.length) {
+                $first.focus();
+                if ($first.is("input[type='text'], input:not([type])")) {
+                    try { $first.select(); } catch (_) { }
+                }
+            }
         }
 
-        // Validar / normalizar Precio Kg (si se cargó)
-        const precioVal = ($precioKg.val() || "").trim();
-        if (precioVal !== "") {
-            const nPrecio = parseFloatFlexible(precioVal);
-            if (nPrecio === null) {
-                alert("Precio Kg inválido. Usá números y decimal con coma o punto.");
-                e.preventDefault();
-                return false;
-            }
-            $precioKg.val(formatFloatInvariant(nPrecio)); // manda con punto decimal
+        // Paso 1: siempre validar código duplicado (aunque no haya salido del input)
+        if (!reenviandoSubmit) {
+            e.preventDefault();
+
+            validarCodigoExistente().done(function () {
+                if (codigoDuplicado) {
+                    $codigo.focus().select();
+                    return; // NO reenvía
+                }
+
+                reenviandoSubmit = true;
+                $frm.trigger("submit"); // reingresa y sigue con lógica normal
+            });
+
+            return false;
+        }
+
+        // Paso 2: submit real (reenvío controlado)
+        reenviandoSubmit = false;
+
+        let ok = true;
+
+        // Validaciones base
+        if (!validarCodigo()) ok = false;
+        if (!validarNombre()) ok = false;
+        if (!validarPrecio()) ok = false;
+        if (!validarTipo()) ok = false;
+        if (!validarIva()) ok = false;
+        if (!validarPuntoStock()) ok = false;
+        if (!validarPromedio()) ok = false;
+        if (!validarModoDependientes()) ok = false;
+
+        // Duplicado (por si quedó marcado)
+        if (codigoDuplicado) {
+            ok = false;
+            $codigo.addClass("is-invalid");
+        }
+
+        if (!ok) {
+            e.preventDefault();
+            enfocarPrimerInvalido();
+            return false;
+        }
+
+        // =========================
+        // Normalización de numéricos para POST (.NET es-AR)
+        // =========================
+
+        // Precio Kg (obligatorio en cliente, pero reutilizamos helper)
+        if (!normalizarFloatOpcionalParaPost($precioKg, "Precio Kg")) {
+            e.preventDefault();
+            marcarValidez($precioKg, false);
+            $precioKg.focus().select();
+            return false;
+        }
+
+        // Promedio (opcional o float válido)
+        if (!normalizarFloatOpcionalParaPost($promedio, "Promedio")) {
+            e.preventDefault();
+            marcarValidez($promedio, false);
+            $promedio.focus().select();
+            return false;
         }
 
         const modo = ($ddlModo.val() || "Ninguno");
 
         if (modo === "CorteMaestro") {
-            if (!$("input[name='IdCorteMaestro']").val()) {
-                alert("Seleccioná un corte maestro.");
+            const nPorc = parseFloatFlexible($porcentaje.val() || "");
+            const nDesp = parseFloatFlexible($desperdicio.val() || "");
+
+            // Redundancia defensiva (ya validado arriba)
+            if (nPorc === null || nPorc <= 0) {
                 e.preventDefault();
+                marcarValidez($porcentaje, false);
+                $porcentaje.focus().select();
                 return false;
             }
 
-            const nPorc = parseFloatFlexible($porcentaje.val() || "0");
-            const nDesp = parseFloatFlexible($desperdicio.val() || "0");
-
-            if (nPorc === null) {
-                alert("Porcentaje inválido. Usá números y decimal con coma o punto.");
+            if (nDesp === null || nDesp < 0) {
                 e.preventDefault();
+                marcarValidez($desperdicio, false);
+                $desperdicio.focus().select();
                 return false;
             }
 
-            if (nDesp === null) {
-                alert("Desperdicio inválido. Usá números y decimal con coma o punto.");
-                e.preventDefault();
-                return false;
-            }
-
-            $("input[name='Porcentaje']").val(formatFloatInvariant(nPorc));
-            $("input[name='PorcentajeHueso']").val(formatFloatInvariant(nDesp));
+            // HiddenFor -> valores con coma para binder .NET
+            $("input[name='Porcentaje']").val(formatFloatForPost(nPorc));
+            $("input[name='PorcentajeHueso']").val(formatFloatForPost(nDesp));
         }
 
         if (modo === "Presentacion") {
-            if (!$("input[name='IdCorteMaestro']").val()) {
-                alert("Seleccioná un corte maestro para la presentación.");
-                e.preventDefault();
-                return false;
-            }
-
             const u = parseFloatFlexible($("#txtPresentacionUnidades").val() || "");
+
+            // Redundancia defensiva (ya validado arriba)
             if (u === null || u < 1) {
-                alert("La presentación (unidades) debe ser un número mayor o igual a 1.");
                 e.preventDefault();
+                marcarValidez($("#txtPresentacionUnidades"), false);
+                $("#txtPresentacionUnidades").focus().select();
                 return false;
             }
 
             $("input[name='Porcentaje']").val("100");
-            $("input[name='PorcentajeHueso']").val(formatFloatInvariant(100 * (u - 1)));
+            $("input[name='PorcentajeHueso']").val(formatFloatForPost(100 * (u - 1)));
         }
 
         if (modo === "Ninguno") {
+            // Solo hidden para enviar consistente (NO limpiamos visibles)
             $("input[name='IdCorteMaestro']").val("");
             $("input[name='Porcentaje']").val("0");
             $("input[name='PorcentajeHueso']").val("0");
-        }
-
-        if (!ok) {
-            e.preventDefault();
-            return false;
         }
 
         return true;
@@ -1003,4 +1338,70 @@
             opacity: .9;
         }
     }
+
+    .validation-summary-valid {
+        display: none;
+    }
+
+    .validation-summary-errors ul {
+        margin-bottom: 0;
+    }
+
+    /* Modal: que no supere el alto de pantalla */
+    .modal-fit-screen .modal-content,
+    #modalBuscarProducto .modal-content {
+        max-height: calc(100vh - 1.5rem);
+    }
+
+    .modal-table-scroll {
+        max-height: min(50vh, 420px);
+        overflow-y: auto;
+    }
+
+    #modalBuscarProducto .table-responsive {
+        max-height: min(50vh, 420px);
+        overflow-y: auto;
+    }
+
+    /* Fila activa (si no se nota bien con tu theme) */
+    #tbMarcas tr.table-active,
+    #tablaProductos tr.table-active {
+        background-color: rgba(13, 110, 253, .12);
+    }
+    /* Botonera fija inferior */
+.espacio-botonera-fija {
+    height: 84px; /* reserva espacio para que no tape contenido */
+}
+
+.barra-acciones-fija {
+    position: fixed;
+    bottom: 0;
+    z-index: 1030;
+
+    /* 👇 ya NO ancho completo */
+    left: auto;
+    right: auto;
+    width: auto;
+
+    background: rgba(255,255,255,.98);
+    border-top: 1px solid #dee2e6;
+    box-shadow: 0 -4px 16px rgba(0,0,0,.06);
+    padding: .5rem .75rem;
+}
+
+.barra-acciones-inner {
+    /* 👇 usa todo el ancho de la barra (que ya coincide con la columna) */
+    max-width: none;
+    margin: 0;
+}
+
+@@media (max-width: 576px) {
+    .espacio-botonera-fija {
+        height: 96px;
+    }
+
+    .barra-acciones-fija .btn {
+        min-height: 40px;
+    }
+}
 </style>

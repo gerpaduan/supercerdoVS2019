@@ -44,7 +44,7 @@ namespace Web.Controllers
 
         // Acción para búsqueda en vivo usada por el modal POS
         [HttpGet]
-        public JsonResult ListarParaPOS(string q = "")
+        public JsonResult ListarProductos(string q = "")
         {
             try
             {
@@ -64,6 +64,7 @@ namespace Web.Controllers
                 var resultado = productos
                     .Select(p => new
                     {
+                        id = p.IdCorte,
                         codigo = p.codigo.ToString(),
                         nombre = p.corte,
                         precio = p.precioKg
@@ -232,7 +233,7 @@ namespace Web.Controllers
         }
 
         // ===============================
-        // EJEMPLO: POST Guardar
+        // POST Guardar
         // ===============================
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -244,6 +245,20 @@ namespace Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            // 1) Normalizar floats desde Request.Form (acepta coma o punto)
+            NormalizarFloatsDesdeRequest(vm);
+
+            // 2) Validación server-side de código duplicado (seguridad extra)
+            if (vm.Codigo > 0)
+            {
+                var existente = oCorteN.findCorteByCodigo(vm.Codigo, false);
+                if (existente != null && existente.IdCorte != vm.IdCorte)
+                {
+                    ModelState.AddModelError("Codigo", $"El código ya existe para el producto: {existente.CorteDesc}");
+                }
+            }
+
+            // 3) Validación de modo
             ValidarModoCorte(vm);
 
             if (!ModelState.IsValid)
@@ -256,26 +271,24 @@ namespace Web.Controllers
                 ? oCorteN.findCorteById(vm.IdCorte, true)
                 : new Entidades.Corte();
 
-            if (vm.IdCorte > 0 && entity == null) return HttpNotFound();
+            if (vm.IdCorte > 0 && entity == null)
+                return HttpNotFound();
 
             // Si querés guardar el porcentaje (sin columna), lo saco del texto:
             vm.AlicuotaIva = ObtenerAlicuotaPorcentajeDesdeDT(vm.IdAlicuotaIva);
 
-            MapToEntity(vm, entity); // VM -> Entity (que asigne IdAlicuotaIva y AlicuotaIva si la usás)
+            MapToEntity(vm, entity); // VM -> Entity
 
             oCorteN.addOrEditCorte(entity);
 
-
-            // 6) Mensaje OK
             TempData["FlashSuccess"] = $"El producto \"{vm.CorteDesc}\" guardó correctamente.";
             return RedirectToAction("Index");
         }
-
-    // ============================================
-    // 1) ValidarModoCorte
-    // ============================================
-    private void ValidarModoCorte(CorteUpsertVM vm)
-        {
+        // ============================================
+        // 1) ValidarModoCorte
+        // ============================================
+        private void ValidarModoCorte(CorteUpsertVM vm)
+    {
             vm.ModoCorte = (vm.ModoCorte ?? "Ninguno").Trim();
 
             if (vm.ModoCorte != "Ninguno" && vm.ModoCorte != "CorteMaestro" && vm.ModoCorte != "Presentacion")
@@ -294,17 +307,63 @@ namespace Web.Controllers
             if (vm.ModoCorte == "CorteMaestro")
             {
                 // Si querés exigir valores > 0, descomentá
-                // if (vm.Porcentaje <= 0) ModelState.AddModelError("", "El porcentaje debe ser mayor a 0.");
-                // if (vm.PorcentajeHueso < 0) ModelState.AddModelError("", "El desperdicio no puede ser negativo.");
+                if (vm.Porcentaje <= 0) ModelState.AddModelError("", "El porcentaje debe ser mayor a 0.");
+                if (vm.PorcentajeHueso < 0) ModelState.AddModelError("", "El desperdicio no puede ser negativo.");
             }
 
             if (vm.ModoCorte == "Presentacion")
             {
-                if (!vm.PresentacionUnidades.HasValue || vm.PresentacionUnidades.Value < 1)
-                    ModelState.AddModelError("", "La presentación (unidades) debe ser un número mayor o igual a 1.");
+                if (vm.Porcentaje <= 0) ModelState.AddModelError("", "La presentación (unidades) debe ser un número mayor o igual a 1.");
+                
             }
         }
 
+        private void NormalizarFloatsDesdeRequest(CorteUpsertVM vm)
+        {
+            // Campos float de la vista
+            TrySetFloatFromRequest("PrecioKg", v => vm.PrecioKg = v, "Precio Kg");
+            TrySetFloatFromRequest("Promedio", v => vm.Promedio = v, "Promedio");
+            TrySetFloatFromRequest("Porcentaje", v => vm.Porcentaje = v, "Porcentaje");
+            TrySetFloatFromRequest("PorcentajeHueso", v => vm.PorcentajeHueso = v, "Desperdicio");
+        }
+
+        /// <summary>
+        /// Lee Request.Form[key], acepta coma o punto decimal, y setea el float en VM.
+        /// Si viene vacío, no agrega error (campo opcional).
+        /// </summary>
+        private void TrySetFloatFromRequest(string key, Action<float> setter, string label)
+        {
+            var raw = (Request.Form[key] ?? string.Empty).Trim();
+
+            // Si está vacío, lo dejamos como vino del binder (normalmente 0 en float)
+            // y removemos errores de parseo si existieran por tema de cultura.
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                ModelState.Remove(key);
+                return;
+            }
+
+            // Soporta coma o punto
+            var normalized = raw.Replace(",", ".");
+
+            float valor;
+            bool ok = float.TryParse(
+                normalized,
+                NumberStyles.Float | NumberStyles.AllowThousands,
+                CultureInfo.InvariantCulture,
+                out valor);
+
+            if (!ok)
+            {
+                ModelState.AddModelError(key, $"{label} tiene un formato numérico inválido.");
+                return;
+            }
+
+            setter(valor);
+
+            // Muy importante: sacamos el error del binder si falló por cultura
+            ModelState.Remove(key);
+        }
 
         // ============================================
         // 2) BuildVM (Entity -> VM)
@@ -444,17 +503,8 @@ namespace Web.Controllers
                     e.Presentacion = true;
 
                     // Recalculo SIEMPRE del lado servidor
-                    float unidades = vm.PresentacionUnidades ?? 0;
-                    if (unidades <= 0)
-                    {
-                        // fallback si por alguna razón no vino PresentacionUnidades:
-                        // unidades = (100 + desperdicio) / 100
-                        unidades = (100f + vm.PorcentajeHueso) / 100f;
-                    }
-                    if (unidades < 1) unidades = 1;
-
-                    e.Porcentaje = 100f;
-                    e.PorcentajeHueso = 100f * (unidades - 1f);
+                    e.Porcentaje = vm.PresentacionUnidades ?? 0;
+                    e.PorcentajeHueso = 0;
                 }
             }
 
@@ -531,14 +581,10 @@ namespace Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
-
         [HttpGet]
-        public ActionResult FindCorteByCodigo(string codigo, int? idExcluir = null)
+        public JsonResult FindCorteByCodigo(long? codigo, int? idExcluir = null)
         {
-            codigo = (codigo ?? "").Trim();
-
-            // Si viene vacío, responder JSON normal (no 404)
-            if (string.IsNullOrWhiteSpace(codigo))
+            if (!codigo.HasValue || codigo.Value <= 0)
             {
                 return Json(new
                 {
@@ -546,18 +592,8 @@ namespace Web.Controllers
                 }, JsonRequestBehavior.AllowGet);
             }
 
-            // Como en tu BD el código es bigint, validamos numérico
-            if (!long.TryParse(codigo, out long codigoLong))
-            {
-                return Json(new
-                {
-                    existe = false
-                }, JsonRequestBehavior.AllowGet);
-            }
+            var corte = oCorteN.findCorteByCodigo(codigo.Value, false);
 
-            var corte = oCorteN.findCorteByCodigo(codigoLong, false);
-
-            // No existe -> JSON (no 404)
             if (corte == null)
             {
                 return Json(new
@@ -566,22 +602,25 @@ namespace Web.Controllers
                 }, JsonRequestBehavior.AllowGet);
             }
 
-            // Si estoy editando y encontró el mismo producto, no lo tomo como duplicado
-            if (idExcluir.HasValue && corte.IdCorte == idExcluir.Value)
+            // Si es edición y el código pertenece al mismo producto, no lo marcamos duplicado
+            int idExc = idExcluir.GetValueOrDefault();
+            if (idExc > 0 && corte.IdCorte == idExc)
             {
                 return Json(new
                 {
-                    existe = false
+                    existe = false,
+                    mismoRegistro = true,
+                    id = corte.IdCorte,
+                    nombre = corte.CorteDesc
                 }, JsonRequestBehavior.AllowGet);
             }
 
-            // Existe -> devolvemos lo que la vista necesita
             return Json(new
             {
                 existe = true,
                 id = corte.IdCorte,
-                nombre = corte.CorteDesc,        // <- lo espera tu JS
-                descripcion = corte.CorteDesc,   // <- opcional, por compatibilidad
+                nombre = corte.CorteDesc,
+                descripcion = corte.CorteDesc,
                 precio = corte.PrecioKg
             }, JsonRequestBehavior.AllowGet);
         }
@@ -664,7 +703,7 @@ namespace Web.Controllers
 
 
         // ===============================
-        // EJEMPLO: POST Guardar
+        // EJEMPLO: POST Eliminar
         // ===============================
         [HttpPost]
         [ValidateAntiForgeryToken]

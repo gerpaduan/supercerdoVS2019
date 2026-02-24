@@ -1,43 +1,74 @@
-﻿<div class="modal fade" id="modalBuscarProducto" tabindex="-1" role="dialog"
-                 data-api-url="@Url.Action("ListarParaPOS", "Productos")">
-    <div class="modal-dialog modal-lg" role="document">
+﻿@using System
+
+@{
+    // Configuración reutilizable por ViewData
+    var modalId = (ViewData["ModalId"] as string) ?? "modalBuscarProducto";
+    var apiUrl = (ViewData["ApiUrl"] as string) ?? Url.Action("ListarProductos", "Productos");
+    var titulo = (ViewData["Titulo"] as string) ?? "Buscar Producto";
+
+    bool mostrarPrecio = true; // <- default: mostrar precio
+    if (ViewData["MostrarPrecio"] != null)
+    {
+        bool.TryParse(ViewData["MostrarPrecio"].ToString(), out mostrarPrecio);
+    }
+}
+
+<div class="modal fade"
+     id="@modalId"
+     tabindex="-1"
+     role="dialog"
+     aria-hidden="true"
+     data-role="buscar-producto-modal"
+     data-api-url="@apiUrl"
+     data-mostrar-precio="@(mostrarPrecio ? "true" : "false")">
+
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document" style="max-height: 100vh;">
         <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-box"></i> Buscar Producto
-                    </h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-box"></i> @titulo
+                </h5>
+
+                @* Compatible Bootstrap 4/5 *@
+                <button type="button"
+                        class="close text-white"
+                        data-dismiss="modal"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Filtro -->
+                <div class="form-group mb-3">
+                    <input type="text"
+                           class="form-control js-buscar-producto-input"
+                           placeholder="Buscar por código o nombre"
+                           autocomplete="off" />
                 </div>
 
-                <div class="modal-body">
-
-                    <!-- Filtro -->
-                    <div class="form-group mb-3">
-                        <input type="text"
-                               id="filtroProducto"
-                               class="form-control"
-                               placeholder="Buscar por código o nombre"
-                               autocomplete="off">
-                    </div>
-
-                    <!-- Tabla -->
-                    <div class="table-responsive" style="max-height: 50vh; overflow-y:auto;">
-                        <table class="table table-hover table-sm">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th style="width:120px">Código</th>
-                                    <th>Producto</th>
-                                    <th style="width:120px" class="text-right">Precio</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaProductos"></tbody>
-                        </table>
-                    </div>
-
+                <!-- Tabla (scroll, no supera alto de pantalla) -->
+                <div class="table-responsive" style="max-height: calc(100vh - 240px); overflow-y:auto;">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:120px">Código</th>
+                                <th>Producto</th>
+                                <th class="text-right js-col-precio-header" style="width:120px">Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody class="js-buscar-producto-tbody"></tbody>
+                    </table>
                 </div>
+
+                <small class="text-muted d-block mt-2">
+                    Enter selecciona la fila activa (o la primera). Doble clic también selecciona.
+                </small>
 
             </div>
         </div>
+    </div>
 </div>
