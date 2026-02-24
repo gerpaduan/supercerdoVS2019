@@ -132,8 +132,32 @@
                     <h5 class="mb-3">Stock y estado</h5>
 
                     <div class="row g-3">
+
+
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-2">
+                                @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "swPesable" })
+                                <label class="form-check-label" for="swPesable">Pesable</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2">
+                                @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input", id = "swHabilitado" })
+                                <label class="form-check-label" for="swHabilitado">Habilitado</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2">
+                                @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
+                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
+                            </div>
+
+                            <div class="form-check form-switch mb-2">
+                                @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
+                                <label class="form-check-label" for="swCierre">En cierre stock</label>
+                            </div>
+                        </div>
+
                         <div class="col-12 col-md-6">
-                            <label class="form-label">Punto Stock (Nro Entero)</label>
+                            <label class="form-label">Punto Stock (número entero)</label>
                             @Html.TextBoxFor(m => m.PuntoStock, new { @class = "form-control", inputmode = "numeric" })
                         </div>
 
@@ -150,27 +174,7 @@
                             </div>
                         }
 
-                        <div class="col-12">
-                            <div class="form-check form-switch mb-2">
-                                @Html.CheckBoxFor(m => m.Pesable, new { @class = "form-check-input", id = "swPesable" })
-                                <label class="form-check-label" for="swPesable">Pesable</label>
-                            </div>
 
-                            <div class="form-check form-switch mb-2">
-                                @Html.CheckBoxFor(m => m.EnCierreStock, new { @class = "form-check-input", id = "swCierre" })
-                                <label class="form-check-label" for="swCierre">En cierre stock</label>
-                            </div>
-
-                            <div class="form-check form-switch mb-2">
-                                @Html.CheckBoxFor(m => m.Habilitado, new { @class = "form-check-input", id = "swHabilitado" })
-                                <label class="form-check-label" for="swHabilitado">Habilitado</label>
-                            </div>
-
-                            <div class="form-check form-switch mb-2">
-                                @Html.CheckBoxFor(m => m.IngresoRapidoEmbutido, new { @class = "form-check-input", id = "swRapido" })
-                                <label class="form-check-label" for="swRapido">Ingreso rápido elaborado</label>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -508,6 +512,9 @@
     // =========================
     let debounceMarcaTimer = null;
 
+    // 👇 guardar el botón que abrió el modal
+    let $triggerModalMarcas = null;
+
     function seleccionarMarcaDesdeFila($row) {
         if (!$row || !$row.length) return;
 
@@ -520,6 +527,8 @@
     }
 
     $("#btnBuscarMarca").on("click", function () {
+        // 👇 GUARDO el botón que abrió
+        $triggerModalMarcas = $(this);
         $("#modalMarcas").modal("show");
     });
 
@@ -577,6 +586,18 @@
         buscarMarcas(); // q vacío => traer todas
     });
 
+
+    // al cerrar, devolver foco al botón que lo abrió
+    $("#modalMarcas").on("hidden.bs.modal", function () {
+        setTimeout(function () {
+            if ($triggerModalMarcas && $triggerModalMarcas.length) {
+                $triggerModalMarcas.focus();
+            } else {
+                $("#btnBuscarMarca").focus(); // fallback
+            }
+        }, 0);
+    });
+
     // Botón Buscar manual
     $("#btnDoBuscarMarca").on("click", buscarMarcas);
 
@@ -624,11 +645,17 @@
     // MODAL CORTES (Corte Maestro)
     // reutiliza _BuscarProductoModal + script global
     // =========================
+
+    // 👇 guardar el botón que abrió el modal
+    let $triggerModalCorteMaestro= null;
+
     $("#btnBuscarCorteMaestro").on("click", function () {
         if (typeof window.abrirBuscarProductoModal !== "function") {
             alert("No se pudo abrir el buscador de productos. Verificá que el script del modal esté cargado.");
             return;
         }
+
+        $triggerModalCorteMaestro = $(this);
 
         window.abrirBuscarProductoModal({
             modalSelector: "#modalBuscarProducto", // <-- explícito
@@ -643,6 +670,17 @@
     $("#btnLimpiarCorteMaestro").on("click", function () {
         $("input[name='IdCorteMaestro']").val("");
         $("#txtCorteMaestroNombre").val("");
+    });
+
+    // 👇 NUEVO: al cerrar, devolver foco al botón que lo abrió
+    $("#modalBuscarProducto").on("hidden.bs.modal", function () {
+        setTimeout(function () {
+            if ($triggerModalCorteMaestro && $triggerModalCorteMaestro.length) {
+                $triggerModalCorteMaestro.focus();
+            } else {
+                $("#btnBuscarCorteMaestro").focus(); // fallback
+            }
+        }, 0);
     });
 
     // =========================
@@ -1162,6 +1200,18 @@
         return true;
     });
 
+
+    // ======================================================
+    //para scrolear cuando el usuario usa tab para saltar de campo en campo
+    // ======================================================
+    document.querySelectorAll('input, select, textarea').forEach(element => {
+        element.addEventListener('focus', () => {
+            const scrollMargin = 200; // Por ejemplo, margen para que no quede tapado
+            const elementTop = element.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({ top: elementTop - scrollMargin, behavior: 'smooth' });
+        });
+    });
+
     // ======================================================
     // SCANNER: EAN-8 / EAN-13 -> setea #Codigo, cierra, foco #CorteDesc
     // ======================================================
@@ -1256,6 +1306,13 @@
 
                 const $desc = document.querySelector(SEL_DESC);
                 if ($desc) $desc.focus();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputCodigo = document.getElementById('Codigo');
+            if (inputCodigo) {
+                inputCodigo.focus();
             }
         });
 

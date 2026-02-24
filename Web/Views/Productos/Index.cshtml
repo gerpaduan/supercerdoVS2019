@@ -17,30 +17,52 @@
          TOOLBAR (acciones globales)
          ========================= -->
     <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+            <div class="d-flex flex-wrap gap-2">
 
-            <a class="btn btn-primary" href="@Url.Action("AddOrEdit", "Productos")">
-                <i class="fas fa-plus mr-1"></i> Nuevo
-            </a>
-
-            <a class="btn btn-outline-secondary" href="@Url.Action("Tipos", "Productos")">
-                <i class="fas fa-tags mr-1"></i> Tipos
-            </a>
-
-            <a class="btn btn-outline-secondary" href="@Url.Action("Marcas", "Productos")">
-                <i class="fas fa-industry mr-1"></i> Marcas
-            </a>
-
-            <a class="btn btn-outline-secondary" href="@Url.Action("Index", "Productos", new { modo = "etiquetas" })">
-                <i class="fas fa-barcode mr-1"></i> Etiquetas (PDF)
-            </a>
-
-            @if (modoEtiquetas)
-            {
-                <a class="btn btn-outline-dark" href="@Url.Action("Index", "Productos")">
-                    <i class="fas fa-arrow-left mr-1"></i> Volver
+                <a id="lnkNuevoCorte"
+                   data-hotkey="n"
+                   class="btn btn-primary"
+                   href="@Url.Action("AddOrEdit", "Productos")"
+                   title="Atajo: Shift + N">
+                    <i class="fas fa-plus mr-1"></i> <span class="atajo-letra">N</span>uevo
                 </a>
-            }
+
+                <a id="lnkTipos"
+                   data-hotkey="t"
+                   class="btn btn-outline-secondary"
+                   href="@Url.Action("Tipos", "Productos")"
+                   title="Atajo: Shift + T">
+                    <i class="fas fa-tags mr-1"></i> <span class="atajo-letra">T</span>ipos
+                </a>
+
+                <a id="lnkMarcas"
+                   data-hotkey="m"
+                   class="btn btn-outline-secondary"
+                   href="@Url.Action("Marcas", "Productos")"
+                   title="Atajo: Shift + M">
+                    <i class="fas fa-industry mr-1"></i> <span class="atajo-letra">M</span>arcas
+                </a>
+
+                <a id="lnkEtiquetas"
+                   data-hotkey="e"
+                   class="btn btn-outline-secondary"
+                   href="@Url.Action("Index", "Productos", new { modo = "etiquetas" })"
+                   title="Atajo: Shift + E">
+                    <i class="fas fa-barcode mr-1"></i> <span class="atajo-letra">E</span>tiquetas (PDF)
+                </a>
+
+                @if (modoEtiquetas)
+                {
+                    <a id="lnkVolver"
+                       data-hotkey="v"
+                       class="btn btn-outline-dark"
+                       href="@Url.Action("Index", "Productos")"
+                       title="Atajo: Shift + V">
+                        <i class="fas fa-arrow-left mr-1"></i> <span class="atajo-letra">V</span>olver
+                    </a>
+                }
+            </div>
         </div>
 
         <div class="d-flex flex-wrap align-items-center gap-3">
@@ -1102,6 +1124,41 @@
             };
         }
 
+            (function () {
+                document.addEventListener('keydown', function (e) {
+                    // Solo atajos con SHIFT (sin Ctrl / Alt / Meta)
+                    if (!e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+
+                    // No activar si el usuario está escribiendo en un input/textarea/select o contenido editable
+                    const target = e.target;
+                    const tag = (target.tagName || '').toLowerCase();
+                    const isEditable =
+                        tag === 'input' ||
+                        tag === 'textarea' ||
+                        tag === 'select' ||
+                        target.isContentEditable;
+
+                    if (isEditable) return;
+
+                    // Obtener letra presionada (ej: Shift+N => "n")
+                    const key = (e.key || '').toLowerCase();
+                    if (!key || key.length !== 1) return;
+
+                    // Buscar botón/link con data-hotkey igual a la tecla
+                    const selector = `[data-hotkey="${key}"]`;
+                    const btn = document.querySelector(selector);
+
+                    // Si no existe o está oculto/deshabilitado, salir
+                    if (!btn) return;
+                    if (btn.disabled) return;
+                    if (btn.offsetParent === null) return; // oculto (display:none)
+
+                    // Evitar comportamiento por defecto y ejecutar click
+                    e.preventDefault();
+                    btn.click();
+                });
+        })();
+
     </script>
 }
 
@@ -1167,5 +1224,11 @@
         .btn {
             margin-bottom: 4px;
         }
+    }
+
+    .atajo-letra {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        text-decoration-thickness: 1px;
     }
 </style>
