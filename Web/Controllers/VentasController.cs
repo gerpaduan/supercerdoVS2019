@@ -480,18 +480,18 @@ namespace Web.Controllers
                                         venta,
                                         factuElec
                                     );
-                    foreach (var l in venta.LineasVenta)
-                    {
-                        dto.Detalle.Add(new LineaVentaDto
-                        {
-                            Codigo = l.Codigo,
-                            CantKg = l.CantKg,
-                            PrecioKg = l.PrecioKg,
-                            Bonificacion = l.Bonificacion,
-                            Estado = l.Estado,
-                            Balanza = l.PesoBalanza
-                        });
-                    }
+                    //foreach (var l in venta.LineasVenta)
+                    //{
+                    //    dto.Detalle.Add(new LineaVentaDto
+                    //    {
+                    //        Codigo = l.Codigo,
+                    //        CantKg = l.CantKg,
+                    //        PrecioKg = l.PrecioKg,
+                    //        Bonificacion = l.Bonificacion,
+                    //        Estado = l.Estado,
+                    //        Balanza = l.PesoBalanza
+                    //    });
+                    //}
                     return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
                 }
 
@@ -666,7 +666,9 @@ namespace Web.Controllers
                 : venta.FechaVenta;
 
             // ===== EMISOR (TU EMPRESA) =====
-            dto.PtoVtaAfip = venta.Sucursal.CodPuntoVentaAfip.ToString();
+            dto.PtoVtaAfip = venta.Sucursal.CodPuntoVentaAfip.ToString(); 
+            dto.EmisorRazonSocial = venta.Sucursal.Empresa.RazonSocialAfip;
+            dto.EmisorCUIT = venta.Sucursal.Empresa.Cuit.ToString();
             //dto.EmisorRazonSocial = user.Empresa.RazonSocial // venta.Sucursal.RazonSocial;
             //dto.EmisorCUIT = user.Empresa.CUIT;
             //dto.EmisorCondicionIVA = user.Empresa.CondicionIVA;

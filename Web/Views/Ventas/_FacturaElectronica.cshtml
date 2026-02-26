@@ -1,197 +1,381 @@
 @model Web.Models.DTO.FacturaElectronicaDTO
+@using System.Globalization
 
-<!-- Modal Factura Electrónica -->
+@{
+    bool yaEmitida = (Model?.IdFactura ?? 0) > 0 && !string.IsNullOrWhiteSpace(Model?.CAE);
+
+    var empresaNombre = !string.IsNullOrWhiteSpace(Model?.EmisorRazonSocial)
+        ? Model.EmisorRazonSocial
+        : (ViewBag.EmpresaNombre as string) ?? "Empresa";
+
+    var empresaCuit = !string.IsNullOrWhiteSpace(Model?.EmisorCUIT)
+        ? Model.EmisorCUIT
+        : (ViewBag.EmpresaCUIT as string) ?? "";
+
+    decimal totalOrig = 0m;
+    if (Model?.Detalle != null && Model.Detalle.Any())
+    {
+        totalOrig = Model.Detalle.Sum(x => (decimal)x.CantKg * (decimal)x.PrecioKg);
+    }
+}
+
+<style>
+    /* ===== Layout alto fijo del modal (sin pasar el alto de pantalla) ===== */
+    .fe-body {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        max-height: calc(92vh - 120px); /* header+footer aprox */
+    }
+
+    .fe-top {
+        flex: 0 0 auto;
+    }
+
+    .fe-table-scroll {
+        flex: 1 1 auto;
+        overflow: auto;
+        border: 1px solid rgba(0,0,0,.12);
+        border-radius: .35rem;
+    }
+
+    html.dark-mode .fe-table-scroll {
+        border-color: rgba(255,255,255,.12);
+    }
+
+    .fe-summary {
+        flex: 0 0 auto;
+    }
+
+    .fe-kpi {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+
+        .fe-kpi .label {
+            color: rgba(0,0,0,.60);
+            font-weight: 600;
+        }
+
+    html.dark-mode .fe-kpi .label {
+        color: rgba(255,255,255,.70);
+    }
+
+    .fe-kpi .value {
+        font-weight: 800;
+        font-size: 1.15rem;
+    }
+
+    .fe-muted {
+        color: rgba(0,0,0,.60);
+    }
+
+    html.dark-mode .fe-muted {
+        color: rgba(255,255,255,.70);
+    }
+
+    /* En pantallas chicas, un toque más compacto */
+    @@media (max-width: 991.98px) {
+        .fe-body {
+            max-height: calc(92vh - 110px);
+        }
+
+        .fe-table-scroll {
+            border-radius: .30rem;
+        }
+    }
+</style>
+
+<!-- HEADER -->
 <div class="modal-header bg-success text-white py-2">
-    <h6 class="modal-title">Generar Factura Electrónica</h6>
+    <h6 class="modal-title mb-0">
+        @(yaEmitida ? "Factura Electrónica (emitida)" : "Generar Factura Electrónica")
+    </h6>
     <button type="button" class="close text-white" data-dismiss="modal">
         <span>&times;</span>
     </button>
 </div>
 
-<form id="formFacturaElectronica">
+<form id="formFacturaElectronica" class="fe-root"
+      data-ya-emitida="@(yaEmitida ? "1" : "0")"
+      data-total-orig="@totalOrig.ToString(CultureInfo.InvariantCulture)">
 
-    <!-- ===== Hidden ===== -->
+    @* @Html.AntiForgeryToken() *@
+
+    <!-- ===== Hidden base ===== -->
     <input type="hidden" name="IdVenta" value="@Model.IdVenta" />
     <input type="hidden" name="IdFactura" value="@Model.IdFactura" />
     <input type="hidden" name="NroCbteAfip" value="@Model.NroCbteAfip" />
     <input type="hidden" name="CAE" value="@Model.CAE" />
     <input type="hidden" name="FecVtoCAE" value="@Model.FecVtoCAE" />
 
-    <div class="modal-body">
+    <!-- Lo que guardás SIEMPRE -->
+    <input type="hidden" name="PorcentajeFacturacion" id="fePorcentajeFacturacion" value="100" />
 
-        <!-- ================= CLIENTE ================= -->
-        <h6 class="font-weight-bold text-success">Datos del Cliente</h6>
+    <div class="modal-body fe-body">
 
-        <div class="row">
-            <div class="col-md-6 mb-2">
-                <label>Razón Social / Nombre</label>
-                <input type="text" name="RazonSocialAFIP"
-                       class="form-control form-control-sm"
-                       value="@Model.RazonSocialAFIP">
+        <!-- ===== TOP: Empresa + Datos ===== -->
+        <div class="fe-top">
+
+            <!-- Empresa -->
+            <div class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="font-weight-bold">@empresaNombre</div>
+                    <div class="text-right">
+                        <div class="fe-muted" style="font-size:.85rem;">CUIT</div>
+                        <div class="font-weight-bold">@empresaCuit</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-3 mb-2">
-                <label>Documento</label>
-                <input type="text" name="NroDocAfip"
-                       class="form-control form-control-sm"
-                       value="@Model.NroDocAfip">
+            <!-- Comprobante -->
+            <div class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="font-weight-bold text-success">Comprobante</div>
+                    @if (yaEmitida)
+                    {
+                        <span class="badge badge-info">CAE: @Model.CAE</span>
+                    }
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-6 col-md-3 mb-2">
+                        <label class="mb-1">Punto de Venta</label>
+                        <input type="text" name="PtoVtaAfip"
+                               class="form-control form-control-sm"
+                               value="@Model.PtoVtaAfip" readonly />
+                    </div>
+
+                    <div class="form-group col-6 col-md-3 mb-2">
+                        <label class="mb-1">Tipo</label>
+                        <select name="CodTipoCbteAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                            <option value="1" @(Model.CodTipoCbteAfip == 1 ? "selected" : "")>Factura A</option>
+                            <option value="6" @(Model.CodTipoCbteAfip == 6 ? "selected" : "")>Factura B</option>
+                            <option value="11" @(Model.CodTipoCbteAfip == 11 ? "selected" : "")>Factura C</option>
+                        </select>
+                        @* Si está disabled no viaja en serialize *@
+                        @if (yaEmitida)
+                        {
+                            <input type="hidden" name="CodTipoCbteAfip" value="@Model.CodTipoCbteAfip" />
+                        }
+                    </div>
+
+                    <div class="form-group col-12 col-md-3 mb-2">
+                        <label class="mb-1">Forma de Pago</label>
+                        <input type="text" name="FormaPago"
+                               class="form-control form-control-sm"
+                               value="@Model.FormaPago" @(yaEmitida ? "" : "") />
+                    </div>
+
+                    <div class="form-group col-12 col-md-3 mb-2">
+                        <label class="mb-1">Fecha de facturación</label>
+                        <input type="date" name="FechaEmisionAfip"
+                               class="form-control form-control-sm"
+                               value="@(Model.FechaEmisionAfip?.ToString("yyyy-MM-dd"))"
+                               @(yaEmitida ? "readonly" : "") />
+                        <small class="fe-muted d-block mt-1">
+                            @(yaEmitida ? "Emitida: no editable" : "Editable antes de emitir")
+                        </small>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-3 mb-2">
-                <label>Condición IVA</label>
-                <input type="text" name="CondicionIvaAFIP"
-                       class="form-control form-control-sm"
-                       value="@Model.CondicionIvaAFIP">
+            <!-- Cliente -->
+            <div class="border rounded p-2 mb-2">
+                <div class="font-weight-bold text-success mb-2">Cliente</div>
+
+                <div class="form-row">
+                    <div class="form-group col-6 col-md-2 mb-2">
+                        <label class="mb-1">Tipo Doc</label>
+                        <select name="TipoDocAfip" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                            <option value="96" @(Model.TipoDocAfip == "96" ? "selected" : "")>DNI</option>
+                            <option value="80" @(Model.TipoDocAfip == "80" ? "selected" : "")>CUIT</option>
+                            <option value="86" @(Model.TipoDocAfip == "86" ? "selected" : "")>CUIL</option>
+                            <option value="99" @(Model.TipoDocAfip == "99" ? "selected" : "")>Sin identificar</option>
+                        </select>
+                        @if (yaEmitida)
+                        {
+                            <input type="hidden" name="TipoDocAfip" value="@Model.TipoDocAfip" />
+                        }
+                    </div>
+
+                    <div class="form-group col-6 col-md-3 mb-2">
+                        <label class="mb-1">Nro Doc</label>
+                        <input type="text" name="NroDocAfip"
+                               class="form-control form-control-sm"
+                               value="@Model.NroDocAfip" @(yaEmitida ? "readonly" : "") />
+                    </div>
+
+                    <div class="form-group col-12 col-md-4 mb-2">
+                        <label class="mb-1">Razón Social</label>
+                        <input type="text" name="RazonSocialAFIP"
+                               class="form-control form-control-sm"
+                               value="@Model.RazonSocialAFIP" @(yaEmitida ? "readonly" : "") />
+                    </div>
+
+                    <div class="form-group col-12 col-md-3 mb-2">
+                        <label class="mb-1">Cond. IVA</label>
+                        <input type="text" name="CondicionIvaAFIP"
+                               class="form-control form-control-sm"
+                               value="@Model.CondicionIvaAFIP" @(yaEmitida ? "readonly" : "") />
+                    </div>
+
+                    <div class="form-group col-12 mb-2">
+                        <label class="mb-1">Domicilio</label>
+                        <input type="text" name="DomicilioAFIP"
+                               class="form-control form-control-sm"
+                               value="@Model.DomicilioAFIP" @(yaEmitida ? "readonly" : "") />
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-12 mb-2">
-                <label>Domicilio</label>
-                <input type="text" name="DomicilioAFIP"
-                       class="form-control form-control-sm"
-                       value="@Model.DomicilioAFIP">
+            <!-- Ajuste de facturación (porcentaje / total) -->
+            <div class="border rounded p-2 mb-2 @(yaEmitida ? "d-none" : "")">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="font-weight-bold text-success">Facturación parcial</div>
+
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="feSwitchAjuste">
+                        <label class="custom-control-label" for="feSwitchAjuste">
+                            Editar facturación
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row mt-2">
+                    <div class="form-group col-6 col-md-3 mb-2">
+                        <label class="mb-1">% a facturar</label>
+                        <input type="number" step="0.01" min="0.01" max="100"
+                               id="feInputPorcentaje"
+                               class="form-control form-control-sm"
+                               value="100" readonly />
+                    </div>
+
+                    <div class="form-group col-6 col-md-4 mb-2">
+                        <label class="mb-1">Total a facturar</label>
+                        <input type="text"
+                               id="feInputTotalFacturar"
+                               class="form-control form-control-sm"
+                               value="@totalOrig.ToString("0.00", CultureInfo.InvariantCulture)" readonly />
+                        <small class="fe-muted d-block mt-1">Podés editar % o Total (cuando activás el switch).</small>
+                    </div>
+
+                    <div class="form-group col-12 col-md-5 mb-2">
+                        <label class="mb-1">Modo</label>
+                        <div class="d-flex gap-2">
+                            <div class="custom-control custom-radio mr-3">
+                                <input type="radio" id="feModoPorcentaje" name="feModo" class="custom-control-input" checked>
+                                <label class="custom-control-label" for="feModoPorcentaje">Editar %</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="feModoTotal" name="feModo" class="custom-control-input">
+                                <label class="custom-control-label" for="feModoTotal">Editar Total</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-md-6 mb-2">
-                <label>Email</label>
-                <input type="email" name="Email"
-                       class="form-control form-control-sm"
-                       value="@Model.Email">
-            </div>
-
-            <div class="col-md-6 mb-2">
-                <label>WhatsApp</label>
-                <input type="text" name="Whatsapp"
-                       class="form-control form-control-sm"
-                       value="@Model.Whatsapp">
-            </div>
-        </div>
-
-        <!-- ================= COMPROBANTE ================= -->
-        <h6 class="font-weight-bold text-success 
-            -3">Datos del Comprobante</h6>
-
-        <div class="row">
-            <div class="col-md-3 mb-2">
-                <label>Tipo</label>
-                <select name="CodTipoCbteAfip" class="form-control form-control-sm">
-                    <option value="1" @(Model.CodTipoCbteAfip == 1 ? "selected" : "")>Factura A</option>
-                    <option value="6" @(Model.CodTipoCbteAfip == 6 ? "selected" : "")>Factura B</option>
-                    <option value="11" @(Model.CodTipoCbteAfip == 11 ? "selected" : "")>Factura C</option>
-                </select>
-            </div>
-
-            <div class="col-md-3 mb-2">
-                <label>Forma de Pago</label>
-                <input type="text" name="FormaPago"
-                       class="form-control form-control-sm"
-                       value="@Model.FormaPago">
-            </div>
-
-            <div class="col-md-3 mb-2">
-                <label>Punto de Venta</label>
-                <input type="text" name="PtoVtaAfip"
-                       class="form-control form-control-sm"
-                       value="@Model.PtoVtaAfip">
-            </div>
-
-            <div class="col-md-3 mb-2">
-                <label>Fecha</label>
-                <input type="date" name="FechaEmisionAfip"
-                       class="form-control form-control-sm"
-                       value="@Model.FechaEmisionAfip?.ToString(" yyyy-MM-dd")">
-            </div>
-        </div>
-
-        <!-- ================= IMPORTES ================= -->
-        <h6 class="font-weight-bold text-success mt-3">Importes</h6>
-
-        <div class="row">
-            <div class="col-md-4 mb-2">
-                <label>Neto Gravado</label>
-                <input type="text" name="ImporteNetoGravado"
-                       class="form-control form-control-sm text-right"
-                       value="@Model.ImporteNetoGravado.ToString("0.00")">
-            </div>
-
-            <div class="col-md-4 mb-2">
-                <label>IVA</label>
-                <input type="text" name="Iva"
-                       class="form-control form-control-sm text-right"
-                       value="@Model.Iva.ToString("0.00")">
-            </div>
-
-            <div class="col-md-4 mb-2">
-                <label>Total</label>
-                <input type="text" name="ImporteTotal"
-                       class="form-control form-control-sm text-right font-weight-bold"
-                       value="@Model.ImporteTotal.ToString("0.00")">
-            </div>
-        </div>
-
-        <!-- ================= DETALLE ================= -->
-        <h6 class="font-weight-bold text-success mt-3">Detalle</h6>
-
-        <div class="table-responsive border rounded">
-            <table class="table table-sm table-bordered mb-0">
+        </div><!-- /fe-top -->
+        <!-- ===== TABLA (SCROLL) ===== -->
+        <div class="fe-table-scroll mb-2" id="feTablaWrapper">
+            <table class="table table-sm table-bordered mb-0" id="feTablaItems">
                 <thead class="thead-light">
                     <tr>
-                        <th>Código</th>
+                        <th style="width:110px;">Código</th>
                         <th>Producto</th>
-                        <th class="text-right">Cant</th>
-                        <th class="text-right">Precio</th>
-                        <th class="text-right">Subtotal</th>
+                        <th class="text-right" style="width:90px;">Cant</th>
+                        <th class="text-right" style="width:110px;">Precio</th>
+                        <th class="text-right" style="width:90px;">IVA %</th>
+                        <th class="text-right" style="width:120px;">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var l in Model.Detalle)
                     {
-                        <tr>
+                        var qty = ((decimal)l.CantKg);
+                        var prc = ((decimal)l.PrecioKg);
+                        var sub = qty * prc;
+
+                        <tr class="fe-item"
+                            data-qty="@qty.ToString(CultureInfo.InvariantCulture)"
+                            data-precio-orig="@prc.ToString(CultureInfo.InvariantCulture)"
+                            data-iva="@Convert.ToDecimal(l.AlicuotaIva).ToString(CultureInfo.InvariantCulture)">
                             <td>@l.Codigo</td>
                             <td>@l.Descripcion</td>
-                            <td class="text-right">@l.CantKg.ToString("0.000")</td>
-                            <td class="text-right">@l.PrecioKg.ToString("0.00")</td>
-                            <td class="text-right">@((l.CantKg * l.PrecioKg).ToString("0.00"))</td>
+                            <td class="text-right fe-qty">@qty.ToString("0.000", CultureInfo.InvariantCulture)</td>
+                            <td class="text-right"><span class="fe-precio">@prc.ToString("0.00", CultureInfo.InvariantCulture)</span></td>
+                            <td class="text-right"><span class="fe-iva">@Convert.ToDecimal(l.AlicuotaIva).ToString("0.##", CultureInfo.InvariantCulture)</span></td>
+                            <td class="text-right"><span class="fe-subtotal">@sub.ToString("0.00", CultureInfo.InvariantCulture)</span></td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
 
+        <!-- ===== TOTALES + IVA DISCRIMINADO (NO SCROLLEA) ===== -->
+        <div class="fe-summary border rounded p-2">
+
+            <div class="fe-kpi mb-1">
+                <div class="label">Total a facturar</div>
+                <div class="value" id="feLblTotal">$ 0,00</div>
+            </div>
+
+            <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                <div class="fe-muted">Neto: <strong id="feLblNeto">$ 0,00</strong></div>
+                <div class="fe-muted">IVA: <strong id="feLblIva">$ 0,00</strong></div>
+            </div>
+
+            <!-- Inputs que viajan al server (si te sirve guardarlos / auditar) -->
+            <div class="form-row">
+                <div class="form-group col-4 mb-2">
+                    <label class="mb-1">Neto gravado</label>
+                    <input type="text" name="ImporteNetoGravado" id="feInputNeto"
+                           class="form-control form-control-sm text-right" value="@Model.ImporteNetoGravado.ToString("0.00", CultureInfo.InvariantCulture)" readonly />
+                </div>
+                <div class="form-group col-4 mb-2">
+                    <label class="mb-1">IVA</label>
+                    <input type="text" name="Iva" id="feInputIva"
+                           class="form-control form-control-sm text-right" value="@Model.Iva.ToString("0.00", CultureInfo.InvariantCulture)" readonly />
+                </div>
+                <div class="form-group col-4 mb-2">
+                    <label class="mb-1">Total</label>
+                    <input type="text" name="ImporteTotal" id="feInputTotal"
+                           class="form-control form-control-sm text-right font-weight-bold" value="@Model.ImporteTotal.ToString("0.00", CultureInfo.InvariantCulture)" readonly />
+                </div>
+            </div>
+
+            <div class="table-responsive border rounded">
+                <table class="table table-sm mb-0" id="feTablaIva">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Alícuota</th>
+                            <th class="text-right">Neto</th>
+                            <th class="text-right">IVA</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @* Se llena por JS *@
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- ================= FOOTER ================= -->
+    <!-- FOOTER -->
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
             Cancelar
         </button>
-        <button type="submit" class="btn btn-success btn-sm">
-            <i class="fas fa-file-invoice"></i> Generar Factura
+
+        <button type="submit" class="btn btn-success btn-sm" id="btnRegistrarFactura">
+            <i class="fas fa-file-invoice"></i>
+            @(yaEmitida ? "Guardar cambios" : "Registrar factura")
         </button>
     </div>
-
 </form>
-
-<script>
-$('#formFacturaElectronica').on('submit', function (e) {
-    e.preventDefault();
-    var $btn = $(this).find('button[type="submit"]').prop('disabled', true);
-    var datos = $(this).serialize();
-    $.post('@Url.Action("GenerarFactura","Ventas")', datos)
-        .done(function (resp) {
-            if (resp.ok) {
-                Swal.fire({ icon: 'success', title: 'Factura generada', text: 'Nro: ' + (resp.nro || '') });
-                $('#modalFacturaElectronica').modal('hide');
-                // emitir evento para refrescar UI de la venta
-                $(document).trigger('venta:facturada', [resp]);
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: resp.msg || 'Error desconocido' });
-            }
-        })
-        .fail(function () {
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Error en la petición' });
-        })
-        .always(function () {
-            $btn.prop('disabled', false);
-        });
-});
-</script>

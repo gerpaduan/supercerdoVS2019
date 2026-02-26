@@ -5,8 +5,16 @@ let totalVentaActual = 0;
 let otroTipoPagoSeleccionado = null;
 let ventaEnProceso = false;
 
-window.mostrarModalPostVenta = window.mostrarModalPostVenta || function (ventaId) {
-    $('#modalPostVenta').data('venta-id', ventaId).modal('show');
+window.mostrarModalPostVenta = window.mostrarModalPostVenta || function (ventaId, telefonoCliente) {
+
+    const tel = telefonoCliente || '';
+
+    if (!window.PostModal || typeof window.PostModal.openVenta !== 'function') {
+        console.error('PostModal no está listo. Revisá orden de carga de scripts.');
+        return;
+    }
+
+    window.PostModal.openVenta(ventaId, { whatsapp: tel });
 };
 
 
@@ -196,20 +204,27 @@ function finalizarVenta(data) {
             }
 
 
-            // ✅ Venta OK: desactivar aviso de salida/recarga
+            // ✅ Venta OK
             window.desactivarAvisoSalidaPOS?.();
 
-            // --- NUEVO: GUARDAMOS ID VENTA PARA POST-VENTA ---
-            const ventaId = resp.ventaId; // tu backend debe mandar esto
+            const ventaId = resp.ventaId;
+            const tel = resp.whatsapp || ''; // o de donde lo saques
 
-            $('#modalFormaPago').modal('hide');
+            const $fp = $('#modalFormaPago');
+
+            // 1) Sacar el foco de adentro ANTES de ocultar (evita el warning)
+            $fp.find(':focus').trigger('blur');
+            if (document.activeElement) document.activeElement.blur();
+
+            // 2) Cuando el modal terminó de ocultarse, recién ahí abrimos PostVenta
+            $fp.one('hidden.bs.modal', function () {
+                window.mostrarModalPostVenta(ventaId, tel);
+            });
+
+            // 3) Ocultar modal forma pago
+            $fp.modal('hide');
+
             hayVentaEnCurso = false;
-
-            // Esperamos cierre animación
-            setTimeout(() => {
-                window.mostrarModalPostVenta(ventaId);
-
-            }, 400);
         },
 
         error: function (xhr) {

@@ -170,7 +170,7 @@
                                 <div class="row">
 
                                     <!-- COLUMNA IZQUIERDA -->
-                                    <div class="col-6">
+                                    <div class="col-6 producto-resumen">
 
                                         <h4 id="prodNombre" class="fw-bold text-muted">
                                             Info producto...
@@ -500,8 +500,8 @@ else
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
-@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
+@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
 
 
 @section Scripts {
@@ -2827,4 +2827,106 @@ else
     html.dark-mode #tablaItems tr.fila-item:hover {
         background: rgba(255,255,255,.06);
     }
+
+    /* =========================================================
+   RESPONSIVE: resumen producto en 2 filas (Nombre/Precio y Cant/Subtotal)
+   ========================================================= */
+    @@media (max-width: 991.98px) {
+
+        /* la columna del resumen pasa a grilla */
+        .producto-resumen {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-areas:
+                "nombre  precio"
+                "cantidad subtotal";
+            align-items: center;
+            column-gap: .60rem;
+            row-gap: .25rem;
+        }
+
+            /* ocultar textos (labels) en responsive */
+            .producto-resumen .lbl-precio,
+            .producto-resumen .lbl-cantidad,
+            .producto-resumen .lbl-subtotal {
+                display: none !important;
+            }
+
+            /* “aplastar” contenedores para que #prodPrecio / #inputCantidad / #prodSubtotal
+        participen directamente en la grilla */
+            .producto-resumen > .mb-3 {
+                display: contents;
+                margin: 0 !important;
+            }
+
+                .producto-resumen > .mb-3 > .d-flex {
+                    display: contents !important;
+                }
+
+            /* ubicar cada pieza en su área */
+            .producto-resumen #prodNombre {
+                grid-area: nombre;
+                margin: 0 !important;
+                height: auto !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 1rem;
+                line-height: 1.1;
+            }
+
+            .producto-resumen #prodPrecio {
+                grid-area: precio;
+                justify-self: end;
+                font-size: 1.05rem;
+                line-height: 1.1;
+            }
+
+            .producto-resumen #inputCantidad {
+                grid-area: cantidad;
+                justify-self: start;
+                width: 100%;
+                max-width: 180px; /* ajustalo si querés más chico/grande */
+            }
+
+            .producto-resumen #prodSubtotal {
+                grid-area: subtotal;
+                justify-self: end;
+                margin: 0 !important;
+                font-size: 1.15rem;
+                line-height: 1.1;
+            }
+
+
+            /* 1) Nombre + grande (aprox +2px) */
+            .producto-resumen #prodNombre {
+                font-size: calc(1rem + 4px) !important;
+                font-weight: 100 !important;
+                line-height: 1.15 !important;
+            }
+
+        /* 2) Más aire vertical entre filas (evita que quede pegado al teclado) */
+        .producto-resumen {
+            row-gap: .45rem !important; /* antes .25rem */
+            padding-bottom: .35rem; /* aire extra abajo */
+            margin-bottom: .35rem; /* separa del bloque de abajo */
+            border-bottom: 1px solid rgba(0,0,0,.10); /* divisoria suave */
+        }
+
+        /* divisoria en dark-mode */
+        html.dark-mode .producto-resumen {
+            border-bottom-color: rgba(255,255,255,.14);
+        }
+
+        /* 3) Un poquito de margen arriba del input para que respire */
+        .producto-resumen #inputCantidad {
+            margin-top: .10rem;
+        }
+    }
+    /* Forzar alineación del texto dentro del input SIEMPRE a la izquierda */
+    #inputCantidad {
+        text-align: right !important;
+        direction: ltr;
+    }
+
 </style>

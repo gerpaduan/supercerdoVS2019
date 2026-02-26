@@ -1,16 +1,26 @@
-﻿<div class="modal fade" id="modalPostVenta" tabindex="-1" role="dialog" aria-hidden="true">
+﻿<div class="modal fade" id="modalPostVenta" tabindex="-1" role="dialog" aria-hidden="true"
+     data-context="venta"
+     data-venta-id="0"
+     data-factura-id="0"
+     data-nro=""
+     data-cae=""
+     data-whatsapp=""
+     data-pdf-url="">
     <div class="modal-dialog modal-md modal-dialog-centered" role="document">
         <div class="modal-content">
 
             <!-- HEADER (sin X) -->
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title mb-0">¡Venta completada! ✔</h5>
+                <div class="w-100">
+                    <h5 class="modal-title mb-0" id="pvModalTitle">¡Venta completada! ✔</h5>
+                    <small class="d-block" id="pvModalSubTitle" style="opacity:.9; display:none;"></small>
+                </div>
             </div>
 
             <!-- BODY -->
             <div class="modal-body text-center">
 
-                <p class="mb-3" style="font-size:1.1rem;">
+                <p class="mb-3" style="font-size:1.1rem;" id="pvPregunta">
                     ¿Qué deseas hacer ahora?
                 </p>
 
@@ -64,20 +74,20 @@
                 <!-- 3) FACTURA -->
                 <button class="btn btn-info btn-lg btn-block mb-2" id="btnPostVenta3" type="button">
                     <span class="badge badge-light mr-2">3</span>
-                    Factura
+                    <span id="pvLblFacturaBtn">Factura</span>
                 </button>
 
-                <!-- 4) GENERAR PDF -->
+                <!-- 4) PDF -->
                 <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostVenta4" type="button">
                     <span class="badge badge-light mr-2">4</span>
-                    Generar PDF
+                    <span id="pvLblPdfBtn">Generar PDF</span>
                 </button>
 
                 <!-- 5) WHATSAPP -->
                 <button class="btn btn-success btn-lg btn-block" id="btnPostVenta5" type="button">
                     <span class="badge badge-light mr-2">5</span>
                     <i class="fab fa-whatsapp mr-2"></i>
-                    Enviar a WhatsApp
+                    <span id="pvLblWpBtn">Enviar a WhatsApp</span>
                 </button>
 
             </div>
