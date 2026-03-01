@@ -7,11 +7,11 @@ namespace Datos
 {
     public class Compra
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public Compra(IEmpresaContext empresa)
+        public Compra(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         public void anularCompra(int idCompra)

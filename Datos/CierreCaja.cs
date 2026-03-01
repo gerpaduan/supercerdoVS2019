@@ -8,11 +8,11 @@ namespace Datos
 {
     public class CierreCaja
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public CierreCaja(IEmpresaContext empresa)
+        public CierreCaja(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         public DataTable findCierreCaja(

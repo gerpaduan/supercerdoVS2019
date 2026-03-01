@@ -9,11 +9,11 @@ namespace Datos
 {
     public class Sucursal
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public Sucursal(IEmpresaContext empresa)
+        public Sucursal(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         public DataTable obtenerSucursales()

@@ -188,6 +188,10 @@ namespace wsAFIPvs2008
             //cuit = oEmpresa.Cuit.ToString();
             EmpresaSTATIC = new EmpresaContextWin(idEmpresa);
 
+            // ✅ Nuevo: contexto de parámetros por empresa (instancia, no static values)
+            ParametrosCTX = new Negocio.Parametros(EmpresaSTATIC);
+            ParametrosCTX.Reload(); // opcional
+
             certificado = Directory.GetCurrentDirectory() + @"\Templates\" + oEmpresa.NombreCertificado_pfx;
 
             loadForm();    

@@ -17,7 +17,7 @@ namespace Negocio
         public OtrasClases(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oOtrasClasesD = new Datos.OtrasClases(empresa);
+            oOtrasClasesD = new Datos.OtrasClases(empresa, param);
         }
 
         #region Licencia

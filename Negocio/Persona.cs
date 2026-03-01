@@ -12,7 +12,7 @@ namespace Negocio
         public Persona(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oPersonaD = new Datos.Persona(empresa);
+            oPersonaD = new Datos.Persona(empresa, param);
         }
         public void agregarPersona(Entidades.Persona oPersonaE)
         {
@@ -42,6 +42,9 @@ namespace Negocio
         {
             
             Entidades.Persona oPersonaE = oPersonaD.findById(id);
+
+            //oPersonaE.ConsumidorFinal = esConsumidorFinal(oPersonaE);
+
             if (oPersonaE != null && oPersonaE.Marca && oPersonaE.IdPropietario > 0)
             {
                 oPersonaE.Propietario = oPersonaD.findById((int)oPersonaE.IdPropietario);
@@ -52,6 +55,11 @@ namespace Negocio
         public Entidades.Persona getConsumidorFinal()
         {
             return findById(_param.GetInt(ParamKeys.IdConsumidorFinal, 0));// Entidades.Persona.idConsumidorFinal);
+        }
+
+        public bool esConsumidorFinal(Entidades.Persona oPersonaE)
+        {
+            return (oPersonaE != null && oPersonaE.idPersona > 0 && _param.GetInt(ParamKeys.IdConsumidorFinal, 0) == oPersonaE.idPersona);
         }
 
         public bool personaTieneCompras_Ventas(int idPersona)

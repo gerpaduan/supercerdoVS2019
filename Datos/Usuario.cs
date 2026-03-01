@@ -9,11 +9,11 @@ namespace Datos
 {
     public class Usuario
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public Usuario(IEmpresaContext empresa)
+        public Usuario(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         public DataTable obtenerUsuarios(bool soloActivos, bool filtroEmpresa = true, bool soloAdmin = false)

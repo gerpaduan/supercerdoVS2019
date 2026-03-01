@@ -17,8 +17,8 @@ namespace Negocio
         public CierreCaja(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCierreD = new Datos.CierreCaja(empresa);
-            oVentaN = new Negocio.Venta(empresa);
+            oCierreD = new Datos.CierreCaja(empresa, param);
+            oVentaN = new Negocio.Venta(empresa, param);
         }
 
         public Entidades.CierreCaja findByIdOrLast(Entidades.CierreCaja oCierre, Entidades.CierreCaja.tipoBusqueda tipoBusqueda, string texto)

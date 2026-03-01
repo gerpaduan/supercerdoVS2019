@@ -8,10 +8,21 @@
 
     function toNum(v) {
         if (v == null) return 0;
-        // admite "1.234,56" o "1234.56"
-        const s = String(v).trim()
-            .replace(/\./g, '')     // miles
-            .replace(',', '.');     // decimal
+        let s = String(v).trim();
+
+        // Normalizar espacios
+        s = s.replace(/\s/g, '');
+
+        // Caso: tiene ambos separadores -> asumimos '.' miles y ',' decimal
+        if (s.indexOf('.') !== -1 && s.indexOf(',') !== -1) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        }
+        // Solo tiene ',' -> coma decimal
+        else if (s.indexOf(',') !== -1 && s.indexOf('.') === -1) {
+            s = s.replace(',', '.');
+        }
+        // Solo tiene '.' -> punto decimal (no tocar)
+        // No separadores -> se parsea directo
         const n = parseFloat(s);
         return isNaN(n) ? 0 : n;
     }
@@ -45,14 +56,29 @@
         return toNum($('#feInputPorcentaje').val()) || 0;
     }
 
+    function showPctWarning(show) {
+        const $w = $('#fePctWarning');
+        if (show) $w.show(); else $w.hide();
+    }
+
     function setPorcentaje(p) {
-        $('#feInputPorcentaje').val((p || 0).toFixed(2));
-        $('#fePorcentajeFacturacion').val((p || 0).toFixed(4)); // lo que guardás
+        // Guardar valor para enviar
+        $('#fePorcentajeFacturacion').val((p || 0).toFixed(4));
+
+        // No sobrescribir el campo mientras el usuario lo está editando
+        const $input = $('#feInputPorcentaje');
+        if (document.activeElement === $input[0]) {
+            return;
+        }
+        $input.val((p || 0).toFixed(2));
     }
 
     function setTotalFacturar(t) {
-        // visual: mantenemos string simple "1234.56"
-        $('#feInputTotalFacturar').val((t || 0).toFixed(2));
+        const $input = $('#feInputTotalFacturar');
+        if (document.activeElement === $input[0]) {
+            return;
+        }
+        $input.val((t || 0).toFixed(2));
     }
 
     function modoEdicion() {
@@ -66,12 +92,24 @@
     function habilitarInputsEdicion(on) {
         const editable = !!on;
 
-        // Si no está en modo edición, quedan readonly
+        // Mostrar/ocultar bloque de ajuste
+        $('#feAjusteBlock').toggleClass('d-none', !editable);
+
+        // Inputs readonly según modo y editabilidad
         $('#feInputPorcentaje').prop('readonly', !editable || modo() !== 'porcentaje');
         $('#feInputTotalFacturar').prop('readonly', !editable || modo() !== 'total');
 
-        // Radio siempre activos mientras switch on
+        // Radios
         $('#feModoPorcentaje, #feModoTotal').prop('disabled', !editable);
+
+        // cuando se habilita, enfocamos el input adecuado para que el usuario comience a editar
+        if (editable) {
+            if (modo() === 'porcentaje') {
+                $('#feInputPorcentaje').focus().select();
+            } else {
+                $('#feInputTotalFacturar').focus().select();
+            }
+        }
     }
 
     // =========================
@@ -180,6 +218,28 @@
         updating = false;
     }
 
+    // Ajusta alturas de body y tabla para que footer quede visible y body scrollee
+    function ajustarAlturasModal() {
+        try {
+            const $modal = $('#modalFacturaElectronica');
+            if (!$modal.length) return;
+            const vh = Math.max(window.innerHeight || document.documentElement.clientHeight, 600);
+            const maxModal = Math.round(vh * 0.92);
+            const headerH = $modal.find('.modal-header').outerHeight(true) || 0;
+            const footerH = $modal.find('.modal-footer').outerHeight(true) || 0;
+            const contentPad = 24; // margen / paddings
+            const bodyMax = Math.max(120, maxModal - (headerH + footerH + contentPad));
+            $modal.find('.modal-body.fe-body').css('max-height', bodyMax + 'px');
+            // dejar parte para tabla: restar espacio de summary y top
+            const topH = $modal.find('.fe-top').outerHeight(true) || 0;
+            const summaryH = $modal.find('.fe-summary').outerHeight(true) || 0;
+            const availForTable = Math.max(120, bodyMax - (topH + summaryH + 24));
+            $modal.find('.fe-table-scroll').css('max-height', availForTable + 'px');
+        } catch (e) {
+            console.warn('ajuste alturas modal', e);
+        }
+    }
+
     // =========================
     // Init cuando se muestra modal
     // =========================
@@ -187,25 +247,36 @@
         const $f = $root();
         if (!$f.length) return;
 
+        // Asegurar estado del bloque de ajuste según switch
+        $('#feAjusteBlock').toggleClass('d-none', !$('#feSwitchAjuste').is(':checked'));
+
         // Si ya emitida: solo recalculamos para mostrar bien (sin edición)
         if (isYaEmitida()) {
             aplicarPorcentaje(100);
-            // foco igual al botón (para Enter = guardar)
-            setTimeout(() => $('#btnRegistrarFactura').trigger('focus'), 120);
+            setTimeout(() => {
+                const el = document.getElementById('feLblTotal');
+                if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'auto' });
+                $('#btnRegistrarFactura').trigger('focus');
+            }, 120);
             return;
         }
 
         // Defaults
-        setPorcentaje(100);
-        $('#feSwitchAjuste').prop('checked', false);
+        $('#feInputPorcentaje').val('100');
+        $('#feInputTotalFacturar').val(totalOriginal().toFixed(2));
         $('#feModoPorcentaje').prop('checked', true);
-        habilitarInputsEdicion(false);
+        habilitarInputsEdicion($('#feSwitchAjuste').is(':checked'));
 
         // Inicializa totales en pantalla
         aplicarPorcentaje(100);
 
-        // Focus al registrar
-        setTimeout(() => $('#btnRegistrarFactura').trigger('focus'), 120);
+        // Ajustar alturas y hacer visible total
+        setTimeout(() => {
+            ajustarAlturasModal();
+            const el = document.getElementById('feLblTotal');
+            if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'auto' });
+            $('#btnRegistrarFactura').trigger('focus');
+        }, 150);
     }
 
     // =========================
@@ -213,43 +284,91 @@
     // =========================
     $(document).on('shown.bs.modal', '#modalFacturaElectronica', function () {
         initFacturaModal();
+        ajustarAlturasModal();
+        $(window).on('resize.factura', ajustarAlturasModal);
     });
 
+    $(document).on('hidden.bs.modal', '#modalFacturaElectronica', function () {
+        $(window).off('resize.factura');
+    });
+
+    // Toggle: mostrar/ocultar bloque AJUSTE
     $(document).on('change', '#feSwitchAjuste', function () {
         if (isYaEmitida()) return;
-
         const on = $(this).is(':checked');
         habilitarInputsEdicion(on);
 
-        // Si apaga: vuelve a 100%
         if (!on) {
             $('#feModoPorcentaje').prop('checked', true);
             habilitarInputsEdicion(false);
             aplicarPorcentaje(100);
+            showPctWarning(false);
+        } else {
+            // desplazar vista para que el bloque quede visible
+            setTimeout(() => {
+                const el = document.getElementById('feAjusteBlock');
+                if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                ajustarAlturasModal();
+            }, 80);
         }
     });
 
     $(document).on('change', '#feModoPorcentaje, #feModoTotal', function () {
         if (isYaEmitida()) return;
         habilitarInputsEdicion(modoEdicion());
+        ajustarAlturasModal();
     });
 
-    // Input porcentaje
+    // Input porcentaje (texto): parse flexible (coma o punto), no formatear mientras el usuario escribe
     $(document).on('input', '#feInputPorcentaje', function () {
         if (isYaEmitida()) return;
         if (!modoEdicion() || modo() !== 'porcentaje') return;
 
-        const p = toNum($(this).val());
-        aplicarPorcentaje(p);
+        const raw = $(this).val();
+        const p = toNum(raw);
+
+        // mostrar warning si mayor a 100
+        if (p > 100) {
+            showPctWarning(true);
+            $(this).addClass('is-invalid');
+        } else {
+            showPctWarning(false);
+            $(this).removeClass('is-invalid');
+        }
+
+        aplicarPorcentaje(Math.min(p, 100));
     });
 
-    // Input total objetivo
+    // Al salir del porcentaje, si >100 volver a 100
+    $(document).on('blur', '#feInputPorcentaje', function () {
+        const p = toNum($(this).val());
+        if (p > 100) {
+            $(this).val('100.00');
+            $('#fePorcentajeFacturacion').val((100).toFixed(4));
+            showPctWarning(false);
+            $(this).removeClass('is-invalid');
+            aplicarPorcentaje(100);
+        } else {
+            $(this).val((p || 0).toFixed(2));
+            $('#fePorcentajeFacturacion').val((p || 0).toFixed(4));
+        }
+        ajustarAlturasModal();
+    });
+
+    // Input total objetivo (texto)
     $(document).on('input', '#feInputTotalFacturar', function () {
         if (isYaEmitida()) return;
         if (!modoEdicion() || modo() !== 'total') return;
 
         const t = toNum($(this).val());
         aplicarTotalObjetivo(t);
+    });
+
+    // Normalizar formato en blur (no durante la edición)
+    $(document).on('blur', '#feInputTotalFacturar', function () {
+        const t = toNum($(this).val());
+        $(this).val((t || 0).toFixed(2));
+        ajustarAlturasModal();
     });
 
     // =========================

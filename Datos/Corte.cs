@@ -9,11 +9,11 @@ namespace Datos
 {
     public class Corte
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public Corte(IEmpresaContext empresa)
+        public Corte(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         // =========================
@@ -27,11 +27,12 @@ namespace Datos
             oCorteE.Codigo = Convert.ToInt64(drCorte["codigo"]);
             oCorteE.CorteDesc = Convert.ToString(drCorte["corte"]);
 
+            
             if (drCorte["idMarca"] != DBNull.Value)
             {
-                // Nota: esto abre otra consulta por cada corte.
+                //TODO: Nota: esto abre otra consulta por cada corte.
                 // Si querés performance, después lo cambiamos a JOIN.
-                Datos.Persona oPersonaD = new Datos.Persona(_empresa);
+                Datos.Persona oPersonaD = new Datos.Persona(_empresa, _param);
                 oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));
             }
 

@@ -577,7 +577,7 @@ namespace Web.Controllers
                 }
 
                 // Llamar al servicio AFIP (encapsulado en AFIP.GenerarFacturaService)
-                var afipSvc = new AFIP.GenerarFacturaService();
+                var afipSvc = new AFIP.GenerarFacturaService(venta);
                 var afipRes = afipSvc.GenerarFactura(venta, esNotaCredito);
 
                 // Si AFIP devolvió error, persistir registro de fallo y devolver error al cliente

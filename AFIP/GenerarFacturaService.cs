@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace AFIP
 {
@@ -32,14 +33,19 @@ namespace AFIP
         private readonly string certificadoPath;
 
         //TODO: obtener de Session
-        bool esRRII = true;// ConfigurationManager.AppSettings["ivaCliente"].ToString().Equals("RRII");
-        string cuit = "20306210786";// ConfigurationManager.AppSettings["cuit"].ToString();
-        private readonly int ptoVtaAfip = 6;  
+        bool esRRII = false;// ConfigurationManager.AppSettings["ivaCliente"].ToString().Equals("RRII");
+        string cuit = "";// "20306210786";// ConfigurationManager.AppSettings["cuit"].ToString();
+        private readonly int ptoVtaAfip = 0;  
 
         private readonly string servidorTipo;
+               
 
-        public GenerarFacturaService()
+        public GenerarFacturaService(Entidades.Venta venta)
         {
+            //OBTENER LOS DATOS DE LA EMPRESA LOGUEADA
+            esRRII = venta.Sucursal.Empresa.EsRRII == 1;// == FacturaElectronica.codRRII_IvaAfip;
+            cuit = venta.Sucursal.Empresa.Cuit.ToString();
+            ptoVtaAfip = venta.Sucursal.CodPuntoVentaAfip;
 
             ///OBTENER LOS DATOS DE LA EMPRESA LOGUEADA
             ///SE DEBERIAN RECUPERAR DE LA SESSION
@@ -185,13 +191,38 @@ namespace AFIP
                 det.Concepto = 1;
 
                 // Tipo y nro doc cliente (si no existe -> 99 y 0)
-                int tipoDoc = Persona.esConsumidorFinal(venta.Persona) ? 99 : 80;
+                int tipoDoc = venta.Persona.ConsumidorFinal ? 99 : 80; //TODO: reemplazar el llamado a entidad por Negocio
                 long nroDoc = string.IsNullOrEmpty(venta.Persona.Cuit) ? 0 : long.Parse(venta.Persona.Cuit);
 
                 det.DocTipo = tipoDoc;
-                det.DocNro = nroDoc;; // o de tu cliente
+                det.DocNro = nroDoc; // o de tu cliente
 
                 var factTemp = new FacturaElectronica();
+
+                #region CONDICION IVA RECEPTOR - CODIGOS AFIP
+                //1 = IVA Responsable Inscripto
+
+                //4 = IVA Sujeto Exento
+
+                //5 = Consumidor Final
+
+                //6 = Responsable Monotributo
+
+                //7 = Sujeto No Categorizado
+
+                //8 = Proveedor del Exterior
+
+                //9 = Cliente del Exterior
+
+                //10 = IVA Liberado – Ley 19.640
+
+                //13 = Monotributista Social
+
+                //15 = IVA No Alcanzado
+
+                //16 = Monotributo Trabajador Independiente Promovido
+                #endregion
+
                 det.CondicionIVAReceptorId = factTemp.MapearCondicionIVAReceptorIdAfip(venta.Persona.IdIva);
 
                 // CBTE nro -> recuperar ultimo

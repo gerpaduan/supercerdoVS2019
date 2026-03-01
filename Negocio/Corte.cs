@@ -16,7 +16,7 @@ namespace Negocio
         public Corte(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCorteD = new Datos.Corte(empresa);
+            oCorteD = new Datos.Corte(empresa, param);
         }
 
         //Mantuve el metodo con este nombre getCorteById para no modificar toda la capa presentacion

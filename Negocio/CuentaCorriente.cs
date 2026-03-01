@@ -19,7 +19,7 @@ namespace Negocio
         public CuentaCorriente(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCtaCteD = new Datos.CuentaCorriente(empresa);
+            oCtaCteD = new Datos.CuentaCorriente(empresa, param);
         }
 
         public DataTable obtenerCtasCtes(string txtBusqueda, int? idPersona)

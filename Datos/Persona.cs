@@ -8,11 +8,12 @@ namespace Datos
 {
     public class Persona
     {
+        private readonly IParametrosContext _param;
         private readonly IEmpresaContext _empresa;
 
-        public Persona(IEmpresaContext empresa)
+        public Persona(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         #region Helpers (LIKE seguro + DBNull)
@@ -145,7 +146,11 @@ namespace Datos
                 setParams: p => p.AddWithValue("@id", id)
             );
 
-            return (list.Count > 0) ? list[0] : null;
+            var persona = (list.Count > 0) ? list[0] : null;
+            if (persona != null) 
+                persona.ConsumidorFinal = (persona.idPersona > 0 && _param.GetInt(ParamKeys.IdConsumidorFinal, 0) == persona.idPersona);
+
+            return persona;
         }
 
         public DataTable buscarProveedor(string buscarTexto)

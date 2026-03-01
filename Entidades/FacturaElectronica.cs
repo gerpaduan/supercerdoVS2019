@@ -42,7 +42,30 @@ namespace Entidades
         //Concepto
         public const int codConceptoProductos_Afip = 1;
 
-        
+
+        #region CONDICION IVA RECEPTOR - CODIGOS AFIP
+        //1 = IVA Responsable Inscripto
+
+        //4 = IVA Sujeto Exento
+
+        //5 = Consumidor Final
+
+        //6 = Responsable Monotributo
+
+        //7 = Sujeto No Categorizado
+
+        //8 = Proveedor del Exterior
+
+        //9 = Cliente del Exterior
+
+        //10 = IVA Liberado – Ley 19.640
+
+        //13 = Monotributista Social
+
+        //15 = IVA No Alcanzado
+
+        //16 = Monotributo Trabajador Independiente Promovido
+        #endregion
 
         public int MapearCondicionIVAReceptorIdAfip(int idLocalIva)
         {
@@ -307,10 +330,15 @@ namespace Entidades
         float porcentajeFacturacion;
 
         string descItemUnitario;
-        public List<AlicuotaIva> ListaAlicuota { get => listaAlicuota; set => listaAlicuota = value; }
         public float PorcentajeFacturacion { get => porcentajeFacturacion; set => porcentajeFacturacion = value; }
         public string DescItemUnitario { get => descItemUnitario; set => descItemUnitario = value; }
 
-        private List<Entidades.AlicuotaIva> listaAlicuota;
+        private List<Entidades.AlicuotaIva> listaAlicuota = new List<Entidades.AlicuotaIva>();
+
+        public List<AlicuotaIva> ListaAlicuota
+        {
+            get => listaAlicuota;
+            set => listaAlicuota = value ?? new List<AlicuotaIva>(); // opcional: evita que te la seteen en null
+        }
     }
 }

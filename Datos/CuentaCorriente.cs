@@ -9,11 +9,11 @@ namespace Datos
 {
     public class CuentaCorriente
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public CuentaCorriente(IEmpresaContext empresa)
+        public CuentaCorriente(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         #region Helpers (LIKE seguro + DBNull)
@@ -141,14 +141,14 @@ namespace Datos
             }
 
             // Relaciones fuera del reader
-            var oUsuarioD = new Datos.Usuario(_empresa);
+            var oUsuarioD = new Datos.Usuario(_empresa, _param);
             mov.CreadoPor = idCreadoPor > 0 ? oUsuarioD.getUsuarioById(idCreadoPor) : null;
             mov.ActualizadoPor = idActualizadoPor.HasValue ? oUsuarioD.getUsuarioById(idActualizadoPor.Value) : null;
 
-            var oSucursalD = new Datos.Sucursal(_empresa);
+            var oSucursalD = new Datos.Sucursal(_empresa, _param);
             mov.Sucursal = idSucursal > 0 ? oSucursalD.findById(idSucursal) : null;
 
-            var oPersonaD = new Datos.Persona(_empresa);
+            var oPersonaD = new Datos.Persona(_empresa, _param);
             mov.Persona = idPersona > 0 ? oPersonaD.findById(idPersona) : null;
 
             return mov;
@@ -669,16 +669,16 @@ namespace Datos
                 return null;
 
             // Relaciones fuera del reader
-            var oPersonaD = new Datos.Persona(_empresa);
+            var oPersonaD = new Datos.Persona(_empresa, _param);
             oPagoE.Persona = oPersonaD.findById(oPagoE.IdPersona);
 
             if (conCheques)
                 oPagoE.Cheques = getChequesPorPago(oPagoE.Id, false);
 
-            var oSucursalD = new Datos.Sucursal(_empresa);
+            var oSucursalD = new Datos.Sucursal(_empresa, _param);
             oPagoE.Sucursal = oSucursalD.findById(oPagoE.IdSucursal);
 
-            var oUsuarioD = new Datos.Usuario(_empresa);
+            var oUsuarioD = new Datos.Usuario(_empresa, _param);
             oPagoE.CreadoPor = oUsuarioD.getUsuarioById(oPagoE.IdCreadoPor);
             if (oPagoE.IdActualizadoPor.HasValue)
                 oPagoE.ActualizadoPor = oUsuarioD.getUsuarioById(oPagoE.IdActualizadoPor.Value);

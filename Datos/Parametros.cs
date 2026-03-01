@@ -8,7 +8,7 @@ namespace Datos
 {
     public class Parametros
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
         public Parametros(IEmpresaContext empresaContext)
         {

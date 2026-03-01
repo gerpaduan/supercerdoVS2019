@@ -21,7 +21,7 @@ namespace Negocio
         {
             _empresa = empresa;
             _param = param;
-            oVentaD = new Datos.Venta(empresa);
+            oVentaD = new Datos.Venta(empresa, param);
         }
 
 

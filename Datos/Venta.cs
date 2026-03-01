@@ -9,11 +9,11 @@ namespace Datos
 {
     public class Venta
     {
-        private readonly IEmpresaContext _empresa;
+        private readonly IEmpresaContext _empresa;private readonly IParametrosContext _param;
 
-        public Venta(IEmpresaContext empresa)
+        public Venta(IEmpresaContext empresa, IParametrosContext param = null)
         {
-            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa));
+            _empresa = empresa ?? throw new ArgumentNullException(nameof(empresa)); _param = param;
         }
 
         #region Helpers
@@ -55,7 +55,7 @@ namespace Datos
             var oSucursalD = new Sucursal(_empresa);
             oVentaE.Sucursal = oSucursalD.findById(oVentaE.IdSucursal);
 
-            var oPersonaD = new Datos.Persona(_empresa);
+            var oPersonaD = new Datos.Persona(_empresa, _param);
             oVentaE.Persona = oPersonaD.findById(oVentaE.IdPersona);
 
             if (cargarLineas)
@@ -346,7 +346,7 @@ namespace Datos
 
         public List<Entidades.LineaVenta> obtenerLineasVenta(int idVenta)
         {
-            var oCorteD = new Datos.Corte(_empresa);
+            var oCorteD = new Datos.Corte(_empresa, _param);
 
             return Db.Reader(
                 _empresa,
@@ -661,7 +661,7 @@ namespace Datos
 
         public List<Entidades.LineaVenta> obtenerLineasExpendio(int idExpendio)
         {
-            var oCorteD = new Datos.Corte(_empresa);
+            var oCorteD = new Datos.Corte(_empresa, _param);
 
             const string sql = "SELECT * FROM LineaExpendio WHERE idExpendio = @idExpendio;";
 

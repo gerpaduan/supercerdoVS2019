@@ -22,13 +22,13 @@ namespace Negocio
         public Compra(IEmpresaContext empresa, IParametrosContext param = null)
         {
             _empresa = empresa;_param = param;
-            oCompraD = new Datos.Compra(empresa);
-            oCorteN = new Corte(empresa);
-            oSucN = new Negocio.Sucursal(empresa);
-            oUsuarioN = new Usuario(empresa);
-            oCierreN = new Negocio.CierreCaja(empresa);
-            oPersonaN = new Persona(empresa);
-            oCtaCteN = new Negocio.CuentaCorriente(empresa);
+            oCompraD = new Datos.Compra(empresa, param);
+            oCorteN = new Corte(empresa, param);
+            oSucN = new Negocio.Sucursal(empresa, param);
+            oUsuarioN = new Usuario(empresa, param);
+            oCierreN = new Negocio.CierreCaja(empresa, param);
+            oPersonaN = new Persona(empresa, param);
+            oCtaCteN = new Negocio.CuentaCorriente(empresa, param);
         }
 
         public int AddOrEditCompra(Entidades.Compra oCompraE, string tipoCompra,List<Entidades.MediaRes> listaMediaRes, 

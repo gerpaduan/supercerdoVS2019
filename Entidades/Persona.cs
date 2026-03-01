@@ -139,6 +139,8 @@ namespace Entidades
         DateTime creado;
 
 
+        public bool ConsumidorFinal { get; set; }
+
         public static int idIndefinido = 4;
         public static int idConsumidorFinal = 6;
         public static bool esConsumidorFinal(Entidades.Persona oPersona)

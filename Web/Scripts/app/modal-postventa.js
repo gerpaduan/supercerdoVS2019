@@ -326,7 +326,48 @@ $(document).ready(function () {
         $.get('/Ventas/ImprimirTicket', { id: ventaId, mm: 0 })
             .done(function (html) {
                 $('#contenedorFacturaElectronica').html(html);
-                $('#modalFacturaElectronica').modal('show');
+
+                // Ajustes de layout: calcular altura de la tabla para que la vista no se desplace
+                const $modal = $('#modalFacturaElectronica');
+
+                // El modal parcial puede ya tener handlers; nos aseguramos que no forcemos ancho
+                $modal.find('.modal-dialog').removeClass('modal-fullscreen-dialog');
+
+                function ajustarFacturaModal() {
+                    try {
+                        const vh = Math.max(window.innerHeight || document.documentElement.clientHeight, 600);
+                        const maxModal = Math.round(vh * 0.92); // 92vh como el CSS
+                        const $header = $modal.find('.modal-header');
+                        const $footer = $modal.find('.modal-footer');
+                        const $top = $modal.find('.fe-top');
+                        const headerH = $header.length ? $header.outerHeight(true) : 0;
+                        const footerH = $footer.length ? $footer.outerHeight(true) : 0;
+                        const topH = $top.length ? $top.outerHeight(true) : 0;
+                        const summaryH = $modal.find('.fe-summary').length ? $modal.find('.fe-summary').outerHeight(true) : 0;
+                        const padding = 40; // márgenes internos / gaps
+                        // espacio disponible para la tabla
+                        const available = Math.max(120, maxModal - (headerH + footerH + topH + summaryH + padding));
+                        $modal.find('.fe-table-scroll').css('max-height', available + 'px');
+                    } catch (err) {
+                        console.warn('Error ajustando modal factura', err);
+                    }
+                }
+
+                // Ajustar cuando se muestra y en resize
+                $modal.off('shown.factura').on('shown.bs.modal.factura', function () {
+                    ajustarFacturaModal();
+                    // también activar resize listener (namespaced)
+                    $(window).on('resize.factura', ajustarFacturaModal);
+                });
+
+                $modal.off('hidden.factura').on('hidden.bs.modal.factura', function () {
+                    $(window).off('resize.factura');
+                    // limpiar listeners si es necesario
+                    $modal.off('.factura');
+                });
+
+                // abrir modal
+                $modal.modal('show');
             });
 
         // oculto post modal mientras factura está abierta
