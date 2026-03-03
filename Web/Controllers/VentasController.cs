@@ -480,18 +480,6 @@ namespace Web.Controllers
                                         venta,
                                         factuElec
                                     );
-                    //foreach (var l in venta.LineasVenta)
-                    //{
-                    //    dto.Detalle.Add(new LineaVentaDto
-                    //    {
-                    //        Codigo = l.Codigo,
-                    //        CantKg = l.CantKg,
-                    //        PrecioKg = l.PrecioKg,
-                    //        Bonificacion = l.Bonificacion,
-                    //        Estado = l.Estado,
-                    //        Balanza = l.PesoBalanza
-                    //    });
-                    //}
                     return PartialView("~/Views/Ventas/_FacturaElectronica.cshtml", dto);
                 }
 
@@ -551,17 +539,21 @@ namespace Web.Controllers
         }
 
         [HttpPost]
-        public JsonResult GenerarFactura(int idVenta, bool esNotaCredito = false)
+        public JsonResult GenerarFactura(Web.Models.DTO.FacturaElectronicaDTO dto)
         {
             try
             {
+                var factura = MapDtoToFactura(dto);
+
+                bool esNotaCredito = dto.CodTipoCbteAfip == 3 || dto.CodTipoCbteAfip == 8 || dto.CodTipoCbteAfip == 13; // CodTipoCbteAfip 3=NC B, 8=NC A
+
                 // Validar existencia de la venta
-                var venta = oVentaN.getVentaById(idVenta);
-                if (venta == null)
+                if (factura.Venta == null)
                     return Json(new { ok = false, msg = "Venta no encontrada" });
 
+
                 // Idempotencia: si ya existe factura (o nota) para esta venta devolvemos la info
-                int idFactExistente = oVentaN.esVentaSinFacturar(idVenta, esNotaCredito);
+                int idFactExistente = oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, esNotaCredito);
                 if (idFactExistente > 0)
                 {
                     var fExist = oVentaN.getFactuElecById(idFactExistente);
@@ -574,11 +566,11 @@ namespace Web.Controllers
                         cae = fExist?.CAE1,
                         mensaje = "Ya existe una factura asociada a esta venta"
                     });
-                }
+                }             
 
                 // Llamar al servicio AFIP (encapsulado en AFIP.GenerarFacturaService)
-                var afipSvc = new AFIP.GenerarFacturaService(venta);
-                var afipRes = afipSvc.GenerarFactura(venta, esNotaCredito);
+                var afipSvc = new AFIP.GenerarFacturaService(factura.Venta);
+                var afipRes = afipSvc.GenerarFactura(factura, esNotaCredito);
 
                 // Si AFIP devolvió error, persistir registro de fallo y devolver error al cliente
                 if (!afipRes.Ok)
@@ -587,7 +579,7 @@ namespace Web.Controllers
                     {
                         var factErr = new Entidades.FacturaElectronica
                         {
-                            IdVenta = idVenta,
+                            IdVenta = factura.Venta.IdVenta,
                             Error = true,
                             MensajeError = afipRes.Mensaje,
                             FechaError = DateTime.Now
@@ -602,9 +594,10 @@ namespace Web.Controllers
                     return Json(new { ok = false, msg = "AFIP: " + afipRes.Mensaje });
                 }
 
-                // AFIP ok → persistir la factura en BD y asociarla a la venta
-                var factura = afipRes.Factura ?? new Entidades.FacturaElectronica();
-                factura.IdVenta = idVenta;
+                //// AFIP ok → persistir la factura en BD y asociarla a la venta
+                //var factura = afipRes.Factura ?? new Entidades.FacturaElectronica();
+
+                //factura.IdVenta = idVenta;
                 try
                 {
                     oVentaN.addOrEditFactuElec(factura);
@@ -616,7 +609,7 @@ namespace Web.Controllers
                 }
 
                 // Recuperar id guardado (método seguro que ya usás)
-                int idGuardado = oVentaN.esVentaSinFacturar(idVenta, esNotaCredito);
+                int idGuardado = oVentaN.esVentaSinFacturar(factura.Venta.IdVenta, esNotaCredito);
 
                 var facturaGuardada = idGuardado > 0 ? oVentaN.getFactuElecById(idGuardado) : factura;
 
@@ -657,7 +650,10 @@ namespace Web.Controllers
 
             dto.IdVenta = venta.IdVenta;
             dto.IdFactura = factuElec.Id;
-            dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip;
+
+            dto.CodTipoCbteAfip = factuElec.CodTipoCbteAfip == 0 ? 
+                factuElec.getCodTipoCbteAFIP(venta.Sucursal.Empresa.EsRRII, venta.Persona.EsRRII(venta.Persona.IdIva), false) : 
+                factuElec.CodTipoCbteAfip;
             dto.DescTipoCbteAfip = factuElec.DescTipoCbteAfip;
             dto.LetraCbte = factuElec.getLetraId_TipoCbte(factuElec.CodTipoCbteAfip).ToString();
             dto.NroCbteAfip = factuElec.NroCbteAfip;
@@ -690,20 +686,6 @@ namespace Web.Controllers
             List<Entidades.AlicuotaIva> listaAlicuotasFactura = new List<Entidades.AlicuotaIva>();
             List<int> listaIdAlicuotaConIva = new List<int>();
             float importeTotal = 0, importeNeto = 0, importeIva = 0;
-
-            //iniciarTipoIva
-            //Obtiene las Alícuotas y establece el 10.5%
-            //for (int index = 0; index < TipoIVACmb.Items.Count; index++)
-            //{
-            //    IvaTipo item = (IvaTipo)TipoIVACmb.Items[index];
-
-            //    //cargo las alicuotas de iva para luego aplicar el importe
-            //    Entidades.AlicuotaIva oAli = new Entidades.AlicuotaIva();
-            //    oAli.IdIva = Convert.ToInt32(item.Id);
-            //    oAli.Iva = (float)(item.Desc.Replace("%", ""), true);
-            //    listaAlicuotasFactura.Add(oAli);
-
-            //}
 
             //Inicializo valores de las Base Imponible de Alicuotas
             for (int i = 0; i < listaAlicuotasFactura.Count; i++)
@@ -762,6 +744,41 @@ namespace Web.Controllers
             dto.FecVtoCAE = factuElec.FecVtoCAE;
 
             return dto;
+        }
+
+        public FacturaElectronica MapDtoToFactura(FacturaElectronicaDTO dto)
+        {
+            return new FacturaElectronica
+            {
+                IdVenta = dto.IdVenta,
+                Venta = oVentaN.getVentaById(dto.IdVenta),
+                PtoVtaAfip = dto.PtoVtaAfip,
+                CodTipoCbteAfip = dto.CodTipoCbteAfip,
+                DescTipoCbteAfip = dto.DescTipoCbteAfip,
+                NroCbteAfip = dto.NroCbteAfip,
+                FechaEmisionAfip = dto.FechaEmisionAfip,
+
+                TipoDocAfip = dto.TipoDocAfip,
+                NroDocAfip = dto.NroDocAfip,
+                RazonSocialAFIP = dto.RazonSocialAFIP,
+                CondicionIvaAFIP = dto.CondicionIvaAFIP,
+                DomicilioAFIP = dto.DomicilioAFIP,
+
+                CondicionVenta = dto.CondicionVenta,
+                FormaPago = dto.FormaPago,
+
+                PorcentajeFacturacion = (float)dto.PorcentajeFacturacion,
+                ImporteNetoGravado = (float)dto.ImporteNetoGravado,
+                Iva = (float)dto.Iva,
+                ImporteTotal = (float)dto.ImporteTotal,
+
+                CAE1 = dto.CAE,
+                FecVtoCAE = dto.FecVtoCAE,
+
+                // Otros campos que podés asignar si son necesarios:
+                Creado = DateTime.Now,
+                Error = false
+            };
         }
 
 

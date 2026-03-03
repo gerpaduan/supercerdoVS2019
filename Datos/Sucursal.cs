@@ -184,7 +184,7 @@ namespace Datos
                 Telefono = dr["telefono"]?.ToString(),
                 Email = dr["email"]?.ToString(),
                 BasePath = dr["basePath"]?.ToString(),
-                EsRRII = dr["esRRII"] != DBNull.Value ? Convert.ToByte(dr["esRRII"]) : (byte)0,
+                EsRRII = (dr["esRRII"] != DBNull.Value ? Convert.ToByte(dr["esRRII"]) : (byte)0) == 1,
                 NombreCertificado_pfx = dr["nombreCertificado_pfx"]?.ToString(),
                 Entorno_HOMO_PROD = dr["entorno_HOMO_PROD"]?.ToString(),
                 BaseDatosNombre = dr["baseDatosNombre"]?.ToString(),

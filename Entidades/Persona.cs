@@ -148,5 +148,14 @@ namespace Entidades
             return (oPersona.idPersona == idConsumidorFinal);// Persona.idConsumidorFinal);
         }
 
+
+        ///Cond.Iva:  1 - Consumidor Final / 2 - RRII / 3 - Monotributo / 4 - Exento
+        ///
+        public static int codIvaRRII_Afip = 2;
+        public bool EsRRII(int idIvaPersona)
+        {
+            return (this.idIva == codIvaRRII_Afip);
+
+        }
     }
 }

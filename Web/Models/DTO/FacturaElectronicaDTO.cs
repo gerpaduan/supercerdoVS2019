@@ -41,6 +41,8 @@ namespace Web.Models.DTO
         public string FormaPago { get; set; }
 
         // ===== Importes =====
+
+        public decimal PorcentajeFacturacion { get; set; }
         public decimal ImporteNetoGravado { get; set; }
         public decimal Iva { get; set; }
         public decimal ImporteTotal { get; set; }

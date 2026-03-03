@@ -25,7 +25,7 @@ namespace Entidades
         public string Telefono { get; set; }
         public string Email { get; set; }
         public string BasePath { get; set; }
-        public byte EsRRII { get; set; }
+        public bool EsRRII { get; set; }
         public string NombreCertificado_pfx { get; set; }
         public string Entorno_HOMO_PROD { get; set; }
         public string BaseDatosNombre { get; set; }

@@ -33,7 +33,7 @@ namespace Datos
                 //TODO: Nota: esto abre otra consulta por cada corte.
                 // Si querés performance, después lo cambiamos a JOIN.
                 Datos.Persona oPersonaD = new Datos.Persona(_empresa, _param);
-                oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));
+                oCorteE.Marca = oPersonaD.findById(Convert.ToInt32(drCorte["idMarca"]));            
             }
 
             oCorteE.Tipo = Convert.ToString(drCorte["tipo"]);

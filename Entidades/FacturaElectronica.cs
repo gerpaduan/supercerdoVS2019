@@ -151,6 +151,14 @@ namespace Entidades
             return codTipoCbteAFIP;
         }
 
+        public int getCodTipoCbteAFIP(bool esRRII_Empresa, bool esRRII_Cliente, bool esNotaCredito)
+        {
+            if (esRRII_Empresa)
+                return esRRII_Cliente ? (esNotaCredito ? codNotaCreditoA_Afip : codFacturaA_Afip) : (esNotaCredito ? codNotaCreditoB_Afip : codFacturaB_Afip);
+            else
+                 return esNotaCredito ? codNotaCreditoC_Afip : codFacturaC_Afip;
+        }
+
         int id;
 
         public int Id
