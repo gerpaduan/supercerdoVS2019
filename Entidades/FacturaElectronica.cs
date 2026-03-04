@@ -2,24 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Entidades
 {
     public class FacturaElectronica
-    {//1: Factura A
-     //2: Nota de Débito A
-     //3: Nota de Crédito A
-     //4: Recibo A
-     //6: Factura B
-     //7: Nota de Débito B
-     //8: Nota de Crédito B
-     //9: Recibo B
-     //11: Factura C
-     //12: Nota de Débito C
-     //13: Nota de Crédito C
-     //15: Recibo C
+        {//1: Factura A
+         //2: Nota de Débito A
+         //3: Nota de Crédito A
+         //4: Recibo A
+         //6: Factura B
+         //7: Nota de Débito B
+         //8: Nota de Crédito B
+         //9: Recibo B
+         //11: Factura C
+         //12: Nota de Débito C
+         //13: Nota de Crédito C
+         //15: Recibo C
 
-     //Tipos Comprobantes
+         //Tipos Comprobantes
         public const int codFacturaA_Afip = 1;
         public const int codNotaCreditoA_Afip = 3;
         public const int codFacturaB_Afip = 6;
@@ -45,27 +46,16 @@ namespace Entidades
 
         #region CONDICION IVA RECEPTOR - CODIGOS AFIP
         //1 = IVA Responsable Inscripto
-
         //4 = IVA Sujeto Exento
-
         //5 = Consumidor Final
-
         //6 = Responsable Monotributo
-
-        //7 = Sujeto No Categorizado
-
-        //8 = Proveedor del Exterior
-
-        //9 = Cliente del Exterior
-
-        //10 = IVA Liberado – Ley 19.640
-
-        //13 = Monotributista Social
-
-        //15 = IVA No Alcanzado
-
-        //16 = Monotributo Trabajador Independiente Promovido
         #endregion
+
+        public const int codCondicionIva_RRII = 1;
+        public const int codCondicionIva_Exento = 4;
+        public const int codCondicionIva_ConsFinal = 5;
+        public const int codCondicionIva_Monotributo = 6;
+
 
         public int MapearCondicionIVAReceptorIdAfip(int idLocalIva)
         {
@@ -73,18 +63,30 @@ namespace Entidades
             switch (idLocalIva)
             {
                 case 1: // Consumidor Final
-                    return 5;
+                    return codCondicionIva_ConsFinal;
                 case 2: // Responsable Inscripto
-                    return 1;
+                    return codCondicionIva_RRII;
                 case 3: // Monotributista
-                    return 6;
+                    return codCondicionIva_Monotributo;
                 case 4: // Exento
-                    return 4;
+                    return codCondicionIva_Exento;
                 default:
                     // Manejo de casos no contemplados para evitar CS8509
-                    return 5; // Valor por defecto (puede ajustarse según necesidades)
+                    return codCondicionIva_ConsFinal; // Valor por defecto (puede ajustarse según necesidades)
             }
         }
+
+        //Los “ID” (códigos) de Tipo de documento que usa AFIP en WSFE son estos(los más comunes):
+
+        //    80 = CUIT
+        //    86 = CUIL
+        //    87 = CDI
+        //    96 = DNI
+
+        public const int codTipoDoc_CUIT= 80;
+        public const int codTipoDoc_DNI = 96;
+        public const int codTipoDoc_SinIdentif = 99;
+
 
         /// <summary>
         /// Pasando en (String) Codigo TipoComprobante se retorna bool si es Factura A (Codigo Afip 001)

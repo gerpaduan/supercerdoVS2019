@@ -310,7 +310,10 @@ namespace AFIP
                 det.Concepto = 1;
 
                 // Doc tipo/nro: prioriza lo que venga en FacturaElectronica, si no usa persona
-                int tipoDocFallback = factura.Venta.Persona.ConsumidorFinal ? 99 : 80;
+                int tipoDocFallback = factura.Venta.Persona.ConsumidorFinal ? 
+                    Entidades.FacturaElectronica.codTipoDoc_SinIdentif
+                    : Entidades.FacturaElectronica.codTipoDoc_CUIT;
+
                 int tipoDoc = !string.IsNullOrWhiteSpace(factura.TipoDocAfip)
                     ? ToIntOr(tipoDocFallback, factura.TipoDocAfip)
                     : tipoDocFallback;

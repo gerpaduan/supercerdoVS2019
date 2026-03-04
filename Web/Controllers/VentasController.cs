@@ -543,8 +543,18 @@ namespace Web.Controllers
         {
             try
             {
-                var factura = MapDtoToFactura(dto);
+                if (!ModelState.IsValid)
+                {
+                    var errs = ModelState
+                        .Where(kv => kv.Value.Errors.Any())
+                        .Select(kv => kv.Key + ": " + string.Join(" | ", kv.Value.Errors.Select(e => e.ErrorMessage)))
+                        .ToList();
 
+                    return Json(new { ok = false, msg = "ModelState inválido", errs });
+                }
+
+                var factura = MapDtoToFactura(dto);
+                
                 bool esNotaCredito = dto.CodTipoCbteAfip == 3 || dto.CodTipoCbteAfip == 8 || dto.CodTipoCbteAfip == 13; // CodTipoCbteAfip 3=NC B, 8=NC A
 
                 // Validar existencia de la venta
@@ -655,7 +665,7 @@ namespace Web.Controllers
                 factuElec.getCodTipoCbteAFIP(venta.Sucursal.Empresa.EsRRII, venta.Persona.EsRRII(venta.Persona.IdIva), false) : 
                 factuElec.CodTipoCbteAfip;
             dto.DescTipoCbteAfip = factuElec.DescTipoCbteAfip;
-            dto.LetraCbte = factuElec.getLetraId_TipoCbte(factuElec.CodTipoCbteAfip).ToString();
+            dto.LetraCbte = factuElec.getLetraId_TipoCbte(dto.CodTipoCbteAfip).ToString();
             dto.NroCbteAfip = factuElec.NroCbteAfip;
             dto.FechaEmisionAfip = factuElec.Id > 0
                 ? factuElec.FechaEmisionAfip
@@ -665,14 +675,14 @@ namespace Web.Controllers
             dto.PtoVtaAfip = venta.Sucursal.CodPuntoVentaAfip.ToString(); 
             dto.EmisorRazonSocial = venta.Sucursal.Empresa.RazonSocialAfip;
             dto.EmisorCUIT = venta.Sucursal.Empresa.Cuit.ToString();
-            //dto.EmisorRazonSocial = user.Empresa.RazonSocial // venta.Sucursal.RazonSocial;
-            //dto.EmisorCUIT = user.Empresa.CUIT;
-            //dto.EmisorCondicionIVA = user.Empresa.CondicionIVA;
-            //dto.EmisorDomicilio = user.Sucursal.Domicilio;
-            //dto.EmisorIngresosBrutos = user.EmpresaIngresosBrutos;
-            //dto.EmisorInicioActividad = vuser.Empresa.InicioActividad?.ToString("dd/MM/yyyy");
+            dto.EmisorCondicionIVA = venta.Sucursal.Empresa.CondicionIVA;
+            dto.EmisorDomicilio = venta.Sucursal.Direccion;
+            dto.EmisorIngresosBrutos = venta.Sucursal.Empresa.Iibb.ToString();
+            dto.EmisorInicioActividad = venta.Sucursal.Empresa.InicioActividad.ToString("dd/MM/yyyy");
 
             // ===== Cliente =====
+            dto.TipoDocAfip = (venta.Persona.IdIva == Entidades.FacturaElectronica.codCF_IvaAfip ?
+                Entidades.FacturaElectronica.codTipoDoc_SinIdentif : Entidades.FacturaElectronica.codTipoDoc_CUIT).ToString();// factuElec.MapearCondicionIVAReceptorIdAfip(venta.Persona.IdIva).ToString();
             dto.NroDocAfip = venta.Persona.Cuit?.Replace("-", "");
             dto.RazonSocialAFIP = venta.Persona.razonSocial;
             dto.CondicionIvaAFIP = venta.Persona.Iva;
@@ -714,29 +724,27 @@ namespace Web.Controllers
                     IndexAnulado = l.IndexAnulado,
                 });
 
-                //recorro las lineas de venta para obtener las alicuotas utilizadas
-                //calculo de las Base Imponible de Alicuotas
-                for (int i = 0; i < listaAlicuotasFactura.Count; i++)
-                {
-                    if (listaAlicuotasFactura[i].IdIva == l.IdAlicuotaIva)
-                    {
-                        float totalProd = (float)Math.Round((l.CantKg * l.PrecioKg), 2);
-                        float divisorIva = 1 + (listaAlicuotasFactura[i].Iva / 100);
-                        float baseImponibleLinea = totalProd / divisorIva;
-                        importeTotal += totalProd;
-                        importeNeto += baseImponibleLinea;
-                        importeIva += totalProd - baseImponibleLinea;
-                        listaAlicuotasFactura[i].BaseImponible += (float)Math.Round(baseImponibleLinea, 2);
-                        listaAlicuotasFactura[i].Importe += (float)Math.Round((totalProd - baseImponibleLinea), 2);
-                    }
-                }
+                ////recorro las lineas de venta para obtener las alicuotas utilizadas
+                ////calculo de las Base Imponible de Alicuotas
+                //for (int i = 0; i < listaAlicuotasFactura.Count; i++)
+                //{
+                //    if (listaAlicuotasFactura[i].IdIva == l.IdAlicuotaIva)
+                //    {
+                //        float totalProd = (float)Math.Round((l.CantKg * l.PrecioKg), 2);
+                //        float divisorIva = 1 + (listaAlicuotasFactura[i].Iva / 100);
+                //        float baseImponibleLinea = totalProd / divisorIva;
+                //        importeTotal += totalProd;
+                //        importeNeto += baseImponibleLinea;
+                //        importeIva += totalProd - baseImponibleLinea;
+                //        listaAlicuotasFactura[i].BaseImponible += (float)Math.Round(baseImponibleLinea, 2);
+                //        listaAlicuotasFactura[i].Importe += (float)Math.Round((totalProd - baseImponibleLinea), 2);
+                //    }
+                //}
             }
 
             // ===== Importes =====            
-
-
-            dto.ImporteTotal =(decimal) importeTotal;// Math.Round((decimal)venta.TotalImporte, 2);
-            dto.ImporteNetoGravado = (decimal)importeNeto;// dto.ImporteTotal;
+            dto.ImporteTotal = (decimal)11.25;// (decimal)importeTotal;
+            dto.ImporteNetoGravado = (decimal)importeNeto;
             dto.Iva = (decimal)importeIva;
 
             // ===== CAE =====
@@ -780,7 +788,6 @@ namespace Web.Controllers
                 Error = false
             };
         }
-
 
         #endregion
     }

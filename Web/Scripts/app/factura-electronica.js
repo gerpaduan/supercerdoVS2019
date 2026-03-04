@@ -6,6 +6,12 @@
     const nfMoney = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const nfQty = new Intl.NumberFormat('es-AR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
+    function toServerDec(n, dec) {
+        const x = (n || 0);
+        // toFixed usa punto; lo convertimos a coma para es-AR
+        return x.toFixed(dec).replace('.', ',');
+    }
+
     function toNum(v) {
         if (v == null) return 0;
         let s = String(v).trim();
@@ -53,7 +59,7 @@
     }
 
     function getPorcentaje() {
-        return toNum($('#feInputPorcentaje').val()) || 0;
+        return toNum($('#feInputPorcentajeUI').val()) || 0;
     }
 
     function showPctWarning(show) {
@@ -62,15 +68,13 @@
     }
 
     function setPorcentaje(p) {
-        // Guardar valor para enviar
-        $('#fePorcentajeFacturacion').val((p || 0).toFixed(4));
+        // hidden (POST) con coma
+        $('#fePorcentajeFacturacion').val(toServerDec(p || 0, 4));
 
-        // No sobrescribir el campo mientras el usuario lo está editando
-        const $input = $('#feInputPorcentaje');
-        if (document.activeElement === $input[0]) {
-            return;
-        }
-        $input.val((p || 0).toFixed(2));
+        // UI (si no está editando)
+        const $ui = $('#feInputPorcentajeUI');
+        if (document.activeElement === $ui[0]) return;
+        $ui.val(toServerDec(p || 0, 2));
     }
 
     function setTotalFacturar(t) {
@@ -96,7 +100,7 @@
         $('#feAjusteBlock').toggleClass('d-none', !editable);
 
         // Inputs readonly según modo y editabilidad
-        $('#feInputPorcentaje').prop('readonly', !editable || modo() !== 'porcentaje');
+        $('#feInputPorcentajeUI').prop('readonly', !editable || modo() !== 'porcentaje');
         $('#feInputTotalFacturar').prop('readonly', !editable || modo() !== 'total');
 
         // Radios
@@ -105,7 +109,7 @@
         // cuando se habilita, enfocamos el input adecuado para que el usuario comience a editar
         if (editable) {
             if (modo() === 'porcentaje') {
-                $('#feInputPorcentaje').focus().select();
+                $('#feInputPorcentajeUI').focus().select();
             } else {
                 $('#feInputTotalFacturar').focus().select();
             }
@@ -156,15 +160,15 @@
             grupos[key].total += subtotal;
         });
 
-        // KPI
-        $('#feLblTotal').text(money(total));
-        $('#feLblNeto').text(money(neto));
-        $('#feLblIva').text(money(iva));
+        // Hidden (POST) con coma
+        $('#feInputTotal').val(toServerDec(total, 2));
+        $('#feInputNeto').val(toServerDec(neto, 2));
+        $('#feInputIva').val(toServerDec(iva, 2));
 
-        // Inputs (server)
-        $('#feInputTotal').val(total.toFixed(2));
-        $('#feInputNeto').val(neto.toFixed(2));
-        $('#feInputIva').val(iva.toFixed(2));
+        // UI visible
+        $('#feInputTotalUI').val(toServerDec(total, 2));
+        $('#feInputNetoUI').val(toServerDec(neto, 2));
+        $('#feInputIvaUI').val(toServerDec(iva, 2));
 
         // Tabla IVA
         const $tb = $('#feTablaIva tbody');
@@ -320,7 +324,7 @@
     });
 
     // Input porcentaje (texto): parse flexible (coma o punto), no formatear mientras el usuario escribe
-    $(document).on('input', '#feInputPorcentaje', function () {
+    $(document).on('input', '#feInputPorcentajeUI', function () {
         if (isYaEmitida()) return;
         if (!modoEdicion() || modo() !== 'porcentaje') return;
 
@@ -340,18 +344,11 @@
     });
 
     // Al salir del porcentaje, si >100 volver a 100
-    $(document).on('blur', '#feInputPorcentaje', function () {
+    $(document).on('blur', '#feInputPorcentajeUI', function () {
         const p = toNum($(this).val());
-        if (p > 100) {
-            $(this).val('100.00');
-            $('#fePorcentajeFacturacion').val((100).toFixed(4));
-            showPctWarning(false);
-            $(this).removeClass('is-invalid');
-            aplicarPorcentaje(100);
-        } else {
-            $(this).val((p || 0).toFixed(2));
-            $('#fePorcentajeFacturacion').val((p || 0).toFixed(4));
-        }
+        const fixed = Math.min(Math.max(p || 0, 0.01), 100);
+        $(this).val(toServerDec(fixed, 2));
+        $('#fePorcentajeFacturacion').val(toServerDec(fixed, 4));
         ajustarAlturasModal();
     });
 
