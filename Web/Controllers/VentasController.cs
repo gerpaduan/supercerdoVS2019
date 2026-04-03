@@ -610,7 +610,7 @@ namespace Web.Controllers
                 //factura.IdVenta = idVenta;
                 try
                 {
-                    oVentaN.addOrEditFactuElec(factura);
+                    oVentaN.addOrEditFactuElec(afipRes.Factura);
                 }
                 catch (Exception saveEx)
                 {
@@ -742,10 +742,11 @@ namespace Web.Controllers
                 //}
             }
 
-            // ===== Importes =====            
-            dto.ImporteTotal = (decimal)11.25;// (decimal)importeTotal;
-            dto.ImporteNetoGravado = (decimal)importeNeto;
-            dto.Iva = (decimal)importeIva;
+            // ===== Importes =====
+            // 
+            dto.ImporteTotal = (decimal)venta.LineasVenta.Sum(l => l.ImporteConIva());
+            dto.ImporteNetoGravado = (decimal)venta.LineasVenta.Sum(l => l.ImporteNeto());
+            dto.Iva = (decimal)venta.LineasVenta.Sum(l => l.ImporteIva());
 
             // ===== CAE =====
             dto.CAE = factuElec.CAE1;

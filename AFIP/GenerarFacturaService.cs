@@ -255,6 +255,7 @@ namespace AFIP
 
             // Asignar OUT al final
             listaAlicuotas = alicuotasLocal;
+            factura.ListaAlicuota = alicuotasLocal;
         }
 
         /// <summary>

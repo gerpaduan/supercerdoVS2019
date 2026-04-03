@@ -87,7 +87,9 @@
 
 <form id="formFacturaElectronica" class="fe-root"
       data-ya-emitida="@(yaEmitida ? "1" : "0")"
-      data-total-orig="@totalOrig.ToString(CultureInfo.InvariantCulture)">
+      data-total-orig="@totalOrig.ToString(CultureInfo.InvariantCulture)"
+      data-neto-orig="@Model.ImporteNetoGravado.ToString(CultureInfo.InvariantCulture)"
+      data-iva-orig="@Model.Iva.ToString(CultureInfo.InvariantCulture)">
 
     @* @Html.AntiForgeryToken() *@
 
@@ -222,63 +224,62 @@
             </div>
 
         </div><!-- /fe-top -->
-
         @* BLOQUE DE AJUSTE MOVIDO: aparece solo cuando se activa el switch *@
-    <div id="feAjusteBlock" class="border rounded p-2 mb-2 d-none @(yaEmitida ? "d-none" : "")">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="font-weight-bold text-success">Facturación parcial</div>
-            <small class="fe-muted">Modifica % o Total para facturar</small>
-        </div>
-
-
-        <div class="form-row mt-2">
-            <div class="form-group col-6 col-md-3 mb-2">
-                <label class="mb-1">% a facturar</label>
-
-                <!-- UI (sin name) -->
-                <input type="text" id="feInputPorcentajeUI"
-                       class="form-control form-control-sm"
-                       value="@Model.PorcentajeFacturacion.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))"
-                       inputmode="decimal" />
-
-                <div id="fePctWarning" role="alert">No puede ser mayor a 100%</div>
-
-                <!-- POST (con name, id único) -->
-                <input type="hidden" name="PorcentajeFacturacion" id="fePorcentajeFacturacion"
-                       value="@Model.PorcentajeFacturacion.ToString("0.####", CultureInfo.GetCultureInfo("es-AR"))" />
+        <div id="feAjusteBlock" class="border rounded p-2 mb-2 d-none @(yaEmitida ? "d-none" : "")">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="font-weight-bold text-success">Facturación parcial</div>
+                <small class="fe-muted">Modifica % o Total para facturar</small>
             </div>
 
-            <div class="form-group col-6 col-md-4 mb-2">
-                <label class="mb-1">Total a facturar</label>
-                <input type="text" id="feInputTotalFacturar" class="form-control form-control-sm" value="@totalOrig.ToString("0.00", CultureInfo.InvariantCulture)" inputmode="decimal" />
-                <small class="fe-muted d-block mt-1">Podés editar % o Total (cuando activás el switch).</small>
-            </div>
 
-            <div class="form-group col-12 col-md-5 mb-2 d-flex align-items-center">
-                <div class="custom-control custom-radio mr-3">
-                    <input type="radio" id="feModoPorcentaje" name="feModo" class="custom-control-input" checked>
-                    <label class="custom-control-label" for="feModoPorcentaje">Editar %</label>
+            <div class="form-row mt-2">
+                <div class="form-group col-6 col-md-3 mb-2">
+                    <label class="mb-1">% a facturar</label>
+
+                    <!-- UI (sin name) -->
+                    <input type="text" id="feInputPorcentajeUI"
+                           class="form-control form-control-sm"
+                           value="@Model.PorcentajeFacturacion.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))"
+                           inputmode="decimal" />
+
+                    <div id="fePctWarning" role="alert">No puede ser mayor a 100%</div>
+
+                    <!-- POST (con name, id único) -->
+                    <input type="hidden" name="PorcentajeFacturacion" id="fePorcentajeFacturacion"
+                           value="@Model.PorcentajeFacturacion.ToString("0.####", CultureInfo.GetCultureInfo("es-AR"))" />
                 </div>
-                <div class="custom-control custom-radio">
-                    <input type="radio" id="feModoTotal" name="feModo" class="custom-control-input">
-                    <label class="custom-control-label" for="feModoTotal">Editar Total</label>
+
+                <div class="form-group col-6 col-md-4 mb-2">
+                    <label class="mb-1">Total a facturar</label>
+                    <input type="text" id="feInputTotalFacturar" class="form-control form-control-sm" value="@totalOrig.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" inputmode="decimal" />
+                    <small class="fe-muted d-block mt-1">Podés editar % o Total (cuando activás el switch).</small>
+                </div>
+
+                <div class="form-group col-12 col-md-5 mb-2 d-flex align-items-center">
+                    <div class="custom-control custom-radio mr-3">
+                        <input type="radio" id="feModoPorcentaje" name="feModo" class="custom-control-input" checked>
+                        <label class="custom-control-label" for="feModoPorcentaje">Editar %</label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                        <input type="radio" id="feModoTotal" name="feModo" class="custom-control-input">
+                        <label class="custom-control-label" for="feModoTotal">Editar Total</label>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
         <!-- ===== TOTALES + IVA DISCRIMINADO (NO SCROLLEA) ===== -->
         <div class="fe-summary border rounded p-2">
 
             @*<div class="fe-kpi mb-1">
-                <div class="label">Total a facturar</div>
-                <div class="value" id="feLblTotal">$ 0,00</div>
-            </div>
+                    <div class="label">Total a facturar</div>
+                    <div class="value" id="feLblTotal">$ 0,00</div>
+                </div>
 
-            <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
-                <div class="fe-muted">Neto: <strong id="feLblNeto">$ 0,00</strong></div>
-                <div class="fe-muted">IVA: <strong id="feLblIva">$ 0,00</strong></div>
-            </div>*@
+                <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                    <div class="fe-muted">Neto: <strong id="feLblNeto">$ 0,00</strong></div>
+                    <div class="fe-muted">IVA: <strong id="feLblIva">$ 0,00</strong></div>
+                </div>*@
 
             <!-- Inputs que viajan al server (si te sirve guardarlos / auditar) -->
             <div class="form-row">
@@ -324,7 +325,7 @@
                            value="@Model.ImporteTotal.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" />
                 </div>
             </div>
-            <div class="table-responsive border rounded">
+            <div class="table-responsive border rounded fe-table-scroll">
                 <table class="table table-sm mb-0" id="feTablaIva">
                     <thead class="thead-light">
                         <tr>

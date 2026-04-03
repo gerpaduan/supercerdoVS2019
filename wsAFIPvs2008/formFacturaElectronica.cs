@@ -652,7 +652,7 @@ namespace wsAFIPvs2008
             for (int index = 0; index < ptos_venta_cm.Items.Count; index++)
             {
                 PtoVenta item = (PtoVenta)ptos_venta_cm.Items[index];
-                if (item.Nro == oVentaE.Sucursal.getPtoVtaAfip(oVentaE.Sucursal.idSucursal))
+                if (item.Nro == oVentaE.Sucursal.CodPuntoVentaAfip)// oVentaE.Sucursal.getPtoVtaAfip(oVentaE.Sucursal.idSucursal))
                 {
                     ptos_venta_cm.SelectedIndex = index;
                     break;

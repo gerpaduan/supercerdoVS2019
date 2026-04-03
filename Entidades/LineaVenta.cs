@@ -171,5 +171,21 @@ namespace Entidades
         public float AjustePrecio1 { get => ajustePrecio; set => ajustePrecio = value; }
         public int IdExpendio { get => idExpendio; set => idExpendio = value; }
         public float PrecioKgOriginal { get => precioKgOriginal; set => precioKgOriginal = value; }
+
+        public float ImporteConIva()
+        {
+            return (float)Math.Round(CantKg * PrecioKg, 2);
+        }
+
+        public float ImporteNeto()
+        {
+            float total = ImporteConIva();
+            return (float)Math.Round(total / (1 + AlicuotaIva / 100f), 2);
+        }
+
+        public float ImporteIva()
+        {
+            return (float)Math.Round(ImporteConIva() - ImporteNeto(), 2);
+        }
     }
 }
