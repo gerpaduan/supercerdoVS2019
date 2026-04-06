@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.util;
-using System.Windows;
 using System.Windows.Forms;
 using iTextSharp.text.html;
 using Presentacion.Cortes;

@@ -7,12 +7,10 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Windows.Forms;
-
 using System.Configuration;
 using Entidades;
 using Presentacion.Embutidos;
 using System.Web.UI.WebControls;
-using System.Windows;
 
 namespace Presentacion.Cheques
 {

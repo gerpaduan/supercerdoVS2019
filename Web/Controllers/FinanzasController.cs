@@ -1,4 +1,4 @@
-﻿    using System;
+﻿using System;
 using System.Data;
 using System.Web.Mvc;
 using Negocio;
@@ -12,6 +12,7 @@ using iTextSharp.text;
 using Datos;
 using System.Collections.Generic;
 using System.Web;
+using Newtonsoft.Json;
 
 namespace Web.Controllers
 {
@@ -326,7 +327,7 @@ namespace Web.Controllers
             oPagoE.NroCheque = "";// txtNroCheque.Text;
             oPagoE.TitularCheque = "";// txtTitular.Text;
             
-            oPagoE.CreadoPor = oPagoE.Id > 0 ? 
+            oPagoE.CreadoPor = oPagoE.Id > 0 ?
                 oCtaCteN.getPagoById(oPagoE.Id).CreadoPor : 
                 Session["Usuario"] as Entidades.Usuario; ;
             oPagoE.ActualizadoPor = oPagoE.Id > 0 ? Session["Usuario"] as Entidades.Usuario : oPagoE.ActualizadoPor;

@@ -16,7 +16,6 @@ using Utilidades;
 using Presentacion.CuentaCorriente;
 using static Presentacion.Caja.formCerrarCaja;
 using System.Drawing.Text;
-using System.Windows;
 using System.Globalization;
 using Entidades;
 

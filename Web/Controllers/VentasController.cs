@@ -115,16 +115,6 @@ namespace Web.Controllers
             return View(venta);
         }
 
-        public ActionResult Imprimir(int id)
-        {
-            Entidades.Venta venta = oVentaN.getVentaById(id);
-
-            var generador = new Utilidades.GenerarDocs();
-            byte[] pdfBytes = generador.GenerarFacturaX(venta);
-            return File(pdfBytes, "application/pdf", $"Factura_{id}.pdf");
-        }
-
-
         [HttpPost]
 
         public JsonResult FinalizarVenta(FinalizarVentaRequest request)
@@ -496,6 +486,18 @@ namespace Web.Controllers
                 return Json(new { ok = false, msg = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
+
+
+        public ActionResult Imprimir(int id)
+        {
+            Entidades.Venta venta = oVentaN.getVentaById(id);
+            Entidades.FacturaElectronica factuElec = oVentaN.getFactuElecById(oVentaN.existeFactuElectParaVenta(id));
+
+            var generador = new Utilidades.GenerarDocs();
+            byte[] pdfBytes = generador.GenerarFacturaPDF(venta, factuElec);
+            return File(pdfBytes, "application/pdf", $"Factura_{id}.pdf");
+        }
+
         #endregion
 
         #region AFIP

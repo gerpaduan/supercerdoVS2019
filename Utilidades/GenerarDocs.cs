@@ -1,16 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using iTextSharp.text;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.draw;
+using Newtonsoft.Json;
+using System;
+using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
-using System.Data;
-using iTextSharp.text.pdf.draw;
-using System.Configuration;
-using System.Diagnostics;
+using Font = iTextSharp.text.Font;
+using Formatting = Newtonsoft.Json.Formatting;
+using Rectangle = iTextSharp.text.Rectangle;
+using QRCoder;
+
+// Asegúrate de instalar el paquete NuGet "QRCoder" en tu proyecto.
+// Puedes hacerlo desde la consola del administrador de paquetes con:
+// Install-Package QRCoder
 
 namespace Utilidades
 {
@@ -298,7 +302,7 @@ namespace Utilidades
         //#endregion
         #region PUBLICO
 
-        public byte[] GenerarFacturaX(Entidades.Venta venta)
+        public byte[] GenerarFacturaPDF(Entidades.Venta venta, Entidades.FacturaElectronica factura)
         {
             using (var ms = new MemoryStream())
             {
@@ -308,7 +312,7 @@ namespace Utilidades
 
                 // ===== FUENTES =====
                 var colorRojo = new BaseColor(174, 0, 0);
-                var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 25, colorRojo);
+                var fuenteTitulo = FontFactory.GetFont(FontFactory.HELVETICA, 30, colorRojo);
                 var fuenteNormal = FontFactory.GetFont(FontFactory.HELVETICA, 9);
                 var fuenteNegrita = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10);
                 var fuenteX = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 35);
@@ -318,23 +322,40 @@ namespace Utilidades
                 var linea = new LineSeparator(1.5f, 100f, BaseColor.GRAY, Element.ALIGN_CENTER, -6);
 
                 // ===== CABECERA =====
-                doc.Add(GenerarCabecera(venta, fuenteTitulo, fuenteNormal, fuenteNegrita, fuenteX, fuenteFooter));
+                doc.Add(GenerarCabecera(venta, factura, fuenteTitulo, fuenteNormal, fuenteNegrita, fuenteX, fuenteFooter));
                 doc.Add(new Chunk(linea));
                 doc.Add(new Paragraph(" "));
 
                 // ===== CLIENTE =====
-                doc.Add(GenerarCliente(venta, fuenteNormal, fuenteNegrita));
+                doc.Add(GenerarCliente(venta, factura, fuenteNormal, fuenteNegrita));
                 doc.Add(new Chunk(linea));
-                doc.Add(new Paragraph(" "));
+                //doc.Add(new Paragraph(" "));
 
                 // ===== PRODUCTOS =====
-                doc.Add(GenerarProductos(venta, fuenteNormal, fuenteHeaderTabla));
+                doc.Add(GenerarProductos(venta, factura, fuenteNormal, fuenteHeaderTabla));
 
                 // ===== TOTALES =====
                 doc.Add(new Chunk(linea));
                 doc.Add(new Paragraph(" "));
-                doc.Add(GenerarTotales(venta, fuenteNegrita));
+                doc.Add(GenerarTotales(venta, factura, fuenteNormal, fuenteNegrita));
                 doc.Add(new Chunk(linea));
+
+
+                doc.Add(InfoRegimenFiscal(venta, factura, fuenteNormal, fuenteNegrita, fuenteFooter));
+
+
+                // Crear imagen QR
+                iTextSharp.text.Image qrImage = iTextSharp.text.Image.GetInstance(GenerateQRCode(factura));
+                // Escalar a 100x100 px
+                qrImage.ScaleAbsolute(100, 100);
+                // Posicionar en la esquina inferior izquierda dentro de márgenes
+                float xPosition = doc.LeftMargin;          // borde izquierdo del área imprimible
+                float yPosition = doc.BottomMargin;        // borde inferior del área imprimible
+                qrImage.SetAbsolutePosition(xPosition, yPosition);
+                // Agregar al documento
+                doc.Add(qrImage);
+
+                doc.Add(InfoCAE(venta, factura, fuenteNormal, fuenteNegrita, fuenteFooter));
 
                 // ===== OBS =====
                 if (!string.IsNullOrEmpty(venta.Observaciones))
@@ -354,6 +375,7 @@ namespace Utilidades
 
         private PdfPTable GenerarCabecera(
             Entidades.Venta venta,
+            Entidades.FacturaElectronica factura,
             Font fuenteTitulo,
             Font fuenteNormal,
             Font fuenteNegrita,
@@ -365,7 +387,15 @@ namespace Utilidades
 
             // IZQUIERDA
             PdfPCell izq = new PdfPCell { Border = 0 };
-            izq.AddElement(new Paragraph("NOMBRE DEL NEGOCIO\n", fuenteTitulo));
+            izq.AddElement(new Paragraph(venta.Sucursal.Empresa.NombreFantasia+"\n", fuenteTitulo));
+            if (venta.TipoComprobante != 'X')
+            { 
+                izq.AddElement(new Paragraph("\nRazón Social: " + factura.Venta.Sucursal.Empresa.RazonSocialAfip + "\n", fuenteNormal));
+                izq.AddElement(new Paragraph(factura.Venta.Sucursal.Empresa.Domicilio + " - " +
+                                        factura.Venta.Sucursal.Empresa.Ciudad + "\n", fuenteNormal)); 
+                izq.AddElement(new Paragraph("Cond. IVA: " + factura.Venta.Sucursal.Empresa.CondicionIVA + "\n", fuenteNormal));                
+            }
+            
             cabecera.AddCell(izq);
 
             // CENTRO
@@ -379,7 +409,11 @@ namespace Utilidades
             }
             else
             {
-                p.Add(new Chunk(venta.TipoComprobante.ToString(), fuenteX));
+                String codFactura = "COD." + (factura.CodTipoCbteAfip < 10 ? 
+                    ("0" + factura.CodTipoCbteAfip.ToString()) : factura.CodTipoCbteAfip.ToString());
+
+                p.Add(new Chunk(venta.TipoComprobante.ToString()+"\n", fuenteX));
+                p.Add(new Chunk(codFactura, fuenteFooter));
             }
 
             centro.AddElement(p);
@@ -392,8 +426,23 @@ namespace Utilidades
                 HorizontalAlignment = Element.ALIGN_RIGHT
             };
 
-            der.AddElement(new Paragraph($"N° Comprobante: {venta.IdVenta}", fuenteNegrita));
-            der.AddElement(new Paragraph($"Fecha: {venta.FechaVenta:dd/MM/yyyy}", fuenteNormal));
+            if (venta.TipoComprobante == 'X')
+            {
+                der.AddElement(new Paragraph($"N° Comprobante: {venta.IdVenta}", fuenteNegrita));
+                der.AddElement(new Paragraph($"Fecha: {venta.FechaVenta:dd/MM/yyyy}", fuenteNormal));
+            }
+            else
+            {
+                string descComprobante = factura.DescTipoCbteAfip.Substring(0, factura.DescTipoCbteAfip.Length - 1);
+                der.AddElement(new Paragraph("\n" + descComprobante.ToUpper() + "\n", fuenteNegrita));
+                der.AddElement(new Paragraph("Nro.Comp.: " + factura.PtoVtaAfip + "-" + factura.NroCbteAfip + "\n", fuenteNormal));
+                der.AddElement(new Paragraph("Fecha de Emisión: " + factura.FechaEmisionAfip.Value.Date.ToString("dd/MM/yyyy") + "\n", fuenteNormal));
+                der.AddElement(new Paragraph("IIBB: " + factura.Venta.Sucursal.Empresa.Iibb.ToString() + "\n", fuenteNormal));
+                der.AddElement(new Paragraph("CUIT: " + factura.Venta.Sucursal.Empresa.Cuit.ToString() + "\n", fuenteNormal));
+                der.AddElement(new Paragraph("Inicio Act.: " + factura.Venta.Sucursal.Empresa.InicioActividad.Date.ToString("dd/MM/yyyy") + "\n", fuenteNormal));
+
+            }
+
             cabecera.AddCell(der);
 
             return cabecera;
@@ -403,20 +452,25 @@ namespace Utilidades
 
         #region CLIENTE
 
-        private PdfPTable GenerarCliente(Entidades.Venta venta, Font normal, Font negrita)
+        private PdfPTable GenerarCliente(Entidades.Venta venta, Entidades.FacturaElectronica factura, Font normal, Font negrita)
         {
             PdfPTable cliente = new PdfPTable(4) { WidthPercentage = 100 };
             cliente.SetWidths(new float[] { 15, 45, 15, 25 });
 
-            cliente.AddCell(Celda("Sr.(es):", negrita));
+            cliente.AddCell(Celda("Cliente:", negrita));
             cliente.AddCell(Celda(venta.Persona.razonSocial, normal));
             cliente.AddCell(Celda("CUIT:", negrita));
             cliente.AddCell(Celda(venta.Persona.Cuit, normal));
 
+            cliente.AddCell(Celda("Domicilio:", negrita));
+            cliente.AddCell(Celda(venta.Persona.Domicilio, normal));
             cliente.AddCell(Celda("Cond. IVA:", negrita));
             cliente.AddCell(Celda(venta.Persona.Iva, normal));
+
             cliente.AddCell(Celda("Forma pago:", negrita));
             cliente.AddCell(Celda(venta.FormaPago, normal));
+            cliente.AddCell(Celda("", negrita));
+            cliente.AddCell(Celda("", normal));
 
             return cliente;
         }
@@ -425,7 +479,7 @@ namespace Utilidades
 
         #region PRODUCTOS
 
-        private PdfPTable GenerarProductos(Entidades.Venta venta, Font normal, Font header)
+        private PdfPTable GenerarProductos(Entidades.Venta venta, Entidades.FacturaElectronica factura, Font normal, Font header)
         {
             bool esFacturaA = venta.TipoComprobante == 'A';
 
@@ -469,23 +523,96 @@ namespace Utilidades
 
         #region TOTALES
 
-        private PdfPTable GenerarTotales(Entidades.Venta venta, Font negrita)
+        private PdfPTable GenerarTotales(
+            Entidades.Venta venta,
+            Entidades.FacturaElectronica factura,
+            Font fuenteNormal,
+            Font negrita)
         {
             PdfPTable total = new PdfPTable(3) { WidthPercentage = 100 };
             total.SetWidths(new float[] { 5, 1, 1 });
 
-            total.AddCell(Celda("", negrita));
-            total.AddCell(Celda("TOTAL:", negrita, Element.ALIGN_RIGHT));
-            total.AddCell(Celda(
-                venta.TotalImporte.ToString("#,##0.00", new CultureInfo("es-AR")),
-                negrita,
-                Element.ALIGN_RIGHT));
+            bool esFacturaA = venta.TipoComprobante == 'A';
 
+            if (venta.TipoComprobante == 'X')
+            {
+                total.AddCell(Celda("", negrita));
+                total.AddCell(Celda("TOTAL:", negrita, Element.ALIGN_RIGHT));
+                total.AddCell(Celda(
+                    venta.TotalImporte.ToString("#,##0.00", new CultureInfo("es-AR")),
+                    negrita,
+                    Element.ALIGN_RIGHT));
+            }
+            else
+            {
+                if (esFacturaA)
+                {
+                    total.AddCell(Celda("", negrita));
+                    total.AddCell(Celda("Neto s/iva: $", negrita, Element.ALIGN_RIGHT));
+                    total.AddCell(Celda(factura.ImporteNetoGravado.ToString("#,##0.00", new CultureInfo("es-AR")), negrita, Element.ALIGN_RIGHT));
+
+
+                    foreach (Entidades.AlicuotaIva item in factura.ListaAlicuota)
+                    {
+                        if (item.Importe > 0)
+                        {
+                            total.AddCell(Celda("", negrita, Element.ALIGN_RIGHT));
+                            total.AddCell(Celda("Iva " + item.Iva + "%: $", negrita, Element.ALIGN_RIGHT));
+                            total.AddCell(Celda(item.Importe.ToString("#,##0.00", new CultureInfo("es-AR")), negrita, Element.ALIGN_RIGHT));
+                        }
+                    }
+                }
+                else
+                {
+                    total.AddCell(Celda("", negrita, Element.ALIGN_RIGHT));
+                    total.AddCell(Celda("Subtotal: $", negrita, Element.ALIGN_RIGHT));
+                    total.AddCell(Celda(factura.ImporteTotal.ToString("#,##0.00", new CultureInfo("es-AR")), negrita, Element.ALIGN_RIGHT));
+                }
+                total.AddCell(Celda("", negrita, Element.ALIGN_RIGHT));
+                total.AddCell(Celda("Total: $", negrita, Element.ALIGN_RIGHT));
+                total.AddCell(Celda(factura.ImporteTotal.ToString("#,##0.00", new CultureInfo("es-AR")), negrita, Element.ALIGN_RIGHT));
+
+            }
             return total;
         }
 
         #endregion
 
+        #region INFO_CAE
+
+        private PdfPTable InfoRegimenFiscal(Entidades.Venta venta, Entidades.FacturaElectronica factura,
+            Font fuenteNormal,
+            Font fuenteNegrita,
+            Font fuenteFooter)
+        {
+            // Totales
+            PdfPTable infoRegimenFiscal = new PdfPTable(1);
+            infoRegimenFiscal.WidthPercentage = 100;
+            infoRegimenFiscal.SetWidths(new float[] { 1f });
+            infoRegimenFiscal.AddCell(Celda($"Régimen de Transparencia Fiscal Al Consumidor(Ley 27.743)", fuenteFooter, Element.ALIGN_RIGHT));
+            infoRegimenFiscal.AddCell(Celda($"IVA Contenido: {factura.Iva:N2}", fuenteFooter, Element.ALIGN_RIGHT));
+            infoRegimenFiscal.AddCell(Celda($"    ", fuenteFooter, Element.ALIGN_RIGHT));
+
+            return infoRegimenFiscal;
+        }
+
+        private PdfPTable InfoCAE(Entidades.Venta venta, Entidades.FacturaElectronica factura,
+            Font fuenteNormal,
+            Font fuenteNegrita,
+            Font fuenteFooter)
+        {
+            // Totales
+            PdfPTable infoRegimenFiscal = new PdfPTable(1);
+            infoRegimenFiscal.WidthPercentage = 100;
+            infoRegimenFiscal.SetWidths(new float[] { 1f });
+            infoRegimenFiscal.AddCell(Celda($"Régimen de Transparencia Fiscal Al Consumidor(Ley 27.743)", fuenteFooter, Element.ALIGN_RIGHT));
+            infoRegimenFiscal.AddCell(Celda($"IVA Contenido: {factura.Iva:N2}", fuenteFooter, Element.ALIGN_RIGHT));
+            infoRegimenFiscal.AddCell(Celda($"    ", fuenteFooter, Element.ALIGN_RIGHT));
+
+            return infoRegimenFiscal;
+        }
+
+        #endregion
         #region HELPERS
 
         private PdfPCell Celda(string texto, Font fuente, int align = Element.ALIGN_LEFT)
@@ -504,8 +631,71 @@ namespace Utilidades
             {
                 BackgroundColor = new BaseColor(255, 200, 200),
                 HorizontalAlignment = Element.ALIGN_CENTER,
+                Border = Rectangle.NO_BORDER,
                 Padding = 4
             };
+        }
+
+
+        public byte[] GenerateQRCode(Entidades.FacturaElectronica factura)
+        {
+            //string data = GenerarJSON();
+            string urlBase = "https://www.afip.gob.ar/fe/qr/";
+            string data = urlBase + "?p=" + GenerarJSON(factura);
+
+            QRCodeGenerator qrGenerator = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrGenerator.CreateQrCode(data, QRCodeGenerator.ECCLevel.Q);
+            QRCode qrCode = new QRCode(qrCodeData);
+            Bitmap qrCodeImage = qrCode.GetGraphic(20);
+            using (MemoryStream stream = new MemoryStream())
+            {
+                qrCodeImage.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                return stream.ToArray();
+            }
+        }
+        private string GenerarJSON(Entidades.FacturaElectronica factura)
+        {
+            //Entidades.FacturaElectronica factura = notaCredito ? oNotaCredito : oFactuElec;
+
+            string fechaEmision = factura.FechaEmisionAfip?.ToString("yyyy-MM-dd");
+            // Crear la estructura del JSON utilizando la variable
+            long _cuitEmisor = long.Parse(factura.Venta.Sucursal.Empresa.Cuit.ToString());
+            long _nroCmp = long.Parse(factura.NroCbteAfip);
+            long _nroDocRec = string.IsNullOrEmpty(factura.NroDocAfip) ? 0 : long.Parse(factura.NroDocAfip);
+            long _codAut = long.Parse(factura.CAE1);
+            int _ptoVta = Convert.ToInt32(factura.PtoVtaAfip);
+
+            //TODO: mejorar la obtenendo del idTipoDoc (CUIT, DNI, DOC)
+            //80 CUIT
+            //96 DNI
+            //99 Doc. (otro)
+            int _tipoDocRec = factura.TipoDocAfip.Equals("CUIT") ? 80 :
+                factura.TipoDocAfip.Equals("DNI") ? 86 : 99; //= Convert.ToInt32(TipoDocCMB.SelectedValue.ToString());
+
+            decimal _importe = Convert.ToDecimal(factura.ImporteTotal);
+            var qrData = new
+            {
+                ver = 1,
+                fecha = fechaEmision,
+                cuit = _cuitEmisor,
+                ptoVta = _ptoVta,
+                tipoCmp = factura.CodTipoCbteAfip,
+                nroCmp = _nroCmp,
+                importe = _importe,
+                moneda = "PES",
+                ctz = 1,
+                tipoDocRec = _tipoDocRec,
+                nroDocRec = _nroDocRec,
+                tipoCodAut = "E",
+                codAut = _codAut
+            };
+
+            // Serializar el objeto a JSON
+            string jsonData = JsonConvert.SerializeObject(qrData, Formatting.Indented);
+            //Codificar el JSON en Base64
+            string jsonDataBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(jsonData));
+
+            return jsonDataBase64;
         }
 
         #endregion
