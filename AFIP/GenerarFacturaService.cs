@@ -393,7 +393,7 @@ namespace AFIP
                     {
                         PtoVtaAfip = ptoVtaFormato,
                         FechaEmisionAfip = fch,
-                        DescTipoCbteAfip = factura.DescTipoCbteAfip ?? "",
+                        DescTipoCbteAfip = (esNotaCredito ? "Nota Credito " : "Factura ") + factura.getLetraId_TipoCbte(factura.CodTipoCbteAfip), //factura.DescTipoCbteAfip ?? "",
                         CodTipoCbteAfip = factura.CodTipoCbteAfip,
                         NroCbteAfip = nroCbteFormato,
 
