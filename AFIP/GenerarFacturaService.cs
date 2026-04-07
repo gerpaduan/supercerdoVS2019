@@ -400,11 +400,11 @@ namespace AFIP
                         TipoDocAfip = det.DocTipo.ToString(),
                         NroDocAfip = det.DocNro > 0 ? det.DocNro.ToString() : "",
                         RazonSocialAFIP = factura.Venta.Persona?.razonSocial ?? "",
-                        CondicionIvaAFIP = factura.Venta.Persona?.Iva ?? "",
-                        DomicilioAFIP = factura.Venta.Persona != null ? $"{factura.Venta.Persona.Domicilio} - {factura.Venta.Persona.Ciudad}" : "",
+                        CondicionIvaAFIP = factura.CondicionIvaAFIP,//factura.Venta.Persona?.Iva ?? "",
+                        DomicilioAFIP = factura.DomicilioAFIP,// factura.Venta.Persona != null ? $"{factura.Venta.Persona.Domicilio} - {factura.Venta.Persona.Ciudad}" : "",
 
                         CondicionVenta = factura.Venta.EnCtaCte ? "Cuenta Corriente" : "Contado",
-                        FormaPago = factura.Venta.FormaPago ?? "",
+                        FormaPago = factura.FormaPago, //factura.Venta.FormaPago ?? "",
 
                         CAE1 = detResp.CAE,
                         FecVtoCAE = detResp.CAEFchVto,

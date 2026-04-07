@@ -153,34 +153,24 @@ function pvNormalizarTelefono(raw) {
 }
 
 function pvAbrirPdf() {
-    const ctx = pvGetContext();
-    const $m = $('#modalPostVenta');
-
-    // 1) Si ya te pasaron un pdfUrl, usamos eso
-    const explicit = ($m.data('pdf-url') || '').toString().trim();
-    if (explicit) {
-        window.open(explicit, '_blank', 'noopener');
-        cerrarPostVentaYRecargar();
-        return;
-    }
-
+    const $btn = $('#btnPostVenta4');
+    const baseUrl = ($btn.data('venta-pdf-url') || '').toString().trim();
     const ventaId = pvGetVentaId();
-    if (!ventaId) return;
 
-    // 2) Default por contexto (ajustalo a tus acciones reales)
-    let url = '';
-    if (ctx === 'factura') {
-        url = `/Ventas/FacturaPdf?idVenta=${ventaId}`; // <-- ajustá endpoint si difiere
-    } else {
-        url = `/Ventas/VentaPdf?id=${ventaId}`; // <-- si no existe, te va a quedar "pendiente"
-    }
-
-    if (!url) {
-        alert('Pendiente: PDF');
+    if (!ventaId) {
+        alert('No se encontró el id de la venta.');
         return;
     }
 
-    window.open(url, '_blank', 'noopener');
+    if (!baseUrl) {
+        alert('No se configuró la URL del PDF.');
+        return;
+    }
+
+    const url = new URL(baseUrl, window.location.origin);
+    url.searchParams.set('id', ventaId);
+
+    window.open(url.toString(), '_blank', 'noopener');
     cerrarPostVentaYRecargar();
 }
 

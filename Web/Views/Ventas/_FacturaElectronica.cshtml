@@ -201,9 +201,23 @@
 
                     <div class="form-group col-12 col-md-3 mb-2">
                         <label class="mb-1">Cond. IVA</label>
-                        <input type="text" name="CondicionIvaAFIP"
-                               class="form-control form-control-sm"
-                               value="@Model.CondicionIvaAFIP" @(yaEmitida ? "readonly" : "") />
+                        @*//1 = IVA Responsable Inscripto
+                        //4 = IVA Sujeto Exento
+                        //5 = Consumidor Final
+                        //6 = Responsable Monotributo*@
+                    <select name="CondicionIvaAFIP" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                        <option value="Consumidor Final" @(Model.CondicionIvaAFIP == "Consumidor Final" ? "selected" : "")>Consumidor Final</option>
+                        <option value="Responsable Inscripto" @(Model.CondicionIvaAFIP == "Responsable Inscripto" ? "selected" : "")>Responsable Inscripto</option>
+                        <option value="Monotributista" @(Model.CondicionIvaAFIP == "Monotributista" ? "selected" : "")>Monotributista</option>
+                        <option value="Exento" @(Model.CondicionIvaAFIP == "Exento" ? "selected" : "")>Exento</option>
+                    </select>
+                        @if (yaEmitida)
+                        {
+                            <input type="hidden" name="CondicionIvaAFIP" value="@Model.CondicionIvaAFIP" />
+                        }
+                        @*<input type="text" name="CondicionIvaAFIP"
+        class="form-control form-control-sm"
+        value="@Model.CondicionIvaAFIP" @(yaEmitida ? "readonly" : "") />*@
                     </div>
 
                     <div class="form-group col-12 mb-2">
@@ -325,7 +339,7 @@
                            value="@Model.ImporteTotal.ToString("0.00", CultureInfo.GetCultureInfo("es-AR"))" />
                 </div>
             </div>
-            <div class="table-responsive border rounded fe-table-scroll">
+            <!--<div class="table-responsive border rounded fe-table-scroll">
                 <table class="table table-sm mb-0" id="feTablaIva">
                     <thead class="thead-light">
                         <tr>
@@ -335,11 +349,11 @@
                             <th class="text-right">Total</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody>-->
                         @* Se llena por JS *@
-                    </tbody>
+                    <!--</tbody>
                 </table>
-            </div>
+            </div>-->
 
         </div>
 

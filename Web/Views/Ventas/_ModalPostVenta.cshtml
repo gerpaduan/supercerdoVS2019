@@ -78,7 +78,10 @@
                 </button>
 
                 <!-- 4) PDF -->
-                <button class="btn btn-dark btn-lg btn-block mb-2" id="btnPostVenta4" type="button">
+                <button class="btn btn-dark btn-lg btn-block mb-2"
+                        id="btnPostVenta4"
+                        type="button"
+                        data-venta-pdf-url="@Url.Action("Imprimir", "Ventas")">
                     <span class="badge badge-light mr-2">4</span>
                     <span id="pvLblPdfBtn">Generar PDF</span>
                 </button>

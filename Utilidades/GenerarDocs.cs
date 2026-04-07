@@ -556,6 +556,7 @@ namespace Utilidades
             string importe_obs = string.IsNullOrEmpty(venta.Observaciones) ? importeTexto :
                 importeTexto + "\n-------\n" + venta.Observaciones;
 
+            total.AddCell(Celda(importe_obs, fuenteNormal, Element.ALIGN_LEFT));
             total.AddCell(Celda("TOTAL:", negrita, Element.ALIGN_RIGHT));
             total.AddCell(Celda(
                 venta.TotalImporte.ToString("#,##0.00", new CultureInfo("es-AR")),
