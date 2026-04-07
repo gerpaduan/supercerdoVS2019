@@ -116,7 +116,8 @@ namespace Presentacion.Ventas
         {
             comboUsuario.SelectedValue = oVentaE.Vendedor.Id;
             txtCliente.Text = oVentaE.Persona.razonSocial;
-            comboSucursal.SelectedIndex = oVentaE.Sucursal.idSucursal - 1;
+            comboSucursal.SelectedValue = oVentaE?.Sucursal?.idSucursal;
+            comboTipoComprobante.SelectedItem = oVentaE.TipoComprobante.ToString();
             checkCtaCte.Checked = oVentaE.EnCtaCte;
             
             txtFechaVenta.Value =oVentaE.FechaVenta;
@@ -969,7 +970,12 @@ namespace Presentacion.Ventas
                 
             txtUsuario.Text = oUsuario.Nombre;
             checkCtaCte.Visible = false;
-            comboTipoComprobante.SelectedIndex = 0; //Remito
+
+            if (!(oVentaE.TipoComprobante != '\0'))
+            {
+                comboTipoComprobante.SelectedIndex = 0; //Remito
+            }
+
             restablecerFormaDePago();
             cargandoDatos = false;
 

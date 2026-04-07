@@ -219,9 +219,10 @@
     </div>
 </div>
 
-<!-- Select2 (después de jQuery) -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @section Scripts {
+
+    <!-- Select2 (después de jQuery) -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
 
         $(document).ready(function () {
@@ -348,75 +349,74 @@
         filtroFormaPago?.addEventListener("change", aplicarFiltros);
 
     </script>
-    }
+}
 
 
 <style>
-        /* Mantengo tus estilos actuales */
-        .venta-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 10px 15px;
-        }
+    /* Mantengo tus estilos actuales */
+    .venta-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 10px 15px;
+    }
 
-        .venta-icono {
-            flex: 0 0 auto;
-            margin-right: 10px;
-        }
+    .venta-icono {
+        flex: 0 0 auto;
+        margin-right: 10px;
+    }
 
-        .venta-info {
-            flex: 1 1 auto;
-            min-width: 0;
-        }
+    .venta-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
 
-        /* Estilo general para escritorio */
+    /* Estilo general para escritorio */
+    .venta-tipo-persona {
+        word-wrap: break-word; /* permite cortar palabras largas */
+        /*overflow-wrap: break-word*/; /* asegura compatibilidad */
+        white-space: normal;
+    }
+
+    /* En pantallas pequeñas (celulares) */
+    @@media (max-width: 576px) {
         .venta-tipo-persona {
-            word-wrap: break-word; /* permite cortar palabras largas */
-            /*overflow-wrap: break-word*/; /* asegura compatibilidad */
-            white-space: normal;
+            max-width: 17ch;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+    }
+
+    .venta-id {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .venta-total {
+        text-align: right;
+        flex: 0 0 auto;
+    }
+
+        .venta-total .importe {
+            font-weight: bold;
+            color: #28a745;
         }
 
-        /* En pantallas pequeñas (celulares) */
-        @@media (max-width: 576px) {
-            .venta-tipo-persona {
-                max-width: 17ch;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                display: block;
-            }
+    .venta-item:hover {
+        background-color: #f8f9fc;
+    }
+
+    /* Solo en pantallas grandes */
+    @@media (min-width: 992px) {
+        .vista-venta {
+            width: 60%;
+            max-width: none; /* anula reglas de container */
+            margin: 0 !important; /* elimina auto margins de Bootstrap */
+            padding-left: 0;
+            padding-right: 0;
         }
-
-        .venta-id {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-
-        .venta-total {
-            text-align: right;
-            flex: 0 0 auto;
-        }
-
-            .venta-total .importe {
-                font-weight: bold;
-                color: #28a745;
-            }
-
-        .venta-item:hover {
-            background-color: #f8f9fc;
-        }
-
-        /* Solo en pantallas grandes */
-        @@media (min-width: 992px) {
-            .vista-venta {
-                width: 60%;
-                max-width: none; /* anula reglas de container */
-                margin: 0 !important; /* elimina auto margins de Bootstrap */
-                padding-left: 0;
-                padding-right: 0;
-            }
-        }
-
+    }
 </style>
