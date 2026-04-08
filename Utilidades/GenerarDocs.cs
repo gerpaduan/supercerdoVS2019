@@ -472,17 +472,17 @@ namespace Utilidades
             cliente.SetWidths(new float[] { 15, 45, 15, 25 });
 
             cliente.AddCell(Celda("Cliente:", negrita));
-            cliente.AddCell(Celda(factura.RazonSocialAFIP, normal));//venta.Persona.razonSocial, normal));
+            cliente.AddCell(Celda(factura != null ? factura.RazonSocialAFIP : venta.Persona.razonSocial, normal));//venta.Persona.razonSocial, normal));
             cliente.AddCell(Celda("CUIT:", negrita));
-            cliente.AddCell(Celda(factura.NroDocAfip, normal)); //venta.Persona.Cuit, normal));
+            cliente.AddCell(Celda(factura != null ? factura.NroDocAfip : venta.Persona.Cuit, normal)); //venta.Persona.Cuit, normal));
 
             cliente.AddCell(Celda("Domicilio:", negrita));
-            cliente.AddCell(Celda(factura.DomicilioAFIP, normal));
+            cliente.AddCell(Celda(factura != null ? factura.DomicilioAFIP : venta.Persona.Domicilio, normal));
             cliente.AddCell(Celda("Cond. IVA:", negrita));
-            cliente.AddCell(Celda(factura.CondicionIvaAFIP, normal));
+            cliente.AddCell(Celda(factura != null ? factura.CondicionIvaAFIP : venta.Persona.Iva, normal));
 
             cliente.AddCell(Celda("Forma pago:", negrita));
-            cliente.AddCell(Celda(factura.FormaPago, normal));
+            cliente.AddCell(Celda(factura != null ? factura.FormaPago : venta.FormaPago, normal));
             cliente.AddCell(Celda("", negrita));
             cliente.AddCell(Celda("", normal));
 
