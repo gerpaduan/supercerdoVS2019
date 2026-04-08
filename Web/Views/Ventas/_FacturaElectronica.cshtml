@@ -19,60 +19,97 @@
     }
 }
 
-<style> 
-/* Mantener ancho modal habitual; limitar altura y permitir scroll en body */
-#modalFacturaElectronica .modal-dialog {
-    max-width: 900px;
-    margin: 1.5rem auto;
-}
-#modalFacturaElectronica .modal-content {
-    max-height: 92vh;
-    display: flex;
-    flex-direction: column;
-    border-radius: .35rem;
-    overflow: hidden;
-}
+<style>
+     /* Mantener ancho modal habitual; limitar altura y permitir scroll en body */
+     #modalFacturaElectronica .modal-dialog {
+         max-width: 900px;
+         margin: 1.5rem auto;
+     }
 
-/* modal-body ahora scrollea si el contenido supera la altura disponible.
-   El body es flexible (flex:1) para que footer quede siempre visible */
-#modalFacturaElectronica .modal-body.fe-body {
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    overflow: auto; /* permitimos scroll general del body */
-    flex: 1 1 auto;
-}
+     #modalFacturaElectronica .modal-content {
+         max-height: 92vh;
+         display: flex;
+         flex-direction: column;
+         border-radius: .35rem;
+         overflow: hidden;
+     }
 
-/* la tabla seguirá teniendo su propia área scrolleable si necesita más espacio */
-#modalFacturaElectronica .fe-table-scroll {
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    /* fallback razonable: JS ajusta la altura dinámica al mostrar el modal */
-    max-height: calc(92vh - 420px);
-}
+     /* modal-body ahora scrollea si el contenido supera la altura disponible.
+    El body es flexible (flex:1) para que footer quede siempre visible */
+     #modalFacturaElectronica .modal-body.fe-body {
+         display: flex;
+         flex-direction: column;
+         padding: 1rem;
+         overflow: auto; /* permitimos scroll general del body */
+         flex: 1 1 auto;
+     }
 
-/* footer siempre visible */
-#modalFacturaElectronica .modal-footer {
-    flex: 0 0 auto;
-}
+     /* la tabla seguirá teniendo su propia área scrolleable si necesita más espacio */
+     #modalFacturaElectronica .fe-table-scroll {
+         overflow: auto;
+         -webkit-overflow-scrolling: touch;
+         /* fallback razonable: JS ajusta la altura dinámica al mostrar el modal */
+         max-height: calc(92vh - 420px);
+     }
 
-/* estructura de layout interna */
-.fe-top { flex: 0 0 auto; }
-.fe-summary { flex: 0 0 auto; }
-.fe-kpi { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
-.fe-kpi .label { color: rgba(0,0,0,.60); font-weight: 600; }
-.fe-kpi .value { font-weight: 800; font-size: 1.15rem; }
-.fe-muted { color: rgba(0,0,0,.60); }
+     /* footer siempre visible */
+     #modalFacturaElectronica .modal-footer {
+         flex: 0 0 auto;
+     }
 
-/* Warning pequeño para porcentaje */
-#fePctWarning { display: none; color: #dc3545; font-size: 0.85rem; margin-top: .25rem; }
+     /* estructura de layout interna */
+     .fe-top {
+         flex: 0 0 auto;
+     }
 
-/* Responsive */
-@@media (max-width: 991.98px) {
-    #modalFacturaElectronica .modal-dialog { max-width: calc(100% - 2rem); margin: 0.5rem; }
-    #modalFacturaElectronica .modal-content { max-height: 94vh; }
-    #modalFacturaElectronica .fe-table-scroll { max-height: calc(94vh - 420px); }
-}
+     .fe-summary {
+         flex: 0 0 auto;
+     }
+
+     .fe-kpi {
+         display: flex;
+         align-items: baseline;
+         justify-content: space-between;
+         gap: .75rem;
+     }
+
+         .fe-kpi .label {
+             color: rgba(0,0,0,.60);
+             font-weight: 600;
+         }
+
+         .fe-kpi .value {
+             font-weight: 800;
+             font-size: 1.15rem;
+         }
+
+     .fe-muted {
+         color: rgba(0,0,0,.60);
+     }
+
+     /* Warning pequeño para porcentaje */
+     #fePctWarning {
+         display: none;
+         color: #dc3545;
+         font-size: 0.85rem;
+         margin-top: .25rem;
+     }
+
+     /* Responsive */
+     @@media (max-width: 991.98px) {
+         #modalFacturaElectronica .modal-dialog {
+             max-width: calc(100% - 2rem);
+             margin: 0.5rem;
+         }
+
+         #modalFacturaElectronica .modal-content {
+             max-height: 94vh;
+         }
+
+         #modalFacturaElectronica .fe-table-scroll {
+             max-height: calc(94vh - 420px);
+         }
+     }
 </style>
 
 <!-- HEADER -->
@@ -187,10 +224,21 @@
 
                     <div class="form-group col-6 col-md-3 mb-2">
                         <label class="mb-1">Nro Doc</label>
-                        <input type="text" name="NroDocAfip"
+                        <input type="text"
+                               id="NroDocAfip"
+                               name="NroDocAfip"
                                class="form-control form-control-sm"
-                               value="@Model.NroDocAfip" @(yaEmitida ? "readonly" : "") />
+                               value="@Model.NroDocAfip"
+                               data-original="@Model.NroDocAfip"
+                               @(yaEmitida ? "readonly" : "") />
                     </div>
+
+                    <div id="avisoCambioNroDoc"
+                         class="alert alert-warning mt-2 py-2 px-3"
+                         style="display: none; font-size: 0.78rem;">
+                        Al modificar este número de documento, la venta se actualizará con el CUIT facturado, en caso de estar cargado en la base de datos.
+                    </div>
+
 
                     <div class="form-group col-12 col-md-4 mb-2">
                         <label class="mb-1">Razón Social</label>
@@ -202,22 +250,22 @@
                     <div class="form-group col-12 col-md-3 mb-2">
                         <label class="mb-1">Cond. IVA</label>
                         @*//1 = IVA Responsable Inscripto
-                        //4 = IVA Sujeto Exento
-                        //5 = Consumidor Final
-                        //6 = Responsable Monotributo*@
-                    <select name="CondicionIvaAFIP" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
-                        <option value="Consumidor Final" @(Model.CondicionIvaAFIP == "Consumidor Final" ? "selected" : "")>Consumidor Final</option>
-                        <option value="Responsable Inscripto" @(Model.CondicionIvaAFIP == "Responsable Inscripto" ? "selected" : "")>Responsable Inscripto</option>
-                        <option value="Monotributista" @(Model.CondicionIvaAFIP == "Monotributista" ? "selected" : "")>Monotributista</option>
-                        <option value="Exento" @(Model.CondicionIvaAFIP == "Exento" ? "selected" : "")>Exento</option>
-                    </select>
+            //4 = IVA Sujeto Exento
+            //5 = Consumidor Final
+            //6 = Responsable Monotributo*@
+                        <select name="CondicionIvaAFIP" class="form-control form-control-sm" @(yaEmitida ? "disabled" : "")>
+                            <option value="Consumidor Final" @(Model.CondicionIvaAFIP == "Consumidor Final" ? "selected" : "")>Consumidor Final</option>
+                            <option value="Responsable Inscripto" @(Model.CondicionIvaAFIP == "Responsable Inscripto" ? "selected" : "")>Responsable Inscripto</option>
+                            <option value="Monotributista" @(Model.CondicionIvaAFIP == "Monotributista" ? "selected" : "")>Monotributista</option>
+                            <option value="Exento" @(Model.CondicionIvaAFIP == "Exento" ? "selected" : "")>Exento</option>
+                        </select>
                         @if (yaEmitida)
                         {
                             <input type="hidden" name="CondicionIvaAFIP" value="@Model.CondicionIvaAFIP" />
                         }
                         @*<input type="text" name="CondicionIvaAFIP"
-        class="form-control form-control-sm"
-        value="@Model.CondicionIvaAFIP" @(yaEmitida ? "readonly" : "") />*@
+            class="form-control form-control-sm"
+            value="@Model.CondicionIvaAFIP" @(yaEmitida ? "readonly" : "") />*@
                     </div>
 
                     <div class="form-group col-12 mb-2">
@@ -350,8 +398,8 @@
                         </tr>
                     </thead>
                     <tbody>-->
-                        @* Se llena por JS *@
-                    <!--</tbody>
+            @* Se llena por JS *@
+            <!--</tbody>
                 </table>
             </div>-->
 
@@ -370,4 +418,17 @@
             @(yaEmitida ? "Guardar cambios" : "Registrar factura")
         </button>
     </div>
-</form>     
+</form>
+
+<script>
+    $(document).off('input', '#NroDocAfip').on('input', '#NroDocAfip', function () {
+        var valorOriginal = ($(this).data('original') || '').toString().trim();
+        var valorActual = ($(this).val() || '').toString().trim();
+
+        if (valorActual !== valorOriginal) {
+            $('#avisoCambioNroDoc').show();
+        } else {
+            $('#avisoCambioNroDoc').hide();
+        }
+    });
+</script>

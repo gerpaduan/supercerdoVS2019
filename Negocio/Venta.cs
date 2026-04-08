@@ -489,6 +489,21 @@ namespace Negocio
             {
                 oVentaD.actualizarLetraId_TipoCbte(oFacturaElectronicaE.IdVenta, letraId_TipoCbte);
             }
+            
+            ///si el cuit se lo ingresa al facturar y no en la venta 
+            ///se actualiza el cliente en caso de existir en BD
+            if (oFacturaElectronicaE.TipoDocAfip == FacturaElectronica.codTipoDoc_CUIT.ToString())
+            {
+                oFacturaElectronicaE.Venta = oVentaD.getVentaById(oFacturaElectronicaE.IdVenta);
+                if (oFacturaElectronicaE.Venta != null &&
+                    oFacturaElectronicaE.NroDocAfip != oFacturaElectronicaE.Venta.Persona.Cuit)
+                {
+                    Negocio.Persona personaN = new Negocio.Persona(_empresa, _param);
+                    int idPersona = personaN.existeCuit(oFacturaElectronicaE.NroDocAfip.ToString());
+                    if (idPersona > 0)
+                        oVentaD.actualizarCliente(oFacturaElectronicaE.Venta.IdVenta, idPersona);
+                }
+            }
         }
 
         public Entidades.FacturaElectronica getFactuElecById(int idFactuElec)
