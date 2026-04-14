@@ -27,10 +27,10 @@ namespace Web.Controllers
         {
             base.OnActionExecuting(filterContext);
 
-            oCtaCteN = new Negocio.CuentaCorriente(empresa);
-            oSucursalN = new Negocio.Sucursal(empresa);
-            oUsuarioN = new Negocio.Usuario(empresa);
-            oPersonasN = new Negocio.Persona(empresa);
+            oCtaCteN = new Negocio.CuentaCorriente(empresa, param);
+            oSucursalN = new Negocio.Sucursal(empresa, param);
+            oUsuarioN = new Negocio.Usuario(empresa, param);
+            oPersonasN = new Negocio.Persona(empresa, param);
         }
 
         // ***********************************************************

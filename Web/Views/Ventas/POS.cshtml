@@ -262,7 +262,7 @@
                                             <button class="btn btn-outline-secondary w-100" id="btnLimpiar">Comentario</button>
                                         </div>
                                         <div class="col-4">
-                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda</button>
+                                            <button class="btn btn-outline-primary w-100" id="btnAyuda">Ayuda (F1)</button>
                                         </div>
                                     </div>
                                 </div>
@@ -286,31 +286,6 @@
         </div>
 
     </div>
-
-    <!-- MODAL: DIGITAR CÓDIGO -->
-    @*<div class="modal fade" id="modalDigitarCodigo" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-secondary text-white">
-                    <h5 class="modal-title">Digitar código</h5>
-                    <button type="button" class="btn-close" data-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <input id="txtCodigoManual" class="form-control form-control-lg text-center mb-3" placeholder="Ingrese código" />
-                    <div class="row g-2">
-                        @{ for (int r = 1; r <= 9; r++)
-                            { <text>
-                                    <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">@r</button></div>
-                            </text>;
-                        } }
-                        <div class="col-4"><button class="btn btn-outline-dark w-100 py-3" id="key-back">←</button></div>
-                        <div class="col-4"><button class="btn btn-outline-dark w-100 py-3 num-key">0</button></div>
-                        <div class="col-4"><button class="btn btn-success w-100 py-3" id="key-ok">OK</button></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>*@
 
     <!-- MODAL LINEA VENTA -->
     <div class="modal fade" id="modalLineaVenta" tabindex="-1" role="dialog" aria-hidden="true">
@@ -495,13 +470,208 @@ else
     var vdBuscarCorteMaestro = new ViewDataDictionary();
     vdBuscarCorteMaestro["ModalId"] = "modalBuscarProducto";
     vdBuscarCorteMaestro["ApiUrl"] = Url.Action("ListarProductos", "Productos"); // tu endpoint actual
-    //vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
-    //vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
+                                                                                 //vdBuscarCorteMaestro["Titulo"] = "Seleccionar producto";
+                                                                                 //vdBuscarCorteMaestro["MostrarPrecio"] = false; // ocultar precio en alta/edición
 }
 
 @Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
 @Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
 @Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
+
+@Html.Partial("~/Views/Productos/_BuscarProductoModal.cshtml", vdBuscarCorteMaestro)
+@Html.Partial("~/Views/Ventas/_ModalPostVenta.cshtml")
+@Html.Partial("~/Views/Ventas/_FormaPagoModal.cshtml")
+
+<!-- INICIO AYUDA POS -->
+<style>
+    .pos-help-modal .modal-dialog {
+        max-width: 820px;
+    }
+
+    .pos-help-modal .modal-header {
+        background: #f8f9fa;
+    }
+
+    .pos-help-title {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .pos-help-subtitle {
+        font-size: .92rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .pos-help-grid .col-12 {
+        margin-bottom: .75rem;
+    }
+
+    .pos-help-action {
+        text-align: left;
+        min-height: 62px;
+        border-radius: 10px;
+    }
+
+        .pos-help-action .pos-help-action-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            width: 100%;
+        }
+
+        .pos-help-action .pos-help-label {
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .pos-help-action .pos-help-key {
+            white-space: nowrap;
+            font-size: .82rem;
+            padding: .4rem .55rem;
+            border-radius: .5rem;
+        }
+
+    .pos-help-note {
+        font-size: .9rem;
+    }
+
+    @@media (max-width: 576px) {
+        .pos-help-action {
+            min-height: 58px;
+            padding-top: .75rem;
+            padding-bottom: .75rem;
+        }
+
+            .pos-help-action .pos-help-label {
+                font-size: .95rem;
+            }
+    }
+</style>
+
+<div class="modal fade pos-help-modal" id="modalAyudaPOS" tabindex="-1" role="dialog" aria-labelledby="modalAyudaPOSTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title pos-help-title" id="modalAyudaPOSTitle">
+                    <i class="fas fa-keyboard mr-2"></i>Ayuda y atajos del POS
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                @*<div class="alert alert-light pos-help-note mb-3">
+                    En <strong>PC</strong> podés usar los atajos del teclado. En <strong>celular</strong>, tocá una acción para ejecutar lo mismo.
+                </div>
+
+                <div class="pos-help-subtitle">
+                    F1 abre o cierra esta ayuda.
+                </div>*@
+
+                <div class="row pos-help-grid">
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="Home">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Foco en código</span>
+                                <span class="badge badge-primary pos-help-key">Inicio</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-success btn-block pos-help-action" data-accion="End">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Finalizar venta</span>
+                                <span class="badge badge-success pos-help-key">Fin</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F2">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Cuentas corrientes</span>
+                                <span class="badge badge-secondary pos-help-key">F2</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F3">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Cálculo de billetes</span>
+                                <span class="badge badge-secondary pos-help-key">F3</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F5">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Nueva compra</span>
+                                <span class="badge badge-secondary pos-help-key">F5</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F6">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Mis egresos caja</span>
+                                <span class="badge badge-secondary pos-help-key">F6</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="F7">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Egresos caja</span>
+                                <span class="badge badge-secondary pos-help-key">F7</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-secondary btn-block pos-help-action" data-accion="AvPag">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Expendios</span>
+                                <span class="badge badge-secondary pos-help-key">AvPág/PgDn</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F9">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Buscar cliente</span>
+                                <span class="badge badge-primary pos-help-key">F9</span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <button type="button" class="btn btn-outline-primary btn-block pos-help-action" data-accion="F10">
+                            <span class="pos-help-action-inner">
+                                <span class="pos-help-label">Buscar producto</span>
+                                <span class="badge badge-primary pos-help-key">F10</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <small class="text-muted">Esc cierra la ayuda.</small>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FIN AYUDA POS -->
 
 
 @section Scripts {
@@ -2133,12 +2303,234 @@ else
 
     });
     </script>
+
+    <script>
+        // INICIO AYUDA POS
+        $(function () {
+            if (!document.getElementById("pos-app")) return;
+
+            window.posHotkeysHooks = window.posHotkeysHooks || {};
+
+            function limpiarEstadoModalBootstrap() {
+                $(".modal-backdrop").remove();
+                $("body").removeClass("modal-open");
+                $("body").css("padding-right", "");
+            }
+
+            function hayOtroModalAbierto() {
+                return $(".modal.show").not("#modalAyudaPOS").length > 0;
+            }
+
+            function ayudaAbierta() {
+                return $("#modalAyudaPOS").hasClass("show");
+            }
+
+            function focoCodigo() {
+                var inp = document.getElementById("inputCodigo");
+                if (inp) {
+                    inp.focus();
+                    try { inp.select(); } catch (e) { }
+                }
+            }
+
+            function abrirAyudaPOS() {
+                if (hayOtroModalAbierto()) return;
+                $("#modalAyudaPOS").modal("show");
+            }
+
+            function cerrarAyudaPOS(callback) {
+                var $modal = $("#modalAyudaPOS");
+
+                if (!$modal.length) {
+                    if (typeof callback === "function") callback();
+                    return;
+                }
+
+                if (!$modal.hasClass("show")) {
+                    limpiarEstadoModalBootstrap();
+                    if (typeof callback === "function") {
+                        setTimeout(function () {
+                            callback();
+                        }, 0);
+                    }
+                    return;
+                }
+
+                $modal
+                    .off("hidden.bs.modal.posAyudaAccion")
+                    .one("hidden.bs.modal.posAyudaAccion", function () {
+                        limpiarEstadoModalBootstrap();
+
+                        if (typeof callback === "function") {
+                            setTimeout(function () {
+                                callback();
+                            }, 80);
+                        }
+                    });
+
+                $modal.modal("hide");
+            }
+
+            function ejecutarHook(clave) {
+                if (window.posHotkeysHooks && typeof window.posHotkeysHooks[clave] === "function") {
+                    window.posHotkeysHooks[clave]();
+                    return true;
+                }
+
+                $(document).trigger("pos:atajo:" + clave, [{ clave: clave }]);
+                return false;
+            }
+
+            function ejecutarAccionAyuda(clave, cerrarModalPrimero) {
+                var run = function () {
+                    switch (clave) {
+                        case "Home":
+                            focoCodigo();
+                            break;
+
+                        case "End":
+                            var btnFinalizar = document.getElementById("btnFinalizar");
+                            if (btnFinalizar && !btnFinalizar.disabled) btnFinalizar.click();
+                            break;
+
+                        case "F9":
+                            var btnBuscarPersona = document.getElementById("btnBuscarPersona");
+                            if (btnBuscarPersona && !btnBuscarPersona.disabled) btnBuscarPersona.click();
+                            break;
+
+                        case "F10":
+                            if (typeof abrirBuscadorProductosPOS === "function") {
+                                abrirBuscadorProductosPOS();
+                            }
+                            break;
+
+                        case "F2":
+                            ejecutarHook("F2");
+                            break;
+
+                        case "F3":
+                            ejecutarHook("F3");
+                            break;
+
+                        case "F5":
+                            ejecutarHook("F5");
+                            break;
+
+                        case "F6":
+                            ejecutarHook("F6");
+                            break;
+
+                        case "F7":
+                            ejecutarHook("F7");
+                            break;
+                    }
+                };
+
+                if (cerrarModalPrimero && ayudaAbierta()) {
+                    cerrarAyudaPOS(run);
+                } else {
+                    run();
+                }
+            }
+
+            $(document)
+                .off("click.posAyudaBtn", "#btnAyuda")
+                .on("click.posAyudaBtn", "#btnAyuda", function (e) {
+                    e.preventDefault();
+                    abrirAyudaPOS();
+                });
+
+            $(document)
+                .off("click.posAyudaAction", ".pos-help-action")
+                .on("click.posAyudaAction", ".pos-help-action", function () {
+                    var accion = $(this).data("accion");
+                    ejecutarAccionAyuda(accion, true);
+                });
+
+            $("#modalAyudaPOS")
+                .off("hidden.bs.modal.posAyuda")
+                .on("hidden.bs.modal.posAyuda", function () {
+                    setTimeout(function () {
+                        limpiarEstadoModalBootstrap();
+
+                        if (!$(".modal.show").length) {
+                            focoCodigo();
+                        }
+                    }, 0);
+                });
+
+            document.addEventListener("keydown", function (e) {
+                var key = e.key;
+                var helpOpen = ayudaAbierta();
+                var otherModalOpen = hayOtroModalAbierto();
+
+                if (key === "F1") {
+                    e.preventDefault();
+
+                    if (helpOpen) {
+                        cerrarAyudaPOS();
+                    } else if (!otherModalOpen) {
+                        abrirAyudaPOS();
+                    }
+                    return;
+                }
+
+                if (otherModalOpen && !helpOpen) {
+                    return;
+                }
+
+                if (key === "F2" || key === "F3" || key === "F5" || key === "F6" || key === "F7") {
+                    e.preventDefault();
+                    ejecutarAccionAyuda(key, false);
+                    return;
+                }
+
+                if (helpOpen) {
+                    if (key === "Escape") {
+                        e.preventDefault();
+                        cerrarAyudaPOS();
+                        return;
+                    }
+
+                    if (key === "Home" || key === "End" || key === "F9" || key === "F10") {
+                        e.preventDefault();
+                        ejecutarAccionAyuda(key, true);
+                    }
+                }
+            }, true);
+
+            /*
+                HOOKS PARA CONECTAR DESPUÉS
+
+                window.posHotkeysHooks.F2 = function () {
+                    // Cuentas corrientes
+                };
+
+                window.posHotkeysHooks.F3 = function () {
+                    // Cálculo de billetes
+                };
+
+                window.posHotkeysHooks.F5 = function () {
+                    // Nueva compra
+                };
+
+                window.posHotkeysHooks.F6 = function () {
+                    // Mis egresos caja
+                };
+
+                window.posHotkeysHooks.F7 = function () {
+                    // Egresos caja
+                };
+            */
+        });
+        // FIN AYUDA POS
+    </script>
 }
 
 <style>
     /* =========================================================
-     0) Base: wrapper de la vista
-     ========================================================= */
+      0) Base: wrapper de la vista
+      ========================================================= */
     .pos-page {
         height: 100%;
         min-height: 0;
@@ -2148,8 +2540,8 @@ else
     }
 
     /* =========================================================
-     1) Variables (claro/oscuro)
-     ========================================================= */
+      1) Variables (claro/oscuro)
+      ========================================================= */
     :root {
         --pos-bg: #ffffff;
         --pos-text: rgba(0,0,0,.88);
@@ -2173,8 +2565,8 @@ else
     }
 
     /* =========================================================
-     2) TOP POS
-     ========================================================= */
+      2) TOP POS
+      ========================================================= */
     .pos-topbar {
         flex: 0 0 auto;
         border: 1px solid var(--posbar-border);
@@ -2227,9 +2619,9 @@ else
     }
 
     /* =========================================================
-     3) POS APP: ocupa TODO el alto restante (desktop)
-     - mata cualquier height:85vh viejo
-     ========================================================= */
+      3) POS APP: ocupa TODO el alto restante (desktop)
+      - mata cualquier height:85vh viejo
+      ========================================================= */
     #pos-app {
         flex: 1 1 auto;
         min-height: 0;
@@ -2270,8 +2662,8 @@ else
             }
 
     /* =========================================================
-     4) CARRITO: scroll SOLO en .zona-tabla
-     ========================================================= */
+      4) CARRITO: scroll SOLO en .zona-tabla
+      ========================================================= */
     .carrito-col {
         display: flex;
         flex-direction: column;
@@ -2306,8 +2698,8 @@ else
     }
 
     /* =========================================================
-     5) Tabla items
-     ========================================================= */
+      5) Tabla items
+      ========================================================= */
     .tabla-productos td {
         border: none;
         padding: .45rem 0 .70rem 0;
@@ -2349,8 +2741,8 @@ else
     }
 
     /* =========================================================
-     6) COLUMNA DERECHA (desktop): todo entra
-     ========================================================= */
+      6) COLUMNA DERECHA (desktop): todo entra
+      ========================================================= */
     @@media (min-width: 992px) {
         #pos-app .col-md-6.d-flex.flex-column {
             min-height: 0;
@@ -2418,8 +2810,8 @@ else
     }
 
     /* =========================================================
-     7) Teclado: SIN scroll interno (desktop)
-     ========================================================= */
+      7) Teclado: SIN scroll interno (desktop)
+      ========================================================= */
     .keyboard-grid {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -2479,8 +2871,8 @@ else
     }
 
     /* =========================================================
-     8) FULLSCREEN botón activo
-     ========================================================= */
+      8) FULLSCREEN botón activo
+      ========================================================= */
     #btn-toggle-fullscreen.is-fullscreen {
         background: #198754;
         border-color: #198754;
@@ -2494,10 +2886,10 @@ else
     }
 
     /* =========================================================
-     9) MOBILE/TABLET: layout responsivo
-     - scroll normal
-     - teclado full width (stack)
-     ========================================================= */
+      9) MOBILE/TABLET: layout responsivo
+      - scroll normal
+      - teclado full width (stack)
+      ========================================================= */
     @@media (max-width: 991.98px) {
         #pos-app,
         #pos-app > .card,
@@ -2593,8 +2985,8 @@ else
     }
 
     /* =========================================================
-    MODO COMPACTO por altura (desktop bajito: 768px/zoom)
-    ========================================================= */
+     MODO COMPACTO por altura (desktop bajito: 768px/zoom)
+     ========================================================= */
     html.pos-compact .pos-topbar {
         padding: .30rem .40rem !important;
         margin-bottom: .35rem !important;
@@ -2635,8 +3027,8 @@ else
     }
 
     /* =========================================================
-    MODO TINY (alto MUY justo: zoom alto / ventanas chicas)
-    ========================================================= */
+     MODO TINY (alto MUY justo: zoom alto / ventanas chicas)
+     ========================================================= */
     html.pos-tiny .keyboard-grid {
         gap: 4px !important;
         grid-auto-rows: minmax(26px, 1fr) !important;
@@ -2653,8 +3045,8 @@ else
     }
 
     /* =========================================================
-    TECLADO: forma y spans SIEMPRE (todas las resoluciones)
-    ========================================================= */
+     TECLADO: forma y spans SIEMPRE (todas las resoluciones)
+     ========================================================= */
     .keyboard-grid {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -2689,8 +3081,8 @@ else
     }
 
     /* =========================================================
-    BLOQUE INFO PRODUCTO: estirar alto y alinear columnas
-    ========================================================= */
+     BLOQUE INFO PRODUCTO: estirar alto y alinear columnas
+     ========================================================= */
     #producto-info {
         /* hace más alto el bloque sin romper en pantallas chicas */
         min-height: clamp(260px, 38vh, 460px);
@@ -2715,8 +3107,8 @@ else
     }
 
     /* =========================================================
-    MOBILE: teclado grande y estable (no se achica)
-    ========================================================= */
+     MOBILE: teclado grande y estable (no se achica)
+     ========================================================= */
     @@media (max-width: 991.98px) {
         .keyboard-grid {
             --key-h: clamp(60px, 9vh, 92px);
@@ -2730,9 +3122,9 @@ else
     }
 
     /* =========================================================
-    Si usás pos-compact / pos-tiny: NO lo dejes bajar demasiado
-    (si no, el teclado se “aplasta”)
-    ========================================================= */
+     Si usás pos-compact / pos-tiny: NO lo dejes bajar demasiado
+     (si no, el teclado se “aplasta”)
+     ========================================================= */
     html.pos-compact .keyboard-grid {
         --key-h: max(44px, clamp(44px, 5.6vh, 64px));
         gap: 6px !important;
@@ -2744,8 +3136,8 @@ else
     }
 
     /* =========================================================
-    CARRITO DESKTOP: tabla con scroll + total fijo visible
-    ========================================================= */
+     CARRITO DESKTOP: tabla con scroll + total fijo visible
+     ========================================================= */
     @@media (min-width: 992px) {
         .carrito-col {
             display: flex;
@@ -2773,8 +3165,8 @@ else
     }
 
     /* =========================================================
-    RESPONSIVE: asegurar scroll de página (si algo lo bloqueó)
-    ========================================================= */
+     RESPONSIVE: asegurar scroll de página (si algo lo bloqueó)
+     ========================================================= */
     @@media (max-width: 991.98px) {
         /* 1) Asegurar que la página pueda scrollear */
         html, body {
@@ -2794,7 +3186,7 @@ else
             overflow: visible !important;
         }
         /* 3) Si querés que el carrito también pueda scrollear internamente en tablet,
-         activalo acá (recomendado para no perder zona-total dentro del panel) */
+          activalo acá (recomendado para no perder zona-total dentro del panel) */
         .carrito-col {
             display: flex;
             flex-direction: column;
@@ -2829,10 +3221,9 @@ else
     }
 
     /* =========================================================
-   RESPONSIVE: resumen producto en 2 filas (Nombre/Precio y Cant/Subtotal)
-   ========================================================= */
+    RESPONSIVE: resumen producto en 2 filas (Nombre/Precio y Cant/Subtotal)
+    ========================================================= */
     @@media (max-width: 991.98px) {
-
         /* la columna del resumen pasa a grilla */
         .producto-resumen {
             display: grid;
@@ -2844,16 +3235,14 @@ else
             column-gap: .60rem;
             row-gap: .25rem;
         }
-
             /* ocultar textos (labels) en responsive */
             .producto-resumen .lbl-precio,
             .producto-resumen .lbl-cantidad,
             .producto-resumen .lbl-subtotal {
                 display: none !important;
             }
-
             /* “aplastar” contenedores para que #prodPrecio / #inputCantidad / #prodSubtotal
-        participen directamente en la grilla */
+         participen directamente en la grilla */
             .producto-resumen > .mb-3 {
                 display: contents;
                 margin: 0 !important;
@@ -2862,7 +3251,6 @@ else
                 .producto-resumen > .mb-3 > .d-flex {
                     display: contents !important;
                 }
-
             /* ubicar cada pieza en su área */
             .producto-resumen #prodNombre {
                 grid-area: nombre;
@@ -2896,15 +3284,12 @@ else
                 font-size: 1.15rem;
                 line-height: 1.1;
             }
-
-
             /* 1) Nombre + grande (aprox +2px) */
             .producto-resumen #prodNombre {
                 font-size: calc(1rem + 4px) !important;
                 font-weight: 100 !important;
                 line-height: 1.15 !important;
             }
-
         /* 2) Más aire vertical entre filas (evita que quede pegado al teclado) */
         .producto-resumen {
             row-gap: .45rem !important; /* antes .25rem */
@@ -2912,12 +3297,10 @@ else
             margin-bottom: .35rem; /* separa del bloque de abajo */
             border-bottom: 1px solid rgba(0,0,0,.10); /* divisoria suave */
         }
-
         /* divisoria en dark-mode */
         html.dark-mode .producto-resumen {
             border-bottom-color: rgba(255,255,255,.14);
         }
-
         /* 3) Un poquito de margen arriba del input para que respire */
         .producto-resumen #inputCantidad {
             margin-top: .10rem;
@@ -2928,5 +3311,4 @@ else
         text-align: right !important;
         direction: ltr;
     }
-
 </style>
