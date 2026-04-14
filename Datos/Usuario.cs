@@ -59,20 +59,30 @@ namespace Datos
         /// conviene agregar overloads en Db que acepten (SqlConnection/SqlTransaction).
         /// Por ahora lo dejo simple con Db.Reader.
         /// </summary>
+        /// modificado el 13/04/2026 xq tiraba error del reader
+
         public Entidades.Usuario getUsuarioById(int idUsuario)
         {
-
-            var oSucursalD = new Datos.Sucursal(_empresa);
-
             const string sql = "SELECT * FROM Usuarios WHERE id = @id";
 
-            var list = Db.Reader(
-                _empresa,
-                sql,
-                CommandType.Text,
-                map: dr =>
+            Entidades.Usuario usuario = null;
+
+            int idSucursal = 0;
+            int idEmpresa = 0;
+
+            using (var con = Db.Open(_empresa))
+            using (var cmd = new SqlCommand(sql, con))
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandTimeout = Conexion.timeOut;
+                cmd.Parameters.Add("@id", SqlDbType.Int).Value = idUsuario;
+
+                using (var dr = cmd.ExecuteReader())
                 {
-                    return new Entidades.Usuario
+                    if (!dr.Read())
+                        return null;
+
+                    usuario = new Entidades.Usuario
                     {
                         Id = Convert.ToInt32(dr["id"]),
                         Nombre = dr["nombre"] == DBNull.Value ? "" : Convert.ToString(dr["nombre"]),
@@ -83,18 +93,21 @@ namespace Datos
                         Activo = dr["activo"] != DBNull.Value && Convert.ToBoolean(dr["activo"]),
                         ColorForm = dr["colorForm"] == DBNull.Value ? "" : Convert.ToString(dr["colorForm"]),
                         IdSucursal = dr["idSucursalUser"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idSucursalUser"]),
-                        IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"]),
-                        Sucursal = dr["idSucursalUser"] == DBNull.Value ? null : oSucursalD.findById(Convert.ToInt32(dr["idSucursalUser"])),
-                        Empresa = dr["idEmpresa"] == DBNull.Value ? null : oSucursalD.findEmpresaById(Convert.ToInt32(dr["idEmpresa"]))
+                        IdEmpresa = dr["idEmpresa"] == DBNull.Value ? 0 : Convert.ToInt32(dr["idEmpresa"])
                     };
-                },
-                setParams: p =>
-                {
-                    p.Add("@id", SqlDbType.Int).Value = idUsuario;
-                }
-            );
 
-            return list.Count > 0 ? list[0] : null;
+                    idSucursal = usuario.IdSucursal;
+                    idEmpresa = usuario.IdEmpresa;
+                }
+            }
+
+            // Relaciones fuera del reader
+            var oSucursalD = new Datos.Sucursal(_empresa);
+
+            usuario.Sucursal = idSucursal > 0 ? oSucursalD.findById(idSucursal) : null;
+            usuario.Empresa = idEmpresa > 0 ? oSucursalD.findEmpresaById(idEmpresa) : null;
+
+            return usuario;
         }
 
         public void addOrEditUser(Entidades.Usuario oUsuarioE)

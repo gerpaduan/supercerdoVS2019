@@ -2061,6 +2061,7 @@
     <Content Include="Views\Ventas\_TicketHTML.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronica.cshtml" />
     <Content Include="Views\Ventas\_FacturaElectronicaModal.cshtml" />
+    <Content Include="Views\Finanzas\_AddOrEditPagoScripts.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

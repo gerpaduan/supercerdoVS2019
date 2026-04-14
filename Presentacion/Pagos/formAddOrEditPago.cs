@@ -492,6 +492,9 @@ namespace Presentacion.Pagos
 
         private bool validar()
         {
+            if (readOnly && idPago != 0)
+                return true;
+
             bool respuesta = true;
 
             if (oPersonaE == null || oPersonaE.idPersona.Equals( FormPrincipal.ParametrosCTX.GetInt(Parametros.IdConsumidorFinal, 0)))
@@ -535,17 +538,17 @@ namespace Presentacion.Pagos
                 //txtImporte.Text = valor.ToString();
             }
 
-            if (txtNroRecibo.Text == "" || txtPersona.Text == "" || comboTipoPago.Text == ""
+            if (txtPersona.Text == "" || comboTipoPago.Text == ""
                 || txtImporte.Text == "")
             {
                 respuesta = false;
 
                 string mensaje = "Complete los siguientes campos: ";
 
-                if (txtNroRecibo.Text == "")
-                {
-                    mensaje += "\n" + "-Número de Recibo";
-                }
+                //if (txtNroRecibo.Text == "")
+                //{
+                //    mensaje += "\n" + "-Número de Recibo";
+                //}
 
                 if (txtPersona.Text == "")
                 {

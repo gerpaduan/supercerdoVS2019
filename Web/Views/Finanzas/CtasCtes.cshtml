@@ -1,13 +1,14 @@
 ﻿@model System.Data.DataTable
 
 @{
+    bool desdePos = ViewBag.DesdePOS != null && (bool)ViewBag.DesdePOS;
+
     ViewBag.Title = "Cuentas Corrientes";
-    Layout = "~/Views/Shared/_LayoutBase.cshtml";
+    Layout = desdePos ? null : "~/Views/Shared/_LayoutBase.cshtml";
 
     string buscar = ViewBag.Buscar ?? "";
     string ordenSaldo = ViewBag.OrdenSaldo ?? "DESC";
 }
-
 <div class="container-fluid">
 
     <!-- PANEL SUPERIOR DE BÚSQUEDA -->
@@ -47,8 +48,10 @@
                                         @col.ColumnName
 
                                         <!-- Botón ordenar -->
-                                        <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC" })"
-                                           class="btn btn-sm btn-light ml-2">
+                                        <a href="@Url.Action("CtasCtes", "Finanzas", new { buscar = buscar, ordenSaldo = ordenSaldo == "ASC" ? "DESC" : "ASC", desdePos = desdePos })"
+                                           class="btn btn-sm btn-light ml-2"
+                                           data-pos-ajax="@(desdePos ? "true" : "false")"
+                                           data-pos-title="Cuentas corrientes">
                                             @(ordenSaldo == "ASC" ? "↓" : "↑")
                                         </a>
                                     </th>
@@ -82,12 +85,7 @@
 </div>
 
 <script>
-
-    // ==============================
-    // FORMATEAR COLUMNA SALDO
-    // ==============================
     window.addEventListener("DOMContentLoaded", function () {
-
         try {
             let cabeceras = document.querySelectorAll("#tablaCtasCtes thead th");
             let indiceSaldo = -1;
@@ -113,105 +111,88 @@
         } catch (e) {
             console.error("Error formateando columna Saldo:", e);
         }
-
     });
 
-    // ==============================
-    // REDIRECCIÓN AL HACER CLICK
-    // ==============================
     function irACtaCte(row) {
-
         let id = row.children[0].innerText.trim();
 
-        // Fecha de hoy menos 1 mes
         let hoy = new Date();
         hoy.setMonth(hoy.getMonth() - 1);
-
-        // Convertir a yyyy-MM-dd
         let fechaDesde = hoy.toISOString().split('T')[0];
 
-        // Armamos la URL con ambos parámetros
         let url = '@Url.Action("CtaCtePersona", "Finanzas")'
-                  + '?idPersona=' + id
-                  + '&fechaDesde=' + fechaDesde;
+                  + '?idPersona=' + encodeURIComponent(id)
+                  + '&fechaDesde=' + encodeURIComponent(fechaDesde)
+                  + '&desdePos=@(desdePos.ToString().ToLower())';
+
+        if (@Html.Raw(desdePos.ToString().ToLower()) && window.POSFinanzas) {
+            window.POSFinanzas.cargar(url, "Cuenta corriente");
+            return;
+        }
 
         window.location.href = url;
     }
 
-    // ==============================
-    // BÚSQUEDA EN VIVO SIN DB
-    // ==============================
     const txtBuscar = document.getElementById("txtBuscar");
 
     txtBuscar.addEventListener("input", function () {
-
         let filtro = this.value.toLowerCase();
         let filas = document.querySelectorAll("#tbodyCtas tr");
 
         filas.forEach(fila => {
-
             let textoFila = fila.innerText.toLowerCase();
-
-            if (textoFila.includes(filtro)) {
-                fila.style.display = "";
-            } else {
-                fila.style.display = "none";
-            }
-
+            fila.style.display = textoFila.includes(filtro) ? "" : "none";
         });
-
     });
-
 </script>
 
 <style>
 
     /* Siempre permitir que el input crezca */
-#txtBuscar {
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
+    #txtBuscar {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
 
-/* ----- PANTALLAS GRANDES ----- */
-.form-inline {
-    display: flex;
-    flex-wrap: nowrap; /* evita que se baje el icono */
-    width: 100%;
-}
-
-.form-inline .form-group {
-    flex: 1; /* ocupa todo el espacio */
-}
-
-.input-group {
-    width: 100%;
-    display: flex;
-    flex-wrap: nowrap; /* icono siempre al lado */
-}
-
-/* ----- PANTALLAS PEQUEÑAS ----- */
-@@media (max-width: 576px) {
-
+    /* ----- PANTALLAS GRANDES ----- */
     .form-inline {
-        display: block;
+        display: flex;
+        flex-wrap: nowrap; /* evita que se baje el icono */
         width: 100%;
     }
 
-    .form-group,
-    .input-group {
-        width: 100% !important;
-    }
+        .form-inline .form-group {
+            flex: 1; /* ocupa todo el espacio */
+        }
 
     .input-group {
+        width: 100%;
         display: flex;
-        flex-wrap: nowrap; /* evita salto de línea */
+        flex-wrap: nowrap; /* icono siempre al lado */
     }
 
-    .input-group .form-control {
-        min-width: 0;
-        flex: 1 1 auto;
-    }
-}
+    /* ----- PANTALLAS PEQUEÑAS ----- */
+    @@media (max-width: 576px) {
 
+        .form-inline {
+            display: block;
+            width: 100%;
+        }
+
+        .form-group,
+        .input-group {
+            width: 100% !important;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: nowrap; /* evita salto de línea */
+        }
+
+            .input-group .form-control {
+                min-width: 0;
+                flex: 1 1 auto;
+            }
+    }
 </style>

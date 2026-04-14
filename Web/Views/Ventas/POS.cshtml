@@ -465,6 +465,27 @@ else
     </div>
 </div>
 
+<div class="modal fade" id="modalFinanzasPOS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalFinanzasPOSTitle">
+                    <i class="fas fa-file-invoice-dollar mr-2"></i>Finanzas
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body p-0" id="contenedorFinanzasPOS">
+                <div class="p-4 text-center text-muted">
+                    Cargando...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL CORTES (Corte Maestro) - reutiliza partial -->
 @{
     var vdBuscarCorteMaestro = new ViewDataDictionary();
@@ -564,12 +585,12 @@ else
 
             <div class="modal-body">
                 @*<div class="alert alert-light pos-help-note mb-3">
-                    En <strong>PC</strong> podés usar los atajos del teclado. En <strong>celular</strong>, tocá una acción para ejecutar lo mismo.
-                </div>
+                        En <strong>PC</strong> podés usar los atajos del teclado. En <strong>celular</strong>, tocá una acción para ejecutar lo mismo.
+                    </div>
 
-                <div class="pos-help-subtitle">
-                    F1 abre o cierra esta ayuda.
-                </div>*@
+                    <div class="pos-help-subtitle">
+                        F1 abre o cierra esta ayuda.
+                    </div>*@
 
                 <div class="row pos-help-grid">
                     <div class="col-12 col-md-6">
@@ -2524,6 +2545,149 @@ else
             */
         });
         // FIN AYUDA POS
+    </script>
+
+    <script>
+    // INICIO FINANZAS POS
+    $(function () {
+        if (!document.getElementById("pos-app")) return;
+
+        function focoCodigoPOS() {
+            var inp = document.getElementById("inputCodigo");
+            if (inp) {
+                inp.focus();
+                try { inp.select(); } catch (e) { }
+            }
+        }
+
+        function renderConScripts(html) {
+            var $contenedor = $("#contenedorFinanzasPOS");
+            $contenedor.html(html);
+
+            $contenedor.find("script").each(function () {
+                var script = this;
+                var src = script.getAttribute("src");
+
+                if (src) {
+                    if (document.querySelector('script[data-pos-loaded="' + src + '"]')) {
+                        script.parentNode.removeChild(script);
+                        return;
+                    }
+
+                    var nuevo = document.createElement("script");
+                    nuevo.src = src;
+                    nuevo.async = false;
+                    nuevo.setAttribute("data-pos-loaded", src);
+                    document.body.appendChild(nuevo);
+                    script.parentNode.removeChild(script);
+                    return;
+                }
+
+                $.globalEval(script.text || script.textContent || script.innerHTML || "");
+                script.parentNode.removeChild(script);
+            });
+        }
+
+        function mostrarErrorFinanzas(msg) {
+            var html = '<div class="alert alert-danger m-3 mb-0">' + msg + '</div>';
+            $("#contenedorFinanzasPOS").html(html);
+        }
+
+        window.POSFinanzas = {
+            cargar: function (url, titulo) {
+                $("#modalFinanzasPOSTitle").text(titulo || "Finanzas");
+                $("#contenedorFinanzasPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                $("#modalFinanzasPOS").modal("show");
+
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    cache: false,
+                    success: function (html) {
+                        renderConScripts(html);
+                    },
+                    error: function () {
+                        mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
+                    }
+                });
+            },
+
+            abrirCtasCtes: function () {
+                var url = '@Url.Action("CtasCtes", "Finanzas", new { desdePos = true })';
+                this.cargar(url, "Cuentas corrientes");
+            },
+
+            abrirCtaCtePersona: function (idPersona, fechaDesde) {
+                var url = '@Url.Action("CtaCtePersona", "Finanzas")'
+                    + '?idPersona=' + encodeURIComponent(idPersona)
+                    + '&desdePos=true';
+
+                if (fechaDesde) {
+                    url += '&fechaDesde=' + encodeURIComponent(fechaDesde);
+                }
+
+                this.cargar(url, "Cuenta corriente");
+            },
+
+            abrirPago: function (idPersona, returnUrl, idPago) {
+                var url = '@Url.Action("AddOrEditPago", "Finanzas")'
+                    + '?idPersona=' + encodeURIComponent(idPersona)
+                    + '&desdePos=true';
+
+                if (returnUrl) {
+                    url += '&returnUrl=' + encodeURIComponent(returnUrl);
+                }
+
+                if (idPago) {
+                    url += '&idPago=' + encodeURIComponent(idPago);
+                }
+
+                this.cargar(url, "Pago / Cobro");
+            }
+        };
+
+        window.posHotkeysHooks = window.posHotkeysHooks || {};
+        window.posHotkeysHooks.F2 = function () {
+            window.POSFinanzas.abrirCtasCtes();
+        };
+
+        $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+            var titulo = $(this).data("pos-title") || "Finanzas";
+            window.POSFinanzas.cargar(url, titulo);
+        });
+
+        $(document).on("submit", "#modalFinanzasPOS form[data-pos-ajax='true'][method='get'], #modalFinanzasPOS form[data-pos-ajax='true']:not([method])", function (e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var url = $form.attr("action");
+            var query = $form.serialize();
+
+            if (url.indexOf("?") >= 0) {
+                url += "&" + query;
+            } else {
+                url += "?" + query;
+            }
+
+            var titulo = $form.data("pos-title") || "Finanzas";
+            window.POSFinanzas.cargar(url, titulo);
+        });
+
+        $("#modalFinanzasPOS").on("hidden.bs.modal", function (e) {
+            if (e.target !== this) return;
+
+            $("#contenedorFinanzasPOS").html("");
+
+            setTimeout(function () {
+                if (!$(".modal.show").length) {
+                    focoCodigoPOS();
+                }
+            }, 0);
+        });
+    });
+    // FIN FINANZAS POS
     </script>
 }
 

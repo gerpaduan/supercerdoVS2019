@@ -52,14 +52,14 @@ namespace Web.Controllers
         // ============================================================
         // GET: /Finanzas/CtasCtes
         // ============================================================
-        public ActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC")
+
+        public ActionResult CtasCtes(string buscar = "", string ordenSaldo = "DESC", bool desdePos = false)
         {
             try
             {
-                // ==============================
-                // Validación de permisos IGUAL que WinForms
-                // ==============================
-                if (!DesdePOS)
+                bool modoPos = desdePos || DesdePOS;
+
+                if (!modoPos)
                 {
                     var user = Session["Usuario"] as Entidades.Usuario;
                     if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtasCtes, null))
@@ -70,46 +70,49 @@ namespace Web.Controllers
                 }
 
                 ViewBag.Buscar = buscar;
-                ViewBag.DesdePOS = DesdePOS;
+                ViewBag.DesdePOS = desdePos;
                 ViewBag.OrdenSaldo = ordenSaldo;
 
-                // ==============================
-                // Obtener DataTable como WinForms
-                // ==============================
                 DataTable dt = oCtaCteN.obtenerCtasCtes(buscar, null);
 
-
-                // Ordenar por saldo
                 DataView dv = dt.DefaultView;
                 dv.Sort = $"Saldo {ordenSaldo}";
                 dt = dv.ToTable();
 
-                return View("CtasCtes", dt); // usa la vista que generamos antes
+                if (desdePos)
+                    return PartialView("CtasCtes", dt);
+
+                return View("CtasCtes", dt);
             }
             catch (Exception ex)
             {
+                if (desdePos)
+                    return Content("<div class='alert alert-danger m-3'>Error: " + HttpUtility.HtmlEncode(ex.Message) + "</div>");
+
                 return Content("Error: " + ex.Message);
             }
         }
 
-
         // GET: Finanzas/CtaCtePersona
-        public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde)
+        public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool desdePos = false)
         {
             try
             {
-                var user = Session["Usuario"] as Entidades.Usuario;
-                if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtaCtePersona, null))
+                bool modoPos = desdePos || DesdePOS;
+
+                if (!modoPos)
                 {
-                    ViewBag.Seccion = "Cuenta Corriente Persona";
-                    return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    var user = Session["Usuario"] as Entidades.Usuario;
+                    if (!PermisosHelper.TienePermiso(Session, Permisos.Finanza.VerCtaCtePersona, null))
+                    {
+                        ViewBag.Seccion = "Cuenta Corriente Persona";
+                        return View("~/Views/Shared/AccesoDenegado.cshtml");
+                    }
                 }
 
-                // Fecha por defecto = hoy
                 if (!fechaDesde.HasValue)
                     fechaDesde = DateTime.Now.Date;
 
-                // Obtengo movimientos desde la base
                 DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value);
 
                 decimal saldo = 0;
@@ -121,20 +124,29 @@ namespace Web.Controllers
                         saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
                 }
 
-                // Datos para la vista
                 ViewBag.IdPersona = idPersona;
-                ViewBag.Persona = oPersonasN.findById(idPersona);  // opcional
+                ViewBag.Persona = oPersonasN.findById(idPersona);
                 ViewBag.SaldoPersona = saldo;
-                ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd"); ;
+                ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd");
+                ViewBag.DesdePOS = desdePos;
+
+                if (desdePos)
+                    return PartialView("CtaCtePersona", dtMov);
 
                 return View(dtMov);
             }
             catch (Exception ex)
             {
                 ViewBag.Error = "Error al cargar cuenta corriente: " + ex.Message;
+                ViewBag.DesdePOS = desdePos;
+
+                if (desdePos)
+                    return PartialView("CtaCtePersona", new DataTable());
+
                 return View(new DataTable());
             }
-}
+        }
+
 
         // POST: Finanzas/CtaCtePersona
         [HttpPost]
@@ -243,13 +255,14 @@ namespace Web.Controllers
         // ============================================================
         //  AGREGAR COBRO / PAGO (placeholder)
         // ============================================================
-        public ActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0)
+
+        public ActionResult AddOrEditPago(int idPersona, string returnUrl, int idPago = 0, bool desdePos = false)
         {
-            var sucursales = oSucursalN.findAll(); // Obtiene List<Entidades.Sucursal>
+            var sucursales = oSucursalN.findAll();
 
-            ViewBag.Sucursales = sucursales;            
-
+            ViewBag.Sucursales = sucursales;
             ViewBag.ReturnUrl = returnUrl;
+            ViewBag.DesdePOS = desdePos;
 
             if (!string.IsNullOrEmpty(returnUrl) && idPago == 0)
             {
@@ -258,8 +271,6 @@ namespace Web.Controllers
                 );
             }
 
-
-            // Obtengo movimientos desde la base
             DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, DateTime.Today);
 
             decimal saldo = 0;
@@ -271,41 +282,43 @@ namespace Web.Controllers
                     saldo = Convert.ToDecimal(ultimaFila["Saldo"]);
             }
 
-            // Datos para la vista
             ViewBag.IdPersona = idPersona;
             ViewBag.Persona = oPersonasN.findById(idPersona);
-            ViewBag.SaldoPersona = saldo; 
+            ViewBag.SaldoPersona = saldo;
             ViewBag.Bancos = oCtaCteN.getBancos();
 
             Pago model;
 
             if (idPago == 0)
             {
-                model = new Pago();          // ← IMPORTANTE
-                model.Fecha = DateTime.Now;  // valores por defecto
-                model.AProveedor = true; // 👈 por defecto "Pagar"
-            }   
+                model = new Pago();
+                model.Fecha = DateTime.Now;
+                model.AProveedor = true;
+            }
             else
             {
-                model = oCtaCteN.getPagoById(idPago);                
+                model = oCtaCteN.getPagoById(idPago);
                 if (model == null)
                     return HttpNotFound();
             }
+
+            if (desdePos)
+                return PartialView("AddOrEditPago", model);
 
             return View(model);
         }
 
         [HttpPost]
-        public ActionResult AddOrEditPagoPost(Pago oPagoE,
+        public ActionResult AddOrEditPagoPost(
+            Pago oPagoE,
             string returnUrl,
             int SucursalId,
             int idPersona,
             string importe,
             string Efectivo,
-            string ChequesJson)
+            string ChequesJson,
+            bool desdePos = false)
         {
-
-            // reconstruís los objetos completos
             oPagoE.Sucursal = oSucursalN.findById(SucursalId);
             oPagoE.Persona = oPersonasN.findById(idPersona);
 
@@ -316,35 +329,48 @@ namespace Web.Controllers
                     oPagoE.Cheques[index] = oCtaCteN.getChequePorIDorNro(oPagoE.Cheques[index].Id, "");
             }
             else
+            {
                 oPagoE.Cheques = new List<Cheque>();
-
-            //setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
-            //oPagoE.NroRecibo = setearNroRecibo();//se vuelve a setear el nro recibo para que no se dupliquen
+            }
 
             oPagoE.Importe = ParseFloat(importe);
             oPagoE.Efectivo = Efectivo == null ? 0 : ParseFloat(Efectivo);
-            oPagoE.Banco = "";// txtBanco.Text;
-            oPagoE.NroCheque = "";// txtNroCheque.Text;
-            oPagoE.TitularCheque = "";// txtTitular.Text;
-            
-            oPagoE.CreadoPor = oPagoE.Id > 0 ?
-                oCtaCteN.getPagoById(oPagoE.Id).CreadoPor : 
-                Session["Usuario"] as Entidades.Usuario; ;
-            oPagoE.ActualizadoPor = oPagoE.Id > 0 ? Session["Usuario"] as Entidades.Usuario : oPagoE.ActualizadoPor;
+            oPagoE.Banco = "";
+            oPagoE.NroCheque = "";
+            oPagoE.TitularCheque = "";
+
+            oPagoE.CreadoPor = oPagoE.Id > 0
+                ? oCtaCteN.getPagoById(oPagoE.Id).CreadoPor
+                : Session["Usuario"] as Entidades.Usuario;
+
+            oPagoE.ActualizadoPor = oPagoE.Id > 0
+                ? Session["Usuario"] as Entidades.Usuario
+                : oPagoE.ActualizadoPor;
 
             oPagoE.FormaPago = oPagoE.FormaPago_.ToString();
 
-            ///VALIDAR PAGO
             var (ok, mensaje) = oCtaCteN.ValidarPago(oPagoE);
 
             if (!ok)
-            {
                 return Json(new { ok = false, mensaje });
-            }
 
-            ///Cuenta Corriente y generar Egreso de Caja si pago/cobro se genera desde POS
-            _ = oCtaCteN.addOrEditPago(oPagoE, null, null);//, oCierreCajaE, oPagoSinMod);
-                                   
+            _ = oCtaCteN.addOrEditPago(oPagoE, null, null);
+
+            if (desdePos)
+            {
+                //TODO: mandar a la cta cte de la persona en POS 
+                string urlRetornoPos = !string.IsNullOrEmpty(returnUrl)
+                    ? returnUrl
+                    : Url.Action("CtaCtePersona", "Finanzas", new
+                    {
+                        idPersona = idPersona,
+                        fechaDesde = DateTime.Today.ToString("yyyy-MM-dd"),
+                        desdePos = true
+                    });
+
+                urlRetornoPos = Url.Action("POS", "Ventas");
+                return Json(new { ok = true, redirectUrl = urlRetornoPos });
+            }
 
             if (!string.IsNullOrEmpty(returnUrl))
                 return Json(new { ok = true, redirectUrl = returnUrl });
@@ -536,3 +562,4 @@ namespace Web.Controllers
     }
     
 }
+
