@@ -318,7 +318,7 @@ namespace Negocio
             // PERSONA
             // ===============================
             if (oPagoE.Persona == null ||
-                oPagoE.Persona.idPersona == Entidades.Persona.idConsumidorFinal)
+                oPagoE.Persona.idPersona == _param.GetInt(ParamKeys.IdConsumidorFinal, 0))
             {
                 return (false,
                     "Debe seleccionar una persona válida y diferente a Consumidor Final.\n" +
