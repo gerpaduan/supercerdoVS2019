@@ -360,10 +360,12 @@ namespace Web.Controllers
             {
                 model = new Pago();
                 model.Fecha = DateTime.Now;
-                model.AProveedor = true;
+                model.AProveedor = !desdePos;
 
                 var user = Session["Usuario"] as Entidades.Usuario;
                 model.Sucursal = user.Sucursal;
+
+                model.NroRecibo = oCtaCteN.getNroReciboAutomatico(model.Sucursal.idSucursal);                
             }
             else
             {

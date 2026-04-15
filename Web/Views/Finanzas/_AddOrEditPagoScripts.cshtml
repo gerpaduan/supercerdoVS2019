@@ -73,6 +73,8 @@
 
     $(document).ready(function () {
 
+        $("#SucursalId").focus();
+
         function actualizarVisibilidad() {
             const $formaPago = $("#formaPago");
             const valor = ($formaPago.val() || "").toString().trim().toLowerCase();

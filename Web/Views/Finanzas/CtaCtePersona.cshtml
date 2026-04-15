@@ -172,7 +172,7 @@
 
                                 <td>@Convert.ToDateTime(row["Fecha"]).ToString("dd/MM/yyyy")</td>
                                 <td>@row["Tabla"]</td>
-                                <td>@row["Detalle"]</td>
+                                <td>[ID: @row["IdTabla"]] @row["Detalle"]</td>
 
                                 <td style="text-align:right; color:@(Convert.ToDecimal(row["Importe"]) >= 0 ? "green" : "red"); font-weight:bold;">
                                     @Convert.ToDecimal(row["Importe"]).ToString("N2")
