@@ -150,7 +150,7 @@ namespace Web.Controllers
 
                 //VALIDAR VENTA EN CTACTE sea solo en Cta Cte Y NO A 
                 if (venta.EnCtaCte && (!venta.FormaPago.ToString().Equals(Entidades.Venta.formaPagoEnum.CtaCte.ToString()) ||
-                    venta.Persona.idPersona.Equals(Entidades.Persona.idConsumidorFinal)))
+                    venta.Persona.idPersona.Equals(param.GetInt(ParamKeys.IdConsumidorFinal, 0))))
                 {
                     string msg_ = "Las ventas en Cuenta Corriente (CTA.CTE.) no pueden ser a Consumidor Final" +
                         "\n\nPor favor, revisa los datos ingresados y vuelva a intentarlo.";
