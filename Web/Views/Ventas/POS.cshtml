@@ -465,7 +465,7 @@ else
     </div>
 </div>
 
-<div class="modal fade" id="modalFinanzasPOS" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="modalFinanzasPOS" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-light">
@@ -478,6 +478,27 @@ else
             </div>
 
             <div class="modal-body p-0" id="contenedorFinanzasPOS">
+                <div class="p-4 text-center text-muted">
+                    Cargando...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPagoPOS" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalPagoPOSTitle">
+                    <i class="fas fa-money-check-alt mr-2"></i>Pago / Cobro
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body p-0" id="contenedorPagoPOS">
                 <div class="p-4 text-center text-muted">
                     Cargando...
                 </div>
@@ -584,13 +605,6 @@ else
             </div>
 
             <div class="modal-body">
-                @*<div class="alert alert-light pos-help-note mb-3">
-                        En <strong>PC</strong> podés usar los atajos del teclado. En <strong>celular</strong>, tocá una acción para ejecutar lo mismo.
-                    </div>
-
-                    <div class="pos-help-subtitle">
-                        F1 abre o cierra esta ayuda.
-                    </div>*@
 
                 <div class="row pos-help-grid">
                     <div class="col-12 col-md-6">
@@ -2097,11 +2111,6 @@ else
         // FIN MODAL LINEA VENTA
         ////////////////////
 
-
-        ////////////////////
-        // FIN MODAL LINEA VENTA
-        ////////////////////
-
         // ===============================
         // HELPERS NUMÉRICOS (AR)
         // ===============================
@@ -2560,37 +2569,81 @@ else
             }
         }
 
-        function renderConScripts(html) {
-            var $contenedor = $("#contenedorFinanzasPOS");
-            $contenedor.html(html);
+        function renderConScripts(html, selectorContenedor) {
+            var $contenedor = $(selectorContenedor);
+            var $tmp = $("<div>").html(html);
+            var scripts = [];
 
-            $contenedor.find("script").each(function () {
-                var script = this;
-                var src = script.getAttribute("src");
+            $tmp.find("script").each(function () {
+                scripts.push({
+                    src: this.getAttribute("src"),
+                    code: this.text || this.textContent || this.innerHTML || ""
+                });
+                $(this).remove();
+            });
 
-                if (src) {
-                    if (document.querySelector('script[data-pos-loaded="' + src + '"]')) {
-                        script.parentNode.removeChild(script);
+            $contenedor.html($tmp.html());
+
+            function normalizarSrc(src) {
+                try {
+                    return new URL(src, document.baseURI).href;
+                } catch (e) {
+                    return src;
+                }
+            }
+
+            function yaExisteScript(srcNormalizado) {
+                return Array.from(document.scripts).some(function (s) {
+                    return s.src && normalizarSrc(s.src) === srcNormalizado;
+                });
+            }
+
+            function ejecutarScript(index) {
+                if (index >= scripts.length) return;
+
+                var item = scripts[index];
+
+                if (item.src) {
+                    var srcNormalizado = normalizarSrc(item.src);
+
+                    if (yaExisteScript(srcNormalizado)) {
+                        ejecutarScript(index + 1);
                         return;
                     }
 
                     var nuevo = document.createElement("script");
-                    nuevo.src = src;
+                    nuevo.src = srcNormalizado;
                     nuevo.async = false;
-                    nuevo.setAttribute("data-pos-loaded", src);
+                    nuevo.setAttribute("data-pos-loaded", "true");
+
+                    nuevo.onload = function () {
+                        ejecutarScript(index + 1);
+                    };
+
+                    nuevo.onerror = function () {
+                        console.error("No se pudo cargar el script:", srcNormalizado);
+                        ejecutarScript(index + 1);
+                    };
+
                     document.body.appendChild(nuevo);
-                    script.parentNode.removeChild(script);
                     return;
                 }
 
-                $.globalEval(script.text || script.textContent || script.innerHTML || "");
-                script.parentNode.removeChild(script);
-            });
+                $.globalEval(item.code);
+                ejecutarScript(index + 1);
+            }
+
+            ejecutarScript(0);
         }
 
         function mostrarErrorFinanzas(msg) {
             var html = '<div class="alert alert-danger m-3 mb-0">' + msg + '</div>';
             $("#contenedorFinanzasPOS").html(html);
+        }
+
+        function mostrarErrorPago(msg) {
+            var html = '<div class="alert alert-danger m-3 mb-0">' + msg + '</div>';
+            $("#contenedorPagoPOS").html(html);
         }
 
         window.POSFinanzas = {
@@ -2604,10 +2657,32 @@ else
                     type: "GET",
                     cache: false,
                     success: function (html) {
-                        renderConScripts(html);
+                        renderConScripts(html, "#contenedorFinanzasPOS");
                     },
                     error: function () {
                         mostrarErrorFinanzas("No se pudo cargar el contenido de finanzas.");
+                    }
+                });
+            },
+
+            cargarPago: function (url, titulo) {
+                $("#modalPagoPOSTitle").text(titulo || "Pago / Cobro");
+                $("#contenedorPagoPOS").html('<div class="p-4 text-center text-muted">Cargando...</div>');
+                $("#modalPagoPOS").modal("show");
+
+                setTimeout(function () {
+                    $("body").addClass("modal-open");
+                }, 0);
+
+                $.ajax({
+                    url: url,
+                    type: "GET",
+                    cache: false,
+                    success: function (html) {
+                        renderConScripts(html, "#contenedorPagoPOS");
+                    },
+                    error: function () {
+                        mostrarErrorPago("No se pudo cargar el pago.");
                     }
                 });
             },
@@ -2642,7 +2717,7 @@ else
                     url += '&idPago=' + encodeURIComponent(idPago);
                 }
 
-                this.cargar(url, "Pago / Cobro");
+                this.cargarPago(url, "Pago / Cobro");
             }
         };
 
@@ -2653,8 +2728,15 @@ else
 
         $(document).on("click", "#modalFinanzasPOS a[data-pos-ajax='true']", function (e) {
             e.preventDefault();
+
             var url = $(this).attr("href");
             var titulo = $(this).data("pos-title") || "Finanzas";
+
+            if ((url && url.indexOf("/Finanzas/AddOrEditPago") >= 0) || $(this).data("pos-modal") === "pago") {
+                window.POSFinanzas.cargarPago(url, titulo || "Pago / Cobro");
+                return;
+            }
+
             window.POSFinanzas.cargar(url, titulo);
         });
 
@@ -2675,6 +2757,29 @@ else
             window.POSFinanzas.cargar(url, titulo);
         });
 
+        $("#modalPagoPOS").on("shown.bs.modal", function () {
+            setTimeout(function () {
+                $("body").addClass("modal-open");
+            }, 0);
+        });
+
+        $("#modalPagoPOS").on("hidden.bs.modal", function (e) {
+            if (e.target !== this) return;
+
+            $("#contenedorPagoPOS").html("");
+
+            setTimeout(function () {
+                if ($("#modalFinanzasPOS").hasClass("show")) {
+                    $("body").addClass("modal-open");
+                    return;
+                }
+
+                if (!$(".modal.show").length) {
+                    focoCodigoPOS();
+                }
+            }, 0);
+        });
+
         $("#modalFinanzasPOS").on("hidden.bs.modal", function (e) {
             if (e.target !== this) return;
 
@@ -2686,6 +2791,20 @@ else
                 }
             }, 0);
         });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                const $modalFinanzas = $('#modalFinanzasPOS');
+                const $modalActivo = $('.modal.show').last();
+
+                // Verificamos si el modal de Finanzas POS está abierto
+                // y además es el modal activo
+                if ($modalFinanzas.hasClass('show') && $modalActivo.is($modalFinanzas)) {
+                    $modalFinanzas.modal('hide');
+                }
+            }
+        });
+
     });
     // FIN FINANZAS POS
     </script>

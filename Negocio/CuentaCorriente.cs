@@ -335,6 +335,15 @@ namespace Negocio
                 return (false, "La fecha del pago debe ser menor a la fecha y hora actual.");
 
             // ===============================
+            // SUCURSAL
+            // ===============================
+            if (oPagoE.Sucursal == null)
+            {
+                return (false,
+                    "Debe seleccionar una sucursal.");
+            }
+
+            // ===============================
             // FORMA DE PAGO
             // ===============================
             if (string.IsNullOrWhiteSpace(oPagoE.FormaPago))

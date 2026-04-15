@@ -92,9 +92,8 @@ namespace Web.Controllers
                 return Content("Error: " + ex.Message);
             }
         }
-
         // GET: Finanzas/CtaCtePersona
-        public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool desdePos = false)
+        public ActionResult CtaCtePersona(int idPersona, DateTime? fechaDesde, bool mostrarAnulados = false, bool desdePos = false)
         {
             try
             {
@@ -115,6 +114,13 @@ namespace Web.Controllers
 
                 DataTable dtMov = oCtaCteN.getCtaCteByIdPersona(idPersona, fechaDesde.Value);
 
+                // MISMA LÓGICA QUE EN WINFORMS:
+                // si NO mostrarAnulados => oculta repetidos y deja el de mayor ID
+                if (!mostrarAnulados)
+                {
+                    dtMov = FiltrarRegistrosRepetidos(dtMov);
+                }
+
                 decimal saldo = 0;
                 if (dtMov != null && dtMov.Rows.Count > 0)
                 {
@@ -128,6 +134,7 @@ namespace Web.Controllers
                 ViewBag.Persona = oPersonasN.findById(idPersona);
                 ViewBag.SaldoPersona = saldo;
                 ViewBag.FechaDesde = fechaDesde.Value.ToString("yyyy-MM-dd");
+                ViewBag.MostrarAnulados = mostrarAnulados;
                 ViewBag.DesdePOS = desdePos;
 
                 if (desdePos)
@@ -139,6 +146,7 @@ namespace Web.Controllers
             {
                 ViewBag.Error = "Error al cargar cuenta corriente: " + ex.Message;
                 ViewBag.DesdePOS = desdePos;
+                ViewBag.MostrarAnulados = mostrarAnulados;
 
                 if (desdePos)
                     return PartialView("CtaCtePersona", new DataTable());
@@ -147,6 +155,65 @@ namespace Web.Controllers
             }
         }
 
+        private DataTable FiltrarRegistrosRepetidos(DataTable dtMov)
+        {
+            if (dtMov == null)
+                return new DataTable();
+
+            if (dtMov.Rows.Count == 0)
+                return dtMov;
+
+            // Trabajamos sobre una copia para no tocar la original inesperadamente
+            DataTable dt = dtMov.Copy();
+
+            int[] aBorrar = new int[dt.Rows.Count];
+            for (int i = 0; i < aBorrar.Length; i++)
+            {
+                aBorrar[i] = -1;
+            }
+
+            for (int filaPrimer = 0; filaPrimer < dt.Rows.Count; filaPrimer++)
+            {
+                if (dt.Rows[filaPrimer].RowState == DataRowState.Deleted)
+                    continue;
+
+                for (int fila = 0; fila < dt.Rows.Count; fila++)
+                {
+                    if (dt.Rows[fila].RowState == DataRowState.Deleted)
+                        continue;
+
+                    if (aBorrar[filaPrimer] == 1)
+                        break;
+
+                    string tablaPrimer = dt.Rows[filaPrimer]["tabla"].ToString();
+                    string idtablaPrimer = dt.Rows[filaPrimer]["idTabla"].ToString();
+                    string sucursalPrimer = dt.Rows[filaPrimer]["sucursal"].ToString();
+                    int idPrimer = Convert.ToInt32(dt.Rows[filaPrimer]["id"].ToString());
+
+                    string tabla = dt.Rows[fila]["tabla"].ToString();
+                    string idtabla = dt.Rows[fila]["idTabla"].ToString();
+                    string sucursal = dt.Rows[fila]["sucursal"].ToString();
+                    int id = Convert.ToInt32(dt.Rows[fila]["id"].ToString());
+
+                    if (tabla.Equals(tablaPrimer) &&
+                        idtabla.Equals(idtablaPrimer) &&
+                        sucursal.Equals(sucursalPrimer) &&
+                        id < idPrimer)
+                    {
+                        aBorrar[fila] = 1;
+                    }
+                }
+            }
+
+            for (int i = 0; i < aBorrar.Length; i++)
+            {
+                if (aBorrar[i] == 1)
+                    dt.Rows[i].Delete();
+            }
+
+            dt.AcceptChanges();
+            return dt;
+        }
 
         // POST: Finanzas/CtaCtePersona
         [HttpPost]
@@ -294,6 +361,9 @@ namespace Web.Controllers
                 model = new Pago();
                 model.Fecha = DateTime.Now;
                 model.AProveedor = true;
+
+                var user = Session["Usuario"] as Entidades.Usuario;
+                model.Sucursal = user.Sucursal;
             }
             else
             {
@@ -312,11 +382,11 @@ namespace Web.Controllers
         public ActionResult AddOrEditPagoPost(
             Pago oPagoE,
             string returnUrl,
-            int SucursalId,
-            int idPersona,
-            string importe,
-            string Efectivo,
-            string ChequesJson,
+            int SucursalId = 0,
+            int idPersona = 0,
+            string importe = "",
+            string Efectivo = "",
+            string ChequesJson = "",
             bool desdePos = false)
         {
             oPagoE.Sucursal = oSucursalN.findById(SucursalId);
@@ -352,13 +422,19 @@ namespace Web.Controllers
             var (ok, mensaje) = oCtaCteN.ValidarPago(oPagoE);
 
             if (!ok)
-                return Json(new { ok = false, mensaje });
-
+            {
+                return Json(new
+                {
+                    ok = false,
+                    mensaje = string.IsNullOrWhiteSpace(mensaje)
+                        ? "No se pudo validar el pago."
+                        : mensaje
+                });
+            }
             _ = oCtaCteN.addOrEditPago(oPagoE, null, null);
 
             if (desdePos)
             {
-                //TODO: mandar a la cta cte de la persona en POS 
                 string urlRetornoPos = !string.IsNullOrEmpty(returnUrl)
                     ? returnUrl
                     : Url.Action("CtaCtePersona", "Finanzas", new
@@ -368,15 +444,23 @@ namespace Web.Controllers
                         desdePos = true
                     });
 
-                urlRetornoPos = Url.Action("POS", "Ventas");
-                return Json(new { ok = true, redirectUrl = urlRetornoPos });
+                return Json(new
+                {
+                    ok = true,
+                    redirectUrl = urlRetornoPos,
+                    cerrarModalPago = true
+                });
             }
 
             if (!string.IsNullOrEmpty(returnUrl))
                 return Json(new { ok = true, redirectUrl = returnUrl });
 
+            if (Request.IsAjaxRequest())
+                return Json(new { ok = true, redirectUrl = Url.Action("CtasCtes") });
+
             return RedirectToAction("CtasCtes");
         }
+
 
         [HttpGet]
         public JsonResult BuscarChequePorNro(string numero, int pagoId = 0, bool esAProveedor = true)

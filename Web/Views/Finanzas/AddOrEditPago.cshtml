@@ -9,12 +9,30 @@
 
     string persona = ViewBag.Persona.RazonSocial;
     decimal saldo = ViewBag.SaldoPersona;
+
+    string returnUrlView = ViewBag.ReturnUrl as string;
+    string urlVolver = !string.IsNullOrWhiteSpace(returnUrlView)
+        ? returnUrlView
+        : Url.Action("CtaCtePersona", "Finanzas", new
+        {
+            idPersona = ViewBag.Persona.IdPersona,
+            fechaDesde = DateTime.Today.ToString("yyyy-MM-dd")
+        });
 }
 
 <div class="container-fluid">
 
     <div class="row">
         <div class="col-12 col-lg-8 mx-auto">
+
+            <div class="mb-3">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        onclick="volverDesdePago()">
+                    <i class="fas fa-arrow-left mr-1"></i> Volver
+                </button>
+            </div>
+
             <!-- =======================
              CABECERA PERSONA + SALDO
              ======================= -->
@@ -43,34 +61,29 @@
                     @using (Html.BeginForm("AddOrEditPagoPost", "Finanzas", FormMethod.Post, new { @id = "formPago" }))
                     {
                         <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                        <input type="hidden" id="urlVolverPago" value="@urlVolver" />
                         @Html.HiddenFor(m => m.Id)
-
 
                         <input type="hidden" id="idPersona" name="idPersona" value="@ViewBag.Persona.IdPersona" />
                         <input type="hidden" name="desdePos" value="@(desdePos.ToString().ToLower())" />
-                        <div id="comboSucursales" class="mb-3">
 
-                            <!-- COMBO SUCURSALES -->
+                        <div id="comboSucursales" class="mb-3">
                             <div class="form-group">
                                 <label>Sucursal</label>
-                                <select class="form-control" id="SucursalId" name="SucursalId"
-                                        onchange="document.getElementById('formStock').submit()">
+                                <select class="form-control" id="SucursalId" name="SucursalId">
                                     <option value="">- Seleccione sucursal -</option>
 
                                     @foreach (var s in (List<Entidades.Sucursal>)ViewBag.Sucursales)
                                     {
                                         <option value="@s.IdSucursal"
-                                                @( (Model.Sucursal?.IdSucursal == s.IdSucursal || ViewBag.SucursalId == s.IdSucursal) ? "selected" : "" )>
+                                                @((Model.Sucursal?.IdSucursal == s.IdSucursal || ViewBag.SucursalId == s.IdSucursal) ? "selected" : "")>
                                             @s.SucursalNombre
                                         </option>
-
                                     }
                                 </select>
                             </div>
-
                         </div>
 
-                        <!-- Tipo Operación -->
                         <div class="form-group">
                             <label>Tipo de Operación</label>
                             @Html.DropDownListFor(
@@ -84,7 +97,6 @@
                             )
                         </div>
 
-                        <!-- Fecha -->
                         <div class="form-group">
                             @Html.LabelFor(m => m.Fecha)
                             @Html.TextBoxFor(
@@ -94,33 +106,27 @@
                             )
                         </div>
 
-
-                        <!-- nroRecibo -->
                         <div class="form-group">
                             @Html.LabelFor(m => m.NroRecibo)
                             @Html.TextBoxFor(m => m.NroRecibo, new { @class = "form-control", type = "nroRecibo" })
                         </div>
 
-                        <!-- Forma de Pago -->
                         <div class="form-group">
                             @Html.Label("Forma de pago")
                             @Html.EnumDropDownListFor(m => m.FormaPago_, new { @class = "form-control", id = "formaPago" })
                         </div>
 
-                        <!-- Importe -->
                         <div class="form-group importe-destacado">
                             <label>Importe</label>
                             @Html.TextBoxFor(m => m.Importe, new
                             {
                                 @class = "form-control solo-decimal",
                                 id = "importe",
-                                type = "text",           // ← IMPORTANTE: evitar type="number"
+                                type = "text",
                                 autocomplete = "off"
                             })
-
                         </div>
 
-                        <!-- Efectivo (solo Efectivo + Cheque) -->
                         <div id="bloqueEfectivo" class="bloque-pago" style="display:none;">
                             <div class="form-group">
                                 <h5 class="text-primary">Efectivo</h5>
@@ -135,11 +141,9 @@
                                         type = "text"
                                     }
                                 )
-
                             </div>
                         </div>
 
-                        <!-- BLOQUE DE CHEQUES -->
                         <div id="bloqueCheques" class="bloque-pago" style="display:none;">
 
                             <h5 class="mt-1 mb-3 text-primary">Cheques</h5>
@@ -157,7 +161,6 @@
                                 </div>
                             </div>
 
-                            <!-- Tabla de cheques agregados -->
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="tablaCheques">
                                     <thead class="thead-light">
@@ -173,7 +176,6 @@
                                 </table>
                             </div>
 
-                            <!-- Total de cheques -->
                             <div class="form-group">
                                 <label>Total Cheques</label>
                                 <input type="text" id="txtTotalCheques" class="form-control solo-decimal" readonly value="0">
@@ -181,20 +183,18 @@
 
                         </div>
 
-                        <!-- Observaciones -->
                         <div class="form-group">
                             @Html.LabelFor(m => m.Observaciones)
                             @Html.TextAreaFor(m => m.Observaciones, new { @class = "form-control", rows = 3 })
                         </div>
 
                         <input type="hidden" id="ChequesJson" name="ChequesJson" />
+
                         <button type="submit"
-                                onclick="desactivarProteccionSalida()"
+                                onclick="if (!@desdePos.ToString().ToLower() && typeof desactivarProteccionSalida === 'function') { desactivarProteccionSalida(); }"
                                 class="btn btn-success btn-block">
                             Guardar
                         </button>
-
-
                     }
                 </div>
             </div>
@@ -203,15 +203,10 @@
     </div>
 </div>
 
-<!-- *************************************************************** -->
-<!-- ********************   MODAL BUSCAR CHEQUES   ***************** -->
-<!-- *************************************************************** -->
-<!-- MODAL BUSCAR CHEQUES -->
 <div class="modal fade" id="modalBuscarCheques" tabindex="-1" role="dialog" aria-labelledby="modalBuscarChequesLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
 
-            <!-- Header -->
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">Buscar Cheques</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
@@ -219,10 +214,8 @@
                 </button>
             </div>
 
-            <!-- Body -->
             <div class="modal-body">
 
-                <!-- Filtros -->
                 <div class="row mb-3">
 
                     <div class="col-md-3">
@@ -256,7 +249,6 @@
 
                 </div>
 
-                <!-- Tabla de Cheques -->
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover" id="tablaModalCheques">
                         <thead class="thead-light">
@@ -270,15 +262,12 @@
                                 <th>Titular</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Se llenará por AJAX -->
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
 
             </div>
 
-            <!-- Footer -->
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
             </div>
@@ -287,41 +276,30 @@
     </div>
 </div>
 
-
-<!-- *************************************************************** -->
-<!-- MODAL ALTA CHEQUE (NEW) -->
-<!-- *************************************************************** -->
 @Html.Partial("_ModalAltaCheque")
 
-
-<!-- *************************************************************** -->
-<!-- ************************   SCRIPTS   *************************** -->
-<!-- *************************************************************** -->
-
-    @if (desdePos)
-    {
-        <script>
+@if (desdePos)
+{
+    <script>
         window.urls = {
             guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")'
         };
+    </script>
+    <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
+    @Html.Partial("_AddOrEditPagoScripts")
+}
+else
+{
+    @section Scripts{
+        <script>
+            window.urls = {
+                guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")'
+            };
         </script>
         <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
         @Html.Partial("_AddOrEditPagoScripts")
     }
-    else
-    {
-        @section Scripts{
-            <script>
-            window.urls = {
-                guardarCheque: '@Url.Action("GuardarCheque", "Finanzas")'
-            };
-            </script>
-            <script src="@Url.Content("~/Scripts/app/modal-cheque.js")"></script>
-            @Html.Partial("_AddOrEditPagoScripts")
-        }
-    }
-
-
+}
 
 <style>
     .importe-destacado label {
@@ -335,10 +313,10 @@
     }
 
     .bloque-pago {
-        background: #f7f7f7; /* Fondo sutil */
-        border: 1px solid #e0e0e0; /* Borde fino */
-        border-radius: 6px; /* Esquinas redondeadas */
-        padding: 12px; /* Espaciado interno */
-        margin-bottom: 12px; /* Separación entre bloques */
+        background: #f7f7f7;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 12px;
     }
 </style>

@@ -3,6 +3,8 @@
 }
 
 <script>
+(function () {
+
     const desdePosPago = @Html.Raw((desdePos ? "true" : "false"));
     const urlBuscarCheque = '@Url.Action("BuscarChequePorNro", "Finanzas")';
     const urlValidarChequeParaPago = '@Url.Action("ValidarChequeParaPago", "Finanzas")';
@@ -13,18 +15,43 @@
         };
 
         if (desdePosPago) {
-            const target = document.querySelector("#modalFinanzasPOS .modal-content") || document.body;
+            const target =
+                document.querySelector("#modalPagoPOS .modal-content") ||
+                document.querySelector("#modalFinanzasPOS .modal-content") ||
+                document.body;
+
             base.target = target;
         }
 
         return Swal.fire(Object.assign(base, opciones || {}));
     }
 
-    $("input, select, textarea").on("change keyup", function () {
-        if (typeof activarProteccionSalida === "function") {
-            activarProteccionSalida();
+    window.volverDesdePago = function () {
+        if (desdePosPago) {
+            $("#modalPagoPOS").modal("hide");
+            return;
         }
-    });
+
+        if (typeof desactivarProteccionSalida === "function") {
+            desactivarProteccionSalida();
+        }
+
+        const urlVolver = $("#urlVolverPago").val();
+        if (urlVolver) {
+            window.location.href = urlVolver;
+            return;
+        }
+
+        window.history.back();
+    };
+
+    $(document)
+        .off("change.posPagoProteccion keyup.posPagoProteccion", "#formPago input, #formPago select, #formPago textarea")
+        .on("change.posPagoProteccion keyup.posPagoProteccion", "#formPago input, #formPago select, #formPago textarea", function () {
+            if (!desdePosPago && typeof activarProteccionSalida === "function") {
+                activarProteccionSalida();
+            }
+        });
 
     $(document)
         .off("hidden.bs.modal.posPagoInterno", "#modalBuscarCheques, #modalAltaCheque")
@@ -47,13 +74,29 @@
     $(document).ready(function () {
 
         function actualizarVisibilidad() {
-            let fp = $("#formaPago option:selected").text();
+            const $formaPago = $("#formaPago");
+            const valor = ($formaPago.val() || "").toString().trim().toLowerCase();
+            const texto = ($formaPago.find("option:selected").text() || "").toString().trim().toLowerCase();
 
-            if (fp === "Cheque" || fp === "EftvoCheque") {
+            const esCheque =
+                valor === "cheque" ||
+                valor === "eftvocheque" ||
+                valor === "efvtocheque" ||
+                texto === "cheque" ||
+                texto === "eftvocheque" ||
+                texto === "efvtocheque";
+
+            const esEfectivoCheque =
+                valor === "eftvocheque" ||
+                valor === "efvtocheque" ||
+                texto === "eftvocheque" ||
+                texto === "efvtocheque";
+
+            if (esCheque) {
                 $("#bloqueCheques").show();
                 $("#importe").prop("readonly", true);
 
-                if (fp === "EftvoCheque") {
+                if (esEfectivoCheque) {
                     $("#bloqueEfectivo").show();
                 } else {
                     $("#bloqueEfectivo").hide();
@@ -69,10 +112,19 @@
                 $("#tablaCheques tbody").empty();
                 $("#txtTotalCheques").val(0);
             }
+
+            console.log("formaPago valor:", valor);
+            console.log("formaPago texto:", texto);
+            console.log("bloqueCheques visible:", $("#bloqueCheques").is(":visible"));
         }
 
-        $("#formaPago").off("change.posPago").on("change.posPago", actualizarVisibilidad);
-        actualizarVisibilidad();
+        $("#formaPago").off("change.posPago").on("change.posPago", function () {
+            actualizarVisibilidad();
+        });
+
+        setTimeout(function () {
+            actualizarVisibilidad();
+        }, 0);
 
         $("#txtNroCheque")
             .off("keydown.posPago")
@@ -368,7 +420,6 @@
 
         $("#Efectivo").off("input.posPago").on("input.posPago", actualizarImporte);
 
-        // CARGAR CHEQUES EXISTENTES
         @if (Model != null && Model.Id > 0 && Model.Cheques != null)
         {
             foreach (var c in Model.Cheques)
@@ -387,99 +438,101 @@
 
     });
 
-    $("#formPago").off("submit.posPago").on("submit.posPago", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+    $(document)
+        .off("submit.posPago", "#formPago")
+        .on("submit.posPago", "#formPago", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
 
-        var suc = $("#SucursalId").val();
+            var suc = $("#SucursalId").val();
 
-        if (!suc) {
-            swalPago({
-                title: "Atención",
-                text: "Debe seleccionar una sucursal antes de guardar.",
-                icon: "warning"
-            });
-            return false;
-        }
-
-        let imp = $("#importe").val()?.trim() ?? "";
-        $("#importe").val(imp);
-
-        let impEf = $("#Efectivo").val()?.trim();
-        if (!impEf) impEf = "0";
-        $("#Efectivo").val(impEf);
-
-        let lista = [];
-
-        $("#tablaCheques tbody tr").each(function () {
-            lista.push({
-                Id: $(this).data("id") || 0,
-                NroCheque: $(this).find("td:eq(0)").contents().filter(function () {
-                    return this.nodeType === 3;
-                }).text().trim(),
-                Banco: $(this).find("td:eq(1)").contents().filter(function () {
-                    return this.nodeType === 3;
-                }).text().trim(),
-                FechaPago: $(this).find("td:eq(2)").contents().filter(function () {
-                    return this.nodeType === 3;
-                }).text().trim(),
-                Importe: parseFloat(
-                    $(this).find("td:eq(3)").contents().filter(function () {
-                        return this.nodeType === 3;
-                    }).text().replace("$", "").trim()
-                )
-            });
-        });
-
-        $("#ChequesJson").val(JSON.stringify(lista));
-
-        $.ajax({
-            url: this.action,
-            type: "POST",
-            data: $(this).serialize(),
-            success: function (resp) {
-                if (!resp.ok) {
-                    swalPago({
-                        icon: "warning",
-                        title: "Validación",
-                        text: resp.mensaje
-                    });
-                    return;
-                }
-
+            if (!suc) {
                 swalPago({
-                    icon: "success",
-                    title: "Pago guardado correctamente"
-                }).then(() => {
-                    if (resp.redirectUrl) {
-                        if (desdePosPago && window.POSFinanzas) {
-                            window.POSFinanzas.cargar(resp.redirectUrl, "Cuenta corriente");
-                        } else {
-                            window.location.href = resp.redirectUrl;
-                        }
+                    title: "Atención",
+                    text: "Debe seleccionar una sucursal antes de guardar.",
+                    icon: "warning"
+                });
+                return false;
+            }
+
+            let imp = $("#importe").val()?.trim() ?? "";
+            $("#importe").val(imp);
+
+            let impEf = $("#Efectivo").val()?.trim();
+            if (!impEf) impEf = "0";
+            $("#Efectivo").val(impEf);
+
+            let lista = [];
+
+            $("#tablaCheques tbody tr").each(function () {
+                lista.push({
+                    Id: $(this).data("id") || 0,
+                    NroCheque: $(this).find("td:eq(0)").contents().filter(function () {
+                        return this.nodeType === 3;
+                    }).text().trim(),
+                    Banco: $(this).find("td:eq(1)").contents().filter(function () {
+                        return this.nodeType === 3;
+                    }).text().trim(),
+                    FechaPago: $(this).find("td:eq(2)").contents().filter(function () {
+                        return this.nodeType === 3;
+                    }).text().trim(),
+                    Importe: parseFloat(
+                        $(this).find("td:eq(3)").contents().filter(function () {
+                            return this.nodeType === 3;
+                        }).text().replace("$", "").trim()
+                    ) || 0
+                });
+            });
+
+            $("#ChequesJson").val(JSON.stringify(lista));
+
+            $.ajax({
+                url: this.action,
+                type: "POST",
+                data: $(this).serialize(),
+                dataType: "json",
+                success: function (resp) {
+                    if (!resp.ok) {
+                        swalPago({
+                            icon: "warning",
+                            title: "Validación",
+                            text: resp.mensaje
+                        });
                         return;
                     }
 
-                    if (!desdePosPago) {
-                        window.location.reload();
+                    swalPago({
+                        icon: "success",
+                        title: "Pago guardado correctamente"
+                    }).then(() => {
+                        if (desdePosPago) {
+                            $("#modalPagoPOS").modal("hide");
+                            return;
+                        }
+
+                        if (resp.redirectUrl) {
+                            window.location.href = resp.redirectUrl;
+                        } else {
+                            volverDesdePago();
+                        }
+                    });
+                },
+                error: function (xhr) {
+                    let mensaje = "Ocurrió un error inesperado al guardar el pago.";
+
+                    if (xhr?.responseJSON?.mensaje) {
+                        mensaje = xhr.responseJSON.mensaje;
                     }
-                });
-            },
-            error: function (xhr) {
-                let mensaje = "Ocurrió un error inesperado al guardar el pago.";
 
-                if (xhr && xhr.responseJSON && xhr.responseJSON.mensaje) {
-                    mensaje = xhr.responseJSON.mensaje;
+                    swalPago({
+                        icon: "error",
+                        title: "Error",
+                        text: mensaje
+                    });
                 }
+            });
 
-                swalPago({
-                    title: "Error",
-                    text: mensaje,
-                    icon: "error"
-                });
-            }
+            return false;
         });
-
-        return false;
-    });
+})();
 </script>
