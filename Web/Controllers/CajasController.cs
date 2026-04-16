@@ -35,56 +35,46 @@ namespace Web.Controllers
                 return View("~/Views/Shared/AccesoDenegado.cshtml");
             }
 
-            // Modelo inicial vacío
-            var dt = new DataTable();
-
             // --- Sucursales para el combo ---
             var sucursales = oSucursalN.findAll();
             ViewBag.Sucursales = sucursales;
-            ViewBag.IdSucursal = idSucursal;   // No lo conviertas a 0
+            ViewBag.IdSucursal = idSucursal;
             ViewBag.Buscar = buscar;
 
-            // Si no eligió sucursal → mostrar vista vacía
-            if (!idSucursal.HasValue)
-            {
-                if (ajax)
-                    return PartialView("_TablaCajasAbiertas", dt);
+            // --- Armar filtro ---
+            CierreCaja filtro = new CierreCaja();
 
-                return View("~/Views/Cajas/CajasAbiertas.cshtml", dt);
+            if (idSucursal.HasValue)
+            {
+                var sucursalActual = oSucursalN.findById(idSucursal.Value);
+
+                if (sucursalActual == null)
+                {
+                    var dtVacio = new DataTable();
+
+                    if (ajax)
+                        return PartialView("_TablaCajasAbiertas", dtVacio);
+
+                    return View("~/Views/Cajas/CajasAbiertas.cshtml", dtVacio);
+                }
+
+                filtro.Sucursal = sucursalActual;
             }
 
-            // --- Obtener sucursal actual ---
-            var sucursalActual = oSucursalN.findById(idSucursal.Value);
-            if (sucursalActual == null)
-            {
-                if (ajax)
-                    return PartialView("_TablaCajasAbiertas", dt);
-
-                return View("~/Views/Cajas/CajasAbiertas.cshtml", dt);
-            }
-
-            // --- Armar entidad filtro ---
-            var filtro = new CierreCaja
-            {
-                Sucursal = sucursalActual
-            };
-
-            // --- Consultar cajas abiertas ---
-            dt = oCierreN.findCierreCaja(
+            // Si idSucursal viene null, filtro queda sin sucursal
+            // y debería traer todas las sucursales
+            var dt = oCierreN.findCierreCaja(
                 filtro,
                 CierreCaja.tipoBusqueda.FindOpen,
                 buscar,
                 null
             );
 
-            // --- Si es AJAX, devolver solo la tabla ---
             if (ajax)
                 return PartialView("_TablaCajasAbiertas", dt);
 
-            // --- Vista completa ---
             return View("~/Views/Cajas/CajasAbiertas.cshtml", dt);
         }
-
         public ActionResult ObtenerDatosCierre(int id)
         {
             var user = Session["Usuario"] as Entidades.Usuario;
@@ -103,6 +93,7 @@ namespace Web.Controllers
             return Json(new
             {
                 id = caja.Id,
+                suc = caja.Sucursal.sucursal,
                 vendedor = caja.UsuarioInicio.Nombre,
                 cajaInicial = caja.CajaInicio,
                 fechaApertura = caja.FechaHoraInicio.Value.ToString("dd/MM/yyyy HH:mm"),

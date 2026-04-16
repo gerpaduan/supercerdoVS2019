@@ -44,11 +44,13 @@ namespace Datos
 
                 case Entidades.CierreCaja.tipoBusqueda.FindOpen:
                     selectText =
-                        "select CierreCaja.id, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, fechaHoraInicio, " +
+                        "select CierreCaja.id, CierreCaja.usuarioInicio, Usuarios.nombre as vendedor, " +
+                        "Sucursal.sucursal, fechaHoraInicio, " +
                         "round(cajaInicio, 2) as cajaInicio " +
                         "from CierreCaja " +
                         "inner join Usuarios on CierreCaja.usuarioInicio = Usuarios.id " +
-                        "where CierreCaja.idSucursal = @sucursal " +
+                        "inner join Sucursal on CierreCaja.idSucursal = Sucursal.idSucursal " +
+                        "where (@sucursal is null or @sucursal = 0 or CierreCaja.idSucursal = @sucursal) " +
                         "and Usuarios.nombre like @texto " +
                         "and CierreCaja.usuarioCierre = 0";
                     break;
@@ -89,12 +91,10 @@ namespace Datos
                             p.Add("@fechaDesde", SqlDbType.DateTime).Value = (object)fechaDesde ?? DateTime.MinValue;
                             p.Add("@texto", SqlDbType.NVarChar, 100).Value = "%" + (texto ?? "") + "%";
                             break;
-
                         case Entidades.CierreCaja.tipoBusqueda.FindOpen:
-                            p.Add("@sucursal", SqlDbType.Int).Value = oCierreParam.Sucursal.idSucursal;
+                            p.Add("@sucursal", SqlDbType.Int).Value = oCierreParam.Sucursal?.idSucursal ?? 0;
                             p.Add("@texto", SqlDbType.NVarChar, 100).Value = "%" + (texto ?? "") + "%";
                             break;
-
                         case Entidades.CierreCaja.tipoBusqueda.FindById:
                             p.Add("@id", SqlDbType.Int).Value = oCierreParam.Id;
                             break;

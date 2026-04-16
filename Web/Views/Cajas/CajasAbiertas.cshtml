@@ -15,7 +15,7 @@
             <!-- Combo sucursal -->
             <div class="col-md-3">
                 <select name="idSucursal" id="idSucursal" class="form-control">
-                    <option value="">-- Seleccione una sucursal --</option>
+                    <option value="">-- Todas las sucursales --</option>
                     @foreach (var s in sucursales)
                     {
                         <option value="@s.IdSucursal" @(s.IdSucursal == idSucursal ? "selected" : "")>
@@ -46,111 +46,109 @@
         </div>
     </form>
 
-
-
     <!-- Área que se actualiza con AJAX -->
     <div id="tablaResultado">
         @Html.Partial("_TablaCajasAbiertas", Model)
     </div>
 
 </div>
-    <!-- Modal Cerrar Caja -->
-    <div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
 
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Cerrar Caja</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+<!-- Modal Cerrar Caja -->
+<div class="modal fade" id="modalCerrarCaja" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
 
-                <div class="modal-body">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Cerrar Caja</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
 
-                    <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
+            <div class="modal-body">
 
-                    <form id="formCerrarCaja">
+                <div id="cerrarCajaError" class="alert alert-danger d-none"></div>
 
-                        <!-- ID oculto -->
-                        <input type="hidden" id="Id" name="Id" />
+                <form id="formCerrarCaja">
 
-                        <div class="row">
-                            <div class="col-md-5">
-                                <label>Caja</label>
-                                <input type="text" id="CajaDesc" class="form-control" readonly />
-                            </div>
+                    <input type="hidden" id="Id" name="Id" />
 
-                            <div class="col-md-5">
-                                <label>Apertura</label>
-                                <input type="text" id="FechaApertura" class="form-control" readonly />
-                            </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label id="labelSucursal">Caja</label>
+                            <input type="text" id="CajaDesc" class="form-control" readonly />
                         </div>
 
-                        <hr />
+                        <div class="col-md-5">
+                            <label>Apertura</label>
+                            <input type="text" id="FechaApertura" class="form-control" readonly />
+                        </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-5">
-                                <label>Caja Inicial</label>
-                                <input type="text" id="CajaInicial" class="form-control" readonly />
-                            </div>
+                    <hr />
 
-                            <div class="col-md-5">
-                                <input type="hidden" id="Usuario" class="form-control" readonly />
-                            </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Caja Inicial</label>
+                            <input type="text" id="CajaInicial" class="form-control" readonly />
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-5">
-                                <label>Ventas</label>
-                                <input type="text" id="Ventas" class="form-control" readonly />
-                            </div>
+                        <div class="col-md-5">
+                            <input type="hidden" id="Usuario" class="form-control" readonly />
+                        </div>
+                    </div>
 
-                            <div class="col-md-5">
-                                <label>EgresosCaja</label>
-                                <input type="number" step="0.01" id="EgresosCaja" class="form-control" readonly />
-                            </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Ventas</label>
+                            <input type="text" id="Ventas" class="form-control" readonly />
                         </div>
 
-                        <hr />
+                        <div class="col-md-5">
+                            <label>EgresosCaja</label>
+                            <input type="number" step="0.01" id="EgresosCaja" class="form-control" readonly />
+                        </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-5">
-                                <label>Caja Cierre</label>
-                                <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
-                            </div>
+                    <hr />
 
-                            <div class="col-md-5">
-                                <label>Diferencia</label>
-                                <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
-                            </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Caja Cierre</label>
+                            <input type="text" step="0.01" id="CajaCierre" name="CajaCierre" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
                         </div>
 
-                        <hr />
-
-                        <div class="row">
-                            <div class="col-md-5">
-                                <label>Importe Retirado</label>
-                                <input type="text" id="ImporteRetirado" name="ImporteRetirado" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
-                            </div>
-                            <div class="col-md-5">
-                                <label>Queda en Caja</label>
-                                <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;"/>
-                            </div>
+                        <div class="col-md-5">
+                            <label>Diferencia</label>
+                            <input type="text" id="Diferencia" name="Diferencia" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;" />
                         </div>
+                    </div>
 
-                    </form>
+                    <hr />
 
-                </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <label>Importe Retirado</label>
+                            <input type="text" id="ImporteRetirado" name="ImporteRetirado" class="form-control" oninput="validarNumero(this); recalcularCierre();" />
+                        </div>
+                        <div class="col-md-5">
+                            <label>Queda en Caja</label>
+                            <input type="text" id="CajaInicioSiguiente" name="CajaInicioSiguiente" class="form-control" readonly style="font-weight:bold; font-size:1.25rem;" />
+                        </div>
+                    </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
-                    <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
-                </div>
+                </form>
 
             </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="guardarCierreCaja()">Cerrar Caja</button>
+                <button class="btn btn-secondary" data-dismiss="modal" onclick="modalCerrarCaja()">Cancelar</button>
+            </div>
+
         </div>
     </div>
+</div>
 
 @section Scripts {
     <script>
@@ -158,7 +156,6 @@
             const idSucursal = $("#idSucursal").val() || "";
             const buscar = $("#buscarVendedor").val() || "";
 
-            // guardar posición del cursor solo si el input existe y tiene foco
             let pos = 0;
             const txt = document.getElementById("buscarVendedor");
             if (txt && document.activeElement === txt && typeof txt.selectionStart === "number") {
@@ -167,87 +164,62 @@
 
             $.ajax({
                 url: '@Url.Action("CajasAbiertas", "Cajas")',
-                //url: baseUrl + 'Cajas/CajasAbiertas', // baseUrl ya termina con "/" normalmente
                 type: 'GET',
                 data: {
                     idSucursal: idSucursal,
                     buscar: buscar,
                     ajax: true
                 },
-                cache: false, // evita respuestas cacheadas
+                cache: false,
                 success: function (html) {
                     $("#tablaResultado").html(html);
 
-                    // restaurar foco/posición solo si corresponde
                     if (txt) {
                         setTimeout(() => {
                             txt.focus();
                             try {
                                 txt.setSelectionRange(pos, pos);
-                            } catch (e) { /* ignora si no aplica */ }
+                            } catch (e) { }
                         }, 30);
                     }
                 }
             });
         }
 
-        // Delegación: asegura que el evento sobreviva a reemplazos de HTML
         $(document).on('change', '#idSucursal', function () {
             filtrar();
         });
 
-        // Disparo inicial al cargar la página (respeta la sucursal ya seleccionada)
         $(function () {
             filtrar();
         });
 
-
-
-
-        //SCRIPT PARA ABRIR MODAL CERRAR CAJA
         function abrirModalCerrarCaja(Id) {
-            console.log("abrirModalCerrarCaja", Id);
-
             $("#cerrarCajaError").addClass("d-none").text("");
 
             $.ajax({
                 url: '@Url.Action("ObtenerDatosCierre", "Cajas")',
-
-                //url: baseUrl + '/Cajas/ObtenerDatosCierre',
                 type: 'GET',
                 data: { id: Id },
                 success: function (data) {
-
-                    // CAMBIO CLAVE AQUÍ
                     $("#Id").val(data.id);
-
+                    $("#labelSucursal").text("Caja | " + data.suc);
                     $("#CajaDesc").val(data.vendedor);
                     $("#FechaApertura").val(data.fechaApertura);
                     $("#CajaInicial").val(data.cajaInicial);
                     $("#Usuario").val(data.usuario);
-
                     $("#Ventas").val(data.ventas);
                     $("#EgresosCaja").val(data.egresosCaja);
                     $("#Diferencia").val("");
-
                     $("#modalCerrarCaja").modal("show");
                 }
             });
         }
 
-        // Cuando se cierra el modal, limpiar inputs editables
         $('#modalCerrarCaja').on('hidden.bs.modal', function () {
-
-            // Limpia todos los inputs dentro del modal excepto los hidden
             $(this).find('input:not([type="hidden"])').val('');
-
-            // Limpia textareas
             $(this).find('textarea').val('');
-
-            // Limpia selects
             $(this).find('select').prop('selectedIndex', 0);
-
-            // Si usás mensajes de error, ocultarlos
             $('.text-danger').addClass('d-none').text('');
         });
 
@@ -256,9 +228,8 @@
         }
 
         function guardarCierreCaja() {
-
             let data = {
-                Id: $("#Id").val(),                     // ← CAMBIADO
+                Id: $("#Id").val(),
                 CajaCierre: $("#CajaCierre").val(),
                 Diferencia: $("#Diferencia").val(),
                 ImporteRetirado: $("#ImporteRetirado").val(),
@@ -267,11 +238,9 @@
 
             $.ajax({
                 url: '@Url.Action("CerrarCaja", "Cajas")',
-                //url: baseUrl +  '/Cajas/CerrarCaja',
                 type: 'POST',
                 data: data,
                 success: function (resp) {
-
                     if (!resp.ok) {
                         $("#cerrarCajaError").removeClass("d-none").text(resp.error);
                         return;
@@ -284,11 +253,8 @@
                         confirmButtonText: 'Aceptar',
                         confirmButtonColor: '#4e73df'
                     }).then(() => {
-
-                        let idSucursal = $("#SucursalId").val(); // el combo que ya tenés
-
-                        // ⬅️ Recarga PERO mantiene el filtro
-                        window.location.href = '/Cajas/CajasAbiertas?idSucursal=' + idSucursal +'&buscar=';
+                        let idSucursal = $("#idSucursal").val() || "";
+                        window.location.href = '/Cajas/CajasAbiertas?idSucursal=' + idSucursal + '&buscar=';
                     });
                 }
             });
@@ -297,38 +263,30 @@
         function toFloat(value) {
             let v = value.trim();
             if (v === "") return 0;
-            v = v.replace(",", "."); // por si ingresan coma
+            v = v.replace(",", ".");
             return parseFloat(v) || 0;
         }
 
         function validarNumero(input) {
             let v = input.value;
-
-            // Solo dígitos, coma o punto
             v = v.replace(/[^\d.,]/g, "");
-
-            // Reemplazar coma por punto (unifica formato)
             v = v.replace(",", ".");
 
-            // Evitar más de 1 punto
             const partes = v.split(".");
             if (partes.length > 2) {
-                v = partes[0] + "." + partes[1]; // corta el excedente
+                v = partes[0] + "." + partes[1];
             }
 
             input.value = v;
         }
 
-
         function recalcularCierre() {
-
             let cajaInicial = toFloat($("#CajaInicial").val());
             let ventas = toFloat($("#Ventas").val());
             let gastos = toFloat($("#EgresosCaja").val());
             let cajaCierre = toFloat($("#CajaCierre").val());
             let importeRetirado = toFloat($("#ImporteRetirado").val());
 
-            // Calcula diferencia
             let diferencia = (gastos + cajaCierre) - (cajaInicial + ventas);
 
             if ($("#CajaCierre").val().length > 0)
@@ -336,14 +294,13 @@
             else
                 $("#Diferencia").val("");
 
-            // Calcula caja para el siguiente inicio
             let cajaInicioSiguiente = cajaCierre - importeRetirado;
             $("#CajaInicioSiguiente").val(cajaInicioSiguiente.toFixed(2));
 
             colorearDiferencia();
         }
-        function colorearDiferencia() {
 
+        function colorearDiferencia() {
             let valor = parseFloat($("#Diferencia").val().replace(",", "."));
 
             if (isNaN(valor)) {
@@ -351,20 +308,15 @@
                 return;
             }
 
-            // Verde claro → entre -100 y 100
             if (valor >= -100 && valor <= 100) {
                 $("#Diferencia").css("background-color", "#c8f7c5");
             }
-            // Amarillo claro → entre -300 y -100 | 100 y 300
             else if ((valor > 100 && valor <= 300) || (valor < -100 && valor >= -300)) {
                 $("#Diferencia").css("background-color", "#fff3b0");
             }
-            // Rojo claro → fuera de esos rangos
             else {
                 $("#Diferencia").css("background-color", "#f7c6c6");
             }
         }
-
-
     </script>
 }
